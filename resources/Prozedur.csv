@@ -1,0 +1,10 @@
+Patient-ID,Prozesdurentext,Prozedurencode,Dokumentationsdatum,,,
+1uke,,,,,,"Prozeduren enthält Informationen aus dem Bereich ""Prozedur"" des Art-Decor; erstmal  fokussiert auf OPS"
+1uke,,,,,,"Bezeichner ist ""Freitextbeschreibung"" der Prozedur ; gerne natürlich zusammen mit ICD"
+2UKE,ÖGD,1-638.1,3/2/2020,,,OPS ist der vollständige OPS Prozedurenkode
+2UKE,"Transfusion von Vollblut, Erythrozytenkonzentrat und Thrombozytenkonzentrat",8-800,3/2/2020,,,Dokumentationsdatum ist der Zeitpunkt der Dokumentation
+2UKE,,,,,,
+uksh200,PTCA,8-836.0,1/6/2020,,,
+uksh201,Marknagel,5-794.be,1/11/2020,,,
+uksh201,"Transfusion von Vollblut, Erythrozytenkonzentrat und Thrombozytenkonzentrat",8-800,1/11/2020,,,
+UKB001,Natives CT des Abdomens,3-207,8/2/2020,,,

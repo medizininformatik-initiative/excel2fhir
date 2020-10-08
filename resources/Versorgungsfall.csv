@@ -1,0 +1,13 @@
+Patient-ID,Versorgungsfallgrund (Aufnahmediagnose),Startdatum,Enddatum,Versorgungsfallklasse,,,
+1UKE,,4/1/2020,,stationaer,,,"""Versorgungsfall"" enthält Informationen aus dem Bereich ""Versorgungsfall"" des Art-Decor;"
+2UKE,,3/1/2020,,stationaer,,,Versorgungsfallgrund ist bei  Aufnahmediagnose vorgesehen
+3UKE,,2/26/2020,,stationaer,,,https://art-decor.org/art-decor/decor-datasets--mide-?id=2.16.840.1.113883.3.1937.777.24.1.1&effectiveDate=2018-06-05T12%3A44%3A12&conceptId=2.16.840.1.113883.3.1937.777.24.2.1326&conceptEffectiveDate=2020-01-21T14%3A17%3A02&language=de-DE
+4UKE,,5/1/2020,,stationaer,,,
+5UKE,,1/30/2020,,stationaer,,,
+6UKE,,2/21/2020,,stationaer,,,
+uksh001,C76.0,11/24/2017,11/30/2017,stationaer,,,
+uksh002,C61,11/14/2017,11/25/2017,stationaer,,,
+uksh200,I21.1,1/1/2020,5/1/2020,stationaer,,,
+uksh201,K35.30,1/1/2020,1/15/2020,stationaer,,,
+UKB001,K85.11,7/30/2020,8/14/2020,vollstationaer,,,
+UKB002,N30.9,11/25/2019,,,,,
