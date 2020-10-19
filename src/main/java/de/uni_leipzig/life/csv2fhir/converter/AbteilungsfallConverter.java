@@ -1,8 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -16,7 +17,48 @@ public class AbteilungsfallConverter implements Converter {
 
     @Override
     public List<Resource> convert() throws Exception {
-        //TODO
-        return Collections.singletonList(null);
+        Encounter encounter = new Encounter();
+        encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
+        // TODO encounter.setIdentifier(null);
+        // TODO encounter.setDiagnosis(null);
+        // TODO encounter.setClass_(null);
+        encounter.setSubject(convertEncounterIdReference());
+        encounter.setPeriod(convertPeriod());
+        encounter.setServiceType(convertServiceType());
+        return Collections.singletonList(encounter);
+    }
+
+    private Reference convertEncounterIdReference() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            throw new Exception("Error on Abteilungsfall: Patient-ID empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private Period convertPeriod() throws Exception {
+        try {
+            return new Period()
+                    .setStartElement(DateUtil.tryParseToDateTimeType(record.get("Startdatum")))
+                    .setEndElement(DateUtil.tryParseToDateTimeType(record.get("Enddatum")));
+        } catch (Exception e) {
+            throw new Exception("Error on Abteilungsfall: Can not parse Startdatum or Enddatum for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
+        }
+    }
+
+    private CodeableConcept convertServiceType() throws Exception {
+        String code = record.get("Fachabteilung");
+        if (code != null) {
+            return new CodeableConcept().addCoding(new Coding()
+                        .setSystem("https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/Fachabteilungsschluessel")
+                        .setCode(code))
+                    .setText(code);
+        } else {
+            throw new Exception("Error on Abteilungsfall: Fachabteilung empty for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
+        }
     }
 }

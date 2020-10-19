@@ -7,7 +7,7 @@ import org.apache.commons.csv.CSVRecord;
 
 public class DiagnoseConverterFactory implements ConverterFactory {
 
-    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Bezeichner", "ICD", "Dokumentationsdatum", "Typ"};
+    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Bezeichner", "ICD", "Dokumentationsdatum"}; //unused:  "Typ"
 
     @Override
     public Converter create(CSVRecord record) {

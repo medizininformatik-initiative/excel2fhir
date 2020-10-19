@@ -5,7 +5,6 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.*;
-import java.math.BigDecimal;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +58,7 @@ public class LaborbefundConverter implements Converter {
         try {
             return new Quantity().setValue(DecimalUtil.matchesDecimal(record.get("Messwert"))).setUnit(record.get("Einheit"));
         } catch (Exception e){
-        throw new Exception("Error on Medication: Einzeldosis is not a numerical value for Record: "
+        throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
                 + record.getRecordNumber() + "! " + record.toString());
         }
     }
