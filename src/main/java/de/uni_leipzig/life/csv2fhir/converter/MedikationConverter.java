@@ -4,7 +4,19 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Dosage;
+import org.hl7.fhir.r4.model.MedicationAdministration;
+import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.Ratio;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.SimpleQuantity;
+
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -130,9 +142,9 @@ public class MedikationConverter implements Converter {
     }
 
     private BigDecimal getDosesPerDay() throws Exception {
-        try{
+        try {
             return DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new Exception("Error on Medication: Anzahl Dosen pro Tag is not a numerical value for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
         }
@@ -141,7 +153,7 @@ public class MedikationConverter implements Converter {
     private BigDecimal getDose() throws Exception {
         try {
             return DecimalUtil.parseDecimal(record.get("Einzeldosis"));
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new Exception("Error on Medication: Einzeldosis is not a numerical value for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
         }

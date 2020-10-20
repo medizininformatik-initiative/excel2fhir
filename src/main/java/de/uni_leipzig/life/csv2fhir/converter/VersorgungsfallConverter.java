@@ -3,7 +3,12 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +41,7 @@ public class VersorgungsfallConverter implements Converter {
             return new Coding()
                     .setSystem("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse")
                     .setCode(code);
-        }else {
+        } else {
             throw new Exception("Error on Versorgungsfall: Versorgungsfallklasse empty for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
         }
@@ -70,11 +75,9 @@ public class VersorgungsfallConverter implements Converter {
                     .setSystem("2.25.13106415395318837456468900343666547797")
                     .setCode(code));
         } else {
-           return null;
+            return null;
         }
     }
-
-
 
 
 }

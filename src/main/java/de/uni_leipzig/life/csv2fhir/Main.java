@@ -10,7 +10,7 @@ public class Main {
             if (dir.isDirectory()) {
                 Csv2Fhir converter = new Csv2Fhir(dir);
                 converter.convertFiles();
-            }else{
+            } else {
                 System.out.println("Provided dir is no directory! Abort!");
             }
         }

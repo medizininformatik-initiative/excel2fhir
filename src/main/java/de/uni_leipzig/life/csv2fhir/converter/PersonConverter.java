@@ -3,7 +3,14 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.Address;
+import org.hl7.fhir.r4.model.DateType;
+import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.HumanName;
+import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+
 import java.util.Collections;
 import java.util.List;
 

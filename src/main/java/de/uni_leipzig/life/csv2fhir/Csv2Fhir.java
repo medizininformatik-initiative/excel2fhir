@@ -1,15 +1,28 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import ca.uhn.fhir.context.FhirContext;
-import de.uni_leipzig.life.csv2fhir.converterFactory.*;
+import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Csv2Fhir {
@@ -83,9 +96,9 @@ public class Csv2Fhir {
     }
 
     private boolean isColumnMissing(Map<String, Integer> map, String[] neededColls) {
-        boolean b= !map.keySet().stream().map(String::trim).collect(Collectors.toSet()).containsAll(Arrays.asList(neededColls));
-        if(b){//Error message
-            for(String s : neededColls){
+        boolean b = !map.keySet().stream().map(String::trim).collect(Collectors.toSet()).containsAll(Arrays.asList(neededColls));
+        if (b) {//Error message
+            for (String s : neededColls) {
                 System.out.print(map.keySet().stream().map(String::trim).collect(Collectors.toSet()).contains(s) + " - '" + s + "' ");
             }
             System.out.println();

@@ -4,9 +4,15 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.*;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,9 +78,9 @@ public class LaborbefundConverter implements Converter {
     private Quantity parseObservationValue() throws Exception {
         try {
             return new Quantity().setValue(DecimalUtil.parseDecimal(record.get("Messwert"))).setUnit(record.get("Einheit"));
-        } catch (Exception e){
-        throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
-                + record.getRecordNumber() + "! " + record.toString());
+        } catch (Exception e) {
+            throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
         }
     }
 }
