@@ -19,15 +19,44 @@ public class ProzedurConverter implements Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Procedure procedure = new Procedure();
+        procedure.addExtension(new Extension()
+                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
+                .setValue(convertRecordedDate()));
         procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);//TODO
-        procedure.setSubject(convertProcedureIdReference());
-        procedure.addNote(convertProcedureNote());
         procedure.setCode(convertProcedureCode());
-        procedure.setPerformed(convertPeriod());
+        procedure.setSubject(convertSubject());
+        // TODO procedure.setPerformed(null);
         return Collections.singletonList(procedure);
     }
 
-    private Reference convertProcedureIdReference() throws Exception {
+    private DateTimeType convertRecordedDate() throws Exception {
+        try {
+            return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
+        } catch (Exception e) {
+            throw new Exception("Error on Procedure: Can not parse Dokumentationsdatum for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
+        }
+    }
+
+    private CodeableConcept convertProcedureCode() throws Exception {
+        return new CodeableConcept()
+                .addCoding(getCode())
+                .setText(record.get("Prozesdurentext"));
+    }
+
+    private Coding getCode() throws Exception {
+        String code = record.get("Prozedurencode");
+        if (code != null) {
+            return new Coding()
+                    .setSystem("http://snomed.info/sct")
+                    .setCode(code);
+        } else {
+            throw new Exception("Error on Procedure: Prozedurencode empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private Reference convertSubject() throws Exception {
         String patientId = record.get("Patient-ID");
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
@@ -36,31 +65,5 @@ public class ProzedurConverter implements Converter {
                     + record.getRecordNumber() + "!" + record.toString());
         }
     }
-
-    private Annotation convertProcedureNote() {
-        String note = record.get("Prozesdurentext");
-        if (note != null) {
-            return new Annotation().setText(note);
-        }
-        return null;
-    }
-
-    private CodeableConcept convertProcedureCode() throws Exception {
-        String code = record.get("Prozedurencode");
-        if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://snomed.info/sct").setCode(code)).setText(code);
-        } else {
-            throw new Exception("Error on Procedure: Prozedurencode empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
-
-    private DateTimeType convertPeriod() throws Exception {
-        try {
-            return DateUtil.tryParseToDateTimeType(record.get("Dokumentationsdatum"));
-        } catch (Exception e) {
-            throw new Exception("Error on Procedure: Can not parse Dokumentationsdatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
-    }
 }
+

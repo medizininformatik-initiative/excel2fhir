@@ -8,7 +8,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Resource;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Csv2Fhir {
 
@@ -27,11 +29,12 @@ public class Csv2Fhir {
             put("Diagnose.csv", new DiagnoseConverterFactory());
             put("Prozedur.csv", new ProzedurConverterFactory());
             put("Medikation (2).csv", new MedikationConverterFactory());
+            put("Medikation.csv", new MedikationConverterFactory());
             put("Klinische Dokumentation.csv", new KlinischeDokumentationConverterFactory());
         }};
         this.ctx = FhirContext.forR4();
         csvFormat = CSVFormat.DEFAULT
-                .withNullString("").withIgnoreSurroundingSpaces()
+                .withNullString("").withIgnoreSurroundingSpaces().withTrim(true)
                 .withAllowMissingColumnNames(true).withFirstRecordAsHeader();
     }
 
@@ -39,9 +42,9 @@ public class Csv2Fhir {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
 
-        String[] directories = dir.list();
-        if (directories != null) {
-            for (String fileName : directories) {
+        String[] files = dir.list();
+        if (files != null) {
+            for (String fileName : files) {
                 ConverterFactory factory = converterFactorys.get(fileName);
                 if (factory == null) {
                     continue;
@@ -80,7 +83,15 @@ public class Csv2Fhir {
     }
 
     private boolean isColumnMissing(Map<String, Integer> map, String[] neededColls) {
-        return !map.keySet().containsAll(Arrays.asList(neededColls));
+        boolean b= !map.keySet().stream().map(String::trim).collect(Collectors.toSet()).containsAll(Arrays.asList(neededColls));
+        if(b){//Error message
+            for(String s : neededColls){
+                System.out.print(map.keySet().stream().map(String::trim).collect(Collectors.toSet()).contains(s) + " - '" + s + "' ");
+            }
+            System.out.println();
+            System.out.println(map.keySet().stream().map(String::trim).collect(Collectors.toSet()).toString());
+        }
+        return b;
     }
 
     private Bundle.BundleEntryRequestComponent getRequestComponent(Resource resource) {

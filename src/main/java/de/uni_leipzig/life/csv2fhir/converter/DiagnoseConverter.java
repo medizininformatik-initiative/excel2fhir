@@ -19,15 +19,42 @@ public class DiagnoseConverter implements Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
-        condition.setSubject(convertConditionIdReference());
-        condition.addNote(convertProcedureNote());
+        condition.addCategory(convertCategory());
         condition.setCode(convertProcedureCode());
-        condition.setRecordedDateElement(convertPeriod());
-        // TODO Type ?
+        condition.setSubject(convertSubject());
+        condition.setRecordedDateElement(convertRecordedDate());
         return Collections.singletonList(condition);
     }
 
-    private Reference convertConditionIdReference() throws Exception {
+    private CodeableConcept convertCategory() throws Exception {
+        String code = record.get("Typ");
+        if (code != null) {
+            return new CodeableConcept().setText(code);
+        } else {
+            throw new Exception("Error on Diagnose: Typ empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private CodeableConcept convertProcedureCode() throws Exception {
+        return new CodeableConcept()
+                .addCoding(getCoding())
+                .setText(record.get("Bezeichner"));
+    }
+
+    private Coding getCoding() throws Exception {
+        String code = record.get("ICD");
+        if (code != null) {
+            return new Coding()
+                    .setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm")
+                    .setCode(code);
+        } else {
+            throw new Exception("Error on Diagnose: ICD empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private Reference convertSubject() throws Exception {
         String patientId = record.get("Patient-ID");
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
@@ -37,27 +64,9 @@ public class DiagnoseConverter implements Converter {
         }
     }
 
-    private Annotation convertProcedureNote() {
-        String note = record.get("Bezeichner");
-        if (note != null) {
-            return new Annotation().setText(note);
-        }
-        return null;
-    }
-
-    private CodeableConcept convertProcedureCode() throws Exception {
-        String code = record.get("ICD");
-        if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm").setCode(code)).setText(code);
-        } else {
-            throw new Exception("Error on Diagnose: ICD empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
-
-    private DateTimeType convertPeriod() throws Exception {
+    private DateTimeType convertRecordedDate() throws Exception {
         try {
-            return DateUtil.tryParseToDateTimeType(record.get("Dokumentationsdatum"));
+            return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
         } catch (Exception e) {
             throw new Exception("Error on Diagnose: Can not parse Dokumentationsdatum for Record: "
                     + record.getRecordNumber() + "! " + record.toString());

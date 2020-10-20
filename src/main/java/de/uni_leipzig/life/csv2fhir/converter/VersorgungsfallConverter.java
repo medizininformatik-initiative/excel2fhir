@@ -19,44 +19,15 @@ public class VersorgungsfallConverter implements Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Encounter encounter = new Encounter();
-        encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
         // TODO encounter.setIdentifier(null);
-        // TODO encounter.setDiagnosis(null);
-        encounter.setSubject(convertEncounterIdReference());
-        encounter.addReasonCode(convertReasonCode());
-        encounter.setPeriod(convertPeriod());
+        encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
         encounter.setClass_(convertClass());
+        encounter.setSubject(convertSubject());
+        encounter.setPeriod(convertPeriod());
+        encounter.addReasonCode(convertReasonCode());
+        // TODO encounter.setDiagnosis(null);
+
         return Collections.singletonList(encounter);
-    }
-
-    private Reference convertEncounterIdReference() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Versorgungsfall: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
-
-    private CodeableConcept convertReasonCode() {
-        String code = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
-        if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("").setCode(code)).setText(code);
-        } else {
-           return null;
-        }
-    }
-
-    private Period convertPeriod() throws Exception {
-        try {
-            return new Period()
-                    .setStartElement(DateUtil.tryParseToDateTimeType(record.get("Startdatum")))
-                    .setEndElement(DateUtil.tryParseToDateTimeType(record.get("Enddatum")));
-        } catch (Exception e) {
-            throw new Exception("Error on Versorgungsfall: Can not parse Startdatum or Enddatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
     }
 
     private Coding convertClass() throws Exception {
@@ -70,4 +41,40 @@ public class VersorgungsfallConverter implements Converter {
                     + record.getRecordNumber() + "! " + record.toString());
         }
     }
+
+    private Reference convertSubject() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            throw new Exception("Error on Versorgungsfall: Patient-ID empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private Period convertPeriod() throws Exception {
+        try {
+            return new Period()
+                    .setStartElement(DateUtil.parseDateTimeType(record.get("Startdatum")))
+                    .setEndElement(DateUtil.parseDateTimeType(record.get("Enddatum")));
+        } catch (Exception e) {
+            throw new Exception("Error on Versorgungsfall: Can not parse Startdatum or Enddatum for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
+        }
+    }
+
+    private CodeableConcept convertReasonCode() {
+        String code = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
+        if (code != null) {
+            return new CodeableConcept().addCoding(new Coding()
+                    .setSystem("2.25.13106415395318837456468900343666547797")
+                    .setCode(code));
+        } else {
+           return null;
+        }
+    }
+
+
+
+
 }

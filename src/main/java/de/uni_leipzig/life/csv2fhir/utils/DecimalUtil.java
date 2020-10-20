@@ -7,7 +7,7 @@ public class DecimalUtil {
 
     static Pattern pattern = Pattern.compile("-?\\d+(\\.\\d*)?");
 
-    public static BigDecimal matchesDecimal(String s) throws Exception {
+    public static BigDecimal parseDecimal(String s) throws Exception {
         if (s != null && pattern.matcher(s).matches()) {
             return new BigDecimal(s);
         } else {

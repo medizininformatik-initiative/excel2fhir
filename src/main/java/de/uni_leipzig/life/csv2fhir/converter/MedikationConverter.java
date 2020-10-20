@@ -31,28 +31,18 @@ public class MedikationConverter implements Converter {
     private MedicationAdministration convertMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setStatus("completed");
-        medicationAdministration.setSubject(convertPatientIdReference());
         medicationAdministration.setMedication(convertMedicationCodeableConcept());
-        medicationAdministration.setDosage(convertDosageComponent());
+        medicationAdministration.setSubject(convertSubject());
         medicationAdministration.setEffective(convertPeriod());
+        medicationAdministration.setDosage(convertDosageComponent());
         return medicationAdministration;
-    }
-
-    private Reference convertPatientIdReference() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Medication: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
     }
 
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(getATCCoding());
         concept.addCoding(getPZNCoding());
-        concept.addCoding(getASKCoding());
+        //concept.addCoding(getASKCoding());
         concept.setText(record.get("Wirksubstanz aus Präparat/Handelsname"));
         return concept;
     }
@@ -93,6 +83,27 @@ public class MedikationConverter implements Converter {
         }
     }
 
+    private Reference convertSubject() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            throw new Exception("Error on Medication: Patient-ID empty for Record: "
+                    + record.getRecordNumber() + "!" + record.toString());
+        }
+    }
+
+    private Period convertPeriod() throws Exception {
+        try {
+            return new Period()
+                    .setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")))
+                    .setEndElement(DateUtil.parseDateTimeType(record.get("Therapieendedatum")));
+        } catch (Exception e) {
+            throw new Exception("Error on Medication: Can not parse Therapiestartdatum or Therapieendedatum for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
+        }
+    }
+
     private MedicationAdministration.MedicationAdministrationDosageComponent convertDosageComponent() throws Exception {
         return new MedicationAdministration.MedicationAdministrationDosageComponent()
                 .setRate(getDoseRate());
@@ -120,7 +131,7 @@ public class MedikationConverter implements Converter {
 
     private BigDecimal getDosesPerDay() throws Exception {
         try{
-            return DecimalUtil.matchesDecimal(record.get("Anzahl Dosen pro Tag"));
+            return DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
         } catch (Exception e){
             throw new Exception("Error on Medication: Anzahl Dosen pro Tag is not a numerical value for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
@@ -129,20 +140,9 @@ public class MedikationConverter implements Converter {
 
     private BigDecimal getDose() throws Exception {
         try {
-            return DecimalUtil.matchesDecimal(record.get("Einzeldosis"));
+            return DecimalUtil.parseDecimal(record.get("Einzeldosis"));
         } catch (Exception e){
             throw new Exception("Error on Medication: Einzeldosis is not a numerical value for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
-    }
-
-    private Period convertPeriod() throws Exception {
-        try {
-            return new Period()
-                    .setStartElement(DateUtil.tryParseToDateTimeType(record.get("Therapiestartdatum")))
-                    .setEndElement(DateUtil.tryParseToDateTimeType(record.get("Therapieendedatum")));
-        } catch (Exception e) {
-            throw new Exception("Error on Medication: Can not parse Therapiestartdatum or Therapieendedatum for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
         }
     }
@@ -150,17 +150,17 @@ public class MedikationConverter implements Converter {
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
         medicationStatement.setStatus(ACTIVE);
-        medicationStatement.setSubject(convertPatientIdReference());
-        medicationStatement.setDateAssertedElement(convertMedicationTimestamp());
         medicationStatement.setMedication(convertMedicationCodeableConcept());
-        medicationStatement.addDosage(convertDosage());
+        medicationStatement.setSubject(convertSubject());
         medicationStatement.setEffective(convertPeriod());
+        medicationStatement.setDateAssertedElement(convertTimestamp());
+        medicationStatement.addDosage(convertDosage());
         return medicationStatement;
     }
 
-    private DateTimeType convertMedicationTimestamp() throws Exception {
+    private DateTimeType convertTimestamp() throws Exception {
         try {
-            return DateUtil.tryParseToDateTimeType(record.get("Zeitstempel"));
+            return DateUtil.parseDateTimeType(record.get("Zeitstempel"));
         } catch (Exception e) {
             throw new Exception("Error on Medication: Can not parse timestamp for Record: "
                     + record.getRecordNumber() + "! " + record.toString());

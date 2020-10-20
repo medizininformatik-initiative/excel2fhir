@@ -21,24 +21,14 @@ public class LaborbefundConverter implements Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
-        observation.setIdentifier(new ArrayList<>());//TODO
+        //TODO observation.setIdentifier(new ArrayList<>());
         observation.setStatus(Observation.ObservationStatus.FINAL);
-        observation.setCategory(new ArrayList<>()); //TODO
-        observation.setSubject(parseObservationPatientId());
+        //TODO observation.setCategory(new ArrayList<>());
         observation.setCode(parseObservationCode());
-        observation.setValue(parseObservationValue());
+        observation.setSubject(parseObservationPatientId());
         observation.setEffective(parseObservationTimestamp());
+        observation.setValue(parseObservationValue());
         return Collections.singletonList(observation);
-    }
-
-    private Reference parseObservationPatientId() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Observation: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
     }
 
     private CodeableConcept parseObservationCode() throws Exception {
@@ -54,12 +44,13 @@ public class LaborbefundConverter implements Converter {
         }
     }
 
-    private Quantity parseObservationValue() throws Exception {
-        try {
-            return new Quantity().setValue(DecimalUtil.matchesDecimal(record.get("Messwert"))).setUnit(record.get("Einheit"));
-        } catch (Exception e){
-        throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
-                + record.getRecordNumber() + "! " + record.toString());
+    private Reference parseObservationPatientId() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            throw new Exception("Error on Observation: Patient-ID empty for Record: "
+                    + record.getRecordNumber() + "! " + record.toString());
         }
     }
 
@@ -67,7 +58,7 @@ public class LaborbefundConverter implements Converter {
         String timestamp = record.get("Zeitstempel (Abnahme)");
         if (timestamp != null) {
             try {
-                return DateUtil.tryParseToDateTimeType(timestamp);
+                return DateUtil.parseDateTimeType(timestamp);
             } catch (DateTimeParseException eYear) {
                 throw new Exception("Error on Observation: Can not parse Zeitstempel for Record: "
                         + record.getRecordNumber() + "! " + record.toString());
@@ -75,6 +66,15 @@ public class LaborbefundConverter implements Converter {
         } else {
             throw new Exception("Error on Observation: Zeitstempel (Abnahme) empty for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
+        }
+    }
+
+    private Quantity parseObservationValue() throws Exception {
+        try {
+            return new Quantity().setValue(DecimalUtil.parseDecimal(record.get("Messwert"))).setUnit(record.get("Einheit"));
+        } catch (Exception e){
+        throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
+                + record.getRecordNumber() + "! " + record.toString());
         }
     }
 }

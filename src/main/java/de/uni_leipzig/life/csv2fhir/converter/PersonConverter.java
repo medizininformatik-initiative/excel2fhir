@@ -19,11 +19,11 @@ public class PersonConverter implements Converter {
     public List<Resource> convert() throws Exception {
         Patient patient = new Patient();
         patient.setId(parsePatientId());
-        patient.addName(parsePatientName());
-        patient.addAddress(parsePatientAddres());
-        patient.setBirthDateElement(parsePatientBirthDate());
-        patient.setGender(parsePatientSex());
-        patient.addGeneralPractitioner(parsePatientHealthProvider());
+        patient.addName(parseName());
+        patient.setGender(parseSex());
+        patient.setBirthDateElement(parseBirthDate());
+        patient.addAddress(parseAddres());
+        patient.addGeneralPractitioner(parseHealthProvider());
         return Collections.singletonList(patient);
     }
 
@@ -37,7 +37,7 @@ public class PersonConverter implements Converter {
         }
     }
 
-    private HumanName parsePatientName() {
+    private HumanName parseName() {
         String forename = record.get("Vorname");
         String surname = record.get("Nachname");
 
@@ -55,46 +55,7 @@ public class PersonConverter implements Converter {
         }
     }
 
-    private Address parsePatientAddres() {
-        String address = record.get("Anschrift");
-        if (address != null) {
-            String[] addressSplitByComma = address.split(",");
-            if (addressSplitByComma.length == 2) {
-                String[] addressPlzAndCity = addressSplitByComma[1].split(" ");
-                String plz = addressPlzAndCity[1];
-                StringBuilder city = new StringBuilder();
-                for (int i = 2; i < addressPlzAndCity.length; i++) {
-                    city.append(addressPlzAndCity[i]);
-                }
-                return new Address().setCity(city.toString()).setPostalCode(plz).setText(address);
-            } else {
-                System.out.println("On Patient: Can not parse Address for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
-                return null;
-            }
-        } else {
-            System.out.println("On Patient: Anschrift empty for Record: "
-                    + record.getRecordNumber() + "!\n" + record.toString());
-            return null;
-        }
-    }
-
-    private DateType parsePatientBirthDate() throws Exception {
-        String birthday = record.get("Geburtsdatum");
-        if (birthday != null) {
-            try {
-                return DateUtil.tryParseToDateType(birthday);
-            } catch (Exception e) {
-                throw new Exception("Error on Patient: Can not parse birthday for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
-            }
-        } else {
-            throw new Exception("Error on Patient: Geburtsdatum empty for Record: "
-                    + record.getRecordNumber() + "!\n" + record.toString());
-        }
-    }
-
-    private Enumerations.AdministrativeGender parsePatientSex() throws Exception {
+    private Enumerations.AdministrativeGender parseSex() throws Exception {
         String sex = record.get("Geschlecht");
         if (sex != null) {
             if (sex.length() != 0) {
@@ -121,7 +82,46 @@ public class PersonConverter implements Converter {
         }
     }
 
-    private Reference parsePatientHealthProvider() throws Exception {
+    private DateType parseBirthDate() throws Exception {
+        String birthday = record.get("Geburtsdatum");
+        if (birthday != null) {
+            try {
+                return DateUtil.parseDateType(birthday);
+            } catch (Exception e) {
+                throw new Exception("Error on Patient: Can not parse birthday for Record: "
+                        + record.getRecordNumber() + "!\n" + record.toString());
+            }
+        } else {
+            throw new Exception("Error on Patient: Geburtsdatum empty for Record: "
+                    + record.getRecordNumber() + "!\n" + record.toString());
+        }
+    }
+
+    private Address parseAddres() {
+        String address = record.get("Anschrift");
+        if (address != null) {
+            String[] addressSplitByComma = address.split(",");
+            if (addressSplitByComma.length == 2) {
+                String[] addressPlzAndCity = addressSplitByComma[1].split(" ");
+                String plz = addressPlzAndCity[1];
+                StringBuilder city = new StringBuilder();
+                for (int i = 2; i < addressPlzAndCity.length; i++) {
+                    city.append(addressPlzAndCity[i]);
+                }
+                return new Address().setCity(city.toString()).setPostalCode(plz).setText(address);
+            } else {
+                System.out.println("On Patient: Can not parse Address for Record: "
+                        + record.getRecordNumber() + "!\n" + record.toString());
+                return null;
+            }
+        } else {
+            System.out.println("On Patient: Anschrift empty for Record: "
+                    + record.getRecordNumber() + "!\n" + record.toString());
+            return null;
+        }
+    }
+
+    private Reference parseHealthProvider() throws Exception {
         String practitioner = record.get("Krankenkasse");
         if (practitioner != null) {
             if (practitioner.length() != 0) {

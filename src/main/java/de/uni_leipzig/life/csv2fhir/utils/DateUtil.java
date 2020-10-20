@@ -10,15 +10,15 @@ import java.util.Date;
 
 public class DateUtil {
 
-    public static DateType tryParseToDateType(String date) throws Exception {
+    public static DateType parseDateType(String date) throws Exception {
         return new DateType(
-                Date.from(tryParseToLocalDate(date)
+                Date.from(parseLocalDate(date)
                         .atStartOfDay(ZoneId.systemDefault())
                         .toInstant()),
                 TemporalPrecisionEnum.DAY);
     }
 
-    private static LocalDate tryParseToLocalDate(String dateTime) throws Exception {
+    private static LocalDate parseLocalDate(String dateTime) throws Exception {
         if (!dateTime.isBlank()) {
             return tryDayFormat1(dateTime);
         } else {
@@ -77,17 +77,17 @@ public class DateUtil {
         }
     }
 
-    public static DateTimeType tryParseToDateTimeType(String date) throws Exception {
+    public static DateTimeType parseDateTimeType(String date) throws Exception {
         return new DateTimeType(
-                Date.from(tryParseToLocalDateTime(date)
+                Date.from(parseLocalDateTime(date)
                         .atZone(ZoneId.systemDefault())
                         .toInstant()),
                 TemporalPrecisionEnum.SECOND);
     }
 
-    private static LocalDateTime tryParseToLocalDateTime(String date) throws Exception {
+    private static LocalDateTime parseLocalDateTime(String date) throws Exception {
         try {
-            LocalDate localDate = tryParseToLocalDate(date);
+            LocalDate localDate = parseLocalDate(date);
             return localDate.atStartOfDay();
         } catch (Exception e) {
             return tryTimeFormat1(date);
