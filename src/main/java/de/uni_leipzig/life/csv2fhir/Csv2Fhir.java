@@ -27,13 +27,15 @@ import java.util.stream.Collectors;
 
 public class Csv2Fhir {
 
-    private final File dir;
+    private final File inputDirectory;
+    private final File outputFile;
     private final Map<String, ConverterFactory> converterFactorys;
     private final FhirContext ctx;
     private final CSVFormat csvFormat;
 
-    public Csv2Fhir(File directory) {
-        this.dir = directory;
+    public Csv2Fhir(File inputDir, File outputFile) {
+        this.inputDirectory = inputDir;
+        this.outputFile = outputFile;
         this.converterFactorys = new HashMap<>() {{
             put("Person.csv", new PersonConverterFactory());
             put("Versorgungsfall.csv", new VersorgungsfallConverterFactory());
@@ -55,14 +57,14 @@ public class Csv2Fhir {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
 
-        String[] files = dir.list();
+        String[] files = inputDirectory.list();
         if (files != null) {
             for (String fileName : files) {
                 ConverterFactory factory = converterFactorys.get(fileName);
                 if (factory == null) {
                     continue;
                 }
-                File file = new File(dir.getPath(), fileName);
+                File file = new File(inputDirectory.getPath(), fileName);
                 if (!file.exists() || file.isDirectory()) {
                     continue;
                 }
@@ -91,8 +93,7 @@ public class Csv2Fhir {
                 }
             }
         }
-        File out = new File(dir.getPath(), "out.json");
-        ctx.newJsonParser().encodeResourceToWriter(bundle, new FileWriter(out));
+        ctx.newJsonParser().encodeResourceToWriter(bundle, new FileWriter(outputFile));
     }
 
     private boolean isColumnMissing(Map<String, Integer> map, String[] neededColls) {
