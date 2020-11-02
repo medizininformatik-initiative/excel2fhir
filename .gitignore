@@ -4,3 +4,6 @@
 /*.json
 /resources/out.json
 /resources/
+/bin/
+/.classpath
+/.project
