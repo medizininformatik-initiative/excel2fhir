@@ -43,7 +43,7 @@ public class Csv2Fhir {
             put("Laborbefund.csv", new LaborbefundConverterFactory());
             put("Diagnose.csv", new DiagnoseConverterFactory());
             put("Prozedur.csv", new ProzedurConverterFactory());
-            put("Medikation (2).csv", new MedikationConverterFactory());
+//            put("Medikation (2).csv", new MedikationConverterFactory());
             put("Medikation.csv", new MedikationConverterFactory());
             put("Klinische Dokumentation.csv", new KlinischeDokumentationConverterFactory());
         }};
