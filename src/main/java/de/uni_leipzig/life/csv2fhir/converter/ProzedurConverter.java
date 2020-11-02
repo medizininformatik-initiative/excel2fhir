@@ -47,7 +47,7 @@ public class ProzedurConverter implements Converter {
     private CodeableConcept convertProcedureCode() throws Exception {
         return new CodeableConcept()
                 .addCoding(getCode())
-                .setText(record.get("Prozesdurentext"));
+                .setText(record.get("Prozedurentext"));
     }
 
     private Coding getCode() throws Exception {
