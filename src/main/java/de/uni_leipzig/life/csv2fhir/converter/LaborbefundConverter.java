@@ -16,6 +16,9 @@ import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
 
+// KDS Profile ObservationLab
+// https://simplifier.net/guide/LaborbefundinderMedizininformatik-Initiative/Observation
+
 public class LaborbefundConverter implements Converter {
 
     private final CSVRecord record;
@@ -77,7 +80,8 @@ public class LaborbefundConverter implements Converter {
 
     private Quantity parseObservationValue() throws Exception {
         try {
-            return new Quantity().setValue(DecimalUtil.parseDecimal(record.get("Messwert"))).setUnit(record.get("Einheit"));
+            return new Quantity().setValue(DecimalUtil.parseDecimal(record.get("Messwert")))
+            		.setSystem("http://unitsofmeasure.org").setCode("UCUM").setUnit(record.get("Einheit"));
         } catch (Exception e) {
             throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
