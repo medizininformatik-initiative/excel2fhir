@@ -1,13 +1,21 @@
-Patient-ID,Versorgungsfallgrund (Aufnahmediagnose),Startdatum,Enddatum,Versorgungsfallklasse,,,
-1UKE,,4/1/2020,,stationaer,,,"""Versorgungsfall"" enthält Informationen aus dem Bereich ""Versorgungsfall"" des Art-Decor;"
-2UKE,,3/1/2020,,stationaer,,,Versorgungsfallgrund ist bei  Aufnahmediagnose vorgesehen
-3UKE,,2/26/2020,,stationaer,,,https://art-decor.org/art-decor/decor-datasets--mide-?id=2.16.840.1.113883.3.1937.777.24.1.1&effectiveDate=2018-06-05T12%3A44%3A12&conceptId=2.16.840.1.113883.3.1937.777.24.2.1326&conceptEffectiveDate=2020-01-21T14%3A17%3A02&language=de-DE
-4UKE,,5/1/2020,,stationaer,,,
-5UKE,,1/30/2020,,stationaer,,,
-6UKE,,2/21/2020,,stationaer,,,
-uksh001,C76.0,11/24/2017,11/30/2017,stationaer,,,
-uksh002,C61,11/14/2017,11/25/2017,stationaer,,,
-uksh200,I21.1,1/1/2020,5/1/2020,stationaer,,,
-uksh201,K35.30,1/1/2020,1/15/2020,stationaer,,,
-UKB001,K85.11,7/30/2020,8/14/2020,vollstationaer,,,
-UKB002,N30.9,11/25/2019,,,,,
+Patient-ID,Versorgungsfallgrund (Aufnahmediagnose),Startdatum,Enddatum,Versorgungsfallklasse
+1UKE,,"01.04.2020, 00:00","08.04.2020, 00:00",stationaer
+2UKE,,"01.03.2020, 00:00","12.03.2020, 00:00",stationaer
+3UKE,,"26.02.2020, 00:00","02.03.2020, 00:00",stationaer
+4UKE,,"01.05.2020, 00:00","07.05.2020, 00:00",stationaer
+5UKE,,"30.01.2020, 00:00","03.03.2020, 00:00",stationaer
+6UKE,,"21.02.2020, 00:00","27.02.2020, 00:00",stationaer
+7UKE,,"05.06.2020, 00:00","14.06.2020, 00:00",stationaer
+8UKE,,"31.05.2020, 00:00","02.06.2020, 00:00",stationaer
+9UKE,,"05.02.2020, 00:00","11.02.2020, 00:00",stationaer
+10UKE,,"04.09.2020, 00:00","09.09.2020, 00:00",stationaer
+11UKE,,"15.09.2020, 00:00","05.10.2020, 00:00",stationaer
+12UKE,,"14.08.2020, 00:00","20.08.2020, 00:00",stationaer
+13UKE,,"13.06.2020, 00:00","18.06.2020, 00:00",stationaer
+14UKE,,"10.03.2020, 00:00","17.03.2020, 00:00",stationaer
+15UKE,,"31.07.2020, 00:00","05.08.2020, 00:00",stationaer
+16UKE,,"01.10.2020, 00:00","07.10.2020, 00:00",stationaer
+17UKE,,"21.01.2020, 00:00","29.01.2020, 00:00",stationaer
+18UKE,,"04.02.2020, 00:00","22.02.2020, 00:00",stationaer
+19UKE,,"05.04.2020, 00:00","08.04.2020, 00:00",stationaer
+20UKE,,"19.05.2020, 00:00","27.05.2020, 00:00",stationaer

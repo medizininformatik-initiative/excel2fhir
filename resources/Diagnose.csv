@@ -1,38 +1,37 @@
-Patient-ID,Bezeichner,ICD,Dokumentationsdatum,Typ,,,
-1uke,,E66.01,,Aufnahmediagnose,,,"Diagnosen enthält Informationen aus dem Bereich ""Diagnose"" des Art-Decor; erstmal  fokussiert auf ICD"
-1uke,,I10.90,,,,,"Bezeichner ist ""Freitextbeschreibung"" der Porzedur; gerne natürlich zusammen mit OPS"
-1uke,,I34.0,,,,,ICD ist der vollständige ICD-10-GM Diagnosekode
-1uke,,,,,,,"Dokumentationsdatum ist der Zeitpunkt der Dokumentation; erstmal setzen wir das mit ""Feststellungsdatum"" gleich"
-1uke,Zwei-Gefäßerkrankung,I25.12,,,,,"Zu Kategorie (Aufnahme,m Entklassung, Haupt, Nebendiagnose ) finde ich im Art Decor nichts rechtes?"
-1uke,"Chronische Nierenkrankheit, Stadium 2",N18.2,,,,,
-2uke,Linksherzinsuffizienz,I50.12,,,,,
-2uke,akute erosive Gastritis mit Blutung,K29.0,,,,,
-2uke,Asthma bronchiale late onset,J45.9,,,,,
-2uke,gemischte Hyperlipidämie,E78.2,,,,,
-2uke,,,,,,,
-3uke,,I10.90,,,,,
-3uke,,I25.2,,,,,
-3uke,,N18.2,,,,,
-3uke,,,,,,,
-3uke,,,,,,,
-3uke,,,,,,,
-4uke,,I10.90,,,,,
-4uke,,E78.2,,,,,
-4uke,,I34.0,,,,,
-,,K57.32,,,,,
-uksh001,CUP Hals,C76.0,11/24/2017,Einweisungsdiagnose,,,
-uksh001,Sepsis,A49.-,11/24/2017,Aufnahmediagnose,,,
-uksh001,Schlafstörung,F41.0,11/25/2017,Nebendiagnose,,,
-uksh002,Prostata-Ca,C61,11/14/2017,Einweisungsdiagnose,,,
-uksh200,Herzinfarkt,I21.1,1/1/2020,Einweisungsdiagnose,,,
-uksh201,Appendizitis,K35.30,1/1/2020,Einweisungsdiagnose,,,
-uksh201,Sturz,W01,1/5/2020,Nebendiagnose,,,
-UKB001,Akute Pankreatitis,K85.11,7/28/2020,Haupdiagnose,,,
-UKB001,sekundäre aterielle Hypertonie,I15.90,7/30/2020,Nebendiagnose,,,
-UKB001,"Aneurysma der Aorta abdominalis, ohne Angabe einer Ruptur",I71.4,7/30/2020,Nebendiagnose,,,
-UKB001,"Alkoholische Leberkrankheit, nicht näher bezeichnet",K70.9,7/30/2020,Nebendiagnose,,,
-UKB001,Einfache Leberzyste,K76.8,8/2/2020,Nebendiagnose,,,
-UKB001,Zyste der Niere,N28.1,8/2/2020,Nebendiagnose,,,
-UKB001,Alkoholabusus,F10.1,7/30/2020,Nebendiagnose,,,
-UKB001,Allergie gegenüber Penicilline,Z88.0,7/30/2020,Nebendiagnose,,,
-UKB001,Allergie gegenüber Sulfonamide,Z88.2,7/30/2020,Nebendiagnose,,,
+Patient-ID,Bezeichner,ICD,Dokumentationsdatum,Typ
+1UKE,,E66.01,,Aufnahmediagnose
+1UKE,,I10.90,,Aufnahmediagnose
+1UKE,,I34.0,,Aufnahmediagnose
+1UKE,,,,
+1UKE,Zwei-Gef��erkrankung,I25.12,,Aufnahmediagnose
+1UKE,"Chronische Nierenkrankheit, Stadium 2",N18.2,,Aufnahmediagnose
+2UKE,Linksherzinsuffizienz,I50.12,,Aufnahmediagnose
+2UKE,akute erosive Gastritis mit Blutung,K29.0,,Aufnahmediagnose
+2UKE,Asthma bronchiale late onset,J45.9,,Aufnahmediagnose
+2UKE,gemischte Hyperlipid�mie,E78.2,,Aufnahmediagnose
+2UKE,,,,
+3UKE,,I10.90,,Aufnahmediagnose
+3UKE,,I25.2,,Aufnahmediagnose
+3UKE,,N18.2,,Aufnahmediagnose
+3UKE,,,,
+3UKE,,,,
+3UKE,,,,
+4UKE,,I10.90,,
+4UKe,,E78.2,,
+4UKE,,I34.0,,
+5UKE,"Chronische Nierenkrankheit, Stadium 2",N18.2,"30.01.2020, 00:00",Aufnahmediagnose
+6UKE,Linksherzinsuffizienz,I50.12,"21.02.2020, 00:00",Aufnahmediagnose
+7UKE,akute erosive Gastritis mit Blutung,K29.0,"05.06.2020, 00:00",Aufnahmediagnose
+8UKE,Asthma bronchiale late onset,J45.9,"31.05.2020, 00:00",Aufnahmediagnose
+9UKE,gemischte Hyperlipid�mie,E78.2,"05.02.2020, 00:00",Aufnahmediagnose
+10UKE,Diabetes mellitus TypII,E11.60,"04.09.2020, 00:00",Aufnahmediagnose
+11UKE,COPD,J44.99,"15.09.2020, 00:00",Aufnahmediagnose
+12UKE,Hypertonie,I10.90,"14.08.2020, 00:00",Aufnahmediagnose
+13UKE,Myokardinfarkt in Vergangenheit,I25.22,"13.06.2020, 00:00",Aufnahmediagnose
+14UKE,Vorhofflimmern,I48.9,"10.03.2020, 00:00",Aufnahmediagnose
+15UKE,Herzinsuffizienz,I50.9,"31.07.2020, 00:00",Aufnahmediagnose
+16UKE,Hypertonie,I10.90,"01.10.2020, 00:00",Aufnahmediagnose
+17UKE,Depression (leicht),F33.0,"21.01.2020, 00:00",Aufnahmediagnose
+18UKE,COPD Exazerbation,J44.19,"04.02.2020, 00:00",Aufnahmediagnose
+19UKE,Diabetes mellitus TypII,E11.91,"05.04.2020, 00:00",Aufnahmediagnose
+20UKE,Hypertonie,I10.90,"19.05.2020, 00:00",Aufnahmediagnose

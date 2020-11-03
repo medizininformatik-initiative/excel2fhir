@@ -1,13 +1,21 @@
-Patient-ID,Vorname,Nachname,Anschrift,Geburtsdatum,Geschlecht,Krankenkasse,,,,
-1UKE,a,d,"Rader Insel 321, 24794 Rader Insel",1963,männlich,Barmer,,,"Patient enthält Informationen aus dem Bereich ""Person"" des Art-Decor",
-2UKE,b,e,"Rader Insel 321, 24794 Rader Insel",1947,männlich,AOK,,,"Patient-ID ist hier erstmal nur ein durchgehendes Pseudonym im Testdatensatz; nicht der original ""Patienten-Identifikator"" der Klinik",
-3UKE,c,f,"Rader Insel 321, 24794 Rader Insel",1941,weiblich,AOK,,,Vorname ist optional, hier nur der erste Vorname
-4UKE,d,g,"Rader Insel 321, 24794 Rader Insel",1956,weiblich,AOK,,,Nachname ist optional,
-5UKE,e,h,"Rader Insel 321, 24794 Rader Insel",1972,weiblich,TKK,,,"Anschrift ist ""Strassenanschrift"" als Teil der ""Adresse"" im Art-Decor; hier nur optional; enthält u.a. PLZ, Wohnort und Strasse mit Hausnummer",
-6UKE,f,i,"Rader Insel 321, 24794 Rader Insel",1952,männlich,TKK,,,"Geburtsdatum kann entweder komplett DD.MM.YYYYY oder nur (eigentlich nicht Standard) als YYYY angegeben werden (obgleich das eher ""Klinische Dokumentation/Basisdaten/Alter"" zugehörig wäre)",
-uksh001,Agata,Woźniak,"Rader Insel 321, 24794 Rader Insel",1963,weiblich,Barmer,,,"Geschlecht ist ""Administratives Geschlecht""; erstmal nur m/w/d",
-uksh002,Götz,Van der Bergen,"Inselweg 2, 24118 Kiel",1962,männlich,AOK,,,"Krankenkasse ist eigentlich ""Institutionskennzeichen der Krankenkasse""; erstmal nur Freitext",
-uksh200,Karl-Theodor Maria Nikolaus Johann Jacob Philipp Franz Joseph Sylvester,Buhl-Freiherr von und zu Guttenberg,"Hauptstr. 1, 80331  München",1944,männlich,AOK,,,,
-uksh201,Lille,Müller,"Meierei 1, 24113 Kiel",1920,weiblich,AOK,,,,
-UKB001,Karl-Heinz,Hennet,"Musterstraße 1, 53121 Bonn",1950,männlich,AOK,,,,
-UKB002,Richart,Bauer,"Musterstraße 2, 53121 Bonn",1963,männlich,AOK,,,,
+Patient-ID,Vorname,Nachname,Anschrift,Geburtsdatum,Geschlecht,Krankenkasse
+1UKE,a,d,,1963,m�nnlich,Barmer
+2UKE,b,e,,1947,m�nnlich,AOK
+3UKE,c,f,,1941,weiblich,AOK
+4UKE,d,g,,1956,weiblich,AOK
+5UKE,e,h,,1972,weiblich,TKK
+6UKE,f,i,,1952,m�nnlich,TKK
+7UKE,d,s,,1961,m�nnlich,Barmer
+8UKE,g,o,,1983,weiblich,AOK
+9UKE,j,p,,1954,m�nnlich,AOK
+10UKE,s,w,,1992,weiblich,AOK
+11UKE,f,h,,1954,weiblich,TKK
+12UKE,s,b,,1949,m�nnlich,TKK
+13UKE,i,l,,1943,m�nnlich,Barmer
+14UKE,d,i,,1977,weiblich,AOK
+15UKE,k,k,,1943,m�nnlich,AOK
+16UKE,y,q,,1981,weiblich,AOK
+17UKE,e,w,,1967,weiblich,TKK
+18UKE,l,f,,1960,m�nnlich,TKK
+19UKE,d,p,,1973,weiblich,Barmer
+20UKE,k,h,,1964,weiblich,Barmer

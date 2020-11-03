@@ -1,15 +1,23 @@
-Patient-ID,Startdatum,Enddatum,Fachabteilung,,,
-1UKE,4/1/2020,4/8/2020,Innere Medizin,,,"Fall enthält Informationen aus dem Bereich ""Fall"" des Art-Decor; erstmal  ist es hier eher dem ""Abteilungsfall"" zuzuordnen und damit wohl eher eine Art Bewegung"
-2UKE,3/1/2020,3/2/2020,Innere Medizin,,,Startdatum ist Datum+Zeit ist der Beginn des med. Abteilungsfalls
-2UKE,3/2/2020,3/4/2020,Intensivmedizin,,,
-2UKE,3/4/2020,3/12/2020,Innere Medizin,,,
-3UKE,2/26/2020,,Innere Medizin,,,Enddatum ist Datum+Zeit des Ende des med. Abteilungsfalls
-4UKE,5/1/2020,,Innere Medizin,,,Fachabteilung ist der Fachabteilungsschlüssell gem
-5UKE,1/30/2020,,Innere Medizin,,,https://art-decor.org/art-decor/decor-valuesets--mide-?id=2.16.840.1.113883.3.1937.777.24.11.21&effectiveDate=dynamic&language=de-DE
-6UKE,2/21/2020,,Innere Medizin,,,
-uksh001,11/24/2017,11/30/2017,Strahlenheilkunde,,,
-uksh002,11/14/2017,11/25/2017,Strahlenheilkunde,,,
-uksh200,1/1/2020,1/5/2020,Kardiologie,,,
-uksh201,1/1/2020,1/10/2020,Allgemeine Chirurgie,,,
-uksh201,1/11/2020,1/15/2020,Unfallchirurgie,,,
-UKB001,8/6/2020,8/14/2020,Gastroenterologie,,,
+Patient-ID,Startdatum,Enddatum,Fachabteilung
+1UKE,"01.04.2020, 00:00","08.04.2020, 00:00",Innere Medizin
+2UKE,"01.03.2020, 00:00","02.03.2020, 00:00",Innere Medizin
+2UKE,"02.03.2020, 00:00","04.03.2020, 00:00",Intensivmedizin
+2UKE,"04.03.2020, 00:00","12.03.2020, 00:00",Innere Medizin
+3UKE,"26.02.2020, 00:00","02.03.2020, 00:00",Innere Medizin
+4UKE,"01.05.2020, 00:00","07.05.2020, 00:00",Innere Medizin
+5UKE,"30.01.2020, 00:00","03.03.2020, 00:00",Innere Medizin
+6UKE,"21.02.2020, 00:00",,Innere Medizin
+7UKE,"05.06.2020, 00:00","14.06.2020, 00:00",Pneumologie
+8UKE,"31.05.2020, 00:00","02.06.2020, 00:00",Innere Medizin
+9UKE,"05.02.2020, 00:00","11.02.2020, 00:00",Gastroenterologie
+10UKE,"04.09.2020, 00:00","09.09.2020, 00:00",Pneumologie
+11UKE,"15.09.2020, 00:00","05.10.2020, 00:00",Pneumologie
+12UKE,"14.08.2020, 00:00","20.08.2020, 00:00",Innere Medizin
+13UKE,"13.06.2020, 00:00","18.06.2020, 00:00",Kardiologie
+14UKE,"10.03.2020, 00:00","17.03.2020, 00:00",Neurologie
+15UKE,"31.07.2020, 00:00","05.08.2020, 00:00",Innere Medizin
+16UKE,"01.10.2020, 00:00","07.10.2020, 00:00",Pneumologie
+17UKE,"21.01.2020, 00:00","29.01.2020, 00:00",Pneumologie
+18UKE,"04.02.2020, 00:00","22.02.2020, 00:00",Innere Medizin
+19UKE,"05.04.2020, 00:00","08.04.2020, 00:00",Gastroenterologie
+20UKE,"19.05.2020, 00:00","27.05.2020, 00:00",Pneumologie
