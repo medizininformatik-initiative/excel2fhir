@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 import org.apache.commons.csv.CSVRecord;
@@ -55,7 +56,7 @@ public class MedikationConverter implements Converter {
         concept.addCoding(getATCCoding());
         concept.addCoding(getPZNCoding());
         //concept.addCoding(getASKCoding());
-        concept.setText(record.get("Wirksubstanz aus Pr√§parat/Handelsname"));
+        concept.setText(record.get("Wirksubstanz aus Pr‰parat/Handelsname"));
         return concept;
     }
 
@@ -107,9 +108,12 @@ public class MedikationConverter implements Converter {
 
     private Period convertPeriod() throws Exception {
         try {
-            return new Period()
-                    .setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")))
-                    .setEndElement(DateUtil.parseDateTimeType(record.get("Therapieendedatum")));
+        	Period  p = new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")));
+        	String end = record.get("Therapieendedatum");
+        	if (end != null && !end.isBlank()) {
+        		p.setEndElement(DateUtil.parseDateTimeType(end));
+        	}
+        	return p;
         } catch (Exception e) {
             throw new Exception("Error on Medication: Can not parse Therapiestartdatum or Therapieendedatum for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
@@ -180,18 +184,27 @@ public class MedikationConverter implements Converter {
     }
 
     private Dosage convertDosage() throws Exception {
-        String doseUnit = getDoseUnit();
+        String unit = getDoseUnit();
+		String ucum,synonym;
+		if (Ucum.isUcum(unit)) {
+			ucum = unit;
+			synonym = Ucum.ucum2human(unit); 
+		} else  {
+			ucum = Ucum.human2ucum(unit);
+			synonym = unit;
+		}
+
         return new Dosage()
                 .addDoseAndRate(new Dosage.DosageDoseAndRateComponent()
                         .setDose(new SimpleQuantity()
                                 .setValue(getDose())
-                                .setUnit(doseUnit)
-                                .setSystem("\"http://unitsofmeasure.org\"")
-                                .setCode(doseUnit))
+                                .setUnit(synonym)
+                                .setSystem("http://unitsofmeasure.org")
+                                .setCode(ucum))
                         .setRate(new Quantity()
                                 .setValue(getDosesPerDay())
                                 .setUnit("day")
-                                .setSystem("\"http://unitsofmeasure.org\"")
+                                .setSystem("http://unitsofmeasure.org")
                                 .setCode("d")));
     }
 

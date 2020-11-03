@@ -1,6 +1,7 @@
 package de.uni_leipzig.imise.csv2fhir;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
@@ -30,15 +31,14 @@ import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 
 public class SplitExcel {
 
-	//	"Person","Versorgungsfall","Abteilungsfall","Diagnose","Prozedur"
 	private static Set<String> sheetNames = new HashSet<String>((Arrays.asList(
-//			"Person","Versorgungsfall","Abteilungsfall","Laborbefund","Diagnose","Prozedur","Medikation","Klinische Dokumentation"
-			"Person","Laborbefund","Klinische Dokumentation"
+			"Person","Versorgungsfall","Abteilungsfall","Laborbefund","Diagnose","Prozedur","Medikation","Klinische Dokumentation"
+//			"Person","Klinische Dokumentation"
 			)));
 	private static String delim=",";
 	private static String quote="\"";
-	//	private static SimpleDateFormat dateFormat =new SimpleDateFormat("dd.MM.yyyy");
-	private static SimpleDateFormat dateFormat =new SimpleDateFormat("MM/dd/yyyy");
+		private static SimpleDateFormat dateFormat =new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+//	private static SimpleDateFormat dateFormat =new SimpleDateFormat("MM/dd/yyyy");
 	class Logger {
 		void info(String s) { System.out.println(s); } 
 		void error(String s) { System.err.println(s); } 
@@ -67,7 +67,9 @@ public class SplitExcel {
 				// Das ist der Trick für UTF-8 Ausgabe (z.B. wegen "männlich")
 				String csvFile = FilenameUtils.concat(basename, sheetName+".csv"); 
 				OutputStream os = new FileOutputStream(new File(csvFile));
-				try (PrintWriter csv = new PrintWriter(new OutputStreamWriter(os,"UTF-8"))) {
+//				String charSet = "UTF-8";
+				String charSet = "ISO-8859-1";
+			try (PrintWriter csv = new PrintWriter(new OutputStreamWriter(os,charSet))) {
 					log.info("creating " + csvFile);
 					// Annahme: Header ist in der ersten Zeile
 					// Annahme: Es gibt nur soviele Spalten wie Header
@@ -99,6 +101,7 @@ public class SplitExcel {
 								cellValue = "";
 							} else if (cell.getCellType() == CellType.NUMERIC) {
 								if (DateUtil.isCellDateFormatted(cell)) {
+									// Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein String 
 									cellValue = dateFormat.format(cell.getDateCellValue());
 								} else {
 									cellValue = "" + cell.getNumericCellValue();
@@ -106,7 +109,7 @@ public class SplitExcel {
 									cellValue = cellValue.replaceAll("\\.0$", "");
 								}
 							} else if (cell.getCellType() == CellType.STRING) { 
-								cellValue = cell.getStringCellValue();
+								cellValue = cell.getStringCellValue();								
 							} else {
 								log.error("unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
 								cellValue = "";
@@ -141,6 +144,7 @@ public class SplitExcel {
 						FilenameUtils.removeExtension(excelTestdata.getName())+".json");
 				Csv2Fhir converter = new Csv2Fhir(csvDir,resultJson);
 				converter.convertFiles();	
+				System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -43,8 +43,6 @@ public class Csv2Fhir {
             put("Laborbefund.csv", new LaborbefundConverterFactory());
             put("Diagnose.csv", new DiagnoseConverterFactory());
             put("Prozedur.csv", new ProzedurConverterFactory());
-// 	Medikation(2) heisst nun Medikation; Medikation(2) ist obsolet
-//            put("Medikation (2).csv", new MedikationConverterFactory());
             put("Medikation.csv", new MedikationConverterFactory());
             put("Klinische Dokumentation.csv", new KlinischeDokumentationConverterFactory());
         }};
@@ -88,7 +86,8 @@ public class Csv2Fhir {
                                 }
                             }
                         } catch (Exception e) {
-                            System.out.println(e.getMessage());
+                            if (e.getMessage()==null) e.printStackTrace();
+                            else System.out.println(e.getMessage());
                         }
                     }
                 }

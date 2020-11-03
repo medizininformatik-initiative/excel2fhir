@@ -12,7 +12,7 @@ public class MedikationConverterFactory implements ConverterFactory {
                     "ATC Code", "PZN Code", "FHIR_UserSelected",
                     "Anzahl Dosen pro Tag", "Therapiestartdatum",
                     "Therapieendedatum", "Einzeldosis", "Einheit",
-                    "Wirksubstanz aus Pr√§parat/Handelsname"};
+                    "Wirksubstanz aus Pr‰parat/Handelsname"};
     //"Medikationsplanart", "Darreichungsform", "Tagesdosis", "KombinationsAMI", "ASK" not used!
 
     @Override

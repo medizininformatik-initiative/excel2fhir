@@ -36,7 +36,7 @@ public class VersorgungsfallConverter implements Converter {
     }
 
     private Coding convertClass() throws Exception {
-        String code = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
+        String code = record.get("Versorgungsfallklasse");
         if (code != null) {
             return new Coding()
                     .setSystem("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse")

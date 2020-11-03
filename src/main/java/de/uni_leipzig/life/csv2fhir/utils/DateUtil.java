@@ -101,7 +101,7 @@ public class DateUtil {
 
     private static LocalDateTime tryTimeFormat1(String date) throws Exception {
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy, H:mm");
             return LocalDateTime.parse(date, formatter);
         } catch (DateTimeParseException e) {
             throw new Exception();

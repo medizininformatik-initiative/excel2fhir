@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
@@ -13,6 +14,7 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import java.math.BigDecimal;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +64,7 @@ public class KlinischeDokumentationConverter implements Converter {
         if (timestamp != null) {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
-            } catch (DateTimeParseException eYear) {
+            } catch (Exception eYear) {
                 throw new Exception("Error on Observation: Can not parse Zeitstempel for Record: "
                         + record.getRecordNumber() + "! " + record.toString());
             }
@@ -71,13 +73,31 @@ public class KlinischeDokumentationConverter implements Converter {
                     + record.getRecordNumber() + "! " + record.toString());
         }
     }
-    private Quantity parseObservationValue() throws Exception {
-        try {
-            return new Quantity().setValue(DecimalUtil.parseDecimal(record.get("Wert")))
-            		.setSystem("http://unitsofmeasure.org").setCode("UCUM").setUnit(record.get("Einheit"));
-        } catch (Exception e) {
-            throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
-    }
+	private Quantity parseObservationValue() throws Exception {
+		BigDecimal messwert;
+		try {
+			messwert = DecimalUtil.parseDecimal(record.get("Wert"));
+		} catch (Exception e) {
+			throw new Exception("Error on Observation: Wert is not a numerical value for Record: "
+					+ record.getRecordNumber() + "! " + record.toString());
+		}
+		String unit = record.get("Einheit");
+		if (unit == null || unit.isEmpty()) {
+			throw new Exception("Error on Observation: Einheit is empty for Record: "
+					+ record.getRecordNumber() + "! " + record.toString());
+		}
+
+		String ucum,synonym;
+		if (Ucum.isUcum(unit)) {
+			ucum = unit;
+			synonym = Ucum.ucum2human(unit); 
+		} else  {
+			ucum = Ucum.human2ucum(unit);
+			synonym = unit;
+		}
+		if (ucum.isEmpty())
+			return new Quantity().setValue(messwert).setUnit(synonym);
+		return new Quantity().setValue(messwert).setSystem("http://unitsofmeasure.org").setCode(ucum).setUnit(synonym);
+	}
+
 }

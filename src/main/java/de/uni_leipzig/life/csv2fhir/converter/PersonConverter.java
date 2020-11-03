@@ -29,7 +29,7 @@ public class PersonConverter implements Converter {
         patient.addName(parseName());
         patient.setGender(parseSex());
         patient.setBirthDateElement(parseBirthDate());
-        patient.addAddress(parseAddres());
+        patient.addAddress(parseAddress());
         patient.addGeneralPractitioner(parseHealthProvider());
         return Collections.singletonList(patient);
     }
@@ -57,7 +57,7 @@ public class PersonConverter implements Converter {
             return humanName;
         } else {
             System.out.println("On Patient: Vorname or Nachname empty for Record: "
-                    + record.getRecordNumber() + "!\n" + record.toString());
+                    + record.getRecordNumber() + "! " + record.toString());
             return null;
         }
     }
@@ -68,6 +68,7 @@ public class PersonConverter implements Converter {
             if (sex.length() != 0) {
                 switch (sex) {
                     case "m":
+                    case "m‰nnlich":
                     case "m√§nnlich":
                         return Enumerations.AdministrativeGender.MALE;
                     case "w":
@@ -77,15 +78,15 @@ public class PersonConverter implements Converter {
                     case "divers":
                         return Enumerations.AdministrativeGender.OTHER;
                     default:
-                        throw new Exception("Error on Patient: Geschlecht not parsable for Record: "
-                                + record.getRecordNumber() + "!\n" + record.toString());
+                        throw new Exception("Error on Patient: Geschlecht <"+ sex+ ">not parsable for Record: "
+                                + record.getRecordNumber() + "! " + record.toString());
                 }
             } else {
                 throw new Exception("Error on Patient: Geschlecht empty for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
+                        + record.getRecordNumber() + "! " + record.toString());
             }
         } else {
-            throw new Exception("Error on Patient: Collumn Geschlecht not found!");
+            throw new Exception("Error on Patient: Geschlecht not found!");
         }
     }
 
@@ -100,11 +101,11 @@ public class PersonConverter implements Converter {
             }
         } else {
             throw new Exception("Error on Patient: Geburtsdatum empty for Record: "
-                    + record.getRecordNumber() + "!\n" + record.toString());
+                    + record.getRecordNumber() + "! " + record.toString());
         }
     }
 
-    private Address parseAddres() {
+    private Address parseAddress() {
         String address = record.get("Anschrift");
         if (address != null) {
             String[] addressSplitByComma = address.split(",");
@@ -118,12 +119,12 @@ public class PersonConverter implements Converter {
                 return new Address().setCity(city.toString()).setPostalCode(plz).setText(address);
             } else {
                 System.out.println("On Patient: Can not parse Address for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
+                        + record.getRecordNumber() + "! " + record.toString());
                 return null;
             }
         } else {
             System.out.println("On Patient: Anschrift empty for Record: "
-                    + record.getRecordNumber() + "!\n" + record.toString());
+                    + record.getRecordNumber() + "! " + record.toString());
             return null;
         }
     }
