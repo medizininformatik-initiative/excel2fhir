@@ -108,12 +108,12 @@ public class MedikationConverter implements Converter {
 
     private Period convertPeriod() throws Exception {
         try {
-        	Period  p = new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")));
-        	String end = record.get("Therapieendedatum");
-        	if (end != null && !end.isBlank()) {
-        		p.setEndElement(DateUtil.parseDateTimeType(end));
-        	}
-        	return p;
+            Period  p = new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")));
+            String end = record.get("Therapieendedatum");
+            if (end != null && !end.isBlank()) {
+                p.setEndElement(DateUtil.parseDateTimeType(end));
+            }
+            return p;
         } catch (Exception e) {
             throw new Exception("Error on Medication: Can not parse Therapiestartdatum or Therapieendedatum for Record: "
                     + record.getRecordNumber() + "! " + record.toString());
@@ -185,14 +185,14 @@ public class MedikationConverter implements Converter {
 
     private Dosage convertDosage() throws Exception {
         String unit = getDoseUnit();
-		String ucum,synonym;
-		if (Ucum.isUcum(unit)) {
-			ucum = unit;
-			synonym = Ucum.ucum2human(unit); 
-		} else  {
-			ucum = Ucum.human2ucum(unit);
-			synonym = unit;
-		}
+        String ucum,synonym;
+        if (Ucum.isUcum(unit)) {
+            ucum = unit;
+            synonym = Ucum.ucum2human(unit); 
+        } else  {
+            ucum = Ucum.human2ucum(unit);
+            synonym = unit;
+        }
 
         return new Dosage()
                 .addDoseAndRate(new Dosage.DosageDoseAndRateComponent()
