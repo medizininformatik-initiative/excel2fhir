@@ -76,7 +76,7 @@ public class MedikationConverter implements Converter {
         String pzn = record.get("PZN Code");
         if (pzn != null) {
             return new Coding()
-                    .setSystem("pzn-code")
+                    .setSystem("http://fhir.de/CodeSystem/ifa/pzn")
                     .setCode(pzn)
                     .setUserSelected("PZN".equals(record.get("FHIR_UserSelected")));
         } else {
@@ -88,7 +88,7 @@ public class MedikationConverter implements Converter {
         String ask = record.get("ASK");
         if (ask != null) {
             return new Coding()
-                    .setSystem("ask-code")
+                    .setSystem("http://fhir.de/CodeSystem/ask")
                     .setCode(ask)
                     .setUserSelected("ASK".equals(record.get("FHIR_UserSelected")));
         } else {
