@@ -68,7 +68,6 @@ public class PersonConverter implements Converter {
             if (sex.length() != 0) {
                 switch (sex) {
                     case "m":
-                    case "m‰nnlich":
                     case "m√§nnlich":
                         return Enumerations.AdministrativeGender.MALE;
                     case "w":
