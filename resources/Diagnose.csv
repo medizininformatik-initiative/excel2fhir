@@ -3,12 +3,12 @@ Patient-ID,Bezeichner,ICD,Dokumentationsdatum,Typ
 1UKE,,I10.90,,Aufnahmediagnose
 1UKE,,I34.0,,Aufnahmediagnose
 1UKE,,,,
-1UKE,Zwei-Gef‰ﬂerkrankung,I25.12,,Aufnahmediagnose
+1UKE,Zwei-Gef√§√üerkrankung,I25.12,,Aufnahmediagnose
 1UKE,"Chronische Nierenkrankheit, Stadium 2",N18.2,,Aufnahmediagnose
 2UKE,Linksherzinsuffizienz,I50.12,,Aufnahmediagnose
 2UKE,akute erosive Gastritis mit Blutung,K29.0,,Aufnahmediagnose
 2UKE,Asthma bronchiale late onset,J45.9,,Aufnahmediagnose
-2UKE,gemischte Hyperlipid‰mie,E78.2,,Aufnahmediagnose
+2UKE,gemischte Hyperlipid√§mie,E78.2,,Aufnahmediagnose
 2UKE,,,,
 3UKE,,I10.90,,Aufnahmediagnose
 3UKE,,I25.2,,Aufnahmediagnose
@@ -23,7 +23,7 @@ Patient-ID,Bezeichner,ICD,Dokumentationsdatum,Typ
 6UKE,Linksherzinsuffizienz,I50.12,"21.02.2020, 00:00",Aufnahmediagnose
 7UKE,akute erosive Gastritis mit Blutung,K29.0,"05.06.2020, 00:00",Aufnahmediagnose
 8UKE,Asthma bronchiale late onset,J45.9,"31.05.2020, 00:00",Aufnahmediagnose
-9UKE,gemischte Hyperlipid‰mie,E78.2,"05.02.2020, 00:00",Aufnahmediagnose
+9UKE,gemischte Hyperlipid√§mie,E78.2,"05.02.2020, 00:00",Aufnahmediagnose
 10UKE,Diabetes mellitus TypII,E11.60,"04.09.2020, 00:00",Aufnahmediagnose
 11UKE,COPD,J44.99,"15.09.2020, 00:00",Aufnahmediagnose
 12UKE,Hypertonie,I10.90,"14.08.2020, 00:00",Aufnahmediagnose
