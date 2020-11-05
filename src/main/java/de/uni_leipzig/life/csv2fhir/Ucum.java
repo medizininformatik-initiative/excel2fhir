@@ -31,15 +31,15 @@ public class Ucum {
         ucumMap.put("kg", "kg");
         ucumMap.put("g", "g");
         ucumMap.put("mg", "mg");
-        ucumMap.put("ug", "µg");
+        ucumMap.put("ug", "Âµg");
         ucumMap.put("ng", "ng");
         ucumMap.put("pg", "pg");
 
         // Mol
         ucumMap.put("U", "U");
-        ucumMap.put("uU", "µU");
+        ucumMap.put("uU", "ÂµU");
         ucumMap.put("mmol", "mmol");
-        ucumMap.put("umol", "µmol");
+        ucumMap.put("umol", "Âµmol");
         ucumMap.put("nmol", "nmol");
         ucumMap.put("mosm", "mosmol"); // millio osmol
 
@@ -49,7 +49,7 @@ public class Ucum {
         ucumMap.put("mm[Hg]", "mmHg");
         ucumMap.put("mbar", "mbar");
         ucumMap.put("Ohm", "\u03a9");
-        ucumMap.put("Cel", "°C");
+        ucumMap.put("Cel", "Â°C");
         ucumMap.put("10**9", "G");	
         ucumMap.put("10*12","T");
         ucumMap.put("deg", "\u00b0");
@@ -60,7 +60,7 @@ public class Ucum {
         ucumMap.put("L", "l");
         ucumMap.put("dL", "dl");
         ucumMap.put("mL", "ml");
-        ucumMap.put("uL", "µl");
+        ucumMap.put("uL", "Âµl");
         ucumMap.put("fL", "fl");
 
 

@@ -62,18 +62,19 @@ public class SplitExcel {
                     log.info("skip sheet \"" + sheetName + "\"");
                     continue;
                 }
-                // Das ist der Trick für UTF-8 Ausgabe (z.B. wegen "männlich")
+                // Das ist der Trick fï¿½r das pot. Setzen des encondigs.(z.B. wegen "mï¿½nnlich")
+                // Wir setzten nun aber nur auf UTF
                 String csvFile = FilenameUtils.concat(basename, sheetName+".csv"); 
                 OutputStream os = new FileOutputStream(new File(csvFile));
-                //				String charSet = "UTF-8";
-                String charSet = "ISO-8859-1";
+                String charSet = "UTF-8";
+//                String charSet = "ISO-8859-1";
                 try (PrintWriter csv = new PrintWriter(new OutputStreamWriter(os,charSet))) {
                     log.info("creating " + csvFile);
                     // Annahme: Header ist in der ersten Zeile
                     // Annahme: Es gibt nur soviele Spalten wie Header
                     int maxCol = 0;
                     Row firstRow = dataSheet.getRow(0);
-                    // Zähle relevante Spalten 
+                    // Zï¿½hle relevante Spalten 
                     for (int col = 0; col < firstRow.getLastCellNum(); col++) {
                         // This looks fine but skips null cells
                         //for (Cell cell : firstRow) {

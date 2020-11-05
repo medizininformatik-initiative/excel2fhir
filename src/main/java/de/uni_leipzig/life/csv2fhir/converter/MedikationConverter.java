@@ -55,8 +55,8 @@ public class MedikationConverter implements Converter {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(getATCCoding());
         concept.addCoding(getPZNCoding());
-        //concept.addCoding(getASKCoding());
-        concept.setText(record.get("Wirksubstanz aus Pr‰parat/Handelsname"));
+        concept.addCoding(getASKCoding());
+        concept.setText(record.get("Wirksubstanz aus Pr√§parat/Handelsname"));
         return concept;
     }
 
