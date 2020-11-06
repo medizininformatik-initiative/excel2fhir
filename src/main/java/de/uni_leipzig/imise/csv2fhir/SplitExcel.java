@@ -35,7 +35,7 @@ public class SplitExcel {
             )));
     private static String delim=",";
     private static String quote="\"";
-    private static SimpleDateFormat dateFormat =new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private static SimpleDateFormat dateFormat =new SimpleDateFormat("dd.MM.yyyy HH:mm");
     //	private static SimpleDateFormat dateFormat =new SimpleDateFormat("MM/dd/yyyy");
     class Logger {
         void info(String s) { System.out.println(s); } 
@@ -44,10 +44,13 @@ public class SplitExcel {
     Logger log = new Logger();
     //	Logger log = LogManager.getLogger(getClass());
 
-    public File splitExcel(File excel) throws IOException {
-        FileInputStream excelFile = new FileInputStream(excel);
+    public void splitExcel(File excel) throws IOException {
         String basename = FilenameUtils.removeExtension(excel.getPath());
         File csvDir = new File(basename);
+        splitExcel(excel,csvDir);
+    }
+    public void splitExcel(File excel,File csvDir) throws IOException {
+        FileInputStream excelFile = new FileInputStream(excel);
         if (!csvDir.exists()) {
             log.info("creating " + csvDir);
             csvDir.mkdirs();
@@ -55,6 +58,7 @@ public class SplitExcel {
             log.info("delete all files in " + csvDir);
             FileUtils.cleanDirectory(csvDir);
         }
+        String csvDirBasename = FilenameUtils.removeExtension(csvDir.getPath());
         try (Workbook workbook = new XSSFWorkbook(excelFile)) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
@@ -64,7 +68,7 @@ public class SplitExcel {
                 }
                 // Das ist der Trick f�r das pot. Setzen des encondigs.(z.B. wegen "m�nnlich")
                 // Wir setzten nun aber nur auf UTF
-                String csvFile = FilenameUtils.concat(basename, sheetName+".csv"); 
+                String csvFile = FilenameUtils.concat(csvDirBasename, sheetName+".csv"); 
                 OutputStream os = new FileOutputStream(new File(csvFile));
                 String charSet = "UTF-8";
 //                String charSet = "ISO-8859-1";
@@ -124,7 +128,6 @@ public class SplitExcel {
             }
         }
         log.info("finished");
-        return csvDir;
     }
     public void convertAllExcelInDir(File excelDir) {
         FilenameFilter filter= new FilenameFilter() {
@@ -133,9 +136,9 @@ public class SplitExcel {
             }
         };
         for (File excelTestdata : excelDir.listFiles(filter)) {
-            File csvDir;
             try {
-                csvDir = splitExcel(excelTestdata);
+                splitExcel(excelTestdata);
+                File csvDir = new File(FilenameUtils.removeExtension(excelTestdata.getPath()));
                 File logFile = new File(excelDir,	FilenameUtils.removeExtension(excelTestdata.getName())+".log");
                 System.out.println(logFile.getAbsolutePath());
                 System.setOut(new PrintStream(logFile));
