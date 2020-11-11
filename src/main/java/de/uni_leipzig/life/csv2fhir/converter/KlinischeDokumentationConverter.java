@@ -1,9 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.Ucum;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
-import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -14,17 +13,14 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
-import java.math.BigDecimal;
-import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.Ucum;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
-public class KlinischeDokumentationConverter implements Converter {
-
-	private final CSVRecord record;
-
+public class KlinischeDokumentationConverter extends Converter {
 	public KlinischeDokumentationConverter(CSVRecord record) {
-		this.record = record;
+		super(record);
 	}
 
 	@Override
@@ -45,8 +41,8 @@ public class KlinischeDokumentationConverter implements Converter {
                     .setCode(code))
                     .setText(record.get("Bezeichner"));
         } else {
-            throw new Exception("Error on Observation: LOINC empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("LOINC empty for Record");
+            return null;
         }
     }
     
@@ -55,8 +51,8 @@ public class KlinischeDokumentationConverter implements Converter {
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
         } else {
-            throw new Exception("Error on Observation: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Patient-ID empty for Record");
+            return null;
         }
     }
     private DateTimeType parseObservationTimestamp() throws Exception {
@@ -65,12 +61,12 @@ public class KlinischeDokumentationConverter implements Converter {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
             } catch (Exception eYear) {
-                throw new Exception("Error on Observation: Can not parse Zeitstempel for Record: "
-                        + record.getRecordNumber() + "! " + record.toString());
+                error("Can not parse Zeitstempel");
+                return null;
             }
         } else {
-            throw new Exception("Error on Observation: Zeitstempel (Abnahme) empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Zeitstempel (Abnahme) empty for Record");
+            return null;
         }
     }
 	private Quantity parseObservationValue() throws Exception {
@@ -78,13 +74,13 @@ public class KlinischeDokumentationConverter implements Converter {
 		try {
 			messwert = DecimalUtil.parseDecimal(record.get("Wert"));
 		} catch (Exception e) {
-			throw new Exception("Error on Observation: Wert is not a numerical value for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("Wert is not a numerical value for Record");
+            return null;
 		}
 		String unit = record.get("Einheit");
 		if (unit == null || unit.isEmpty()) {
-			throw new Exception("Error on Observation: Einheit is empty for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("Einheit is empty for Record");
+			return null;
 		}
 
 		String ucum,synonym;

@@ -1,31 +1,40 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.hl7.fhir.r4.model.HumanName;
+import org.hl7.fhir.r4.model.HumanName.NameUse;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class PersonConverter implements Converter {
+public class PersonConverter extends Converter {
 
-    private final CSVRecord record;
-
+    String PROFILE="https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
+    // https://simplifier.net/MedizininformatikInitiative-ModulPerson/PatientIn
+    
     public PersonConverter(CSVRecord record) {
-        this.record = record;
+        super(record);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
         Patient patient = new Patient();
-        patient.setId(parsePatientId());
+        String pid = parsePatientId();
+        patient.setMeta(new Meta().addProfile(PROFILE));
+        patient.setId(pid);
+        patient.setIdentifier(Arrays.asList(new Identifier().setValue(pid)));
         patient.addName(parseName());
         patient.setGender(parseSex());
         patient.setBirthDateElement(parseBirthDate());
@@ -34,30 +43,19 @@ public class PersonConverter implements Converter {
         return Collections.singletonList(patient);
     }
 
-    private String parsePatientId() throws Exception {
-        String id = record.get("Patient-ID");
-        if (id != null) {
-            return id;
-        } else {
-            throw new Exception("Error on Patient: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
-    }
-
     private HumanName parseName() {
         String forename = record.get("Vorname");
         String surname = record.get("Nachname");
 
 
         if (forename != null && surname != null) {
-            HumanName humanName = new HumanName().setFamily(surname);
+            HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
             for (String name : forename.split(" ")) {
                 humanName.addGiven(name);
             }
             return humanName;
         } else {
-            System.out.println("On Patient: Vorname or Nachname empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            warning("Vorname or Nachname empty for Record");
             return null;
         }
     }
@@ -81,11 +79,12 @@ public class PersonConverter implements Converter {
                                 + record.getRecordNumber() + "! " + record.toString());
                 }
             } else {
-                throw new Exception("Error on Patient: Geschlecht empty for Record: "
-                        + record.getRecordNumber() + "! " + record.toString());
+                error("Geschlecht empty for Record");
+                return null;
             }
         } else {
-            throw new Exception("Error on Patient: Geschlecht not found!");
+            error("Geschlecht not found");
+            return null;
         }
     }
 
@@ -95,12 +94,12 @@ public class PersonConverter implements Converter {
             try {
                 return DateUtil.parseDateType(birthday);
             } catch (Exception e) {
-                throw new Exception("Error on Patient: Can not parse birthday for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
+                error("Can not parse birthday for Record");
+                return null;
             }
         } else {
-            throw new Exception("Error on Patient: Geburtsdatum empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Geburtsdatum empty for Record");
+            return null;
         }
     }
 
@@ -122,8 +121,7 @@ public class PersonConverter implements Converter {
                 return null;
             }
         } else {
-            System.out.println("On Patient: Anschrift empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            warning("On Patient: Anschrift empty for Record");
             return null;
         }
     }
@@ -134,11 +132,12 @@ public class PersonConverter implements Converter {
             if (practitioner.length() != 0) {
                 return new Reference().setDisplay(practitioner);
             } else {
-                throw new Exception("Error on Patient: Krankenkasse empty for Record: "
-                        + record.getRecordNumber() + "!\n" + record.toString());
+                error("Krankenkasse empty for Record");
+                return null;
             }
         } else {
-            throw new Exception("Error on Patient: Collumn Krankenkasse not found!");
+            warning("Column Krankenkasse not found!");
+            return null;
         }
     }
 }

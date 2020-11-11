@@ -1,37 +1,39 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Procedure;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class ProzedurConverter implements Converter {
+public class ProzedurConverter extends Converter {
 
-    private final CSVRecord record;
+    String PROFILE= "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure";
+    // https://simplifier.net/medizininformatikinitiative-modulprozeduren/prozedur  
 
     public ProzedurConverter(CSVRecord record) {
-        this.record = record;
+        super(record);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
         Procedure procedure = new Procedure();
-        procedure.addExtension(new Extension()
-                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
-                .setValue(convertRecordedDate()));
-        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);//TODO
+        procedure.setMeta(new Meta().addProfile(PROFILE));
+//        procedure.addExtension(new Extension()
+//                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
+//                .setValue(convertRecordedDate()));
+        procedure.setPerformed(convertRecordedDate());
+        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(convertSubject());
-        // TODO procedure.setPerformed(null);
         return Collections.singletonList(procedure);
     }
 
@@ -39,8 +41,8 @@ public class ProzedurConverter implements Converter {
         try {
             return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
         } catch (Exception e) {
-            throw new Exception("Error on Procedure: Can not parse Dokumentationsdatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Can not parse Dokumentationsdatum for Record");
+            return null;
         }
     }
 
@@ -54,22 +56,15 @@ public class ProzedurConverter implements Converter {
         String code = record.get("Prozedurencode");
         if (code != null) {
             return new Coding()
-                    .setSystem("http://snomed.info/sct")
+                    .setSystem("http://fhir.de/CodeSystem/dimdi/ops")
+                    .setVersion("2020")     // just to be KDS compatible
                     .setCode(code);
         } else {
-            throw new Exception("Error on Procedure: Prozedurencode empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
+            error("Prozedurencode empty for Record");
+            return null;
         }
     }
 
-    private Reference convertSubject() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Procedure: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
+
 }
 

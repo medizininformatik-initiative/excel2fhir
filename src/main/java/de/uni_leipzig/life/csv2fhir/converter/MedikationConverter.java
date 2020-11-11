@@ -1,56 +1,91 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.Ucum;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
-import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
+import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
+
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Dosage;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.MedicationAdministration;
 import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Ratio;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.SimpleQuantity;
 
-import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.Ucum;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
-import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
+public class MedikationConverter extends Converter {
 
-public class MedikationConverter implements Converter {
+    String PROFILE_ADM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
+    
+    String PROFILE_STM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
+    
+    String PROFILE_MED= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
+    // https://simplifier.net/medizininformatikinitiative-modulmedikation/medication-duplicate-3
+    /*
+     * Invalid : Instance count for 'Medication.ingredient' is 0, which is not within the specified cardinality of 1..*
+     */
 
-    private final CSVRecord record;
+    // Krude Lösung TODO
+    static Set<String> medis = new HashSet<String>();
 
     public MedikationConverter(CSVRecord record) {
-        this.record = record;
+        super(record);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
-        if ("Administration".equals(record.get("FHIR_Resourcentyp"))) {
-            return Collections.singletonList(convertMedicationAdministration());
-        } else {
-            return Collections.singletonList(parseMedicationStatement());
+        List<Resource> l = new Vector<>();
+        if (!medis.contains(getMedicationId())) {
+            l.add(parseMedication());
+            medis.add(getMedicationId());
         }
+        if ("Administration".equals(record.get("FHIR_Resourcentyp"))) {
+            l.add(convertMedicationAdministration());
+        } else {
+            l.add(parseMedicationStatement());
+        }
+        return l;
     }
 
     private MedicationAdministration convertMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
+        medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
+
         medicationAdministration.setStatus("completed");
-        medicationAdministration.setMedication(convertMedicationCodeableConcept());
+        medicationAdministration.setMedication(getMedicationReference());
+        //        medicationAdministration.setMedication(convertMedicationCodeableConcept());
         medicationAdministration.setSubject(convertSubject());
         medicationAdministration.setEffective(convertPeriod());
         medicationAdministration.setDosage(convertDosageComponent());
         return medicationAdministration;
     }
 
+    private Medication parseMedication() throws Exception {
+        Medication medication = new Medication();
+        medication.setMeta(new Meta().addProfile(PROFILE_MED));
+        medication.setId(getMedicationId());
+        medication.setIdentifier(Collections.singletonList(new Identifier().setValue(getMedicationId())));
+        medication.setCode(convertMedicationCodeableConcept());
+        return medication;
+    }
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(getATCCoding());
@@ -60,6 +95,26 @@ public class MedikationConverter implements Converter {
         return concept;
     }
 
+    private String getMedicationId() throws Exception {
+        String atc = record.get("ATC Code");
+        if (atc != null) {
+            return getDIZId() + "-" + atc;
+        } else {
+            error("ATC empty");
+            return null;
+        }
+    }
+
+
+    private Reference getMedicationReference() throws Exception {
+        String atc = record.get("ATC Code");
+        if (atc != null) {
+            return new Reference().setReference("Medication/" + getMedicationId());
+        } else {
+            error("ATC empty");
+            return null;
+        }
+    }
     private Coding getATCCoding() {
         String atc = record.get("ATC Code");
         if (atc != null) {
@@ -96,16 +151,6 @@ public class MedikationConverter implements Converter {
         }
     }
 
-    private Reference convertSubject() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Medication: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
-
     private Period convertPeriod() throws Exception {
         try {
             Period  p = new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")));
@@ -115,8 +160,9 @@ public class MedikationConverter implements Converter {
             }
             return p;
         } catch (Exception e) {
-            throw new Exception("Error on Medication: Can not parse Therapiestartdatum or Therapieendedatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Can not parse Therapiestartdatum or Therapieendedatum");
+            
+            return null;
         }
     }
 
@@ -140,8 +186,8 @@ public class MedikationConverter implements Converter {
                             .setSystem("http://unitsofmeasure.org")
                             .setCode("d"));
         } else {
-            throw new Exception("Error on Medication: Einheit empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Einheit empty for Record");
+            return null;
         }
     }
 
@@ -149,8 +195,8 @@ public class MedikationConverter implements Converter {
         try {
             return DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
         } catch (Exception e) {
-            throw new Exception("Error on Medication: Anzahl Dosen pro Tag is not a numerical value for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Anzahl Dosen pro Tag is not a numerical value for Record");
+            return null;
         }
     }
 
@@ -158,15 +204,19 @@ public class MedikationConverter implements Converter {
         try {
             return DecimalUtil.parseDecimal(record.get("Einzeldosis"));
         } catch (Exception e) {
-            throw new Exception("Error on Medication: Einzeldosis is not a numerical value for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Einzeldosis is not a numerical value for Record");
+            return null;
         }
     }
 
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
         medicationStatement.setStatus(ACTIVE);
-        medicationStatement.setMedication(convertMedicationCodeableConcept());
+        medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
+
+        medicationStatement.setMedication(getMedicationReference());
+
+        //        medicationStatement.setMedication(convertMedicationCodeableConcept());
         medicationStatement.setSubject(convertSubject());
         medicationStatement.setEffective(convertPeriod());
         medicationStatement.setDateAssertedElement(convertTimestamp());
@@ -178,8 +228,8 @@ public class MedikationConverter implements Converter {
         try {
             return DateUtil.parseDateTimeType(record.get("Zeitstempel"));
         } catch (Exception e) {
-            throw new Exception("Error on Medication: Can not parse timestamp for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Can not parse timestamp");
+            return null;
         }
     }
 
@@ -213,8 +263,8 @@ public class MedikationConverter implements Converter {
         if (doseUnit != null) {
             return doseUnit;
         } else {
-            throw new Exception("Error on Medication: Einheit empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Einheit empty");
+            return null;
         }
     }
 }

@@ -1,20 +1,5 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import ca.uhn.fhir.context.FhirContext;
-import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Resource;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,6 +9,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Resource;
+
+import ca.uhn.fhir.context.FhirContext;
+import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
 
 public class Csv2Fhir {
 

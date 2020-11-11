@@ -1,11 +1,58 @@
 package de.uni_leipzig.life.csv2fhir;
 
 
+import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import java.util.List;
 
-public interface Converter {
+public abstract class Converter {
 
-    List<Resource> convert() throws Exception;
+    protected final CSVRecord record;
+    
+    public Converter(CSVRecord record) {
+        this.record = record;
+    }
+    public abstract List<Resource> convert() throws Exception;
+
+    protected void error(String msg) throws Exception {
+        throw new Exception("Error on " + this.getClass().getSimpleName().replaceFirst("Converter", "") + ": " + msg + ":"
+                + record.getRecordNumber() + "! " + record.toString());     
+    }
+    
+    protected void warning(String msg) {
+        System.out.println("Warning on " + this.getClass().getSimpleName().replaceFirst("Converter", "") + ": " + msg + ":"
+                + record.getRecordNumber() + "! " + record.toString());     
+    }   
+    
+    protected String parsePatientId() throws Exception {
+        String id = record.get("Patient-ID");
+        if (id != null) {
+            return id;
+        } else {
+            error("Patient-ID empty for Record");
+            return null;
+        }
+    }
+
+    protected Reference convertSubject() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            error("Patient-ID empty for Record");
+            return null;
+        }
+    }
+
+    protected String getDIZId() throws Exception {
+        return parsePatientId().replaceAll("[0-9]", "");
+    }
+    protected String getEncounterId() throws Exception {
+        return parsePatientId();
+    }
+    protected Reference getEncounterReference() throws Exception {
+        return new Reference().setReference("Encounter/" + getEncounterId());
+    }
 }

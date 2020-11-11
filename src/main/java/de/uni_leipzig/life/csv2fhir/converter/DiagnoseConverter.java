@@ -1,29 +1,36 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class DiagnoseConverter implements Converter {
+public class DiagnoseConverter extends Converter {
 
-    private final CSVRecord record;
+    String PROFILE="https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
+    // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
 
     public DiagnoseConverter(CSVRecord record) {
-        this.record = record;
+        super(record);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
+        // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose 
+        condition.setId(getDiagnoseId());
+        condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
+        condition.setMeta(new Meta().addProfile(PROFILE));
         condition.addCategory(convertCategory());
         condition.setCode(convertProcedureCode());
         condition.setSubject(convertSubject());
@@ -31,13 +38,16 @@ public class DiagnoseConverter implements Converter {
         return Collections.singletonList(condition);
     }
 
+    private String getDiagnoseId() throws Exception {
+        return parsePatientId() + "-" + record.get("ICD").replaceAll("[^0-9A-Z]", "");
+    }
     private CodeableConcept convertCategory() throws Exception {
         String code = record.get("Typ");
         if (code != null) {
             return new CodeableConcept().setText(code);
         } else {
-            throw new Exception("Error on Diagnose: Typ empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
+            error("Typ empty for Record");                  
+            return null;
         }
     }
 
@@ -52,20 +62,12 @@ public class DiagnoseConverter implements Converter {
         if (code != null) {
             return new Coding()
                     .setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm")
+                    .setVersion("2020")     // just to be KDS compatible
                     .setCode(code);
-        } else {
-            throw new Exception("Error on Diagnose: ICD empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
-        }
-    }
 
-    private Reference convertSubject() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
         } else {
-            throw new Exception("Error on Diagnose: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
+            error("ICD empty for Record");
+            return null;
         }
     }
 
@@ -73,8 +75,8 @@ public class DiagnoseConverter implements Converter {
         try {
             return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
         } catch (Exception e) {
-            throw new Exception("Error on Diagnose: Can not parse Dokumentationsdatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Can not parse Dokumentationsdatum for Record");
+            return null;
         }
     }
 }

@@ -31,7 +31,7 @@ public class SplitExcel {
 
     private static Set<String> sheetNames = new HashSet<String>((Arrays.asList(
             "Person","Versorgungsfall","Abteilungsfall","Laborbefund","Diagnose","Prozedur","Medikation","Klinische Dokumentation"
-            //			"Person","Klinische Dokumentation"
+//            			"Person","Klinische Dokumentation"
             )));
     private static String delim=",";
     private static String quote="\"";
@@ -118,7 +118,10 @@ public class SplitExcel {
                                 cellValue = "";
                             }
                             if (col > 0) csv.print(delim);
-                            //s = s.replace("\"", "\"\"");
+                            // clean value inclusive bon-breaking whitespace occured in ICD
+                            cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
+                            // "No Value" used in UKE
+                            if (cellValue.equals("#NV")) cellValue = "";
                             if (cellValue.contains(delim)) cellValue = quote + cellValue + quote;
                             csv.print(cellValue);
                         }

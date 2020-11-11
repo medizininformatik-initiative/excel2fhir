@@ -1,40 +1,104 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import java.util.Collections;
+import java.util.List;
+import java.util.Vector;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
-import java.util.Collections;
-import java.util.List;
+import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class VersorgungsfallConverter implements Converter {
+public class VersorgungsfallConverter extends Converter {
 
-    private final CSVRecord record;
+    String PROFILE= "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/Encounter/Versorgungsfall";
+    // https://simplifier.net/medizininformatikinitiative-modulfall/versorgungsfall-duplicate-2
+    // https://simplifier.net/medizininformatikinitiative-modulfall/example-versorgungsfall
 
-    public VersorgungsfallConverter(CSVRecord record) {
-        this.record = record;
+    /*
+     * NotSupported : Terminology service failed while validating code '' (system ''): Cannot retrieve valueset 'https://www.medizininformatik-initiative.de/fhir/core/modul-fall/ValueSet/Versorgungsfallklasse'
+     */
+    
+    /*
+     * Schwierigkeit: die Aufnahmediagnosen nicht unbedingt identisch mit der Hauptdiagnosen
+     * Diagnose haben typisch keinen verpflichtenden Identifier; hier wird konstruiert...
+     *  
+     */
+   public VersorgungsfallConverter(CSVRecord record) {
+        super(record);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
         Encounter encounter = new Encounter();
-        // TODO encounter.setIdentifier(null);
+        encounter.setMeta(new Meta().addProfile(PROFILE));
+        encounter.setId(getEncounterId());
+        encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
         encounter.setClass_(convertClass());
         encounter.setSubject(convertSubject());
         encounter.setPeriod(convertPeriod());
-        encounter.addReasonCode(convertReasonCode());
-        // TODO encounter.setDiagnosis(null);
+    
+        // encounter.addReasonCode(convertReasonCode());
+        encounter.setDiagnosis(convertDiagnosis());
 
         return Collections.singletonList(encounter);
     }
 
+    private List<DiagnosisComponent> convertDiagnosis() throws Exception {
+        String codes = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
+        CodeableConcept c = new CodeableConcept();
+        c.addCoding().setCode("AD").setSystem("http://terminology.hl7.org/CodeSystem/diagnosis-role").setDisplay("Admission diagnosis");
+        if (codes != null) {
+            String codeArr[] = codes.trim().split("\\s*\\+\\s*");
+            List<DiagnosisComponent> ld = new Vector<>();
+            for (String icd : codeArr) {
+                ld.add(new DiagnosisComponent().setUse(c).setCondition(new Reference().setReference("Condition/" + parsePatientId() + "-" + icd.replaceAll("[^0-9A-Z]",""))));
+            }
+            return ld;
+        } else {
+            warning("Versorgungsfallgrund (Aufnahmediagnose) empty");
+            return null;           
+        }
+    }
+    protected Reference convertSubject() throws Exception {
+        String patientId = record.get("Patient-ID");
+        if (patientId != null) {
+            return new Reference().setReference("Patient/" + patientId);
+        } else {
+            error("Patient-ID empty");
+            return null;
+        }
+    }
+
+    private List<Identifier> convertIdentifier() throws Exception {
+        // generierte Encounternummer
+        String id = getEncounterId();
+
+        // geratenes DIZ Kürzel
+        String diz = parsePatientId().replaceAll("[0-9]", "");
+
+        CodeableConcept d = new CodeableConcept();
+        d.addCoding()
+        .setCode("VN")
+        .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203");
+        Reference r = new Reference().setIdentifier(new Identifier()
+                .setValue(diz)
+                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+        return Collections.singletonList(new Identifier().setValue(id).setSystem("Generated").setAssigner(r).setType(d));
+
+    }
+
+       
     private Coding convertClass() throws Exception {
         String code = record.get("Versorgungsfallklasse");
         if (code != null) {
@@ -42,18 +106,8 @@ public class VersorgungsfallConverter implements Converter {
                     .setSystem("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse")
                     .setCode(code);
         } else {
-            throw new Exception("Error on Versorgungsfall: Versorgungsfallklasse empty for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
-        }
-    }
-
-    private Reference convertSubject() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            throw new Exception("Error on Versorgungsfall: Patient-ID empty for Record: "
-                    + record.getRecordNumber() + "!" + record.toString());
+            error("Versorgungsfallklasse empty");
+            return null;
         }
     }
 
@@ -63,8 +117,8 @@ public class VersorgungsfallConverter implements Converter {
                     .setStartElement(DateUtil.parseDateTimeType(record.get("Startdatum")))
                     .setEndElement(DateUtil.parseDateTimeType(record.get("Enddatum")));
         } catch (Exception e) {
-            throw new Exception("Error on Versorgungsfall: Can not parse Startdatum or Enddatum for Record: "
-                    + record.getRecordNumber() + "! " + record.toString());
+            error("Can not parse Startdatum or Enddatum");
+            return null;
         }
     }
 

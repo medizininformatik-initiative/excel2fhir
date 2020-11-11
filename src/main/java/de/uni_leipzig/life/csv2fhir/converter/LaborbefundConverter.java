@@ -1,46 +1,76 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Identifier;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Organization;
+import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
-import org.apache.commons.collections4.iterators.AbstractUntypedIteratorDecorator;
-import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.Reference;
-import org.hl7.fhir.r4.model.Resource;
 
-import java.math.BigDecimal;
-import java.time.format.DateTimeParseException;
-import java.util.Collections;
-import java.util.List;
+public class LaborbefundConverter extends Converter {
 
-// KDS Profile ObservationLab
-// https://simplifier.net/guide/LaborbefundinderMedizininformatik-Initiative/Observation
+    String PROFILE= "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";
+    // https://simplifier.net/medizininformatikinitiative-modullabor/observationlab 
 
-public class LaborbefundConverter implements Converter {
-
-	private final CSVRecord record;
-
+    static int n = 10000;
+    
 	public LaborbefundConverter(CSVRecord record) {
-		this.record = record;
+		super(record);
 	}
 
 	@Override
 	public List<Resource> convert() throws Exception {
 		Observation observation = new Observation();
-		//TODO observation.setIdentifier(new ArrayList<>());
+		observation.setMeta(new Meta().addProfile(PROFILE));
 		observation.setStatus(Observation.ObservationStatus.FINAL);
-		//TODO observation.setCategory(new ArrayList<>());
 		observation.setCode(parseObservationCode());
-		observation.setSubject(parseObservationPatientId());
+		observation.setSubject(convertSubject());
 		observation.setEffective(parseObservationTimestamp());
 		observation.setValue(parseObservationValue());
+		
+		// generierte Labornummer
+        String id = parsePatientId() + "-" + n++;
+        
+        // geratenes DIZ Kürzel
+        String diz = getDIZId();
+        
+        CodeableConcept d = new CodeableConcept();
+        d.addCoding()
+            .setCode("OBI")
+            .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203");
+        Reference r = new Reference()
+            .setIdentifier(new Identifier()
+            .setValue(diz)
+            .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+        observation
+            .setIdentifier(Arrays.asList(new Identifier().setValue(id).setSystem("Generated").setAssigner(r).setType(d)));     
+     
+        CodeableConcept c = new CodeableConcept();
+        c.addCoding()
+            .setCode("laboratory")
+            .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
+            .setDisplay("Laboratory");
+        c.addCoding()
+            .setCode("26436-6")
+            .setSystem("http://loinc.org")
+            .setDisplay("Laboratory studies");
+        observation.setCategory(Arrays.asList(c));
 		return Collections.singletonList(observation);
 	}
 
@@ -52,18 +82,8 @@ public class LaborbefundConverter implements Converter {
 					.setCode(code))
 					.setText(record.get("Parameter"));
 		} else {
-			throw new Exception("Error on Observation: LOINC empty for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
-		}
-	}
-
-	private Reference parseObservationPatientId() throws Exception {
-		String patientId = record.get("Patient-ID");
-		if (patientId != null) {
-			return new Reference().setReference("Patient/" + patientId);
-		} else {
-			throw new Exception("Error on Observation: Patient-ID empty for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("LOINC empty for Record");
+			return null;
 		}
 	}
 
@@ -73,12 +93,12 @@ public class LaborbefundConverter implements Converter {
 			try {
 				return DateUtil.parseDateTimeType(timestamp);
 			} catch (Exception eYear) {
-				throw new Exception("Error on Observation: Can not parse Zeitstempel for Record: "
-						+ record.getRecordNumber() + "! " + record.toString());
+				error("Can not parse Zeitstempel for Record");
+				return null;
 			}
 		} else {
-			throw new Exception("Error on Observation: Zeitstempel (Abnahme) empty for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("Zeitstempel (Abnahme) empty for Record");
+			return null;
 		}
 	}
 
@@ -87,13 +107,13 @@ public class LaborbefundConverter implements Converter {
 		try {
 			messwert = DecimalUtil.parseDecimal(record.get("Messwert"));
 		} catch (Exception e) {
-			throw new Exception("Error on Observation: Messwert is not a numerical value for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("Messwert is not a numerical value for Record");
+            return null;
 		}
 		String unit = record.get("Einheit");
 		if (unit == null || unit.isEmpty()) {
-			throw new Exception("Error on Observation: Einheit is empty for Record: "
-					+ record.getRecordNumber() + "! " + record.toString());
+			error("Einheit is empty for Record");
+            return null;
 		}
 
 		String ucum,synonym;
