@@ -28,6 +28,15 @@ public class SplitMainTest extends TestCase {
         }
     }
 
+    public static void splitForGit() throws IOException {
+        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
+        File csvDir = new File("H:\\git\\csv2fhir\\resources");
+        SplitExcel se = new SplitExcel();
+        se.splitExcel(testExcel,csvDir);
+    }
+    
+    // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
+        
     public static void splitTestDir() {
         File excelDir =  new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
         SplitExcel se = new SplitExcel();
@@ -35,14 +44,15 @@ public class SplitMainTest extends TestCase {
 
     }
     public static void splitTestSingle() {
-        // File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx");
-        // File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
-        // File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx");
-        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU_20201008.xlsx");
-        // File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH-20201002.xlsx");
+//         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx");
+         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
+//        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx");
+//        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU_20201008.xlsx");
+//         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH-20201002.xlsx");
         SplitExcel se = new SplitExcel();
         try {
-            File csvDir = se.splitExcel(testExcel);
+            se.splitExcel(testExcel);
+            File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
             File resultJson = new File(testExcel.getParent(),            			
                     FilenameUtils.removeExtension(testExcel.getName())+".json");
             Csv2Fhir converter = new Csv2Fhir(csvDir,resultJson);
