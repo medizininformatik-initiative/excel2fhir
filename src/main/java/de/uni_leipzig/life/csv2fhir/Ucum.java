@@ -81,9 +81,11 @@ public class Ucum {
         humanMap.put("sec","s");
         humanMap.put("1","");	// like in 1/min
         humanMap.put("BPM","/m");	// like in 1/min
-        humanMap.put("-","");	// eigentich empty
+        humanMap.put("-","");   // eigentich empty
+        
+        humanMap.put("1.73^2","{1.73_m2}");   // Ausnahme Böhm; eigentlich echter Fehler 
+        humanMap.put("1.73m^2","{1.73_m2}");   // Ausnahme Böhm
 
-        //		humanMap.put("1/min","/min");
         //		humanMap.put("mmHg","mm[Hg]");
         //		humanMap.put("l","L");
         //		humanMap.put("ml","mL");
@@ -104,7 +106,7 @@ public class Ucum {
         String[] uArr = ucum.split("/",-1);
         String human="";
         for (String u : uArr) {
-            String h = ucumMap.get(u);
+            String h = ucumMap.get(u.trim());
             if (h == null) {
                 System.out.println("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
                 h = u;
@@ -117,14 +119,20 @@ public class Ucum {
     public static String human2ucum(String human) {
         String[] hArr = human.split("/",-1);
         String ucum = "";
-        for (String h : hArr) {
-            String u = humanMap.get(h);
+        boolean first = true;
+        for (String h : hArr) {            
+            String u = humanMap.get(h.trim());
             if (u == null) {
                 System.out.println("unknown human readable unit <" + h + "> in " + human +"; ucum will be empty");
                 return "";
             }
 
-            if (!ucum.isEmpty()) ucum +="/";
+            if (first) {
+                first=false;
+            } else {
+                ucum +="/"; 
+            }       
+
             ucum += u;
         }
         return ucum;
