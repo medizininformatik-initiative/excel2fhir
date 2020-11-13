@@ -96,24 +96,26 @@ public class MedikationConverter extends Converter {
     }
 
     private String getMedicationId() throws Exception {
+        String id;
         String atc = record.get("ATC Code");
         if (atc != null) {
-            return getDIZId() + "-" + atc;
+            id =  atc;
         } else {
-            error("ATC empty");
-            return null;
+            String txt = record.get("Wirksubstanz aus Präparat/Handelsname");
+            if (txt != null) {
+                warning("ATC empty");
+                id = txt;
+            } else {
+                error("ATC and Wirksubstanz aus Präparat/Handelsname empty");
+                return null;
+            }
         }
+        return getDIZId() + "-M-" + id.hashCode();
     }
 
 
     private Reference getMedicationReference() throws Exception {
-        String atc = record.get("ATC Code");
-        if (atc != null) {
-            return new Reference().setReference("Medication/" + getMedicationId());
-        } else {
-            error("ATC empty");
-            return null;
-        }
+        return new Reference().setReference("Medication/" + getMedicationId());
     }
     private Coding getATCCoding() {
         String atc = record.get("ATC Code");
@@ -160,7 +162,7 @@ public class MedikationConverter extends Converter {
             }
             return p;
         } catch (Exception e) {
-            error("Can not parse Therapiestartdatum or Therapieendedatum");
+            warning("Can not parse Therapiestartdatum or Therapieendedatum");
             
             return null;
         }
