@@ -82,7 +82,7 @@ public class LaborbefundConverter extends Converter {
 					.setCode(code))
 					.setText(record.get("Parameter"));
 		} else {
-			error("LOINC empty for Record");
+			warning("LOINC empty for Record");
 			return null;
 		}
 	}
@@ -112,7 +112,7 @@ public class LaborbefundConverter extends Converter {
 		}
 		String unit = record.get("Einheit");
 		if (unit == null || unit.isEmpty()) {
-			error("Einheit is empty for Record");
+			warning("Einheit is empty for Record");
             return null;
 		}
 
