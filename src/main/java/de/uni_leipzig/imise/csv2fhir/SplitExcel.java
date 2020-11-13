@@ -31,7 +31,7 @@ public class SplitExcel {
 
     private static Set<String> sheetNames = new HashSet<String>((Arrays.asList(
             "Person","Versorgungsfall","Abteilungsfall","Laborbefund","Diagnose","Prozedur","Medikation","Klinische Dokumentation"
-//            			"Person","Klinische Dokumentation"
+//            "Medikation"
             )));
     private static String delim=",";
     private static String quote="\"";
@@ -107,7 +107,13 @@ public class SplitExcel {
                                     // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein String 
                                     cellValue = dateFormat.format(cell.getDateCellValue());
                                 } else {
-                                    cellValue = "" + cell.getNumericCellValue();
+                                    // 11715311 wird ansonsten zu 1.1715311E7
+                                    // Mist Excel
+                                    double d = cell.getNumericCellValue();
+                                    long l = (long) d;
+                                    if (d -l == 0) cellValue = "" + l;
+                                    else cellValue = "" + d;
+                                    
                                     cellValue = cellValue.replace(",", ".");
                                     cellValue = cellValue.replaceAll("\\.0$", "");
                                 }
