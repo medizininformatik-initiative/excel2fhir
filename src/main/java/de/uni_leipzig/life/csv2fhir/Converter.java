@@ -47,12 +47,23 @@ public abstract class Converter {
     }
 
     protected String getDIZId() throws Exception {
-        return parsePatientId().replaceAll("[0-9]", "");
+        return parsePatientId().replaceAll("[^A-Z]", "");
     }
     protected String getEncounterId() throws Exception {
-        return parsePatientId();
+        return parsePatientId() + "E-1";
     }
     protected Reference getEncounterReference() throws Exception {
         return new Reference().setReference("Encounter/" + getEncounterId());
     }
+    protected String getDiagnoseId(String icd) throws Exception {
+        String id;
+        if (icd != null) {
+            id = icd;
+        } else {
+            error("ICD empty");
+            return null;
+        }
+        return parsePatientId() + "-C-" + id.hashCode();
+    }
+
 }
