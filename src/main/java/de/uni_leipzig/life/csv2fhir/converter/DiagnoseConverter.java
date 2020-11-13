@@ -39,7 +39,7 @@ public class DiagnoseConverter extends Converter {
     }
 
     private String getDiagnoseId() throws Exception {
-        return parsePatientId() + "-" + record.get("ICD").replaceAll("[^0-9A-Z]", "");
+        return getDiagnoseId(record.get("ICD"));
     }
     private CodeableConcept convertCategory() throws Exception {
         String code = record.get("Typ");
