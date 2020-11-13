@@ -62,7 +62,7 @@ public class VersorgungsfallConverter extends Converter {
             String codeArr[] = codes.trim().split("\\s*\\+\\s*");
             List<DiagnosisComponent> ld = new Vector<>();
             for (String icd : codeArr) {
-                ld.add(new DiagnosisComponent().setUse(c).setCondition(new Reference().setReference("Condition/" + parsePatientId() + "-" + icd.replaceAll("[^0-9A-Z]",""))));
+                ld.add(new DiagnosisComponent().setUse(c).setCondition(new Reference().setReference("Condition/" + getDiagnoseId(icd))));
             }
             return ld;
         } else {
