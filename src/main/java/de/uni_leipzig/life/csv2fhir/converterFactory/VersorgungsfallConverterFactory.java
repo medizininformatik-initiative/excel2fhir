@@ -9,7 +9,7 @@ public class VersorgungsfallConverterFactory implements ConverterFactory {
 
     private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Versorgungsfallgrund (Aufnahmediagnose)", "Startdatum", "Enddatum", "Versorgungsfallklasse"};
 
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new VersorgungsfallConverter(record);
     }
 

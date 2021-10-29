@@ -2,7 +2,6 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>de.uni-leipzig.life.csv2fhir</groupId>
     <artifactId>csv2fhir</artifactId>
     <packaging>jar</packaging>
@@ -17,6 +16,15 @@
         <maven.compiler.source>11</maven.compiler.source>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>oss-snapshots</id>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -27,8 +35,20 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-structures-r4</artifactId>
-            <version>4.1.0</version>
+            <version>5.5.0-PRE7-SNAPSHOT</version>
         </dependency>
+       <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-validation-resources-r4</artifactId>
+            <version>5.5.0-PRE7-SNAPSHOT</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/org.hl7.fhir.validation -->
+        <dependency>
+            <groupId>ca.uhn.hapi.fhir</groupId>
+            <artifactId>hapi-fhir-validation</artifactId>
+            <version>5.5.0-PRE7-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>

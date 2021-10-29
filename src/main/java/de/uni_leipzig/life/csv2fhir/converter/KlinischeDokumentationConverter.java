@@ -19,16 +19,20 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 public class KlinischeDokumentationConverter extends Converter {
-	public KlinischeDokumentationConverter(CSVRecord record) {
+    static int n = 1;
+    
+	public KlinischeDokumentationConverter(CSVRecord record) throws Exception {
 		super(record);
 	}
 
 	@Override
 	public List<Resource> convert() throws Exception {
 		Observation observation = new Observation();
+		observation.setId(getEncounterId()+"-O-"+n++);
 		observation.setStatus(Observation.ObservationStatus.FINAL);
 		observation.setCode(parseObservationCode());
-		observation.setSubject(parseObservationPatientId());
+        observation.setSubject(parseObservationPatientId());
+        observation.setEncounter(getEncounterReference());
 		observation.setEffective(parseObservationTimestamp());
 		observation.setValue(parseObservationValue());
 		return Collections.singletonList(observation);

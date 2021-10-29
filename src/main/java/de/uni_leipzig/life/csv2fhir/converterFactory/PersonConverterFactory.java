@@ -11,7 +11,7 @@ public class PersonConverterFactory implements ConverterFactory {
             {"Patient-ID", "Vorname", "Nachname", "Anschrift", "Geburtsdatum",
                     "Geschlecht", "Krankenkasse"};
 
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new PersonConverter(record);
     }
 

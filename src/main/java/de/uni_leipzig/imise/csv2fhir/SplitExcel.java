@@ -151,9 +151,9 @@ public class SplitExcel {
                 File logFile = new File(excelDir,	FilenameUtils.removeExtension(excelTestdata.getName())+".log");
                 System.out.println(logFile.getAbsolutePath());
                 System.setOut(new PrintStream(logFile));
-                File resultJson = new File(excelDir,            			
-                        FilenameUtils.removeExtension(excelTestdata.getName())+".json");
-                Csv2Fhir converter = new Csv2Fhir(csvDir,resultJson);
+//                File resultJson = new File(excelDir,                        
+//                        FilenameUtils.removeExtension(excelTestdata.getName())+".json");
+                Csv2Fhir converter = new Csv2Fhir(csvDir,FilenameUtils.removeExtension(excelTestdata.getName()));
                 converter.convertFiles();	
                 System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
             } catch (IOException e) {

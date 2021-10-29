@@ -20,7 +20,7 @@ public class DiagnoseConverter extends Converter {
     String PROFILE="https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
     // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
 
-    public DiagnoseConverter(CSVRecord record) {
+    public DiagnoseConverter(CSVRecord record) throws Exception {
         super(record);
     }
 
@@ -31,9 +31,10 @@ public class DiagnoseConverter extends Converter {
         condition.setId(getDiagnoseId());
         condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
         condition.setMeta(new Meta().addProfile(PROFILE));
-        condition.addCategory(convertCategory());
-        condition.setCode(convertProcedureCode());
-        condition.setSubject(convertSubject());
+//        condition.addCategory(convertCategory());
+        condition.setCode(convertCode());
+        condition.setSubject(getPatientReference());
+        condition.setEncounter(getEncounterReference());
         condition.setRecordedDateElement(convertRecordedDate());
         return Collections.singletonList(condition);
     }
@@ -46,12 +47,12 @@ public class DiagnoseConverter extends Converter {
         if (code != null) {
             return new CodeableConcept().setText(code);
         } else {
-            error("Typ empty for Record");                  
+            warning("Typ empty for Record");                  
             return null;
         }
     }
 
-    private CodeableConcept convertProcedureCode() throws Exception {
+    private CodeableConcept convertCode() throws Exception {
         return new CodeableConcept()
                 .addCoding(getCoding())
                 .setText(record.get("Bezeichner"));

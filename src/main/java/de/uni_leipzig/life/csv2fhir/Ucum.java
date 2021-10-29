@@ -49,9 +49,10 @@ public class Ucum {
         ucumMap.put("mm[Hg]", "mmHg");
         ucumMap.put("mbar", "mbar");
         ucumMap.put("Ohm", "\u03a9");
-        ucumMap.put("Cel", "°C");
-        ucumMap.put("10**9", "G");	
-        ucumMap.put("10*12","T");
+//        ucumMap.put("Cel", "°C");
+        ucumMap.put("C", "°C"); // das ist eigentoich falsch; Vonk stolpert aber darüber und will nicht Cel
+        ucumMap.put("10^9", "G");	
+        ucumMap.put("10^12","T");
         ucumMap.put("deg", "\u00b0");
         ucumMap.put("[iU]", "IE");
 
@@ -72,11 +73,11 @@ public class Ucum {
 
         // Exceptions
         humanMap.put("I.E.","[iU]");
-        humanMap.put("x 10^3","10*3");
-        humanMap.put("x 10^6","10*6");
-        humanMap.put("x10^12","10*12");
-        humanMap.put("x10^9","10*9");
-        humanMap.put("Mrd","10*9");
+        humanMap.put("x 10^3","10^3");
+        humanMap.put("x 10^6","10^6");
+        humanMap.put("x10^12","10^12");
+        humanMap.put("x10^9","10^9");
+        humanMap.put("Mrd","10^9");
         humanMap.put("Sekunde(n)","s");
         humanMap.put("sec","s");
         humanMap.put("1","");	// like in 1/min

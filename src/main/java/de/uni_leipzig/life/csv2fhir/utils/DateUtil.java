@@ -4,6 +4,8 @@ import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DateType;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -11,16 +13,29 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 public class DateUtil {
+    static List<String> formatStrings = Arrays.asList("dd.MM.yyyy hh:mm","yyyy");
 
     public static DateType parseDateType(String date) throws Exception {
-        return new DateType(
-                Date.from(parseLocalDate(date)
-                        .atStartOfDay(ZoneId.systemDefault())
-                        .toInstant()),
-                TemporalPrecisionEnum.DAY);
+        //        return new DateType(
+        //                Date.from(parseLocalDate(date)
+        //                        .atStartOfDay(ZoneId.systemDefault())
+        //                        .toInstant()),
+        //                TemporalPrecisionEnum.DAY);
+        for (String formatString : formatStrings)
+        {
+            try
+            {
+                return new DateType(new SimpleDateFormat(formatString).parse(date));
+            }
+            catch (ParseException e) {}
+        }
+
+        return null;
     }
 
     private static LocalDate parseLocalDate(String dateTime) throws Exception {

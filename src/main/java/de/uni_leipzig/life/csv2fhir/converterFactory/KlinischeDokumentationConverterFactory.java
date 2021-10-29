@@ -10,7 +10,7 @@ public class KlinischeDokumentationConverterFactory implements ConverterFactory 
     private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Bezeichner", "LOINC", "Wert", "Einheit", "Zeitstempel"};
 
     @Override
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new KlinischeDokumentationConverter(record);
     }
 

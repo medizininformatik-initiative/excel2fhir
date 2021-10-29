@@ -33,7 +33,7 @@ public class VersorgungsfallConverter extends Converter {
      * Diagnose haben typisch keinen verpflichtenden Identifier; hier wird konstruiert...
      *  
      */
-   public VersorgungsfallConverter(CSVRecord record) {
+   public VersorgungsfallConverter(CSVRecord record) throws Exception {
         super(record);
     }
 
@@ -45,7 +45,7 @@ public class VersorgungsfallConverter extends Converter {
         encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
         encounter.setClass_(convertClass());
-        encounter.setSubject(convertSubject());
+        encounter.setSubject(getPatientReference());
         encounter.setPeriod(convertPeriod());
     
         // encounter.addReasonCode(convertReasonCode());
@@ -70,7 +70,7 @@ public class VersorgungsfallConverter extends Converter {
             return null;           
         }
     }
-    protected Reference convertSubject() throws Exception {
+    protected Reference getPatientReference() throws Exception {
         String patientId = record.get("Patient-ID");
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
@@ -84,15 +84,12 @@ public class VersorgungsfallConverter extends Converter {
         // generierte Encounternummer
         String id = getEncounterId();
 
-        // geratenes DIZ Kürzel
-        String diz = parsePatientId().replaceAll("[0-9]", "");
-
         CodeableConcept d = new CodeableConcept();
         d.addCoding()
         .setCode("VN")
         .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203");
         Reference r = new Reference().setIdentifier(new Identifier()
-                .setValue(diz)
+                .setValue(getDIZId())
                 .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
         return Collections.singletonList(new Identifier().setValue(id).setSystem("Generated").setAssigner(r).setType(d));
 

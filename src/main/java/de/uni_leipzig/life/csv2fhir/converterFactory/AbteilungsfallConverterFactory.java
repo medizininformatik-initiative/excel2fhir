@@ -10,7 +10,7 @@ public class AbteilungsfallConverterFactory implements ConverterFactory {
     private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Startdatum", "Enddatum", "Fachabteilung"};
 
     @Override
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new AbteilungsfallConverter(record);
     }
 

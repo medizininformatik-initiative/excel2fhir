@@ -12,7 +12,6 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -30,22 +29,25 @@ public class LaborbefundConverter extends Converter {
 
     static int n = 10000;
     
-	public LaborbefundConverter(CSVRecord record) {
+	public LaborbefundConverter(CSVRecord record) throws Exception {
 		super(record);
 	}
 
 	@Override
 	public List<Resource> convert() throws Exception {
-		Observation observation = new Observation();
+        // generierte Labornummer
+        String id = getEncounterId()+"-O" + n++;
+
+        Observation observation = new Observation();
+        observation.setId(id);
 		observation.setMeta(new Meta().addProfile(PROFILE));
 		observation.setStatus(Observation.ObservationStatus.FINAL);
 		observation.setCode(parseObservationCode());
-		observation.setSubject(convertSubject());
+        observation.setSubject(getPatientReference());
+        observation.setEncounter(getEncounterReference());
 		observation.setEffective(parseObservationTimestamp());
 		observation.setValue(parseObservationValue());
 		
-		// generierte Labornummer
-        String id = parsePatientId() + "-" + n++;
         
         // geratenes DIZ Kürzel
         String diz = getDIZId();
@@ -59,7 +61,7 @@ public class LaborbefundConverter extends Converter {
             .setValue(diz)
             .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
         observation
-            .setIdentifier(Arrays.asList(new Identifier().setValue(id).setSystem("Generated").setAssigner(r).setType(d)));     
+            .setIdentifier(Arrays.asList(new Identifier().setValue(id).setSystem("https://"+diz+".de/befund").setAssigner(r).setType(d)));     
      
         CodeableConcept c = new CodeableConcept();
         c.addCoding()
@@ -82,8 +84,12 @@ public class LaborbefundConverter extends Converter {
 					.setCode(code))
 					.setText(record.get("Parameter"));
 		} else {
-			warning("LOINC empty for Record");
-			return null;
+			warning("LOINC empty for Record; creating empty code");
+            return new CodeableConcept().addCoding(new Coding()
+                    .setSystem("http://loinc.org")
+                    )
+                    .setText(record.get("Parameter"));			
+//			return null;
 		}
 	}
 

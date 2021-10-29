@@ -16,7 +16,7 @@ public class MedikationConverterFactory implements ConverterFactory {
     //"Medikationsplanart", "Darreichungsform", "Tagesdosis", "KombinationsAMI", "ASK" not used!
 
     @Override
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new MedikationConverter(record);
     }
 

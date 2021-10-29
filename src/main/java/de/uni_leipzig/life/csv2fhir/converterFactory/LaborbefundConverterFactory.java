@@ -11,7 +11,7 @@ public class LaborbefundConverterFactory implements ConverterFactory {
             "Messwert", "Einheit", "Zeitstempel (Abnahme)"}; //Not used: "Methode"
 
     @Override
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new LaborbefundConverter(record);
     }
 

@@ -2,6 +2,7 @@ package fmeineke.imise.de;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -34,29 +35,59 @@ public class SplitMainTest extends TestCase {
         SplitExcel se = new SplitExcel();
         se.splitExcel(testExcel,csvDir);
     }
-    
+
     // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
-        
+
     public static void splitTestDir() {
         File excelDir =  new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
         SplitExcel se = new SplitExcel();
         se.convertAllExcelInDir(excelDir);
 
     }
+
+    public static void ucumTest() {
+        assertEquals("%", Ucum.human2ucum("%"));
+        assertEquals("/min", Ucum.human2ucum("1/min"));
+        assertEquals("umol/L", Ucum.human2ucum("µmol/l"));
+        assertEquals("mL/min/{1.73_m2}", Ucum.human2ucum("ml/min/1.73m^2"));
+        assertEquals("10*9/L", Ucum.human2ucum("x10^9/l"));
+
+        Set<String> s = LoincUcum.set();
+        assert(s.contains("/min"));
+
+        //        assertSystem.out.println(Ucum.human2ucum("1/min"));
+    }
+    public static void VHF() {
+        String files[] = {
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"
+        };
+        for (String f : files) {
+            splitTestSingle(f);
+        }
+    }
+
     public static void splitTestSingle() {
-//         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx");
-         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
-//        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx");
-//        File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU_20201008.xlsx");
-//         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH-20201002.xlsx");
+        String files[] = {
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx",
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx",
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH.xlsx",
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU.xlsx",
+                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx"
+        };
+        for (String f : files) {
+            splitTestSingle(f);
+        }
+    }
+    public static void splitTestSingle(String filename) {
+        File testExcel = new File(filename);
         SplitExcel se = new SplitExcel();
         try {
             se.splitExcel(testExcel);
             File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
-            File resultJson = new File(testExcel.getParent(),            			
-                    FilenameUtils.removeExtension(testExcel.getName())+".json");
-            Csv2Fhir converter = new Csv2Fhir(csvDir,resultJson);
-            converter.convertFiles();	
+//            File resultJson = new File(testExcel.getParent(),            			
+//                    FilenameUtils.removeExtension(testExcel.getName())+".json");
+            Csv2Fhir converter = new Csv2Fhir(csvDir,FilenameUtils.removeExtension(testExcel.getName()));
+            converter.convertFilesPerPatient();	
 
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -68,4 +99,10 @@ public class SplitMainTest extends TestCase {
         }
     }
 
+       public static void xxxxx() {
+           for (int i = 1; i < 10002; i++) {
+               System.out.printf(",VHF%05d",i);
+               if (i % 1000 == 0) System.out.printf("\n");
+           }
+       }
 }

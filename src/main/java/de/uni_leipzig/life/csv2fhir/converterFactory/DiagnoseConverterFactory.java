@@ -10,7 +10,7 @@ public class DiagnoseConverterFactory implements ConverterFactory {
     private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Bezeichner", "ICD", "Dokumentationsdatum", "Typ"};
 
     @Override
-    public Converter create(CSVRecord record) {
+    public Converter create(CSVRecord record) throws Exception {
         return new DiagnoseConverter(record);
     }
 

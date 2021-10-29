@@ -8,11 +8,14 @@ import org.hl7.fhir.r4.model.Resource;
 import java.util.List;
 
 public abstract class Converter {
-
+    final String pid;
     protected final CSVRecord record;
+    protected boolean kds = true;
+    protected boolean kds_strict = true;
     
-    public Converter(CSVRecord record) {
+    public Converter(CSVRecord record) throws Exception {
         this.record = record;
+        pid = parsePatientId();
     }
     public abstract List<Resource> convert() throws Exception;
 
@@ -26,31 +29,28 @@ public abstract class Converter {
                 + record.getRecordNumber() + "! " + record.toString());     
     }   
     
-    protected String parsePatientId() throws Exception {
+    public String getPatientId() {
+        return pid;
+    }
+    private String parsePatientId() throws Exception {
         String id = record.get("Patient-ID");
         if (id != null) {
-            return id;
+            return id.replace("_", "-");
         } else {
             error("Patient-ID empty for Record");
             return null;
         }
     }
 
-    protected Reference convertSubject() throws Exception {
-        String patientId = record.get("Patient-ID");
-        if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
-        } else {
-            error("Patient-ID empty for Record");
-            return null;
-        }
-    }
+    protected Reference getPatientReference() throws Exception {
+        return new Reference().setReference("Patient/" + getPatientId());
+    } 
 
     protected String getDIZId() throws Exception {
-        return parsePatientId().replaceAll("[^A-Z]", "");
+        return getPatientId().toUpperCase().replaceAll("[^A-Z]", "");
     }
     protected String getEncounterId() throws Exception {
-        return parsePatientId() + "E-1";
+        return getPatientId() + "-E-1";
     }
     protected Reference getEncounterReference() throws Exception {
         return new Reference().setReference("Encounter/" + getEncounterId());
@@ -63,7 +63,7 @@ public abstract class Converter {
             error("ICD empty");
             return null;
         }
-        return parsePatientId() + "-C-" + id.hashCode();
+        return getPatientId() + "-C-" + id.hashCode();
     }
 
 }

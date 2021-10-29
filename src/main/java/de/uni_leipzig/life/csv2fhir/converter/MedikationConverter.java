@@ -10,43 +10,53 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Dosage;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.Medication.MedicationIngredientComponent;
 import org.hl7.fhir.r4.model.MedicationAdministration;
+import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationDosageComponent;
+import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus;
 import org.hl7.fhir.r4.model.MedicationStatement;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Ratio;
-import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.SimpleQuantity;
+import org.hl7.fhir.r4.model.Type;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
+/*
+ * MedicationStatement bei "Vor Aufnahme"
+ * MedicationAdminstration sonst
+ */
 public class MedikationConverter extends Converter {
 
     String PROFILE_ADM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
-    
+
     String PROFILE_STM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
-    
+
     String PROFILE_MED= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
     // https://simplifier.net/medizininformatikinitiative-modulmedikation/medication-duplicate-3
     /*
      * Invalid : Instance count for 'Medication.ingredient' is 0, which is not within the specified cardinality of 1..*
      */
 
+    static int n = 1;
     // Krude Lösung TODO
     static Set<String> medis = new HashSet<String>();
 
-    public MedikationConverter(CSVRecord record) {
+    public MedikationConverter(CSVRecord record) throws Exception {
         super(record);
     }
 
@@ -57,24 +67,30 @@ public class MedikationConverter extends Converter {
             l.add(parseMedication());
             medis.add(getMedicationId());
         }
-        if ("Administration".equals(record.get("FHIR_Resourcentyp"))) {
-            l.add(convertMedicationAdministration());
-        } else {
+        if ("Vor Aufnahme".equals(record.get("Medikationsplanart"))) {
             l.add(parseMedicationStatement());
-        }
+        } else {
+            l.add(parseMedicationAdministration());            
+        }        
         return l;
     }
 
-    private MedicationAdministration convertMedicationAdministration() throws Exception {
+    private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
+        medicationAdministration.setId(getEncounterId()+"-MA-"+n++);
 
-        medicationAdministration.setStatus("completed");
+//        medicationAdministration.setStatus("completed");
+        medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
+        // Set Reference
         medicationAdministration.setMedication(getMedicationReference());
+        // and set CodeableConcept
         //        medicationAdministration.setMedication(convertMedicationCodeableConcept());
-        medicationAdministration.setSubject(convertSubject());
-        medicationAdministration.setEffective(convertPeriod());
-        medicationAdministration.setDosage(convertDosageComponent());
+        medicationAdministration.setContext(getEncounterReference());
+        medicationAdministration.setSubject(getPatientReference());
+//        medicationAdministration.setEffective(convertPeriod());
+        medicationAdministration.setEffective(convertTimestamp());
+        medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
     }
 
@@ -84,13 +100,28 @@ public class MedikationConverter extends Converter {
         medication.setId(getMedicationId());
         medication.setIdentifier(Collections.singletonList(new Identifier().setValue(getMedicationId())));
         medication.setCode(convertMedicationCodeableConcept());
+        medication.setIngredient(Collections.singletonList(getIngredient()));
         return medication;
+    }
+    private MedicationIngredientComponent getIngredient() {
+        MedicationIngredientComponent m = new MedicationIngredientComponent();
+
+        try {
+            m.setItem(new CodeableConcept().addCoding(getASKCoding()));
+        } catch (Exception e) {
+            warning("cannot set ATC");
+        }
+        try {
+            m.setStrength(getDoseRate());
+        } catch (Exception e) {
+            warning("cannot set strength");
+        }
+        return m;
     }
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
-        concept.addCoding(getATCCoding());
         concept.addCoding(getPZNCoding());
-        concept.addCoding(getASKCoding());
+        concept.addCoding(getATCCoding());
         concept.setText(record.get("Wirksubstanz aus Präparat/Handelsname"));
         return concept;
     }
@@ -110,7 +141,9 @@ public class MedikationConverter extends Converter {
                 return null;
             }
         }
-        return getDIZId() + "-M-" + id.hashCode();
+//        return getDIZId() + "-M-" + id.hashCode();
+        // Dumm, jede Medikation wird für jeden Patienten wiederholt... es dafür steht jedes bundle für sich
+        return getPatientId() + "-M-" + id.hashCode();
     }
 
 
@@ -148,29 +181,61 @@ public class MedikationConverter extends Converter {
                     .setSystem("http://fhir.de/CodeSystem/ask")
                     .setCode(ask)
                     .setUserSelected("ASK".equals(record.get("FHIR_UserSelected")));
-        } else {
-            return null;
         }
+        // fake to be KDS conform
+        warning("no ask code");
+        return new Coding()
+                .setSystem("http://fhir.de/CodeSystem/ask").setDisplay("no code defined");
     }
 
-    private Period convertPeriod() throws Exception {
+//    /*
+//     * Wenn kein start/end vorhanden, dann nehme einfach mal an "start unbekannt", "end = Zeitstempel/heute"
+//     */
+//    private  Type convertDateTime() throws Exception {
+//        try {
+//            
+//            String e = record.get("Zeitstempel");
+//            if (!StringUtils.isBlank(e)) {
+//                return DateUtil.parseDateTimeType(e);
+//                // Period with only end date
+//                // DateTimeType end = DateUtil.parseDateTimeType(e);
+//                //return new Period().setEndElement(end);
+//            }
+//        } catch (Exception e) {
+//            error("Can not parse Zeitstempel");           
+//        }
+//        return null;
+//    }
+
+    /*
+     * In den Testdaten leider häufig falsch / täglich wiederholt genutzt
+     */
+    private  Type convertPeriod() throws Exception {
         try {
-            Period  p = new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Therapiestartdatum")));
-            String end = record.get("Therapieendedatum");
-            if (end != null && !end.isBlank()) {
-                p.setEndElement(DateUtil.parseDateTimeType(end));
+            String s = record.get("Therapiestartdatum");
+            String e = record.get("Therapieendedatum");
+            if (StringUtils.isBlank(s)) {
+                if (StringUtils.isBlank(e)) {
+                    // no date given
+                    error("cannot administer without effective date");
+                    return null;
+                }
+                // Period with only end date
+                DateTimeType end = DateUtil.parseDateTimeType(e);
+                return new Period().setEndElement(end);
             }
-            return p;
+            DateTimeType start = DateUtil.parseDateTimeType(s);
+            if (StringUtils.isBlank(e) || e.equals(s)) {
+                // Just a single day
+                return start;                                    
+            }
+            DateTimeType end = DateUtil.parseDateTimeType(e);
+            // complete Period
+            return new Period().setStartElement(start).setEndElement(end);                    
         } catch (Exception e) {
-            warning("Can not parse Therapiestartdatum or Therapieendedatum");
-            
-            return null;
+            error("Can not parse Therapiestartdatum or Therapieendedatum");           
         }
-    }
-
-    private MedicationAdministration.MedicationAdministrationDosageComponent convertDosageComponent() throws Exception {
-        return new MedicationAdministration.MedicationAdministrationDosageComponent()
-                .setRate(getDoseRate());
+        return null;
     }
 
     private Ratio getDoseRate() throws Exception {
@@ -178,15 +243,14 @@ public class MedikationConverter extends Converter {
         if (unit != null) {
             return new Ratio()
                     .setNumerator(new Quantity()
-                            .setValue(getDosesPerDay().multiply(getDose()))
+                            .setValue(getDose())
                             .setUnit(unit)
                             .setSystem("http://unitsofmeasure.org")
-                            .setCode(unit))
+                            .setCode(Ucum.human2ucum(unit)))
                     .setDenominator(new Quantity()
-                            .setValue(1)
-                            .setUnit("day")
-                            .setSystem("http://unitsofmeasure.org")
-                            .setCode("d"));
+                            .setValue(new BigDecimal(1))
+                            .setSystem("http://XXX")
+                            .setCode(record.get("Darreichungsform")));
         } else {
             error("Einheit empty for Record");
             return null;
@@ -213,16 +277,20 @@ public class MedikationConverter extends Converter {
 
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
+        medicationStatement.setId(getEncounterId()+"-MS-"+n++);
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
 
         medicationStatement.setMedication(getMedicationReference());
 
         //        medicationStatement.setMedication(convertMedicationCodeableConcept());
-        medicationStatement.setSubject(convertSubject());
-        medicationStatement.setEffective(convertPeriod());
-        medicationStatement.setDateAssertedElement(convertTimestamp());
-        medicationStatement.addDosage(convertDosage());
+        medicationStatement.setContext(getEncounterReference());
+        medicationStatement.setSubject(getPatientReference());
+//        Type p = convertPeriod(); in den Testdaten meist so nicht richtig
+        Type p = convertTimestamp();
+        medicationStatement.setEffective(p);
+//        medicationStatement.setDateAssertedElement(convertTimestamp());
+        medicationStatement.addDosage(convertDosageStatement());
         return medicationStatement;
     }
 
@@ -235,31 +303,33 @@ public class MedikationConverter extends Converter {
         }
     }
 
-    private Dosage convertDosage() throws Exception {
-        String unit = getDoseUnit();
-        String ucum,synonym;
-        if (Ucum.isUcum(unit)) {
-            ucum = unit;
-            synonym = Ucum.ucum2human(unit); 
-        } else  {
-            ucum = Ucum.human2ucum(unit);
-            synonym = unit;
+    private Quantity convertQuantity() throws Exception {
+        BigDecimal value = null;
+        try {
+            value = DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
+        } catch (Exception e) {
+            warning("no dose defined");
+            return new SimpleQuantity().setUnit(record.get("Anzahl Dosen pro Tag"));
         }
-
-        return new Dosage()
-                .addDoseAndRate(new Dosage.DosageDoseAndRateComponent()
-                        .setDose(new SimpleQuantity()
-                                .setValue(getDose())
-                                .setUnit(synonym)
-                                .setSystem("http://unitsofmeasure.org")
-                                .setCode(ucum))
-                        .setRate(new Quantity()
-                                .setValue(getDosesPerDay())
-                                .setUnit("day")
-                                .setSystem("http://unitsofmeasure.org")
-                                .setCode("d")));
+        String ucum = "1"; // see https://ucum.org/ucum.html#section-Examples-for-some-Non-Units.
+        String synonym = record.get("Darreichungsform");
+        return new SimpleQuantity()
+                .setValue(value)
+                .setUnit(synonym)
+                .setSystem("http://unitsofmeasure.org")
+                .setCode(ucum);
     }
 
+    private MedicationAdministrationDosageComponent convertDosageAdministration() throws Exception {
+        return new MedicationAdministrationDosageComponent().setDose(convertQuantity());
+    }
+    private Dosage convertDosageStatement() throws Exception {
+        Dosage d = new Dosage();
+        d.addDoseAndRate().setDose(convertQuantity());
+        return d;
+    }
+
+    
     private String getDoseUnit() throws Exception {
         String doseUnit = record.get("Einheit");
         if (doseUnit != null) {

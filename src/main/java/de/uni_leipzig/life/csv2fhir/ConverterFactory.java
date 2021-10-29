@@ -4,7 +4,7 @@ import org.apache.commons.csv.CSVRecord;
 
 public interface ConverterFactory {
 
-    Converter create(CSVRecord record);
+    Converter create(CSVRecord record) throws Exception;
 
     String[] getNeededColumnNames();
 }
