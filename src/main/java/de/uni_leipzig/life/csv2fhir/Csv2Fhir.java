@@ -24,6 +24,7 @@ import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Resource;
 
 import ca.uhn.fhir.context.FhirContext;
+import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
@@ -32,7 +33,6 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
-import de.uni_leipzig.life.csv2fhir.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020)

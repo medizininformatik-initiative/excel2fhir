@@ -24,8 +24,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.google.common.collect.Sets;
 
+import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
-import de.uni_leipzig.life.csv2fhir.utils.Sys;
 
 /**
  * @author fmeinecke (02.11.2020)

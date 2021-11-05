@@ -1,4 +1,4 @@
-package de.uni_leipzig.life.csv2fhir.utils;
+package de.uni_leipzig.imise.utils;
 
 import java.io.PrintStream;
 
@@ -33,26 +33,29 @@ public class Sys {
     }
 
     public static void outm(final int maxTraceSteps, final int hideTraceSteps, final Object... message) {
-        printInternal(maxTraceSteps, System.out, hideTraceSteps + 3, false, message);
+        printInternal(maxTraceSteps, System.out, hideTraceSteps + 3, maxTraceSteps == 1, message);
     }
 
     public static void errn(final int maxTraceSteps, final Object... message) {
         errInternal(maxTraceSteps, false, message);
     }
 
-    private static void outInternal(final int maxTraceSteps, final boolean appendFistTraceStepToLastMessageLine, final Object... message) {
+    private static void outInternal(final int maxTraceSteps, final boolean appendFistTraceStepToLastMessageLine,
+            final Object... message) {
         printInternal(maxTraceSteps, System.out, 4, appendFistTraceStepToLastMessageLine, message);
     }
 
-    private static void errInternal(final int maxTraceSteps, final boolean appendFistTraceStepToLastMessageLine, final Object... message) {
+    private static void errInternal(final int maxTraceSteps, final boolean appendFistTraceStepToLastMessageLine,
+            final Object... message) {
         printInternal(maxTraceSteps, System.err, 4, appendFistTraceStepToLastMessageLine, message);
     }
 
     public static void errm(final int maxTraceSteps, final int hideTraceSteps, final Object... message) {
-        printInternal(maxTraceSteps, System.err, hideTraceSteps + 3, false, message);
+        printInternal(maxTraceSteps, System.err, hideTraceSteps + 3, maxTraceSteps == 1, message);
     }
 
-    private static void printInternal(final int maxTraceSteps, final PrintStream stream, final int hideTraceSteps, final boolean appendFistTraceStepToLastMessageLine, final Object... message) {
+    private static void printInternal(final int maxTraceSteps, final PrintStream stream, final int hideTraceSteps,
+            final boolean appendFistTraceStepToLastMessageLine, final Object... message) {
         if (message == null) {
             print(null, stream, false, !appendFistTraceStepToLastMessageLine);
         } else if (message.length == 0) {

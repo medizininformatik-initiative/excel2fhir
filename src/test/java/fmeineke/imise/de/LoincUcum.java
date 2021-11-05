@@ -3,7 +3,7 @@ package fmeineke.imise.de;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_leipzig.life.csv2fhir.utils.Sys;
+import de.uni_leipzig.imise.utils.Sys;
 
 public class LoincUcum {
 

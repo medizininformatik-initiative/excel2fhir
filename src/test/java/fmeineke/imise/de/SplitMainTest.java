@@ -7,9 +7,9 @@ import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 
 import de.uni_leipzig.imise.csv2fhir.SplitExcel;
+import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.Ucum;
-import de.uni_leipzig.life.csv2fhir.utils.Sys;
 import junit.framework.TestCase;
 
 public class SplitMainTest extends TestCase {

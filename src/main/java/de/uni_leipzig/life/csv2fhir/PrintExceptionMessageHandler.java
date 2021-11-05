@@ -2,7 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import java.io.PrintWriter;
 
-import de.uni_leipzig.life.csv2fhir.utils.Sys;
+import de.uni_leipzig.imise.utils.Sys;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeExceptionMapper;
 
