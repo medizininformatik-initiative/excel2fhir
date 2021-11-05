@@ -253,9 +253,9 @@ public class Csv2Fhir {
             }
             //            System.out.println();
             //            Sys.out1(columns);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
