@@ -17,9 +17,14 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnoseConverter extends Converter {
 
-    String PROFILE="https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
+    /**  */
+    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
     // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
 
+    /**
+     * @param record
+     * @throws Exception
+     */
     public DiagnoseConverter(CSVRecord record) throws Exception {
         super(record);
     }
@@ -27,11 +32,11 @@ public class DiagnoseConverter extends Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
-        // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose 
+        // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
         condition.setId(getDiagnoseId());
         condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
         condition.setMeta(new Meta().addProfile(PROFILE));
-//        condition.addCategory(convertCategory());
+        //        condition.addCategory(convertCategory());
         condition.setCode(convertCode());
         condition.setSubject(getPatientReference());
         condition.setEncounter(getEncounterReference());
@@ -39,39 +44,54 @@ public class DiagnoseConverter extends Converter {
         return Collections.singletonList(condition);
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private String getDiagnoseId() throws Exception {
         return getDiagnoseId(record.get("ICD"));
     }
+
+    /**
+     * @return
+     * @throws Exception
+     */
     private CodeableConcept convertCategory() throws Exception {
         String code = record.get("Typ");
         if (code != null) {
             return new CodeableConcept().setText(code);
-        } else {
-            warning("Typ empty for Record");                  
-            return null;
         }
+        warning("Typ empty for Record");
+        return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private CodeableConcept convertCode() throws Exception {
-        return new CodeableConcept()
-                .addCoding(getCoding())
-                .setText(record.get("Bezeichner"));
+        return new CodeableConcept().addCoding(getCoding()).setText(record.get("Bezeichner"));
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private Coding getCoding() throws Exception {
         String code = record.get("ICD");
         if (code != null) {
-            return new Coding()
-                    .setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm")
-                    .setVersion("2020")     // just to be KDS compatible
+            return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm").setVersion("2020") // just to be KDS compatible
                     .setCode(code);
 
-        } else {
-            error("ICD empty for Record");
-            return null;
         }
+        error("ICD empty for Record");
+        return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
             return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));

@@ -1,11 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
-import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
-import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.DateType;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
@@ -17,35 +14,56 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-public class DateUtil {
-    static List<String> formatStrings = Arrays.asList("dd.MM.yyyy hh:mm","yyyy");
+import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.DateType;
 
+import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
+
+/**
+ * @author fheuschkel (02.11.2020)
+ */
+public class DateUtil {
+
+    /**  */
+    static List<String> formatStrings = Arrays.asList("dd.MM.yyyy hh:mm", "yyyy");
+
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
     public static DateType parseDateType(String date) throws Exception {
         //        return new DateType(
         //                Date.from(parseLocalDate(date)
         //                        .atStartOfDay(ZoneId.systemDefault())
         //                        .toInstant()),
         //                TemporalPrecisionEnum.DAY);
-        for (String formatString : formatStrings)
-        {
-            try
-            {
+        for (String formatString : formatStrings) {
+            try {
                 return new DateType(new SimpleDateFormat(formatString).parse(date));
+            } catch (ParseException e) {
             }
-            catch (ParseException e) {}
         }
-
         return null;
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate parseLocalDate(String dateTime) throws Exception {
         if (!dateTime.isBlank()) {
             return tryDayFormat1(dateTime);
-        } else {
-            throw new Exception();
         }
+        throw new Exception();
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat1(String dateTime) throws Exception {
         try {
             return Year.parse(dateTime).atDay(1);
@@ -54,6 +72,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat2(String dateTime) throws Exception {
         try {
             return YearMonth.parse(dateTime).atDay(1);
@@ -62,6 +85,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat3(String dateTime) throws Exception {
         try {
             return LocalDate.parse(dateTime);
@@ -70,6 +98,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat4(String dateTime) throws Exception {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -79,6 +112,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat5(String dateTime) throws Exception {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/dd/yyyy");
@@ -88,6 +126,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param dateTime
+     * @return
+     * @throws Exception
+     */
     private static LocalDate tryDayFormat6(String dateTime) throws Exception {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
@@ -97,14 +140,24 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
     public static DateTimeType parseDateTimeType(String date) throws Exception {
-        return new DateTimeType(
-                Date.from(parseLocalDateTime(date)
-                        .atZone(ZoneId.systemDefault())
-                        .toInstant()),
-                TemporalPrecisionEnum.SECOND);
+        LocalDateTime parsedLocalDateTime = parseLocalDateTime(date);
+        ZoneId systemDefaultZoneId = ZoneId.systemDefault();
+        Instant instantDate = parsedLocalDateTime.atZone(systemDefaultZoneId).toInstant();
+        Date resultDate = Date.from(instantDate);
+        return new DateTimeType(resultDate, TemporalPrecisionEnum.SECOND);
     }
 
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
     private static LocalDateTime parseLocalDateTime(String date) throws Exception {
         try {
             LocalDate localDate = parseLocalDate(date);
@@ -114,6 +167,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
     private static LocalDateTime tryTimeFormat1(String date) throws Exception {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy, H:mm");
@@ -123,6 +181,11 @@ public class DateUtil {
         }
     }
 
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
     private static LocalDateTime tryTimeFormat2(String date) throws Exception {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm");

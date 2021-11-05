@@ -12,17 +12,18 @@ import de.uni_leipzig.life.csv2fhir.Ucum;
 import junit.framework.TestCase;
 
 public class SplitMainTest extends TestCase {
+
     public SplitMainTest(String testName) {
         super(testName);
     }
 
     public static void testUcum() {
-        String test[] = { "mg/dl","U/l","ng/ml"};
+        String test[] = {"mg/dl", "U/l", "ng/ml"};
 
         for (String t : test) {
-            boolean isUcum =Ucum.isUcum(t);
+            boolean isUcum = Ucum.isUcum(t);
             if (isUcum) {
-                System.out.println(t + " is Ucum; human readable is " + Ucum.ucum2human(t));				
+                System.out.println(t + " is Ucum; human readable is " + Ucum.ucum2human(t));
             } else {
                 System.out.println(t + " is human readable; ucum is " + Ucum.human2ucum(t));
             }
@@ -33,13 +34,13 @@ public class SplitMainTest extends TestCase {
         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
         File csvDir = new File("H:\\git\\csv2fhir\\resources");
         SplitExcel se = new SplitExcel();
-        se.splitExcel(testExcel,csvDir);
+        se.splitExcel(testExcel, csvDir);
     }
 
     // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
 
     public static void splitTestDir() {
-        File excelDir =  new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
+        File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
         SplitExcel se = new SplitExcel();
         se.convertAllExcelInDir(excelDir);
 
@@ -53,14 +54,13 @@ public class SplitMainTest extends TestCase {
         assertEquals("10*9/L", Ucum.human2ucum("x10^9/l"));
 
         Set<String> s = LoincUcum.set();
-        assert(s.contains("/min"));
+        assert s.contains("/min");
 
         //        assertSystem.out.println(Ucum.human2ucum("1/min"));
     }
+
     public static void VHF() {
-        String files[] = {
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"
-        };
+        String files[] = {"C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"};
         for (String f : files) {
             splitTestSingle(f);
         }
@@ -78,31 +78,31 @@ public class SplitMainTest extends TestCase {
             splitTestSingle(f);
         }
     }
+
     public static void splitTestSingle(String filename) {
         File testExcel = new File(filename);
         SplitExcel se = new SplitExcel();
         try {
             se.splitExcel(testExcel);
             File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
-//            File resultJson = new File(testExcel.getParent(),            			
-//                    FilenameUtils.removeExtension(testExcel.getName())+".json");
-            Csv2Fhir converter = new Csv2Fhir(csvDir,FilenameUtils.removeExtension(testExcel.getName()));
-            converter.convertFilesPerPatient();	
+            //            File resultJson = new File(testExcel.getParent(),
+            //                    FilenameUtils.removeExtension(testExcel.getName())+".json");
+            Csv2Fhir converter = new Csv2Fhir(csvDir, FilenameUtils.removeExtension(testExcel.getName()));
+            converter.convertFilesPerPatient();
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
-        }
-        catch (Exception e) {
-            // TODO Auto-generated catch block
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-       public static void xxxxx() {
-           for (int i = 1; i < 10002; i++) {
-               System.out.printf(",VHF%05d",i);
-               if (i % 1000 == 0) System.out.printf("\n");
-           }
-       }
+    public static void xxxxx() {
+        for (int i = 1; i < 10002; i++) {
+            System.out.printf(",VHF%05d", i);
+            if (i % 1000 == 0) {
+                System.out.printf("\n");
+            }
+        }
+    }
 }

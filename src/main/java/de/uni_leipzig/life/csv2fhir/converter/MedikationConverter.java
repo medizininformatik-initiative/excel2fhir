@@ -37,25 +37,34 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 /*
- * MedicationStatement bei "Vor Aufnahme"
- * MedicationAdminstration sonst
+ * MedicationStatement bei "Vor Aufnahme" MedicationAdminstration sonst
  */
 public class MedikationConverter extends Converter {
 
-    String PROFILE_ADM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
+    /**  */
+    String PROFILE_ADM = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
 
-    String PROFILE_STM= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
+    /**  */
+    String PROFILE_STM = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
 
-    String PROFILE_MED= "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
+    /**  */
+    String PROFILE_MED = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
     // https://simplifier.net/medizininformatikinitiative-modulmedikation/medication-duplicate-3
+
     /*
-     * Invalid : Instance count for 'Medication.ingredient' is 0, which is not within the specified cardinality of 1..*
+     * Invalid : Instance count for 'Medication.ingredient' is 0, which is not
+     * within the specified cardinality of 1..*
      */
-
     static int n = 1;
-    // Krude Lösung TODO
-    static Set<String> medis = new HashSet<String>();
 
+    // Krude Lösung TODO
+    /**  */
+    static Set<String> medis = new HashSet<>();
+
+    /**
+     * @param record
+     * @throws Exception
+     */
     public MedikationConverter(CSVRecord record) throws Exception {
         super(record);
     }
@@ -70,17 +79,21 @@ public class MedikationConverter extends Converter {
         if ("Vor Aufnahme".equals(record.get("Medikationsplanart"))) {
             l.add(parseMedicationStatement());
         } else {
-            l.add(parseMedicationAdministration());            
-        }        
+            l.add(parseMedicationAdministration());
+        }
         return l;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(getEncounterId()+"-MA-"+n++);
+        medicationAdministration.setId(getEncounterId() + "-MA-" + n++);
 
-//        medicationAdministration.setStatus("completed");
+        //        medicationAdministration.setStatus("completed");
         medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
         // Set Reference
         medicationAdministration.setMedication(getMedicationReference());
@@ -88,12 +101,16 @@ public class MedikationConverter extends Converter {
         //        medicationAdministration.setMedication(convertMedicationCodeableConcept());
         medicationAdministration.setContext(getEncounterReference());
         medicationAdministration.setSubject(getPatientReference());
-//        medicationAdministration.setEffective(convertPeriod());
+        //        medicationAdministration.setEffective(convertPeriod());
         medicationAdministration.setEffective(convertTimestamp());
         medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private Medication parseMedication() throws Exception {
         Medication medication = new Medication();
         medication.setMeta(new Meta().addProfile(PROFILE_MED));
@@ -103,6 +120,10 @@ public class MedikationConverter extends Converter {
         medication.setIngredient(Collections.singletonList(getIngredient()));
         return medication;
     }
+
+    /**
+     * @return
+     */
     private MedicationIngredientComponent getIngredient() {
         MedicationIngredientComponent m = new MedicationIngredientComponent();
 
@@ -118,6 +139,10 @@ public class MedikationConverter extends Converter {
         }
         return m;
     }
+
+    /**
+     * @return
+     */
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(getPZNCoding());
@@ -126,91 +151,97 @@ public class MedikationConverter extends Converter {
         return concept;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private String getMedicationId() throws Exception {
         String id;
         String atc = record.get("ATC Code");
         if (atc != null) {
-            id =  atc;
+            id = atc;
         } else {
             String txt = record.get("Wirksubstanz aus Präparat/Handelsname");
-            if (txt != null) {
-                warning("ATC empty");
-                id = txt;
-            } else {
+            if (txt == null) {
                 error("ATC and Wirksubstanz aus Präparat/Handelsname empty");
                 return null;
             }
+            warning("ATC empty");
+            id = txt;
         }
-//        return getDIZId() + "-M-" + id.hashCode();
+        //        return getDIZId() + "-M-" + id.hashCode();
         // Dumm, jede Medikation wird für jeden Patienten wiederholt... es dafür steht jedes bundle für sich
         return getPatientId() + "-M-" + id.hashCode();
     }
 
-
+    /**
+     * @return
+     * @throws Exception
+     */
     private Reference getMedicationReference() throws Exception {
         return new Reference().setReference("Medication/" + getMedicationId());
     }
     private Coding getATCCoding() {
         String atc = record.get("ATC Code");
         if (atc != null) {
-            return new Coding()
-                    .setSystem("http://fhir.de/CodeSystem/dimdi/atc")
-                    .setCode(atc)
-                    .setUserSelected("ATC".equals(record.get("FHIR_UserSelected")));
-        } else {
-            return null;
+            return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/atc").setCode(atc).setUserSelected("ATC".equals(
+                    record.get("FHIR_UserSelected")));
         }
+        return null;
     }
 
+    /**
+     * @return
+     */
     private Coding getPZNCoding() {
         String pzn = record.get("PZN Code");
         if (pzn != null) {
-            return new Coding()
-                    .setSystem("http://fhir.de/CodeSystem/ifa/pzn")
-                    .setCode(pzn)
-                    .setUserSelected("PZN".equals(record.get("FHIR_UserSelected")));
-        } else {
-            return null;
+            return new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn").setCode(pzn).setUserSelected("PZN".equals(record
+                    .get("FHIR_UserSelected")));
         }
+        return null;
     }
 
+    /**
+     * @return
+     */
     private Coding getASKCoding() {
         String ask = record.get("ASK");
         if (ask != null) {
-            return new Coding()
-                    .setSystem("http://fhir.de/CodeSystem/ask")
-                    .setCode(ask)
-                    .setUserSelected("ASK".equals(record.get("FHIR_UserSelected")));
+            return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setCode(ask).setUserSelected("ASK".equals(record.get(
+                    "FHIR_UserSelected")));
         }
         // fake to be KDS conform
         warning("no ask code");
-        return new Coding()
-                .setSystem("http://fhir.de/CodeSystem/ask").setDisplay("no code defined");
+        return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setDisplay("no code defined");
     }
 
-//    /*
-//     * Wenn kein start/end vorhanden, dann nehme einfach mal an "start unbekannt", "end = Zeitstempel/heute"
-//     */
-//    private  Type convertDateTime() throws Exception {
-//        try {
-//            
-//            String e = record.get("Zeitstempel");
-//            if (!StringUtils.isBlank(e)) {
-//                return DateUtil.parseDateTimeType(e);
-//                // Period with only end date
-//                // DateTimeType end = DateUtil.parseDateTimeType(e);
-//                //return new Period().setEndElement(end);
-//            }
-//        } catch (Exception e) {
-//            error("Can not parse Zeitstempel");           
-//        }
-//        return null;
-//    }
+    //    /*
+    //     * Wenn kein start/end vorhanden, dann nehme einfach mal an "start unbekannt", "end = Zeitstempel/heute"
+    //     */
+    //    private  Type convertDateTime() throws Exception {
+    //        try {
+    //
+    //            String e = record.get("Zeitstempel");
+    //            if (!StringUtils.isBlank(e)) {
+    //                return DateUtil.parseDateTimeType(e);
+    //                // Period with only end date
+    //                // DateTimeType end = DateUtil.parseDateTimeType(e);
+    //                //return new Period().setEndElement(end);
+    //            }
+    //        } catch (Exception e) {
+    //            error("Can not parse Zeitstempel");
+    //        }
+    //        return null;
+    //    }
 
-    /*
+    /**
      * In den Testdaten leider häufig falsch / täglich wiederholt genutzt
+     *
+     * @return
+     * @throws Exception
      */
-    private  Type convertPeriod() throws Exception {
+    private Type convertPeriod() throws Exception {
         try {
             String s = record.get("Therapiestartdatum");
             String e = record.get("Therapieendedatum");
@@ -227,36 +258,37 @@ public class MedikationConverter extends Converter {
             DateTimeType start = DateUtil.parseDateTimeType(s);
             if (StringUtils.isBlank(e) || e.equals(s)) {
                 // Just a single day
-                return start;                                    
+                return start;
             }
             DateTimeType end = DateUtil.parseDateTimeType(e);
             // complete Period
-            return new Period().setStartElement(start).setEndElement(end);                    
+            return new Period().setStartElement(start).setEndElement(end);
         } catch (Exception e) {
-            error("Can not parse Therapiestartdatum or Therapieendedatum");           
+            error("Can not parse Therapiestartdatum or Therapieendedatum");
         }
         return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private Ratio getDoseRate() throws Exception {
         String unit = record.get("Einheit");
         if (unit != null) {
-            return new Ratio()
-                    .setNumerator(new Quantity()
-                            .setValue(getDose())
-                            .setUnit(unit)
-                            .setSystem("http://unitsofmeasure.org")
-                            .setCode(Ucum.human2ucum(unit)))
-                    .setDenominator(new Quantity()
-                            .setValue(new BigDecimal(1))
-                            .setSystem("http://XXX")
-                            .setCode(record.get("Darreichungsform")));
-        } else {
-            error("Einheit empty for Record");
-            return null;
+            return new Ratio().setNumerator(new Quantity().setValue(getDose()).setUnit(unit).setSystem(
+                    "http://unitsofmeasure.org").setCode(Ucum.human2ucum(unit)))
+                    .setDenominator(new Quantity().setValue(new BigDecimal(1)).setSystem("http://XXX").setCode(record.get(
+                            "Darreichungsform")));
         }
+        error("Einheit empty for Record");
+        return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private BigDecimal getDosesPerDay() throws Exception {
         try {
             return DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
@@ -266,6 +298,10 @@ public class MedikationConverter extends Converter {
         }
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private BigDecimal getDose() throws Exception {
         try {
             return DecimalUtil.parseDecimal(record.get("Einzeldosis"));
@@ -275,9 +311,13 @@ public class MedikationConverter extends Converter {
         }
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(getEncounterId()+"-MS-"+n++);
+        medicationStatement.setId(getEncounterId() + "-MS-" + n++);
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
 
@@ -286,14 +326,18 @@ public class MedikationConverter extends Converter {
         //        medicationStatement.setMedication(convertMedicationCodeableConcept());
         medicationStatement.setContext(getEncounterReference());
         medicationStatement.setSubject(getPatientReference());
-//        Type p = convertPeriod(); in den Testdaten meist so nicht richtig
+        //        Type p = convertPeriod(); in den Testdaten meist so nicht richtig
         Type p = convertTimestamp();
         medicationStatement.setEffective(p);
-//        medicationStatement.setDateAssertedElement(convertTimestamp());
+        //        medicationStatement.setDateAssertedElement(convertTimestamp());
         medicationStatement.addDosage(convertDosageStatement());
         return medicationStatement;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private DateTimeType convertTimestamp() throws Exception {
         try {
             return DateUtil.parseDateTimeType(record.get("Zeitstempel"));
@@ -303,6 +347,10 @@ public class MedikationConverter extends Converter {
         }
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private Quantity convertQuantity() throws Exception {
         BigDecimal value = null;
         try {
@@ -313,30 +361,37 @@ public class MedikationConverter extends Converter {
         }
         String ucum = "1"; // see https://ucum.org/ucum.html#section-Examples-for-some-Non-Units.
         String synonym = record.get("Darreichungsform");
-        return new SimpleQuantity()
-                .setValue(value)
-                .setUnit(synonym)
-                .setSystem("http://unitsofmeasure.org")
-                .setCode(ucum);
+        return new SimpleQuantity().setValue(value).setUnit(synonym).setSystem("http://unitsofmeasure.org").setCode(ucum);
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private MedicationAdministrationDosageComponent convertDosageAdministration() throws Exception {
         return new MedicationAdministrationDosageComponent().setDose(convertQuantity());
     }
+
+    /**
+     * @return
+     * @throws Exception
+     */
     private Dosage convertDosageStatement() throws Exception {
         Dosage d = new Dosage();
         d.addDoseAndRate().setDose(convertQuantity());
         return d;
     }
 
-    
+    /**
+     * @return
+     * @throws Exception
+     */
     private String getDoseUnit() throws Exception {
         String doseUnit = record.get("Einheit");
         if (doseUnit != null) {
             return doseUnit;
-        } else {
-            error("Einheit empty");
-            return null;
         }
+        error("Einheit empty");
+        return null;
     }
 }

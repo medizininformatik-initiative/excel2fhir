@@ -1,4 +1,5 @@
 package de.uni_leipzig.imise;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,73 +25,103 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 
-
+/**
+ * @author fmeinecke (02.11.2020)
+ */
 public class FHIRValidator {
+
+    /**  */
     FhirValidator validator;
+
+    /**
+     * @throws IOException
+     */
     public FHIRValidator() throws IOException {
-        FhirContext ctx = FhirContext.forR4();
-        
-        NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(ctx);
+        FhirContext fhirContext = FhirContext.forR4();
+
+        NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(fhirContext);
         File dir = new File(this.getClass().getClassLoader().getResource("package").getPath());
         for (File f : dir.listFiles()) {
             if (f.isFile()) {
-                System.out.println("loadPackage: " + f.getCanonicalPath());            
+                System.out.println("loadPackage: " + f.getCanonicalPath());
                 npmPackageSupport.loadPackageFromClasspath("package/" + f.getName());
             }
         }
 
-        
         // Create a support chain including the NPM Package Support
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                 npmPackageSupport,
-                new DefaultProfileValidationSupport(ctx),
-                new CommonCodeSystemsTerminologyService(ctx),
-                new InMemoryTerminologyServerValidationSupport(ctx),
-                new SnapshotGeneratingValidationSupport(ctx)
-                );
+                new DefaultProfileValidationSupport(fhirContext),
+                new CommonCodeSystemsTerminologyService(fhirContext),
+                new InMemoryTerminologyServerValidationSupport(fhirContext),
+                new SnapshotGeneratingValidationSupport(fhirContext));
+
         CachingValidationSupport validationSupport = new CachingValidationSupport(validationSupportChain);
 
         // Create a validator. Note that for good performance you can create as many validator objects
         // as you like, but you should reuse the same validation support object in all of the,.
-        validator = ctx.newValidator();
+        validator = fhirContext.newValidator();
         FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
-        validator.registerValidatorModule(instanceValidator);      
+        validator.registerValidatorModule(instanceValidator);
     }
+
+    /**
+     * @param r
+     */
     public void validate(Resource r) {
         // Perform the validation
         System.out.println("validate: " + r.getId());
         ValidationResult outcome = validator.validateWithResult(r);
-        
-        for (SingleValidationMessage i : outcome.getMessages()) {        
+
+        for (SingleValidationMessage i : outcome.getMessages()) {
             System.out.println(i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
         }
     }
-    
+
+    /**
+     * @param f
+     * @return
+     * @throws ConfigurationException
+     * @throws DataFormatException
+     * @throws FileNotFoundException
+     */
     static public Bundle readBundle(File f) throws ConfigurationException, DataFormatException, FileNotFoundException {
         FhirContext ctx = FhirContext.forR4();
-        IBaseResource r = ctx.newJsonParser().parseResource(new FileInputStream(f));
+        IBaseResource r = null;
+        try (FileInputStream fileStream = new FileInputStream(f)) {
+            r = ctx.newJsonParser().parseResource(fileStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         assert r instanceof Bundle;
         return (Bundle) r;
     }
+
+    /**
+     * @param bundle
+     * @throws ConfigurationException
+     * @throws DataFormatException
+     * @throws FileNotFoundException
+     */
     public void validateBundle(Bundle bundle) throws ConfigurationException, DataFormatException, FileNotFoundException {
         for (BundleEntryComponent e : bundle.getEntry()) {
             validate(e.getResource());
         }
-        
+
         // Geht auch:
-//        validate(bundle);
+        //        validate(bundle);
     }
     static public void main(String args[]) throws IOException {
-        
+
         FHIRValidator v = new FHIRValidator();
         String f = "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB\\POLAR_Testdaten_UKB-UKB002.json";
 
         v.validateBundle(readBundle(new File(f)));
         // Create a test patient to validate
-//        Patient patient = new Patient();
-//        patient.getMeta().addProfile("https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient");
-//        // System but not value set for NHS identifier (this should generate an error)
-//        patient.addIdentifier().setSystem("https://fhir.nhs.uk/Id/nhs-number");
-//        v.validate(patient);
+        //        Patient patient = new Patient();
+        //        patient.getMeta().addProfile("https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient");
+        //        // System but not value set for NHS identifier (this should generate an error)
+        //        patient.addIdentifier().setSystem("https://fhir.nhs.uk/Id/nhs-number");
+        //        v.validate(patient);
     }
 }

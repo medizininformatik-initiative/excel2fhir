@@ -25,9 +25,14 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class PersonConverter extends Converter {
 
-    String PROFILE="https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
+    /**  */
+    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
     // @see https://simplifier.net/MedizininformatikInitiative-ModulPerson/PatientIn
 
+    /**
+     * @param record
+     * @throws Exception
+     */
     public PersonConverter(CSVRecord record) throws Exception {
         super(record);
     }
@@ -46,20 +51,23 @@ public class PersonConverter extends Converter {
         return Collections.singletonList(patient);
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private List<Identifier> parseIdentifier() throws Exception {
         Identifier i = new Identifier();
-        i.setValue(getPatientId())
-        .setSystem("https://"+getDIZId()+".de/pid")
-        .setUse(IdentifierUse.USUAL)
-        .setType(new CodeableConcept(new Coding()
-                .setCode("MR")
-                .setSystem("http://terminology.hl7.org/CodeSystem/v2-0203")));
+        i.setValue(getPatientId()).setSystem("https://" + getDIZId() + ".de/pid").setUse(IdentifierUse.USUAL).setType(
+                new CodeableConcept(new Coding().setCode("MR").setSystem("http://terminology.hl7.org/CodeSystem/v2-0203")));
         return Collections.singletonList(i);
     }
+
+    /**
+     * @return
+     */
     private HumanName parseName() {
         String forename = record.get("Vorname");
         String surname = record.get("Nachname");
-
 
         if (forename != null && surname != null) {
             HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
@@ -67,12 +75,15 @@ public class PersonConverter extends Converter {
                 humanName.addGiven(name);
             }
             return humanName;
-        } else {
-            warning("Vorname or Nachname empty for Record");
-            return null;
         }
+        warning("Vorname or Nachname empty for Record");
+        return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private Enumerations.AdministrativeGender parseSex() throws Exception {
         String sex = record.get("Geschlecht");
         if (sex != null) {
@@ -88,19 +99,21 @@ public class PersonConverter extends Converter {
                 case "divers":
                     return Enumerations.AdministrativeGender.OTHER;
                 default:
-                    throw new Exception("Error on Patient: Geschlecht <"+ sex+ ">not parsable for Record: "
-                            + record.getRecordNumber() + "! " + record.toString());
+                    throw new Exception("Error on Patient: Geschlecht <" + sex + ">not parsable for Record: " + record
+                            .getRecordNumber() + "! " + record.toString());
                 }
-            } else {
-                warning("Geschlecht empty for Record");
-                return null;
             }
-        } else {
-            warning("Geschlecht not found");
+            warning("Geschlecht empty for Record");
             return null;
         }
+        warning("Geschlecht not found");
+        return null;
     }
 
+    /**
+     * @return
+     * @throws Exception
+     */
     private DateType parseBirthDate() throws Exception {
         String birthday = record.get("Geburtsdatum");
         if (birthday != null) {
@@ -110,12 +123,14 @@ public class PersonConverter extends Converter {
                 error("Can not parse birthday for Record");
                 return null;
             }
-        } else {
-            error("Geburtsdatum empty for Record");
-            return null;
         }
+        error("Geburtsdatum empty for Record");
+        return null;
     }
 
+    /**
+     * @return
+     */
     private Address parseAddress() {
         String address = record.get("Anschrift");
         Address a;
@@ -134,35 +149,36 @@ public class PersonConverter extends Converter {
             } else {
                 // "12345 ORT"
                 String[] addressPlzAndCity = address.split(" ");
-                if (addressPlzAndCity.length == 2) { 
+                if (addressPlzAndCity.length == 2) {
                     String plz = addressPlzAndCity[0];
                     String city = addressPlzAndCity[1];
                     a.setCity(city).setPostalCode(plz).setText(address);
                 } else {
                     a.setText(address);
-                }               
+                }
             }
             return a.setType(AddressType.BOTH).setCountry("DE");
-        } else {
-            warning("On Patient: Anschrift empty for Record");
-            return null;
         }
+        warning("On Patient: Anschrift empty for Record");
+        return null;
     }
 
-    // not used yet    
+    // not used yet
+    /**
+     * @return
+     * @throws Exception
+     */
     @SuppressWarnings("unused")
     private Reference parseHealthProvider() throws Exception {
         String practitioner = record.get("Krankenkasse");
         if (practitioner != null) {
             if (practitioner.length() != 0) {
                 return new Reference().setDisplay(practitioner);
-            } else {
-                error("Krankenkasse empty for Record");
-                return null;
             }
-        } else {
-            warning("Column Krankenkasse not found!");
+            error("Krankenkasse empty for Record");
             return null;
         }
+        warning("Column Krankenkasse not found!");
+        return null;
     }
 }

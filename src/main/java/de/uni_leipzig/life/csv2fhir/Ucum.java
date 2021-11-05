@@ -4,12 +4,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+/**
+ * @author fheuschkel (02.11.2020)
+ */
 public class Ucum {
+
+    /**  */
     private static Map<String, String> ucumMap = new HashMap<>();
+
+    /**  */
     private static Map<String, String> humanMap = new HashMap<>();
 
     // http://download.hl7.de/documents/ucum/ucumdata.html
-    // Mapping from "Valid UCUM Code to Common Synonym (non-UCUM) 
+    // Mapping from "Valid UCUM Code to Common Synonym (non-UCUM)
     static {
         // Times
         ucumMap.put("a", "year");
@@ -20,7 +27,6 @@ public class Ucum {
         ucumMap.put("h", "h");
         ucumMap.put("s", "s");
         ucumMap.put("ms", "ms");
-
 
         // Length
         ucumMap.put("m2", "m\u00b2");
@@ -49,13 +55,12 @@ public class Ucum {
         ucumMap.put("mm[Hg]", "mmHg");
         ucumMap.put("mbar", "mbar");
         ucumMap.put("Ohm", "\u03a9");
-//        ucumMap.put("Cel", "°C");
+        //        ucumMap.put("Cel", "°C");
         ucumMap.put("C", "°C"); // das ist eigentoich falsch; Vonk stolpert aber darüber und will nicht Cel
-        ucumMap.put("10^9", "G");	
-        ucumMap.put("10^12","T");
+        ucumMap.put("10^9", "G");
+        ucumMap.put("10^12", "T");
         ucumMap.put("deg", "\u00b0");
         ucumMap.put("[iU]", "IE");
-
 
         // Liter
         ucumMap.put("L", "l");
@@ -64,75 +69,93 @@ public class Ucum {
         ucumMap.put("uL", "µl");
         ucumMap.put("fL", "fl");
 
-
         //		ucumMap.put("", "");
 
         for (Entry<String, String> e : ucumMap.entrySet()) {
-            humanMap.put(e.getValue(),e.getKey());
+            humanMap.put(e.getValue(), e.getKey());
         }
 
         // Exceptions
-        humanMap.put("I.E.","[iU]");
-        humanMap.put("x 10^3","10^3");
-        humanMap.put("x 10^6","10^6");
-        humanMap.put("x10^12","10^12");
-        humanMap.put("x10^9","10^9");
-        humanMap.put("Mrd","10^9");
-        humanMap.put("Sekunde(n)","s");
-        humanMap.put("sec","s");
-        humanMap.put("1","");	// like in 1/min
-        humanMap.put("BPM","/m");	// like in 1/min
-        humanMap.put("-","");   // eigentich empty
-        
-        humanMap.put("1.73^2","{1.73_m2}");   // Ausnahme Böhm; eigentlich echter Fehler 
-        humanMap.put("1.73m^2","{1.73_m2}");   // Ausnahme Böhm
+        humanMap.put("I.E.", "[iU]");
+        humanMap.put("x 10^3", "10^3");
+        humanMap.put("x 10^6", "10^6");
+        humanMap.put("x10^12", "10^12");
+        humanMap.put("x10^9", "10^9");
+        humanMap.put("Mrd", "10^9");
+        humanMap.put("Sekunde(n)", "s");
+        humanMap.put("sec", "s");
+        humanMap.put("1", ""); // like in 1/min
+        humanMap.put("BPM", "/m"); // like in 1/min
+        humanMap.put("-", ""); // eigentich empty
+
+        humanMap.put("1.73^2", "{1.73_m2}"); // Ausnahme Böhm; eigentlich echter Fehler
+        humanMap.put("1.73m^2", "{1.73_m2}"); // Ausnahme Böhm
 
         //		humanMap.put("mmHg","mm[Hg]");
         //		humanMap.put("l","L");
         //		humanMap.put("ml","mL");
         //		humanMap.put("Jahre","a");
     }
+
+    /**
+     * @param ucum
+     * @return
+     */
     public static boolean isUcum(String ucum) {
-        String[] uArr = ucum.split("/",-1);
-        if (ucum == null || ucum.isBlank()) return false;
+        String[] uArr = ucum.split("/", -1);
+        if (ucum == null || ucum.isBlank()) {
+            return false;
+        }
         for (String u : uArr) {
             String h = ucumMap.get(u);
             if (h == null) {
                 return false;
             }
         }
-        return true;		
+        return true;
     }
+
+    /**
+     * @param ucum
+     * @return
+     */
     public static String ucum2human(String ucum) {
-        String[] uArr = ucum.split("/",-1);
-        String human="";
+        String[] uArr = ucum.split("/", -1);
+        String human = "";
         for (String u : uArr) {
             String h = ucumMap.get(u.trim());
             if (h == null) {
                 System.out.println("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
                 h = u;
             }
-            if (!human.isEmpty()) human +="/";
+            if (!human.isEmpty()) {
+                human += "/";
+            }
             human += h;
         }
         return human;
     }
+
+    /**
+     * @param human
+     * @return
+     */
     public static String human2ucum(String human) {
-        String[] hArr = human.split("/",-1);
+        String[] hArr = human.split("/", -1);
         String ucum = "";
         boolean first = true;
-        for (String h : hArr) {            
+        for (String h : hArr) {
             String u = humanMap.get(h.trim());
             if (u == null) {
-                System.out.println("unknown human readable unit <" + h + "> in " + human +"; ucum will be empty");
+                System.out.println("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
                 return "";
             }
 
             if (first) {
-                first=false;
+                first = false;
             } else {
-                ucum +="/"; 
-            }       
+                ucum += "/";
+            }
 
             ucum += u;
         }
