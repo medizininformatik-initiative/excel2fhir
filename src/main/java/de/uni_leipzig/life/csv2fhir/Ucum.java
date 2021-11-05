@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
+
 /**
  * @author fheuschkel (02.11.2020)
  */
@@ -125,7 +127,7 @@ public class Ucum {
         for (String u : uArr) {
             String h = ucumMap.get(u.trim());
             if (h == null) {
-                System.out.println("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
+                Sys.out1("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
                 h = u;
             }
             if (!human.isEmpty()) {
@@ -147,7 +149,7 @@ public class Ucum {
         for (String h : hArr) {
             String u = humanMap.get(h.trim());
             if (u == null) {
-                System.out.println("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
+                Sys.out1("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
                 return "";
             }
 

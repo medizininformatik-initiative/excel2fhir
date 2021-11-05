@@ -24,6 +24,7 @@ import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
 
 /**
  * @author fmeinecke (02.11.2020)
@@ -43,7 +44,7 @@ public class FHIRValidator {
         File dir = new File(this.getClass().getClassLoader().getResource("package").getPath());
         for (File f : dir.listFiles()) {
             if (f.isFile()) {
-                System.out.println("loadPackage: " + f.getCanonicalPath());
+                Sys.out1("loadPackage: " + f.getCanonicalPath());
                 npmPackageSupport.loadPackageFromClasspath("package/" + f.getName());
             }
         }
@@ -70,11 +71,11 @@ public class FHIRValidator {
      */
     public void validate(Resource r) {
         // Perform the validation
-        System.out.println("validate: " + r.getId());
+        Sys.out1("validate: " + r.getId());
         ValidationResult outcome = validator.validateWithResult(r);
 
         for (SingleValidationMessage i : outcome.getMessages()) {
-            System.out.println(i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
+            Sys.out1(i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
         }
     }
 

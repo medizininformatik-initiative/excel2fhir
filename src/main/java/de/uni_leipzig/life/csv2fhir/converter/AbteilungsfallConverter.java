@@ -74,7 +74,7 @@ class Fachabteilungsschluessel {
      */
     private static void add(String code, String text) {
         dict.put(normalize(text), code);
-        //        System.out.println(normalize(text));
+        //        Sys.out1(normalize(text));
         //        dict.put(code,normalize(text));
     }
 

@@ -6,6 +6,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
+
 /**
  * @author fheuschkel (02.11.2020)
  */
@@ -47,7 +49,7 @@ public abstract class Converter {
      * @param msg
      */
     protected void warning(String msg) {
-        System.out.println("Warning on " + getErrorMessageBody(msg));
+        Sys.out1("Warning on " + getErrorMessageBody(msg));
     }
 
     /**

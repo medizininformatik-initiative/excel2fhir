@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 import de.uni_leipzig.imise.csv2fhir.SplitExcel;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.Ucum;
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
 import junit.framework.TestCase;
 
 public class SplitMainTest extends TestCase {
@@ -23,9 +24,9 @@ public class SplitMainTest extends TestCase {
         for (String t : test) {
             boolean isUcum = Ucum.isUcum(t);
             if (isUcum) {
-                System.out.println(t + " is Ucum; human readable is " + Ucum.ucum2human(t));
+                Sys.out1(t + " is Ucum; human readable is " + Ucum.ucum2human(t));
             } else {
-                System.out.println(t + " is human readable; ucum is " + Ucum.human2ucum(t));
+                Sys.out1(t + " is human readable; ucum is " + Ucum.human2ucum(t));
             }
         }
     }

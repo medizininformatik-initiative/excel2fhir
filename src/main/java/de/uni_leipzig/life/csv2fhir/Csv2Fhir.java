@@ -32,6 +32,7 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -105,7 +106,7 @@ public class Csv2Fhir {
                 String pid = record.get("Patient-ID");
                 if (pid != null) {
                     pids.add(pid.toUpperCase());
-                    System.out.println("found pid=" + pid);
+                    Sys.out1("found pid=" + pid);
                 }
             }
             String[] a = new String[pids.size()];
@@ -133,7 +134,7 @@ public class Csv2Fhir {
                 }
                 try (Reader in = new FileReader(file)) {
                     CSVParser records = csvFormat.parse(in);
-                    System.out.println("Start parsing File:" + fileName);
+                    Sys.out1("Start parsing File:" + fileName);
                     if (isColumnMissing(records.getHeaderMap(), factory.getNeededColumnNames())) {
                         records.close();
                         throw new Exception("Error - File: " + fileName + " not convertable!");
@@ -184,7 +185,7 @@ public class Csv2Fhir {
                     }
                     try (Reader in = new FileReader(file)) {
                         CSVParser records = csvFormat.parse(in);
-                        System.out.println("Start parsing File:" + fileName);
+                        Sys.out1("Start parsing File:" + fileName);
                         if (isColumnMissing(records.getHeaderMap(), factory.getNeededColumnNames())) {
                             records.close();
                             throw new Exception("Error - File: " + fileName + " not convertable!");
@@ -211,7 +212,7 @@ public class Csv2Fhir {
                     }
                 }
                 File outputFile = new File(inputDirectory.getAbsolutePath(), outputFilenamebase + "-" + pid + ".json");
-                System.out.println("writing pid=" + pid);
+                Sys.out1("writing pid=" + pid);
 
                 try (FileWriter fw = new FileWriter(outputFile)) {
                     try (FileWriter fileWriter = new FileWriter(outputFile)) {
@@ -247,11 +248,11 @@ public class Csv2Fhir {
         if (!columns.containsAll(neededColumns)) {//Error message
             for (String s : neededColls) {
                 if (!columns.contains(s)) {
-                    System.out.println("Column " + s + " missing");
+                    Sys.out1("Column " + s + " missing");
                 }
             }
             //            System.out.println();
-            //            System.out.println(columns);
+            //            Sys.out1(columns);
             return false;
         }
         return true;

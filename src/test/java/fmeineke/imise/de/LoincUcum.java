@@ -3,6 +3,8 @@ package fmeineke.imise.de;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
+
 public class LoincUcum {
 
     static Set<String> m;
@@ -12,7 +14,7 @@ public class LoincUcum {
             m = new HashSet<>();
             for (String[] s : d) {
                 m.add(s[0]);
-                System.out.println(s[0]);
+                Sys.out1(s[0]);
             }
         }
         return m;

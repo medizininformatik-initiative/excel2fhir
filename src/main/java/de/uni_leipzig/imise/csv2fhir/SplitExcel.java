@@ -25,6 +25,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.google.common.collect.Sets;
 
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
+import de.uni_leipzig.life.csv2fhir.utils.Sys;
 
 /**
  * @author fmeinecke (02.11.2020)
@@ -51,10 +52,10 @@ public class SplitExcel {
      */
     class Logger {
         void info(String s) {
-            System.out.println(s);
+            Sys.out1(s);
         }
         void error(String s) {
-            System.err.println(s);
+            Sys.err1(s);
         }
     }
 
@@ -194,7 +195,7 @@ public class SplitExcel {
             try (PrintStream logFileStream = new PrintStream(logFile)) {
                 splitExcel(excelTestdata);
                 File csvDir = new File(FilenameUtils.removeExtension(excelTestdata.getPath()));
-                System.out.println(logFile.getAbsolutePath());
+                Sys.out1(logFile.getAbsolutePath());
                 System.setOut(logFileStream);
                 //                File resultJson = new File(excelDir, fileName + ".json");
                 Csv2Fhir converter = new Csv2Fhir(csvDir, fileName);
