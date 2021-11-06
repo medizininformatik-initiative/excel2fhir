@@ -40,7 +40,7 @@ public class SplitMainTest extends TestCase {
 
     // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
 
-    public static void splitTestDir() {
+    public static void splitTestDir() throws IOException {
         File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
         SplitExcel se = new SplitExcel();
         se.convertAllExcelInDir(excelDir);
@@ -89,7 +89,7 @@ public class SplitMainTest extends TestCase {
             //            File resultJson = new File(testExcel.getParent(),
             //                    FilenameUtils.removeExtension(testExcel.getName())+".json");
             Csv2Fhir converter = new Csv2Fhir(csvDir, FilenameUtils.removeExtension(testExcel.getName()));
-            converter.convertFilesPerPatient();
+            converter.convertFiles(true);
 
         } catch (IOException e) {
             e.printStackTrace();

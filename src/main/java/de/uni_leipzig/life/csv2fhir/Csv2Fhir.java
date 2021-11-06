@@ -7,7 +7,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +26,7 @@ import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Resource;
 
 import ca.uhn.fhir.context.FhirContext;
+import de.uni_leipzig.imise.utils.Alphabetical;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
@@ -43,6 +46,12 @@ public class Csv2Fhir {
     private final File inputDirectory;
 
     /**  */
+    private final File outputDirectory;
+
+    /**  */
+    private final String outputFileNameBase;
+
+    /**  */
     private final Map<String, ConverterFactory> converterFactorys;
 
     /**  */
@@ -52,19 +61,25 @@ public class Csv2Fhir {
     private final CSVFormat csvFormat;
 
     /**  */
-    private final String outputFilenamebase;
-
-    /**  */
     private String filter = ".*";
 
     /**
      * @param inputDirectory
      * @param outputFileNameBase
      */
-    @SuppressWarnings("serial")
     public Csv2Fhir(File inputDirectory, String outputFileNameBase) {
+        this(inputDirectory, inputDirectory, outputFileNameBase);
+    }
+
+    /**
+     * @param inputDirectory
+     * @param outputFileNameBase
+     */
+    @SuppressWarnings("serial")
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase) {
         this.inputDirectory = inputDirectory;
-        outputFilenamebase = outputFileNameBase;
+        this.outputDirectory = outputDirectory;
+        this.outputFileNameBase = outputFileNameBase;
         converterFactorys = new HashMap<>() {
             {
                 put("Person.csv", new PersonConverterFactory());
@@ -90,27 +105,36 @@ public class Csv2Fhir {
     }
 
     /**
-     * @param fileName
+     * @param csvFileName
+     * @param columnName
+     * @param distinct
+     * @param alphabetical
      * @return
      * @throws IOException
      */
-    public String[] getIds(String fileName) throws IOException {
-        Set<String> pids = new HashSet<>();
-        File file = new File(inputDirectory.getPath(), fileName);
+    public Collection<String> getValues(String csvFileName, String columnName, boolean distinct, boolean alphabetical)
+            throws IOException {
+        Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
+        File file = new File(inputDirectory, csvFileName);
 
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
         try (CSVParser records = csvFormat.parse(new FileReader(file))) {
             for (CSVRecord record : records) {
-                String pid = record.get("Patient-ID");
+                String pid = record.get(columnName);
                 if (pid != null) {
-                    pids.add(pid.toUpperCase());
+                    values.add(pid.toUpperCase());
                     Sys.out1("found pid=" + pid);
                 }
             }
-            String[] a = new String[pids.size()];
-            return pids.toArray(a);
+            if (alphabetical) {
+                if (distinct) {
+                    values = new ArrayList<>(values);
+                }
+                Alphabetical.sort((List<String>) values);
+            }
+            return values;
         }
     }
 
@@ -128,14 +152,16 @@ public class Csv2Fhir {
                 if (factory == null) {
                     continue;
                 }
-                File file = new File(inputDirectory.getPath(), fileName);
+                File file = new File(inputDirectory, fileName);
                 if (!file.exists() || file.isDirectory()) {
                     continue;
                 }
                 try (Reader in = new FileReader(file)) {
                     CSVParser records = csvFormat.parse(in);
                     Sys.out1("Start parsing File:" + fileName);
-                    if (isColumnMissing(records.getHeaderMap(), factory.getNeededColumnNames())) {
+                    Map<String, Integer> headerMap = records.getHeaderMap();
+                    String[] columnNames = factory.getNeededColumnNames();
+                    if (isColumnMissing(headerMap, columnNames)) {
                         records.close();
                         throw new Exception("Error - File: " + fileName + " not convertable!");
                     }
@@ -157,17 +183,29 @@ public class Csv2Fhir {
                 }
             }
         }
-        File outputFile = new File(inputDirectory.getAbsolutePath(), outputFilenamebase + ".json");
+        File outputFile = new File(outputDirectory, outputFileNameBase + ".json");
         try (FileWriter fileWriter = new FileWriter(outputFile)) {
             fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
         }
     }
 
     /**
+     * @param convertFilesPerPatient
      * @throws Exception
      */
-    public void convertFilesPerPatient() throws Exception {
-        String[] pids = getIds("Person.csv");
+    public void convertFiles(boolean convertFilesPerPatient) throws Exception {
+        if (convertFilesPerPatient) {
+            convertFilesPerPatient();
+        } else {
+            convertFiles();
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private void convertFilesPerPatient() throws Exception {
+        Collection<String> pids = getValues("Person.csv", "Patient-ID", true, false);
         for (String pid : pids) {
             setFilter(pid);
             String[] files = inputDirectory.list();
@@ -179,7 +217,7 @@ public class Csv2Fhir {
                     if (factory == null) {
                         continue;
                     }
-                    File file = new File(inputDirectory.getPath(), fileName);
+                    File file = new File(inputDirectory, fileName);
                     if (!file.exists() || file.isDirectory()) {
                         continue;
                     }
@@ -211,7 +249,7 @@ public class Csv2Fhir {
                         records.close();
                     }
                 }
-                File outputFile = new File(inputDirectory.getAbsolutePath(), outputFilenamebase + "-" + pid + ".json");
+                File outputFile = new File(outputDirectory, outputFileNameBase + "-" + pid + ".json");
                 Sys.out1("writing pid=" + pid);
 
                 try (FileWriter fw = new FileWriter(outputFile)) {

@@ -9,7 +9,7 @@ import picocli.CommandLine.IExitCodeExceptionMapper;
 /**
  * @author fheuschkel (02.11.2020)
  */
-class PrintExceptionMessageHandler implements CommandLine.IExecutionExceptionHandler {
+public class PrintExceptionMessageHandler implements CommandLine.IExecutionExceptionHandler {
 
     @Override
     public int handleExecutionException(Exception ex, CommandLine cmd, CommandLine.ParseResult parseResult) {

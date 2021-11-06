@@ -49,7 +49,7 @@ public abstract class Converter {
      * @param msg
      */
     protected void warning(String msg) {
-        Sys.out1("Warning on " + getErrorMessageBody(msg));
+        Sys.outm(1, 1, "Warning on " + getErrorMessageBody(msg));
     }
 
     /**
