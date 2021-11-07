@@ -25,7 +25,10 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Resource;
 
+import com.google.common.base.Strings;
+
 import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.utils.Alphabetical;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
@@ -42,6 +45,39 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFac
  */
 public class Csv2Fhir {
 
+    /**
+     * @author AXS (07.11.2021)
+     */
+    public static enum OutputFileType {
+
+        JSON {
+            @Override
+            public IParser getParser() {
+                return fhirContext.newJsonParser();
+            }
+        },
+
+        XML {
+            @Override
+            public IParser getParser() {
+                return fhirContext.newXmlParser();
+            }
+        };
+
+        public String getFileExtension() {
+            return "." + name().toLowerCase();
+        }
+
+        /** The context to generate the parser */
+        private static final FhirContext fhirContext = FhirContext.forR4();
+
+        /**
+         * @return the parser to write the bundles
+         */
+        public abstract IParser getParser();
+
+    }
+
     /**  */
     private final File inputDirectory;
 
@@ -55,13 +91,7 @@ public class Csv2Fhir {
     private final Map<String, ConverterFactory> converterFactorys;
 
     /**  */
-    private final FhirContext fhirContext;
-
-    /**  */
     private final CSVFormat csvFormat;
-
-    /**  */
-    private String filter = ".*";
 
     /**
      * @param inputDirectory
@@ -92,16 +122,8 @@ public class Csv2Fhir {
                 put("Klinische Dokumentation.csv", new KlinischeDokumentationConverterFactory());
             }
         };
-        fhirContext = FhirContext.forR4();
         csvFormat = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withTrim(true)
                 .withAllowMissingColumnNames(true).withFirstRecordAsHeader();
-    }
-
-    /**
-     * @param f
-     */
-    public void setFilter(String f) {
-        filter = f.toUpperCase();
     }
 
     /**
@@ -139,126 +161,107 @@ public class Csv2Fhir {
     }
 
     /**
-     * @throws Exception
-     */
-    public void convertFiles() throws Exception {
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.TRANSACTION);
-
-        String[] files = inputDirectory.list();
-        if (files != null) {
-            for (String fileName : files) {
-                ConverterFactory factory = converterFactorys.get(fileName);
-                if (factory == null) {
-                    continue;
-                }
-                File file = new File(inputDirectory, fileName);
-                if (!file.exists() || file.isDirectory()) {
-                    continue;
-                }
-                try (Reader in = new FileReader(file)) {
-                    CSVParser records = csvFormat.parse(in);
-                    Sys.out1("Start parsing File:" + fileName);
-                    Map<String, Integer> headerMap = records.getHeaderMap();
-                    String[] columnNames = factory.getNeededColumnNames();
-                    if (isColumnMissing(headerMap, columnNames)) {
-                        records.close();
-                        throw new Exception("Error - File: " + fileName + " not convertable!");
-                    }
-                    for (CSVRecord record : records) {
-                        try {
-                            List<Resource> list = factory.create(record).convert();
-                            if (list != null) {
-                                for (Resource resource : list) {
-                                    if (resource != null) {
-                                        bundle.addEntry().setResource(resource).setRequest(getRequestComponent(resource));
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            printException(e);
-                        }
-                    }
-                    records.close();
-                }
-            }
-        }
-        File outputFile = new File(outputDirectory, outputFileNameBase + ".json");
-        try (FileWriter fileWriter = new FileWriter(outputFile)) {
-            fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
-        }
-    }
-
-    /**
      * @param convertFilesPerPatient
      * @throws Exception
      */
-    public void convertFiles(boolean convertFilesPerPatient) throws Exception {
+    public void convertFiles(OutputFileType outputFileType, boolean convertFilesPerPatient) throws Exception {
         if (convertFilesPerPatient) {
-            convertFilesPerPatient();
+            convertFilesPerPatient(outputFileType);
         } else {
-            convertFiles();
+            convertFiles(outputFileType);
         }
     }
 
     /**
      * @throws Exception
      */
-    private void convertFilesPerPatient() throws Exception {
+    public void convertFiles(OutputFileType outputFileType) throws Exception {
+        String[] files = inputDirectory.list();
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.TRANSACTION);
+        if (files != null) {
+            convertFiles(bundle, null, files);
+        }
+        writeOutputFile(bundle, "", outputFileType);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
         Collection<String> pids = getValues("Person.csv", "Patient-ID", true, false);
         for (String pid : pids) {
-            setFilter(pid);
+            String filter = pid.toUpperCase();
             String[] files = inputDirectory.list();
+            Bundle bundle = new Bundle();
+            bundle.setType(Bundle.BundleType.TRANSACTION);
             if (files != null) {
-                Bundle bundle = new Bundle();
-                bundle.setType(Bundle.BundleType.TRANSACTION);
-                for (String fileName : files) {
-                    ConverterFactory factory = converterFactorys.get(fileName);
-                    if (factory == null) {
-                        continue;
-                    }
-                    File file = new File(inputDirectory, fileName);
-                    if (!file.exists() || file.isDirectory()) {
-                        continue;
-                    }
-                    try (Reader in = new FileReader(file)) {
-                        CSVParser records = csvFormat.parse(in);
-                        Sys.out1("Start parsing File:" + fileName);
-                        if (isColumnMissing(records.getHeaderMap(), factory.getNeededColumnNames())) {
-                            records.close();
-                            throw new Exception("Error - File: " + fileName + " not convertable!");
-                        }
-                        for (CSVRecord record : records) {
-                            try {
-                                String p = record.get("Patient-ID");
-                                if (!p.toUpperCase().matches(filter)) {
-                                    continue;
-                                }
-                                List<Resource> list = factory.create(record).convert();
-                                if (list != null) {
-                                    for (Resource resource : list) {
-                                        if (resource != null) {
-                                            bundle.addEntry().setResource(resource).setRequest(getRequestComponent(resource));
-                                        }
-                                    }
-                                }
-                            } catch (Exception e) {
-                                printException(e);
+                convertFiles(bundle, filter, files);
+            }
+            writeOutputFile(bundle, "-" + pid, outputFileType);
+        }
+    }
+
+    private void writeOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
+            throws IOException {
+        String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
+                + outputFileType.getFileExtension();
+        File outputFile = new File(outputDirectory, fileName);
+        Sys.out1("writing file " + fileName);
+        try (FileWriter fw = new FileWriter(outputFile)) {
+            try (FileWriter fileWriter = new FileWriter(outputFile)) {
+                outputFileType.getParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
+            }
+        }
+    }
+
+    /**
+     * @param bundle
+     * @param filterID
+     * @param files
+     * @throws Exception
+     */
+    private void convertFiles(Bundle bundle, String filterID, String[] files) throws Exception {
+        for (String fileName : files) {
+            ConverterFactory factory = converterFactorys.get(fileName);
+            if (factory == null) {
+                continue;
+            }
+            File file = new File(inputDirectory, fileName);
+            if (!file.exists() || file.isDirectory()) {
+                continue;
+            }
+            try (Reader in = new FileReader(file)) {
+                CSVParser records = csvFormat.parse(in);
+                Sys.out1("Start parsing File:" + fileName);
+                Map<String, Integer> headerMap = records.getHeaderMap();
+                String[] columnNames = factory.getNeededColumnNames();
+                if (isColumnMissing(headerMap, columnNames)) {
+                    records.close();
+                    throw new Exception("Error - File: " + fileName + " not convertable!");
+                }
+                for (CSVRecord record : records) {
+                    try {
+                        if (!Strings.isNullOrEmpty(filterID)) {
+                            String idColumnName = factory.getIdColumnName();
+                            String p = record.get(idColumnName);
+                            if (!p.toUpperCase().matches(filterID)) {
+                                continue;
                             }
                         }
-                        records.close();
+                        List<Resource> list = factory.create(record).convert();
+                        if (list != null) {
+                            for (Resource resource : list) {
+                                if (resource != null) {
+                                    bundle.addEntry().setResource(resource).setRequest(getRequestComponent(resource));
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        printException(e);
                     }
                 }
-                File outputFile = new File(outputDirectory, outputFileNameBase + "-" + pid + ".json");
-                Sys.out1("writing pid=" + pid);
-
-                try (FileWriter fw = new FileWriter(outputFile)) {
-                    try (FileWriter fileWriter = new FileWriter(outputFile)) {
-                        fhirContext.newJsonParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
-                        //        ctx.newXmlParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
-                    }
-
-                }
+                records.close();
             }
         }
     }

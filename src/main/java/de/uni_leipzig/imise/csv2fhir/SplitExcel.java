@@ -1,5 +1,7 @@
 package de.uni_leipzig.imise.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,6 +29,7 @@ import com.google.common.collect.Sets;
 import de.uni_leipzig.imise.utils.FileTools;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
+import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
 
 /**
  * @author fmeinecke (02.11.2020)
@@ -236,59 +239,65 @@ public class SplitExcel {
      * @throws IOException
      */
     public void convertAllExcelInDir(File sourceExcelDir) throws IOException {
-        convertAllExcelInDir(sourceExcelDir, null, null, false);
+        convertAllExcelInDir(sourceExcelDir, null, null, JSON, false);
     }
 
     /**
      * @param sourceExcelDir
-     * @param targetCSVDir
-     * @param targetJSONDir
+     * @param tempDir
+     * @param resultDir
+     * @param outputFileType
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, File targetCSVDir, File targetJSONDir, boolean convertFilesPerPatient)
+    public void convertAllExcelInDir(File sourceExcelDir, File tempDir, File resultDir, OutputFileType outputFileType,
+            boolean convertFilesPerPatient)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
-        createAndCleanOutputDirectories(sourceExcelDir, targetCSVDir, targetJSONDir);
+        createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, targetCSVDir, targetJSONDir, convertFilesPerPatient, false);
+            convertExcelFile(sourceExcelFile, tempDir, resultDir, outputFileType, convertFilesPerPatient, false);
         }
     }
 
     /**
      * @param sourceExcelFile
-     * @param targetCSVDir
-     * @param targetJSONDir
+     * @param tempDir
+     * @param resultDir
+     * @param outputFileType
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public void convertExcelFile(File sourceExcelFile, File targetCSVDir, File targetJSONDir, boolean convertFilesPerPatient)
+    public void convertExcelFile(File sourceExcelFile, File tempDir, File resultDir, OutputFileType outputFileType,
+            boolean convertFilesPerPatient)
             throws IOException {
-        convertExcelFile(sourceExcelFile, targetCSVDir, targetJSONDir, convertFilesPerPatient, true);
+        convertExcelFile(sourceExcelFile, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
     }
 
     /**
      * @param sourceExcelFile
-     * @param targetCSVDir
-     * @param targetJSONDir
+     * @param tempDir
+     * @param resultDir
+     * @param outputFileType
      * @param convertFilesPerPatient
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private void convertExcelFile(File sourceExcelFile, File targetCSVDir, File targetJSONDir, boolean convertFilesPerPatient,
+    private void convertExcelFile(File sourceExcelFile, File tempDir, File resultDir, OutputFileType outputFileType,
+            boolean convertFilesPerPatient,
             boolean createAndCleanOutputDirectories) throws IOException {
         if (createAndCleanOutputDirectories) {
-            createAndCleanOutputDirectories(sourceExcelFile, targetCSVDir, targetJSONDir);
+            createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
         PrintStream defaultSysOut = System.out;
         String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
-        File logFile = new File(targetCSVDir, fileName + ".log");
+        File logFile = new File(tempDir, fileName + ".log");
         try (PrintStream logFileStream = new PrintStream(logFile)) {
-            splitExcel(sourceExcelFile, targetCSVDir);
+            splitExcel(sourceExcelFile, tempDir);
             Sys.out1(logFile.getAbsolutePath());
             System.setOut(logFileStream);
-            Csv2Fhir converter = new Csv2Fhir(targetCSVDir, targetJSONDir, fileName);
-            converter.convertFiles(convertFilesPerPatient);
+            Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
+            converter.convertFiles(outputFileType, convertFilesPerPatient);
             System.setOut(defaultSysOut);
         } catch (Exception e) {
             e.printStackTrace();

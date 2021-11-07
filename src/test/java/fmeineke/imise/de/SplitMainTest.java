@@ -1,5 +1,7 @@
 package fmeineke.imise.de;
 
+import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
@@ -89,7 +91,7 @@ public class SplitMainTest extends TestCase {
             //            File resultJson = new File(testExcel.getParent(),
             //                    FilenameUtils.removeExtension(testExcel.getName())+".json");
             Csv2Fhir converter = new Csv2Fhir(csvDir, FilenameUtils.removeExtension(testExcel.getName()));
-            converter.convertFiles(true);
+            converter.convertFiles(JSON, true);
 
         } catch (IOException e) {
             e.printStackTrace();

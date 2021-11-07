@@ -13,4 +13,19 @@ public interface ConverterFactory {
     /**  */
     String[] getNeededColumnNames();
 
+    /**
+     * @param index
+     * @return the name of the needed column at the index
+     */
+    public default String getNeededColumnName(int index) {
+        return getNeededColumnNames()[index];
+    }
+
+    /**
+     * @return the name of the column with the id (default 0)
+     */
+    public default String getIdColumnName() {
+        return getNeededColumnName(0);
+    }
+
 }

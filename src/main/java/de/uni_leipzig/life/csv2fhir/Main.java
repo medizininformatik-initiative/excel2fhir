@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
+
 import java.io.File;
 import java.util.concurrent.Callable;
 
@@ -42,7 +44,7 @@ public class Main implements Callable<Integer> {
             throw new Exception("provided input Directory is NOT a directory!");
         }
         Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile);
-        converter.convertFiles();
+        converter.convertFiles(JSON);
         return 0;
     }
 }
