@@ -56,18 +56,18 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-structures-r4</artifactId>
-            <version>5.5.0-PRE7-SNAPSHOT</version>
+            <version>5.5.3</version>
         </dependency>
        <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-validation-resources-r4</artifactId>
-            <version>5.5.0-PRE7-SNAPSHOT</version>
+            <version>5.5.3</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/org.hl7.fhir.validation -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-validation</artifactId>
-            <version>5.5.0-PRE7-SNAPSHOT</version>
+            <version>5.5.3</version>
         </dependency>
 
         <dependency>

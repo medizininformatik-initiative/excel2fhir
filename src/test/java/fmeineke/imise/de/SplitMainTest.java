@@ -63,7 +63,10 @@ public class SplitMainTest extends TestCase {
     }
 
     public static void VHF() {
-        String files[] = {"C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"};
+        String files[] = {
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"
+                "D:\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\VHF-Testdaten.xlsx"
+        };
         for (String f : files) {
             splitTestSingle(f);
         }
@@ -71,11 +74,12 @@ public class SplitMainTest extends TestCase {
 
     public static void splitTestSingle() {
         String files[] = {
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx",
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx",
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH.xlsx",
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU.xlsx",
-                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx"
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx",
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFR.xlsx",
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKSH.xlsx",
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKFAU.xlsx",
+                //                "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx"
+                "D:\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB.xlsx"
         };
         for (String f : files) {
             splitTestSingle(f);
