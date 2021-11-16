@@ -3,6 +3,8 @@ package de.uni_leipzig.life.csv2fhir;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -15,6 +17,9 @@ public abstract class Converter {
 
     /**  */
     final String pid;
+
+    /**  */
+    final String dizID;
 
     /**  */
     protected final CSVRecord record;
@@ -32,6 +37,7 @@ public abstract class Converter {
     public Converter(CSVRecord record) throws Exception {
         this.record = record;
         pid = parsePatientId();
+        dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
     }
 
     /**  */
@@ -86,7 +92,7 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getPatientReference() throws Exception {
-        return new Reference().setReference("Patient/" + getPatientId());
+        return createReference(Patient.class, getPatientId());
     }
 
     /**
@@ -94,7 +100,7 @@ public abstract class Converter {
      * @throws Exception
      */
     protected String getDIZId() throws Exception {
-        return getPatientId().toUpperCase().replaceAll("[^A-Z]", "");
+        return dizID;
     }
 
     /**
@@ -110,7 +116,15 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getEncounterReference() throws Exception {
-        return new Reference().setReference("Encounter/" + getEncounterId());
+        return createReference(Encounter.class, getEncounterId());
+    }
+
+    /**
+     * @param resourceClass
+     * @param idBase
+     */
+    public static Reference createReference(Class<? extends Resource> resourceClass, String idBase) {
+        return new Reference().setReference(resourceClass.getSimpleName() + "/" + idBase);
     }
 
     /**

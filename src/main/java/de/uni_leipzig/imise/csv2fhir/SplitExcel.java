@@ -38,9 +38,7 @@ public class SplitExcel {
 
     /**  */
     private static Set<String> sheetNames = Sets.newHashSet("Person", "Versorgungsfall", "Abteilungsfall", "Laborbefund",
-            "Diagnose", "Prozedur", "Medikation", "Klinische Dokumentation"
-    //            "Medikation"
-    );
+            "Diagnose", "Prozedur", "Medikation", "Klinische Dokumentation");
 
     /**  */
     private static final String DELIM = ",";
