@@ -173,35 +173,47 @@ public class Csv2Fhir {
     }
 
     /**
+     * @param outputFileType
      * @throws Exception
      */
     public void convertFiles(OutputFileType outputFileType) throws Exception {
-        String[] files = inputDirectory.list();
-        Bundle bundle = new Bundle();
-        bundle.setType(Bundle.BundleType.TRANSACTION);
-        if (files != null) {
-            convertFiles(bundle, null, files);
-        }
-        writeOutputFile(bundle, "", outputFileType);
+        convertFiles(outputFileType, null);
     }
 
     /**
+     * @param outputFileType
      * @throws Exception
      */
     private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
         Collection<String> pids = getValues("Person.csv", "Patient-ID", true, false);
         for (String pid : pids) {
-            String filter = pid.toUpperCase();
-            String[] files = inputDirectory.list();
-            Bundle bundle = new Bundle();
-            bundle.setType(Bundle.BundleType.TRANSACTION);
-            if (files != null) {
-                convertFiles(bundle, filter, files);
-            }
-            writeOutputFile(bundle, "-" + pid, outputFileType);
+            convertFiles(outputFileType, pid);
         }
     }
 
+    /**
+     * @param outputFileType
+     * @param pid
+     * @throws Exception
+     */
+    private void convertFiles(OutputFileType outputFileType, String pid) throws Exception {
+        String filter = pid == null ? null : pid.toUpperCase();
+        String[] files = inputDirectory.list();
+        Bundle bundle = new Bundle();
+        bundle.setType(Bundle.BundleType.TRANSACTION);
+        if (files != null) {
+            convertFiles(bundle, filter, files);
+        }
+        EncounterReferenceReplacer.convert(bundle);
+        writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
+    }
+
+    /**
+     * @param bundle
+     * @param fileNameExtension
+     * @param outputFileType
+     * @throws IOException
+     */
     private void writeOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
             throws IOException {
         String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
