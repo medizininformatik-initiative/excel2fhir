@@ -28,11 +28,11 @@ public class Excel2Fhir implements Callable<Integer> {
 
     @Option(names = {"-o",
             "--output-directory"}, paramLabel = "OUTPUT-DIRECTORY", description = "Output directory for the result json file(s).")
-    File outputDirectory = new File(APPLICATION_DIR, "outputGlobal");
+    File outputDirectory;
 
     @Option(names = {"-t",
             "--temp-directory"}, paramLabel = "TEMP-DIRECTORY", description = "Temp directory for csv files converted from input files and needed to create output files. If parameter is missing then the temp directory is the input directory.")
-    File tempDirectory = new File(APPLICATION_DIR, "outputLocal");
+    File tempDirectory;
 
     @Option(names = {"-r",
             "--result-file-format"}, paramLabel = "RESULT-FILE-FORMAT", description = "Result file format \"JSON\" (default) or \"XML\".")
@@ -55,6 +55,14 @@ public class Excel2Fhir implements Callable<Integer> {
     public Integer call() throws Exception {
         SplitExcel se = new SplitExcel();
         try {
+            File defaultOutputDirectory = inputFile != null ? inputFile.getParentFile() : inputDirectory.getParentFile();
+            if (tempDirectory == null) {
+                tempDirectory = new File(defaultOutputDirectory, "outputLocal");
+            }
+            if (outputDirectory == null) {
+                outputDirectory = new File(defaultOutputDirectory, "outputGlobal");
+            }
+
             if (inputFile != null) {
                 se.convertExcelFile(inputFile, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             } else {
