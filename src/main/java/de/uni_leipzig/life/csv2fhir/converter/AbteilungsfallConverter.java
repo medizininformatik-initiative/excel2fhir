@@ -133,7 +133,7 @@ public class AbteilungsfallConverter extends Converter {
     /**
      * @return
      */
-    private Coding convertClass_() {
+    private static Coding convertClass_() {
         return new Coding().setCode("ub").setSystem("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse");
     }
 
@@ -153,6 +153,10 @@ public class AbteilungsfallConverter extends Converter {
         }
         return new CodeableConcept().addCoding(new Coding()
                 .setSystem("https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/Fachabteilungsschluessel")
+                // Source:
+                // https://simplifier.net/MedizininformatikInitiative-ModulFall/KontaktGesundheitseinrichtung/~details
+                // and there search for Encounter.serviceType.coding:Fachabteilungsschluessel
+                .setSystem("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel")
                 .setCode(code)
                 .setDisplay(text));
     }
