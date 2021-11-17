@@ -1,14 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import java.io.InputStream;
-import java.net.URL;
-import java.text.Normalizer;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
-import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
@@ -20,69 +14,12 @@ import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
- * @author fmeinecke (29.10.2021), AXS
- */
-@SuppressWarnings("serial")
-class Fachabteilungsschluessel extends Properties {
-
-    /** Path to the file with department keys and their textual description. */
-    private static final URL DEPARTMENT_KEYS_FILE = ClassLoader.getSystemResource("Fachabteilungsschluessel.map");
-
-    /** Cache to prevent normalizing same strings in again and again. */
-    private static Map<Object, String> normalizedCache = new HashedMap<>();
-
-    /**
-     * A map from
-     */
-    public Fachabteilungsschluessel() {
-        try (InputStream s = DEPARTMENT_KEYS_FILE.openStream()) {
-            load(s);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public synchronized Object put(Object code, Object text) {
-        String key = normalize(text);
-        String value = String.valueOf(code);
-        return super.put(key, value);
-    }
-
-    @Override
-    public String get(Object keyText) {
-        String key = String.valueOf(keyText);
-        key = normalize(key);
-        return (String) super.get(key);
-    }
-
-    /**
-     * Replaces in the toString() string of the given object all special alpha
-     * characters by they base form and removes all non alpha characters.<br>
-     * ("Hämatologie und internistische Onkologie" -->
-     * hamatologieundinternistischeonkologie)
-     *
-     * @param o
-     * @return
-     */
-    private static String normalize(Object o) {
-        String normalizedString = normalizedCache.get(o);
-        if (normalizedString == null) {
-            String s = String.valueOf(o);
-            normalizedString = Normalizer.normalize(s, Normalizer.Form.NFD).toLowerCase().replaceAll("[^a-z]", "");
-            normalizedCache.put(o, normalizedString);
-        }
-        return normalizedString;
-    }
-
-}
-
-/**
- * @author fheuschkel (29.10.2020), fmeinecke
+ * @author fheuschkel (29.10.2020), fmeinecke, AXS
  */
 public class AbteilungsfallConverter extends Converter {
 
@@ -93,7 +30,8 @@ public class AbteilungsfallConverter extends Converter {
      * Maps from human readable department description to the number code for
      * the department.
      */
-    static Fachabteilungsschluessel fachabteilungsschluessel = new Fachabteilungsschluessel();
+    private final CodeSystemMapper departmentKeyMapper = new CodeSystemMapper("Fachabteilungsschluessel.map");
+
     //https://www.tmf-ev.de/MII/FHIR/ModulFall/Terminologien.html
     //https://www.medizininformatik-initiative.de/fhir/core/ValueSet/Fachabteilungsschluessel
 
@@ -142,23 +80,20 @@ public class AbteilungsfallConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertServiceType() throws Exception {
-        String text = record.get("Fachabteilung");
-        if (text == null) {
+        String departmentText = record.get("Fachabteilung");
+        if (departmentText == null) {
             error("Fachabteilung empty for Record");
             return null;
         }
-        String code = fachabteilungsschluessel.get(text);
-        if (code == null) {
-            code = text;
+        String departmentCode = departmentKeyMapper.getHumanToCode(departmentText);
+        if (departmentCode == null) {
+            departmentCode = departmentText;
         }
+        String codeSystem = departmentKeyMapper.getCodeSystem();
         return new CodeableConcept().addCoding(new Coding()
-                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/Fachabteilungsschluessel")
-                // Source:
-                // https://simplifier.net/MedizininformatikInitiative-ModulFall/KontaktGesundheitseinrichtung/~details
-                // and there search for Encounter.serviceType.coding:Fachabteilungsschluessel
-                .setSystem("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel")
-                .setCode(code)
-                .setDisplay(text));
+                .setSystem(codeSystem)
+                .setCode(departmentCode)
+                .setDisplay(departmentText));
     }
 
     /**

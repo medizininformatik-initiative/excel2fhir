@@ -9,7 +9,7 @@
 #
 # NOTE: 
 # Whitespaces in the human readable keys must be coded as '\u0020'.
-# An empty UCUM valu must be marked as 'EMPTY_STRING'.
+# An empty UCUM value must be marked as 'EMPTY_STRING'.
 #
 ###################################################################
 

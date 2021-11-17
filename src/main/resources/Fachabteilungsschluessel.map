@@ -1,40 +1,78 @@
-#https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Fall/Terminologien.html
-0100	Innere Medizin
-0200	Geriatrie
-0300	Kardiologie
-0400	Nephrologie
-0500	Hamatologie und internistische Onkologie
-0600	Endokrinologie
-0700	Gastroenterologie
-0800	Pneumologie
-0900	Rheumatologie
-1000	Padiatrie
-1100	Kinderkardiologie
-1200	Neonatologie
-1300	Kinderchirurgie
-1400	Lungen- und Bronchialheilkunde
-1500	Allgemeine Chirurgie
-1600	Unfallchirurgie
-1700	Neurochirurgie
-1800	Gefa.chirurgie
-1900	Plastische Chirurgie
-2000	Thoraxchirurgie
-2100	Herzchirurgie
-2200	Urologie
-2300	Orthopadie
-2400	Frauenheilkunde und Geburtshilfe
-2500	Geburtshilfe
-2600	Hals-, Nasen-, Ohrenheilkunde
-2700	Augenheilkunde
-2800	Neurologie
-2900	Allgemeine Psychiatrie
-3000	Kinder- und Jugendpsychiatrie
-3100	Psychosomatik/Psychotherapie
-3200	Nuklearmedizin
-3300	Strahlenheilkunde
-3400	Dermatologie
-3500	Zahn- und Kieferheilkunde, Mund- und Kieferchirurgie
-3600	Intensivmedizin
-2316	Orthopadie und Unfallchirurgie
-2425	Frauenheilkunde
-3700	Sonstige Fachabteilung
+####################################################################################################################
+# This map is used by the AbteilungsfallConverter to create Encounters with servicetype.
+#
+# https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Fall/Terminologien.html
+# alter System Code war "https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/Fachabteilungsschluessel"
+# aktueller Code siehe 
+# https://simplifier.net/MedizininformatikInitiative-ModulFall/KontaktGesundheitseinrichtung/~details
+# and there search for Encounter.serviceType.coding:Fachabteilungsschluessel
+#
+# If two or more human readable codes map to the same code,
+# then the backward map (from code to human readable text)
+# maps to the very first human readable code in this map.
+#
+# NOTE: 
+# Whitespaces in the human readable keys must be coded as '\u0020'.
+# An empty value must be marked as 'EMPTY_STRING'.
+#####################################################################################################################
+
+CODE_SYSTEM_URL		http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel
+
+###
+# the following codes comes from the excel tables
+###
+Innere\u0020Medizin											0100
+Geriatrie													0200
+Kardiologie													0300
+Nephrologie													0400
+Haematologie\u0020und\u0020internistische\u0020Onkologie	0500
+Endokrinologie												0600
+Gastroenterologie											0700
+Pneumologie													0800
+Rheumatologie												0900
+Paediatrie													1000
+Kinderkardiologie											1100
+Neonatologie												1200
+Kinderchirurgie												1300
+Lungen-\u0020und\u0020Bronchialheilkunde					1400
+Allgemeine\u0020Chirurgie									1500
+Unfallchirurgie												1600
+Neurochirurgie												1700
+Gefaesschirurgie											1800
+Plastische\u0020Chirurgie									1900
+Thoraxchirurgie												2000
+Herzchirurgie												2100	
+Urologie													2200
+Orthopaedie													2300
+Frauenheilkunde\u0020und\u0020Geburtshilfe					2400
+Geburtshilfe												2500
+Hals-,\u0020Nasen-,\u0020Ohrenheilkunde						2600
+Augenheilkunde												2700
+Neurologie													2800
+Allgemeine\u0020Pychiatrie									2900
+Kinder-\u0020und\u0020Jugendpsychiatrie						3000
+Psychosomatik/Psychotherapie								3100
+Nuklearmedizin												3200
+Strahlenheilkunde											3300
+Dermatologie												3400
+Zahn-\u0020und\u0020Kieferheilkunde,\u0020Mund-\u0020und\u0020Kieferchirurgie	3500
+Intensivmedizin												3600
+Orthopaedie\u0020und\u0020Unfallchirurgie					2316
+Frauenheilkunde												2425
+Sonstige\u0020Fachabteilung									3700
+
+###
+# the following codes come from the CODE_SYSTEM_URL
+# http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel
+###
+Hämatologie\u0020und\u0020internistische\u0020Onkologie		0500
+Pädiatrie													1000
+Gefa.chirurgie												1800
+Orthopädie													2300
+Orthopädie\u0020und\u0020Unfallchirurgie					2316
+
+
+###
+# the following codes are here for completeness
+###
+Gefäßchirurgie												1800	
