@@ -1,0 +1,107 @@
+###################################################################
+# Maps from a human readable code (non-UCUM) to an UCUM code.
+#
+# If two or more human readable codes map to the same UCUM code,
+# then the backward map (from ucum code to human readable code)
+# maps to the very first human readable code in this map.
+#
+# http://download.hl7.de/documents/ucum/ucumdata.html
+#
+# NOTE: 
+# Whitespaces in the human readable keys must be coded as '\u0020'.
+# An empty UCUM valu must be marked as 'EMPTY_STRING'.
+#
+###################################################################
+
+#########
+# Times #
+#########
+year	a
+month	mo
+week	wk
+d		d
+min		min
+h		h
+s		s
+ms		ms
+
+##########
+# Length #
+##########
+m\u00b2	m2
+m		m
+cm		cm
+
+##########
+# Weight #
+##########
+kg		kg
+g		g
+mg		mg
+µg		ug
+ng		ng
+pg		pg
+
+#######
+# Mol #
+#######
+U		U
+µU		uU
+mmol	mmol
+µmol	umol
+nmol	nmol
+### das nächste bedeutet millio osmol
+mosmol	mosm
+
+#########
+# Other #
+#########
+%		%
+cmH2O	cm[H2O]
+mmHg	mm[Hg]
+mbar	mbar
+\u03a9	Ohm
+### nur C statt Cel ist eigentlich falsch; Vonk stolpert aber darüber und will nicht Cel
+### °C		Cel
+°C		C
+G		10^9
+T		10^12
+\u00b0	deg
+IE		[iU]
+
+#########
+# Liter #
+#########
+l		L
+dl		dL
+ml		mL
+µl		uL
+fl		fL
+
+##############
+# Exceptions #
+##############
+I.E.		[iU]
+x\u002010^3		10^3
+x\u002010^6		10^6
+x10^12		10^12
+x10^9		10^9
+Mrd			10^9
+Sekunde(n)	s
+sec			s
+### like in 1/min
+1	 		EMPTY_STRING
+### like in 1/min
+BPM			/m
+### eigentich empty
+-			EMPTY_STRING
+
+### Ausnahme Böhm; eigentlich echter Fehler
+1.73^2		{1.73_m2}
+### Ausnahme Böhm
+1.73m^2		{1.73_m2}
+
+### mmHg		mm[Hg]
+### l			L
+### ml			mL
+### Jahre		a

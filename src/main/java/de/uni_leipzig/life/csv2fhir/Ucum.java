@@ -1,102 +1,72 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Properties;
 
 import de.uni_leipzig.imise.utils.Sys;
 
 /**
- * @author fheuschkel (02.11.2020)
+ * @author fheuschkel (02.11.2020), AXS
  */
+@SuppressWarnings("serial")
 public class Ucum {
 
-    /**  */
-    private static Map<String, String> ucumMap = new HashMap<>();
+    /**
+     * Name of the ucum map file in the resources which maps from non-UCUM text.
+     */
+    public static final String UCUM_MAP_FILE_NAME = "ucum.map";
 
-    /**  */
-    private static Map<String, String> humanMap = new HashMap<>();
+    /** Maps from human readable non-UCUM text to the UCUM code */
+    private static Map<String, String> humanToUcumMap = new HashMap<>();
 
-    // http://download.hl7.de/documents/ucum/ucumdata.html
-    // Mapping from "Valid UCUM Code to Common Synonym (non-UCUM)
+    /** Maps from an UCUM code to the human readable non-UCUM text */
+    private static Map<String, String> ucumToHumanMap = new HashMap<>();
+
     static {
-        // Times
-        ucumMap.put("a", "year");
-        ucumMap.put("mo", "month");
-        ucumMap.put("wk", "week");
-        ucumMap.put("d", "d");
-        ucumMap.put("min", "min");
-        ucumMap.put("h", "h");
-        ucumMap.put("s", "s");
-        ucumMap.put("ms", "ms");
+        UcumPropertiesLoader.load();
+    }
 
-        // Length
-        ucumMap.put("m2", "m\u00b2");
-        ucumMap.put("m", "m");
-        ucumMap.put("cm", "cm");
+    /**
+     * Fills the both maps from the properties file.
+     *
+     * @author AXS (17.11.2021)
+     */
+    private static class UcumPropertiesLoader extends Properties {
 
-        // Weight
-        ucumMap.put("kg", "kg");
-        ucumMap.put("g", "g");
-        ucumMap.put("mg", "mg");
-        ucumMap.put("ug", "µg");
-        ucumMap.put("ng", "ng");
-        ucumMap.put("pg", "pg");
-
-        // Mol
-        ucumMap.put("U", "U");
-        ucumMap.put("uU", "µU");
-        ucumMap.put("mmol", "mmol");
-        ucumMap.put("umol", "µmol");
-        ucumMap.put("nmol", "nmol");
-        ucumMap.put("mosm", "mosmol"); // millio osmol
-
-        // Other
-        ucumMap.put("%", "%");
-        ucumMap.put("cm[H2O]", "cmH2O");
-        ucumMap.put("mm[Hg]", "mmHg");
-        ucumMap.put("mbar", "mbar");
-        ucumMap.put("Ohm", "\u03a9");
-        //        ucumMap.put("Cel", "°C");
-        ucumMap.put("C", "°C"); // das ist eigentoich falsch; Vonk stolpert aber darüber und will nicht Cel
-        ucumMap.put("10^9", "G");
-        ucumMap.put("10^12", "T");
-        ucumMap.put("deg", "\u00b0");
-        ucumMap.put("[iU]", "IE");
-
-        // Liter
-        ucumMap.put("L", "l");
-        ucumMap.put("dL", "dl");
-        ucumMap.put("mL", "ml");
-        ucumMap.put("uL", "µl");
-        ucumMap.put("fL", "fl");
-
-        //		ucumMap.put("", "");
-
-        for (Entry<String, String> e : ucumMap.entrySet()) {
-            humanMap.put(e.getValue(), e.getKey());
+        /**
+         * Loads the properties file from the resources and fills the both maps.
+         */
+        public static void load() {
+            UcumPropertiesLoader ucumLoader = new UcumPropertiesLoader();
+            URL ucumMapFile = ClassLoader.getSystemResource(UCUM_MAP_FILE_NAME);
+            try (InputStream inputStream = ucumMapFile.openStream()) {
+                ucumLoader.load(inputStream);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        // Exceptions
-        humanMap.put("I.E.", "[iU]");
-        humanMap.put("x 10^3", "10^3");
-        humanMap.put("x 10^6", "10^6");
-        humanMap.put("x10^12", "10^12");
-        humanMap.put("x10^9", "10^9");
-        humanMap.put("Mrd", "10^9");
-        humanMap.put("Sekunde(n)", "s");
-        humanMap.put("sec", "s");
-        humanMap.put("1", ""); // like in 1/min
-        humanMap.put("BPM", "/m"); // like in 1/min
-        humanMap.put("-", ""); // eigentich empty
+        @Override
+        public synchronized String put(Object humanReadable, Object ucumCode) {
+            //Sys.out1(humanReadable + " -> " + ucumCode);
+            String ucumCodeString = String.valueOf(ucumCode);
+            //the const value 'EMPTY_STRING' means the empty string "" :)
+            if ("EMPTY_STRING".equals(ucumCodeString)) {
+                ucumCodeString = "";
+            }
+            String humanReadableString = String.valueOf(humanReadable);
+            // the very first human readable non-UCUM code in the ucum properties
+            // file is the value for the backward mapping from UCUM to nin-UCUM
+            String existingHumanReadable = ucumToHumanMap.get(ucumCode);
+            if (existingHumanReadable == null) {
+                ucumToHumanMap.put(ucumCodeString, humanReadableString);
+            }
+            return humanToUcumMap.put(humanReadableString, ucumCodeString);
+        }
 
-        humanMap.put("1.73^2", "{1.73_m2}"); // Ausnahme Böhm; eigentlich echter Fehler
-        humanMap.put("1.73m^2", "{1.73_m2}"); // Ausnahme Böhm
-
-        //		humanMap.put("mmHg","mm[Hg]");
-        //		humanMap.put("l","L");
-        //		humanMap.put("ml","mL");
-        //		humanMap.put("Jahre","a");
     }
 
     /**
@@ -104,12 +74,12 @@ public class Ucum {
      * @return
      */
     public static boolean isUcum(String ucum) {
-        String[] uArr = ucum.split("/", -1);
         if (ucum == null || ucum.isBlank()) {
             return false;
         }
+        String[] uArr = ucum.split("/", -1);
         for (String u : uArr) {
-            String h = ucumMap.get(u);
+            String h = ucumToHumanMap.get(u);
             if (h == null) {
                 return false;
             }
@@ -125,7 +95,7 @@ public class Ucum {
         String[] uArr = ucum.split("/", -1);
         String human = "";
         for (String u : uArr) {
-            String h = ucumMap.get(u.trim());
+            String h = ucumToHumanMap.get(u.trim());
             if (h == null) {
                 Sys.out1("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
                 h = u;
@@ -147,7 +117,7 @@ public class Ucum {
         String ucum = "";
         boolean first = true;
         for (String h : hArr) {
-            String u = humanMap.get(h.trim());
+            String u = humanToUcumMap.get(h.trim());
             if (u == null) {
                 Sys.out1("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
                 return "";
