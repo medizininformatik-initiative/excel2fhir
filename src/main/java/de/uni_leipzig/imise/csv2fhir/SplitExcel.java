@@ -1,5 +1,7 @@
 package de.uni_leipzig.imise.csv2fhir;
 
+import static de.uni_leipzig.imise.utils.LogUtils.infoFinished;
+import static de.uni_leipzig.imise.utils.LogUtils.infoStarted;
 import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
 import java.io.File;
@@ -9,7 +11,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -23,9 +24,12 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
 
 import de.uni_leipzig.imise.utils.FileTools;
-import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
 
@@ -43,27 +47,15 @@ public class SplitExcel {
     /**  */
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    /**
-     *
-     */
-    class Logger {
-        void info(String s) {
-            Sys.outm(1, 1, s);
-        }
-        void error(String s) {
-            Sys.errm(1, 1, s);
-        }
-    }
-
     /**  */
-    Logger log = new Logger();
-    //	Logger log = LogManager.getLogger(getClass());
+    private static final Logger LOG = LoggerFactory.getLogger(SplitExcel.class);
 
     /**
      * @param excelFile
      * @return
      */
     private static File getTargetCSVDir(File excelFile) {
+
         String path = excelFile.getPath();
         path = FilenameUtils.removeExtension(path);
         File targetCSVDir = new File(path, "output");
@@ -90,13 +82,14 @@ public class SplitExcel {
      * @throws IOException
      */
     public void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
+        Stopwatch stopwatch = infoStarted(LOG, "Start splitting Excel to CSV...");
         ensureEmptyDirectory(targetCsvDir, sourceExcelFile.getParentFile());
         String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
         try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
                 if (sheetNames != null && !sheetNames.contains(sheetName)) {
-                    log.info("Skip sheet \"" + sheetName + "\"");
+                    LOG.info("Skip sheet \"" + sheetName + "\"");
                     continue;
                 }
                 // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
@@ -106,7 +99,7 @@ public class SplitExcel {
                 String charSet = "UTF-8";
                 //                String charSet = "ISO-8859-1";
                 try (PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, charSet))) {
-                    log.info("Creating " + csvFile);
+                    LOG.info("Creating " + csvFile);
                     // Annahme: Header ist in der ersten Zeile
                     // Annahme: Es gibt nur soviele Spalten wie Header
                     int maxCol = 0;
@@ -125,7 +118,7 @@ public class SplitExcel {
                             break;
                         }
                         if (!cellColumnHeader.trim().equals(cellColumnHeader)) {
-                            log.error("Column \"" + cellColumnHeader + "\" is not trimmed");
+                            LOG.error("Column \"" + cellColumnHeader + "\" is not trimmed");
                         }
                         maxCol++;
                     }
@@ -161,7 +154,7 @@ public class SplitExcel {
                             } else if (cell.getCellType() == CellType.STRING) {
                                 cellValue = cell.getStringCellValue();
                             } else {
-                                log.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
+                                LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
                                 cellValue = "";
                             }
                             if (col > 0) {
@@ -185,7 +178,7 @@ public class SplitExcel {
                 }
             }
         }
-        log.info("Finished");
+        infoFinished(LOG, "Finished splitting Excel to CSV in ", stopwatch);
     }
 
     /**
@@ -193,13 +186,13 @@ public class SplitExcel {
      * @param inputDir
      * @throws IOException
      */
-    private final void ensureEmptyDirectory(File dir2CreateOrClean, File inputDir) throws IOException {
+    private static final void ensureEmptyDirectory(File dir2CreateOrClean, File inputDir) throws IOException {
         if (!dir2CreateOrClean.exists()) {
-            log.info("creating " + dir2CreateOrClean);
+            LOG.info("creating " + dir2CreateOrClean);
             dir2CreateOrClean.mkdirs();
         } else if (!inputDir.equals(dir2CreateOrClean)) {
             if (!FileTools.isEmpty(dir2CreateOrClean)) {
-                log.info("Delete all files in \"" + dir2CreateOrClean + "\"");
+                LOG.info("Delete all files in \"" + dir2CreateOrClean + "\"");
                 try {
                     FileUtils.cleanDirectory(dir2CreateOrClean);
                 } catch (Exception e) {
@@ -215,7 +208,7 @@ public class SplitExcel {
      * @param targetJSONDir
      * @throws IOException
      */
-    private void createAndCleanOutputDirectories(File sourceExcelFileOrDirectory, File targetCSVDir, File targetJSONDir)
+    private static void createAndCleanOutputDirectories(File sourceExcelFileOrDirectory, File targetCSVDir, File targetJSONDir)
             throws IOException {
         File sourceExcelDir = sourceExcelFileOrDirectory.isDirectory() ? sourceExcelFileOrDirectory
                 : sourceExcelFileOrDirectory.getParentFile();
@@ -296,18 +289,13 @@ public class SplitExcel {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
-        PrintStream defaultSysOut = System.out;
         String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
-        File logFile = new File(tempDir, fileName + ".log");
-        try (PrintStream logFileStream = new PrintStream(logFile)) {
-            splitExcel(sourceExcelFile, sheetNames, tempDir);
-            Sys.out1(logFile.getAbsolutePath());
-            System.setOut(logFileStream);
-            Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
+        splitExcel(sourceExcelFile, sheetNames, tempDir);
+        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
+        try {
             converter.convertFiles(outputFileType, convertFilesPerPatient);
-            System.setOut(defaultSysOut);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
         }
     }
 

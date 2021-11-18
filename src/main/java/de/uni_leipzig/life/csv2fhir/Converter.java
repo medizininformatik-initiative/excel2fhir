@@ -15,15 +15,19 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
-import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
  * @author fheuschkel (02.11.2020)
  */
 public abstract class Converter {
+
+    /**  */
+    protected static Logger LOG = LoggerFactory.getLogger(Converter.class);
 
     /**
      * Specifies how to handle missing values.
@@ -78,6 +82,8 @@ public abstract class Converter {
      * @throws Exception
      */
     protected void error(String msg) throws Exception {
+        Exception exception = new Exception("Error on " + getErrorMessageBody(msg));
+        LOG.error(msg, exception);
         throw new Exception("Error on " + getErrorMessageBody(msg));
     }
 
@@ -85,14 +91,7 @@ public abstract class Converter {
      * @param msg
      */
     protected void warning(String msg) {
-        Sys.outm(1, 1, "Warning on " + getErrorMessageBody(msg));
-    }
-
-    /**
-     * @param msg
-     */
-    protected void warning(String msg, int stackTraceBackwardSteps) {
-        Sys.outm(1, stackTraceBackwardSteps, "Warning on " + getErrorMessageBody(msg));
+        LOG.warn(getErrorMessageBody(msg));
     }
 
     /**
@@ -265,7 +264,7 @@ public abstract class Converter {
         if (errorLevelIfCodeIsMissing == ERROR) {
             error(errorMessage);
         } else if (errorLevelIfCodeIsMissing == WARNING) {
-            warning(errorMessage, 2);
+            warning(errorMessage);
         }
         return null;
     }
@@ -340,7 +339,7 @@ public abstract class Converter {
         if (errorLevelIfCodeIsMissing == ERROR) {
             error(errorMessage);
         } else {
-            warning(errorMessage, 2);
+            warning(errorMessage);
         }
         return null;
     }
@@ -383,7 +382,7 @@ public abstract class Converter {
             DateTimeType endDate = DateUtil.parseDateTimeType(endDateValue);
             return new Period().setStartElement(startDate).setEndElement(endDate);
         } catch (Exception e) {
-            warning("Can not parse Startdatum or Enddatum for Record", 2);
+            warning("Can not parse Startdatum or Enddatum for Record");
             return null;
         }
     }

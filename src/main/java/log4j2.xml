@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- https://stackoverflow.com/questions/21206993/very-simple-log4j2-xml-configuration-file-using-console-and-file-appender -->
+<Configuration status="INFO">
+	<Appenders>
+		<Console name="MESSAGE_ONLY" target="SYSTEM_OUT">
+			<PatternLayout pattern="%msg%n" />
+		</Console>
+		<Console name="DATE_LEVEL_SOURCE" target="SYSTEM_OUT">
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36}.%M(%F:%L) - %msg%n" />
+		</Console>
+		<Console name="DATE_LEVEL_SOURCE_LINENUMBER" target="SYSTEM_OUT">
+			<PatternLayout pattern="%sn %d{yyyy/MM/dd HH:mm:ss,SSS} %r [%-6p] [%t] %C{36}.%M(%F:%L) – %m%n" />
+		</Console>
+<!-- 		<File name="MyFile" fileName="target/all.log" immediateFlush="false" append="false"> -->
+<!-- 			<PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" /> -->
+<!-- 		</File> -->
+	</Appenders>
+	<Loggers>
+		<!-- additivity="true" because only one logger catches the message if false -->
+		<Root level="debug" additivity="true" includeLocation="true">
+<!-- 			<AppenderRef ref="MyFile" /> -->
+<!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
+		</Root>
+		<logger name="de.uni_leipzig" level="info" additivity="true" includeLocation="true">
+<!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
+			<AppenderRef ref="DATE_LEVEL_SOURCE" />
+<!-- 			<AppenderRef ref="DATE_LEVEL_SOURCE_LINENUMBER" /> -->
+<!-- 			<AppenderRef ref="MyFile" /> -->
+		</logger>
+	</Loggers>
+</Configuration>

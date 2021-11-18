@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler.printException;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -22,18 +20,22 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.utils.Alphabetical;
-import de.uni_leipzig.imise.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020)
  */
 public class Csv2Fhir {
+
+    /**  */
+    private static Logger LOG = LoggerFactory.getLogger(Csv2Fhir.class);
 
     /**
      * @author AXS (07.11.2021)
@@ -91,7 +93,6 @@ public class Csv2Fhir {
      * @param inputDirectory
      * @param outputFileNameBase
      */
-    @SuppressWarnings("serial")
     public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
@@ -121,7 +122,7 @@ public class Csv2Fhir {
                 String pid = record.get(columnName);
                 if (pid != null) {
                     values.add(pid.toUpperCase());
-                    Sys.out1("found pid=" + pid);
+                    LOG.info("found pid=" + pid);
                 }
             }
             if (alphabetical) {
@@ -190,7 +191,7 @@ public class Csv2Fhir {
         String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
                 + outputFileType.getFileExtension();
         File outputFile = new File(outputDirectory, fileName);
-        Sys.out1("writing file " + fileName);
+        LOG.info("writing file " + fileName);
         try (FileWriter fw = new FileWriter(outputFile)) {
             try (FileWriter fileWriter = new FileWriter(outputFile)) {
                 outputFileType.getParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
@@ -216,7 +217,7 @@ public class Csv2Fhir {
             }
             try (Reader in = new FileReader(file)) {
                 CSVParser records = csvFormat.parse(in);
-                Sys.out1("Start parsing File:" + fileName);
+                LOG.info("Start parsing File:" + fileName);
                 Map<String, Integer> headerMap = records.getHeaderMap();
                 List<String> neededColumnNames = factory.getNeededColumnNames();
                 if (isColumnMissing(headerMap, neededColumnNames)) {
@@ -241,7 +242,7 @@ public class Csv2Fhir {
                             }
                         }
                     } catch (Exception e) {
-                        printException(e);
+                        LOG.error("Error while converting files", e);
                     }
                 }
                 records.close();
@@ -271,11 +272,9 @@ public class Csv2Fhir {
         if (!columns.containsAll(neededColumnNames)) {//Error message
             for (String s : neededColumnNames) {
                 if (!columns.contains(s)) {
-                    Sys.out1("Column " + s + " missing");
+                    LOG.info("Column " + s + " missing");
                 }
             }
-            //            System.out.println();
-            //            Sys.out1(columns);
             return true;
         }
         return false;

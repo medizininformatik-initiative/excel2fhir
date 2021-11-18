@@ -2,7 +2,6 @@ package de.uni_leipzig.life.csv2fhir;
 
 import java.io.PrintWriter;
 
-import de.uni_leipzig.imise.utils.Sys;
 import picocli.CommandLine;
 import picocli.CommandLine.IExitCodeExceptionMapper;
 
@@ -21,17 +20,6 @@ public class PrintExceptionMessageHandler implements CommandLine.IExecutionExcep
                     : cmd.getCommandSpec().exitCodeOnExecutionException();
         } catch (Exception e) {
             return -1;
-        }
-    }
-
-    /**
-     * @param e
-     */
-    public static void printException(Exception e) {
-        if (e.getMessage() == null) {
-            e.printStackTrace();
-        } else {
-            Sys.out1(e.getMessage());
         }
     }
 

@@ -1,12 +1,17 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
-import de.uni_leipzig.imise.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020), AXS
  */
 public class Ucum {
+
+    /**  */
+    private static Logger LOG = LoggerFactory.getLogger(Ucum.class);
 
     /**
      * Name of the ucum map file in the resources which maps from non-UCUM text.
@@ -41,7 +46,7 @@ public class Ucum {
         for (String u : uArr) {
             String h = UCUM_CODE_MAPPER.getCodeToHuman(u.trim());
             if (h == null) {
-                Sys.out1("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
+                LOG.info("unknown ucum unit <" + u + "> in " + ucum + "; error ignored");
                 h = u;
             }
             if (!human.isEmpty()) {
@@ -63,7 +68,7 @@ public class Ucum {
         for (String h : hArr) {
             String u = UCUM_CODE_MAPPER.getHumanToCode(h.trim());
             if (u == null) {
-                Sys.out1("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
+                LOG.info("unknown human readable unit <" + h + "> in " + human + "; ucum will be empty");
                 return "";
             }
 
