@@ -17,6 +17,13 @@ public class MedikationConverterFactory implements ConverterFactory {
         },
         Zeitstempel,
         FHIR_Resourcentyp,
+        Medikationsplanart,
+        Wirksubstanz_aus_Praeparat_Handelsname {
+            @Override
+            public String toString() {
+                return "Wirksubstanz aus Präparat/Handelsname";
+            }
+        },
         ATC_Code {
             @Override
             public String toString() {
@@ -29,7 +36,10 @@ public class MedikationConverterFactory implements ConverterFactory {
                 return "PZN Code";
             }
         },
+        ASK,
         FHIR_UserSelected,
+        Darreichungsform,
+        //Tagesdosis,
         Anzahl_Dosen_pro_Tag {
             @Override
             public String toString() {
@@ -40,18 +50,7 @@ public class MedikationConverterFactory implements ConverterFactory {
         Therapieendedatum,
         Einzeldosis,
         Einheit,
-        Wirksubstanz_aus_Praeparat_Handelsname {
-            @Override
-            public String toString() {
-                return "Wirksubstanz aus Präparat/Handelsname";
-            }
-        },
-        //currently not used:
-        //Methode,
-        //Darreichungsform,
-        //Tagesdosis,
         //KombinationsAMI,
-        //ASK,
     }
 
     @Override

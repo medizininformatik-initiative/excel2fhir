@@ -1,5 +1,12 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Patient_ID;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Wert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Zeitstempel;
+
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -49,10 +56,9 @@ public class KlinischeDokumentationConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept parseObservationCode() throws Exception {
-        String code = record.get("LOINC");
+        String code = record.get(LOINC);
         if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(
-                    "Bezeichner"));
+            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(Bezeichner));
         }
         error("LOINC empty for Record");
         return null;
@@ -63,7 +69,7 @@ public class KlinischeDokumentationConverter extends Converter {
      * @throws Exception
      */
     private Reference parseObservationPatientId() throws Exception {
-        String patientId = record.get("Patient-ID");
+        String patientId = record.get(Patient_ID);
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
         }
@@ -76,7 +82,7 @@ public class KlinischeDokumentationConverter extends Converter {
      * @throws Exception
      */
     private DateTimeType parseObservationTimestamp() throws Exception {
-        String timestamp = record.get("Zeitstempel");
+        String timestamp = record.get(Zeitstempel);
         if (timestamp != null) {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
@@ -96,12 +102,12 @@ public class KlinischeDokumentationConverter extends Converter {
     private Quantity parseObservationValue() throws Exception {
         BigDecimal messwert;
         try {
-            messwert = DecimalUtil.parseDecimal(record.get("Wert"));
+            messwert = DecimalUtil.parseDecimal(record.get(Wert));
         } catch (Exception e) {
             error("Wert is not a numerical value for Record");
             return null;
         }
-        String unit = record.get("Einheit");
+        String unit = record.get(Einheit);
         if (unit == null || unit.isEmpty()) {
             error("Einheit is empty for Record");
             return null;

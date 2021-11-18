@@ -1,5 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Patient_ID;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallgrund_Aufnahmediagnose;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
@@ -66,7 +72,7 @@ public class VersorgungsfallConverter extends Converter {
      * @throws Exception
      */
     private List<DiagnosisComponent> convertDiagnosis() throws Exception {
-        String codes = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
+        String codes = record.get(Versorgungsfallgrund_Aufnahmediagnose);
         CodeableConcept c = new CodeableConcept();
         c.addCoding().setCode("AD").setSystem("http://terminology.hl7.org/CodeSystem/diagnosis-role").setDisplay(
                 "Admission diagnosis");
@@ -87,7 +93,7 @@ public class VersorgungsfallConverter extends Converter {
      */
     @Override
     protected Reference getPatientReference() throws Exception {
-        String patientId = record.get("Patient-ID");
+        String patientId = record.get(Patient_ID);
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
         }
@@ -116,7 +122,7 @@ public class VersorgungsfallConverter extends Converter {
      * @throws Exception
      */
     private Coding convertClass() throws Exception {
-        String code = record.get("Versorgungsfallklasse");
+        String code = record.get(Versorgungsfallklasse);
         if (code != null) {
             return new Coding().setSystem(
                     "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse")
@@ -132,8 +138,8 @@ public class VersorgungsfallConverter extends Converter {
      */
     private Period convertPeriod() throws Exception {
         try {
-            return new Period().setStartElement(DateUtil.parseDateTimeType(record.get("Startdatum"))).setEndElement(DateUtil
-                    .parseDateTimeType(record.get("Enddatum")));
+            return new Period().setStartElement(DateUtil.parseDateTimeType(record.get(Startdatum))).setEndElement(DateUtil
+                    .parseDateTimeType(record.get(Enddatum)));
         } catch (Exception e) {
             error("Can not parse Startdatum or Enddatum");
             return null;
@@ -144,7 +150,7 @@ public class VersorgungsfallConverter extends Converter {
      * @return
      */
     private CodeableConcept convertReasonCode() {
-        String code = record.get("Versorgungsfallgrund (Aufnahmediagnose)");
+        String code = record.get(Versorgungsfallgrund_Aufnahmediagnose);
         if (code != null) {
             return new CodeableConcept().addCoding(new Coding().setSystem("2.25.13106415395318837456468900343666547797")
                     .setCode(code));

@@ -1,5 +1,10 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.ICD;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Typ;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -49,7 +54,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private String getDiagnoseId() throws Exception {
-        return getDiagnoseId(record.get("ICD"));
+        return getDiagnoseId(record.get(ICD));
     }
 
     /**
@@ -57,7 +62,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertCategory() throws Exception {
-        String code = record.get("Typ");
+        String code = record.get(Typ);
         if (code != null) {
             return new CodeableConcept().setText(code);
         }
@@ -70,7 +75,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertCode() throws Exception {
-        return new CodeableConcept().addCoding(getCoding()).setText(record.get("Bezeichner"));
+        return new CodeableConcept().addCoding(getCoding()).setText(record.get(Bezeichner));
     }
 
     /**
@@ -78,7 +83,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private Coding getCoding() throws Exception {
-        String code = record.get("ICD");
+        String code = record.get(ICD);
         if (code != null) {
             return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm").setVersion("2020") // just to be KDS compatible
                     .setCode(code);
@@ -94,7 +99,7 @@ public class DiagnoseConverter extends Converter {
      */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
-            return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
+            return DateUtil.parseDateTimeType(record.get(Dokumentationsdatum));
         } catch (Exception e) {
             error("Can not parse Dokumentationsdatum for Record");
             return null;

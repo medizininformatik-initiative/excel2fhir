@@ -1,5 +1,18 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ASK;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ATC_Code;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Anzahl_Dosen_pro_Tag;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Darreichungsform;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Einzeldosis;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.FHIR_UserSelected;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Medikationsplanart;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.PZN_Code;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapieendedatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapiestartdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Wirksubstanz_aus_Praeparat_Handelsname;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Zeitstempel;
 import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
 import java.math.BigDecimal;
@@ -76,7 +89,7 @@ public class MedikationConverter extends Converter {
             l.add(parseMedication());
             medis.add(getMedicationId());
         }
-        if ("Vor Aufnahme".equals(record.get("Medikationsplanart"))) {
+        if ("Vor Aufnahme".equals(record.get(Medikationsplanart))) {
             l.add(parseMedicationStatement());
         } else {
             l.add(parseMedicationAdministration());
@@ -147,7 +160,7 @@ public class MedikationConverter extends Converter {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(getPZNCoding());
         concept.addCoding(getATCCoding());
-        concept.setText(record.get("Wirksubstanz aus Präparat/Handelsname"));
+        concept.setText(record.get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
     }
 
@@ -157,11 +170,11 @@ public class MedikationConverter extends Converter {
      */
     private String getMedicationId() throws Exception {
         String id;
-        String atc = record.get("ATC Code");
+        String atc = record.get(ATC_Code);
         if (atc != null) {
             id = atc;
         } else {
-            String txt = record.get("Wirksubstanz aus Präparat/Handelsname");
+            String txt = record.get(Wirksubstanz_aus_Praeparat_Handelsname);
             if (txt == null) {
                 error("ATC and Wirksubstanz aus Präparat/Handelsname empty");
                 return null;
@@ -182,10 +195,10 @@ public class MedikationConverter extends Converter {
         return new Reference().setReference("Medication/" + getMedicationId());
     }
     private Coding getATCCoding() {
-        String atc = record.get("ATC Code");
+        String atc = record.get(ATC_Code);
         if (atc != null) {
             return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/atc").setCode(atc).setUserSelected("ATC".equals(
-                    record.get("FHIR_UserSelected")));
+                    record.get(FHIR_UserSelected)));
         }
         return null;
     }
@@ -194,10 +207,9 @@ public class MedikationConverter extends Converter {
      * @return
      */
     private Coding getPZNCoding() {
-        String pzn = record.get("PZN Code");
+        String pzn = record.get(PZN_Code);
         if (pzn != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn").setCode(pzn).setUserSelected("PZN".equals(record
-                    .get("FHIR_UserSelected")));
+            return new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn").setCode(pzn).setUserSelected("PZN".equals(record.get(FHIR_UserSelected)));
         }
         return null;
     }
@@ -206,10 +218,9 @@ public class MedikationConverter extends Converter {
      * @return
      */
     private Coding getASKCoding() {
-        String ask = record.get("ASK");
+        String ask = record.get(ASK);
         if (ask != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setCode(ask).setUserSelected("ASK".equals(record.get(
-                    "FHIR_UserSelected")));
+            return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setCode(ask).setUserSelected("ASK".equals(record.get(FHIR_UserSelected)));
         }
         // fake to be KDS conform
         warning("no ask code");
@@ -243,8 +254,8 @@ public class MedikationConverter extends Converter {
      */
     private Type convertPeriod() throws Exception {
         try {
-            String s = record.get("Therapiestartdatum");
-            String e = record.get("Therapieendedatum");
+            String s = record.get(Therapiestartdatum);
+            String e = record.get(Therapieendedatum);
             if (StringUtils.isBlank(s)) {
                 if (StringUtils.isBlank(e)) {
                     // no date given
@@ -274,12 +285,16 @@ public class MedikationConverter extends Converter {
      * @throws Exception
      */
     private Ratio getDoseRate() throws Exception {
-        String unit = record.get("Einheit");
+        String unit = record.get(Einheit);
         if (unit != null) {
-            return new Ratio().setNumerator(new Quantity().setValue(getDose()).setUnit(unit).setSystem(
-                    "http://unitsofmeasure.org").setCode(Ucum.human2ucum(unit)))
-                    .setDenominator(new Quantity().setValue(new BigDecimal(1)).setSystem("http://XXX").setCode(record.get(
-                            "Darreichungsform")));
+            return new Ratio().setNumerator(
+                    new Quantity().setValue(getDose())
+                            .setUnit(unit).setSystem("http://unitsofmeasure.org")
+                            .setCode(Ucum.human2ucum(unit)))
+                    .setDenominator(
+                            new Quantity().setValue(new BigDecimal(1))
+                                    .setSystem("http://XXX")
+                                    .setCode(record.get(Darreichungsform)));
         }
         error("Einheit empty for Record");
         return null;
@@ -291,7 +306,7 @@ public class MedikationConverter extends Converter {
      */
     private BigDecimal getDosesPerDay() throws Exception {
         try {
-            return DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
+            return DecimalUtil.parseDecimal(record.get(Anzahl_Dosen_pro_Tag));
         } catch (Exception e) {
             error("Anzahl Dosen pro Tag is not a numerical value for Record");
             return null;
@@ -304,7 +319,7 @@ public class MedikationConverter extends Converter {
      */
     private BigDecimal getDose() throws Exception {
         try {
-            return DecimalUtil.parseDecimal(record.get("Einzeldosis"));
+            return DecimalUtil.parseDecimal(record.get(Einzeldosis));
         } catch (Exception e) {
             error("Einzeldosis is not a numerical value for Record");
             return null;
@@ -340,7 +355,7 @@ public class MedikationConverter extends Converter {
      */
     private DateTimeType convertTimestamp() throws Exception {
         try {
-            return DateUtil.parseDateTimeType(record.get("Zeitstempel"));
+            return DateUtil.parseDateTimeType(record.get(Zeitstempel));
         } catch (Exception e) {
             error("Can not parse timestamp");
             return null;
@@ -353,14 +368,15 @@ public class MedikationConverter extends Converter {
      */
     private Quantity convertQuantity() throws Exception {
         BigDecimal value = null;
+        String doseCount = record.get(Anzahl_Dosen_pro_Tag);
         try {
-            value = DecimalUtil.parseDecimal(record.get("Anzahl Dosen pro Tag"));
+            value = DecimalUtil.parseDecimal(doseCount);
         } catch (Exception e) {
             warning("no dose defined");
-            return new SimpleQuantity().setUnit(record.get("Anzahl Dosen pro Tag"));
+            return new SimpleQuantity().setUnit(doseCount);
         }
         String ucum = "1"; // see https://ucum.org/ucum.html#section-Examples-for-some-Non-Units.
-        String synonym = record.get("Darreichungsform");
+        String synonym = record.get(Darreichungsform);
         return new SimpleQuantity().setValue(value).setUnit(synonym).setSystem("http://unitsofmeasure.org").setCode(ucum);
     }
 

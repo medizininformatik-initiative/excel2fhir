@@ -1,5 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurencode;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurentext;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -58,7 +62,7 @@ public class ProzedurConverter extends Converter {
      */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
-            return DateUtil.parseDateTimeType(record.get("Dokumentationsdatum"));
+            return DateUtil.parseDateTimeType(record.get(Dokumentationsdatum));
         } catch (Exception e) {
             error("Can not parse Dokumentationsdatum for Record");
             return null;
@@ -70,7 +74,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
-        return new CodeableConcept().addCoding(getCode()).setText(record.get("Prozedurentext"));
+        return new CodeableConcept().addCoding(getCode()).setText(record.get(Prozedurentext));
     }
 
     /**
@@ -78,7 +82,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private Coding convertSnomedCategory() throws Exception {
-        String code = record.get("Prozedurencode");
+        String code = record.get(Prozedurencode);
         if (code != null) {
             String display;
             switch (code.charAt(0)) {
@@ -122,7 +126,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private Coding getCode() throws Exception {
-        String code = record.get("Prozedurencode");
+        String code = record.get(Prozedurencode);
         if (code != null) {
             return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/ops").setVersion("2020") // just to be KDS compatible
                     .setCode(code);

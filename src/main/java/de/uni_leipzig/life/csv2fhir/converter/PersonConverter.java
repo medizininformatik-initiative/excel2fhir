@@ -1,5 +1,15 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Anschrift;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geburtsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geschlecht;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Krankenkasse;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Nachname;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Vorname;
+import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
+import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
+import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -9,7 +19,7 @@ import org.hl7.fhir.r4.model.Address.AddressType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateType;
-import org.hl7.fhir.r4.model.Enumerations;
+import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.HumanName.NameUse;
 import org.hl7.fhir.r4.model.Identifier;
@@ -66,8 +76,8 @@ public class PersonConverter extends Converter {
      * @return
      */
     private HumanName parseName() {
-        String forename = record.get("Vorname");
-        String surname = record.get("Nachname");
+        String forename = record.get(Vorname);
+        String surname = record.get(Nachname);
 
         if (forename != null && surname != null) {
             HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
@@ -84,20 +94,20 @@ public class PersonConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private Enumerations.AdministrativeGender parseSex() throws Exception {
-        String sex = record.get("Geschlecht");
+    private AdministrativeGender parseSex() throws Exception {
+        String sex = record.get(Geschlecht);
         if (sex != null) {
             if (sex.length() != 0) {
                 switch (sex) {
                 case "m":
                 case "männlich":
-                    return Enumerations.AdministrativeGender.MALE;
+                    return MALE;
                 case "w":
                 case "weiblich":
-                    return Enumerations.AdministrativeGender.FEMALE;
+                    return FEMALE;
                 case "d":
                 case "divers":
-                    return Enumerations.AdministrativeGender.OTHER;
+                    return OTHER;
                 default:
                     throw new Exception("Error on Patient: Geschlecht <" + sex + ">not parsable for Record: " + record
                             .getRecordNumber() + "! " + record.toString());
@@ -115,7 +125,7 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private DateType parseBirthDate() throws Exception {
-        String birthday = record.get("Geburtsdatum");
+        String birthday = record.get(Geburtsdatum);
         if (birthday != null) {
             try {
                 return DateUtil.parseDateType(birthday);
@@ -132,7 +142,7 @@ public class PersonConverter extends Converter {
      * @return
      */
     private Address parseAddress() {
-        String address = record.get("Anschrift");
+        String address = record.get(Anschrift);
         Address a;
         if (address != null) {
             a = new Address();
@@ -170,7 +180,7 @@ public class PersonConverter extends Converter {
      */
     @SuppressWarnings("unused")
     private Reference parseHealthProvider() throws Exception {
-        String practitioner = record.get("Krankenkasse");
+        String practitioner = record.get(Krankenkasse);
         if (practitioner != null) {
             if (practitioner.length() != 0) {
                 return new Reference().setDisplay(practitioner);

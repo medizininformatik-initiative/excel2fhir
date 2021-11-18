@@ -1,5 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Messwert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Parameter;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Zeitstempel_Abnahme;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,13 +82,12 @@ public class LaborbefundConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept parseObservationCode() throws Exception {
-        String code = record.get("LOINC");
+        String code = record.get(LOINC);
         if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(
-                    "Parameter"));
+            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(Parameter));
         }
         warning("LOINC empty for Record; creating empty code");
-        return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org")).setText(record.get("Parameter"));
+        return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org")).setText(record.get(Parameter));
         //			return null;
     }
 
@@ -91,7 +96,7 @@ public class LaborbefundConverter extends Converter {
      * @throws Exception
      */
     private DateTimeType parseObservationTimestamp() throws Exception {
-        String timestamp = record.get("Zeitstempel (Abnahme)");
+        String timestamp = record.get(Zeitstempel_Abnahme);
         if (timestamp != null) {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
@@ -111,12 +116,12 @@ public class LaborbefundConverter extends Converter {
     private Quantity parseObservationValue() throws Exception {
         BigDecimal messwert;
         try {
-            messwert = DecimalUtil.parseDecimal(record.get("Messwert"));
+            messwert = DecimalUtil.parseDecimal(record.get(Messwert));
         } catch (Exception e) {
             error("Messwert is not a numerical value for Record");
             return null;
         }
-        String unit = record.get("Einheit");
+        String unit = record.get(Einheit);
         if (unit == null || unit.isEmpty()) {
             warning("Einheit is empty for Record");
             return null;

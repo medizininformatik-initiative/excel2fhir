@@ -1,5 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Fachabteilung;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Startdatum;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -80,7 +84,7 @@ public class AbteilungsfallConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertServiceType() throws Exception {
-        String departmentText = record.get("Fachabteilung");
+        String departmentText = record.get(Fachabteilung);
         if (departmentText == null) {
             error("Fachabteilung empty for Record");
             return null;
@@ -104,7 +108,7 @@ public class AbteilungsfallConverter extends Converter {
         EncounterLocationComponent elc = new EncounterLocationComponent();
         Identifier i = new Identifier();
         i.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
-        i.setValue(record.get("Fachabteilung"));
+        i.setValue(record.get(Fachabteilung));
         Reference r = new Reference();
         r.setIdentifier(i);
         elc.setLocation(r);
@@ -120,8 +124,8 @@ public class AbteilungsfallConverter extends Converter {
     private Period convertPeriod() throws Exception {
         try {
             return new Period()
-                    .setStartElement(DateUtil.parseDateTimeType(record.get("Startdatum")))
-                    .setEndElement(DateUtil.parseDateTimeType(record.get("Enddatum")));
+                    .setStartElement(DateUtil.parseDateTimeType(record.get(Startdatum)))
+                    .setEndElement(DateUtil.parseDateTimeType(record.get(Enddatum)));
         } catch (Exception e) {
             warning("Can not parse Startdatum or Enddatum for Record");
             return null;
