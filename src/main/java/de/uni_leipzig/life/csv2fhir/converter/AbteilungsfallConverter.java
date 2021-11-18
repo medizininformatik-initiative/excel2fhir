@@ -20,7 +20,6 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
@@ -76,7 +75,7 @@ public class AbteilungsfallConverter extends Converter {
      * @return
      */
     private static Coding convertClass_() {
-        return new Coding().setCode("ub").setSystem("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse");
+        return createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse", "ub");
     }
 
     /**
@@ -84,20 +83,7 @@ public class AbteilungsfallConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertServiceType() throws Exception {
-        String departmentText = record.get(Fachabteilung);
-        if (departmentText == null) {
-            error("Fachabteilung empty for Record");
-            return null;
-        }
-        String departmentCode = departmentKeyMapper.getHumanToCode(departmentText);
-        if (departmentCode == null) {
-            departmentCode = departmentText;
-        }
-        String codeSystem = departmentKeyMapper.getCodeSystem();
-        return new CodeableConcept().addCoding(new Coding()
-                .setSystem(codeSystem)
-                .setCode(departmentCode)
-                .setDisplay(departmentText));
+        return createCodeableConcept(Fachabteilung, departmentKeyMapper);
     }
 
     /**
@@ -119,16 +105,9 @@ public class AbteilungsfallConverter extends Converter {
 
     /**
      * @return
-     * @throws Exception
      */
-    private Period convertPeriod() throws Exception {
-        try {
-            return new Period()
-                    .setStartElement(DateUtil.parseDateTimeType(record.get(Startdatum)))
-                    .setEndElement(DateUtil.parseDateTimeType(record.get(Enddatum)));
-        } catch (Exception e) {
-            warning("Can not parse Startdatum or Enddatum for Record");
-            return null;
-        }
+    private Period convertPeriod() {
+        return createPeriod(Startdatum, Enddatum);
     }
+
 }

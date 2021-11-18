@@ -139,9 +139,10 @@ public class MedikationConverter extends Converter {
      */
     private MedicationIngredientComponent getIngredient() {
         MedicationIngredientComponent m = new MedicationIngredientComponent();
-
         try {
-            m.setItem(new CodeableConcept().addCoding(getASKCoding()));
+            Coding askCoding = getASKCoding();
+            CodeableConcept askCodeableConcept = new CodeableConcept(askCoding);
+            m.setItem(askCodeableConcept);
         } catch (Exception e) {
             warning("cannot set ATC");
         }
@@ -158,8 +159,8 @@ public class MedikationConverter extends Converter {
      */
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
-        concept.addCoding(getPZNCoding());
-        concept.addCoding(getATCCoding());
+        concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected, "PZN"));
+        concept.addCoding(createCoding("http://fhir.de/CodeSystem/dimdi/atc", ATC_Code, FHIR_UserSelected, "ATC"));
         concept.setText(record.get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
     }
@@ -194,37 +195,38 @@ public class MedikationConverter extends Converter {
     private Reference getMedicationReference() throws Exception {
         return new Reference().setReference("Medication/" + getMedicationId());
     }
-    private Coding getATCCoding() {
-        String atc = record.get(ATC_Code);
-        if (atc != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/atc").setCode(atc).setUserSelected("ATC".equals(
-                    record.get(FHIR_UserSelected)));
-        }
-        return null;
-    }
-
-    /**
-     * @return
-     */
-    private Coding getPZNCoding() {
-        String pzn = record.get(PZN_Code);
-        if (pzn != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn").setCode(pzn).setUserSelected("PZN".equals(record.get(FHIR_UserSelected)));
-        }
-        return null;
-    }
 
     /**
      * @return
      */
     private Coding getASKCoding() {
-        String ask = record.get(ASK);
-        if (ask != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setCode(ask).setUserSelected("ASK".equals(record.get(FHIR_UserSelected)));
+        String askCodeSystem = "http://fhir.de/CodeSystem/ask";
+        Coding askCoding = createCoding(askCodeSystem, ASK, FHIR_UserSelected, "ASK");
+        if (askCoding == null) {
+            // fake to be KDS conform
+            warning("no ask code");
+            askCoding = createCoding(askCodeSystem, null, "no code defined");
         }
-        // fake to be KDS conform
-        warning("no ask code");
-        return new Coding().setSystem("http://fhir.de/CodeSystem/ask").setDisplay("no code defined");
+        return askCoding;
+    }
+
+    /**
+     * @param codeSystem
+     * @param codeColumnName
+     * @param selectedIndicatorColumnName
+     * @param selectedConditionValue
+     * @return a new Coding with the given code system and code from the column
+     *         with the codeColumnName or <code>null</code> if the code is
+     *         missing.
+     */
+    public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> selectedIndicatorColumnName, String selectedConditionValue) {
+        String code = record.get(codeColumnName);
+        if (code != null) {
+            String selectedColumnValue = record.get(selectedIndicatorColumnName);
+            boolean selected = selectedConditionValue.equals(selectedColumnValue);
+            return createCoding(codeSystem, code).setUserSelected(selected);
+        }
+        return null;
     }
 
     //    /*

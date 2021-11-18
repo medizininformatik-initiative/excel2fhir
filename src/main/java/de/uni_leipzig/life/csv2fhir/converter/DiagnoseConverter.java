@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.ICD;
@@ -75,21 +76,11 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertCode() throws Exception {
-        return new CodeableConcept().addCoding(getCoding()).setText(record.get(Bezeichner));
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Coding getCoding() throws Exception {
-        String code = record.get(ICD);
-        if (code != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/icd-10-gm").setVersion("2020") // just to be KDS compatible
-                    .setCode(code);
-
+        Coding icdCoding = createCoding("http://fhir.de/CodeSystem/dimdi/icd-10-gm", ICD, ERROR);
+        if (icdCoding != null) {
+            icdCoding.setVersion("2020"); // just to be KDS compatible
+            return createCodeableConcept(icdCoding, Bezeichner);
         }
-        error("ICD empty for Record");
         return null;
     }
 

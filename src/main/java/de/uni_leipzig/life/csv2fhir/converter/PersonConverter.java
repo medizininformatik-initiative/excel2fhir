@@ -17,7 +17,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.Address.AddressType;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
@@ -66,10 +65,11 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private List<Identifier> parseIdentifier() throws Exception {
-        Identifier i = new Identifier();
-        i.setValue(getPatientId()).setSystem("https://" + getDIZId() + ".de/pid").setUse(IdentifierUse.USUAL).setType(
-                new CodeableConcept(new Coding().setCode("MR").setSystem("http://terminology.hl7.org/CodeSystem/v2-0203")));
-        return Collections.singletonList(i);
+        Identifier identifier = new Identifier();
+        CodeableConcept identifierType = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "MR");
+        String idCodeSystem = "https://" + getDIZId() + ".de/pid";
+        identifier.setValue(getPatientId()).setSystem(idCodeSystem).setUse(IdentifierUse.USUAL).setType(identifierType);
+        return Collections.singletonList(identifier);
     }
 
     /**

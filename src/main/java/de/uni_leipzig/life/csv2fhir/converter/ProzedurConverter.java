@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurencode;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurentext;
@@ -44,7 +45,7 @@ public class ProzedurConverter extends Converter {
         //                .setValue(convertRecordedDate()));
         procedure.setPerformed(convertRecordedDate());
         procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
-        procedure.setCategory(new CodeableConcept().addCoding(convertSnomedCategory()));
+        procedure.setCategory(new CodeableConcept(convertSnomedCategory()));
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
         procedure.setEncounter(getEncounterReference());
@@ -74,7 +75,12 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
-        return new CodeableConcept().addCoding(getCode()).setText(record.get(Prozedurentext));
+        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/dimdi/ops", Prozedurencode, ERROR);
+        if (procedureCoding != null) {
+            procedureCoding.setVersion("2020"); // just to be KDS compatible
+            return createCodeableConcept(procedureCoding, Prozedurentext);
+        }
+        return null;
     }
 
     /**
@@ -114,24 +120,9 @@ public class ProzedurConverter extends Converter {
                 kds = false;
                 return null;
             }
-            return new Coding().setSystem("http://snomed.info/sct").setDisplay(display).setCode(code);
-
+            return createCoding("http://snomed.info/sct", code, display);
         }
         kds = false;
-        return null;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Coding getCode() throws Exception {
-        String code = record.get(Prozedurencode);
-        if (code != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/dimdi/ops").setVersion("2020") // just to be KDS compatible
-                    .setCode(code);
-        }
-        error("Prozedurencode empty for Record");
         return null;
     }
 

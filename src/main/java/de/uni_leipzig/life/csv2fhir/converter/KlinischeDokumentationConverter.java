@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.LOINC;
@@ -13,7 +14,6 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
@@ -56,12 +56,7 @@ public class KlinischeDokumentationConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept parseObservationCode() throws Exception {
-        String code = record.get(LOINC);
-        if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(Bezeichner));
-        }
-        error("LOINC empty for Record");
-        return null;
+        return createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR);
     }
 
     /**

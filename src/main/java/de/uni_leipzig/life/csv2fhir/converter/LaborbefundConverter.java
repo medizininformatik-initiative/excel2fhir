@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.LOINC;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Messwert;
@@ -62,18 +63,19 @@ public class LaborbefundConverter extends Converter {
         // geratenes DIZ Kürzel
         String diz = getDIZId();
 
-        CodeableConcept d = new CodeableConcept();
-        d.addCoding().setCode("OBI").setSystem("http://terminology.hl7.org/CodeSystem/v2-0203");
+        CodeableConcept obiCode = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "OBI");
         Reference r = new Reference().setIdentifier(new Identifier().setValue(diz).setSystem(
                 "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
         observation.setIdentifier(Arrays.asList(new Identifier().setValue(id).setSystem("https://" + diz + ".de/befund")
-                .setAssigner(r).setType(d)));
+                .setAssigner(r).setType(obiCode)));
 
-        CodeableConcept c = new CodeableConcept();
-        c.addCoding().setCode("laboratory").setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setDisplay(
-                "Laboratory");
-        c.addCoding().setCode("26436-6").setSystem("http://loinc.org").setDisplay("Laboratory studies");
-        observation.setCategory(Arrays.asList(c));
+        CodeableConcept laboratoryCode = new CodeableConcept();
+        Coding laboratoryCoding1 = createCoding("http://terminology.hl7.org/CodeSystem/observation-category", "laboratory", "Laboratory");
+        Coding laboratoryCoding2 = createCoding("http://loinc.org", "26436-6", "Laboratory studies");
+        laboratoryCode.addCoding(laboratoryCoding1);
+        laboratoryCode.addCoding(laboratoryCoding2);
+
+        observation.setCategory(Arrays.asList(laboratoryCode));
         return Collections.singletonList(observation);
     }
 
@@ -82,13 +84,13 @@ public class LaborbefundConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept parseObservationCode() throws Exception {
-        String code = record.get(LOINC);
-        if (code != null) {
-            return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org").setCode(code)).setText(record.get(Parameter));
+        String loincCodeSystem = "http://loinc.org";
+        Coding loincCoding = createCoding(loincCodeSystem, LOINC, IGNORE);
+        if (loincCoding == null) {
+            warning(LOINC + " empty for Record -> creating empty code");
+            loincCoding = createCoding(loincCodeSystem, null);
         }
-        warning("LOINC empty for Record; creating empty code");
-        return new CodeableConcept().addCoding(new Coding().setSystem("http://loinc.org")).setText(record.get(Parameter));
-        //			return null;
+        return createCodeableConcept(loincCoding, Parameter);
     }
 
     /**
