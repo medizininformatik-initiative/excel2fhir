@@ -8,8 +8,20 @@ import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 
 public class PersonConverterFactory implements ConverterFactory {
 
-    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Vorname", "Nachname", "Anschrift", "Geburtsdatum",
-            "Geschlecht", "Krankenkasse"};
+    public enum NeededColumns {
+        Patient_ID {
+            @Override
+            public String toString() {
+                return "Patient-ID";
+            }
+        },
+        Vorname,
+        Nachname,
+        Anschrift,
+        Geburtsdatum,
+        Geschlecht,
+        Krankenkasse
+    }
 
     @Override
     public Converter create(CSVRecord record) throws Exception {
@@ -17,7 +29,7 @@ public class PersonConverterFactory implements ConverterFactory {
     }
 
     @Override
-    public String[] getNeededColumnNames() {
-        return NEEDED_COLUMNS;
+    public Enum<?>[] getNeededColumns() {
+        return NeededColumns.values();
     }
 }

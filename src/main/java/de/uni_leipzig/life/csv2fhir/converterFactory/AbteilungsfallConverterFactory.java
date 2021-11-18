@@ -8,7 +8,17 @@ import de.uni_leipzig.life.csv2fhir.converter.AbteilungsfallConverter;
 
 public class AbteilungsfallConverterFactory implements ConverterFactory {
 
-    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Startdatum", "Enddatum", "Fachabteilung"};
+    public enum NeededColumns {
+        Patient_ID {
+            @Override
+            public String toString() {
+                return "Patient-ID";
+            }
+        },
+        Startdatum,
+        Enddatum,
+        Fachabteilung
+    }
 
     @Override
     public Converter create(CSVRecord record) throws Exception {
@@ -16,7 +26,7 @@ public class AbteilungsfallConverterFactory implements ConverterFactory {
     }
 
     @Override
-    public String[] getNeededColumnNames() {
-        return NEEDED_COLUMNS;
+    public Enum<?>[] getNeededColumns() {
+        return NeededColumns.values();
     }
 }

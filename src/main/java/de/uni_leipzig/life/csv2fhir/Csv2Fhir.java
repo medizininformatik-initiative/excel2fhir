@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -247,8 +246,8 @@ public class Csv2Fhir {
                 CSVParser records = csvFormat.parse(in);
                 Sys.out1("Start parsing File:" + fileName);
                 Map<String, Integer> headerMap = records.getHeaderMap();
-                String[] columnNames = factory.getNeededColumnNames();
-                if (isColumnMissing(headerMap, columnNames)) {
+                List<String> neededColumnNames = factory.getNeededColumnNames();
+                if (isColumnMissing(headerMap, neededColumnNames)) {
                     records.close();
                     throw new Exception("Error - File: " + fileName + " not convertable!");
                 }
@@ -295,11 +294,10 @@ public class Csv2Fhir {
      * @param neededColls
      * @return
      */
-    private static boolean isColumnMissing(Map<String, Integer> map, String[] neededColls) {
+    private static boolean isColumnMissing(Map<String, Integer> map, List<String> neededColumnNames) {
         Set<String> columns = getTrimmedKeys(map);
-        List<String> neededColumns = Arrays.asList(neededColls);
-        if (!columns.containsAll(neededColumns)) {//Error message
-            for (String s : neededColls) {
+        if (!columns.containsAll(neededColumnNames)) {//Error message
+            for (String s : neededColumnNames) {
                 if (!columns.contains(s)) {
                     Sys.out1("Column " + s + " missing");
                 }

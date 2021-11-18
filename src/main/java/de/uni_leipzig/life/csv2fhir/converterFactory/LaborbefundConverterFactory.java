@@ -8,8 +8,25 @@ import de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter;
 
 public class LaborbefundConverterFactory implements ConverterFactory {
 
-    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "LOINC", "Parameter",
-            "Messwert", "Einheit", "Zeitstempel (Abnahme)"}; //Not used: "Methode"
+    public enum NeededColumns {
+        Patient_ID {
+            @Override
+            public String toString() {
+                return "Patient-ID";
+            }
+        },
+        LOINC,
+        Parameter,
+        Messwert,
+        Einheit,
+        Zeitstempel_Abnahme {
+            @Override
+            public String toString() {
+                return "Zeitstempel (Abnahme)";
+            }
+        },
+        //Methode //not used
+    }
 
     @Override
     public Converter create(CSVRecord record) throws Exception {
@@ -17,7 +34,7 @@ public class LaborbefundConverterFactory implements ConverterFactory {
     }
 
     @Override
-    public String[] getNeededColumnNames() {
-        return NEEDED_COLUMNS;
+    public Enum<?>[] getNeededColumns() {
+        return NeededColumns.values();
     }
 }

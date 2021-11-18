@@ -8,7 +8,19 @@ import de.uni_leipzig.life.csv2fhir.converter.KlinischeDokumentationConverter;
 
 public class KlinischeDokumentationConverterFactory implements ConverterFactory {
 
-    private static final String[] NEEDED_COLUMNS = {"Patient-ID", "Bezeichner", "LOINC", "Wert", "Einheit", "Zeitstempel"};
+    public enum NeededColumns {
+        Patient_ID {
+            @Override
+            public String toString() {
+                return "Patient-ID";
+            }
+        },
+        Bezeichner,
+        LOINC,
+        Wert,
+        Einheit,
+        Zeitstempel
+    }
 
     @Override
     public Converter create(final CSVRecord record) throws Exception {
@@ -16,7 +28,7 @@ public class KlinischeDokumentationConverterFactory implements ConverterFactory 
     }
 
     @Override
-    public String[] getNeededColumnNames() {
-        return NEEDED_COLUMNS;
+    public Enum<?>[] getNeededColumns() {
+        return NeededColumns.values();
     }
 }
