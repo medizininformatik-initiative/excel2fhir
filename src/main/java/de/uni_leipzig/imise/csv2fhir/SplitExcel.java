@@ -12,7 +12,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
-import java.util.Set;
+import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -24,8 +24,6 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.google.common.collect.Sets;
-
 import de.uni_leipzig.imise.utils.FileTools;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
@@ -35,10 +33,6 @@ import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
  * @author fmeinecke (02.11.2020)
  */
 public class SplitExcel {
-
-    /**  */
-    private static Set<String> sheetNames = Sets.newHashSet("Person", "Versorgungsfall", "Abteilungsfall", "Laborbefund",
-            "Diagnose", "Prozedur", "Medikation", "Klinische Dokumentation");
 
     /**  */
     private static final String DELIM = ",";
@@ -78,30 +72,34 @@ public class SplitExcel {
 
     /**
      * @param excelFile
+     * @param sheetNames
      * @throws IOException
      */
-    public void splitExcel(File excelFile) throws IOException {
+    public void splitExcel(File excelFile, Collection<String> sheetNames) throws IOException {
         String basename = FilenameUtils.removeExtension(excelFile.getPath());
         File csvDir = new File(basename);
-        splitExcel(excelFile, csvDir);
+        splitExcel(excelFile, sheetNames, csvDir);
     }
 
     /**
-     * @param excel
-     * @param csvDir
+     * @param sourceExcelFile
+     * @param sheetNames if not <code>null</code> then only the sheets with a
+     *            name in this collection will be convertert to csv. If
+     *            <code>null</code> then all sheet will be convertet.
+     * @param targetCsvDir
      * @throws IOException
      */
-    public void splitExcel(File excel, File csvDir) throws IOException {
-        ensureEmptyDirectory(csvDir, excel.getParentFile());
-        String csvDirBasename = FilenameUtils.removeExtension(csvDir.getPath());
-        try (Workbook workbook = new XSSFWorkbook(new FileInputStream(excel))) {
+    public void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
+        ensureEmptyDirectory(targetCsvDir, sourceExcelFile.getParentFile());
+        String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
+        try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
-                if (!sheetNames.contains(sheetName)) {
+                if (sheetNames != null && !sheetNames.contains(sheetName)) {
                     log.info("Skip sheet \"" + sheetName + "\"");
                     continue;
                 }
-                // Das ist der Trick f�r das pot. Setzen des encondigs.(z.B. wegen "m�nnlich")
+                // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
                 // Wir setzten nun aber nur auf UTF
                 String csvFile = FilenameUtils.concat(csvDirBasename, sheetName + ".csv");
                 OutputStream os = new FileOutputStream(new File(csvFile));
@@ -234,46 +232,58 @@ public class SplitExcel {
 
     /**
      * @param excelDir
+     * @param sheetNames if not <code>null</code> then only the sheets with a
+     *            name in this collection will be convertert to csv. If
+     *            <code>null</code> then all sheet will be convertet.
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir) throws IOException {
-        convertAllExcelInDir(sourceExcelDir, null, null, JSON, false);
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
+        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, JSON, false);
     }
 
     /**
      * @param sourceExcelDir
+     * @param sheetNames if not <code>null</code> then only the sheets with a
+     *            name in this collection will be convertert to csv. If
+     *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
      * @param outputFileType
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, File tempDir, File resultDir, OutputFileType outputFileType,
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
             boolean convertFilesPerPatient)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, tempDir, resultDir, outputFileType, convertFilesPerPatient, false);
+            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false);
         }
     }
 
     /**
      * @param sourceExcelFile
+     * @param sheetNames if not <code>null</code> then only the sheets with a
+     *            name in this collection will be convertert to csv. If
+     *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
      * @param outputFileType
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public void convertExcelFile(File sourceExcelFile, File tempDir, File resultDir, OutputFileType outputFileType,
+    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
             boolean convertFilesPerPatient)
             throws IOException {
-        convertExcelFile(sourceExcelFile, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
+        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
     }
 
     /**
      * @param sourceExcelFile
+     * @param sheetNames if not <code>null</code> then only the sheets with a
+     *            name in this collection will be convertert to csv. If
+     *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
      * @param outputFileType
@@ -281,9 +291,8 @@ public class SplitExcel {
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private void convertExcelFile(File sourceExcelFile, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient,
-            boolean createAndCleanOutputDirectories) throws IOException {
+    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
+            boolean convertFilesPerPatient, boolean createAndCleanOutputDirectories) throws IOException {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
@@ -291,7 +300,7 @@ public class SplitExcel {
         String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         File logFile = new File(tempDir, fileName + ".log");
         try (PrintStream logFileStream = new PrintStream(logFile)) {
-            splitExcel(sourceExcelFile, tempDir);
+            splitExcel(sourceExcelFile, sheetNames, tempDir);
             Sys.out1(logFile.getAbsolutePath());
             System.setOut(logFileStream);
             Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
@@ -302,16 +311,4 @@ public class SplitExcel {
         }
     }
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) {
-        SplitExcel se = new SplitExcel();
-        File sourceExcelDir = new File(args[0]);
-        try {
-            se.convertAllExcelInDir(sourceExcelDir);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -30,14 +29,6 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.utils.Alphabetical;
 import de.uni_leipzig.imise.utils.Sys;
-import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -74,7 +65,6 @@ public class Csv2Fhir {
          * @return the parser to write the bundles
          */
         public abstract IParser getParser();
-
     }
 
     /**  */
@@ -85,9 +75,6 @@ public class Csv2Fhir {
 
     /**  */
     private final String outputFileNameBase;
-
-    /**  */
-    private final Map<String, ConverterFactory> converterFactorys;
 
     /**  */
     private final CSVFormat csvFormat;
@@ -109,18 +96,6 @@ public class Csv2Fhir {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
-        converterFactorys = new HashMap<>() {
-            {
-                put("Person.csv", new PersonConverterFactory());
-                put("Versorgungsfall.csv", new VersorgungsfallConverterFactory());
-                put("Abteilungsfall.csv", new AbteilungsfallConverterFactory());
-                put("Laborbefund.csv", new LaborbefundConverterFactory());
-                put("Diagnose.csv", new DiagnoseConverterFactory());
-                put("Prozedur.csv", new ProzedurConverterFactory());
-                put("Medikation.csv", new MedikationConverterFactory());
-                put("Klinische Dokumentation.csv", new KlinischeDokumentationConverterFactory());
-            }
-        };
         csvFormat = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withTrim(true)
                 .withAllowMissingColumnNames(true).withFirstRecordAsHeader();
     }
@@ -197,12 +172,9 @@ public class Csv2Fhir {
      */
     private void convertFiles(OutputFileType outputFileType, String pid) throws Exception {
         String filter = pid == null ? null : pid.toUpperCase();
-        String[] files = inputDirectory.list();
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
-        if (files != null) {
-            convertFiles(bundle, filter, files);
-        }
+        convertFiles(bundle, filter);
         EncounterReferenceReplacer.convert(bundle);
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
     }
@@ -229,12 +201,12 @@ public class Csv2Fhir {
     /**
      * @param bundle
      * @param filterID
-     * @param files
      * @throws Exception
      */
-    private void convertFiles(Bundle bundle, String filterID, String[] files) throws Exception {
-        for (String fileName : files) {
-            ConverterFactory factory = converterFactorys.get(fileName);
+    private void convertFiles(Bundle bundle, String filterID) throws Exception {
+        for (InputDataTableName csvFileName : InputDataTableName.values()) {
+            String fileName = csvFileName.getCsvFileName();
+            ConverterFactory factory = csvFileName.getConverterFactory();
             if (factory == null) {
                 continue;
             }

@@ -4,6 +4,7 @@ import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
@@ -11,6 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import de.uni_leipzig.imise.csv2fhir.SplitExcel;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
+import de.uni_leipzig.life.csv2fhir.InputDataTableName;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import junit.framework.TestCase;
 
@@ -19,6 +21,8 @@ public class SplitMainTest extends TestCase {
     public SplitMainTest(String testName) {
         super(testName);
     }
+
+    static Collection<String> excelSheetNames = InputDataTableName.getExcelSheetNames();
 
     public static void testUcum() {
         String test[] = {"mg/dl", "U/l", "ng/ml"};
@@ -37,7 +41,7 @@ public class SplitMainTest extends TestCase {
         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
         File csvDir = new File("H:\\git\\csv2fhir\\resources");
         SplitExcel se = new SplitExcel();
-        se.splitExcel(testExcel, csvDir);
+        se.splitExcel(testExcel, excelSheetNames, csvDir);
     }
 
     // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
@@ -45,7 +49,7 @@ public class SplitMainTest extends TestCase {
     public static void splitTestDir() throws IOException {
         File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
         SplitExcel se = new SplitExcel();
-        se.convertAllExcelInDir(excelDir);
+        se.convertAllExcelInDir(excelDir, excelSheetNames);
 
     }
 
@@ -90,7 +94,7 @@ public class SplitMainTest extends TestCase {
         File testExcel = new File(filename);
         SplitExcel se = new SplitExcel();
         try {
-            se.splitExcel(testExcel);
+            se.splitExcel(testExcel, excelSheetNames);
             File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
             //            File resultJson = new File(testExcel.getParent(),
             //                    FilenameUtils.removeExtension(testExcel.getName())+".json");

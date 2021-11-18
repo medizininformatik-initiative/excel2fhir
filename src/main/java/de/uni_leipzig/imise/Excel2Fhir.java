@@ -3,6 +3,7 @@ package de.uni_leipzig.imise;
 import static de.uni_leipzig.imise.utils.ApplicationManager.getApplicationDir;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import de.uni_leipzig.imise.csv2fhir.SplitExcel;
@@ -63,13 +64,15 @@ public class Excel2Fhir implements Callable<Integer> {
                 outputDirectory = new File(defaultOutputDirectory, "outputGlobal");
             }
 
+            List<String> excelSheetNames = InputDataTableName.getExcelSheetNames();
+
             if (inputFile != null) {
-                se.convertExcelFile(inputFile, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                se.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                se.convertAllExcelInDir(inputDirectory, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                se.convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             }
         } catch (Exception e) {
             e.printStackTrace();
