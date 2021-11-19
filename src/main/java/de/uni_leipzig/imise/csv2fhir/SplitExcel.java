@@ -2,6 +2,7 @@ package de.uni_leipzig.imise.csv2fhir;
 
 import static de.uni_leipzig.imise.utils.LogUtils.infoFinished;
 import static de.uni_leipzig.imise.utils.LogUtils.infoStarted;
+import static de.uni_leipzig.imise.utils.FileTools.ensureEmptyDirectory;
 import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
 import java.io.File;
@@ -15,7 +16,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
-import de.uni_leipzig.imise.utils.FileTools;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
 
@@ -182,27 +181,6 @@ public class SplitExcel {
     }
 
     /**
-     * @param dir2CreateOrClean
-     * @param inputDir
-     * @throws IOException
-     */
-    private static final void ensureEmptyDirectory(File dir2CreateOrClean, File inputDir) throws IOException {
-        if (!dir2CreateOrClean.exists()) {
-            LOG.info("creating " + dir2CreateOrClean);
-            dir2CreateOrClean.mkdirs();
-        } else if (!inputDir.equals(dir2CreateOrClean)) {
-            if (!FileTools.isEmpty(dir2CreateOrClean)) {
-                LOG.info("Delete all files in \"" + dir2CreateOrClean + "\"");
-                try {
-                    FileUtils.cleanDirectory(dir2CreateOrClean);
-                } catch (Exception e) {
-                    // ignore (maybe the .log file cannot be deleted)
-                }
-            }
-        }
-    }
-
-    /**
      * @param sourceExcelFileOrDirectory
      * @param targetCSVDir
      * @param targetJSONDir
@@ -220,7 +198,9 @@ public class SplitExcel {
         if (targetJSONDir == null) {
             targetJSONDir = targetCSVDir;
         }
-        ensureEmptyDirectory(targetJSONDir, sourceExcelDir);
+        if (targetJSONDir != targetCSVDir) {
+            ensureEmptyDirectory(targetJSONDir, sourceExcelDir);
+        }
     }
 
     /**
