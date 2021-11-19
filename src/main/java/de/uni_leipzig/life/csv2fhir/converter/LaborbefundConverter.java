@@ -138,7 +138,9 @@ public class LaborbefundConverter extends Converter {
             synonym = unit;
         }
         if (ucum.isEmpty()) {
-            return new Quantity().setValue(messwert).setUnit(synonym);
+            warning("ucum empty, check \""+ unit + "\"");
+            throw new Exception("Ignore Ressource");
+            //            return new Quantity().setValue(messwert).setUnit(synonym);
         }
         return new Quantity().setValue(messwert).setSystem("http://unitsofmeasure.org").setCode(ucum).setUnit(synonym);
     }

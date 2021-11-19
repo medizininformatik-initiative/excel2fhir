@@ -196,6 +196,15 @@ public class MedikationConverter extends Converter {
         return new Reference().setReference("Medication/" + getMedicationId());
     }
 
+    private Coding getATCCoding() {
+        String atc = record.get("ATC Code");
+        if (atc != null) {
+            return new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setCode(atc).setUserSelected("ATC".equals(
+                    record.get("FHIR_UserSelected")));
+        }
+        return null;
+    }
+
     /**
      * @return
      */
@@ -205,7 +214,7 @@ public class MedikationConverter extends Converter {
         if (askCoding == null) {
             // fake to be KDS conform
             warning("no ask code");
-            askCoding = createCoding(askCodeSystem, null, "no code defined");
+            askCoding = createCoding(askCodeSystem, "<DUMMY VALUE FOR KDS Warning Suppression - no test value available>", "no code defined");
         }
         return askCoding;
     }
@@ -291,12 +300,12 @@ public class MedikationConverter extends Converter {
         if (unit != null) {
             return new Ratio().setNumerator(
                     new Quantity().setValue(getDose())
-                            .setUnit(unit).setSystem("http://unitsofmeasure.org")
-                            .setCode(Ucum.human2ucum(unit)))
+                    .setUnit(unit).setSystem("http://unitsofmeasure.org")
+                    .setCode(Ucum.human2ucum(unit)))
                     .setDenominator(
                             new Quantity().setValue(new BigDecimal(1))
-                                    .setSystem("http://XXX")
-                                    .setCode(record.get(Darreichungsform)));
+                            .setSystem("http://XXX")
+                            .setCode(record.get(Darreichungsform)));
         }
         error("Einheit empty for Record");
         return null;

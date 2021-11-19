@@ -79,6 +79,16 @@ public class PersonConverter extends Converter {
         String forename = record.get(Vorname);
         String surname = record.get(Nachname);
 
+        if (forename == null) {
+            forename = "Vorname-" + getPatientId();
+            warning("Empty Vorname replaced by " + forename);
+        }
+        if (surname == null) {
+            surname = "Nachname-" + getPatientId();
+            warning("Empty Nachname replaced by " + surname);
+        }
+
+
         if (forename != null && surname != null) {
             HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
             for (String name : forename.split(" ")) {

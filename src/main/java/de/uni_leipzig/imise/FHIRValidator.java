@@ -21,25 +21,41 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
 import ca.uhn.fhir.parser.DataFormatException;
 import ca.uhn.fhir.validation.FhirValidator;
+import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
+import de.uni_leipzig.imise.utils.Sys;
 
 
 public class FHIRValidator {
     FhirValidator validator;
-    public FHIRValidator() throws IOException {
+    int warn = 0;
+    int err = 0;
+    int filter = 0;
+    public FHIRValidator() {
+        // Create a validator. Note that for good performance you can create as many validator objects
+        // as you like, but you should reuse the same validation support object in all of the,.
         FhirContext ctx = FhirContext.forR4();
-        
+        validator = ctx.newValidator();
+    }
+    public void init() {
+
+        FhirContext ctx = FhirContext.forR4();
+
         NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(ctx);
-        File dir = new File(this.getClass().getClassLoader().getResource("package").getPath());
+        File dir = new File(this.getClass().getClassLoader().getResource("fhir").getPath());
         for (File f : dir.listFiles()) {
             if (f.isFile()) {
-                System.out.println("loadPackage: " + f.getCanonicalPath());            
-                npmPackageSupport.loadPackageFromClasspath("package/" + f.getName());
+                try {
+                    System.out.println("loadPackage: " + f.getCanonicalPath());
+                    npmPackageSupport.loadPackageFromClasspath("fhir/" + f.getName());
+                } catch (IOException e) {
+                    Sys.err(e.getMessage());
+                }
             }
         }
 
-        
+
         // Create a support chain including the NPM Package Support
         ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                 npmPackageSupport,
@@ -50,22 +66,34 @@ public class FHIRValidator {
                 );
         CachingValidationSupport validationSupport = new CachingValidationSupport(validationSupportChain);
 
-        // Create a validator. Note that for good performance you can create as many validator objects
-        // as you like, but you should reuse the same validation support object in all of the,.
-        validator = ctx.newValidator();
         FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
-        validator.registerValidatorModule(instanceValidator);      
+        validator.registerValidatorModule(instanceValidator);
     }
     public void validate(Resource r) {
         // Perform the validation
-        System.out.println("validate: " + r.getId());
+        //        System.out.println("validate: " + r.getId());
         ValidationResult outcome = validator.validateWithResult(r);
-        
-        for (SingleValidationMessage i : outcome.getMessages()) {        
-            System.out.println(i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
+
+        for (SingleValidationMessage i : outcome.getMessages()) {
+            if (i.getMessage().contains("Validation failed für \"http://loinc.org") ||
+                    i.getMessage().contains("Unknown code 'http://loinc.org#") ||
+                    i.getMessage().contains("Validation failed für \"http://fhir.de/CodeSystem/ask#") ||
+                    i.getMessage().contains("Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn") ||
+                    i.getMessage().contains("http://terminology.hl7.org/CodeSystem/v2-0203#OBI") ||
+                    i.getMessage().contains("Validation failed für \"http://snomed.info/sct")) {
+                filter++;
+                continue;
+            }
+            System.out.println(i.getSeverity() + " " + i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
+            if (i.getSeverity() == ResultSeverityEnum.ERROR) {
+                err++;
+            }
+            if (i.getSeverity() == ResultSeverityEnum.WARNING) {
+                warn++;
+            }
         }
     }
-    
+
     static public Bundle readBundle(File f) throws ConfigurationException, DataFormatException, FileNotFoundException {
         FhirContext ctx = FhirContext.forR4();
         IBaseResource r = ctx.newJsonParser().parseResource(new FileInputStream(f));
@@ -76,21 +104,25 @@ public class FHIRValidator {
         for (BundleEntryComponent e : bundle.getEntry()) {
             validate(e.getResource());
         }
-        
-        // Geht auch:
-//        validate(bundle);
-    }
-    static public void main(String args[]) throws IOException {
-        
-        FHIRValidator v = new FHIRValidator();
-        String f = "C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKB\\POLAR_Testdaten_UKB-UKB002.json";
 
-        v.validateBundle(readBundle(new File(f)));
-        // Create a test patient to validate
-//        Patient patient = new Patient();
-//        patient.getMeta().addProfile("https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient");
-//        // System but not value set for NHS identifier (this should generate an error)
-//        patient.addIdentifier().setSystem("https://fhir.nhs.uk/Id/nhs-number");
-//        v.validate(patient);
+        // Geht auch:
+        //        validate(bundle);
+    }
+    public void log() {
+        System.out.println("Warnings: " + warn);
+        System.out.println("Error: " + err);
+        System.out.println("Filtered: " + filter);
+    }
+
+    static public void main(String args[]) throws IOException {
+        FHIRValidator v = new FHIRValidator();
+        v.init();
+        for (String f : args)  {
+
+            //        String f = "outputGlobal\\POLAR_Testdaten_UKB-UKB001.json";
+
+            v.validateBundle(readBundle(new File(f)));
+        }
+        v.log();
     }
 }

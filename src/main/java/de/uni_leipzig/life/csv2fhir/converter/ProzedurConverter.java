@@ -75,7 +75,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
-        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/dimdi/ops", Prozedurencode, ERROR);
+        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode, ERROR);
         if (procedureCoding != null) {
             procedureCoding.setVersion("2020"); // just to be KDS compatible
             return createCodeableConcept(procedureCoding, Prozedurentext);

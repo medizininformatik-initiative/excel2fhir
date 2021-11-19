@@ -31,7 +31,7 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 public class VersorgungsfallConverter extends Converter {
 
     /**  */
-    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/Encounter/Versorgungsfall";
+    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
     // https://simplifier.net/medizininformatikinitiative-modulfall/versorgungsfall-duplicate-2
     // https://simplifier.net/medizininformatikinitiative-modulfall/example-versorgungsfall
 

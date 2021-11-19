@@ -63,7 +63,7 @@ mbar	mbar
 \u03a9	Ohm
 ### nur C statt Cel ist eigentlich falsch; Vonk stolpert aber darüber und will nicht Cel
 ### °C		Cel
-°C		C
+\u00b0C      C
 G		10^9
 T		10^12
 \u00b0	deg

@@ -38,7 +38,7 @@ public class AbteilungsfallConverter extends Converter {
     //https://www.tmf-ev.de/MII/FHIR/ModulFall/Terminologien.html
     //https://www.medizininformatik-initiative.de/fhir/core/ValueSet/Fachabteilungsschluessel
 
-    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/Encounter/Abteilungsfall";
+    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
     // https://simplifier.net/medizininformatikinitiative-modulfall/abteilungsfall-duplicate-2
     // https://simplifier.net/medizininformatikinitiative-modulfall/example-abteilungsfall
 
