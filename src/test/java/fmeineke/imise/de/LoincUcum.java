@@ -3,9 +3,13 @@ package fmeineke.imise.de;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_leipzig.imise.utils.Sys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LoincUcum {
+
+    /**  */
+    private static Logger LOG = LoggerFactory.getLogger(LoincUcum.class);
 
     static Set<String> m;
 
@@ -14,7 +18,7 @@ public class LoincUcum {
             m = new HashSet<>();
             for (String[] s : d) {
                 m.add(s[0]);
-                Sys.out1(s[0]);
+                LOG.info(s[0]);
             }
         }
         return m;
