@@ -2,14 +2,21 @@ package de.uni_leipzig.life.csv2fhir;
 
 import java.util.List;
 
+import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+
+import de.uni_leipzig.imise.utils.CodeSystemMapper;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnoseConverter;
+import de.uni_leipzig.life.csv2fhir.converter.VersorgungsfallConverter;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 
 /**
  * Post-processing of a bundle. All references that have a procedure or a
@@ -24,6 +31,12 @@ import org.hl7.fhir.r4.model.Resource;
 public class EncounterReferenceReplacer {
 
     /**
+     * Maps from human readable department description to the number code for
+     * the department.
+     */
+    private final CodeSystemMapper departmentKeyMapper = new CodeSystemMapper("Fachabteilungsschluessel.map");
+
+    /**
      * Adds the all references to conditions and procedures to the diagnoses
      * list of the encounter.<br>
      * <br>
@@ -35,35 +48,50 @@ public class EncounterReferenceReplacer {
      */
     public static void convert(Bundle bundle) {
         List<BundleEntryComponent> bundleEntries = bundle.getEntry();
-        //for every bundle entry
+        // for every bundle entry
         for (BundleEntryComponent entry : bundleEntries) {
             Resource resource = entry.getResource();
             Reference encounterReference = null;
-            //if the entry is a condition or procedure then store the encounter
-            //reference and remove it from the entry
+            // if the entry is a condition or procedure then store the encounter
+            // reference and remove it from the entry
+            String diagnosisUseIdentifier = null;
             if (resource instanceof Condition) {
                 Condition condition = (Condition) resource;
                 encounterReference = condition.getEncounter();
                 condition.setEncounter(null);
                 condition.setEncounterTarget(null);
+                CSVRecord conditionCSVRecord = DiagnoseConverter.conditionToCSVRecordMap.get(condition);
+                diagnosisUseIdentifier = conditionCSVRecord.get(DiagnoseConverterFactory.NeededColumns.Typ);
             } else if (resource instanceof Procedure) {
                 Procedure procedure = (Procedure) resource;
                 encounterReference = procedure.getEncounter();
                 procedure.setEncounter(null);
                 procedure.setEncounterTarget(null);
             }
-            //entry was a condition or procedure -> we found an encounter
-            //reference
+            // entry was a condition or procedure -> we found an encounter
+            // reference
             if (encounterReference != null) {
                 String encounterId = encounterReference.getReference();
-                //encounter should be only null in error cases, but mybe we
-                //should catch and log
+                // encounter should be only null in error cases, but mybe we
+                // should catch and log
                 Encounter encounter = getResource(bundle, Encounter.class, encounterId);
-                //construct a valid DiagnosisComponent from condition or
-                //procedure to add it as reference to the encounter
+                // construct a valid DiagnosisComponent from condition or
+                // procedure to add it as reference to the encounter
                 Reference conditionReference = new Reference(resource);
+                if (diagnosisUseIdentifier == null) {
+                    diagnosisUseIdentifier = "Comorbidity diagnosis"; // default for missing values
+                }
+                // add diagnosis use to the diagnosis component
+                CodeableConcept diagnosisUse = VersorgungsfallConverter.createDiagnosisUse(diagnosisUseIdentifier);
                 DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);
-                encounter.addDiagnosis(diagnosisComponent);
+                diagnosisComponent.setUse(diagnosisUse);
+                // if the same diagnosis was coded in the table "Versorgungsfall"
+                // column "Versorgungsfallgrund_Aufnahmediagnose" then the
+                // encounter already has an equals DiagnosisComponent added in
+                // the VersorgungsfallConverter
+                if (!encounter.getDiagnosis().contains(diagnosisComponent)) {
+                    encounter.addDiagnosis(diagnosisComponent);
+                }
             }
         }
     }

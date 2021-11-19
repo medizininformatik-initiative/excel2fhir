@@ -7,7 +7,9 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFac
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Typ;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -28,6 +30,11 @@ public class DiagnoseConverter extends Converter {
     // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
 
     /**
+     * Stores all {@link CSVRecord}s of all conditions created by this converter
+     */
+    public static final Map<Condition, CSVRecord> conditionToCSVRecordMap = new HashMap<>();
+
+    /**
      * @param record
      * @throws Exception
      */
@@ -38,6 +45,7 @@ public class DiagnoseConverter extends Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
+        conditionToCSVRecordMap.put(condition, record);
         // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
         condition.setId(getDiagnoseId());
         condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
@@ -96,4 +104,5 @@ public class DiagnoseConverter extends Converter {
             return null;
         }
     }
+
 }

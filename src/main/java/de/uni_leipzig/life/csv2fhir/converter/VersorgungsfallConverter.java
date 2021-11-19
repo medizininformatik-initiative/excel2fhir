@@ -8,9 +8,11 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConve
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallgrund_Aufnahmediagnose;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -23,6 +25,7 @@ import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 
 public class VersorgungsfallConverter extends Converter {
@@ -38,6 +41,17 @@ public class VersorgungsfallConverter extends Converter {
      * 'https://www.medizininformatik-initiative.de/fhir/core/modul-fall/
      * ValueSet/Versorgungsfallklasse'
      */
+
+    /**
+     * Stores all {@link CSVRecord}s of all encounters created by this converter
+     */
+    public static final Map<Encounter, CSVRecord> encounterToCSVRecordMap = new HashMap<>();
+
+    /**
+     * Maps from human readable diagnosis role description to the correspondig
+     * code system code.
+     */
+    public static final CodeSystemMapper diagnosisRoleKeyMapper = new CodeSystemMapper("diagnosis-role.map");
 
     /**
      * Schwierigkeit: die Aufnahmediagnosen nicht unbedingt identisch mit der
@@ -63,8 +77,7 @@ public class VersorgungsfallConverter extends Converter {
         encounter.setPeriod(convertPeriod());
 
         // encounter.addReasonCode(convertReasonCode());
-        encounter.setDiagnosis(convertDiagnosis());
-
+        encounter.setDiagnosis(convertDiagnoses());
         return Collections.singletonList(encounter);
     }
 
@@ -72,26 +85,24 @@ public class VersorgungsfallConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private List<DiagnosisComponent> convertDiagnosis() throws Exception {
+    private List<DiagnosisComponent> convertDiagnoses() throws Exception {
         String codes = record.get(Versorgungsfallgrund_Aufnahmediagnose);
-        CodeableConcept c = new CodeableConcept();
-        c.addCoding().setCode("AD").setSystem("http://terminology.hl7.org/CodeSystem/diagnosis-role").setDisplay(
-                "Admission diagnosis");
         if (codes != null) {
+            CodeableConcept diagnosisUse = createDiagnosisUse("Admission diagnosis"); // always Admission diagnosis!
             String codeArr[] = codes.trim().split("\\s*\\+\\s*");
-            List<DiagnosisComponent> ld = new Vector<>();
+            List<DiagnosisComponent> diagnoses = new ArrayList<>();
             for (String icd : codeArr) {
-                ld.add(new DiagnosisComponent().setUse(c).setCondition(new Reference().setReference("Condition/"
-                        + getDiagnoseId(icd))));
+                Reference conditionReference = new Reference("Condition/" + getDiagnoseId(icd));
+                DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);
+                diagnosisComponent.setUse(diagnosisUse);
+                diagnoses.add(diagnosisComponent);
             }
-            return ld;
+            return diagnoses;
         }
         warning("Versorgungsfallgrund (Aufnahmediagnose) empty");
         return null;
     }
-    /**
-     *
-     */
+
     @Override
     protected Reference getPatientReference() throws Exception {
         String patientId = record.get(Patient_ID);
@@ -136,6 +147,22 @@ public class VersorgungsfallConverter extends Converter {
      */
     private CodeableConcept convertReasonCode() throws Exception {
         return createCodeableConcept("2.25.13106415395318837456468900343666547797", Versorgungsfallgrund_Aufnahmediagnose, IGNORE);
+    }
+
+    /**
+     * @param useIdentifier
+     * @return
+     */
+    public static CodeableConcept createDiagnosisUse(String useIdentifier) {
+        String codeSystem = diagnosisRoleKeyMapper.getCodeSystem();
+        String code = diagnosisRoleKeyMapper.getHumanToCode(useIdentifier);
+        String display = diagnosisRoleKeyMapper.getCodeToHuman(code);
+        CodeableConcept diagnosisUse = new CodeableConcept();
+        diagnosisUse.addCoding()
+                .setCode(code)
+                .setSystem(codeSystem)
+                .setDisplay(display);
+        return diagnosisUse;
     }
 
 }

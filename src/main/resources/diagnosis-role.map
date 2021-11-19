@@ -1,0 +1,41 @@
+###################################################################
+# Maps from a human readable code to a code from the code system.
+#
+# see https://www.medizininformatik-initiative.de/Kerndatensatz/Modul_Diagnose/KontextimGesamtprojektBezgezuanderenModulen.html
+# see http://hl7.org/fhir/valueset-diagnosis-role.html
+# see https://simplifier.net/packages/hl7.fhir.r4.core/4.0.1/files/83484
+# see http://terminology.hl7.org/CodeSystem/diagnosis-role
+# 
+#
+# NOTE: 
+# Whitespaces in the human readable keys must be coded as '\u0020'.
+# An empty value must be marked as 'EMPTY_STRING'.
+#
+###################################################################
+
+CODE_SYSTEM_URL		http://terminology.hl7.org/CodeSystem/diagnosis-role
+
+###
+# PRÜFEN, OB PROZEDUREN UND ALLE MISSINGS WIRKLICH MIT CM VERSEHEN WERDEN SOLLEN!?
+###
+
+Admission\u0020diagnosis		AD
+Discharge\u0020diagnosis		DD
+Chief\u0020complaint			CC
+Comorbidity\u0020diagnosis		CM
+pre-op\u0020diagnosis			pre-op
+post-op\u0020diagnosis			post-op
+Billing							billing
+
+
+Aufnahmediagnose				AD
+Einweisungsdiagnose				AD
+Fachabteilungsdiagnose			CM
+Nachfolgediagnose				CM
+Nachfolgediagnose\u0020(mit\u0020anschließender\u0020Arbeitsunfähigkeit)	CM
+Entlassungsdiagnose				DD
+Fachabteilungszusatzdiagnose	CM
+Überweisungsdiagnose			CM
+Behandlungsdiagnose				CM
+Haupdiagnose					CC
+Nebendiagnose					CM
