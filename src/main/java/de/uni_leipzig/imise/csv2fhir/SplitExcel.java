@@ -1,7 +1,5 @@
 package de.uni_leipzig.imise.csv2fhir;
 
-import static de.uni_leipzig.imise.utils.LogUtils.infoFinished;
-import static de.uni_leipzig.imise.utils.LogUtils.infoStarted;
 import static de.uni_leipzig.imise.utils.FileTools.ensureEmptyDirectory;
 import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
@@ -81,7 +79,10 @@ public class SplitExcel {
      * @throws IOException
      */
     public void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
-        Stopwatch stopwatch = infoStarted(LOG, "Start splitting Excel to CSV...");
+
+        LOG.info("Start splitting Excel to CSV...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
+
         ensureEmptyDirectory(targetCsvDir, sourceExcelFile.getParentFile());
         String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
         try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
@@ -177,7 +178,7 @@ public class SplitExcel {
                 }
             }
         }
-        infoFinished(LOG, "Finished splitting Excel to CSV in ", stopwatch);
+        LOG.info("Finished splitting Excel to CSV in " + stopwatch.stop());
     }
 
     /**

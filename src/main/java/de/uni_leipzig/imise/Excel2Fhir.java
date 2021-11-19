@@ -1,7 +1,6 @@
 package de.uni_leipzig.imise;
 
 import static de.uni_leipzig.imise.utils.ApplicationManager.getApplicationDir;
-import static de.uni_leipzig.imise.utils.LogUtils.infoStarted;
 
 import java.io.File;
 import java.util.List;
@@ -15,7 +14,6 @@ import com.google.common.base.Stopwatch;
 import de.uni_leipzig.imise.csv2fhir.SplitExcel;
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
-import de.uni_leipzig.imise.utils.LogUtils;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
 import de.uni_leipzig.life.csv2fhir.InputDataTableName;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
@@ -66,14 +64,15 @@ public class Excel2Fhir implements Callable<Integer> {
     public static void main(String[] args) {
         initDirectoriesAndLogger();
 
-        Stopwatch stopwatch = infoStarted(LOG);
+        LOG.info("Started...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
 
         Excel2Fhir excel2Fhir = new Excel2Fhir();
         CommandLine cmd = new CommandLine(excel2Fhir).setExecutionExceptionHandler(new PrintExceptionMessageHandler());
 
         int exitCode = cmd.execute(args);
 
-        LogUtils.infoFinished(LOG, stopwatch);
+        LOG.info("Finished in " + stopwatch.stop());
 
         System.exit(exitCode);
     }
