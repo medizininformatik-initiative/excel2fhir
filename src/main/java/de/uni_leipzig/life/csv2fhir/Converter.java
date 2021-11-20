@@ -164,21 +164,6 @@ public abstract class Converter {
     }
 
     /**
-     * @param icd
-     * @return
-     * @throws Exception
-     */
-    protected String getDiagnoseId(String icd) throws Exception {
-        String id;
-        if (icd == null) {
-            error("ICD empty");
-            return null;
-        }
-        id = icd;
-        return getPatientId() + "-C-" + id.hashCode();
-    }
-
-    /**
      * Creates a {@link CodeableConcept} from the columns with the given name of
      * the {@link CSVRecord} of this converter and the given codeSystemMapper.
      *

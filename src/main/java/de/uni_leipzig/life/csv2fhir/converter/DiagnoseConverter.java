@@ -20,6 +20,8 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
+import com.google.common.base.Strings;
+
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -63,7 +65,14 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private String getDiagnoseId() throws Exception {
-        return getDiagnoseId(record.get(ICD));
+        String icd = record.get(ICD);
+        if (icd == null) {
+            error("ICD empty");
+            return null;
+        }
+        String diagnosisRole = record.get(Typ);
+        String diagnosisRoleHash = Strings.isNullOrEmpty(diagnosisRole) ? "" : String.valueOf(diagnosisRole.hashCode());
+        return getPatientId() + "-C-" + icd.hashCode() + diagnosisRoleHash;
     }
 
     /**

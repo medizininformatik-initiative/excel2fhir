@@ -37,5 +37,7 @@ Entlassungsdiagnose				DD
 Fachabteilungszusatzdiagnose	CM
 Überweisungsdiagnose			CM
 Behandlungsdiagnose				CM
+Hauptdiagnose					CC
+### The misspelled next key was included in the first version of the Excel test data templates in the code list for the diagnoses
 Haupdiagnose					CC
 Nebendiagnose					CM

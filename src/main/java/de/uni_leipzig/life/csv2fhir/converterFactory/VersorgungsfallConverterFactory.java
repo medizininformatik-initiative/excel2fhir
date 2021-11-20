@@ -15,12 +15,6 @@ public class VersorgungsfallConverterFactory implements ConverterFactory {
                 return "Patient-ID";
             }
         },
-        Versorgungsfallgrund_Aufnahmediagnose {
-            @Override
-            public String toString() {
-                return "Versorgungsfallgrund (Aufnahmediagnose)";
-            }
-        },
         Startdatum,
         Enddatum,
         Versorgungsfallklasse,

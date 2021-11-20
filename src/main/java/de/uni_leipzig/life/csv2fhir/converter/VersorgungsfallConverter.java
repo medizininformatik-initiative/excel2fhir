@@ -1,14 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Enddatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Startdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallgrund_Aufnahmediagnose;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +15,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
-import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
@@ -75,32 +71,7 @@ public class VersorgungsfallConverter extends Converter {
         encounter.setClass_(convertClass());
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(convertPeriod());
-
-        // encounter.addReasonCode(convertReasonCode());
-        encounter.setDiagnosis(convertDiagnoses());
         return Collections.singletonList(encounter);
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private List<DiagnosisComponent> convertDiagnoses() throws Exception {
-        String codes = record.get(Versorgungsfallgrund_Aufnahmediagnose);
-        if (codes != null) {
-            CodeableConcept diagnosisUse = createDiagnosisUse("Admission diagnosis"); // always Admission diagnosis!
-            String codeArr[] = codes.trim().split("\\s*\\+\\s*");
-            List<DiagnosisComponent> diagnoses = new ArrayList<>();
-            for (String icd : codeArr) {
-                Reference conditionReference = new Reference("Condition/" + getDiagnoseId(icd));
-                DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);
-                diagnosisComponent.setUse(diagnosisUse);
-                diagnoses.add(diagnosisComponent);
-            }
-            return diagnoses;
-        }
-        warning("Versorgungsfallgrund (Aufnahmediagnose) empty");
-        return null;
     }
 
     @Override
@@ -140,13 +111,6 @@ public class VersorgungsfallConverter extends Converter {
      */
     private Period convertPeriod() {
         return createPeriod(Startdatum, Enddatum);
-    }
-
-    /**
-     * @return
-     */
-    private CodeableConcept convertReasonCode() throws Exception {
-        return createCodeableConcept("2.25.13106415395318837456468900343666547797", Versorgungsfallgrund_Aufnahmediagnose, IGNORE);
     }
 
     /**
