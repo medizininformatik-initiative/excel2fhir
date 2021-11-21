@@ -53,6 +53,9 @@ public abstract class Converter {
     final String pid;
 
     /**  */
+    final String encounterID;
+
+    /**  */
     final String dizID;
 
     /**  */
@@ -71,6 +74,7 @@ public abstract class Converter {
     public Converter(CSVRecord record) throws Exception {
         this.record = record;
         pid = parsePatientId();
+        encounterID = parseEncounterId();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
     }
 
@@ -125,9 +129,34 @@ public abstract class Converter {
     }
 
     /**
+     * @return
+     * @throws Exception
+     */
+    private String parseEncounterId() throws Exception {
+        Enum<?> encounterIDColumnIdentifier = getEncounterIDColumnIdentifier();
+        //missing encounter number -> always encounter number 1
+        String encounterNumber = "1";
+        if (encounterIDColumnIdentifier != null) {
+            String recordEncounterNumber = record.get(encounterIDColumnIdentifier);
+            if (recordEncounterNumber != null) {
+                encounterNumber = recordEncounterNumber;
+            }
+        }
+        return pid + "-E-" + encounterNumber;
+    }
+
+    /**
      * @return the enum identifier for the column with the patient ID
      */
     protected abstract Enum<?> getPatientIDColumnIdentifier();
+
+    /**
+     * @return the enum identifier for the column with the patient ID
+     */
+    protected Enum<?> getEncounterIDColumnIdentifier() {
+        //TODO AXS: subclasses must override this if they have a column identifier for the encounter number and the excel template must provide this column
+        return null;
+    }
 
     /**
      * @return
@@ -149,8 +178,8 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    protected String getEncounterId() throws Exception {
-        return getPatientId() + "-E-1";
+    protected final String getEncounterId() throws Exception {
+        return encounterID;
     }
 
     /**
