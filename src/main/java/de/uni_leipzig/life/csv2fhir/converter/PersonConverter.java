@@ -94,15 +94,11 @@ public class PersonConverter extends Converter {
             warning("Empty Nachname replaced by " + surname);
         }
 
-        if (forename != null && surname != null) {
-            HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
-            for (String name : forename.split(" ")) {
-                humanName.addGiven(name);
-            }
-            return humanName;
+        HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
+        for (String name : forename.split(" ")) {
+            humanName.addGiven(name);
         }
-        warning("Vorname or Nachname empty for Record");
-        return null;
+        return humanName;
     }
 
     /**

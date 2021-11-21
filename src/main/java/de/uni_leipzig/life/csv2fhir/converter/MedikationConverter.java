@@ -17,11 +17,11 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterF
 import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
@@ -85,7 +85,7 @@ public class MedikationConverter extends Converter {
 
     @Override
     public List<Resource> convert() throws Exception {
-        List<Resource> l = new Vector<>();
+        List<Resource> l = new ArrayList<>();
         if (!medis.contains(getMedicationId())) {
             l.add(parseMedication());
             medis.add(getMedicationId());
@@ -202,6 +202,9 @@ public class MedikationConverter extends Converter {
         return new Reference().setReference("Medication/" + getMedicationId());
     }
 
+    /**
+     * @return
+     */
     private Coding getATCCoding() {
         String atc = record.get("ATC Code");
         if (atc != null) {
