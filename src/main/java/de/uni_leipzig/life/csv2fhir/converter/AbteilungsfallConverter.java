@@ -1,8 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Enddatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Startdatum;
 
 import java.util.Collections;
@@ -59,7 +59,7 @@ public class AbteilungsfallConverter extends Converter {
 
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
-        return Patient_ID;
+        return Abteilungsfall.getPIDColumnIdentifier();
     }
 
     @Override

@@ -205,12 +205,8 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFiles(Bundle bundle, String filterID) throws Exception {
-        for (InputDataTableName csvFileName : InputDataTableName.values()) {
+        for (TableIdentifier csvFileName : TableIdentifier.values()) {
             String fileName = csvFileName.getCsvFileName();
-            ConverterFactory factory = csvFileName.getConverterFactory();
-            if (factory == null) {
-                continue;
-            }
             File file = new File(inputDirectory, fileName);
             if (!file.exists() || file.isDirectory()) {
                 continue;
@@ -219,7 +215,7 @@ public class Csv2Fhir {
                 CSVParser records = csvFormat.parse(in);
                 LOG.info("Start parsing File:" + fileName);
                 Map<String, Integer> headerMap = records.getHeaderMap();
-                List<String> neededColumnNames = factory.getNeededColumnNames();
+                List<String> neededColumnNames = csvFileName.getNeededColumnNames();
                 if (isColumnMissing(headerMap, neededColumnNames)) {
                     records.close();
                     throw new Exception("Error - File: " + fileName + " not convertable!");
@@ -227,13 +223,13 @@ public class Csv2Fhir {
                 for (CSVRecord record : records) {
                     try {
                         if (!Strings.isNullOrEmpty(filterID)) {
-                            String idColumnName = factory.getIdColumnName();
+                            String idColumnName = csvFileName.getPIDColumnIdentifier().toString();
                             String p = record.get(idColumnName);
                             if (!p.toUpperCase().matches(filterID)) {
                                 continue;
                             }
                         }
-                        List<Resource> list = factory.create(record).convert();
+                        List<Resource> list = csvFileName.convert(record);
                         if (list != null) {
                             for (Resource resource : list) {
                                 if (resource != null) {

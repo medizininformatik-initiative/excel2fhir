@@ -8,7 +8,7 @@ import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter;
 
 public class ProzedurConverterFactory implements ConverterFactory {
 
-    public enum NeededColumns {
+    public static enum NeededColumns {
         Patient_ID {
             @Override
             public String toString() {

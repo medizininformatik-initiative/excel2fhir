@@ -28,13 +28,6 @@ public interface ConverterFactory {
     }
 
     /**
-     * @return the name of the column with the id (default 0)
-     */
-    public default String getIdColumnName() {
-        return getNeededColumnName(0);
-    }
-
-    /**
      * @return A list with all column names of the table columns needed for
      *         conversion.
      */

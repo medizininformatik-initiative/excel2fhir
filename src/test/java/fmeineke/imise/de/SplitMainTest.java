@@ -13,7 +13,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
-import de.uni_leipzig.life.csv2fhir.InputDataTableName;
+import de.uni_leipzig.life.csv2fhir.TableIdentifier;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import junit.framework.TestCase;
 
@@ -23,7 +23,7 @@ public class SplitMainTest extends TestCase {
         super(testName);
     }
 
-    static Collection<String> excelSheetNames = InputDataTableName.getExcelSheetNames();
+    static Collection<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
 
     public static void testUcum() {
         String test[] = {"mg/dl", "U/l", "ng/ml"};

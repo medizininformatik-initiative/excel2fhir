@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Medikation;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ASK;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ATC_Code;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Anzahl_Dosen_pro_Tag;
@@ -9,7 +10,6 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.FHIR_UserSelected;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Medikationsplanart;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.PZN_Code;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapieendedatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapiestartdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Wirksubstanz_aus_Praeparat_Handelsname;
@@ -100,7 +100,7 @@ public class MedikationConverter extends Converter {
 
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
-        return Patient_ID;
+        return Medikation.getPIDColumnIdentifier();
     }
 
     /**

@@ -8,7 +8,7 @@ import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 
 public class PersonConverterFactory implements ConverterFactory {
 
-    public enum NeededColumns {
+    public static enum NeededColumns {
         Patient_ID {
             @Override
             public String toString() {
@@ -32,4 +32,5 @@ public class PersonConverterFactory implements ConverterFactory {
     public Enum<?>[] getNeededColumns() {
         return NeededColumns.values();
     }
+
 }

@@ -1,11 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Anschrift;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geburtsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geschlecht;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Krankenkasse;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Nachname;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Vorname;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
@@ -63,7 +63,7 @@ public class PersonConverter extends Converter {
 
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
-        return Patient_ID;
+        return Person.getPIDColumnIdentifier();
     }
 
     /**

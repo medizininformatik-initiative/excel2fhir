@@ -16,7 +16,7 @@ import com.google.common.base.Stopwatch;
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
-import de.uni_leipzig.life.csv2fhir.InputDataTableName;
+import de.uni_leipzig.life.csv2fhir.TableIdentifier;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -103,7 +103,7 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         try {
 
-            List<String> excelSheetNames = InputDataTableName.getExcelSheetNames();
+            List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
 
             if (inputFile != null) {
                 convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
