@@ -49,7 +49,11 @@ public class ProzedurConverter extends Converter {
         procedure.setCategory(new CodeableConcept(convertSnomedCategory()));
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
-        procedure.setEncounter(getEncounterReference());
+
+        //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+        String encounterId = getEncounterId();
+        VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, procedure);
+
         if (kds) {
             procedure.setMeta(new Meta().addProfile(PROFILE));
         } else if (kds_strict) {

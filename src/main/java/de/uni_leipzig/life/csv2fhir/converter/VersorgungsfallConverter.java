@@ -8,17 +8,18 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConve
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -38,11 +39,6 @@ public class VersorgungsfallConverter extends Converter {
      * 'https://www.medizininformatik-initiative.de/fhir/core/modul-fall/
      * ValueSet/Versorgungsfallklasse'
      */
-
-    /**
-     * Stores all {@link CSVRecord}s of all encounters created by this converter
-     */
-    public static final Map<Encounter, CSVRecord> encounterToCSVRecordMap = new HashMap<>();
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
@@ -133,6 +129,49 @@ public class VersorgungsfallConverter extends Converter {
                 .setSystem(codeSystem)
                 .setDisplay(display);
         return diagnosisUse;
+    }
+
+    /**
+     * @param encounterID
+     * @param procedure
+     */
+    public static void addDiagnosisToEncounter(String encounterID, Procedure procedure) {
+        // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
+        addDiagnosisInternal(encounterID, procedure, "Comorbidity diagnosis");
+    }
+
+    /**
+     * @param encounterID
+     * @param condition
+     * @param diagnosisUseIdentifier
+     */
+    public static void addDiagnosisToEncounter(String encounterID, Condition condition, String diagnosisUseIdentifier) {
+        if (diagnosisUseIdentifier == null) {
+            diagnosisUseIdentifier = "Comorbidity diagnosis"; // default for missing values
+        }
+        addDiagnosisInternal(encounterID, condition, diagnosisUseIdentifier);
+    }
+
+    /**
+     * @param encounterID
+     * @param resource
+     * @param diagnosisUseIdentifier
+     */
+    private static void addDiagnosisInternal(String encounterID, Resource resource, String diagnosisUseIdentifier) {
+        // encounter should be only null in error cases, but mybe we
+        // should catch and log
+        Encounter encounter = (Encounter) Versorgungsfall.getResource(encounterID);
+        // construct a valid DiagnosisComponent from condition or
+        // procedure to add it as reference to the encounter
+        Reference conditionReference = new Reference(resource);
+        // add diagnosis use to the diagnosis component
+        CodeableConcept diagnosisUse = VersorgungsfallConverter.createDiagnosisUse(diagnosisUseIdentifier);
+        DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);
+        diagnosisComponent.setUse(diagnosisUse);
+        // maybe the same diagnosis was coded twice
+        if (!encounter.getDiagnosis().contains(diagnosisComponent)) {
+            encounter.addDiagnosis(diagnosisComponent);
+        }
     }
 
 }

@@ -29,4 +29,5 @@ public class VersorgungsfallConverterFactory implements ConverterFactory {
     public Enum<?>[] getNeededColumns() {
         return NeededColumns.values();
     }
+
 }

@@ -176,7 +176,6 @@ public class Csv2Fhir {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
         convertFiles(bundle, filter);
-        EncounterReferenceReplacer.convert(bundle);
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
     }
 

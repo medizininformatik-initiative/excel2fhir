@@ -8,9 +8,7 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFac
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.NeededColumns.Typ;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -24,6 +22,7 @@ import org.hl7.fhir.r4.model.Resource;
 import com.google.common.base.Strings;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnoseConverter extends Converter {
@@ -31,11 +30,6 @@ public class DiagnoseConverter extends Converter {
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
     // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
-
-    /**
-     * Stores all {@link CSVRecord}s of all conditions created by this converter
-     */
-    public static final Map<Condition, CSVRecord> conditionToCSVRecordMap = new HashMap<>();
 
     /**
      * @param record
@@ -48,7 +42,6 @@ public class DiagnoseConverter extends Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
-        conditionToCSVRecordMap.put(condition, record);
         // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
         condition.setId(getDiagnoseId());
         condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
@@ -56,8 +49,13 @@ public class DiagnoseConverter extends Converter {
         //        condition.addCategory(convertCategory());
         condition.setCode(convertCode());
         condition.setSubject(getPatientReference());
-        condition.setEncounter(getEncounterReference());
         condition.setRecordedDateElement(convertRecordedDate());
+
+        //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+        String encounterId = getEncounterId();
+        String diagnosisUseIdentifier = record.get(DiagnoseConverterFactory.NeededColumns.Typ);
+        VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, condition, diagnosisUseIdentifier);
+
         return Collections.singletonList(condition);
     }
 
