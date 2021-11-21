@@ -1,5 +1,7 @@
 package fmeineke.imise.de;
 
+import static de.uni_leipzig.imise.Excel2Fhir.convertAllExcelInDir;
+import static de.uni_leipzig.imise.utils.Excel2Csv.splitExcel;
 import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
 import java.io.File;
@@ -9,7 +11,6 @@ import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 
-import de.uni_leipzig.imise.csv2fhir.SplitExcel;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.InputDataTableName;
@@ -40,16 +41,14 @@ public class SplitMainTest extends TestCase {
     public static void splitForGit() throws IOException {
         File testExcel = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten\\POLAR_Testdaten_UKE.xlsx");
         File csvDir = new File("H:\\git\\csv2fhir\\resources");
-        SplitExcel se = new SplitExcel();
-        se.splitExcel(testExcel, excelSheetNames, csvDir);
+        splitExcel(testExcel, excelSheetNames, csvDir);
     }
 
     // curl -v -H "Content-Type: application/fhir+json" -d @POLAR_Testdaten_UKB.json http://localhost:8080/baseR4/
 
     public static void splitTestDir() throws IOException {
         File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
-        SplitExcel se = new SplitExcel();
-        se.convertAllExcelInDir(excelDir, excelSheetNames);
+        convertAllExcelInDir(excelDir, excelSheetNames);
 
     }
 
@@ -92,9 +91,8 @@ public class SplitMainTest extends TestCase {
 
     public static void splitTestSingle(String filename) {
         File testExcel = new File(filename);
-        SplitExcel se = new SplitExcel();
         try {
-            se.splitExcel(testExcel, excelSheetNames);
+            splitExcel(testExcel, excelSheetNames);
             File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
             //            File resultJson = new File(testExcel.getParent(),
             //                    FilenameUtils.removeExtension(testExcel.getName())+".json");
