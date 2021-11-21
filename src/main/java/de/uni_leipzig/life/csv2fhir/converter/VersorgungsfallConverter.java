@@ -75,6 +75,11 @@ public class VersorgungsfallConverter extends Converter {
     }
 
     @Override
+    protected Enum<?> getPatientIDColumnIdentifier() {
+        return Patient_ID;
+    }
+
+    @Override
     protected Reference getPatientReference() throws Exception {
         String patientId = record.get(Patient_ID);
         if (patientId != null) {

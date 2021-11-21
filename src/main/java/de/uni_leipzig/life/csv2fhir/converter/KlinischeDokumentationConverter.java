@@ -51,6 +51,11 @@ public class KlinischeDokumentationConverter extends Converter {
         return Collections.singletonList(observation);
     }
 
+    @Override
+    protected Enum<?> getPatientIDColumnIdentifier() {
+        return Patient_ID;
+    }
+
     /**
      * @return
      * @throws Exception

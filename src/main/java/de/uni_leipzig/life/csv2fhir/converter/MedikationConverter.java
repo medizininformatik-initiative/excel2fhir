@@ -9,6 +9,7 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.FHIR_UserSelected;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Medikationsplanart;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.PZN_Code;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapieendedatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapiestartdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Wirksubstanz_aus_Praeparat_Handelsname;
@@ -95,6 +96,11 @@ public class MedikationConverter extends Converter {
             l.add(parseMedicationAdministration());
         }
         return l;
+    }
+
+    @Override
+    protected Enum<?> getPatientIDColumnIdentifier() {
+        return Patient_ID;
     }
 
     /**
@@ -300,12 +306,12 @@ public class MedikationConverter extends Converter {
         if (unit != null) {
             return new Ratio().setNumerator(
                     new Quantity().setValue(getDose())
-                    .setUnit(unit).setSystem("http://unitsofmeasure.org")
-                    .setCode(Ucum.human2ucum(unit)))
+                            .setUnit(unit).setSystem("http://unitsofmeasure.org")
+                            .setCode(Ucum.human2ucum(unit)))
                     .setDenominator(
                             new Quantity().setValue(new BigDecimal(1))
-                            .setSystem("http://XXX")
-                            .setCode(record.get(Darreichungsform)));
+                                    .setSystem("http://XXX")
+                                    .setCode(record.get(Darreichungsform)));
         }
         error("Einheit empty for Record");
         return null;

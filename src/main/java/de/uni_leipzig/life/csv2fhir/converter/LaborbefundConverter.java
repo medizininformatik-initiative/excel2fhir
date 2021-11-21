@@ -5,6 +5,7 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverter
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.LOINC;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Messwert;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Parameter;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Zeitstempel_Abnahme;
 
 import java.math.BigDecimal;
@@ -79,6 +80,11 @@ public class LaborbefundConverter extends Converter {
         return Collections.singletonList(observation);
     }
 
+    @Override
+    protected Enum<?> getPatientIDColumnIdentifier() {
+        return Patient_ID;
+    }
+
     /**
      * @return
      * @throws Exception
@@ -138,7 +144,7 @@ public class LaborbefundConverter extends Converter {
             synonym = unit;
         }
         if (ucum.isEmpty()) {
-            warning("ucum empty, check \""+ unit + "\"");
+            warning("ucum empty, check \"" + unit + "\"");
             throw new Exception("Ignore Ressource");
             //            return new Quantity().setValue(messwert).setUnit(synonym);
         }

@@ -115,13 +115,19 @@ public abstract class Converter {
      * @throws Exception
      */
     private String parsePatientId() throws Exception {
-        String id = record.get("Patient-ID");
+        Enum<?> patientIDColumnIdentifier = getPatientIDColumnIdentifier();
+        String id = record.get(patientIDColumnIdentifier);
         if (id != null) {
-            return id.replace("_", "-");
+            return id.replace('_', '-');
         }
-        error("Patient-ID empty for Record");
+        error(patientIDColumnIdentifier + " empty for Record");
         return null;
     }
+
+    /**
+     * @return the enum identifier for the column with the patient ID
+     */
+    protected abstract Enum<?> getPatientIDColumnIdentifier();
 
     /**
      * @return
