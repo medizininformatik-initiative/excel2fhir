@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -191,10 +192,8 @@ public class Csv2Fhir {
                 + outputFileType.getFileExtension();
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
-        try (FileWriter fw = new FileWriter(outputFile)) {
-            try (FileWriter fileWriter = new FileWriter(outputFile)) {
-                outputFileType.getParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
-            }
+        try (FileWriter fileWriter = new FileWriter(outputFile)) {
+            outputFileType.getParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
         }
     }
 
@@ -232,7 +231,12 @@ public class Csv2Fhir {
                         if (list != null) {
                             for (Resource resource : list) {
                                 if (resource != null) {
-                                    bundle.addEntry().setResource(resource).setRequest(getRequestComponent(resource));
+                                    BundleEntryComponent entry = bundle.addEntry();
+                                    entry.setResource(resource);
+                                    BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
+                                    entry.setRequest(requestComponent);
+                                    String url = requestComponent.getUrl();
+                                    entry.setFullUrl(url);
                                 }
                             }
                         }
