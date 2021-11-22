@@ -94,9 +94,17 @@ public class VersorgungsfallConverter extends Converter {
         // generierte Encounternummer
         String id = getEncounterId();
         CodeableConcept identifierCode = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN");
-        Reference r = new Reference().setIdentifier(new Identifier().setValue(getDIZId()).setSystem(
-                "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
-        return Collections.singletonList(new Identifier().setValue(id).setSystem("Generated").setAssigner(r).setType(identifierCode));
+        Reference reference = new Reference()
+                .setIdentifier(
+                        new Identifier()
+                                .setValue(getDIZId())
+                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+        return Collections.singletonList(
+                new Identifier()
+                        .setValue(id)
+                        .setSystem("http://dummyurl") // must be an formal correct url!
+                        .setAssigner(reference)
+                        .setType(identifierCode));
 
     }
 
