@@ -19,7 +19,6 @@ import org.hl7.fhir.common.hapi.validation.support.ValidationSupportChain;
 import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
-import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +33,7 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
+import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
 
 /**
  * @author fmeineke (12.10.2021), @author AXS (22.11.2021)
@@ -66,6 +66,19 @@ public class FHIRValidator {
 
     /**  */
     int fullResources = 0;
+
+    /**
+     * If the validation result contains one of this error message parts then
+     * the error will be ignored.
+     */
+    private static final String[] VALIDATION_IGNORE_ERROR_MESSAGE_PARTS = {
+            "Validation failed für \"http://loinc.org",
+            "Unknown code 'http://loinc.org#",
+            "Validation failed für \"http://fhir.de/CodeSystem/ask#",
+            "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn",
+            "http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
+            "Validation failed für \"http://snomed.info/sct"
+    };
 
     /**
      *
@@ -202,37 +215,54 @@ public class FHIRValidator {
     }
 
     /**
-     * @param r
+     * @param resource
      */
-    public void validate(Resource r) {
-        // Perform the validation
-        //        System.out.println("validate: " + r.getId());
-        ValidationResult outcome = validator.validateWithResult(r);
+    public void validate(Resource resource) {
+        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
+        LOG.info("Validated Resource Content \n" + resourceAsJson);
+        //ValidationResult validationResult = validator.validateWithResult(resource);
+        ValidationResult validationResult = validator.validateWithResult(resourceAsJson);
+        for (SingleValidationMessage validationMessage : validationResult.getMessages()) {
+            ResultSeverityEnum severity = validationMessage.getSeverity();
+            String locationString = validationMessage.getLocationString();
+            Integer locationLine = validationMessage.getLocationLine();
+            Integer locationCol = validationMessage.getLocationCol();
+            String message = validationMessage.getMessage();
+            String logMessage = severity + " " + locationString + " Line " + locationLine + " Col " + locationCol + " : " + message;
 
-        for (SingleValidationMessage i : outcome.getMessages()) {
-            if (i.getMessage().contains("Validation failed für \"http://loinc.org") ||
-                    i.getMessage().contains("Unknown code 'http://loinc.org#") ||
-                    i.getMessage().contains("Validation failed für \"http://fhir.de/CodeSystem/ask#") ||
-                    i.getMessage().contains("Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn") ||
-                    i.getMessage().contains("http://terminology.hl7.org/CodeSystem/v2-0203#OBI") ||
-                    i.getMessage().contains("Validation failed für \"http://snomed.info/sct")) {
-                bundleResources++;
-                fullResources++;
-                continue;
-            }
-            String validationResultMessage = i.getSeverity() + " " + i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage();
-            if (i.getSeverity() == ResultSeverityEnum.ERROR) {
-                LOG.error(validationResultMessage);
-                bundleErrors++;
-                fullErrors++;
-            } else if (i.getSeverity() == ResultSeverityEnum.WARNING) {
-                LOG.warn(validationResultMessage);
-                bundleWarnings++;
-                fullWarnings++;
+            if (!isIgnorableError(validationMessage)) {
+                if (severity == ResultSeverityEnum.ERROR) {
+                    LOG.error(logMessage);
+                    bundleErrors++;
+                    fullErrors++;
+                } else if (severity == ResultSeverityEnum.WARNING) {
+                    LOG.warn(logMessage);
+                    bundleWarnings++;
+                    fullWarnings++;
+                } else {
+                    LOG.info(logMessage);
+                }
             } else {
-                LOG.info(validationResultMessage);
+                LOG.info("IGNORED " + logMessage);
+            }
+            bundleResources++;
+            fullResources++;
+        }
+    }
+
+    /**
+     * @param validationMessage
+     * @return <code>true</code> if the text of the message contains a String of
+     *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
+     */
+    private static boolean isIgnorableError(SingleValidationMessage validationMessage) {
+        String message = validationMessage.getMessage();
+        for (String ignoreMessagePart : VALIDATION_IGNORE_ERROR_MESSAGE_PARTS) {
+            if (message.contains(ignoreMessagePart)) {
+                return true;
             }
         }
+        return false;
     }
 
     /**
@@ -258,11 +288,11 @@ public class FHIRValidator {
      * @throws FileNotFoundException
      */
     public void validateBundle(Bundle bundle) throws ConfigurationException, DataFormatException, FileNotFoundException {
-        for (BundleEntryComponent e : bundle.getEntry()) {
-            validate(e.getResource());
-        }
-        // Alternative:
-        //validate(bundle);
+        validate(bundle);
+        // Alternative: but a lot of errors (reference errors) will only be detected if you validate the whole bundle
+        //        for (BundleEntryComponent e : bundle.getEntry()) {
+        //            validate(e.getResource());
+        //        }
     }
 
     /**
