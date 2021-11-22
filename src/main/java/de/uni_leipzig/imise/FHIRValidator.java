@@ -49,23 +49,32 @@ public class FHIRValidator {
     /**  */
     private final FhirValidator validator;
 
-    /**  */
-    int bundleWarnings = 0;
+    /** Counters for the validation result */
+    private class ResultCounter {
+        int warnings = 0;
+        int errors = 0;
+        int ignoredErrors = 0;
+        int valid = 0;
+        int resources = 0;
 
-    /**  */
-    int bundleErrors = 0;
+        String toString(int i) {
+            String s = String.valueOf(i);
+            if (i >= resources) {
+                return s;
+            }
+            String r = String.valueOf(resources);
+            while (s.length() < r.length()) {
+                s = " " + s;
+            }
+            return s;
+        }
+    }
 
-    /**  */
-    int bundleResources = 0;
+    /** Counter for a Bundle result */
+    private ResultCounter bundleResultCounter = new ResultCounter();
 
-    /**  */
-    int fullWarnings = 0;
-
-    /**  */
-    int fullErrors = 0;
-
-    /**  */
-    int fullResources = 0;
+    /** Counter for all Bundle results */
+    private final ResultCounter fullResultCounter = new ResultCounter();
 
     /**
      * If the validation result contains one of this error message parts then
@@ -137,7 +146,7 @@ public class FHIRValidator {
                     LOG.error("Could not validate bundle " + inputFileName);
                     continue;
                 }
-                resetBundleValidateResult();
+                bundleResultCounter = new ResultCounter();
             }
         }
         if (!validateOnlyOneFile) {
@@ -183,15 +192,6 @@ public class FHIRValidator {
     }
 
     /**
-     * Reset the validation result for a bundle
-     */
-    public void resetBundleValidateResult() {
-        bundleErrors = 0;
-        bundleWarnings = 0;
-        bundleResources = 0;
-    }
-
-    /**
      * @return the validator packages or <code>null</code> in case of error
      */
     private File[] getValidatorPackages() {
@@ -233,20 +233,24 @@ public class FHIRValidator {
             if (!isIgnorableError(validationMessage)) {
                 if (severity == ResultSeverityEnum.ERROR) {
                     LOG.error(logMessage);
-                    bundleErrors++;
-                    fullErrors++;
+                    bundleResultCounter.errors++;
+                    fullResultCounter.errors++;
                 } else if (severity == ResultSeverityEnum.WARNING) {
                     LOG.warn(logMessage);
-                    bundleWarnings++;
-                    fullWarnings++;
+                    bundleResultCounter.warnings++;
+                    fullResultCounter.warnings++;
                 } else {
                     LOG.info(logMessage);
+                    bundleResultCounter.valid++;
+                    fullResultCounter.valid++;
                 }
             } else {
                 LOG.info("IGNORED " + logMessage);
+                bundleResultCounter.ignoredErrors++;
+                fullResultCounter.ignoredErrors++;
             }
-            bundleResources++;
-            fullResources++;
+            bundleResultCounter.resources++;
+            fullResultCounter.resources++;
         }
     }
 
@@ -300,10 +304,13 @@ public class FHIRValidator {
      */
     public void log(String bundleName) {
         boolean logFullErrors = bundleName == null;
+        ResultCounter result = logFullErrors ? fullResultCounter : bundleResultCounter;
         LOG.info(logFullErrors ? "All Bundles Result:" : "Bundle Result: (" + bundleName + ")");
-        LOG.info("Errors   : " + (logFullErrors ? fullErrors : bundleErrors));
-        LOG.info("Warnings : " + (logFullErrors ? fullWarnings : bundleWarnings));
-        LOG.info("Resources: " + (logFullErrors ? fullResources : bundleResources));
+        LOG.info("Errors         : " + result.toString(result.errors));
+        LOG.info("Ignored Errors : " + result.toString(result.ignoredErrors));
+        LOG.info("Warnings       : " + result.toString(result.warnings));
+        LOG.info("Valid Resources: " + result.toString(result.valid));
+        LOG.info("All Resources  : " + result.toString(result.resources));
     }
 
     /**
