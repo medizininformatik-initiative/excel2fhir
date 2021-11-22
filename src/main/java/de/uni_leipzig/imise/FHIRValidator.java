@@ -1,5 +1,7 @@
 package de.uni_leipzig.imise;
 
+import static de.uni_leipzig.imise.utils.StringUtils.getNumberSignSurroundedLogStrings;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -22,6 +24,8 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
+
 import ca.uhn.fhir.context.ConfigurationException;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.support.DefaultProfileValidationSupport;
@@ -32,7 +36,7 @@ import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 
 /**
- * @author fmeineke (12.10.2021)
+ * @author fmeineke (12.10.2021), @author AXS (22.11.2021)
  */
 public class FHIRValidator {
 
@@ -85,6 +89,8 @@ public class FHIRValidator {
      * @param filesOrDirectoriesToValidate
      */
     private void validate(List<String> filesOrDirectoriesToValidate) {
+        LOG.info("Start Validating...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
         boolean validateOnlyOneFile = true;
         for (String inputFileOrDirectoryName : filesOrDirectoriesToValidate) {
             File inputFileOrDirectory = new File(inputFileOrDirectoryName);
@@ -100,15 +106,19 @@ public class FHIRValidator {
                 String inputFileName = inputFile.getName();
                 Bundle bundle = null;
                 try {
-                    LOG.info("Read Bundle " + inputFileName);
+                    for (String logMessage : getNumberSignSurroundedLogStrings("Read Bundle " + inputFileName)) {
+                        LOG.info(logMessage);
+                    }
                     bundle = readBundle(inputFile);
                 } catch (Exception e) {
                     LOG.error("Could not read bundle " + inputFileName);
                     continue;
                 }
                 try {
-                    LOG.info("Validate Bundle " + inputFileName);
+                    LOG.info("Start Validate Bundle...");
+                    Stopwatch bundleValidationStopwatch = Stopwatch.createStarted();
                     validateBundle(bundle);
+                    LOG.info("Finished Validate Bundle in " + bundleValidationStopwatch.stop());
                     log(inputFileName);
                 } catch (Exception e) {
                     LOG.error("Could not validate bundle " + inputFileName);
@@ -120,23 +130,23 @@ public class FHIRValidator {
         if (!validateOnlyOneFile) {
             log(null);
         }
+        LOG.info("Finished Validating in " + stopwatch.stop());
     }
 
     /**
      *
      */
     public void init() {
-
+        LOG.info("Start Init FHIR Validator Bundles...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
         FhirContext ctx = FhirContext.forR4();
-
         NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(ctx);
-
         File[] validatorPackages = getValidatorPackages();
         if (validatorPackages != null) {
             for (File validatorPackage : validatorPackages) {
                 if (validatorPackage.isFile()) {
                     try {
-                        LOG.info("loadPackage: " + validatorPackage.getCanonicalPath());
+                        LOG.info("Load Validation Package: " + validatorPackage.getCanonicalPath());
                         npmPackageSupport.loadPackageFromClasspath(VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "/" + validatorPackage.getName());
                     } catch (IOException e) {
                         LOG.error(e.getMessage(), e);
@@ -156,6 +166,7 @@ public class FHIRValidator {
             FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
             validator.registerValidatorModule(instanceValidator);
         }
+        LOG.info("Finished Init FHIR Validator Bundles in " + stopwatch.stop());
     }
 
     /**
@@ -209,14 +220,17 @@ public class FHIRValidator {
                 fullResources++;
                 continue;
             }
-            System.out.println(i.getSeverity() + " " + i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage());
+            String validationResultMessage = i.getSeverity() + " " + i.getLocationString() + " " + i.getLocationLine() + ": " + i.getMessage();
             if (i.getSeverity() == ResultSeverityEnum.ERROR) {
+                LOG.error(validationResultMessage);
                 bundleErrors++;
                 fullErrors++;
-            }
-            if (i.getSeverity() == ResultSeverityEnum.WARNING) {
+            } else if (i.getSeverity() == ResultSeverityEnum.WARNING) {
+                LOG.warn(validationResultMessage);
                 bundleWarnings++;
                 fullWarnings++;
+            } else {
+                LOG.info(validationResultMessage);
             }
         }
     }
@@ -247,8 +261,8 @@ public class FHIRValidator {
         for (BundleEntryComponent e : bundle.getEntry()) {
             validate(e.getResource());
         }
-        // Geht auch:
-        //        validate(bundle);
+        // Alternative:
+        //validate(bundle);
     }
 
     /**
@@ -256,18 +270,21 @@ public class FHIRValidator {
      */
     public void log(String bundleName) {
         boolean logFullErrors = bundleName == null;
-        LOG.info(logFullErrors ? "All Bundle result: " : "Bundle result: (" + bundleName + ")");
-        LOG.info("Warnings: " + (logFullErrors ? fullWarnings : bundleWarnings));
-        LOG.info("Error: " + (logFullErrors ? fullErrors : bundleErrors));
-        LOG.info("Filtered: " + (logFullErrors ? fullResources : bundleResources));
+        LOG.info(logFullErrors ? "All Bundles Result:" : "Bundle Result: (" + bundleName + ")");
+        LOG.info("Errors   : " + (logFullErrors ? fullErrors : bundleErrors));
+        LOG.info("Warnings : " + (logFullErrors ? fullWarnings : bundleWarnings));
+        LOG.info("Resources: " + (logFullErrors ? fullResources : bundleResources));
     }
 
     /**
      * @param args
      */
     static public void main(String args[]) {
+        LOG.info("Start Validation Process...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
         FHIRValidator fhirValidator = new FHIRValidator();
         fhirValidator.validate(args);
+        LOG.info("Finished Validation Process in " + stopwatch.stop());
         System.exit(0);
     }
 }
