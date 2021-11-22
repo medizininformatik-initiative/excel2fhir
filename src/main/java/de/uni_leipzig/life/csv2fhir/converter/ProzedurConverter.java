@@ -22,6 +22,9 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class ProzedurConverter extends Converter {
 
+    /** Simple counter to generate unique identifier */
+    static int n = 1;
+
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure";
     // https://simplifier.net/medizininformatikinitiative-modulprozeduren/prozedur
@@ -33,9 +36,6 @@ public class ProzedurConverter extends Converter {
     public ProzedurConverter(CSVRecord record) throws Exception {
         super(record);
     }
-
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
 
     @Override
     public List<Resource> convert() throws Exception {

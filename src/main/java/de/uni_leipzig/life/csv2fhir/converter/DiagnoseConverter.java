@@ -19,13 +19,14 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
-import com.google.common.base.Strings;
-
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnoseConverter extends Converter {
+
+    /** Simple counter to generate unique identifier */
+    static int n = 1;
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
@@ -43,8 +44,9 @@ public class DiagnoseConverter extends Converter {
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();
         // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
-        condition.setId(getDiagnoseId());
-        condition.setIdentifier(Collections.singletonList(new Identifier().setValue(getDiagnoseId())));
+        String id = getDiagnoseId();
+        condition.setId(id);
+        condition.setIdentifier(Collections.singletonList(new Identifier().setValue(id)));
         condition.setMeta(new Meta().addProfile(PROFILE));
         //        condition.addCategory(convertCategory());
         condition.setCode(convertCode());
@@ -74,9 +76,7 @@ public class DiagnoseConverter extends Converter {
             error("ICD empty");
             return null;
         }
-        String diagnosisRole = record.get(Typ);
-        String diagnosisRoleHash = Strings.isNullOrEmpty(diagnosisRole) ? "" : String.valueOf(diagnosisRole.hashCode());
-        return getPatientId() + "-C-" + icd.hashCode() + diagnosisRoleHash;
+        return getPatientId() + "-CD-" + n++;
     }
 
     /**

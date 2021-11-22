@@ -69,7 +69,18 @@ public class MedikationConverter extends Converter {
      * Invalid : Instance count for 'Medication.ingredient' is 0, which is not
      * within the specified cardinality of 1..*
      */
-    static int n = 1;
+
+    /**
+     * Simple counter to generate unique identifier for
+     * {@link MedicationAdministration}
+     */
+    static int ma = 1;
+
+    /**
+     * Simple counter to generate unique identifier for
+     * {@link MedicationStatement}
+     */
+    static int ms = 1;
 
     // Krude Lösung TODO
     /**  */
@@ -110,7 +121,7 @@ public class MedikationConverter extends Converter {
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(getEncounterId() + "-MA-" + n++);
+        medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
 
         //        medicationAdministration.setStatus("completed");
         medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
@@ -352,7 +363,7 @@ public class MedikationConverter extends Converter {
      */
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(getEncounterId() + "-MS-" + n++);
+        medicationStatement.setId(getEncounterId() + "-MS-" + ms++);
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
 

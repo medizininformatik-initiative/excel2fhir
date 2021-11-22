@@ -28,7 +28,7 @@ import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 public class KlinischeDokumentationConverter extends Converter {
 
-    /**  */
+    /** Simple counter to generate unique identifier */
     static int n = 1;
 
     /**
@@ -42,7 +42,7 @@ public class KlinischeDokumentationConverter extends Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
-        observation.setId(getEncounterId() + "-O-" + n++);
+        observation.setId(getEncounterId() + "-OK-" + n++);
         observation.setStatus(Observation.ObservationStatus.FINAL);
         observation.setCode(parseObservationCode());
         observation.setSubject(parseObservationPatientId());

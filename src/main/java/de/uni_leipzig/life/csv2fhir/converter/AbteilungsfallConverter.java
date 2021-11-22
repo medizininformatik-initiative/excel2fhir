@@ -97,16 +97,17 @@ public class AbteilungsfallConverter extends Converter {
      * @throws Exception
      */
     private List<EncounterLocationComponent> convertLocation() throws Exception {
-        EncounterLocationComponent elc = new EncounterLocationComponent();
-        Identifier i = new Identifier();
-        i.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
-        i.setValue(record.get(Fachabteilung));
-        Reference r = new Reference();
-        r.setIdentifier(i);
-        elc.setLocation(r);
-        elc.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
-        elc.setPeriod(convertPeriod());
-        return Collections.singletonList(elc);
+        Identifier identifier = new Identifier();
+        identifier.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
+        identifier.setValue(record.get(Fachabteilung));
+        Reference reference = new Reference();
+        reference.setIdentifier(identifier);
+
+        EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
+        encounterLocationComponent.setLocation(reference);
+        encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
+        encounterLocationComponent.setPeriod(convertPeriod());
+        return Collections.singletonList(encounterLocationComponent);
     }
 
     /**
