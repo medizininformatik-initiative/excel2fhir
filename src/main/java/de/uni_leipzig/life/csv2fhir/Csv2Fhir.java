@@ -98,8 +98,12 @@ public class Csv2Fhir {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
-        csvFormat = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withTrim(true)
-                .withAllowMissingColumnNames(true).withFirstRecordAsHeader();
+        csvFormat = CSVFormat.DEFAULT
+                .withNullString("")
+                .withIgnoreSurroundingSpaces()
+                .withTrim(true)
+                .withAllowMissingColumnNames(true)
+                .withFirstRecordAsHeader();
     }
 
     /**
@@ -193,7 +197,9 @@ public class Csv2Fhir {
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
         try (FileWriter fileWriter = new FileWriter(outputFile)) {
-            outputFileType.getParser().setPrettyPrint(true).encodeResourceToWriter(bundle, fileWriter);
+            outputFileType.getParser()
+                    .setPrettyPrint(true)
+                    .encodeResourceToWriter(bundle, fileWriter);
         }
     }
 
@@ -210,15 +216,15 @@ public class Csv2Fhir {
                 continue;
             }
             try (Reader in = new FileReader(file)) {
-                CSVParser records = csvFormat.parse(in);
+                CSVParser csvParser = csvFormat.parse(in);
                 LOG.info("Start parsing File:" + fileName);
-                Map<String, Integer> headerMap = records.getHeaderMap();
+                Map<String, Integer> headerMap = csvParser.getHeaderMap();
                 List<String> neededColumnNames = csvFileName.getNeededColumnNames();
                 if (isColumnMissing(headerMap, neededColumnNames)) {
-                    records.close();
+                    csvParser.close();
                     throw new Exception("Error - File: " + fileName + " not convertable!");
                 }
-                for (CSVRecord record : records) {
+                for (CSVRecord record : csvParser) {
                     try {
                         if (!Strings.isNullOrEmpty(filterID)) {
                             String idColumnName = csvFileName.getPIDColumnIdentifier().toString();
@@ -244,7 +250,7 @@ public class Csv2Fhir {
                         LOG.error("Error while converting files", e);
                     }
                 }
-                records.close();
+                csvParser.close();
             }
         }
     }

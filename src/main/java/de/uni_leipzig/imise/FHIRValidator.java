@@ -51,12 +51,23 @@ public class FHIRValidator {
 
     /** Counters for the validation result */
     private class ResultCounter {
+        /** count of all warnings in the bundle */
         int warnings = 0;
+        /** count of all errors in the bundle */
         int errors = 0;
-        int ignoredErrors = 0;
+        /** count of all ignored errors or warnings in the bundle */
+        int ignored = 0;
+        /** count of valid resources in the bundle */
         int valid = 0;
+        /** count of all resources in the bundle */
         int resources = 0;
 
+        /**
+         * @param i
+         * @return a string value of i with at least the string length of the
+         *         current value of resources. The string is filled with leading
+         *         whitespaces if it is s
+         */
         String toString(int i) {
             String s = String.valueOf(i);
             if (i >= resources) {
@@ -161,8 +172,8 @@ public class FHIRValidator {
     public void init() {
         LOG.info("Start Init FHIR Validator Bundles...");
         Stopwatch stopwatch = Stopwatch.createStarted();
-        FhirContext ctx = FhirContext.forR4();
-        NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(ctx);
+        FhirContext fhirContext = FhirContext.forR4();
+        NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(fhirContext);
         File[] validatorPackages = getValidatorPackages();
         if (validatorPackages != null) {
             for (File validatorPackage : validatorPackages) {
@@ -179,10 +190,10 @@ public class FHIRValidator {
             // Create a support chain including the NPM Package Support
             ValidationSupportChain validationSupportChain = new ValidationSupportChain(
                     npmPackageSupport,
-                    new DefaultProfileValidationSupport(ctx),
-                    new CommonCodeSystemsTerminologyService(ctx),
-                    new InMemoryTerminologyServerValidationSupport(ctx),
-                    new SnapshotGeneratingValidationSupport(ctx));
+                    new DefaultProfileValidationSupport(fhirContext),
+                    new CommonCodeSystemsTerminologyService(fhirContext),
+                    new InMemoryTerminologyServerValidationSupport(fhirContext),
+                    new SnapshotGeneratingValidationSupport(fhirContext));
             CachingValidationSupport validationSupport = new CachingValidationSupport(validationSupportChain);
 
             FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
@@ -246,8 +257,8 @@ public class FHIRValidator {
                 }
             } else {
                 LOG.info("IGNORED " + logMessage);
-                bundleResultCounter.ignoredErrors++;
-                fullResultCounter.ignoredErrors++;
+                bundleResultCounter.ignored++;
+                fullResultCounter.ignored++;
             }
             bundleResultCounter.resources++;
             fullResultCounter.resources++;
@@ -307,8 +318,8 @@ public class FHIRValidator {
         ResultCounter result = logFullErrors ? fullResultCounter : bundleResultCounter;
         LOG.info(logFullErrors ? "All Bundles Result:" : "Bundle Result: (" + bundleName + ")");
         LOG.info("Errors         : " + result.toString(result.errors));
-        LOG.info("Ignored Errors : " + result.toString(result.ignoredErrors));
         LOG.info("Warnings       : " + result.toString(result.warnings));
+        LOG.info("Ignored        : " + result.toString(result.ignored));
         LOG.info("Valid Resources: " + result.toString(result.valid));
         LOG.info("All Resources  : " + result.toString(result.resources));
     }
