@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.File;
 import java.io.FileReader;
@@ -117,8 +118,9 @@ public class Csv2Fhir {
      * @return
      * @throws IOException
      */
-    public Collection<String> getValues(String csvFileName, String columnName, boolean distinct, boolean alphabetical)
+    public Collection<String> getValues(String csvFileName, Object columnName, boolean distinct, boolean alphabetical)
             throws IOException {
+        String columnNameString = String.valueOf(columnName);
         Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
         File file = new File(inputDirectory, csvFileName);
 
@@ -127,7 +129,7 @@ public class Csv2Fhir {
         }
         try (CSVParser records = csvFormat.parse(new FileReader(file))) {
             for (CSVRecord record : records) {
-                String pid = record.get(columnName);
+                String pid = record.get(columnNameString);
                 if (pid != null) {
                     values.add(pid.toUpperCase());
                     LOG.info("found pid=" + pid);
@@ -170,7 +172,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
-        Collection<String> pids = getValues("Person.csv", "Patient-ID", true, false);
+        Collection<String> pids = getValues(Person + ".csv", PersonConverterFactory.NeededColumns.Patient_ID, true, false);
         for (String pid : pids) {
             convertFiles(outputFileType, pid);
         }
