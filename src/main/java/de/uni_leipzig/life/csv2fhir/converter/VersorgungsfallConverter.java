@@ -126,7 +126,7 @@ public class VersorgungsfallConverter extends Converter {
      */
     public static void addDiagnosisToEncounter(String encounterID, Procedure procedure) {
         // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
-        addDiagnosisInternal(encounterID, procedure, "Comorbidity diagnosis");
+        addDiagnosisToEncounter(encounterID, procedure, "Comorbidity diagnosis");
     }
 
     /**
@@ -138,21 +138,30 @@ public class VersorgungsfallConverter extends Converter {
         if (diagnosisUseIdentifier == null) {
             diagnosisUseIdentifier = "Comorbidity diagnosis"; // default for missing values
         }
-        addDiagnosisInternal(encounterID, condition, diagnosisUseIdentifier);
+        addDiagnosisToEncounter(encounterID, (Resource) condition, diagnosisUseIdentifier);
     }
 
     /**
      * @param encounterID
-     * @param resource
+     * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    private static void addDiagnosisInternal(String encounterID, Resource resource, String diagnosisUseIdentifier) {
+    public static void addDiagnosisToEncounter(String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = (Encounter) Versorgungsfall.getResource(encounterID);
+        addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+    }
+
+    /**
+     * @param encounter
+     * @param conditionOrProcedureAsDiagnosis
+     * @param diagnosisUseIdentifier
+     */
+    public static void addDiagnosisToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // construct a valid DiagnosisComponent from condition or
         // procedure to add it as reference to the encounter
-        Reference conditionReference = new Reference(resource);
+        Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis);
         // add diagnosis use to the diagnosis component
         CodeableConcept diagnosisUse = VersorgungsfallConverter.createDiagnosisUse(diagnosisUseIdentifier);
         DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);

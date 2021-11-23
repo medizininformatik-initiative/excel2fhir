@@ -19,10 +19,19 @@ CODE_SYSTEM_URL		http://terminology.hl7.org/CodeSystem/diagnosis-role
 # PRÜFEN, OB PROZEDUREN UND ALLE MISSINGS WIRKLICH MIT CM VERSEHEN WERDEN SOLLEN!?
 ###
 
-Admission\u0020diagnosis		AD
-Discharge\u0020diagnosis		DD
+###########################################################################################################
+### NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE ###
+###                                                                                                     ###
+###      Every part-of-Encounter (Fachabteilungsfall / - kontakt) needs a diagnosis to be valid.        ###
+###      The order of the Code values (CC, CM, AD, DD, ...) in this map determines which diagnosis      ###
+###                     type should be preferentially added to the part-of-Encounter!                   ###
+###                                                                                                     ###
+###########################################################################################################
+
 Chief\u0020complaint			CC
 Comorbidity\u0020diagnosis		CM
+Admission\u0020diagnosis		AD
+Discharge\u0020diagnosis		DD
 pre-op\u0020diagnosis			pre-op
 post-op\u0020diagnosis			post-op
 Billing							billing

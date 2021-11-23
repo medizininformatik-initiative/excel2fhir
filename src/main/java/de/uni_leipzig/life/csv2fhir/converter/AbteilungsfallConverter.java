@@ -89,4 +89,16 @@ public class AbteilungsfallConverter extends Converter {
         return Collections.singletonList(encounterLocationComponent);
     }
 
+    /**
+     * @param encounterID
+     * @param conditionOrProcedureAsDiagnosis
+     * @param diagnosisUseIdentifier
+     */
+    public static void addDiagnosisToEncounterInternal(String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+        // encounter should be only null in error cases, but mybe we
+        // should catch and log
+        Encounter encounter = (Encounter) Abteilungsfall.getResource(encounterID);
+        VersorgungsfallConverter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+    }
+
 }

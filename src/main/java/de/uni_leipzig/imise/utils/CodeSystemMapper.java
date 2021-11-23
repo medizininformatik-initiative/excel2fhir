@@ -5,7 +5,9 @@ package de.uni_leipzig.imise.utils;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -31,6 +33,13 @@ public class CodeSystemMapper {
     private final HashMap<String, String> codeToHumanMap = new HashMap<>();
 
     /**
+     * Stores the values of the map in the order in which they are added the
+     * first time. If a value already exists in this map it will not be added
+     * again.
+     */
+    private final List<String> valuesAddingOrder = new ArrayList<>();
+
+    /**
      * Fills the both maps from the properties file.
      *
      * @author AXS (17.11.2021)
@@ -44,31 +53,34 @@ public class CodeSystemMapper {
          * @param resourceFileName
          */
         public void load(String resourceFileName) {
-            CodeSystemPropertiesLoader ucumLoader = new CodeSystemPropertiesLoader();
+            CodeSystemPropertiesLoader codeMapLoader = new CodeSystemPropertiesLoader();
             URL ucumMapFile = ClassLoader.getSystemResource(resourceFileName);
             try (InputStream inputStream = ucumMapFile.openStream()) {
-                ucumLoader.load(inputStream);
+                codeMapLoader.load(inputStream);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
         @Override
-        public synchronized String put(Object humanReadable, Object ucumCode) {
-            //Sys.out1(humanReadable + " -> " + ucumCode);
-            String ucumCodeString = String.valueOf(ucumCode);
+        public synchronized String put(Object humanReadable, Object code) {
+            //Sys.out1(humanReadable + " -> " + code);
+            String codeString = String.valueOf(code);
             //the const value 'EMPTY_STRING' means the empty string "" :)
-            if ("EMPTY_STRING".equals(ucumCodeString)) {
-                ucumCodeString = "";
+            if ("EMPTY_STRING".equals(codeString)) {
+                codeString = "";
             }
             String humanReadableString = String.valueOf(humanReadable);
-            // the very first human readable non-UCUM code in the ucum properties
-            // file is the value for the backward mapping from UCUM to nin-UCUM
-            String existingHumanReadable = codeToHumanMap.get(ucumCode);
+            // the very first human readable non-code in the ucum properties
+            // file is the value for the backward mapping from code to human
+            String existingHumanReadable = codeToHumanMap.get(code);
             if (existingHumanReadable == null) {
-                codeToHumanMap.put(ucumCodeString, humanReadableString);
+                codeToHumanMap.put(codeString, humanReadableString);
             }
-            return humanToCodeMap.put(humanReadableString, ucumCodeString);
+            if (!valuesAddingOrder.contains(code)) {
+                valuesAddingOrder.add(String.valueOf(code));
+            }
+            return humanToCodeMap.put(humanReadableString, codeString);
         }
 
     }
@@ -102,6 +114,13 @@ public class CodeSystemMapper {
      */
     public String getCodeSystem() {
         return getHumanToCode(CODE_SYSTEM_URL_RESOURCE_KEY);
+    }
+
+    /**
+     * @return an iterable of {@link #valuesAddingOrder}
+     */
+    public Iterable<String> getValuesInAddingOrder() {
+        return () -> valuesAddingOrder.iterator();
     }
 
 }
