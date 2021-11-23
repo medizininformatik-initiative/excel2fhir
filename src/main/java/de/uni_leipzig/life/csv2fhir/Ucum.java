@@ -16,7 +16,7 @@ public class Ucum {
     /**
      * Name of the ucum map file in the resources which maps from non-UCUM text.
      */
-    private static final CodeSystemMapper UCUM_CODE_MAPPER = new CodeSystemMapper("UCUM_Code.properties");
+    private static final CodeSystemMapper UCUM_CODE_MAPPER = new CodeSystemMapper("UCUM_Code.map");
 
     /**
      * @param ucum

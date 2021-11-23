@@ -45,7 +45,7 @@ public class VersorgungsfallConverter extends Converter {
      * Maps from human readable diagnosis role description to the correspondig
      * code system code.
      */
-    public static final CodeSystemMapper diagnosisRoleKeyMapper = new CodeSystemMapper("Diagnosis_Role.properties");
+    public static final CodeSystemMapper diagnosisRoleKeyMapper = new CodeSystemMapper("Diagnosis_Role.map");
 
     /**
      * @param record

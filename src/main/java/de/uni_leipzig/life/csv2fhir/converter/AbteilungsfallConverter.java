@@ -31,7 +31,7 @@ public class AbteilungsfallConverter extends Converter {
      * Maps from human readable department description to the number code for
      * the department.
      */
-    private final CodeSystemMapper departmentKeyMapper = new CodeSystemMapper("Department_Key.properties");
+    private final CodeSystemMapper departmentKeyMapper = new CodeSystemMapper("Department_Key.map");
 
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
     // https://simplifier.net/medizininformatikinitiative-modulfall/abteilungsfall-duplicate-2
