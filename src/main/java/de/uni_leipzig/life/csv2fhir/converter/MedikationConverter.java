@@ -172,6 +172,7 @@ public class MedikationConverter extends Converter {
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected, "PZN"));
+        //concept.addCoding(createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected, "ATC")); //this should be valid but the Validator only acceps dimdi
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/dimdi/atc", ATC_Code, FHIR_UserSelected, "ATC"));
         concept.setText(record.get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
