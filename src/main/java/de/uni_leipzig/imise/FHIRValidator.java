@@ -152,7 +152,7 @@ public class FHIRValidator {
                     Stopwatch bundleValidationStopwatch = Stopwatch.createStarted();
                     validateBundle(bundle);
                     LOG.info("Finished Validate Bundle in " + bundleValidationStopwatch.stop());
-                    log(inputFileName);
+                    logResult(inputFileName);
                 } catch (Exception e) {
                     LOG.error("Could not validate bundle " + inputFileName);
                     continue;
@@ -161,7 +161,7 @@ public class FHIRValidator {
             }
         }
         if (!validateOnlyOneFile) {
-            log(null);
+            logResult(null);
         }
         LOG.info("Finished Validating in " + stopwatch.stop());
     }
@@ -230,7 +230,7 @@ public class FHIRValidator {
      */
     public void validate(Resource resource) {
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
-        LOG.info("Validated Resource Content \n" + resourceAsJson);
+        LOG.debug("Validated Resource Content \n" + resourceAsJson);
         //ValidationResult validationResult = validator.validateWithResult(resource);
         ValidationResult validationResult = validator.validateWithResult(resourceAsJson);
         for (SingleValidationMessage validationMessage : validationResult.getMessages()) {
@@ -313,15 +313,15 @@ public class FHIRValidator {
     /**
      * @param bundleName
      */
-    public void log(String bundleName) {
+    public void logResult(String bundleName) {
         boolean logFullErrors = bundleName == null;
         ResultCounter result = logFullErrors ? fullResultCounter : bundleResultCounter;
         LOG.info(logFullErrors ? "All Bundles Result:" : "Bundle Result: (" + bundleName + ")");
-        LOG.info("Errors         : " + result.toString(result.errors));
-        LOG.info("Warnings       : " + result.toString(result.warnings));
-        LOG.info("Ignored        : " + result.toString(result.ignored));
-        LOG.info("Valid Resources: " + result.toString(result.valid));
-        LOG.info("All Resources  : " + result.toString(result.resources));
+        LOG.info("Errors  : " + result.toString(result.errors));
+        LOG.info("Warnings: " + result.toString(result.warnings));
+        LOG.info("Ignored : " + result.toString(result.ignored));
+        LOG.info("Valid   : " + result.toString(result.valid));
+        LOG.info("All     : " + result.toString(result.resources));
     }
 
     /**

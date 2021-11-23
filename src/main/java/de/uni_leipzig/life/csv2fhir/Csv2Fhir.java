@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -24,6 +26,7 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 
 import ca.uhn.fhir.context.FhirContext;
@@ -173,11 +176,12 @@ public class Csv2Fhir {
 
     /**
      * @param outputFileType
-     * @param pid
+     * @param pid if not null or empty than the reuslt bundle contains only
+     *            values of this patient (all values are filtered with this id)
      * @throws Exception
      */
     private void convertFiles(OutputFileType outputFileType, String pid) throws Exception {
-        String filter = pid == null ? null : pid.toUpperCase();
+        String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
         convertFiles(bundle, filter);
@@ -214,6 +218,8 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFiles(Bundle bundle, String filterID) throws Exception {
+        LOG.info("Start parsing CSV files...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
         for (TableIdentifier csvFileName : TableIdentifier.values()) {
             String fileName = csvFileName.getCsvFileName();
             File file = new File(inputDirectory, fileName);
@@ -252,12 +258,13 @@ public class Csv2Fhir {
                             }
                         }
                     } catch (Exception e) {
-                        LOG.error("Error while converting files", e);
+                        LOG.error("Error (" + e.getMessage() + ") while converting file " + csvFileName + " in record " + record);
                     }
                 }
                 csvParser.close();
             }
         }
+        LOG.info("Finished parsing CSV files in " + stopwatch.stop());
     }
 
     /**

@@ -63,10 +63,11 @@ public class Excel2Fhir {
      * @param sheetNames if not <code>null</code> then only the sheets with a
      *            name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
+     * @param validateBundles
      * @throws IOException
      */
-    public static void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
-        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, JSON, false);
+    public static void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, boolean validateBundles) throws IOException {
+        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, JSON, false, validateBundles);
     }
 
     /**
@@ -78,15 +79,16 @@ public class Excel2Fhir {
      * @param resultDir
      * @param outputFileType
      * @param convertFilesPerPatient
+     * @param validateBundles
      * @throws IOException
      */
     public static void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient)
+            boolean convertFilesPerPatient, boolean validateBundles)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false);
+            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false, validateBundles);
         }
     }
 
@@ -99,12 +101,13 @@ public class Excel2Fhir {
      * @param resultDir
      * @param outputFileType
      * @param convertFilesPerPatient
+     * @param validateBundles
      * @throws IOException
      */
     public static void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient)
+            boolean convertFilesPerPatient, boolean validateBundles)
             throws IOException {
-        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
+        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, true, validateBundles);
     }
 
     /**
@@ -117,10 +120,11 @@ public class Excel2Fhir {
      * @param outputFileType
      * @param convertFilesPerPatient
      * @param createAndCleanOutputDirectories
+     * @param validateBundles
      * @throws IOException
      */
     private static void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient, boolean createAndCleanOutputDirectories) throws IOException {
+            boolean convertFilesPerPatient, boolean createAndCleanOutputDirectories, boolean validateBundles) throws IOException {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
@@ -129,6 +133,11 @@ public class Excel2Fhir {
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
         try {
             converter.convertFiles(outputFileType, convertFilesPerPatient);
+            if (validateBundles) {
+                String[] validatorInputDir = new String[] {resultDir.getPath()};
+                new FHIRValidator().validate(validatorInputDir);
+            }
+
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

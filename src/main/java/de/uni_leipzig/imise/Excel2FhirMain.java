@@ -16,8 +16,8 @@ import com.google.common.base.Stopwatch;
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
-import de.uni_leipzig.life.csv2fhir.TableIdentifier;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
+import de.uni_leipzig.life.csv2fhir.TableIdentifier;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -62,6 +62,10 @@ public class Excel2FhirMain implements Callable<Integer> {
             "--log-layout"}, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
     static LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; //the console log layout is set in the projects log4j2.xml file!
 
+    @Option(names = {"-v",
+            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Validates all bundles after creation")
+    static boolean validateBundles = false;
+
     /**
      * @param args
      */
@@ -102,16 +106,15 @@ public class Excel2FhirMain implements Callable<Integer> {
             initDirectoriesAndLogger();
         }
         try {
-
             List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
 
             if (inputFile != null) {
-                convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient, validateBundles);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient, validateBundles);
             }
         } catch (Exception e) {
             e.printStackTrace();

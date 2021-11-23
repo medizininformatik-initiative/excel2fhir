@@ -86,8 +86,6 @@ public abstract class Converter {
      * @throws Exception
      */
     protected void error(String msg) throws Exception {
-        Exception exception = new Exception("Error on " + getErrorMessageBody(msg));
-        LOG.error(msg, exception);
         throw new Exception("Error on " + getErrorMessageBody(msg));
     }
 
