@@ -19,7 +19,21 @@
 CODE_SYSTEM_URL		http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel
 
 ###
-# the following codes comes from the excel tables
+# the following codes come from the CODE_SYSTEM_URL
+# http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel
+# These are the correct codes from the Code-System-URL. And Yes,
+# "Gefa.chirurgie" is written in this way there!
+###
+Hämatologie\u0020und\u0020internistische\u0020Onkologie		0500
+Pädiatrie													1000
+Gefa.chirurgie												1800
+Orthopädie													2300
+Orthopädie\u0020und\u0020Unfallchirurgie					2316
+
+
+###
+# The following codes come from the excel tables.
+# Only the codes above differ from those of the Code-System-URL
 ###
 Innere\u0020Medizin											0100
 Geriatrie													0200
@@ -60,17 +74,6 @@ Intensivmedizin												3600
 Orthopaedie\u0020und\u0020Unfallchirurgie					2316
 Frauenheilkunde												2425
 Sonstige\u0020Fachabteilung									3700
-
-###
-# the following codes come from the CODE_SYSTEM_URL
-# http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel
-###
-Hämatologie\u0020und\u0020internistische\u0020Onkologie		0500
-Pädiatrie													1000
-Gefa.chirurgie												1800
-Orthopädie													2300
-Orthopädie\u0020und\u0020Unfallchirurgie					2316
-
 
 ###
 # the following codes are here for completeness
