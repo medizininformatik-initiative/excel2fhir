@@ -23,13 +23,21 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFac
  * @author AXS (18.11.2021)
  */
 public enum TableIdentifier {
+
     Person(new PersonConverterFactory(), PersonConverterFactory.NeededColumns.Patient_ID),
+
     Versorgungsfall(new VersorgungsfallConverterFactory(), VersorgungsfallConverterFactory.NeededColumns.Patient_ID),
+
     Abteilungsfall(new AbteilungsfallConverterFactory(), AbteilungsfallConverterFactory.NeededColumns.Patient_ID),
+
     Laborbefund(new LaborbefundConverterFactory(), LaborbefundConverterFactory.NeededColumns.Patient_ID),
+
     Diagnose(new DiagnoseConverterFactory(), DiagnoseConverterFactory.NeededColumns.Patient_ID),
+
     Prozedur(new ProzedurConverterFactory(), ProzedurConverterFactory.NeededColumns.Patient_ID),
+
     Medikation(new MedikationConverterFactory(), MedikationConverterFactory.NeededColumns.Patient_ID),
+
     Klinische_Dokumentation(new KlinischeDokumentationConverterFactory(), KlinischeDokumentationConverterFactory.NeededColumns.Patient_ID);
 
     /** Maps from the reosurce ID to the resource */
@@ -77,6 +85,15 @@ public enum TableIdentifier {
             idToResourceMap.put(id, resource);
         }
         return resources;
+    }
+
+    /**
+     * Clear in all instances the map from IDs to resources.
+     */
+    public static void clearAll() {
+        for (TableIdentifier tabbleIdentifier : TableIdentifier.values()) {
+            tabbleIdentifier.clear();
+        }
     }
 
     /**
