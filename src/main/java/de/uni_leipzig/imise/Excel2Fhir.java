@@ -88,7 +88,11 @@ public class Excel2Fhir {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false, validateBundles);
+            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false, false);
+        }
+        if (validateBundles) {
+            String[] validatorInputDir = new String[] {resultDir.getPath()};
+            new FHIRValidator().validate(validatorInputDir);
         }
     }
 
@@ -137,7 +141,6 @@ public class Excel2Fhir {
                 String[] validatorInputDir = new String[] {resultDir.getPath()};
                 new FHIRValidator().validate(validatorInputDir);
             }
-
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
