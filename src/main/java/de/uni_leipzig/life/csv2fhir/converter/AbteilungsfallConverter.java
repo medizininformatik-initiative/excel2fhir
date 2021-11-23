@@ -9,13 +9,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -65,28 +62,13 @@ public class AbteilungsfallConverter extends Converter {
         encounter.setId(getEncounterId() + "-A-" + n++);
         encounter.setMeta(new Meta().addProfile(PROFILE));
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
-        encounter.setClass_(convertClass_());
-        encounter.setServiceType(convertServiceType());
+        encounter.setClass_(createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse", "ub"));
+        encounter.setServiceType(createCodeableConcept(Fachabteilung, departmentKeyMapper));
         encounter.setSubject(getPatientReference());
-        encounter.setPeriod(convertPeriod());
+        encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         //        encounter.setLocation(convertLocation()); bringt nichts
         encounter.setPartOf(getEncounterReference());
         return Collections.singletonList(encounter);
-    }
-
-    /**
-     * @return
-     */
-    private static Coding convertClass_() {
-        return createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse", "ub");
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private CodeableConcept convertServiceType() throws Exception {
-        return createCodeableConcept(Fachabteilung, departmentKeyMapper);
     }
 
     /**
@@ -103,15 +85,8 @@ public class AbteilungsfallConverter extends Converter {
         EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
         encounterLocationComponent.setLocation(reference);
         encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
-        encounterLocationComponent.setPeriod(convertPeriod());
+        encounterLocationComponent.setPeriod(createPeriod(Startdatum, Enddatum));
         return Collections.singletonList(encounterLocationComponent);
-    }
-
-    /**
-     * @return
-     */
-    private Period convertPeriod() {
-        return createPeriod(Startdatum, Enddatum);
     }
 
 }

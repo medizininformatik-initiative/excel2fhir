@@ -88,7 +88,7 @@ public class DiagnoseConverter extends Converter {
         if (code != null) {
             return new CodeableConcept().setText(code);
         }
-        warning("Typ empty for Record");
+        warning(Typ + " empty for Record");
         return null;
     }
 
@@ -113,7 +113,7 @@ public class DiagnoseConverter extends Converter {
         try {
             return DateUtil.parseDateTimeType(record.get(Dokumentationsdatum));
         } catch (Exception e) {
-            error("Can not parse Dokumentationsdatum for Record");
+            error("Can not parse " + Dokumentationsdatum + " for Record");
             return null;
         }
     }

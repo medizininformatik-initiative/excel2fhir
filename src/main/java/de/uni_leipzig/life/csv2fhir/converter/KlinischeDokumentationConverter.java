@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Bezeichner;
@@ -14,7 +15,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
@@ -44,7 +44,7 @@ public class KlinischeDokumentationConverter extends Converter {
         Observation observation = new Observation();
         observation.setId(getEncounterId() + "-OK-" + n++);
         observation.setStatus(Observation.ObservationStatus.FINAL);
-        observation.setCode(parseObservationCode());
+        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
         observation.setSubject(parseObservationPatientId());
         observation.setEncounter(getEncounterReference());
         observation.setEffective(parseObservationTimestamp());
@@ -61,20 +61,12 @@ public class KlinischeDokumentationConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private CodeableConcept parseObservationCode() throws Exception {
-        return createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR);
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
     private Reference parseObservationPatientId() throws Exception {
         String patientId = record.get(Patient_ID);
-        if (patientId != null) {
+        if (!isNullOrEmpty(patientId)) {
             return new Reference().setReference("Patient/" + patientId);
         }
-        error("Patient-ID empty for Record");
+        error(Patient_ID + " empty for Record");
         return null;
     }
 
@@ -92,7 +84,7 @@ public class KlinischeDokumentationConverter extends Converter {
                 return null;
             }
         }
-        error("Zeitstempel (Abnahme) empty for Record");
+        error(Zeitstempel + " empty for Record");
         return null;
     }
 
@@ -105,27 +97,27 @@ public class KlinischeDokumentationConverter extends Converter {
         try {
             messwert = DecimalUtil.parseDecimal(record.get(Wert));
         } catch (Exception e) {
-            error("Wert is not a numerical value for Record");
+            error(Wert + " is not a numerical value for Record");
             return null;
         }
         String unit = record.get(Einheit);
-        if (unit == null || unit.isEmpty()) {
-            error("Einheit is empty for Record");
+        if (isNullOrEmpty(unit)) {
+            error(Einheit + " is empty for Record");
             return null;
         }
+        boolean isUcum = Ucum.isUcum(unit);
+        String ucum = isUcum ? unit : Ucum.human2ucum(unit);
+        String synonym = isUcum ? Ucum.ucum2human(unit) : unit;
 
-        String ucum, synonym;
-        if (Ucum.isUcum(unit)) {
-            ucum = unit;
-            synonym = Ucum.ucum2human(unit);
-        } else {
-            ucum = Ucum.human2ucum(unit);
-            synonym = unit;
+        Quantity quantity = new Quantity()
+                .setSystem("http://unitsofmeasure.org")
+                .setValue(messwert);
+
+        if (!ucum.isEmpty()) {
+            quantity.setCode(ucum)
+                    .setUnit(synonym);
         }
-        if (ucum.isEmpty()) {
-            return new Quantity().setValue(messwert).setUnit(synonym);
-        }
-        return new Quantity().setValue(messwert).setSystem("http://unitsofmeasure.org").setCode(ucum).setUnit(synonym);
+        return quantity;
     }
 
 }

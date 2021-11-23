@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Einheit;
@@ -65,16 +66,28 @@ public class LaborbefundConverter extends Converter {
         String diz = getDIZId();
 
         CodeableConcept obiCode = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "OBI");
-        Reference r = new Reference().setIdentifier(new Identifier().setValue(diz).setSystem(
-                "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
-        observation.setIdentifier(Arrays.asList(new Identifier().setValue(id).setSystem("https://" + diz + ".de/befund")
-                .setAssigner(r).setType(obiCode)));
-
-        CodeableConcept laboratoryCode = new CodeableConcept();
-        Coding laboratoryCoding1 = createCoding("http://terminology.hl7.org/CodeSystem/observation-category", "laboratory", "Laboratory");
-        Coding laboratoryCoding2 = createCoding("http://loinc.org", "26436-6", "Laboratory studies");
-        laboratoryCode.addCoding(laboratoryCoding1);
-        laboratoryCode.addCoding(laboratoryCoding2);
+        Reference assigner = new Reference()
+                .setIdentifier(
+                        new Identifier()
+                                .setValue(diz)
+                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+        observation.setIdentifier(Arrays.asList(
+                new Identifier()
+                        .setValue(id)
+                        .setSystem("https://" + diz + ".de/befund")
+                        .setAssigner(assigner)
+                        .setType(obiCode)));
+        Coding laboratoryCoding1 = new Coding()
+                .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
+                .setCode("laboratory")
+                .setDisplay("Laboratory");
+        Coding laboratoryCoding2 = new Coding()
+                .setSystem("http://loinc.org")
+                .setCode("26436-6")
+                .setDisplay("Laboratory studies");
+        CodeableConcept laboratoryCode = new CodeableConcept()
+                .addCoding(laboratoryCoding1)
+                .addCoding(laboratoryCoding2);
 
         observation.setCategory(Arrays.asList(laboratoryCode));
         return Collections.singletonList(observation);
@@ -105,15 +118,15 @@ public class LaborbefundConverter extends Converter {
      */
     private DateTimeType parseObservationTimestamp() throws Exception {
         String timestamp = record.get(Zeitstempel_Abnahme);
-        if (timestamp != null) {
+        if (!isNullOrEmpty(timestamp)) {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
             } catch (Exception eYear) {
-                error("Can not parse Zeitstempel for Record");
+                error("Can not parse " + Zeitstempel_Abnahme + " for Record");
                 return null;
             }
         }
-        error("Zeitstempel (Abnahme) empty for Record");
+        error(Zeitstempel_Abnahme + " empty for Record");
         return null;
     }
 
@@ -135,19 +148,18 @@ public class LaborbefundConverter extends Converter {
             return null;
         }
 
-        String ucum, synonym;
-        if (Ucum.isUcum(unit)) {
-            ucum = unit;
-            synonym = Ucum.ucum2human(unit);
-        } else {
-            ucum = Ucum.human2ucum(unit);
-            synonym = unit;
-        }
+        boolean isUcum = Ucum.isUcum(unit);
+        String ucum = isUcum ? unit : Ucum.human2ucum(unit);
+        String synonym = isUcum ? Ucum.ucum2human(unit) : unit;
+
         if (ucum.isEmpty()) {
             warning("ucum empty, check \"" + unit + "\"");
             throw new Exception("Ignore Ressource");
-            //            return new Quantity().setValue(messwert).setUnit(synonym);
         }
-        return new Quantity().setValue(messwert).setSystem("http://unitsofmeasure.org").setCode(ucum).setUnit(synonym);
+        return new Quantity()
+                .setSystem("http://unitsofmeasure.org")
+                .setCode(ucum)
+                .setValue(messwert)
+                .setUnit(synonym);
     }
 }

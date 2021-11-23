@@ -17,7 +17,6 @@ import java.util.List;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.Address.AddressType;
-import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
@@ -29,6 +28,8 @@ import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
+
+import com.google.common.base.Strings;
 
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -71,10 +72,11 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private List<Identifier> parseIdentifier() throws Exception {
-        Identifier identifier = new Identifier();
-        CodeableConcept identifierType = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "MR");
-        String idCodeSystem = "https://" + getDIZId() + ".de/pid";
-        identifier.setValue(getPatientId()).setSystem(idCodeSystem).setUse(IdentifierUse.USUAL).setType(identifierType);
+        Identifier identifier = new Identifier()
+                .setSystem("https://" + getDIZId() + ".de/pid")
+                .setValue(getPatientId())
+                .setUse(IdentifierUse.USUAL)
+                .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "MR"));
         return Collections.singletonList(identifier);
     }
 
@@ -87,11 +89,11 @@ public class PersonConverter extends Converter {
 
         if (forename == null) {
             forename = "Vorname-" + getPatientId();
-            warning("Empty Vorname replaced by " + forename);
+            warning("Empty " + Vorname + " replaced by " + forename);
         }
         if (surname == null) {
             surname = "Nachname-" + getPatientId();
-            warning("Empty Nachname replaced by " + surname);
+            warning("Empty " + Nachname + " replaced by " + surname);
         }
 
         HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
@@ -120,7 +122,7 @@ public class PersonConverter extends Converter {
                 case "divers":
                     return OTHER;
                 default:
-                    throw new Exception("Error on Patient: Geschlecht <" + sex + ">not parsable for Record: " + record
+                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + sex + ">not parsable for Record: " + record
                             .getRecordNumber() + "! " + record.toString());
                 }
             }
@@ -141,11 +143,11 @@ public class PersonConverter extends Converter {
             try {
                 return DateUtil.parseDateType(birthday);
             } catch (Exception e) {
-                error("Can not parse birthday for Record");
+                error("Can not parse " + Geburtsdatum + " for Record");
                 return null;
             }
         }
-        error("Geburtsdatum empty for Record");
+        error(Geburtsdatum + " empty for Record");
         return null;
     }
 
@@ -180,7 +182,7 @@ public class PersonConverter extends Converter {
             }
             return a.setType(AddressType.BOTH).setCountry("DE");
         }
-        warning("On Patient: Anschrift empty for Record");
+        warning("On " + Person + ": " + Anschrift + " empty for Record");
         return null;
     }
 
@@ -189,17 +191,12 @@ public class PersonConverter extends Converter {
      * @return
      * @throws Exception
      */
-    @SuppressWarnings("unused")
     private Reference parseHealthProvider() throws Exception {
         String practitioner = record.get(Krankenkasse);
-        if (practitioner != null) {
-            if (practitioner.length() != 0) {
-                return new Reference().setDisplay(practitioner);
-            }
-            error("Krankenkasse empty for Record");
-            return null;
+        if (!Strings.isNullOrEmpty(practitioner)) {
+            return new Reference().setDisplay(practitioner);
         }
-        warning("Column Krankenkasse not found!");
+        error(Krankenkasse + " empty for Record");
         return null;
     }
 }

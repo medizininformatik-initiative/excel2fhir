@@ -123,15 +123,10 @@ public class MedikationConverter extends Converter {
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
         medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
 
-        //        medicationAdministration.setStatus("completed");
         medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
-        // Set Reference
         medicationAdministration.setMedication(getMedicationReference());
-        // and set CodeableConcept
-        //        medicationAdministration.setMedication(convertMedicationCodeableConcept());
         medicationAdministration.setContext(getEncounterReference());
         medicationAdministration.setSubject(getPatientReference());
-        //        medicationAdministration.setEffective(convertPeriod());
         medicationAdministration.setEffective(convertTimestamp());
         medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
@@ -200,7 +195,6 @@ public class MedikationConverter extends Converter {
             warning("ATC empty");
             id = txt;
         }
-        //        return getDIZId() + "-M-" + id.hashCode();
         // Dumm, jede Medikation wird für jeden Patienten wiederholt... es dafür steht jedes bundle für sich
         return getPatientId() + "-M-" + id.hashCode();
     }
@@ -211,18 +205,6 @@ public class MedikationConverter extends Converter {
      */
     private Reference getMedicationReference() throws Exception {
         return new Reference().setReference("Medication/" + getMedicationId());
-    }
-
-    /**
-     * @return
-     */
-    private Coding getATCCoding() {
-        String atc = record.get("ATC Code");
-        if (atc != null) {
-            return new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setCode(atc).setUserSelected("ATC".equals(
-                    record.get("FHIR_UserSelected")));
-        }
-        return null;
     }
 
     /**
@@ -306,7 +288,7 @@ public class MedikationConverter extends Converter {
             // complete Period
             return new Period().setStartElement(start).setEndElement(end);
         } catch (Exception e) {
-            error("Can not parse Therapiestartdatum or Therapieendedatum");
+            error("Can not parse " + Therapiestartdatum + " or " + Therapieendedatum);
         }
         return null;
     }
@@ -327,21 +309,8 @@ public class MedikationConverter extends Converter {
                                     .setSystem("http://XXX")
                                     .setCode(record.get(Darreichungsform)));
         }
-        error("Einheit empty for Record");
+        error(Einheit + " empty for Record");
         return null;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private BigDecimal getDosesPerDay() throws Exception {
-        try {
-            return DecimalUtil.parseDecimal(record.get(Anzahl_Dosen_pro_Tag));
-        } catch (Exception e) {
-            error("Anzahl Dosen pro Tag is not a numerical value for Record");
-            return null;
-        }
     }
 
     /**
@@ -352,7 +321,7 @@ public class MedikationConverter extends Converter {
         try {
             return DecimalUtil.parseDecimal(record.get(Einzeldosis));
         } catch (Exception e) {
-            error("Einzeldosis is not a numerical value for Record");
+            error(Einzeldosis + " is not a numerical value for Record");
             return null;
         }
     }
@@ -369,13 +338,9 @@ public class MedikationConverter extends Converter {
 
         medicationStatement.setMedication(getMedicationReference());
 
-        //        medicationStatement.setMedication(convertMedicationCodeableConcept());
         medicationStatement.setContext(getEncounterReference());
         medicationStatement.setSubject(getPatientReference());
-        //        Type p = convertPeriod(); in den Testdaten meist so nicht richtig
-        Type p = convertTimestamp();
-        medicationStatement.setEffective(p);
-        //        medicationStatement.setDateAssertedElement(convertTimestamp());
+        medicationStatement.setEffective(convertTimestamp());
         medicationStatement.addDosage(convertDosageStatement());
         return medicationStatement;
     }
@@ -388,7 +353,7 @@ public class MedikationConverter extends Converter {
         try {
             return DateUtil.parseDateTimeType(record.get(Zeitstempel));
         } catch (Exception e) {
-            error("Can not parse timestamp");
+            error("Can not parse " + Zeitstempel);
             return null;
         }
     }
@@ -429,16 +394,4 @@ public class MedikationConverter extends Converter {
         return d;
     }
 
-    /**
-     * @return
-     * @throws Exception
-     */
-    private String getDoseUnit() throws Exception {
-        String doseUnit = record.get("Einheit");
-        if (doseUnit != null) {
-            return doseUnit;
-        }
-        error("Einheit empty");
-        return null;
-    }
 }

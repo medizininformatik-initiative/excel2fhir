@@ -12,13 +12,11 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -26,6 +24,9 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class VersorgungsfallConverter extends Converter {
 
     /**  */
@@ -47,10 +48,6 @@ public class VersorgungsfallConverter extends Converter {
     public static final CodeSystemMapper diagnosisRoleKeyMapper = new CodeSystemMapper("Diagnosis_Role.properties");
 
     /**
-     * Schwierigkeit: die Aufnahmediagnosen nicht unbedingt identisch mit der
-     * Hauptdiagnosen Diagnose haben typisch keinen verpflichtenden Identifier;
-     * hier wird konstruiert...
-     *
      * @param record
      * @throws Exception
      */
@@ -65,9 +62,9 @@ public class VersorgungsfallConverter extends Converter {
         encounter.setId(getEncounterId());
         encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
-        encounter.setClass_(convertClass());
+        encounter.setClass_(createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse", Versorgungsfallklasse, ERROR));
         encounter.setSubject(getPatientReference());
-        encounter.setPeriod(convertPeriod());
+        encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         return Collections.singletonList(encounter);
     }
 
@@ -97,30 +94,14 @@ public class VersorgungsfallConverter extends Converter {
         Reference reference = new Reference()
                 .setIdentifier(
                         new Identifier()
-                                .setValue(getDIZId())
-                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
+                                .setValue(getDIZId()));
         return Collections.singletonList(
                 new Identifier()
-                        .setValue(id)
                         .setSystem("http://dummyurl") // must be an formal correct url!
-                        .setAssigner(reference)
-                        .setType(identifierCode));
-
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Coding convertClass() throws Exception {
-        return createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse", Versorgungsfallklasse, ERROR);
-    }
-
-    /**
-     * @return
-     */
-    private Period convertPeriod() {
-        return createPeriod(Startdatum, Enddatum);
+                        .setValue(id)
+                        .setType(identifierCode)
+                        .setAssigner(reference));
     }
 
     /**
@@ -133,8 +114,8 @@ public class VersorgungsfallConverter extends Converter {
         String display = diagnosisRoleKeyMapper.getCodeToHuman(code);
         CodeableConcept diagnosisUse = new CodeableConcept();
         diagnosisUse.addCoding()
-                .setCode(code)
                 .setSystem(codeSystem)
+                .setCode(code)
                 .setDisplay(display);
         return diagnosisUse;
     }
