@@ -17,7 +17,8 @@
 	</Appenders>
 	<Loggers>
 		<!-- additivity="true" because only one logger catches the message if false -->
-		<Root level="debug" additivity="true" includeLocation="true">
+<!-- 		DO NOT LOG WITH DEBUG WHEN YOU START THE VALIDATOR! The logfile size is then 1 - 5 GB -->
+		<Root level="info" additivity="true" includeLocation="true">
 <!-- 			<AppenderRef ref="MyFile" /> -->
 <!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
 		</Root>
