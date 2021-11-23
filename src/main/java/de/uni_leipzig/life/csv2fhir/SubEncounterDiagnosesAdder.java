@@ -44,6 +44,10 @@ public class SubEncounterDiagnosesAdder {
                 //Get the Encounter of which this Encounter is a part
                 Reference partOfReference = encounter.getPartOf();
                 String superEncounterID = partOfReference.getReference();
+                //no encounter found from which we can copy a diagnosis reference
+                if (superEncounterID == null) {
+                    continue;
+                }
                 Encounter superEncounter = getResource(bundle, Encounter.class, superEncounterID);
                 if (superEncounter == null) {
                     continue;
