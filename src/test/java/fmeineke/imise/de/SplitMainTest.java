@@ -48,7 +48,7 @@ public class SplitMainTest extends TestCase {
 
     public static void splitTestDir() throws IOException {
         File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
-        convertAllExcelInDir(excelDir, excelSheetNames, false);
+        convertAllExcelInDir(excelDir, excelSheetNames);
 
     }
 

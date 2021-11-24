@@ -109,13 +109,19 @@ public class Excel2FhirMain implements Callable<Integer> {
             List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
 
             if (inputFile != null) {
-                convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient, validateBundles);
+                convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient, validateBundles);
+                convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             }
+
+            if (validateBundles) {
+                String[] validatorInputDir = new String[] {outputDirectory.getPath()};
+                new FHIRValidator().validate(validatorInputDir);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
