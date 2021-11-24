@@ -94,7 +94,14 @@ public abstract class Converter {
      * @param msg
      */
     protected void warning(String msg) {
-        LOG.warn(getErrorMessageBody(msg) + "     " + Sys.getStackTraceStep(3));
+        warning(msg, 0);
+    }
+
+    /**
+     * @param msg
+     */
+    protected void warning(String msg, int stackTraceBackwardSteps) {
+        LOG.warn(getErrorMessageBody(msg) + "     " + Sys.getStackTraceStep(3 + stackTraceBackwardSteps));
     }
 
     /**
@@ -312,7 +319,7 @@ public abstract class Converter {
      * @param code the code of the contained {@link Coding}
      * @return a new {@link CodeableConcept}
      */
-    public CodeableConcept createCodeableConcept(String codeSystem, String code) {
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code) {
         Coding coding = createCoding(codeSystem, code);
         return new CodeableConcept(coding);
     }
@@ -327,7 +334,7 @@ public abstract class Converter {
      * @param text
      * @return a new {@link CodeableConcept}
      */
-    public CodeableConcept createCodeableConcept(String codeSystem, String code, String text) {
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String text) {
         Coding coding = createCoding(codeSystem, code);
         return new CodeableConcept(coding).setText(text);
     }
@@ -393,15 +400,29 @@ public abstract class Converter {
      * @return a {@link Period} object filled with the start and end date given
      *         by the column names in the {@link CSVRecord} of this converter
      */
-    public Period createPeriod(Enum<?> startDateColumnName, Enum<?> endDateColumnName) {
+    public Period createPeriod(Enum<?> startDateColumnName, Enum<?> endDateColumnName) throws Exception {
+        DateTimeType startDate = null;
+        DateTimeType endDate = null;
         try {
             String startDateValue = record.get(startDateColumnName);
+            startDate = DateUtil.parseDateTimeType(startDateValue);
+        } catch (Exception e) {
+        }
+        try {
             String endDateValue = record.get(endDateColumnName);
-            DateTimeType startDate = DateUtil.parseDateTimeType(startDateValue);
-            DateTimeType endDate = DateUtil.parseDateTimeType(endDateValue);
+            endDate = DateUtil.parseDateTimeType(endDateValue);
+        } catch (Exception e) {
+        }
+        if (startDate == null) {
+            startDate = endDate;
+        }
+        if (endDate == null) {
+            endDate = startDate;
+        }
+        try {
             return new Period().setStartElement(startDate).setEndElement(endDate);
         } catch (Exception e) {
-            warning("Can not parse Startdatum or Enddatum for Record");
+            error("Can not parse " + startDateColumnName + " or " + endDateColumnName + " as date for Record " + record);
             return null;
         }
     }
