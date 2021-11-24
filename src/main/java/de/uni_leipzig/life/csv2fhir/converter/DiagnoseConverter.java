@@ -99,8 +99,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertCode() throws Exception {
-        //Coding icdCoding = createCoding("http://fhir.de/CodeSystem/dimdi/icd-10-gm", ICD, ERROR); //this should be valid but the Validator only acceps dimdi
-        Coding icdCoding = createCoding("http://fhir.de/CodeSystem/dimdi/icd-10-gm", ICD, ERROR);
+        Coding icdCoding = createCoding("http://fhir.de/CodeSystem/bfarm/icd-10-gm", ICD, ERROR);
         if (icdCoding != null) {
             icdCoding.setVersion("2020"); // just to be KDS compatible
             return createCodeableConcept(icdCoding, Bezeichner);
