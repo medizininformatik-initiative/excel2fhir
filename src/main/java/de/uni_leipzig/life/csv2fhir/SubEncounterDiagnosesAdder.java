@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.Converter.getBaseId;
+import static de.uni_leipzig.life.csv2fhir.BundleFuntions.getResource;
 
 import java.util.List;
 
@@ -83,37 +83,8 @@ public class SubEncounterDiagnosesAdder {
             }
         }
     }
-
-    /**
-     * Finds a resource in a bundle by its type and ID.
-     *
-     * @param <T> return value of the found element
-     * @param bundle the bundle to be searched
-     * @param resourceClass the subclass of the resource to be returned
-     * @param id The ID string that the element must have. If this is not a
-     *            simple ID like "X0001" but a full reference ID like
-     *            "Encounter/X0001", then the ID is converted to a simple ID
-     *            before comparison (everything before the slash is removed).
-     * @return a resource with the given ID and type from the bundle. If not
-     *         found <code>null</code> is returned.
-     */
-    @SuppressWarnings("unchecked")
-    public static <T extends Resource> T getResource(Bundle bundle, Class<? extends T> resourceClass, String id) {
-        //if the id is a reference -> we extract the real id
-        String baseId = getBaseId(id);
-        List<BundleEntryComponent> bundleEntries = bundle.getEntry();
-        //check every entry if it has the correct class and id
-        for (BundleEntryComponent entry : bundleEntries) {
-            Resource entryResource = entry.getResource();
-            Class<? extends Resource> entryResourceClass = entryResource.getClass();
-            if (entryResourceClass.isAssignableFrom(resourceClass)) {
-                String resourceID = entryResource.getId();
-                if (baseId.equals(resourceID)) {
-                    return (T) entryResource;
-                }
             }
         }
-        return null;
     }
 
 }
