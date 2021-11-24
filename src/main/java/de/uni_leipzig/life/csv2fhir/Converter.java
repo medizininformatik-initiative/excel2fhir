@@ -406,4 +406,17 @@ public abstract class Converter {
         }
     }
 
+    /**
+     * Returns the substring of the specified ID string after the first slash,
+     * or the string itself if it does not contain a slash.
+     *
+     * @param id
+     * @return
+     */
+    public static String getBaseId(String id) {
+        int index = id.indexOf('/');
+        //if index == -1 (= slash not found) then substring returns this
+        return id.substring(index + 1);
+    }
+
 }

@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.Converter.getBaseId;
+
 import java.util.List;
 
 import org.hl7.fhir.r4.model.Bundle;
@@ -112,19 +114,6 @@ public class SubEncounterDiagnosesAdder {
             }
         }
         return null;
-    }
-
-    /**
-     * Returns the substring of the specified ID string after the first slash,
-     * or the string itself if it does not contain a slash.
-     *
-     * @param id
-     * @return
-     */
-    private static String getBaseId(String id) {
-        int index = id.indexOf('/');
-        //if index == -1 (= slash not found) then substring returns this
-        return id.substring(index + 1);
     }
 
 }
