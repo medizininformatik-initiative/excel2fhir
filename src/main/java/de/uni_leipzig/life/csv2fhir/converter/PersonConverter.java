@@ -182,8 +182,18 @@ public class PersonConverter extends Converter {
             }
             return a.setType(AddressType.BOTH).setCountry("DE");
         }
-        warning("On " + Person + ": " + Anschrift + " empty for Record");
-        return null;
+        warning("On " + Person + ": " + Anschrift + " empty. Creating dummy address. " + record);
+        return getDummyAddress(); //KDS-Validator needs an Address
+    }
+
+    /**
+     * @return a dummy address
+     */
+    public Address getDummyAddress() {
+        return new Address()
+                .setCity("Dummy City")
+                .setPostalCode("00000")
+                .setLine(List.of(new StringType("Dummy Street 1")));
     }
 
     // not used yet
