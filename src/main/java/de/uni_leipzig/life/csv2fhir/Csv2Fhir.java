@@ -33,6 +33,7 @@ import com.google.common.base.Strings;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.utils.Alphabetical;
+import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -174,7 +175,10 @@ public class Csv2Fhir {
     private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
         Collection<String> pids = getValues(Person + ".csv", PersonConverterFactory.NeededColumns.Patient_ID, true, false);
         for (String pid : pids) {
+            LOG.info("Start create Fhir-Json-Bundle for Patient-ID " + pid + " ...");
+            Stopwatch stopwatch = Stopwatch.createStarted();
             convertFiles(outputFileType, pid);
+            LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
         }
     }
 
@@ -222,7 +226,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFiles(Bundle bundle, String filterID) throws Exception {
-        LOG.info("Start parsing CSV files...");
+        LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         for (TableIdentifier csvFileName : TableIdentifier.values()) {
             String fileName = csvFileName.getCsvFileName();
@@ -268,7 +272,7 @@ public class Csv2Fhir {
                 csvParser.close();
             }
         }
-        LOG.info("Finished parsing CSV files in " + stopwatch.stop());
+        LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
     }
 
     /**

@@ -96,4 +96,29 @@ public class Sys {
         return false;
     }
 
+    /**
+     * @return the stack trace
+     */
+    public static final String getStackTrace() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 1; i < stackTrace.length; i++) {
+            sb.append(stackTrace[i]);
+            sb.append('\n');
+        }
+        int length = sb.length();
+        if (length > 0 && sb.charAt(length - 1) == '\n') {
+            sb.setLength(length - 1);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @return the stack trace
+     */
+    public static final String getStackTraceStep(int stepIndex) {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        return String.valueOf(stackTrace[stepIndex]);
+    }
+
 }
