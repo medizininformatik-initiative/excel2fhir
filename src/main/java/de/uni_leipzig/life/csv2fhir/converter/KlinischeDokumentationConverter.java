@@ -3,6 +3,7 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.createUnknownDataAbsentReason;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.LOINC;
@@ -48,7 +49,13 @@ public class KlinischeDokumentationConverter extends Converter {
         observation.setSubject(parseObservationPatientId());
         observation.setEncounter(getEncounterReference());
         observation.setEffective(parseObservationTimestamp());
-        observation.setValue(parseObservationValue());
+        //set value or value absent reason
+        Quantity observationValue = parseObservationValue();
+        if (observationValue != null) {
+            observation.setValue(observationValue);
+        } else {
+            observation.setDataAbsentReason(createUnknownDataAbsentReason());
+        }
         return Collections.singletonList(observation);
     }
 

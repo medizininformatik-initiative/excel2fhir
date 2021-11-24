@@ -60,7 +60,13 @@ public class LaborbefundConverter extends Converter {
         observation.setSubject(getPatientReference());
         observation.setEncounter(getEncounterReference());
         observation.setEffective(parseObservationTimestamp());
-        observation.setValue(parseObservationValue());
+        //set value or value absent reason
+        Quantity observationValue = parseObservationValue();
+        if (observationValue != null) {
+            observation.setValue(observationValue);
+        } else {
+            observation.setDataAbsentReason(createUnknownDataAbsentReason());
+        }
 
         // geratenes DIZ Kürzel
         String diz = getDIZId();
@@ -139,12 +145,12 @@ public class LaborbefundConverter extends Converter {
         try {
             messwert = DecimalUtil.parseDecimal(record.get(Messwert));
         } catch (Exception e) {
-            error("Messwert is not a numerical value for Record");
+            error(Messwert + " is not a numerical value for Record");
             return null;
         }
         String unit = record.get(Einheit);
         if (unit == null || unit.isEmpty()) {
-            warning("Einheit is empty for Record");
+            warning(Einheit + " is empty for Record");
             return null;
         }
 
@@ -162,4 +168,24 @@ public class LaborbefundConverter extends Converter {
                 .setValue(messwert)
                 .setUnit(synonym);
     }
+
+    /**
+     * @return a {@link CodeableConcept} that represents a valid unknown data
+     *         absent reason for {@link Observation} values.
+     */
+    public static CodeableConcept createUnknownDataAbsentReason() {
+        //needed to be a valid in KDS validating
+        //copied from examples of extracted validation package de.medizininformatikinitiative.kerndatensatz.laborbefund-1.0.6.tgz
+        //    "dataAbsentReason":
+        //    {
+        //        "coding": [
+        //          {
+        //            "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
+        //            "code": "unknown"
+        //          }
+        //       ]
+        //    },
+        return createCodeableConcept("http://terminology.hl7.org/CodeSystem/data-absent-reason", "unknown");
+    }
+
 }
