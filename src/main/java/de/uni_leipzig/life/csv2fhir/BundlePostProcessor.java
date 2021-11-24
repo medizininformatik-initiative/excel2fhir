@@ -23,7 +23,7 @@ import de.uni_leipzig.life.csv2fhir.converter.VersorgungsfallConverter;
  *
  * @author AXS (23.11.2021)
  */
-public class SubEncounterDiagnosesAdder {
+public class BundlePostProcessor {
 
     /**
      * Adds all sub encounters at least one diagnose from the super encounter if

@@ -197,7 +197,7 @@ public class Csv2Fhir {
         // Part-Of-Encounters, after ALL diagnoses have been converted, we must
         // select an appropriate one. Which one this can be is not yet
         // determined during the conversion, so it has to be done afterwards.
-        SubEncounterDiagnosesAdder.convert(bundle);
+        BundlePostProcessor.convert(bundle);
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
     }
 
