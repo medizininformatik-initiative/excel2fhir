@@ -26,7 +26,7 @@ import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
- * @author fheuschkel (02.11.2020)
+ * @author fheuschkel (02.11.2020), AXS (18.11.2021)
  */
 public abstract class Converter {
 
@@ -63,7 +63,7 @@ public abstract class Converter {
     final String dizID;
 
     /**  */
-    protected final CSVRecord record;
+    private final CSVRecord record;
 
     /**  */
     protected boolean kds = true;
@@ -145,12 +145,23 @@ public abstract class Converter {
     }
 
     /**
+     * Short for <code>record.get(columnIdentifier.toString))</code>
+     *
+     * @param columnIdentifier
+     * @return
+     */
+    public String get(Object columnIdentifier) {
+        String columnName = columnIdentifier.toString();
+        return record.get(columnName);
+    }
+
+    /**
      * @return
      * @throws Exception
      */
     private String parsePatientId() throws Exception {
         Enum<?> patientIDColumnIdentifier = getPatientIDColumnIdentifier();
-        String id = record.get(patientIDColumnIdentifier);
+        String id = get(patientIDColumnIdentifier);
         if (id != null) {
             return id.replace('_', '-');
         }
@@ -167,7 +178,7 @@ public abstract class Converter {
         //missing encounter number -> always encounter number 1
         String encounterNumber = "1";
         if (encounterIDColumnIdentifier != null) {
-            String recordEncounterNumber = record.get(encounterIDColumnIdentifier);
+            String recordEncounterNumber = get(encounterIDColumnIdentifier);
             if (recordEncounterNumber != null) {
                 encounterNumber = recordEncounterNumber;
             }
@@ -252,7 +263,7 @@ public abstract class Converter {
             code = humanText;
         }
         String codeSystem = codeSystemMapper.getCodeSystem();
-        Coding coding = createCoding(codeSystem, code).setDisplay(humanText);
+        Coding coding = createCoding(codeSystem, code, humanText);
         return new CodeableConcept(coding);
     }
 
@@ -449,6 +460,14 @@ public abstract class Converter {
             error("Can not parse " + startDateColumnName + " or " + endDateColumnName + " as date for Record " + record);
             return null;
         }
+    }
+
+    /**
+     * Return the toString() of the record of this converter.
+     */
+    @Override
+    public String toString() {
+        return record.toString();
     }
 
 }

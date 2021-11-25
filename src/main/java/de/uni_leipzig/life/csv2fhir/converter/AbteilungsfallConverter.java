@@ -91,7 +91,7 @@ public class AbteilungsfallConverter extends Converter {
     private List<EncounterLocationComponent> convertLocation() throws Exception {
         Identifier identifier = new Identifier();
         identifier.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
-        identifier.setValue(record.get(Fachabteilung));
+        identifier.setValue(get(Fachabteilung));
         Reference reference = new Reference();
         reference.setIdentifier(identifier);
 

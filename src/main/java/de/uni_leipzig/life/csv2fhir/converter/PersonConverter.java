@@ -93,8 +93,8 @@ public class PersonConverter extends Converter {
      * @return
      */
     private HumanName parseName() {
-        String forename = record.get(Vorname);
-        String surname = record.get(Nachname);
+        String forename = get(Vorname);
+        String surname = get(Nachname);
 
         if (forename == null) {
             forename = "Vorname-" + getPatientId();
@@ -117,7 +117,7 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private AdministrativeGender parseSex() throws Exception {
-        String sex = record.get(Geschlecht);
+        String sex = get(Geschlecht);
         if (sex != null) {
             if (sex.length() != 0) {
                 switch (sex) {
@@ -131,8 +131,7 @@ public class PersonConverter extends Converter {
                 case "divers":
                     return OTHER;
                 default:
-                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + sex + ">not parsable for Record: " + record
-                            .getRecordNumber() + "! " + record.toString());
+                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + sex + "> not parsable for Record: " + this);
                 }
             }
             warning("Geschlecht empty for Record");
@@ -147,7 +146,7 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private DateType parseBirthDate() throws Exception {
-        String birthday = record.get(Geburtsdatum);
+        String birthday = get(Geburtsdatum);
         if (birthday != null) {
             try {
                 return DateUtil.parseDateType(birthday);
@@ -164,7 +163,7 @@ public class PersonConverter extends Converter {
      * @return
      */
     private Address parseAddress() {
-        String address = record.get(Anschrift);
+        String address = get(Anschrift);
         Address a;
         if (address != null) {
             a = new Address();
@@ -191,7 +190,7 @@ public class PersonConverter extends Converter {
             }
             return a.setType(AddressType.BOTH).setCountry("DE");
         }
-        warning("On " + Person + ": " + Anschrift + " empty. Creating dummy address. " + record);
+        warning("On " + Person + ": " + Anschrift + " empty. Creating dummy address. " + this);
         return getDummyAddress(); //KDS-Validator needs an Address
     }
 
@@ -211,7 +210,7 @@ public class PersonConverter extends Converter {
      * @throws Exception
      */
     private Reference parseHealthProvider() throws Exception {
-        String practitioner = record.get(Krankenkasse);
+        String practitioner = get(Krankenkasse);
         if (!Strings.isNullOrEmpty(practitioner)) {
             return new Reference().setDisplay(practitioner);
         }

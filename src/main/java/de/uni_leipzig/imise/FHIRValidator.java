@@ -144,8 +144,8 @@ public class FHIRValidator {
     public FHIRValidator() {
         // Create a validator. Note that for good performance you can create as many validator objects
         // as you like, but you should reuse the same validation support object in all of the,.
-        FhirContext ctx = FhirContext.forR4();
-        validator = ctx.newValidator();
+        FhirContext fhirContext = FhirContext.forR4();
+        validator = fhirContext.newValidator();
         init();
     }
 

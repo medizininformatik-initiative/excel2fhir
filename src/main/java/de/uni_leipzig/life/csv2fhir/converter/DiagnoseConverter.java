@@ -23,7 +23,6 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnoseConverter extends Converter {
@@ -67,7 +66,7 @@ public class DiagnoseConverter extends Converter {
 
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
-        String diagnosisUseIdentifier = record.get(DiagnoseConverterFactory.NeededColumns.Typ);
+        String diagnosisUseIdentifier = get(Typ);
         VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, condition, diagnosisUseIdentifier);
 
         return Collections.singletonList(condition);
@@ -83,7 +82,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private String getDiagnoseId() throws Exception {
-        String icd = record.get(ICD);
+        String icd = get(ICD);
         if (icd == null) {
             error("ICD empty");
             return null;
@@ -96,7 +95,7 @@ public class DiagnoseConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertCategory() throws Exception {
-        String code = record.get(Typ);
+        String code = get(Typ);
         if (code != null) {
             return new CodeableConcept().setText(code);
         }
@@ -123,14 +122,14 @@ public class DiagnoseConverter extends Converter {
      */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
-            String date = record.get(Dokumentationsdatum);
+            String date = get(Dokumentationsdatum);
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
             //extract a date from an encounter
-            String pid = record.get(Patient_ID);
+            String pid = get(Patient_ID);
             DateTimeType encounterDate = getEncounterDate(pid);
             if (encounterDate != null) {
-                warning("Can not parse " + Dokumentationsdatum + " for Record. Extract date from encounter. " + record);
+                warning("Can not parse " + Dokumentationsdatum + " for Record. Extract date from encounter. " + this);
                 return encounterDate;
             }
         }

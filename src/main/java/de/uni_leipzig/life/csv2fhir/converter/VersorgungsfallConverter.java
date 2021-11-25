@@ -84,7 +84,7 @@ public class VersorgungsfallConverter extends Converter {
 
     @Override
     protected Reference getPatientReference() throws Exception {
-        String patientId = record.get(Patient_ID);
+        String patientId = get(Patient_ID);
         if (patientId != null) {
             return new Reference().setReference("Patient/" + patientId);
         }

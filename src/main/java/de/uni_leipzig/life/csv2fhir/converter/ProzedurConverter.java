@@ -5,6 +5,8 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurencode;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurentext;
+import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
+import static java.util.Collections.singletonList;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +21,6 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class ProzedurConverter extends Converter {
 
@@ -72,7 +73,7 @@ public class ProzedurConverter extends Converter {
         String encounterId = getEncounterId();
         VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, procedure);
 
-        return Collections.singletonList(procedure);
+        return singletonList(procedure);
     }
 
     @Override
@@ -86,7 +87,7 @@ public class ProzedurConverter extends Converter {
      */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
-            return DateUtil.parseDateTimeType(record.get(Dokumentationsdatum));
+            return parseDateTimeType(get(Dokumentationsdatum));
         } catch (Exception e) {
             error("Can not parse Dokumentationsdatum for Record");
             return null;
@@ -111,7 +112,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private Coding convertSnomedCategory() throws Exception {
-        String code = record.get(Prozedurencode);
+        String code = get(Prozedurencode);
         if (code != null) {
             String display;
             switch (code.charAt(0)) {

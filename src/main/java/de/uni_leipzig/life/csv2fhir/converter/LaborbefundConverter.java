@@ -3,11 +3,14 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
+import static de.uni_leipzig.life.csv2fhir.Ucum.human2ucum;
+import static de.uni_leipzig.life.csv2fhir.Ucum.ucum2human;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.LOINC;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Messwert;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Parameter;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Zeitstempel_Abnahme;
+import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -29,7 +32,6 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
-import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 public class LaborbefundConverter extends Converter {
 
@@ -132,7 +134,7 @@ public class LaborbefundConverter extends Converter {
      * @throws Exception
      */
     private DateTimeType parseObservationTimestamp() throws Exception {
-        String timestamp = record.get(Zeitstempel_Abnahme);
+        String timestamp = get(Zeitstempel_Abnahme);
         if (!isNullOrEmpty(timestamp)) {
             try {
                 return DateUtil.parseDateTimeType(timestamp);
@@ -152,20 +154,20 @@ public class LaborbefundConverter extends Converter {
     private Quantity parseObservationValue() throws Exception {
         BigDecimal messwert;
         try {
-            messwert = DecimalUtil.parseDecimal(record.get(Messwert));
+            messwert = parseDecimal(get(Messwert));
         } catch (Exception e) {
             error(Messwert + " is not a numerical value for Record");
             return null;
         }
-        String unit = record.get(Einheit);
+        String unit = get(Einheit);
         if (unit == null || unit.isEmpty()) {
             warning(Einheit + " is empty for Record");
             return null;
         }
 
         boolean isUcum = Ucum.isUcum(unit);
-        String ucum = isUcum ? unit : Ucum.human2ucum(unit);
-        String synonym = isUcum ? Ucum.ucum2human(unit) : unit;
+        String ucum = isUcum ? unit : human2ucum(unit);
+        String synonym = isUcum ? ucum2human(unit) : unit;
 
         if (ucum.isEmpty()) {
             warning("ucum empty, check \"" + unit + "\"");

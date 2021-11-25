@@ -14,6 +14,9 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Therapiestartdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Wirksubstanz_aus_Praeparat_Handelsname;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Zeitstempel;
+import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
+import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
+import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
 import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
 import java.math.BigDecimal;
@@ -49,7 +52,6 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
-import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 /*
  * MedicationStatement bei "Vor Aufnahme" MedicationAdminstration sonst
@@ -111,7 +113,7 @@ public class MedikationConverter extends Converter {
             l.add(parseMedication());
             medis.add(getMedicationId());
         }
-        if ("Vor Aufnahme".equals(record.get(Medikationsplanart))) {
+        if ("Vor Aufnahme".equals(get(Medikationsplanart))) {
             l.add(parseMedicationStatement());
         } else {
             l.add(parseMedicationAdministration());
@@ -133,7 +135,7 @@ public class MedikationConverter extends Converter {
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
         medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
 
-        medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
+        medicationAdministration.setStatus(COMPLETED);
         medicationAdministration.setMedication(getMedicationReference());
         medicationAdministration.setContext(getEncounterReference());
         medicationAdministration.setSubject(getPatientReference());
@@ -183,7 +185,7 @@ public class MedikationConverter extends Converter {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected, "PZN"));
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected, "ATC"));
-        concept.setText(record.get(Wirksubstanz_aus_Praeparat_Handelsname));
+        concept.setText(get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
     }
 
@@ -193,11 +195,11 @@ public class MedikationConverter extends Converter {
      */
     private String getMedicationId() throws Exception {
         String id;
-        String atc = record.get(ATC_Code);
+        String atc = get(ATC_Code);
         if (atc != null) {
             id = atc;
         } else {
-            String txt = record.get(Wirksubstanz_aus_Praeparat_Handelsname);
+            String txt = get(Wirksubstanz_aus_Praeparat_Handelsname);
             if (txt == null) {
                 error("ATC and Wirksubstanz aus Präparat/Handelsname empty");
                 return null;
@@ -241,9 +243,9 @@ public class MedikationConverter extends Converter {
      *         missing.
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> selectedIndicatorColumnName, String selectedConditionValue) {
-        String code = record.get(codeColumnName);
+        String code = get(codeColumnName);
         if (code != null) {
-            String selectedColumnValue = record.get(selectedIndicatorColumnName);
+            String selectedColumnValue = get(selectedIndicatorColumnName);
             boolean selected = selectedConditionValue.equals(selectedColumnValue);
             return createCoding(codeSystem, code).setUserSelected(selected);
         }
@@ -277,8 +279,8 @@ public class MedikationConverter extends Converter {
      */
     private Type convertPeriod() throws Exception {
         try {
-            String s = record.get(Therapiestartdatum);
-            String e = record.get(Therapieendedatum);
+            String s = get(Therapiestartdatum);
+            String e = get(Therapieendedatum);
             if (StringUtils.isBlank(s)) {
                 if (StringUtils.isBlank(e)) {
                     // no date given
@@ -308,7 +310,7 @@ public class MedikationConverter extends Converter {
      * @throws Exception
      */
     private Ratio getDoseRate() throws Exception {
-        String unit = record.get(Einheit);
+        String unit = get(Einheit);
         if (unit != null) {
             return new Ratio().setNumerator(
                     new Quantity().setValue(getDose())
@@ -317,7 +319,7 @@ public class MedikationConverter extends Converter {
                     .setDenominator(
                             new Quantity().setValue(new BigDecimal(1))
                                     .setSystem("http://XXX")
-                                    .setCode(record.get(Darreichungsform)));
+                                    .setCode(get(Darreichungsform)));
         }
         error(Einheit + " empty for Record");
         return null;
@@ -329,7 +331,7 @@ public class MedikationConverter extends Converter {
      */
     private BigDecimal getDose() throws Exception {
         try {
-            return DecimalUtil.parseDecimal(record.get(Einzeldosis));
+            return parseDecimal(get(Einzeldosis));
         } catch (Exception e) {
             error(Einzeldosis + " is not a numerical value for Record");
             return null;
@@ -361,7 +363,7 @@ public class MedikationConverter extends Converter {
      */
     private DateTimeType convertTimestamp() throws Exception {
         try {
-            return DateUtil.parseDateTimeType(record.get(Zeitstempel));
+            return parseDateTimeType(get(Zeitstempel));
         } catch (Exception e) {
             error("Can not parse " + Zeitstempel);
             return null;
@@ -374,15 +376,15 @@ public class MedikationConverter extends Converter {
      */
     private Quantity convertQuantity() throws Exception {
         BigDecimal value = null;
-        String doseCount = record.get(Anzahl_Dosen_pro_Tag);
+        String doseCount = get(Anzahl_Dosen_pro_Tag);
         try {
-            value = DecimalUtil.parseDecimal(doseCount);
+            value = parseDecimal(doseCount);
         } catch (Exception e) {
             warning("no dose defined");
             return new SimpleQuantity().setUnit(doseCount);
         }
         String ucum = "1"; // see https://ucum.org/ucum.html#section-Examples-for-some-Non-Units.
-        String synonym = record.get(Darreichungsform);
+        String synonym = get(Darreichungsform);
         return new SimpleQuantity().setValue(value).setUnit(synonym).setSystem("http://unitsofmeasure.org").setCode(ucum);
     }
 
