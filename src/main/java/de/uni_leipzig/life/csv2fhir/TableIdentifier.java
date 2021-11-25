@@ -90,19 +90,21 @@ public enum TableIdentifier {
     }
 
     /**
-     * Clear in all instances the map from IDs to resources.
+     * Clear in all instances the map from IDs to resources and resest all
+     * converters
      */
     public static void clearAll() {
-        for (TableIdentifier tabbleIdentifier : TableIdentifier.values()) {
-            tabbleIdentifier.clear();
+        for (TableIdentifier tableIdentifier : TableIdentifier.values()) {
+            tableIdentifier.clear();
         }
     }
 
     /**
-     * Clears the map from IDs to resources.
+     * Clears the map from IDs to resources and resets all converters
      */
     public void clear() {
         idToResourceMap.clear();
+        converterFactory.resetConverterStaticValues();
     }
 
     /**

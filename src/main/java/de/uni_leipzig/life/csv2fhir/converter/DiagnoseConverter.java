@@ -44,6 +44,10 @@ public class DiagnoseConverter extends Converter {
         super(record, validator);
     }
 
+    public static void reset() {
+        n = 1;
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         Condition condition = new Condition();

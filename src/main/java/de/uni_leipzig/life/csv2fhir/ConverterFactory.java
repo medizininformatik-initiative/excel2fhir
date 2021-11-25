@@ -49,4 +49,10 @@ public interface ConverterFactory {
         return neededColumnNames;
     }
 
+    /**
+     * TODO: should not run like this, in case you want to put the converting
+     * into several threads
+     */
+    public void resetConverterStaticValues();
+
 }

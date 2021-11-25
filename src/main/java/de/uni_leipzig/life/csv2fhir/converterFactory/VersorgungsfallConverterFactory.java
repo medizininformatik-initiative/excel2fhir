@@ -31,4 +31,9 @@ public class VersorgungsfallConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        VersorgungsfallConverter.reset();
+    }
+
 }

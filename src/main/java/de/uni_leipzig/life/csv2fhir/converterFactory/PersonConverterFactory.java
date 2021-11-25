@@ -34,4 +34,9 @@ public class PersonConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        PersonConverter.reset();
+    }
+
 }

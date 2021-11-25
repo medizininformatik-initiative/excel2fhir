@@ -39,4 +39,9 @@ public class LaborbefundConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        LaborbefundConverter.reset();
+    }
+
 }

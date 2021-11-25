@@ -49,6 +49,13 @@ public class LaborbefundConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     * Resets the static index counter
+     */
+    public static void reset() {
+        n = 1;
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         // generierte Labornummer

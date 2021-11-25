@@ -57,6 +57,13 @@ public class AbteilungsfallConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     *
+     */
+    public static void reset() {
+        n = 1;
+    }
+
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
         return Abteilungsfall.getPIDColumnIdentifier();

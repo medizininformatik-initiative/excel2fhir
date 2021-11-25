@@ -57,6 +57,13 @@ public class VersorgungsfallConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     * Resets the static index counter
+     */
+    public static void reset() {
+        //no static counter to reset at the moment
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         Encounter encounter = new Encounter();

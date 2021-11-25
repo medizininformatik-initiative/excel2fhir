@@ -174,7 +174,6 @@ public class Csv2Fhir {
         } else {
             convertFiles(outputFileType);
         }
-        TableIdentifier.clearAll();
     }
 
     /**
@@ -183,7 +182,6 @@ public class Csv2Fhir {
      */
     public void convertFiles(OutputFileType outputFileType) throws Exception {
         convertFiles(outputFileType, null);
-        TableIdentifier.clearAll();
     }
 
     /**
@@ -217,6 +215,7 @@ public class Csv2Fhir {
         // determined during the conversion, so it has to be done afterwards.
         BundlePostProcessor.convert(bundle);
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
+        TableIdentifier.clearAll();
     }
 
     /**

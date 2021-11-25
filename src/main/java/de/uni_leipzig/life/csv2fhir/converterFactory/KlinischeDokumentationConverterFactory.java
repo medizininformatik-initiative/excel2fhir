@@ -33,4 +33,9 @@ public class KlinischeDokumentationConverterFactory implements ConverterFactory 
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        KlinischeDokumentationConverter.reset();
+    }
+
 }

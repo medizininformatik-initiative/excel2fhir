@@ -64,4 +64,9 @@ public class MedikationConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        MedikationConverter.reset();
+    }
+
 }

@@ -31,4 +31,9 @@ public class AbteilungsfallConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        AbteilungsfallConverter.reset();
+    }
+
 }

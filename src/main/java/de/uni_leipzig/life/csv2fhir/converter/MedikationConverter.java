@@ -96,6 +96,14 @@ public class MedikationConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     * Resets the static index counters
+     */
+    public static void reset() {
+        ma = 1;
+        ms = 1;
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         List<Resource> l = new ArrayList<>();

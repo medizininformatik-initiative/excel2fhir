@@ -32,4 +32,9 @@ public class DiagnoseConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        DiagnoseConverter.reset();
+    }
+
 }

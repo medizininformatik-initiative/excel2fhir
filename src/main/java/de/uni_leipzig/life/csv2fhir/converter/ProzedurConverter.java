@@ -39,6 +39,13 @@ public class ProzedurConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     * Resets the static index counter
+     */
+    public static void reset() {
+        n = 1;
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         Procedure procedure = new Procedure();

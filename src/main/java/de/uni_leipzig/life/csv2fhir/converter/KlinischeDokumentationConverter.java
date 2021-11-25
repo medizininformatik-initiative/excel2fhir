@@ -42,6 +42,13 @@ public class KlinischeDokumentationConverter extends Converter {
         super(record, validator);
     }
 
+    /**
+     * Resets the static index counter
+     */
+    public static void reset() {
+        n = 1;
+    }
+
     @Override
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();

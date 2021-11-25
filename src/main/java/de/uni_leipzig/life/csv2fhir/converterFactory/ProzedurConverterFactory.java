@@ -31,4 +31,9 @@ public class ProzedurConverterFactory implements ConverterFactory {
         return NeededColumns.values();
     }
 
+    @Override
+    public void resetConverterStaticValues() {
+        ProzedurConverter.reset();
+    }
+
 }
