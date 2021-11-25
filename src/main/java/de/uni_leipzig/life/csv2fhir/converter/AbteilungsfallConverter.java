@@ -16,6 +16,7 @@ import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 
@@ -47,8 +48,13 @@ public class AbteilungsfallConverter extends Converter {
      * 'Encounter.location' is 0, which is not within the specified cardinality
      * of 1..*
      */
-    public AbteilungsfallConverter(CSVRecord record) throws Exception {
-        super(record);
+    /**
+     * @param record
+     * @param validator
+     * @throws Exception
+     */
+    public AbteilungsfallConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override

@@ -17,6 +17,7 @@ import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -31,10 +32,11 @@ public class ProzedurConverter extends Converter {
 
     /**
      * @param record
+     * @param validator
      * @throws Exception
      */
-    public ProzedurConverter(CSVRecord record) throws Exception {
-        super(record);
+    public ProzedurConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override
@@ -50,15 +52,19 @@ public class ProzedurConverter extends Converter {
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
 
+        if (kds) {
+            procedure.setMeta(new Meta().addProfile(PROFILE));
+        } else if (kds_strict) {
+            return Collections.emptyList();
+        }
+
+        if (!isValid(procedure)) {
+            return Collections.emptyList();
+        }
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
         VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, procedure);
 
-        if (kds) {
-            procedure.setMeta(new Meta().addProfile(PROFILE));
-        } else if (kds_strict) {
-            return null;
-        }
         return Collections.singletonList(procedure);
     }
 

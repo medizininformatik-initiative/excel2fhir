@@ -1,6 +1,5 @@
 package fmeineke.imise.de;
 
-import static de.uni_leipzig.imise.Excel2Fhir.convertAllExcelInDir;
 import static de.uni_leipzig.imise.utils.Excel2Csv.splitExcel;
 import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
@@ -11,6 +10,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 
+import de.uni_leipzig.imise.Excel2Fhir;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier;
@@ -48,7 +48,7 @@ public class SplitMainTest extends TestCase {
 
     public static void splitTestDir() throws IOException {
         File excelDir = new File("C:\\Users\\frank\\Nextcloud\\Shared\\POLAR\\Testdaten");
-        convertAllExcelInDir(excelDir, excelSheetNames);
+        new Excel2Fhir(false).convertAllExcelInDir(excelDir, excelSheetNames);
 
     }
 
@@ -96,7 +96,7 @@ public class SplitMainTest extends TestCase {
             File csvDir = new File(FilenameUtils.removeExtension(testExcel.getPath()));
             //            File resultJson = new File(testExcel.getParent(),
             //                    FilenameUtils.removeExtension(testExcel.getName())+".json");
-            Csv2Fhir converter = new Csv2Fhir(csvDir, FilenameUtils.removeExtension(testExcel.getName()));
+            Csv2Fhir converter = new Csv2Fhir(csvDir, FilenameUtils.removeExtension(testExcel.getName()), null);
             converter.convertFiles(JSON, true);
 
         } catch (IOException e) {

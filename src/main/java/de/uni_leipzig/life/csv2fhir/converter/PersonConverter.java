@@ -31,6 +31,7 @@ import org.hl7.fhir.r4.model.StringType;
 
 import com.google.common.base.Strings;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -42,10 +43,11 @@ public class PersonConverter extends Converter {
 
     /**
      * @param record
+     * @param validator
      * @throws Exception
      */
-    public PersonConverter(CSVRecord record) throws Exception {
-        super(record);
+    public PersonConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override

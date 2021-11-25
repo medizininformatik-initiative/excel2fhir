@@ -22,6 +22,7 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -34,10 +35,11 @@ public class KlinischeDokumentationConverter extends Converter {
 
     /**
      * @param record
+     * @param validator
      * @throws Exception
      */
-    public KlinischeDokumentationConverter(CSVRecord record) throws Exception {
-        super(record);
+    public KlinischeDokumentationConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override

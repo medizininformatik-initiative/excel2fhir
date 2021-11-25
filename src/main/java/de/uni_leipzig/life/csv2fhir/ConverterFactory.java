@@ -5,13 +5,22 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 
+import de.uni_leipzig.imise.FHIRValidator;
+
 /**
- * @author fheuschkel (02.11.2020)
+ * @author fheuschkel (02.11.2020), AXS (18.11.2021)
  */
 public interface ConverterFactory {
 
-    /** Creates a new Converter for a CSVRecort */
-    Converter create(CSVRecord record) throws Exception;
+    /**
+     * Creates a new Converter for a CSVRecort
+     *
+     * @param record
+     * @param validator
+     * @return
+     * @throws Exception
+     */
+    Converter create(CSVRecord record, FHIRValidator validator) throws Exception;
 
     /**
      * Enum where the list of toString() methods of the elements specifies the

@@ -25,6 +25,7 @@ import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -41,16 +42,17 @@ public class LaborbefundConverter extends Converter {
 
     /**
      * @param record
+     * @param validator
      * @throws Exception
      */
-    public LaborbefundConverter(CSVRecord record) throws Exception {
-        super(record);
+    public LaborbefundConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override
     public List<Resource> convert() throws Exception {
         // generierte Labornummer
-        String id = getEncounterId() + "-OL" + n++;
+        String id = getEncounterId() + "-OL-" + n++;
 
         Observation observation = new Observation();
         observation.setId(id);

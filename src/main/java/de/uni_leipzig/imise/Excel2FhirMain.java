@@ -1,7 +1,5 @@
 package de.uni_leipzig.imise;
 
-import static de.uni_leipzig.imise.Excel2Fhir.convertAllExcelInDir;
-import static de.uni_leipzig.imise.Excel2Fhir.convertExcelFile;
 import static de.uni_leipzig.imise.utils.ApplicationManager.getApplicationDir;
 
 import java.io.File;
@@ -63,7 +61,7 @@ public class Excel2FhirMain implements Callable<Integer> {
     static LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; //the console log layout is set in the projects log4j2.xml file!
 
     @Option(names = {"-v",
-            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Validates all bundles after creation")
+            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
     static boolean validateBundles = false;
 
     /**
@@ -107,21 +105,15 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         try {
             List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
-
+            Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles);
             if (inputFile != null) {
-                convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                excel2Fhir.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
             }
-
-            if (validateBundles) {
-                String[] validatorInputDir = new String[] {outputDirectory.getPath()};
-                new FHIRValidator().validate(validatorInputDir);
-            }
-
         } catch (Exception e) {
             e.printStackTrace();
         }

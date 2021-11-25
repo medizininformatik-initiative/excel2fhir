@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
@@ -74,11 +75,12 @@ public enum TableIdentifier {
 
     /**
      * @param csvRecord
+     * @param validator
      * @return
      * @throws Exception
      */
-    public List<Resource> convert(CSVRecord csvRecord) throws Exception {
-        Converter converter = converterFactory.create(csvRecord);
+    public List<Resource> convert(CSVRecord csvRecord, FHIRValidator validator) throws Exception {
+        Converter converter = converterFactory.create(csvRecord, validator);
         List<Resource> resources = converter.convert();
         for (Resource resource : resources) {
             String id = resource.getId();

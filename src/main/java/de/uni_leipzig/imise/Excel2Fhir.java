@@ -24,6 +24,9 @@ public class Excel2Fhir {
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Excel2Fhir.class);
 
+    /**  */
+    private final FHIRValidator validator;
+
     /**
      * @param excelFile
      * @return
@@ -33,6 +36,13 @@ public class Excel2Fhir {
         path = FilenameUtils.removeExtension(path);
         File targetCSVDir = new File(path, "output");
         return targetCSVDir;
+    }
+
+    /**
+     * @param validate
+     */
+    public Excel2Fhir(boolean validate) {
+        validator = validate ? new FHIRValidator() : null;
     }
 
     /**
@@ -65,7 +75,7 @@ public class Excel2Fhir {
      *            <code>null</code> then all sheet will be convertet.
      * @throws IOException
      */
-    public static void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
         convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, JSON, false);
     }
 
@@ -80,7 +90,7 @@ public class Excel2Fhir {
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public static void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
             boolean convertFilesPerPatient)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
@@ -101,7 +111,7 @@ public class Excel2Fhir {
      * @param convertFilesPerPatient
      * @throws IOException
      */
-    public static void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
+    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
             boolean convertFilesPerPatient)
             throws IOException {
         convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
@@ -119,14 +129,14 @@ public class Excel2Fhir {
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private static void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
+    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
             boolean convertFilesPerPatient, boolean createAndCleanOutputDirectories) throws IOException {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
         String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
-        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName);
+        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator);
         try {
             converter.convertFiles(outputFileType, convertFilesPerPatient);
         } catch (Exception e) {

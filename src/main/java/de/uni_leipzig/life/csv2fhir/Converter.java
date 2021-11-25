@@ -5,6 +5,8 @@ import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -18,6 +20,7 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -69,18 +72,39 @@ public abstract class Converter {
     protected boolean kds_strict = true;
 
     /**
+     * Validator to validate resources. Can be <code>null</code>. Can be
+     * <code>null</code> if nothing should be validated.
+     */
+    protected final FHIRValidator validator;
+
+    /**
      * @param record
+     * @param validator Validator to validate resources. Can be
+     *            <code>null</code> if nothing should be validated.
      * @throws Exception
      */
-    public Converter(CSVRecord record) throws Exception {
+    public Converter(CSVRecord record, @Nullable FHIRValidator validator) throws Exception {
+        this.validator = validator;
         this.record = record;
         pid = parsePatientId();
         encounterID = parseEncounterId();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
     }
 
-    /**  */
+    /**
+     * @return
+     * @throws Exception
+     */
     public abstract List<Resource> convert() throws Exception;
+
+    /**
+     * @param resource
+     * @return <code>true</code> if the validation is not to be performed or the
+     *         validation does not find an error.
+     */
+    protected boolean isValid(Resource resource) {
+        return validator == null || !validator.validate(resource).isError();
+    }
 
     /**
      * @param msg

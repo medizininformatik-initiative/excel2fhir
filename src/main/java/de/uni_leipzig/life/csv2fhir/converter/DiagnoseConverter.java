@@ -21,6 +21,7 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -36,10 +37,11 @@ public class DiagnoseConverter extends Converter {
 
     /**
      * @param record
+     * @param validator
      * @throws Exception
      */
-    public DiagnoseConverter(CSVRecord record) throws Exception {
-        super(record);
+    public DiagnoseConverter(CSVRecord record, FHIRValidator validator) throws Exception {
+        super(record, validator);
     }
 
     @Override
@@ -54,6 +56,10 @@ public class DiagnoseConverter extends Converter {
         condition.setCode(convertCode());
         condition.setSubject(getPatientReference());
         condition.setRecordedDateElement(convertRecordedDate());
+
+        if (!isValid(condition)) {
+            return Collections.emptyList();
+        }
 
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();

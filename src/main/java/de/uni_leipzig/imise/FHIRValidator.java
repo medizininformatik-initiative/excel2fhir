@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.hl7.fhir.common.hapi.validation.support.ValidationSupportChain;
 import org.hl7.fhir.common.hapi.validation.validator.FhirInstanceValidator;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
+import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,25 @@ public class FHIRValidator {
 
     /**  */
     private final FhirValidator validator;
+
+    /**
+     *
+     */
+    public enum ValidationResultType {
+        ERROR {
+            @Override
+            public boolean isError() {
+                return true;
+            }
+        },
+        WARNING,
+        IGNORED,
+        VALID;
+
+        public boolean isError() {
+            return false;
+        }
+    }
 
     /** Counters for the validation result */
     private class ResultCounter {
@@ -81,6 +102,22 @@ public class FHIRValidator {
         }
     }
 
+    /** Counters for the validation result */
+    public class Result {
+        /** the bundle the result is created from */
+        public Bundle bundle;
+        /** the file of the bundle */
+        private File bundleFile;
+        /** all resources with warnings in the bundle */
+        public List<BundleEntryComponent> warningResources = new ArrayList<>();
+        /** all resources with errors in the bundle */
+        public List<BundleEntryComponent> errorResources = new ArrayList<>();
+        /** all resources with ignored errors or warnings in the bundle */
+        public List<BundleEntryComponent> ignoredResources = new ArrayList<>();
+        /** all valid resources in the bundle */
+        public List<BundleEntryComponent> validResources = new ArrayList<>();
+    }
+
     /** Counter for a Bundle result */
     private ResultCounter bundleResultCounter = new ResultCounter();
 
@@ -97,7 +134,8 @@ public class FHIRValidator {
             "Validation failed für \"http://fhir.de/CodeSystem/ask#",
             "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn",
             "http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
-            "Validation failed für \"http://snomed.info/sct"
+            "Validation failed für \"http://snomed.info/sct",
+            "Falls der Encounter abgeschlossen wurde muss eine Diagnose bekannt sein", //this error will be fixed in the BundlePostProcessor
     };
 
     /**
@@ -113,18 +151,20 @@ public class FHIRValidator {
 
     /**
      * @param filesOrDirectoriesToValidate
+     * @param validateBundleEntriesSeparately
      */
-    public void validate(String[] filesOrDirectoriesToValidate) {
-        validate(Arrays.asList(filesOrDirectoriesToValidate));
+    public List<Result> validate(String[] filesOrDirectoriesToValidate, boolean validateBundleEntriesSeparately) {
+        return validate(Arrays.asList(filesOrDirectoriesToValidate), validateBundleEntriesSeparately);
     }
 
     /**
      * @param filesOrDirectoriesToValidate
      */
-    private void validate(List<String> filesOrDirectoriesToValidate) {
+    private List<Result> validate(List<String> filesOrDirectoriesToValidate, boolean validateBundleEntriesSeparately) {
         LOG.info("Start Validating...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         boolean validateOnlyOneFile = true;
+        List<Result> results = new ArrayList<>();
         for (String inputFileOrDirectoryName : filesOrDirectoriesToValidate) {
             File inputFileOrDirectory = new File(inputFileOrDirectoryName);
             File[] inputFiles;
@@ -150,7 +190,13 @@ public class FHIRValidator {
                 try {
                     LOG.info("Start Validate Bundle...");
                     Stopwatch bundleValidationStopwatch = Stopwatch.createStarted();
-                    validateBundle(bundle);
+                    if (validateBundleEntriesSeparately) {
+                        Result singleResourcesValidationResult = getSingleResourcesValidationResult(bundle);
+                        singleResourcesValidationResult.bundleFile = inputFile;
+                        results.add(singleResourcesValidationResult);
+                    } else {
+                        validateBundle(bundle);
+                    }
                     LOG.info("Finished Validate Bundle in " + bundleValidationStopwatch.stop());
                     logResult(inputFileName);
                 } catch (Exception e) {
@@ -164,6 +210,7 @@ public class FHIRValidator {
             logResult(null);
         }
         LOG.info("Finished Validating in " + stopwatch.stop());
+        return results;
     }
 
     /**
@@ -228,7 +275,8 @@ public class FHIRValidator {
     /**
      * @param resource
      */
-    public void validate(Resource resource) {
+    public ValidationResultType validate(Resource resource) {
+        ValidationResultType resultType = ValidationResultType.VALID;
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
         LOG.debug("Validated Resource Content \n" + resourceAsJson);
         //ValidationResult validationResult = validator.validateWithResult(resource);
@@ -246,10 +294,14 @@ public class FHIRValidator {
                     LOG.error(logMessage);
                     bundleResultCounter.errors++;
                     fullResultCounter.errors++;
+                    resultType = ValidationResultType.ERROR;
                 } else if (severity == ResultSeverityEnum.WARNING) {
                     LOG.warn(logMessage);
                     bundleResultCounter.warnings++;
                     fullResultCounter.warnings++;
+                    if (resultType.ordinal() > ValidationResultType.WARNING.ordinal()) {
+                        resultType = ValidationResultType.WARNING;
+                    }
                 } else {
                     LOG.info(logMessage);
                     bundleResultCounter.valid++;
@@ -259,10 +311,14 @@ public class FHIRValidator {
                 LOG.info("IGNORED " + logMessage);
                 bundleResultCounter.ignored++;
                 fullResultCounter.ignored++;
+                if (resultType.ordinal() > ValidationResultType.IGNORED.ordinal()) {
+                    resultType = ValidationResultType.IGNORED;
+                }
             }
             bundleResultCounter.resources++;
             fullResultCounter.resources++;
         }
+        return resultType;
     }
 
     /**
@@ -302,12 +358,31 @@ public class FHIRValidator {
      * @throws DataFormatException
      * @throws FileNotFoundException
      */
-    public void validateBundle(Bundle bundle) throws ConfigurationException, DataFormatException, FileNotFoundException {
-        validate(bundle);
-        // Alternative: but a lot of errors (reference errors) will only be detected if you validate the whole bundle
-        //        for (BundleEntryComponent e : bundle.getEntry()) {
-        //            validate(e.getResource());
-        //        }
+    public ValidationResultType validateBundle(Bundle bundle) throws ConfigurationException, DataFormatException, FileNotFoundException {
+        return validate(bundle);
+    }
+
+    /**
+     * @param bundle
+     * @return
+     */
+    public Result getSingleResourcesValidationResult(Bundle bundle) {
+        Result result = new Result();
+        result.bundle = bundle;
+        List<BundleEntryComponent> entries = bundle.getEntry(); //is an ArrayList -> values can be changed
+        for (BundleEntryComponent e : entries) {
+            ValidationResultType validateResultType = validate(e.getResource());
+            if (validateResultType == ValidationResultType.ERROR) {
+                result.errorResources.add(e);
+            } else if (validateResultType == ValidationResultType.WARNING) {
+                result.warningResources.add(e);
+            } else if (validateResultType == ValidationResultType.IGNORED) {
+                result.ignoredResources.add(e);
+            } else {
+                result.validResources.add(e);
+            }
+        }
+        return result;
     }
 
     /**
@@ -331,7 +406,7 @@ public class FHIRValidator {
         LOG.info("Start Validation Process...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         FHIRValidator fhirValidator = new FHIRValidator();
-        fhirValidator.validate(args);
+        fhirValidator.validate(args, false);
         LOG.info("Finished Validation Process in " + stopwatch.stop());
         System.exit(0);
     }

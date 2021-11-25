@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -32,6 +34,8 @@ import com.google.common.base.Strings;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
+import de.uni_leipzig.imise.FHIRValidator;
+import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.Alphabetical;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 
@@ -87,19 +91,25 @@ public class Csv2Fhir {
     /**  */
     private final CSVFormat csvFormat;
 
-    /**
-     * @param inputDirectory
-     * @param outputFileNameBase
-     */
-    public Csv2Fhir(File inputDirectory, String outputFileNameBase) {
-        this(inputDirectory, inputDirectory, outputFileNameBase);
-    }
+    /** The validator to validate all separate Resoruces and then the bundle */
+    private final FHIRValidator validator;
 
     /**
      * @param inputDirectory
      * @param outputFileNameBase
+     * @param validator
      */
-    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase) {
+    public Csv2Fhir(File inputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
+        this(inputDirectory, inputDirectory, outputFileNameBase, validator);
+    }
+
+    /**
+     * @param inputDirectory
+     * @param outputDirectory
+     * @param outputFileNameBase
+     * @param validator
+     */
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -109,6 +119,14 @@ public class Csv2Fhir {
                 .withTrim(true)
                 .withAllowMissingColumnNames(true)
                 .withFirstRecordAsHeader();
+        this.validator = validator;
+    }
+
+    /**
+     * @return the validator
+     */
+    public FHIRValidator getValidator() {
+        return validator;
     }
 
     /**
@@ -173,7 +191,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
-        Collection<String> pids = getValues(Person + ".csv", PersonConverterFactory.NeededColumns.Patient_ID, true, false);
+        Collection<String> pids = getValues(Person + ".csv", PersonConverterFactory.NeededColumns.Patient_ID, true, true);
         for (String pid : pids) {
             LOG.info("Start create Fhir-Json-Bundle for Patient-ID " + pid + " ...");
             Stopwatch stopwatch = Stopwatch.createStarted();
@@ -209,14 +227,16 @@ public class Csv2Fhir {
      */
     private void writeOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
             throws IOException {
-        String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
-                + outputFileType.getFileExtension();
-        File outputFile = new File(outputDirectory, fileName);
-        LOG.info("writing file " + fileName);
-        try (FileWriter fileWriter = new FileWriter(outputFile)) {
-            outputFileType.getParser()
-                    .setPrettyPrint(true)
-                    .encodeResourceToWriter(bundle, fileWriter);
+        if (validator == null || !validator.validateBundle(bundle).isError()) {
+            String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
+                    + outputFileType.getFileExtension();
+            File outputFile = new File(outputDirectory, fileName);
+            LOG.info("writing file " + fileName);
+            try (FileWriter fileWriter = new FileWriter(outputFile)) {
+                outputFileType.getParser()
+                        .setPrettyPrint(true)
+                        .encodeResourceToWriter(bundle, fileWriter);
+            }
         }
     }
 
@@ -241,7 +261,8 @@ public class Csv2Fhir {
                 List<String> neededColumnNames = csvFileName.getNeededColumnNames();
                 if (isColumnMissing(headerMap, neededColumnNames)) {
                     csvParser.close();
-                    throw new Exception("Error - File: " + fileName + " not convertable!");
+                    LOG.error("Error - File: " + fileName + " not convertable!");
+                    continue;
                 }
                 for (CSVRecord record : csvParser) {
                     try {
@@ -252,16 +273,20 @@ public class Csv2Fhir {
                                 continue;
                             }
                         }
-                        List<Resource> list = csvFileName.convert(record);
+                        List<Resource> list = csvFileName.convert(record, validator);
                         if (list != null) {
                             for (Resource resource : list) {
                                 if (resource != null) {
-                                    BundleEntryComponent entry = bundle.addEntry();
-                                    entry.setResource(resource);
-                                    BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
-                                    entry.setRequest(requestComponent);
-                                    String url = requestComponent.getUrl();
-                                    entry.setFullUrl(url);
+                                    ValidationResultType validationResult = validator == null ? ValidationResultType.VALID : validator.validate(resource);
+                                    //only add valid Resources
+                                    if (!validationResult.isError()) {
+                                        BundleEntryComponent entry = bundle.addEntry();
+                                        entry.setResource(resource);
+                                        BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
+                                        entry.setRequest(requestComponent);
+                                        String url = requestComponent.getUrl();
+                                        entry.setFullUrl(url);
+                                    }
                                 }
                             }
                         }

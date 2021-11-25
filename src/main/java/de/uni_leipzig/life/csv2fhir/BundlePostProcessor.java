@@ -32,7 +32,7 @@ public class BundlePostProcessor {
      * @param bundle
      */
     public static void convert(Bundle bundle) {
-        List<BundleEntryComponent> invalidResources = addMissingDiagnosesToEncounters(bundle); //TODO: should be removed from bundle (incl. all references to these resources??)
+        List<BundleEntryComponent> invalidResources = addMissingDiagnosesToEncounters(bundle);
     }
 
     /**

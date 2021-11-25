@@ -5,7 +5,9 @@ import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 import java.io.File;
 import java.util.concurrent.Callable;
 
+import de.uni_leipzig.imise.FHIRValidator;
 import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -30,6 +32,13 @@ public class Main implements Callable<Integer> {
     String outputFile;
 
     /**
+     *
+     */
+    @Option(names = {"-v",
+            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
+    static boolean validateBundles = false;
+
+    /**
      * @param args
      */
     public static void main(String[] args) {
@@ -43,7 +52,8 @@ public class Main implements Callable<Integer> {
         if (!inputDirectory.isDirectory()) {
             throw new Exception("provided input Directory is NOT a directory!");
         }
-        Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile);
+        FHIRValidator validator = validateBundles ? new FHIRValidator() : null;
+        Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile, validator);
         converter.convertFiles(JSON);
         return 0;
     }
