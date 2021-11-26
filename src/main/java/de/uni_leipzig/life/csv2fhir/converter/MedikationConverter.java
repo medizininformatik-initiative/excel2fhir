@@ -243,7 +243,7 @@ public class MedikationConverter extends Converter {
         if (Strings.isNullOrEmpty(medicationId)) {
             return null;
         }
-        return new Reference().setReference("Medication/" + medicationId);
+        return createReference(Medication.class, medicationId);
     }
 
     /**

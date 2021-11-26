@@ -7,6 +7,7 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFacto
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Krankenkasse;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Nachname;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Vorname;
+import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
@@ -33,7 +34,6 @@ import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class PersonConverter extends Converter {
 
@@ -149,7 +149,7 @@ public class PersonConverter extends Converter {
         String birthday = get(Geburtsdatum);
         if (birthday != null) {
             try {
-                return DateUtil.parseDateType(birthday);
+                return parseDateType(birthday);
             } catch (Exception e) {
                 error("Can not parse " + Geburtsdatum + " for Record");
                 return null;

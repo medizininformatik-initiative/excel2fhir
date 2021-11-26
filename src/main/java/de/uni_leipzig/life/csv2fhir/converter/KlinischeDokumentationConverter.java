@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -83,7 +84,7 @@ public class KlinischeDokumentationConverter extends Converter {
     private Reference parseObservationPatientId() throws Exception {
         String patientId = get(Patient_ID);
         if (!isNullOrEmpty(patientId)) {
-            return new Reference().setReference("Patient/" + patientId);
+            return createReference(Patient.class, patientId);
         }
         error(Patient_ID + " empty for Record");
         return null;

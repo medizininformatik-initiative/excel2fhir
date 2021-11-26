@@ -2,6 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
+import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 
 import java.util.List;
 
@@ -440,12 +441,12 @@ public abstract class Converter {
         DateTimeType endDate = null;
         try {
             String startDateValue = record.get(startDateColumnName);
-            startDate = DateUtil.parseDateTimeType(startDateValue);
+            startDate = parseDateTimeType(startDateValue);
         } catch (Exception e) {
         }
         try {
             String endDateValue = record.get(endDateColumnName);
-            endDate = DateUtil.parseDateTimeType(endDateValue);
+            endDate = parseDateTimeType(endDateValue);
         } catch (Exception e) {
         }
         if (startDate == null) {

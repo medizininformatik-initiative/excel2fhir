@@ -17,6 +17,7 @@ import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -31,9 +32,11 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 public class VersorgungsfallConverter extends Converter {
 
     /**  */
-    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
+    static String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
     // https://simplifier.net/medizininformatikinitiative-modulfall/versorgungsfall-duplicate-2
     // https://simplifier.net/medizininformatikinitiative-modulfall/example-versorgungsfall
+
+    static String CLASS_CODE_SYSTEM = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse";
 
     /*
      * NotSupported : Terminology service failed while validating code ''
@@ -71,7 +74,7 @@ public class VersorgungsfallConverter extends Converter {
         encounter.setId(getEncounterId());
         encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
-        encounter.setClass_(createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse", Versorgungsfallklasse, ERROR));
+        encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, Versorgungsfallklasse, ERROR));
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         return Collections.singletonList(encounter);
@@ -86,7 +89,7 @@ public class VersorgungsfallConverter extends Converter {
     protected Reference getPatientReference() throws Exception {
         String patientId = get(Patient_ID);
         if (patientId != null) {
-            return new Reference().setReference("Patient/" + patientId);
+            return createReference(Patient.class, patientId);
         }
         error("Patient-ID empty");
         return null;
@@ -99,17 +102,26 @@ public class VersorgungsfallConverter extends Converter {
     private List<Identifier> convertIdentifier() throws Exception {
         // generierte Encounternummer
         String id = getEncounterId();
-        CodeableConcept identifierCode = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN");
+        String dizID = getDIZId();
+        return createIdentifier(id, dizID);
+    }
+
+    /**
+     * @param encounterID
+     * @param dizID
+     * @return
+     */
+    public static List<Identifier> createIdentifier(String encounterID, String dizID) {
         Reference reference = new Reference()
                 .setIdentifier(
                         new Identifier()
                                 .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
-                                .setValue(getDIZId()));
+                                .setValue(dizID));
         return Collections.singletonList(
                 new Identifier()
                         .setSystem("http://dummyurl") // must be an formal correct url!
-                        .setValue(id)
-                        .setType(identifierCode)
+                        .setValue(encounterID)
+                        .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
                         .setAssigner(reference));
     }
 
