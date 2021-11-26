@@ -6,9 +6,16 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converter.MedikationConverter;
+import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 
+/**
+ * @author fheuschkel (02.11.2020), AXS (18.11.2021)
+ */
 public class MedikationConverterFactory implements ConverterFactory {
 
+    /**
+     *
+     */
     public static enum NeededColumns {
         Patient_ID {
             @Override
@@ -52,6 +59,21 @@ public class MedikationConverterFactory implements ConverterFactory {
         Einzeldosis,
         Einheit,
         //KombinationsAMI,
+    }
+
+    /**
+     *
+     */
+    public static enum Medikationsplanart_Values implements StringEqualsIgnoreCase {
+        Vor_Aufnahme,
+        Am_Aufnahmetag,
+        Im_Verlauf,
+        Am_letztzen_Tag,
+        Bei_Entlassung;
+        @Override
+        public String toString() {
+            return super.toString().replace('_', ' ');
+        }
     }
 
     @Override

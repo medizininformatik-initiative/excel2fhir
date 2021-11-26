@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Medikation;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikationsplanart_Values.Vor_Aufnahme;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ASK;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.ATC_Code;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Anzahl_Dosen_pro_Tag;
@@ -16,12 +17,12 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.NeededColumns.Zeitstempel;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
+import static java.util.Collections.singletonList;
 import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
 import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +38,6 @@ import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Medication.MedicationIngredientComponent;
 import org.hl7.fhir.r4.model.MedicationAdministration;
 import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationDosageComponent;
-import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus;
 import org.hl7.fhir.r4.model.MedicationStatement;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
@@ -47,6 +47,8 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.SimpleQuantity;
 import org.hl7.fhir.r4.model.Type;
+
+import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -85,9 +87,8 @@ public class MedikationConverter extends Converter {
      */
     static int ms = 1;
 
-    // Krude Lösung TODO
     /**  */
-    static Set<String> medis = new HashSet<>();
+    static Set<String> medications = new HashSet<>();
 
     /**
      * @param record
@@ -104,21 +105,27 @@ public class MedikationConverter extends Converter {
     public static void reset() {
         ma = 1;
         ms = 1;
+        medications.clear();
     }
 
     @Override
     public List<Resource> convert() throws Exception {
-        List<Resource> l = new ArrayList<>();
-        if (!medis.contains(getMedicationId())) {
-            l.add(parseMedication());
-            medis.add(getMedicationId());
+        List<Resource> resources = new ArrayList<>();
+        String medicationId = getMedicationId();
+        if (!medications.contains(medicationId)) {
+            Medication medication = parseMedication();
+            if (!isValid(medication)) {
+                return resources;
+            }
+            resources.add(parseMedication());
+            medications.add(medicationId);
         }
-        if ("Vor Aufnahme".equals(get(Medikationsplanart))) {
-            l.add(parseMedicationStatement());
+        if (Vor_Aufnahme.equals(get(Medikationsplanart))) {
+            resources.add(parseMedicationStatement());
         } else {
-            l.add(parseMedicationAdministration());
+            resources.add(parseMedicationAdministration());
         }
-        return l;
+        return resources;
     }
 
     @Override
@@ -130,32 +137,49 @@ public class MedikationConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private MedicationAdministration parseMedicationAdministration() throws Exception {
-        MedicationAdministration medicationAdministration = new MedicationAdministration();
-        medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
-
-        medicationAdministration.setStatus(COMPLETED);
-        medicationAdministration.setMedication(getMedicationReference());
-        medicationAdministration.setContext(getEncounterReference());
-        medicationAdministration.setSubject(getPatientReference());
-        medicationAdministration.setEffective(convertTimestamp());
-        medicationAdministration.setDosage(convertDosageAdministration());
-        return medicationAdministration;
+    private Medication parseMedication() throws Exception {
+        Medication medication = new Medication();
+        medication.setMeta(new Meta().addProfile(PROFILE_MED));
+        String medicationId = getMedicationId();
+        medication.setId(medicationId);
+        medication.setIdentifier(singletonList(new Identifier().setValue(medicationId))); // identifier is optional for medication
+        medication.setCode(convertMedicationCodeableConcept());
+        medication.setIngredient(singletonList(getIngredient()));
+        return medication;
     }
 
     /**
      * @return
      * @throws Exception
      */
-    private Medication parseMedication() throws Exception {
-        Medication medication = new Medication();
-        medication.setMeta(new Meta().addProfile(PROFILE_MED));
-        medication.setId(getMedicationId());
-        medication.setIdentifier(Collections.singletonList(new Identifier().setValue(getMedicationId())));
-        medication.setCode(convertMedicationCodeableConcept());
-        medication.setIngredient(Collections.singletonList(getIngredient()));
-        return medication;
+    private MedicationStatement parseMedicationStatement() throws Exception {
+        MedicationStatement medicationStatement = new MedicationStatement();
+        medicationStatement.setId(getEncounterId() + "-MS-" + ms++);
+        medicationStatement.setStatus(ACTIVE);
+        medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
+        medicationStatement.setSubject(getPatientReference());
+        medicationStatement.setContext(getEncounterReference());
+        medicationStatement.setMedication(getMedicationReference());
+        medicationStatement.setEffective(convertTimestamp());
+        medicationStatement.addDosage(convertDosageStatement());
+        return medicationStatement;
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private MedicationAdministration parseMedicationAdministration() throws Exception {
+        MedicationAdministration medicationAdministration = new MedicationAdministration();
+        medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
+        medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
+        medicationAdministration.setStatus(COMPLETED);
+        medicationAdministration.setSubject(getPatientReference());
+        medicationAdministration.setContext(getEncounterReference());
+        medicationAdministration.setMedication(getMedicationReference());
+        medicationAdministration.setEffective(convertTimestamp());
+        medicationAdministration.setDosage(convertDosageAdministration());
+        return medicationAdministration;
     }
 
     /**
@@ -183,8 +207,8 @@ public class MedikationConverter extends Converter {
      */
     private CodeableConcept convertMedicationCodeableConcept() {
         CodeableConcept concept = new CodeableConcept();
-        concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected, "PZN"));
-        concept.addCoding(createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected, "ATC"));
+        concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected));
+        concept.addCoding(createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected));
         concept.setText(get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
     }
@@ -207,8 +231,7 @@ public class MedikationConverter extends Converter {
             warning("ATC empty");
             id = txt;
         }
-        // Dumm, jede Medikation wird für jeden Patienten wiederholt... es dafür steht jedes bundle für sich
-        return getPatientId() + "-M-" + id.hashCode();
+        return "Medication-" + id.hashCode();
     }
 
     /**
@@ -216,7 +239,11 @@ public class MedikationConverter extends Converter {
      * @throws Exception
      */
     private Reference getMedicationReference() throws Exception {
-        return new Reference().setReference("Medication/" + getMedicationId());
+        String medicationId = getMedicationId();
+        if (Strings.isNullOrEmpty(medicationId)) {
+            return null;
+        }
+        return new Reference().setReference("Medication/" + medicationId);
     }
 
     /**
@@ -224,7 +251,7 @@ public class MedikationConverter extends Converter {
      */
     private Coding getASKCoding() {
         String askCodeSystem = "http://fhir.de/CodeSystem/ask";
-        Coding askCoding = createCoding(askCodeSystem, ASK, FHIR_UserSelected, "ASK");
+        Coding askCoding = createCoding(askCodeSystem, ASK, FHIR_UserSelected);
         if (askCoding == null) {
             // fake to be KDS conform
             warning("no ask code");
@@ -236,18 +263,32 @@ public class MedikationConverter extends Converter {
     /**
      * @param codeSystem
      * @param codeColumnName
-     * @param selectedIndicatorColumnName
-     * @param selectedConditionValue
+     * @param userSelectedIndicatorColumnName Name of the column which contains
+     *            the indicator if the Coding is to set as
+     *            {@link Coding#setUserSelected(boolean)}. To set the generated
+     *            Coding as userSelected the value in this column must be
+     *            contained in the
+     *            <code>codeColumnName.toString()<code>. E.g the code column name
+     *            <code>toString()</code> is "ATC-Code" and the value in the
+     *            column with the name
+     *            <code>userSelectedIndicatorColumnName</code> is "ATC" or "atc"
+     *            or "ATC-Code" then the result Coding is set as user selected.
      * @return a new Coding with the given code system and code from the column
      *         with the codeColumnName or <code>null</code> if the code is
      *         missing.
      */
-    public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> selectedIndicatorColumnName, String selectedConditionValue) {
+    public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> userSelectedIndicatorColumnName) {
         String code = get(codeColumnName);
         if (code != null) {
-            String selectedColumnValue = get(selectedIndicatorColumnName);
-            boolean selected = selectedConditionValue.equals(selectedColumnValue);
-            return createCoding(codeSystem, code).setUserSelected(selected);
+            Coding coding = createCoding(codeSystem, code);
+            String selectedColumnValue = get(userSelectedIndicatorColumnName);
+            if (!Strings.isNullOrEmpty(selectedColumnValue)) {
+                String codeColumnNameString = codeColumnName.toString();
+                if (codeColumnNameString.toLowerCase().contains(selectedColumnValue.toLowerCase())) {
+                    coding.setUserSelected(true);
+                }
+            }
+            return coding;
         }
         return null;
     }
@@ -336,25 +377,6 @@ public class MedikationConverter extends Converter {
             error(Einzeldosis + " is not a numerical value for Record");
             return null;
         }
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private MedicationStatement parseMedicationStatement() throws Exception {
-        MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(getEncounterId() + "-MS-" + ms++);
-        medicationStatement.setStatus(ACTIVE);
-        medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
-
-        medicationStatement.setMedication(getMedicationReference());
-
-        medicationStatement.setContext(getEncounterReference());
-        medicationStatement.setSubject(getPatientReference());
-        medicationStatement.setEffective(convertTimestamp());
-        medicationStatement.addDosage(convertDosageStatement());
-        return medicationStatement;
     }
 
     /**
