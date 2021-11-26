@@ -449,18 +449,32 @@ public abstract class Converter {
             endDate = parseDateTimeType(endDateValue);
         } catch (Exception e) {
         }
+        try {
+            return createPeriod(startDate, endDate);
+        } catch (Exception e) {
+            error("Can not parse " + startDateColumnName + " or " + endDateColumnName + " as date for Record " + record);
+            return null;
+        }
+    }
+
+    /**
+     * @param startDate
+     * @param endDate
+     * @return
+     * @throws Exception
+     */
+    public static Period createPeriod(DateTimeType startDate, DateTimeType endDate) throws Exception {
         if (startDate == null) {
             startDate = endDate;
         }
         if (endDate == null) {
             endDate = startDate;
         }
-        try {
-            return new Period().setStartElement(startDate).setEndElement(endDate);
-        } catch (Exception e) {
-            error("Can not parse " + startDateColumnName + " or " + endDateColumnName + " as date for Record " + record);
-            return null;
+        //set endDate always obe day after startDate. Maybe we should deactivate this optional if errors in data should be detected
+        if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
+            endDate = DateUtil.addDays(endDate, 1);
         }
+        return new Period().setStartElement(startDate).setEndElement(endDate);
     }
 
     /**

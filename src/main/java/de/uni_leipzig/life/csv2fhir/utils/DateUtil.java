@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -194,4 +195,19 @@ public class DateUtil {
             throw new Exception();
         }
     }
+
+    /**
+     * Adds or substract (if days negative) the given amount of days to to given
+     * date.
+     *
+     * @param dateTimeType
+     * @param days
+     * @return a new {@link DateTimeType} changed by the given amount of days
+     */
+    public static DateTimeType addDays(DateTimeType dateTimeType, int days) {
+        Calendar calendar = dateTimeType.toCalendar();
+        calendar.add(Calendar.DAY_OF_YEAR, days);
+        return new DateTimeType(calendar);
+    }
+
 }
