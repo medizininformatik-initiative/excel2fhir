@@ -276,6 +276,9 @@ public class FHIRValidator {
      * @param resource
      */
     public ValidationResultType validate(Resource resource) {
+        if (resource == null) {
+            return ValidationResultType.ERROR;
+        }
         ValidationResultType resultType = ValidationResultType.VALID;
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
         LOG.debug("Validated Resource Content \n" + resourceAsJson);
