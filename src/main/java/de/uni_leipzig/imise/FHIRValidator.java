@@ -133,7 +133,7 @@ public class FHIRValidator {
             "Unknown code 'http://loinc.org#",
             "Validation failed für \"http://fhir.de/CodeSystem/ask#",
             "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn",
-            "http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
+            //"http://terminology.hl7.org/CodeSystem/v2-0203#OBI",  //generates only a warning
             "Validation failed für \"http://snomed.info/sct",
             "Falls der Encounter abgeschlossen wurde muss eine Diagnose bekannt sein", //this error will be fixed in the BundlePostProcessor
     };
