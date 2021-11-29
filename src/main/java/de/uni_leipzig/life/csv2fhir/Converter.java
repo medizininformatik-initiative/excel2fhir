@@ -2,6 +2,8 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 
 import java.util.List;
@@ -146,6 +148,14 @@ public abstract class Converter {
     }
 
     /**
+     * @return
+     * @throws Exception
+     */
+    protected final String getEncounterId() throws Exception {
+        return encounterID;
+    }
+
+    /**
      * Short for <code>record.get(columnIdentifier.toString))</code>
      *
      * @param columnIdentifier
@@ -205,7 +215,50 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getPatientReference() throws Exception {
-        return createReference(Patient.class, getPatientId());
+        return getPatientReference(true);
+    }
+
+    /**
+     * @param checkExistence
+     * @return
+     * @throws Exception
+     */
+    protected Reference getPatientReference(boolean checkExistence) throws Exception {
+        return getReference(checkExistence ? Person : null, pid, Patient.class);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected Reference getEncounterReference() throws Exception {
+        return getEncounterReference(true);
+    }
+
+    /**
+     * @param checkExistence
+     * @return
+     * @throws Exception
+     */
+    protected Reference getEncounterReference(boolean checkExistence) throws Exception {
+        return getReference(checkExistence ? Versorgungsfall : null, encounterID, Encounter.class);
+    }
+
+    /**
+     * @param tableIdentifier
+     * @param elementID
+     * @param referenceType
+     * @return
+     * @throws Exception
+     */
+    private static Reference getReference(TableIdentifier tableIdentifier, String elementID, Class<? extends Resource> referenceType) throws Exception {
+        if (tableIdentifier != null) {
+            Resource mainEncounter = tableIdentifier.getResource(elementID);
+            if (mainEncounter == null) {
+                return null;
+            }
+        }
+        return createReference(referenceType, elementID);
     }
 
     /**
@@ -214,22 +267,6 @@ public abstract class Converter {
      */
     protected String getDIZId() throws Exception {
         return dizID;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    protected final String getEncounterId() throws Exception {
-        return encounterID;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    protected Reference getEncounterReference() throws Exception {
-        return createReference(Encounter.class, getEncounterId());
     }
 
     /**

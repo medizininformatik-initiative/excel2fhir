@@ -60,7 +60,7 @@ public class KlinischeDokumentationConverter extends Converter {
         observation.setStatus(FINAL);
         observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
         observation.setSubject(parseObservationPatientId());
-        observation.setEncounter(getEncounterReference());
+        observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         observation.setEffective(parseObservationTimestamp());
         //set value or value absent reason
         Quantity observationValue = parseObservationValue();

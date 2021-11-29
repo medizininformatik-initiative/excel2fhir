@@ -3,7 +3,6 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Startdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
 
@@ -18,6 +17,7 @@ import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
+import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
@@ -83,16 +83,6 @@ public class VersorgungsfallConverter extends Converter {
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
         return Versorgungsfall.getPIDColumnIdentifier();
-    }
-
-    @Override
-    protected Reference getPatientReference() throws Exception {
-        String patientId = get(Patient_ID);
-        if (patientId != null) {
-            return createReference(Patient.class, patientId);
-        }
-        error("Patient-ID empty");
-        return null;
     }
 
     /**
