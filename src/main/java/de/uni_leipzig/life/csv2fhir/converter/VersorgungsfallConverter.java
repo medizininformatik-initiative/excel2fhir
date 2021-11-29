@@ -193,4 +193,28 @@ public class VersorgungsfallConverter extends Converter {
         }
     }
 
+    /**
+     * Creates a default Encounter for this converter class.
+     *
+     * @param pid
+     * @param dizID
+     * @param period
+     * @return
+     */
+    public static Encounter createDefault(String pid, String id, String dizID, Period period) {
+        Encounter encounter = new Encounter();
+        encounter.setMeta(new Meta().addProfile(PROFILE));
+        encounter.setId(id);
+        encounter.setIdentifier(createIdentifier(id, dizID));
+        encounter.setStatus(Encounter.EncounterStatus.FINISHED);
+        encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "stationaer"));
+        encounter.setSubject(createReference(Patient.class, pid));
+        try {
+            encounter.setPeriod(period);
+        } catch (Exception e) {
+            //validity (and not null) should be checked later
+        }
+        return encounter;
+    }
+
 }
