@@ -101,7 +101,7 @@ public class LaborbefundConverter extends Converter {
         Coding laboratoryCoding2 = new Coding()
                 .setSystem("http://loinc.org")
                 .setCode("26436-6")
-                .setDisplay("Laboratory studies");
+                .setDisplay("Laboratory studies (set)");
         CodeableConcept laboratoryCode = new CodeableConcept()
                 .addCoding(laboratoryCoding1)
                 .addCoding(laboratoryCoding2);
