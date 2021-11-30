@@ -103,4 +103,23 @@ public class ConverterResult {
         return result != null ? result : Collections.EMPTY_LIST;
     }
 
+    /**
+     * @param tableSource
+     * @param resourceType
+     * @return
+     */
+    public <T extends Resource> int getResourceCount(TableIdentifier tableSource, Class<T> resourceType) {
+        ConvertedResources<T> result = getResult(tableSource, resourceType);
+        return result != null ? result.size() : 0;
+    }
+
+    /**
+     * @param tableSource
+     * @param resourceType
+     * @return
+     */
+    public <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType) {
+        return getResourceCount(tableSource, resourceType) + 1;
+    }
+
 }

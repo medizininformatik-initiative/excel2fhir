@@ -36,9 +36,6 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class LaborbefundConverter extends Converter {
 
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
-
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";
     // https://simplifier.net/medizininformatikinitiative-modullabor/observationlab
@@ -53,17 +50,11 @@ public class LaborbefundConverter extends Converter {
         super(record, result, validator);
     }
 
-    /**
-     * Resets the static index counter
-     */
-    public static void reset() {
-        n = 1;
-    }
-
     @Override
     public List<Resource> convert() throws Exception {
         // generierte Labornummer
-        String id = getEncounterId() + "-OL-" + n++;
+        int nextId = result.getNextId(Laborbefund, Observation.class);
+        String id = getEncounterId() + "-OL-" + nextId;
 
         Observation observation = new Observation();
         observation.setId(id);

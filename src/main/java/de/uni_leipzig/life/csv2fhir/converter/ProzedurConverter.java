@@ -25,9 +25,6 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 public class ProzedurConverter extends Converter {
 
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
-
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure";
     // https://simplifier.net/medizininformatikinitiative-modulprozeduren/prozedur
@@ -42,17 +39,11 @@ public class ProzedurConverter extends Converter {
         super(record, result, validator);
     }
 
-    /**
-     * Resets the static index counter
-     */
-    public static void reset() {
-        n = 1;
-    }
-
     @Override
     public List<Resource> convert() throws Exception {
         Procedure procedure = new Procedure();
-        procedure.setId(getEncounterId() + "-P-" + n++);
+        int nextId = result.getNextId(Prozedur, Procedure.class);
+        procedure.setId(getEncounterId() + "-P-" + nextId);
         //        procedure.addExtension(new Extension()
         //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         //                .setValue(convertRecordedDate()));

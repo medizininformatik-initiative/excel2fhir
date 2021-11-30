@@ -36,9 +36,6 @@ import de.uni_leipzig.life.csv2fhir.Ucum;
 
 public class KlinischeDokumentationConverter extends Converter {
 
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
-
     /**
      * @param record
      * @param result
@@ -49,17 +46,11 @@ public class KlinischeDokumentationConverter extends Converter {
         super(record, result, validator);
     }
 
-    /**
-     * Resets the static index counter
-     */
-    public static void reset() {
-        n = 1;
-    }
-
     @Override
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
-        observation.setId(getEncounterId() + "-OK-" + n++);
+        int nextId = result.getNextId(Klinische_Dokumentation, Observation.class);
+        observation.setId(getEncounterId() + "-OK-" + nextId);
         observation.setStatus(FINAL);
         observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
         observation.setSubject(parseObservationPatientId());

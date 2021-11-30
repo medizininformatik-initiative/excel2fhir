@@ -26,9 +26,6 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
  */
 public class AbteilungsfallConverter extends Converter {
 
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
-
     /**
      * Maps from human readable department description to the number code for
      * the department.
@@ -59,13 +56,6 @@ public class AbteilungsfallConverter extends Converter {
         super(record, result, validator);
     }
 
-    /**
-     *
-     */
-    public static void reset() {
-        n = 1;
-    }
-
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
         return Abteilungsfall.getPIDColumnIdentifier();
@@ -73,8 +63,9 @@ public class AbteilungsfallConverter extends Converter {
 
     @Override
     public List<Resource> convert() throws Exception {
+        int nextId = result.getNextId(Abteilungsfall, Encounter.class);
         Encounter encounter = new Encounter();
-        encounter.setId(getEncounterId() + "-A-" + n++);
+        encounter.setId(getEncounterId() + "-A-" + nextId);
         encounter.setMeta(new Meta().addProfile(PROFILE));
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
         encounter.setClass_(createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse", "ub"));

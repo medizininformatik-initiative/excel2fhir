@@ -24,9 +24,7 @@ import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatu
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
@@ -78,21 +76,6 @@ public class MedikationConverter extends Converter {
      */
 
     /**
-     * Simple counter to generate unique identifier for
-     * {@link MedicationAdministration}
-     */
-    static int ma = 1;
-
-    /**
-     * Simple counter to generate unique identifier for
-     * {@link MedicationStatement}
-     */
-    static int ms = 1;
-
-    /**  */
-    static Set<String> medications = new HashSet<>();
-
-    /**
      * @param record
      * @param validator
      * @throws Exception
@@ -101,26 +84,18 @@ public class MedikationConverter extends Converter {
         super(record, result, validator);
     }
 
-    /**
-     * Resets the static index counters
-     */
-    public static void reset() {
-        ma = 1;
-        ms = 1;
-        medications.clear();
-    }
-
     @Override
     public List<Resource> convert() throws Exception {
         List<Resource> resources = new ArrayList<>();
         String medicationId = getMedicationId();
-        if (!medications.contains(medicationId)) {
-            Medication medication = parseMedication();
+
+        Medication medication = result.get(Medikation, Medication.class, medicationId);
+        if (medication == null) {
+            medication = parseMedication();
             if (!isValid(medication)) {
                 return resources;
             }
-            resources.add(parseMedication());
-            medications.add(medicationId);
+            resources.add(medication);
         }
         if (Vor_Aufnahme.equals(get(Medikationsplanart))) {
             resources.add(parseMedicationStatement());
@@ -156,7 +131,8 @@ public class MedikationConverter extends Converter {
      */
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(getEncounterId() + "-MS-" + ms++);
+        int nextId = result.getNextId(Medikation, MedicationStatement.class);
+        medicationStatement.setId(getEncounterId() + "-MS-" + nextId);
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
         medicationStatement.setSubject(getPatientReference());
@@ -174,7 +150,8 @@ public class MedikationConverter extends Converter {
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(getEncounterId() + "-MA-" + ma++);
+        int nextId = result.getNextId(Medikation, MedicationAdministration.class);
+        medicationAdministration.setId(getEncounterId() + "-MA-" + nextId);
         medicationAdministration.setStatus(COMPLETED);
         medicationAdministration.setSubject(getPatientReference());
         medicationAdministration.setContext(getEncounterReference());

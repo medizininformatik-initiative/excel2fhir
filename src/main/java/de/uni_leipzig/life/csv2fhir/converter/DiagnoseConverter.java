@@ -28,9 +28,6 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnoseConverter extends Converter {
 
-    /** Simple counter to generate unique identifier */
-    static int n = 1;
-
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
     // https://simplifier.net/medizininformatikinitiative-moduldiagnosen/diagnose
@@ -43,10 +40,6 @@ public class DiagnoseConverter extends Converter {
      */
     public DiagnoseConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
-    }
-
-    public static void reset() {
-        n = 1;
     }
 
     @Override
@@ -89,7 +82,8 @@ public class DiagnoseConverter extends Converter {
             error("ICD empty");
             return null;
         }
-        return getPatientId() + "-CD-" + n++;
+        int nextId = result.getNextId(Diagnose, Condition.class);
+        return getPatientId() + "-CD-" + nextId;
     }
 
     /**
