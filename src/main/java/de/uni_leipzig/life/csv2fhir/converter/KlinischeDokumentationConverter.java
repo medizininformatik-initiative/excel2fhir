@@ -1,17 +1,18 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.BundleFuntions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.Ucum.human2ucum;
 import static de.uni_leipzig.life.csv2fhir.Ucum.ucum2human;
 import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.createUnknownDataAbsentReason;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Patient_ID;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Wert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.NeededColumns.Zeitstempel;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Patient_ID;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Wert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Zeitstempel;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
@@ -30,6 +31,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 
 public class KlinischeDokumentationConverter extends Converter {
@@ -39,11 +41,12 @@ public class KlinischeDokumentationConverter extends Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public KlinischeDokumentationConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public KlinischeDokumentationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**

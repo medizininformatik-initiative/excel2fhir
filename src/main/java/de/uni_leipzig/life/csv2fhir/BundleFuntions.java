@@ -1,5 +1,8 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,53 +34,62 @@ public class BundleFuntions {
     }
 
     /**
+     * @param resourceClass
+     * @param idBase
+     */
+    public static Reference createReference(Class<? extends Resource> resourceClass, String idBase) {
+        return new Reference(resourceClass.getSimpleName() + "/" + idBase);
+    }
+
+    /**
+     * @param result
      * @param pid
      * @return all encounters with the pid from the alrady parsed csv tables
      */
-    public static Collection<Encounter> getEncounters(String pid) {
-        Collection<Encounter> encounters = getEncounters(TableIdentifier.Versorgungsfall, pid);
-        encounters.addAll(getEncounters(TableIdentifier.Abteilungsfall, pid));
+    public static Collection<Encounter> getEncounters(ConverterResult result, String pid) {
+        Collection<Encounter> encounters = getEncountersForPatient(result, Versorgungsfall, pid);
+        encounters.addAll(getEncountersForPatient(result, Abteilungsfall, pid));
         return encounters;
     }
 
     /**
+     * @param result
+     * @param identifier
      * @param pid
      * @return all encounters with the pid from the alrady parsed csv tables
      */
-    public static Collection<Encounter> getEncounters(TableIdentifier encounterSource, String pid) {
-        Collection<Encounter> result = new ArrayList<>();
+    public static Collection<Encounter> getEncountersForPatient(ConverterResult result, TableIdentifier identifier, String pid) {
+        Collection<Encounter> encounters = new ArrayList<>();
         if (pid != null) {
-            for (Resource resource : encounterSource.getResources()) {
-                if (resource instanceof Encounter) {
-                    Encounter encounter = (Encounter) resource;
-                    Reference patientReference = encounter.getSubject();
-                    String encounterPID = patientReference.getReference();
-                    if (encounterPID == null) {
-                        continue;
-                    }
-                    String basePID = getBaseId(pid);
-                    String baseEncounterPID = getBaseId(encounterPID);
-                    if (baseEncounterPID.equals(basePID)) {
-                        result.add(encounter);
-                    }
+            for (Encounter encounter : result.getResources(identifier, Encounter.class)) {
+                Reference patientReference = encounter.getSubject();
+                String encounterPID = patientReference.getReference();
+                if (encounterPID == null) {
+                    continue;
+                }
+                String basePID = getBaseId(pid);
+                String baseEncounterPID = getBaseId(encounterPID);
+                if (baseEncounterPID.equals(basePID)) {
+                    encounters.add(encounter);
                 }
             }
         }
-        return result;
+        return encounters;
     }
 
     /**
      * Extract a date from one encounter of the corresponding patient.
      *
+     * @param result
      * @param pid
      * @return
      */
-    public static DateTimeType getEncounterDate(String pid) {
-        Collection<Encounter> mainEncounters = getEncounters(TableIdentifier.Versorgungsfall, pid);
+    public static DateTimeType getEncounterDate(ConverterResult result, String pid) {
+        Collection<Encounter> mainEncounters = getEncountersForPatient(result, Versorgungsfall, pid);
         DateTimeType encounterDate = getEncounterDate(mainEncounters, true);
         Collection<Encounter> subEncounters = null;
         if (encounterDate == null) {
-            subEncounters = getEncounters(TableIdentifier.Abteilungsfall, pid);
+            subEncounters = getEncountersForPatient(result, Abteilungsfall, pid);
             encounterDate = getEncounterDate(subEncounters, true);
         }
         if (encounterDate == null) {

@@ -37,7 +37,6 @@ import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.Alphabetical;
-import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -189,7 +188,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
-        Collection<String> pids = getValues(Person + ".csv", PersonConverterFactory.NeededColumns.Patient_ID, true, true);
+        Collection<String> pids = getValues(Person + ".csv", Person.getPIDColumnIdentifier(), true, true);
         for (String pid : pids) {
             LOG.info("Start create Fhir-Json-Bundle for Patient-ID " + pid + " ...");
             Stopwatch stopwatch = Stopwatch.createStarted();
@@ -215,7 +214,6 @@ public class Csv2Fhir {
         // determined during the conversion, so it has to be done afterwards.
         BundlePostProcessor.convert(bundle);
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
-        TableIdentifier.clearAll();
     }
 
     /**
@@ -244,11 +242,12 @@ public class Csv2Fhir {
      * @param filterID
      * @throws Exception
      */
-    private void convertFiles(Bundle bundle, String filterID) throws Exception {
+    private ConverterResult convertFiles(Bundle bundle, String filterID) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
-        for (TableIdentifier csvFileName : TableIdentifier.values()) {
-            String fileName = csvFileName.getCsvFileName();
+        ConverterResult result = new ConverterResult();
+        for (TableIdentifier table : TableIdentifier.values()) {
+            String fileName = table.getCsvFileName();
             File file = new File(inputDirectory, fileName);
             if (!file.exists() || file.isDirectory()) {
                 continue;
@@ -257,7 +256,7 @@ public class Csv2Fhir {
                 CSVParser csvParser = csvFormat.parse(in);
                 LOG.info("Start parsing File:" + fileName);
                 Map<String, Integer> headerMap = csvParser.getHeaderMap();
-                List<String> neededColumnNames = csvFileName.getNeededColumnNames();
+                Collection<String> neededColumnNames = table.getMandatoryColumnNames();
                 if (isColumnMissing(headerMap, neededColumnNames)) {
                     csvParser.close();
                     LOG.error("Error - File: " + fileName + " not convertable!");
@@ -266,13 +265,13 @@ public class Csv2Fhir {
                 for (CSVRecord record : csvParser) {
                     try {
                         if (!Strings.isNullOrEmpty(filterID)) {
-                            String idColumnName = csvFileName.getPIDColumnIdentifier().toString();
+                            String idColumnName = table.getPIDColumnIdentifier().toString();
                             String p = record.get(idColumnName);
                             if (!p.toUpperCase().matches(filterID)) {
                                 continue;
                             }
                         }
-                        List<Resource> list = csvFileName.convert(record, validator);
+                        List<? extends Resource> list = table.convert(record, result, validator);
                         if (list != null) {
                             for (Resource resource : list) {
                                 if (resource != null) {
@@ -290,13 +289,14 @@ public class Csv2Fhir {
                             }
                         }
                     } catch (Exception e) {
-                        LOG.error("Error (" + e.getMessage() + ") while converting file " + csvFileName + " in record " + record);
+                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
                     }
                 }
                 csvParser.close();
             }
         }
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
+        return result;
     }
 
     /**
@@ -316,7 +316,7 @@ public class Csv2Fhir {
      * @param neededColls
      * @return
      */
-    private static boolean isColumnMissing(Map<String, Integer> map, List<String> neededColumnNames) {
+    private static boolean isColumnMissing(Map<String, Integer> map, Collection<String> neededColumnNames) {
         Set<String> columns = getTrimmedKeys(map);
         if (!columns.containsAll(neededColumnNames)) {//Error message
             for (String s : neededColumnNames) {

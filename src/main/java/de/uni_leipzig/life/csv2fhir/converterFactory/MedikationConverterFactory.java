@@ -5,6 +5,8 @@ import org.apache.commons.csv.CSVRecord;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converter.MedikationConverter;
 import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 
@@ -16,7 +18,7 @@ public class MedikationConverterFactory implements ConverterFactory {
     /**
      *
      */
-    public static enum NeededColumns {
+    public static enum Medikation_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
@@ -77,18 +79,8 @@ public class MedikationConverterFactory implements ConverterFactory {
     }
 
     @Override
-    public Converter create(CSVRecord record, FHIRValidator validator) throws Exception {
-        return new MedikationConverter(record, validator);
-    }
-
-    @Override
-    public Enum<?>[] getNeededColumns() {
-        return NeededColumns.values();
-    }
-
-    @Override
-    public void resetConverterStaticValues() {
-        MedikationConverter.reset();
+    public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        return new MedikationConverter(record, result, validator);
     }
 
 }

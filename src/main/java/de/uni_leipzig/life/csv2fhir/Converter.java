@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.BundleFuntions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
@@ -38,21 +39,13 @@ public abstract class Converter {
 
     /**
      * Specifies how to handle missing values.
-     *
-     * @author AXS (18.11.2021)
      */
     public static enum EmptyRecordValueErrorLevel {
-        /**
-         * Throw error on missing value
-         */
+        /** Throw error on missing value */
         ERROR,
-        /**
-         * Print warning on missing value
-         */
+        /** Print warning on missing value */
         WARNING,
-        /**
-         * Ignore missing value
-         */
+        /** Ignore missing value */
         IGNORE,
     }
 
@@ -74,6 +67,9 @@ public abstract class Converter {
     /**  */
     protected boolean kds_strict = true;
 
+    /**  */
+    protected final ConverterResult result;
+
     /**
      * Validator to validate resources. Can be <code>null</code>. Can be
      * <code>null</code> if nothing should be validated.
@@ -82,13 +78,15 @@ public abstract class Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator Validator to validate resources. Can be
      *            <code>null</code> if nothing should be validated.
      * @throws Exception
      */
-    public Converter(CSVRecord record, @Nullable FHIRValidator validator) throws Exception {
-        this.validator = validator;
+    public Converter(CSVRecord record, ConverterResult result, @Nullable FHIRValidator validator) throws Exception {
         this.record = record;
+        this.result = result;
+        this.validator = validator;
         pid = parsePatientId();
         encounterID = parseEncounterId();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
@@ -98,7 +96,7 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    public abstract List<Resource> convert() throws Exception;
+    public abstract List<? extends Resource> convert() throws Exception;
 
     /**
      * @param resource
@@ -251,10 +249,10 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    private static Reference getReference(TableIdentifier tableIdentifier, String elementID, Class<? extends Resource> referenceType) throws Exception {
+    private Reference getReference(TableIdentifier tableIdentifier, String elementID, Class<? extends Resource> referenceType) throws Exception {
         if (tableIdentifier != null) {
-            Resource mainEncounter = tableIdentifier.getResource(elementID);
-            if (mainEncounter == null) {
+            Resource resource = result.get(tableIdentifier, referenceType, elementID); //must exists in this bundle to create a valid reference
+            if (resource == null) {
                 return null;
             }
         }
@@ -267,14 +265,6 @@ public abstract class Converter {
      */
     protected String getDIZId() throws Exception {
         return dizID;
-    }
-
-    /**
-     * @param resourceClass
-     * @param idBase
-     */
-    public static Reference createReference(Class<? extends Resource> resourceClass, String idBase) {
-        return new Reference().setReference(resourceClass.getSimpleName() + "/" + idBase);
     }
 
     /**

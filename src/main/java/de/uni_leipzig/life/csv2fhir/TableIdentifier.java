@@ -1,62 +1,101 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Resource;
 
+import com.google.common.collect.ImmutableList;
+
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns;
 
 /**
  * @author AXS (18.11.2021)
  */
 public enum TableIdentifier {
 
-    Person(new PersonConverterFactory(), PersonConverterFactory.NeededColumns.Patient_ID),
+    Person(Person_Columns.class, PersonConverterFactory.class),
 
-    Versorgungsfall(new VersorgungsfallConverterFactory(), VersorgungsfallConverterFactory.NeededColumns.Patient_ID),
+    Versorgungsfall(Versorgungsfall_Columns.class, VersorgungsfallConverterFactory.class),
 
-    Abteilungsfall(new AbteilungsfallConverterFactory(), AbteilungsfallConverterFactory.NeededColumns.Patient_ID),
+    Abteilungsfall(Abteilungsfall_Columns.class, AbteilungsfallConverterFactory.class),
 
-    Laborbefund(new LaborbefundConverterFactory(), LaborbefundConverterFactory.NeededColumns.Patient_ID),
+    Laborbefund(Laborbefund_Columns.class, LaborbefundConverterFactory.class),
 
-    Diagnose(new DiagnoseConverterFactory(), DiagnoseConverterFactory.NeededColumns.Patient_ID),
+    Diagnose(Diagnose_Columns.class, DiagnoseConverterFactory.class),
 
-    Prozedur(new ProzedurConverterFactory(), ProzedurConverterFactory.NeededColumns.Patient_ID),
+    Prozedur(Prozedur_Columns.class, ProzedurConverterFactory.class),
 
-    Medikation(new MedikationConverterFactory(), MedikationConverterFactory.NeededColumns.Patient_ID),
+    Medikation(Medikation_Columns.class, MedikationConverterFactory.class),
 
-    Klinische_Dokumentation(new KlinischeDokumentationConverterFactory(), KlinischeDokumentationConverterFactory.NeededColumns.Patient_ID);
+    Klinische_Dokumentation(KlinischeDokumentation_Columns.class, KlinischeDokumentationConverterFactory.class);
 
-    /** Maps from the reosurce ID to the resource */
-    private final Map<String, Resource> idToResourceMap = new HashMap<>();
+    /** The class with the converter factory for this data type */
+    private final Class<? extends ConverterFactory> converterFactoryClass;
 
-    /** The converterFactory for this type */
-    private final ConverterFactory converterFactory;
+    /** The converter factory for this data type */
+    private ConverterFactory converterFactory;
+
+    /** The class with the enum with the definition of the table columns */
+    private final Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass;
 
     /** The column identifier for the patien ID in the table */
     private final Enum<?> pidColumnIdentifier;
 
     /**
-     * @param converterFactory
-     * @param pidColumnIdentifier
+     * @param columnIdentifiersClass
+     * @param converterFactoryClass
      */
-    private TableIdentifier(ConverterFactory converterFactory, Enum<?> pidColumnIdentifier) {
-        this.converterFactory = converterFactory;
-        this.pidColumnIdentifier = pidColumnIdentifier;
+    private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends ConverterFactory> converterFactoryClass) {
+        this.columnIdentifiersClass = columnIdentifiersClass;
+        this.converterFactoryClass = converterFactoryClass;
+        pidColumnIdentifier = columnIdentifiersClass.getEnumConstants()[0]; //should always declared as the first value!
+    }
+
+    /**
+     * @return Enum where the list of toString() methods of the elements
+     *         specifies the names of the table columns needed for conversion.
+     * @see de.uni_leipzig.life.csv2fhir.ConverterFactory#getNeededColumns()
+     */
+    public Collection<Enum<? extends TableColumnIdentifier>> getMandatoryColumns() {
+        ImmutableList.Builder<Enum<? extends TableColumnIdentifier>> mandatoryColumns = ImmutableList.builder();
+        for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
+            if (((TableColumnIdentifier) columnIndentifier).isMandatory()) {
+                mandatoryColumns.add(columnIndentifier);
+            }
+        }
+        return mandatoryColumns.build();
+    }
+
+    /**
+     * @return A collection with all column names of the table columns needed
+     *         for conversion.
+     */
+    public Collection<String> getMandatoryColumnNames() {
+        ImmutableList.Builder<String> mandatoryColumnNames = ImmutableList.builder();
+        for (Object columnIndentifier : getMandatoryColumns()) {
+            mandatoryColumnNames.add(columnIndentifier.toString());
+        }
+        return mandatoryColumnNames.build();
     }
 
     /**
@@ -75,59 +114,29 @@ public enum TableIdentifier {
 
     /**
      * @param csvRecord
+     * @param result
      * @param validator
      * @return
      * @throws Exception
      */
-    public List<Resource> convert(CSVRecord csvRecord, FHIRValidator validator) throws Exception {
-        Converter converter = converterFactory.create(csvRecord, validator);
-        List<Resource> resources = converter.convert();
-        for (Resource resource : resources) {
-            String id = resource.getId();
-            idToResourceMap.put(id, resource);
+    public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator) throws Exception {
+        if (converterFactory == null) {
+            converterFactory = createConverter();
         }
+        Converter converter = converterFactory.create(csvRecord, result, validator);
+        List<? extends Resource> resources = converter.convert();
+        result.addAll(this, resources);
         return resources;
     }
 
     /**
-     * Clear in all instances the map from IDs to resources and resest all
-     * converters
-     */
-    public static void clearAll() {
-        for (TableIdentifier tableIdentifier : TableIdentifier.values()) {
-            tableIdentifier.clear();
-        }
-    }
-
-    /**
-     * Clears the map from IDs to resources and resets all converters
-     */
-    public void clear() {
-        idToResourceMap.clear();
-        converterFactory.resetConverterStaticValues();
-    }
-
-    /**
-     * @param id
      * @return
+     * @throws Exception
      */
-    public Resource getResource(String id) {
-        return idToResourceMap.get(id);
-    }
-
-    /**
-     * @param id
-     * @return
-     */
-    public Set<String> getIDs(String id) {
-        return idToResourceMap.keySet();
-    }
-
-    /**
-     * @return
-     */
-    public Collection<Resource> getResources() {
-        return idToResourceMap.values();
+    private final ConverterFactory createConverter() throws Exception {
+        Constructor<? extends ConverterFactory> emptyConverterFactoyryConstructor = converterFactoryClass.getConstructor();
+        ConverterFactory converterFactory = emptyConverterFactoyryConstructor.newInstance();
+        return converterFactory;
     }
 
     @Override
@@ -147,22 +156,6 @@ public enum TableIdentifier {
      */
     public String getExcelSheetName() {
         return toString();
-    }
-
-    /**
-     * @return
-     * @see de.uni_leipzig.life.csv2fhir.ConverterFactory#getNeededColumns()
-     */
-    public Enum<?>[] getNeededColumns() {
-        return converterFactory.getNeededColumns();
-    }
-
-    /**
-     * @return
-     * @see de.uni_leipzig.life.csv2fhir.ConverterFactory#getNeededColumnNames()
-     */
-    public List<String> getNeededColumnNames() {
-        return converterFactory.getNeededColumnNames();
     }
 
     /**

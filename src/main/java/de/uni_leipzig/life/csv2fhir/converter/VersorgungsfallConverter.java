@@ -1,10 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.BundleFuntions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Startdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.NeededColumns.Versorgungsfallklasse;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Versorgungsfallklasse;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -53,11 +55,12 @@ public class VersorgungsfallConverter extends Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public VersorgungsfallConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public VersorgungsfallConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**
@@ -132,35 +135,38 @@ public class VersorgungsfallConverter extends Converter {
     }
 
     /**
+     * @param result
      * @param encounterID
      * @param procedure
      */
-    public static void addDiagnosisToEncounter(String encounterID, Procedure procedure) {
+    public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Procedure procedure) {
         // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
-        addDiagnosisToEncounter(encounterID, procedure, "Comorbidity diagnosis");
+        addDiagnosisToEncounter(result, encounterID, procedure, "Comorbidity diagnosis");
     }
 
     /**
+     * @param result
      * @param encounterID
      * @param condition
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounter(String encounterID, Condition condition, String diagnosisUseIdentifier) {
+    public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Condition condition, String diagnosisUseIdentifier) {
         if (diagnosisUseIdentifier == null) {
             diagnosisUseIdentifier = "Comorbidity diagnosis"; // default for missing values
         }
-        addDiagnosisToEncounter(encounterID, (Resource) condition, diagnosisUseIdentifier);
+        addDiagnosisToEncounter(result, encounterID, (Resource) condition, diagnosisUseIdentifier);
     }
 
     /**
+     * @param result
      * @param encounterID
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounter(String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+    private static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
-        Encounter encounter = (Encounter) Versorgungsfall.getResource(encounterID);
+        Encounter encounter = result.get(Versorgungsfall, Encounter.class, encounterID);
         addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
     }
 

@@ -5,11 +5,11 @@ import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.Ucum.human2ucum;
 import static de.uni_leipzig.life.csv2fhir.Ucum.ucum2human;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Messwert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Parameter;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.NeededColumns.Zeitstempel_Abnahme;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Messwert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Parameter;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Zeitstempel_Abnahme;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 
 import java.math.BigDecimal;
@@ -30,6 +30,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -44,11 +45,12 @@ public class LaborbefundConverter extends Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public LaborbefundConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public LaborbefundConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**

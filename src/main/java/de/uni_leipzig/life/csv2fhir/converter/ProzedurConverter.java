@@ -2,9 +2,9 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurencode;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.NeededColumns.Prozedurentext;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Prozedurencode;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Prozedurentext;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static java.util.Collections.singletonList;
 
@@ -21,6 +21,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 public class ProzedurConverter extends Converter {
 
@@ -33,11 +34,12 @@ public class ProzedurConverter extends Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public ProzedurConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public ProzedurConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**
@@ -71,7 +73,7 @@ public class ProzedurConverter extends Converter {
         }
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
-        VersorgungsfallConverter.addDiagnosisToEncounter(encounterId, procedure);
+        VersorgungsfallConverter.addDiagnosisToEncounter(result, encounterId, procedure);
 
         return singletonList(procedure);
     }

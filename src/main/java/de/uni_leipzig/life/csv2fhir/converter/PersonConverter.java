@@ -1,12 +1,12 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Anschrift;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geburtsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Geschlecht;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Krankenkasse;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Nachname;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.NeededColumns.Vorname;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Anschrift;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Geburtsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Geschlecht;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Krankenkasse;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Nachname;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Vorname;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
@@ -34,6 +34,7 @@ import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 public class PersonConverter extends Converter {
 
@@ -43,11 +44,12 @@ public class PersonConverter extends Converter {
 
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public PersonConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public PersonConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**

@@ -1,9 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.NeededColumns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Fachabteilung;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Startdatum;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +19,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
@@ -50,11 +51,12 @@ public class AbteilungsfallConverter extends Converter {
      */
     /**
      * @param record
+     * @param result
      * @param validator
      * @throws Exception
      */
-    public AbteilungsfallConverter(CSVRecord record, FHIRValidator validator) throws Exception {
-        super(record, validator);
+    public AbteilungsfallConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        super(record, result, validator);
     }
 
     /**
@@ -107,10 +109,10 @@ public class AbteilungsfallConverter extends Converter {
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounterInternal(String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+    private void addDiagnosisToEncounterInternal(String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
-        Encounter encounter = (Encounter) Abteilungsfall.getResource(encounterID);
+        Encounter encounter = result.get(Abteilungsfall, Encounter.class, encounterID);
         VersorgungsfallConverter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
     }
 
