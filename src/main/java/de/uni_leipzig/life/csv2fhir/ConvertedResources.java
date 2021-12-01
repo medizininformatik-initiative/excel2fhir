@@ -9,6 +9,9 @@ import org.apache.commons.collections4.map.HashedMap;
 import org.hl7.fhir.r4.model.Resource;
 
 /**
+ * Basically a map that maps from the ID of a resource to the resource. For
+ * simplicity, however, the map interface is not implemented here.
+ *
  * @author AXS (30.11.2021)
  * @param <T>
  */

@@ -6,6 +6,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+import org.hl7.fhir.r4.model.Condition;
+import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Medication;
+import org.hl7.fhir.r4.model.MedicationAdministration;
+import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -18,7 +25,30 @@ public class ConverterResult {
 
     /**
      * Maps from the Resource type and the id to the resource created by this
-     * converter.
+     * converter.<br>
+     * Must be a {@link Multimap} because from the
+     * {@link TableIdentifier#Medikation} we generate 3 different types of
+     * resources. <br>
+     * <br>
+     * A valid convertion result with all resource types has the structure:<br>
+     * {@link TableIdentifier#Person} ->
+     * {{@link ConvertedResources}<{@link Person}>},<br>
+     * {@link TableIdentifier#Versorgungsfall} ->
+     * {{@link ConvertedResources}<{@link Encounter}>},<br>
+     * {@link TableIdentifier#Abteilungsfall} ->
+     * {{@link ConvertedResources}<{@link Encounter}>},<br>
+     * {@link TableIdentifier#Diagnose} ->
+     * {{@link ConvertedResources}<{@link Condition}>},<br>
+     * {@link TableIdentifier#Prozedur} ->
+     * {{@link ConvertedResources}<{@link Procedure}>},<br>
+     * {@link TableIdentifier#Klinische_Dokumentation} ->
+     * {{@link ConvertedResources}<{@link Observation}>},<br>
+     * {@link TableIdentifier#Laborbefund} ->
+     * {{@link ConvertedResources}<{@link Observation}>},<br>
+     * {@link TableIdentifier#Medikation} ->
+     * {{@link ConvertedResources}<{@link Medication}>,
+     * {@link ConvertedResources}<{@link MedicationStatement}>,
+     * {@link ConvertedResources}<{@link MedicationAdministration}>},<br>
      */
     private final Multimap<TableIdentifier, ConvertedResources<? extends Resource>> createdResources = ArrayListMultimap.create();
 
