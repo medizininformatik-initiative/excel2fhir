@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Quantity;
@@ -37,7 +36,6 @@ import de.uni_leipzig.life.csv2fhir.Ucum;
 
 public class KlinischeDokumentationConverter extends Converter {
 
-    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";
     /**
      * @param record
      * @param result
@@ -55,7 +53,6 @@ public class KlinischeDokumentationConverter extends Converter {
         observation.setId(getEncounterId() + "-OK-" + nextId);
         observation.setStatus(FINAL);
         observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
-        observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setSubject(parseObservationPatientId());
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         observation.setEffective(parseObservationTimestamp());
