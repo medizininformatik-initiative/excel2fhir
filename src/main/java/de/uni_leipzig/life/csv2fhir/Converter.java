@@ -103,7 +103,7 @@ public abstract class Converter {
      * @return <code>true</code> if the validation is not to be performed or the
      *         validation does not find an error.
      */
-    protected boolean isValid(Resource resource) {
+    protected final boolean isValid(Resource resource) {
         return validator == null || !validator.validate(resource).isError();
     }
 

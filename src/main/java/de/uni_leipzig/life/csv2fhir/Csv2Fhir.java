@@ -35,7 +35,6 @@ import com.google.common.base.Strings;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.Alphabetical;
 
 /**
@@ -224,15 +223,17 @@ public class Csv2Fhir {
      */
     private void writeOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
             throws IOException {
-        if (validator == null || !validator.validateBundle(bundle).isError()) {
-            String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
-                    + outputFileType.getFileExtension();
-            File outputFile = new File(outputDirectory, fileName);
-            LOG.info("writing file " + fileName);
-            try (FileWriter fileWriter = new FileWriter(outputFile)) {
-                outputFileType.getParser()
-                        .setPrettyPrint(true)
-                        .encodeResourceToWriter(bundle, fileWriter);
+        if (bundle != null && !bundle.getEntry().isEmpty()) {
+            if (validator == null || !validator.validateBundle(bundle).isError()) {
+                String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
+                        + outputFileType.getFileExtension();
+                File outputFile = new File(outputDirectory, fileName);
+                LOG.info("writing file " + fileName);
+                try (FileWriter fileWriter = new FileWriter(outputFile)) {
+                    outputFileType.getParser()
+                            .setPrettyPrint(true)
+                            .encodeResourceToWriter(bundle, fileWriter);
+                }
             }
         }
     }
@@ -272,21 +273,13 @@ public class Csv2Fhir {
                             }
                         }
                         List<? extends Resource> list = table.convert(record, result, validator);
-                        if (list != null) {
-                            for (Resource resource : list) {
-                                if (resource != null) {
-                                    ValidationResultType validationResult = validator == null ? ValidationResultType.VALID : validator.validate(resource);
-                                    //only add valid Resources
-                                    if (!validationResult.isError()) {
-                                        BundleEntryComponent entry = bundle.addEntry();
-                                        entry.setResource(resource);
-                                        BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
-                                        entry.setRequest(requestComponent);
-                                        String url = requestComponent.getUrl();
-                                        entry.setFullUrl(url);
-                                    }
-                                }
-                            }
+                        for (Resource resource : list) {
+                            BundleEntryComponent entry = bundle.addEntry();
+                            entry.setResource(resource);
+                            BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
+                            entry.setRequest(requestComponent);
+                            String url = requestComponent.getUrl();
+                            entry.setFullUrl(url);
                         }
                     } catch (Exception e) {
                         LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);

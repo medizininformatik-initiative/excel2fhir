@@ -1,5 +1,8 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.imise.FHIRValidator.ValidationResultType.ERROR;
+import static de.uni_leipzig.imise.FHIRValidator.ValidationResultType.VALID;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,6 +14,7 @@ import org.hl7.fhir.r4.model.Resource;
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.FHIRValidator;
+import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
@@ -124,7 +128,19 @@ public enum TableIdentifier {
             converterFactory = createConverter();
         }
         Converter converter = converterFactory.create(csvRecord, result, validator);
-        List<? extends Resource> resources = converter.convert();
+        List<? extends Resource> resources = converter.convert(); //should never return null!
+        //validate every resource and remove if invalid
+        for (int i = resources.size() - 1; i >= 0; i--) {
+            Resource resource = resources.get(i);
+            ValidationResultType validationResult = ERROR;
+            if (resource != null) {
+                validationResult = validator == null ? VALID : validator.validate(resource);
+            }
+            if (validationResult == ERROR) {
+                resources.remove(i);
+            }
+        }
+
         result.addAll(this, resources);
         return resources;
     }
