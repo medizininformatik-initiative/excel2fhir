@@ -16,6 +16,7 @@ import java.util.List;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
@@ -28,6 +29,7 @@ import de.uni_leipzig.life.csv2fhir.utils.DecimalUtil;
 
 public class KlinischeDokumentationConverter extends Converter {
 
+    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";
     /**  */
     static int n = 1;
 
@@ -43,6 +45,7 @@ public class KlinischeDokumentationConverter extends Converter {
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
         observation.setId(getEncounterId() + "-O-" + n++);
+        observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(Observation.ObservationStatus.FINAL);
         observation.setCode(parseObservationCode());
         observation.setSubject(parseObservationPatientId());
