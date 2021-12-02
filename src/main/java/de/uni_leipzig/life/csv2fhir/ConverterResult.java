@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.BundleFuntions.getBaseId;
+import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getBaseId;
 
 import java.util.Collection;
 import java.util.Collections;
