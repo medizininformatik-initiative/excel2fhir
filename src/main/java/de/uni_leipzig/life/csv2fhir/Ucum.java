@@ -3,8 +3,6 @@ package de.uni_leipzig.life.csv2fhir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.uni_leipzig.imise.utils.CodeSystemMapper;
-
 /**
  * @author fheuschkel (02.11.2020), AXS
  */

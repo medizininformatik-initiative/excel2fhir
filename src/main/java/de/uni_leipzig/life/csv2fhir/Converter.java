@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.imise.utils.CodeSystemMapper;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
