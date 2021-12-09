@@ -397,7 +397,23 @@ public abstract class Converter {
      * @return a new {@link CodeableConcept}
      */
     public static CodeableConcept createCodeableConcept(String codeSystem, String code, String text) {
+        return createCodeableConcept(codeSystem, code, null, text);
+    }
+
+    /**
+     * Creates a new {@link CodeableConcept} with the given code, code system
+     * and display for the contained {@link Coding}. Additionally the returned
+     * {@link CodeableConcept} gets the text from parameter <code>text</code>.
+     *
+     * @param codeSystem the code system of the contained {@link Coding}
+     * @param code the code of the contained {@link Coding}
+     * @param display
+     * @param text
+     * @return a new {@link CodeableConcept}
+     */
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text) {
         Coding coding = createCoding(codeSystem, code);
+        coding.setDisplay(display);
         return new CodeableConcept(coding).setText(text);
     }
 

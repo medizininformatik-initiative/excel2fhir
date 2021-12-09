@@ -107,9 +107,9 @@ public class KlinischeDokumentationConverter extends Converter {
      * @throws Exception
      */
     private Quantity parseObservationValue() throws Exception {
-        BigDecimal messwert;
+        BigDecimal value;
         try {
-            messwert = parseDecimal(get(Wert));
+            value = parseDecimal(get(Wert));
         } catch (Exception e) {
             error(Wert + " is not a numerical value for Record");
             return null;
@@ -119,13 +119,22 @@ public class KlinischeDokumentationConverter extends Converter {
             error(Einheit + " is empty for Record");
             return null;
         }
-        boolean isUcum = Ucum.isUcum(unit);
-        String ucum = isUcum ? unit : human2ucum(unit);
-        String synonym = isUcum ? ucum2human(unit) : unit;
+        return getQuantity(value, unit);
+    }
+
+    /**
+     * @param value
+     * @param ucumUnit
+     * @return
+     */
+    public static Quantity getQuantity(BigDecimal value, String ucumUnit) {
+        boolean isUcum = Ucum.isUcum(ucumUnit);
+        String ucum = isUcum ? ucumUnit : human2ucum(ucumUnit);
+        String synonym = isUcum ? ucum2human(ucumUnit) : ucumUnit;
 
         Quantity quantity = new Quantity()
                 .setSystem("http://unitsofmeasure.org")
-                .setValue(messwert);
+                .setValue(value);
 
         if (!ucum.isEmpty()) {
             quantity.setCode(ucum)

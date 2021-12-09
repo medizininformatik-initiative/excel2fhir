@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.logging.log4j.util.Strings;
 import org.hl7.fhir.common.hapi.validation.support.CachingValidationSupport;
 import org.hl7.fhir.common.hapi.validation.support.CommonCodeSystemsTerminologyService;
 import org.hl7.fhir.common.hapi.validation.support.InMemoryTerminologyServerValidationSupport;
@@ -279,12 +280,24 @@ public class FHIRValidator {
         if (resource == null) {
             return ValidationResultType.ERROR;
         }
-        ValidationResultType resultType = ValidationResultType.VALID;
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
+        return validate(resourceAsJson);
+    }
+
+    /**
+     * @param resourceAsJson
+     * @return
+     */
+    public ValidationResultType validate(String resourceAsJson) {
+        if (Strings.isBlank(resourceAsJson)) {
+            return ValidationResultType.ERROR;
+        }
+        ValidationResultType resultType = ValidationResultType.VALID;
         LOG.debug("Validated Resource Content \n" + resourceAsJson);
         //ValidationResult validationResult = validator.validateWithResult(resource);
         ValidationResult validationResult = validator.validateWithResult(resourceAsJson);
-        for (SingleValidationMessage validationMessage : validationResult.getMessages()) {
+        List<SingleValidationMessage> validationMessages = validationResult.getMessages();
+        for (SingleValidationMessage validationMessage : validationMessages) {
             ResultSeverityEnum severity = validationMessage.getSeverity();
             String locationString = validationMessage.getLocationString();
             Integer locationLine = validationMessage.getLocationLine();

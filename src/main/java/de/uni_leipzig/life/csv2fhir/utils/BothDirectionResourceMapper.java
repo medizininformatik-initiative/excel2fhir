@@ -3,9 +3,11 @@ package de.uni_leipzig.life.csv2fhir.utils;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author AXS (03.12.2021)
@@ -108,6 +110,22 @@ public class BothDirectionResourceMapper {
      */
     public String getFirstBackwardKey(String value) {
         return backwardMap.get(value);
+    }
+
+    /**
+     * @return
+     * @see java.util.HashMap#keySet()
+     */
+    public Set<String> keySet() {
+        return forwardMap.keySet();
+    }
+
+    /**
+     * @return
+     * @see java.util.HashMap#values()
+     */
+    public Collection<String> values() {
+        return forwardMap.values();
     }
 
 }
