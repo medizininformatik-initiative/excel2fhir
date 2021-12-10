@@ -110,7 +110,7 @@ public abstract class Converter {
      * @param msg
      * @throws Exception
      */
-    protected void error(String msg) throws Exception {
+    public void error(String msg) throws Exception {
         throw new Exception("Error on " + getErrorMessageBody(msg));
     }
 

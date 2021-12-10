@@ -1,38 +1,32 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
-import static de.uni_leipzig.life.csv2fhir.Ucum.human2ucum;
-import static de.uni_leipzig.life.csv2fhir.Ucum.ucum2human;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.createUnknownDataAbsentReason;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.PROFILE;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.getIdentifier;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.parseObservationTimestamp;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.parseObservationValue;
+import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.setValueOrAbsentReason;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Wert;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Zeitstempel;
-import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
-import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
-import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.Ucum;
 
 public class KlinischeDokumentationConverter extends Converter {
 
@@ -50,97 +44,25 @@ public class KlinischeDokumentationConverter extends Converter {
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class);
-        observation.setId(getEncounterId() + "-OK-" + nextId);
+        String id = getEncounterId() + "-OK-" + nextId;
+        observation.setId(id);
+        observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
-        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
-        observation.setSubject(parseObservationPatientId());
+        observation.setSubject(getPatientReference()); // if null then observation is invalid
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
-        observation.setEffective(parseObservationTimestamp());
+        observation.setEffective(parseObservationTimestamp(this, Zeitstempel));
+        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
         //set value or value absent reason
-        Quantity observationValue = parseObservationValue();
-        if (observationValue != null) {
-            observation.setValue(observationValue);
-        } else {
-            observation.setDataAbsentReason(createUnknownDataAbsentReason());
-        }
+        Quantity observationValue = parseObservationValue(this, Wert, Einheit);
+        setValueOrAbsentReason(observation, observationValue);
+        observation.setIdentifier(getIdentifier(id, getDIZId()));
+        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
         return Collections.singletonList(observation);
     }
 
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
         return Klinische_Dokumentation.getPIDColumnIdentifier();
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Reference parseObservationPatientId() throws Exception {
-        String patientId = get(Patient_ID);
-        if (!isNullOrEmpty(patientId)) {
-            return createReference(Patient.class, patientId);
-        }
-        error(Patient_ID + " empty for Record");
-        return null;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private DateTimeType parseObservationTimestamp() throws Exception {
-        String timestamp = get(Zeitstempel);
-        if (timestamp != null) {
-            try {
-                return parseDateTimeType(timestamp);
-            } catch (Exception eYear) {
-                error("Can not parse Zeitstempel");
-                return null;
-            }
-        }
-        error(Zeitstempel + " empty for Record");
-        return null;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Quantity parseObservationValue() throws Exception {
-        BigDecimal value;
-        try {
-            value = parseDecimal(get(Wert));
-        } catch (Exception e) {
-            error(Wert + " is not a numerical value for Record");
-            return null;
-        }
-        String unit = get(Einheit);
-        if (isNullOrEmpty(unit)) {
-            error(Einheit + " is empty for Record");
-            return null;
-        }
-        return getQuantity(value, unit);
-    }
-
-    /**
-     * @param value
-     * @param ucumUnit
-     * @return
-     */
-    public static Quantity getQuantity(BigDecimal value, String ucumUnit) {
-        boolean isUcum = Ucum.isUcum(ucumUnit);
-        String ucum = isUcum ? ucumUnit : human2ucum(ucumUnit);
-        String synonym = isUcum ? ucum2human(ucumUnit) : ucumUnit;
-
-        Quantity quantity = new Quantity()
-                .setSystem("http://unitsofmeasure.org")
-                .setValue(value);
-
-        if (!ucum.isEmpty()) {
-            quantity.setCode(ucum)
-                    .setUnit(synonym);
-        }
-        return quantity;
     }
 
 }
