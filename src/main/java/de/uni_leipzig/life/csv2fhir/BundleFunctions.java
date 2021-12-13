@@ -18,7 +18,7 @@ import org.hl7.fhir.r4.model.Resource;
 /**
  * @author AXS (24.11.2021)
  */
-public class BundleFuntions {
+public class BundleFunctions {
 
     /**
      * Returns the substring of the specified ID string after the first slash,

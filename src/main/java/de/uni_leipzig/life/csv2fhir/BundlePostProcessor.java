@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.BundleFuntions.getResource;
+import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getResource;
 
 import java.util.ArrayList;
 import java.util.List;
