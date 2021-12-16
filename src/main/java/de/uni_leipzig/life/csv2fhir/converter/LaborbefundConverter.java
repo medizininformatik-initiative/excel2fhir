@@ -3,8 +3,6 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
-import static de.uni_leipzig.life.csv2fhir.Ucum.human2ucum;
-import static de.uni_leipzig.life.csv2fhir.Ucum.ucum2human;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.LOINC;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Messwert;
@@ -34,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class LaborbefundConverter extends Converter {
@@ -139,28 +136,7 @@ public class LaborbefundConverter extends Converter {
             converter.error(unitColumnIdentifier + " is empty for Record");
             return null;
         }
-        return getQuantity(value, unit);
-    }
-
-    /**
-     * @param value
-     * @param ucumUnit
-     * @return
-     */
-    public static Quantity getQuantity(BigDecimal value, String ucumUnit) {
-        boolean isUcum = Ucum.isUcum(ucumUnit);
-        String ucum = isUcum ? ucumUnit : human2ucum(ucumUnit);
-        String synonym = isUcum ? ucum2human(ucumUnit) : ucumUnit;
-
-        Quantity quantity = new Quantity()
-                .setSystem("http://unitsofmeasure.org")
-                .setValue(value);
-
-        if (!ucum.isEmpty()) {
-            quantity.setCode(ucum)
-                    .setUnit(synonym);
-        }
-        return quantity;
+        return getUcumQuantity(value, unit);
     }
 
     /**

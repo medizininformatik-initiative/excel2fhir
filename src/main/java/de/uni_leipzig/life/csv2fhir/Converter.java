@@ -7,6 +7,7 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -19,11 +20,13 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -517,6 +520,26 @@ public abstract class Converter {
             endDate = DateUtil.addDays(endDate, 1);
         }
         return new Period().setStartElement(startDate).setEndElement(endDate);
+    }
+
+    /**
+     * @param value
+     * @param ucumCode
+     * @return
+     * @throws Exception
+     */
+    public static Quantity getUcumQuantity(BigDecimal value, String ucumCode) throws Exception {
+        ucumCode = UcumMapper.getValidUcumCode(ucumCode);
+        String ucumUnit = UcumMapper.getUcumUnit(ucumCode);
+        Quantity quantity = new Quantity()
+                .setSystem("http://unitsofmeasure.org")
+                .setValue(value);
+
+        if (!ucumCode.isEmpty()) {
+            quantity.setCode(ucumCode)
+                    .setUnit(ucumUnit);
+        }
+        return quantity;
     }
 
     /**

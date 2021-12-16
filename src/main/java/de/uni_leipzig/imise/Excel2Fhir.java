@@ -12,6 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
@@ -142,5 +143,9 @@ public class Excel2Fhir {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
+        if (!UcumMapper.invalidUcumCodes.isEmpty()) {
+            LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);
+        }
     }
+
 }

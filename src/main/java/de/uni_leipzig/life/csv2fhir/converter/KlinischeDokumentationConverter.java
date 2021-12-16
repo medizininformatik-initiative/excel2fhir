@@ -57,6 +57,7 @@ public class KlinischeDokumentationConverter extends Converter {
         setValueOrAbsentReason(observation, observationValue);
         observation.setIdentifier(getIdentifier(id, getDIZId()));
         observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
+        //        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation);
         return Collections.singletonList(observation);
     }
 

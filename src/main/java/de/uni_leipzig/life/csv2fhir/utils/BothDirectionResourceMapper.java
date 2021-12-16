@@ -6,13 +6,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 /**
  * @author AXS (03.12.2021)
  */
-public class BothDirectionResourceMapper {
+public class BothDirectionResourceMapper implements Map<String, String> {
 
     /**
      * Constant string as map value in the map to identify the empty string
@@ -36,6 +37,11 @@ public class BothDirectionResourceMapper {
      * again.
      */
     private final List<String> valuesAddingOrder = new ArrayList<>();
+
+    /**
+     *
+     */
+    private final CodeSystemPropertiesLoader codeSystemPropertiesLoader = new CodeSystemPropertiesLoader();
 
     /**
      * Fills both maps from the properties file.
@@ -63,7 +69,7 @@ public class BothDirectionResourceMapper {
         @Override
         public synchronized String put(Object key, Object value) {
             //Sys.out1(key + " -> " + value);
-            String valueString = String.valueOf(value);
+            String valueString = String.valueOf(value).trim(); //we trim!
             //the const value 'EMPTY_STRING' means the empty string "" :)
             if (EMPTY_STRING.equals(valueString)) {
                 valueString = "";
@@ -71,10 +77,10 @@ public class BothDirectionResourceMapper {
             String keyString = String.valueOf(key);
             // the very first key in the properties file is the value
             // for the backward mapping from value to key
-            String existingBackwardKey = backwardMap.get(value);
+            String existingBackwardKey = backwardMap.get(valueString);
             if (existingBackwardKey == null) {
                 backwardMap.put(valueString, keyString);
-                valuesAddingOrder.add(String.valueOf(value));
+                valuesAddingOrder.add(valueString);
             }
             return forwardMap.put(keyString, valueString);
         }
@@ -84,9 +90,10 @@ public class BothDirectionResourceMapper {
     /**
      * @param resourceFileName
      */
-    public BothDirectionResourceMapper(String resourceFileName) {
-        CodeSystemPropertiesLoader codeSystemPropertiesLoader = new CodeSystemPropertiesLoader();
-        codeSystemPropertiesLoader.load(resourceFileName);
+    public BothDirectionResourceMapper(String... resourceFileNames) {
+        for (String resourceFileName : resourceFileNames) {
+            codeSystemPropertiesLoader.load(resourceFileName);
+        }
     }
 
     /**
@@ -116,6 +123,7 @@ public class BothDirectionResourceMapper {
      * @return
      * @see java.util.HashMap#keySet()
      */
+    @Override
     public Set<String> keySet() {
         return forwardMap.keySet();
     }
@@ -124,8 +132,63 @@ public class BothDirectionResourceMapper {
      * @return
      * @see java.util.HashMap#values()
      */
+    @Override
     public Collection<String> values() {
         return forwardMap.values();
+    }
+
+    @Override
+    public int size() {
+        return forwardMap.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return forwardMap.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return forwardMap.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return forwardMap.containsValue(value);
+    }
+
+    @Override
+    public String get(Object key) {
+        return getForwardValue(String.valueOf(key));
+    }
+
+    @Override
+    public String put(String key, String value) {
+        return codeSystemPropertiesLoader.put(key, value);
+    }
+
+    @Override
+    public String remove(Object key) {
+        return forwardMap.remove(key);
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends String> m) {
+        for (String key : m.keySet()) {
+            put(key, m.get(key));
+        }
+    }
+
+    @Override
+    public void clear() {
+        forwardMap.clear();
+        backwardMap.clear();
+        valuesAddingOrder.clear();
+    }
+
+    @Override
+    public Set<Entry<String, String>> entrySet() {
+        return forwardMap.entrySet();
     }
 
 }
