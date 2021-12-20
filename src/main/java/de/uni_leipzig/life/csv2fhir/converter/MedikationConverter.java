@@ -52,7 +52,6 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.Ucum;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
@@ -330,12 +329,11 @@ public class MedikationConverter extends Converter {
      * @throws Exception
      */
     private Ratio getDoseRate() throws Exception {
-        String unit = get(Einheit);
-        if (unit != null) {
-            return new Ratio().setNumerator(
-                    new Quantity().setValue(getDose())
-                            .setUnit(unit).setSystem("http://unitsofmeasure.org")
-                            .setCode(Ucum.human2ucum(unit)))
+        String ucumCode = get(Einheit);
+        if (ucumCode != null) {
+            return new Ratio()
+                    .setNumerator(
+                            getUcumQuantity(getDose(), ucumCode))
                     .setDenominator(
                             new Quantity().setValue(new BigDecimal(1))
                                     .setSystem("http://XXX")

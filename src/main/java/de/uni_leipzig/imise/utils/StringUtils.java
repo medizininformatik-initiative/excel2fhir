@@ -3,6 +3,8 @@ package de.uni_leipzig.imise.utils;
 import java.util.Arrays;
 
 /**
+ * Used to format the logging output.
+ *
  * @author AXS (22.11.2021)
  */
 public class StringUtils {

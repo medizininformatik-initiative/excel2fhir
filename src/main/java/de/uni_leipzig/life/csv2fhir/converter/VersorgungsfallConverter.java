@@ -24,7 +24,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.imise.utils.CodeSystemMapper;
+import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 

@@ -1,0 +1,41 @@
+###################################################################
+# Maps from a UCUM sysnonym to a valid UCUM code.
+#
+# NOTE: 
+# Whitespaces in the human readable keys must be coded as '\u0020'.
+# An empty UCUM value must be marked as 'EMPTY_STRING'.
+#
+###################################################################
+
+mmHg		mm[Hg]
+I.E.		[iU]
+IE			[iU]
+Sekunde(n)	s
+BPM			/min
+
+mg/lFEU		mg{FEU}/L
+G/l			10*9/L
+T/l			10*12/L
+Mrd/ml		10*9/mL
+Mrd/l		10*9/L
+x10^3/µl	10*3/uL
+x10^6/µl	10*6/uL
+x10^9/l		10*9/L
+x10^12/l	10*12/L
+1/µl		/uL
+ml/min/1,73m^2	mL/min/{1.73_m2}
+
+
+###############################################
+# codes in data with no valid UCUM equivalent
+###############################################
+# -
+# Beutel
+# Pflaster
+# MioI.E./0,5ml
+# mg/5ml
+# mg/Tropfen
+# Hb/dl
+# Hübe
+# /100Leuk
+# Ratio
