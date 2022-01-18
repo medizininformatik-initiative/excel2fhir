@@ -9,9 +9,9 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter;
 
-public class ProzedurConverterFactory implements ConverterFactory {
+public class ProcedureConverterFactory implements ConverterFactory {
 
-    public static enum Prozedur_Columns implements TableColumnIdentifier {
+    public static enum Procedure_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {

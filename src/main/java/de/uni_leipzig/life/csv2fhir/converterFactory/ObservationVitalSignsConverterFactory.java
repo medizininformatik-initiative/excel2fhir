@@ -7,25 +7,27 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converter.AbteilungsfallConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter;
 
-public class AbteilungsfallConverterFactory implements ConverterFactory {
+public class ObservationVitalSignsConverterFactory implements ConverterFactory {
 
-    public static enum Abteilungsfall_Columns implements TableColumnIdentifier {
+    public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
                 return "Patient-ID";
             }
         },
-        Startdatum,
-        Enddatum,
-        Fachabteilung
+        Bezeichner,
+        LOINC,
+        Wert,
+        Einheit,
+        Zeitstempel
     }
 
     @Override
-    public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        return new AbteilungsfallConverter(record, result, validator);
+    public Converter create(final CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+        return new ObservationVitalSignsConverter(record, result, validator);
     }
 
 }

@@ -15,24 +15,24 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns;
 
 /**
  * @author AXS (18.11.2021)
@@ -41,19 +41,19 @@ public enum TableIdentifier {
 
     Person(Person_Columns.class, PersonConverterFactory.class),
 
-    Versorgungsfall(Versorgungsfall_Columns.class, VersorgungsfallConverterFactory.class),
+    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1ConverterFactory.class),
 
-    Abteilungsfall(Abteilungsfall_Columns.class, AbteilungsfallConverterFactory.class),
+    Abteilungsfall(Abteilungsfall_Columns.class, EncounterLevel2ConverterFactory.class),
 
-    Laborbefund(Laborbefund_Columns.class, LaborbefundConverterFactory.class),
+    Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverterFactory.class),
 
-    Diagnose(Diagnose_Columns.class, DiagnoseConverterFactory.class),
+    Diagnose(Diagnosis_Columns.class, DiagnosisConverterFactory.class),
 
-    Prozedur(Prozedur_Columns.class, ProzedurConverterFactory.class),
+    Prozedur(Procedure_Columns.class, ProcedureConverterFactory.class),
 
-    Medikation(Medikation_Columns.class, MedikationConverterFactory.class),
+    Medikation(Medication_Columns.class, MedicationConverterFactory.class),
 
-    Klinische_Dokumentation(KlinischeDokumentation_Columns.class, KlinischeDokumentationConverterFactory.class),
+    Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverterFactory.class),
 
     Consent(Consent_Columns.class, ConsentConverterFactory.class) {
         @Override

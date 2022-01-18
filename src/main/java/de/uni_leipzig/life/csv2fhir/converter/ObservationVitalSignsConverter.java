@@ -2,17 +2,17 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.PROFILE;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.getIdentifier;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.parseObservationTimestamp;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.parseObservationValue;
-import static de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter.setValueOrAbsentReason;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Wert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory.KlinischeDokumentation_Columns.Zeitstempel;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.PROFILE;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.getIdentifier;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.parseObservationTimestamp;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.parseObservationValue;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.setValueOrAbsentReason;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Wert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Zeitstempel;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
 import java.util.Collections;
@@ -28,7 +28,7 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
-public class KlinischeDokumentationConverter extends Converter {
+public class ObservationVitalSignsConverter extends Converter {
 
     /**
      * @param record
@@ -36,7 +36,7 @@ public class KlinischeDokumentationConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public KlinischeDokumentationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public ObservationVitalSignsConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 

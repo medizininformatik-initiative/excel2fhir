@@ -2,9 +2,9 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Prozedurencode;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProzedurConverterFactory.Prozedur_Columns.Prozedurentext;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurencode;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurentext;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static java.util.Collections.singletonList;
 
@@ -64,7 +64,7 @@ public class ProzedurConverter extends Converter {
         }
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
-        VersorgungsfallConverter.addDiagnosisToEncounter(result, encounterId, procedure);
+        EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
 
         return singletonList(procedure);
     }

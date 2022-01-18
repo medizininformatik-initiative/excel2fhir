@@ -2,20 +2,20 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Medikation;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.ASK;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.ATC_Code;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Anzahl_Dosen_pro_Tag;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Darreichungsform;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Einzeldosis;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.FHIR_UserSelected;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Medikationsplanart;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.PZN_Code;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Therapieendedatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Therapiestartdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikation_Columns.Zeitstempel;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedikationConverterFactory.Medikationsplanart_Values.Vor_Aufnahme;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.ASK;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.ATC_Code;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Anzahl_Dosen_pro_Tag;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Darreichungsform;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Einzeldosis;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.FHIR_UserSelected;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Medikationsplanart;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.PZN_Code;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Therapieendedatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Therapiestartdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Zeitstempel;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medikationsplanart_Values.Vor_Aufnahme;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static java.util.Collections.singletonList;
@@ -57,7 +57,7 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 /**
  * MedicationStatement bei "Vor Aufnahme" MedicationAdminstration sonst
  */
-public class MedikationConverter extends Converter {
+public class MedicationConverter extends Converter {
 
     /**  */
     String PROFILE_ADM = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
@@ -79,7 +79,7 @@ public class MedikationConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public MedikationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public MedicationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 

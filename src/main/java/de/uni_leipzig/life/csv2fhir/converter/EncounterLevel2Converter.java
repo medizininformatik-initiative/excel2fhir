@@ -1,9 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Fachabteilung;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Startdatum;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +24,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
  */
-public class AbteilungsfallConverter extends Converter {
+public class EncounterLevel2Converter extends Converter {
 
     /**
      * Maps from human readable department description to the number code for
@@ -52,7 +52,7 @@ public class AbteilungsfallConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public AbteilungsfallConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public EncounterLevel2Converter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 
@@ -104,7 +104,7 @@ public class AbteilungsfallConverter extends Converter {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Abteilungsfall, Encounter.class, encounterID);
-        VersorgungsfallConverter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+        EncounterLevel1Converter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
     }
 
 }

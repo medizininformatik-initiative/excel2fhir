@@ -3,11 +3,11 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns.ICD;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns.Patient_ID;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns.Typ;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.ICD;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Patient_ID;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Typ;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +26,7 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class DiagnoseConverter extends Converter {
+public class DiagnosisConverter extends Converter {
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose";
@@ -38,7 +38,7 @@ public class DiagnoseConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public DiagnoseConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public DiagnosisConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 
@@ -62,7 +62,7 @@ public class DiagnoseConverter extends Converter {
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
         String diagnosisUseIdentifier = get(Typ);
-        VersorgungsfallConverter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+        EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
 
         return Collections.singletonList(condition);
     }

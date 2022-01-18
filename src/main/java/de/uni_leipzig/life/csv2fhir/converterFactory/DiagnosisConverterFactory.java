@@ -7,33 +7,26 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converter.LaborbefundConverter;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter;
 
-public class LaborbefundConverterFactory implements ConverterFactory {
+public class DiagnosisConverterFactory implements ConverterFactory {
 
-    public static enum Laborbefund_Columns implements TableColumnIdentifier {
+    public static enum Diagnosis_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
                 return "Patient-ID";
             }
         },
-        LOINC,
-        Parameter,
-        Messwert,
-        Einheit,
-        Zeitstempel_Abnahme {
-            @Override
-            public String toString() {
-                return "Zeitstempel (Abnahme)";
-            }
-        },
-        //Methode //not used
+        Bezeichner,
+        ICD,
+        Dokumentationsdatum,
+        Typ
     }
 
     @Override
     public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        return new LaborbefundConverter(record, result, validator);
+        return new DiagnosisConverter(record, result, validator);
     }
 
 }

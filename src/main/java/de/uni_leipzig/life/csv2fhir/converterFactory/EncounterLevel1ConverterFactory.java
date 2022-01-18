@@ -7,11 +7,11 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converter.VersorgungsfallConverter;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 
-public class VersorgungsfallConverterFactory implements ConverterFactory {
+public class EncounterLevel1ConverterFactory implements ConverterFactory {
 
-    public static enum Versorgungsfall_Columns implements TableColumnIdentifier {
+    public static enum EncounterLevel1_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
@@ -25,7 +25,7 @@ public class VersorgungsfallConverterFactory implements ConverterFactory {
 
     @Override
     public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        return new VersorgungsfallConverter(record, result, validator);
+        return new EncounterLevel1Converter(record, result, validator);
     }
 
 }

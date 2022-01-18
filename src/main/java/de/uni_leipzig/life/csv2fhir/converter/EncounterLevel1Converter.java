@@ -3,9 +3,9 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Startdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.VersorgungsfallConverterFactory.Versorgungsfall_Columns.Versorgungsfallklasse;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Versorgungsfallklasse;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +31,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
  */
-public class VersorgungsfallConverter extends Converter {
+public class EncounterLevel1Converter extends Converter {
 
     /**  */
     static String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
@@ -59,7 +59,7 @@ public class VersorgungsfallConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public VersorgungsfallConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public EncounterLevel1Converter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 
@@ -180,7 +180,7 @@ public class VersorgungsfallConverter extends Converter {
         // procedure to add it as reference to the encounter
         Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis);
         // add diagnosis use to the diagnosis component
-        CodeableConcept diagnosisUse = VersorgungsfallConverter.createDiagnosisUse(diagnosisUseIdentifier);
+        CodeableConcept diagnosisUse = EncounterLevel1Converter.createDiagnosisUse(diagnosisUseIdentifier);
         DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);
         diagnosisComponent.setUse(diagnosisUse);
         // maybe the same diagnosis was coded twice

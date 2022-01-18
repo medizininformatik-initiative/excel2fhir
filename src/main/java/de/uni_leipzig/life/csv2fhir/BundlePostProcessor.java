@@ -16,7 +16,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.base.Objects;
 
-import de.uni_leipzig.life.csv2fhir.converter.VersorgungsfallConverter;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 
 /**
  * Post-processing of a bundle.
@@ -60,7 +60,7 @@ public class BundlePostProcessor {
                             if (!diagnoses.isEmpty()) {
                                 //a reference to the first diagnose which has a coded diagnose use from the follwing
                                 //iterable will be added to the child encuonter
-                                Iterable<String> diagnosisUseCodesInAddingOrder = VersorgungsfallConverter.diagnosisRoleKeyMapper.getValuesInAddingOrder();
+                                Iterable<String> diagnosisUseCodesInAddingOrder = EncounterLevel1Converter.diagnosisRoleKeyMapper.getValuesInAddingOrder();
                                 for (String preferedDiagnosisUseCode : diagnosisUseCodesInAddingOrder) {
                                     for (DiagnosisComponent diagnosis : diagnoses) {
                                         CodeableConcept use = diagnosis.getUse();

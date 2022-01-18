@@ -7,18 +7,18 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converter.MedikationConverter;
+import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter;
 import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 
 /**
  * @author fheuschkel (02.11.2020), AXS (18.11.2021)
  */
-public class MedikationConverterFactory implements ConverterFactory {
+public class MedicationConverterFactory implements ConverterFactory {
 
     /**
      *
      */
-    public static enum Medikation_Columns implements TableColumnIdentifier {
+    public static enum Medication_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
@@ -80,7 +80,7 @@ public class MedikationConverterFactory implements ConverterFactory {
 
     @Override
     public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        return new MedikationConverter(record, result, validator);
+        return new MedicationConverter(record, result, validator);
     }
 
 }

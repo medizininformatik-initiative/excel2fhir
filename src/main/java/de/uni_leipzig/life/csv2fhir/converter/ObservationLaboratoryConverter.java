@@ -3,11 +3,11 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Messwert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Parameter;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.LaborbefundConverterFactory.Laborbefund_Columns.Zeitstempel_Abnahme;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Messwert;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Parameter;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Zeitstempel_Abnahme;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
@@ -34,7 +34,7 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
-public class LaborbefundConverter extends Converter {
+public class ObservationLaboratoryConverter extends Converter {
 
     /**  */
     static final String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";
@@ -52,7 +52,7 @@ public class LaborbefundConverter extends Converter {
      * @param validator
      * @throws Exception
      */
-    public LaborbefundConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
+    public ObservationLaboratoryConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
     }
 
