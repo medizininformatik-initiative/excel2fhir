@@ -17,6 +17,8 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.AbteilungsfallConverterFactory.Abteilungsfall_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnoseConverterFactory.Diagnose_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.KlinischeDokumentationConverterFactory;
@@ -51,7 +53,14 @@ public enum TableIdentifier {
 
     Medikation(Medikation_Columns.class, MedikationConverterFactory.class),
 
-    Klinische_Dokumentation(KlinischeDokumentation_Columns.class, KlinischeDokumentationConverterFactory.class);
+    Klinische_Dokumentation(KlinischeDokumentation_Columns.class, KlinischeDokumentationConverterFactory.class),
+
+    Consent(Consent_Columns.class, ConsentConverterFactory.class) {
+        @Override
+        public String toString() {
+            return Person.toString(); // Consent data are on the patient sheet
+        }
+    };
 
     /** The class with the converter factory for this data type */
     private final Class<? extends ConverterFactory> converterFactoryClass;
