@@ -6,6 +6,7 @@ import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
+import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
@@ -540,6 +542,24 @@ public abstract class Converter {
                     .setUnit(ucumUnit);
         }
         return quantity;
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected DateType parseDate(Enum<?> dateColumnName) throws Exception {
+        String date = get(dateColumnName);
+        if (date != null) {
+            try {
+                return parseDateType(date);
+            } catch (Exception e) {
+                error("Can not parse " + dateColumnName + " for Record");
+                return null;
+            }
+        }
+        error(dateColumnName + " empty for Record");
+        return null;
     }
 
     /**

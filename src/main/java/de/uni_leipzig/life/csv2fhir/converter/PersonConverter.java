@@ -7,7 +7,6 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFacto
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Krankenkasse;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Nachname;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Vorname;
-import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
@@ -18,7 +17,6 @@ import java.util.List;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.Address.AddressType;
-import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.HumanName.NameUse;
@@ -67,7 +65,7 @@ public class PersonConverter extends Converter {
         patient.setIdentifier(parseIdentifier());
         patient.addName(parseName());
         patient.setGender(parseSex());
-        patient.setBirthDateElement(parseBirthDate());
+        patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         //        patient.addGeneralPractitioner(parseHealthProvider());
         return Collections.singletonList(patient);
@@ -140,24 +138,6 @@ public class PersonConverter extends Converter {
             return null;
         }
         warning("Geschlecht not found");
-        return null;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private DateType parseBirthDate() throws Exception {
-        String birthday = get(Geburtsdatum);
-        if (birthday != null) {
-            try {
-                return parseDateType(birthday);
-            } catch (Exception e) {
-                error("Can not parse " + Geburtsdatum + " for Record");
-                return null;
-            }
-        }
-        error(Geburtsdatum + " empty for Record");
         return null;
     }
 
