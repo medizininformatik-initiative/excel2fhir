@@ -5,7 +5,6 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurencode;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurentext;
-import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static java.util.Collections.singletonList;
 
 import java.util.Collections;
@@ -14,7 +13,6 @@ import java.util.List;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Resource;
@@ -47,7 +45,7 @@ public class ProzedurConverter extends Converter {
         //        procedure.addExtension(new Extension()
         //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         //                .setValue(convertRecordedDate()));
-        procedure.setPerformed(convertRecordedDate());
+        procedure.setPerformed(parseDateTimeType(Dokumentationsdatum));
         procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
         procedure.setCategory(new CodeableConcept(convertSnomedCategory()));
         procedure.setCode(convertProcedureCode());
@@ -72,19 +70,6 @@ public class ProzedurConverter extends Converter {
     @Override
     protected Enum<?> getPatientIDColumnIdentifier() {
         return Prozedur.getPIDColumnIdentifier();
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private DateTimeType convertRecordedDate() throws Exception {
-        try {
-            return parseDateTimeType(get(Dokumentationsdatum));
-        } catch (Exception e) {
-            error("Can not parse Dokumentationsdatum for Record");
-            return null;
-        }
     }
 
     /**

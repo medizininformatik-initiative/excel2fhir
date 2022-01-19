@@ -16,7 +16,6 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Zeitstempel;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medikationsplanart_Values.Vor_Aufnahme;
-import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static java.util.Collections.singletonList;
 import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
@@ -361,12 +360,7 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private DateTimeType convertTimestamp() throws Exception {
-        try {
-            return parseDateTimeType(get(Zeitstempel));
-        } catch (Exception e) {
-            error("Can not parse " + Zeitstempel);
-            return null;
-        }
+        return parseDateTimeType(Zeitstempel);
     }
 
     /**

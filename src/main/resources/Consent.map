@@ -15,3 +15,71 @@ CONSENT_CATEGORY_CODING_SYSTEM	http://loinc.org
 CONSENT_CATEGORY_CODING_CODE	59284-0
 
 CONSENT_POLICY_URI				https://www.medizininformatik-initiative.de/sites/default/files/2020-04/MII_AG-Consent_Einheitlicher-Mustertext_v1.6d.pdf
+
+#valid yes values in CSV/Excel files
+CONSENT_VALUE_YES				ja|j|1|y|yes|true|x
+
+#####################################################################################################################
+# Sources:
+# https://art-decor.org/art-decor/decor-valuesets--mide-?id=2.16.840.1.113883.3.1937.777.24.11.36&effectiveDate=2021-04-23T10:55:54&language=de-DE
+# https://tmfev.sharepoint.com/:x:/r/sites/tmf/mi-i/_layouts/15/doc2.aspx?sourcedoc=%7B9106C206-B70C-4B74-9A9D-58B8309A1DF4%7D&file=TFCU-PolicyAbbildung_v7_in_Arbeit.xlsx&action=default&mobileredirect=true&cid=1c522908-8f1d-4065-a59e-eca50c846e1f
+#
+# All codes without a validity period in parentheses before or behind it has the default validity period of 30
+# years from the consents start date.
+# A number in parentheses before the codes last number means a retrospective amount of years, behind is prospective.
+# A (*) marker means a one-time consent for exactly one point in time.
+#####################################################################################################################
+CONSENT_PROVISION_SYSTEM		2.16.840.1.113883.3.1937.777.24.5.3
+
+# for every provision group all single provisions resp. their numbers
+#PDAT Einwilligung = Patientendaten erheben, speichern, nutzen (prospektiv)
+CONSENT_PROVISION_GROUP_1		2 3 4 5 6(5) 7 8 9 37
+#KKDAT retro Einwilligung = Krankenkassendaten übertragen, speichern, nutzen (retrospektiv)
+CONSENT_PROVISION_GROUP_10		11(-5) 12 13 38(*)
+#KKDAT Einwilligung = Krankenkassendaten übertragen, speichern, nutzen (prospektiv)
+CONSENT_PROVISION_GROUP_14		15(5) 16 17 39(5)
+#BIOMAT Einwilligung = Biomaterialien erheben, lagern, nutzen
+CONSENT_PROVISION_GROUP_18		19(5) 20 21(5) 22 23
+#BIOMAT Zusatz Einwilligung = Biomaterialien Zusatzentnahme
+CONSENT_PROVISION_GROUP_24		25(5)
+
+# Name of the column in the excel file that represents one provision group
+CONSENT_PROVISION_COLUMN_1		PDAT Einwilligung
+CONSENT_PROVISION_COLUMN_10		KKDAT retro Einwilligung
+CONSENT_PROVISION_COLUMN_14		KKDAT Einwilligung
+CONSENT_PROVISION_COLUMN_18		BIOMAT Einwilligung
+CONSENT_PROVISION_COLUMN_24		BIOMAT Zusatz Einwilligung
+
+#PDAT Einwilligung = Patientendaten erheben, speichern, nutzen (prospektiv)
+CONSENT_PROVISION_TEXT_1		PATDAT_erheben_speichern_nutzen
+CONSENT_PROVISION_TEXT_2		IDAT_erheben
+CONSENT_PROVISION_TEXT_3		IDAT_speichern_verarbeiten
+CONSENT_PROVISION_TEXT_4		IDAT_zusammenfuehren_Dritte
+CONSENT_PROVISION_TEXT_5		IDAT_bereitstellen_EU_DSGVO_NIVEAU
+CONSENT_PROVISION_TEXT_6		MDAT_erheben
+CONSENT_PROVISION_TEXT_7		MDAT_speichern_verarbeiten
+CONSENT_PROVISION_TEXT_8		MDAT_wissenschaftlich_nutzen_EU_DSGVO_NIVEAU
+CONSENT_PROVISION_TEXT_9		MDAT_zusammenfuehren_Dritte
+CONSENT_PROVISION_TEXT_37		Rekontaktierung_Ergebnisse_erheblicher_Bedeutung
+#KKDAT retro Einwilligung = Krankenkassendaten übertragen, speichern, nutzen (retrospektiv)
+CONSENT_PROVISION_TEXT_10		KKDAT_retrospektiv_uebertragen_speichern_nutzen
+CONSENT_PROVISION_TEXT_11		KKDAT_5J_retro_uebertragen
+CONSENT_PROVISION_TEXT_12		KKDAT_5J_retro_speichern_verarbeiten
+CONSENT_PROVISION_TEXT_13		KKDAT_5J_retro_wissenschaftlich_nutzen
+CONSENT_PROVISION_TEXT_38		KKDAT_5J_retro_uebertragen_KVNR
+#KKDAT Einwilligung = Krankenkassendaten übertragen, speichern, nutzen (prospektiv)
+CONSENT_PROVISION_TEXT_14		KKDAT_prospektiv_uebertragen_speichern_nutzen
+CONSENT_PROVISION_TEXT_15		KKDAT_5J_pro_uebertragen
+CONSENT_PROVISION_TEXT_16		KKDAT_5J_pro_speichern_verarbeiten
+CONSENT_PROVISION_TEXT_17		KKDAT_5J_pro_wissenschaftlich_nutzen
+CONSENT_PROVISION_TEXT_39		KKDAT_5J_pro_uebertragen_KVNR
+#BIOMAT Einwilligung = Biomaterialien erheben, lagern, nutzen
+CONSENT_PROVISION_TEXT_18		BIOMAT_erheben_lagern_nutzen
+CONSENT_PROVISION_TEXT_19		BIOMAT_erheben
+CONSENT_PROVISION_TEXT_20		BIOMAT_lagern_verarbeiten
+CONSENT_PROVISION_TEXT_21		BIOMAT_Eigentum_uebertragen
+CONSENT_PROVISION_TEXT_22		BIOMAT_wissenschaftlich_nutzen_EU_DSGVO_NIVEAU
+CONSENT_PROVISION_TEXT_23		BIOMAT_Analysedaten_zusammenfuehren_Dritte
+#BIOMAT Zusatz Einwilligung = Biomaterialien Zusatzentnahme
+CONSENT_PROVISION_TEXT_24		BIOMAT_Zusatzentnahme
+CONSENT_PROVISION_TEXT_25		BIOMAT_Zusatzmengen_entnehmen

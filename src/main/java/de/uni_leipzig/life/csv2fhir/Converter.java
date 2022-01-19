@@ -5,7 +5,6 @@ import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 
 import java.math.BigDecimal;
@@ -488,12 +487,12 @@ public abstract class Converter {
         DateTimeType endDate = null;
         try {
             String startDateValue = record.get(startDateColumnName);
-            startDate = parseDateTimeType(startDateValue);
+            startDate = DateUtil.parseDateTimeType(startDateValue);
         } catch (Exception e) {
         }
         try {
             String endDateValue = record.get(endDateColumnName);
-            endDate = parseDateTimeType(endDateValue);
+            endDate = DateUtil.parseDateTimeType(endDateValue);
         } catch (Exception e) {
         }
         try {
@@ -510,7 +509,7 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    public static Period createPeriod(DateTimeType startDate, DateTimeType endDate) throws Exception {
+    public Period createPeriod(DateTimeType startDate, DateTimeType endDate) throws Exception {
         if (startDate == null) {
             startDate = endDate;
         }
@@ -520,6 +519,11 @@ public abstract class Converter {
         //set endDate always obe day after startDate. Maybe we should deactivate this optional if errors in data should be detected
         if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
             endDate = DateUtil.addDays(endDate, 1);
+        }
+        if (startDate != null && startDate.after(endDate)) {
+            DateTimeType dummy = startDate;
+            startDate = endDate;
+            endDate = dummy;
         }
         return new Period().setStartElement(startDate).setEndElement(endDate);
     }
@@ -553,6 +557,24 @@ public abstract class Converter {
         if (date != null) {
             try {
                 return parseDateType(date);
+            } catch (Exception e) {
+                error("Can not parse " + dateColumnName + " for Record");
+                return null;
+            }
+        }
+        error(dateColumnName + " empty for Record");
+        return null;
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected DateTimeType parseDateTimeType(Enum<?> dateColumnName) throws Exception {
+        String date = get(dateColumnName);
+        if (date != null) {
+            try {
+                return DateUtil.parseDateTimeType(date);
             } catch (Exception e) {
                 error("Can not parse " + dateColumnName + " for Record");
                 return null;
