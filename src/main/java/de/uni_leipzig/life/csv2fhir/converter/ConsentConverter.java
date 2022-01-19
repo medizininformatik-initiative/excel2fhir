@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.Consent.ConsentPolicyComponent;
 import org.hl7.fhir.r4.model.Consent.ConsentProvisionType;
@@ -146,19 +147,27 @@ public class ConsentConverter extends Converter {
     private void addSubProvisions(provisionComponent provision, Period defaultPeriod) throws Exception {
         Set<Integer> provisionGroupIndices = STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.keySet();
         for (int provisionGroupIndex : provisionGroupIndices) {
-            String consentGroupColumnName = STATIC_CONSENT_DATA.getConsentGroupColumnName(provisionGroupIndex);
+            String consentGroupColumnName = STATIC_CONSENT_DATA.getProvisionGroupColumnName(provisionGroupIndex);
             String consentValue = get(consentGroupColumnName);
             if (isNotBlank(consentValue)) {
                 for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.get(provisionGroupIndex)) {
                     provisionComponent subProvision = provision.addProvision();
+                    // permit or deny
                     ConsentProvisionType provisionType = STATIC_CONSENT_DATA.isConsentYesValue(consentValue) ? PERMIT : DENY;
                     subProvision.setType(provisionType);
+                    // provision period
                     int durationYears = STATIC_CONSENT_DATA.provisionIndexToDurationYears.getOrDefault(subProvisionIndex, CONSENT_DEFAULT_DURATION_THIRTY_YEARS);
                     Period period = defaultPeriod;
                     if (durationYears != CONSENT_DEFAULT_DURATION_THIRTY_YEARS) {
                         period = getPeriod(durationYears);
                     }
                     subProvision.setPeriod(period);
+                    // provision coding with system, code and display text
+                    String system = STATIC_CONSENT_DATA.getProvisionSystem();
+                    String code = STATIC_CONSENT_DATA.getProvisionCode(subProvisionIndex);
+                    String display = STATIC_CONSENT_DATA.getProvisionDisplayText(subProvisionIndex);
+                    CodeableConcept coding = createCodeableConcept(system, code, display, null);
+                    subProvision.addCode(coding);
                 }
 
             }
@@ -257,18 +266,33 @@ public class ConsentConverter extends Converter {
          * @param groupIndex
          * @return
          */
-        public String getConsentGroupColumnName(int groupIndex) {
+        public String getProvisionGroupColumnName(int groupIndex) {
             String columnNameResourceKey = CONSENT_PROVISION_COLUMN_KEY_PREFIX + groupIndex;
             return CONSENT_RESOURCES.getProperty(columnNameResourceKey);
         }
 
         /**
-         * @param consentIndex
+         * @param provisionIndex
          * @return
          */
-        public String getConsentDisplayText(int consentIndex) {
-            String displayTextResourceKey = CONSENT_PROVISION_TEXT_KEY_PREFIX + consentIndex;
+        public String getProvisionDisplayText(int provisionIndex) {
+            String displayTextResourceKey = CONSENT_PROVISION_TEXT_KEY_PREFIX + provisionIndex;
             return CONSENT_RESOURCES.getProperty(displayTextResourceKey);
+        }
+
+        /**
+         * @param provisionIndex
+         * @return
+         */
+        public String getProvisionCode(int provisionIndex) {
+            return CONSENT_PROVISION_SYSTEM + "." + provisionIndex;
+        }
+
+        /**
+         * @return
+         */
+        public String getProvisionSystem() {
+            return "urn:oid:" + CONSENT_PROVISION_SYSTEM;
         }
 
     }

@@ -29,6 +29,8 @@ CONSENT_VALUE_YES				ja|j|1|y|yes|true|x
 # A number in parentheses before the codes last number means a retrospective amount of years, behind is prospective.
 # A (*) marker means a one-time consent for exactly one point in time.
 #####################################################################################################################
+# the urn:oid: will be added to the system in the code, but to generate
+# the full IDs of the sub provisions we need it without the prefix
 CONSENT_PROVISION_SYSTEM		2.16.840.1.113883.3.1937.777.24.5.3
 
 # for every provision group all single provisions resp. their numbers
