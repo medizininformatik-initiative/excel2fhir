@@ -126,17 +126,29 @@ public class FHIRValidator {
     private final ResultCounter fullResultCounter = new ResultCounter();
 
     /**
-     * If the validation result contains one of this error message parts then
-     * the error will be ignored.
+     * If the validation result of a full bundle or a single resource contains
+     * one of this error message parts then the error will be ignored.
      */
-    private static final String[] VALIDATION_IGNORE_ERROR_MESSAGE_PARTS = {
+    private static final String[] VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS = {
             "Validation failed für \"http://loinc.org",
             "Unknown code 'http://loinc.org#",
             "Validation failed für \"http://fhir.de/CodeSystem/ask#",
             "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn",
             //"http://terminology.hl7.org/CodeSystem/v2-0203#OBI",  //generates only a warning
             "Validation failed für \"http://snomed.info/sct",
-            "Falls der Encounter abgeschlossen wurde muss eine Diagnose bekannt sein", //this error will be fixed in the BundlePostProcessor
+
+    };
+
+    /**
+     * If the validation result of a single resource contains one of this error
+     * message parts then the error will be ignored.<br>
+     * the following errors will/must be fixed in the BundlePostProcessor
+     * because the correct data for the resource comes from an other table sheet
+     * resp. CSV entry than the resource itself.
+     */
+    private static final String[] VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS = {
+            "Falls der Encounter abgeschlossen wurde muss eine Diagnose bekannt sein",
+            "Encounter.class: mindestens erforderlich = 1, aber nur gefunden 0",
     };
 
     /**
@@ -281,14 +293,15 @@ public class FHIRValidator {
             return ValidationResultType.ERROR;
         }
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
-        return validate(resourceAsJson);
+        return validate(resourceAsJson, resource instanceof Bundle);
     }
 
     /**
      * @param resourceAsJson
+     * @param strict
      * @return
      */
-    public ValidationResultType validate(String resourceAsJson) {
+    public ValidationResultType validate(String resourceAsJson, boolean strict) {
         if (Strings.isBlank(resourceAsJson)) {
             return ValidationResultType.ERROR;
         }
@@ -305,7 +318,7 @@ public class FHIRValidator {
             String message = validationMessage.getMessage();
             String logMessage = severity + " " + locationString + " Line " + locationLine + " Col " + locationCol + " : " + message;
 
-            if (!isIgnorableError(validationMessage)) {
+            if (!isIgnorableError(validationMessage, strict)) {
                 if (severity == ResultSeverityEnum.ERROR) {
                     LOG.error(logMessage);
                     bundleResultCounter.errors++;
@@ -342,11 +355,18 @@ public class FHIRValidator {
      * @return <code>true</code> if the text of the message contains a String of
      *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
      */
-    private static boolean isIgnorableError(SingleValidationMessage validationMessage) {
+    private static boolean isIgnorableError(SingleValidationMessage validationMessage, boolean strict) {
         String message = validationMessage.getMessage();
-        for (String ignoreMessagePart : VALIDATION_IGNORE_ERROR_MESSAGE_PARTS) {
+        for (String ignoreMessagePart : VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS) {
             if (message.contains(ignoreMessagePart)) {
                 return true;
+            }
+        }
+        if (!strict) {
+            for (String ignoreMessagePart : VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS) {
+                if (message.contains(ignoreMessagePart)) {
+                    return true;
+                }
             }
         }
         return false;

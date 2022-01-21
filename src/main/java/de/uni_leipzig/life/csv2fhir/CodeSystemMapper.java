@@ -8,6 +8,12 @@ import de.uni_leipzig.life.csv2fhir.utils.BothDirectionResourceMapper;
 public class CodeSystemMapper extends BothDirectionResourceMapper {
 
     /**
+     * If there is a profile in such a map then this defualt key can/should be
+     * used.
+     */
+    public static final String PROFILE_RESOURCE_KEY = "PROFILE";
+
+    /**
      * As a convention, every code system map should contain this key, which
      * maps to the valid code system URL.
      */
@@ -25,7 +31,7 @@ public class CodeSystemMapper extends BothDirectionResourceMapper {
      * @return
      */
     public String getCodeToHuman(String code) {
-        return super.getFirstBackwardKey(code);
+        return getFirstBackwardKey(code);
     }
 
     /**
@@ -33,14 +39,21 @@ public class CodeSystemMapper extends BothDirectionResourceMapper {
      * @return
      */
     public String getHumanToCode(String humanReadableText) {
-        return super.getForwardValue(humanReadableText);
+        return getForwardValue(humanReadableText);
     }
 
     /**
      * @return
      */
     public String getCodeSystem() {
-        return getHumanToCode(CODE_SYSTEM_URL_RESOURCE_KEY);
+        return getForwardValue(CODE_SYSTEM_URL_RESOURCE_KEY);
+    }
+
+    /**
+     * @return
+     */
+    public String getProfile() {
+        return getForwardValue(PROFILE_RESOURCE_KEY);
     }
 
 }

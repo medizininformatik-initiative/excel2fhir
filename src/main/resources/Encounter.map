@@ -1,0 +1,47 @@
+###################################################################
+# Maps from a human readable code to a code from the code system.
+#
+# see https://terminology.hl7.org/3.0.0/CodeSystem-v3-ActCode.html
+# see https://terminology.hl7.org/3.0.0/ValueSet-v3-ActEncounterCode.html
+# see https://simplifier.net/packages/de.basisprofil.r4/1.0.0/files/397957
+#
+# NOTE: 
+# Whitespaces in the human readable keys must be coded as '\u0020'.
+# An empty value must be marked as 'EMPTY_STRING'.
+# 
+# This a a both direction map! The display text written in the FHIR
+# resources is the first key found for a value code. So don't add
+# key value pairs at the beginning of the list!
+#
+###################################################################
+
+PROFILE = https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung
+
+#CODE_SYSTEM_URL_ENCOUNTER_LEVEL_1	https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse
+#CODE_SYSTEM_URL_ENCOUNTER_LEVEL_2	https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse
+CODE_SYSTEM_URL		http://terminology.hl7.org/CodeSystem/v3-ActCode
+# das folgende ist ein Value Set und kein Codesystem, wurde aber ständig von 'einigen' als das korrekte CodeSystem propagiert
+# CODE_SYSTEM_URL		http://fhir.de/ValueSet/EncounterClassDE
+
+ambulatory					AMB
+inpatient\u0020encounter	IMP
+pre-admission				PRENC
+virtual						VR
+short\u0020stay				SS
+home\u0020health			HH
+
+stationaer					IMP
+vorstationaer				IMP
+vollstationaer				IMP
+nachstationaer				IMP
+ambulant					AMB
+teilstationaer				IMP
+
+stationär					IMP
+vorstationär				IMP
+vollstationär				IMP
+nachstationär				IMP
+ambulant					AMB
+teilstationär				IMP
+
+DEFAULT_CLASS_CODE			IMP

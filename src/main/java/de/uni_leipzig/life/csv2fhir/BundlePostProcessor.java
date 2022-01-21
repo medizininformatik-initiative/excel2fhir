@@ -15,6 +15,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 
@@ -32,14 +33,14 @@ public class BundlePostProcessor {
      * @param bundle
      */
     public static void convert(Bundle bundle) {
-        List<BundleEntryComponent> invalidResources = addMissingDiagnosesToEncounters(bundle);
+        List<BundleEntryComponent> invalidResources = addMissingDiagnosesAndClassToLevel2Encounters(bundle);
     }
 
     /**
      * @param bundle
      * @return
      */
-    private static List<BundleEntryComponent> addMissingDiagnosesToEncounters(Bundle bundle) {
+    private static List<BundleEntryComponent> addMissingDiagnosesAndClassToLevel2Encounters(Bundle bundle) {
         List<BundleEntryComponent> notValidableResources = new ArrayList<>();
         nextEntry: for (BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
@@ -55,6 +56,16 @@ public class BundlePostProcessor {
                     if (superEncounterID != null) {
                         Encounter superEncounter = getResource(bundle, Encounter.class, superEncounterID);
                         if (superEncounter != null) {
+
+                            Coding class_ = encounter.getClass_();
+                            String code = class_.getCode();
+                            //copy encounter class from super encounter to sub encounter
+                            if (Strings.isNullOrEmpty(code)) {
+                                class_ = superEncounter.getClass_();
+                                encounter.setClass_(class_);
+                            }
+
+                            //copy one diagnosis from super encounter to sub encounter
                             diagnoses = superEncounter.getDiagnosis();
                             //Also the parent Encounter has no diagnosis -> nothing to do
                             if (!diagnoses.isEmpty()) {
@@ -67,7 +78,7 @@ public class BundlePostProcessor {
                                         if (use != null) {
                                             List<Coding> codings = use.getCoding();
                                             for (Coding coding : codings) {
-                                                String code = coding.getCode();
+                                                code = coding.getCode();
                                                 if (Objects.equal(preferedDiagnosisUseCode, code)) {
                                                     encounter.addDiagnosis(diagnosis);
                                                     continue nextEntry;

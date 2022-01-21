@@ -50,3 +50,5 @@ Hauptdiagnose					CC
 ### The misspelled next key was included in the first version of the Excel test data templates in the code list for the diagnoses
 Haupdiagnose					CC
 Nebendiagnose					CM
+
+DEFAULT_DIAGNOSIS_ROLE_CODE		CM

@@ -12,19 +12,17 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
 import org.hl7.fhir.r4.model.Identifier;
-import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
-import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
  */
-public class EncounterLevel2Converter extends Converter {
+public class EncounterLevel2Converter extends EncounterLevel1Converter {
 
     /**
      * Maps from human readable department description to the number code for
@@ -32,20 +30,6 @@ public class EncounterLevel2Converter extends Converter {
      */
     private final CodeSystemMapper departmentKeyMapper = new CodeSystemMapper("Department_Key.map");
 
-    String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
-    // https://simplifier.net/medizininformatikinitiative-modulfall/abteilungsfall-duplicate-2
-    // https://simplifier.net/medizininformatikinitiative-modulfall/example-abteilungsfall
-
-    /*
-     * NotSupported : Terminology service failed while validating code ''
-     * (system ''): Cannot retrieve valueset
-     * 'https://www.medizininformatik-initiative.de/fhir/core/modul-fall/
-     * ValueSet/Abteilungsfallklasse' Invalid : Instance count for
-     * 'Encounter.serviceType.coding:fab' is 0, which is not within the
-     * specified cardinality of 1..1 Invalid : Instance count for
-     * 'Encounter.location' is 0, which is not within the specified cardinality
-     * of 1..*
-     */
     /**
      * @param record
      * @param result
@@ -66,9 +50,9 @@ public class EncounterLevel2Converter extends Converter {
         int nextId = result.getNextId(Abteilungsfall, Encounter.class);
         Encounter encounter = new Encounter();
         encounter.setId(getEncounterId() + "-A-" + nextId);
-        encounter.setMeta(new Meta().addProfile(PROFILE));
+        encounter.setMeta(getMeta());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
-        encounter.setClass_(createCoding("https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Abteilungsfallklasse", "ub"));
+        //encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "IMP", "inpatient encounter")); //correct class code will be added in the BundlePostProcessor because it comes from the main level 1 encounter
         encounter.setServiceType(createCodeableConcept(Fachabteilung, departmentKeyMapper));
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));

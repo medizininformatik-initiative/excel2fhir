@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
@@ -33,19 +34,11 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
  */
 public class EncounterLevel1Converter extends Converter {
 
-    /**  */
-    static String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung";
-    // https://simplifier.net/medizininformatikinitiative-modulfall/versorgungsfall-duplicate-2
-    // https://simplifier.net/medizininformatikinitiative-modulfall/example-versorgungsfall
-
-    static String CLASS_CODE_SYSTEM = "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Versorgungsfallklasse";
-
-    /*
-     * NotSupported : Terminology service failed while validating code ''
-     * (system ''): Cannot retrieve valueset
-     * 'https://www.medizininformatik-initiative.de/fhir/core/modul-fall/
-     * ValueSet/Versorgungsfallklasse'
+    /**
+     * Maps from human readable encounter types to the correspondig code system
+     * code and contains some more resources for the encounters.
      */
+    public static final CodeSystemMapper ENCOUNTER_RESOURECES = new CodeSystemMapper("Encounter.map");
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
@@ -73,11 +66,11 @@ public class EncounterLevel1Converter extends Converter {
     @Override
     public List<Resource> convert() throws Exception {
         Encounter encounter = new Encounter();
-        encounter.setMeta(new Meta().addProfile(PROFILE));
+        encounter.setMeta(getMeta());
         encounter.setId(getEncounterId());
         encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
-        encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, Versorgungsfallklasse, ERROR));
+        encounter.setClass_(getClass_());
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         return Collections.singletonList(encounter);
@@ -97,6 +90,37 @@ public class EncounterLevel1Converter extends Converter {
         String id = getEncounterId();
         String dizID = getDIZId();
         return createIdentifier(id, dizID);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private Coding getClass_() throws Exception {
+        Coding coding = createCoding(ENCOUNTER_RESOURECES.getCodeSystem(), Versorgungsfallklasse, ERROR);
+        return setCorrectCodeAndDisplayInClassCoding(coding);
+    }
+
+    /**
+     * @param coding
+     */
+    public Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
+        if (coding != null) {
+            //replace the code string from by the correct code and display from the resource map
+            String code = coding.getCode();
+            String realCode = ENCOUNTER_RESOURECES.get(code);
+            String display = ENCOUNTER_RESOURECES.getFirstBackwardKey(realCode);
+            coding.setCode(realCode);
+            coding.setDisplay(display);
+        }
+        return coding;
+    }
+
+    /**
+     * @return
+     */
+    protected static Meta getMeta() {
+        return new Meta().addProfile(ENCOUNTER_RESOURECES.getProfile());
     }
 
     /**
@@ -140,8 +164,7 @@ public class EncounterLevel1Converter extends Converter {
      * @param procedure
      */
     public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Procedure procedure) {
-        // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
-        addDiagnosisToEncounter(result, encounterID, procedure, "Comorbidity diagnosis");
+        addDiagnosisToEncounter(result, encounterID, procedure, null);
     }
 
     /**
@@ -151,9 +174,6 @@ public class EncounterLevel1Converter extends Converter {
      * @param diagnosisUseIdentifier
      */
     public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Condition condition, String diagnosisUseIdentifier) {
-        if (diagnosisUseIdentifier == null) {
-            diagnosisUseIdentifier = "Comorbidity diagnosis"; // default for missing values
-        }
         addDiagnosisToEncounter(result, encounterID, (Resource) condition, diagnosisUseIdentifier);
     }
 
@@ -164,6 +184,11 @@ public class EncounterLevel1Converter extends Converter {
      * @param diagnosisUseIdentifier
      */
     private static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+        // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
+        if (diagnosisUseIdentifier == null) { // default for missing values
+            String defaultDiagnosisRoleCode = diagnosisRoleKeyMapper.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
+            diagnosisUseIdentifier = diagnosisRoleKeyMapper.getFirstBackwardKey(defaultDiagnosisRoleCode);
+        }
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Versorgungsfall, Encounter.class, encounterID);
@@ -199,11 +224,14 @@ public class EncounterLevel1Converter extends Converter {
      */
     public static Encounter createDefault(String pid, String id, String dizID, Period period) {
         Encounter encounter = new Encounter();
-        encounter.setMeta(new Meta().addProfile(PROFILE));
+        encounter.setMeta(getMeta());
         encounter.setId(id);
         encounter.setIdentifier(createIdentifier(id, dizID));
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
-        encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "stationaer"));
+        //encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "stationaer"));
+        String defaultClassCode = ENCOUNTER_RESOURECES.get("DEFAULT_CLASS_CODE");
+        String defaultDisplay = ENCOUNTER_RESOURECES.getFirstBackwardKey(defaultClassCode);
+        encounter.setClass_(createCoding(ENCOUNTER_RESOURECES.getCodeSystem(), defaultClassCode, defaultDisplay));
         encounter.setSubject(createReference(Patient.class, pid));
         try {
             encounter.setPeriod(period);
