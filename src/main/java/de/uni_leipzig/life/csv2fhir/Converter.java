@@ -171,11 +171,11 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    private String parsePatientId() throws Exception {
+    protected String parsePatientId() throws Exception {
         Enum<?> patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
         if (id != null) {
-            return id.replace('_', '-');
+            return id.replace('_', '-'); //AXS: not sure why this!? Maybe fheuschkel made this because (some) FHIR Server will not accept IDs with an underscore?!
         }
         error(patientIDColumnIdentifier + " empty for Record");
         return null;

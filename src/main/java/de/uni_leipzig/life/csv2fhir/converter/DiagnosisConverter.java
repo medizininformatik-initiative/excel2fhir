@@ -6,7 +6,6 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.ICD;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Patient_ID;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Typ;
 
 import java.util.Collections;
@@ -122,7 +121,7 @@ public class DiagnosisConverter extends Converter {
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
             //extract a date from an encounter
-            String pid = get(Patient_ID);
+            String pid = parsePatientId();
             DateTimeType encounterDate = getEncounterDate(result, pid);
             if (encounterDate != null) {
                 warning("Can not parse " + Dokumentationsdatum + " for Record. Extract date from encounter. " + this);

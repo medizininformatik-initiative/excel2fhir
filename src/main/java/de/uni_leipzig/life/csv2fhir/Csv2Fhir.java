@@ -212,6 +212,7 @@ public class Csv2Fhir {
         // select an appropriate one. Which one this can be is not yet
         // determined during the conversion, so it has to be done afterwards.
         BundlePostProcessor.convert(bundle);
+        pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
         writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
     }
 
