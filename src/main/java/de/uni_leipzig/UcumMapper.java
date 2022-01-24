@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 
-import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.life.csv2fhir.ucum.UcumCodesExtractor;
 import de.uni_leipzig.life.csv2fhir.utils.BothDirectionResourceMapper;
 
@@ -48,9 +47,6 @@ public class UcumMapper {
      * @throws Exception
      */
     public static String getValidUcumCode(String ucumCode) throws Exception {
-        if (ucumCode.contains("mg/l FEU")) {
-            Sys.err(ucumCode);
-        }
         String validUcumCode = getValidUcumCodeInternal(ucumCode);
         if (Strings.isNullOrEmpty(validUcumCode)) {
 
