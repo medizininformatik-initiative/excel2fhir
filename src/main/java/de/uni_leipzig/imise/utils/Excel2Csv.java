@@ -59,6 +59,7 @@ public class Excel2Csv {
      * @param targetCsvDir
      * @throws IOException
      */
+    @SuppressWarnings("null")
     public static void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
@@ -105,13 +106,14 @@ public class Excel2Csv {
                         for (int col = 0; col < maxCol; col++) {
                             Cell cell = row.getCell(col);
                             String cellValue;
-                            if (cell == null || cell.getCellType() == CellType.BLANK) {
+                            CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
+                            if (cellType == CellType.BLANK) {
                                 if (col == 0) {
                                     skipEmptyRow = true;
                                     break;
                                 }
                                 cellValue = "";
-                            } else if (cell.getCellType() == CellType.NUMERIC) {
+                            } else if (cellType == CellType.NUMERIC || cellType == CellType.FORMULA) {
                                 if (DateUtil.isCellDateFormatted(cell)) {
                                     // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein String
                                     cellValue = DATE_FORMAT.format(cell.getDateCellValue());
@@ -129,7 +131,7 @@ public class Excel2Csv {
                                     cellValue = cellValue.replace(",", ".");
                                     cellValue = cellValue.replaceAll("\\.0$", "");
                                 }
-                            } else if (cell.getCellType() == CellType.STRING) {
+                            } else if (cellType == CellType.STRING) {
                                 cellValue = cell.getStringCellValue();
                             } else {
                                 LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
