@@ -17,6 +17,10 @@ public class ConsentConverterFactory implements ConverterFactory {
             public String toString() {
                 return "Patient-ID";
             }
+            @Override
+            public boolean isMandatory() {
+                return true;
+            }
         },
         Datum_Einwilligung,
         PDAT_Einwilligung,
@@ -28,6 +32,11 @@ public class ConsentConverterFactory implements ConverterFactory {
         @Override
         public String toString() {
             return name().replace('_', ' ');
+        }
+
+        @Override
+        public boolean isMandatory() {
+            return false;
         }
 
     }
