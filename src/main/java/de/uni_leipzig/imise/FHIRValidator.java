@@ -36,7 +36,7 @@ import ca.uhn.fhir.validation.FhirValidator;
 import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
-import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
+import de.uni_leipzig.life.csv2fhir.OutputFileType;
 
 /**
  * @author fmeineke (12.10.2021), @author AXS (22.11.2021)

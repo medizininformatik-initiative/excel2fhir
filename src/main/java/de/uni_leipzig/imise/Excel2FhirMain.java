@@ -13,7 +13,7 @@ import com.google.common.base.Stopwatch;
 
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
-import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
+import de.uni_leipzig.life.csv2fhir.OutputFileType;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier;
 import picocli.CommandLine;
@@ -49,12 +49,12 @@ public class Excel2FhirMain implements Callable<Integer> {
     static File tempDirectory;
 
     @Option(names = {"-r",
-            "--result-file-format"}, paramLabel = "RESULT-FILE-FORMAT", description = "Result file format \"JSON\" (default) or \"XML\".")
-    static OutputFileType outputFileType = OutputFileType.JSON;
+            "--result-file-format"}, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Result file format (comma separated) \"JSON\" (default), \"XML\", \"NDJSON\", \"JSONGZIP\" or \"JSONBZ2\".")
+    static OutputFileType[] outputFileTypes = {OutputFileType.JSON};
 
-    @Option(names = {"-s",
-            "--split-result"}, negatable = true, paramLabel = "SPLIT-RESULT", description = "Splits the result file in one file per patient.")
-    static boolean convertFilesPerPatient = false;
+    @Option(names = {"-p",
+            "--patients-count"}, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
+    static int patientsPerBundle = Integer.MAX_VALUE;
 
     @Option(names = {"-l",
             "--log-layout"}, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
@@ -107,12 +107,12 @@ public class Excel2FhirMain implements Callable<Integer> {
             List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
             Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles);
             if (inputFile != null) {
-                excel2Fhir.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                excel2Fhir.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, outputFileType, convertFilesPerPatient);
+                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             }
         } catch (Exception e) {
             e.printStackTrace();

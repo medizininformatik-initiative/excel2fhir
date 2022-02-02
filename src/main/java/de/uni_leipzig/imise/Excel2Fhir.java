@@ -1,7 +1,6 @@
 package de.uni_leipzig.imise;
 
 import static de.uni_leipzig.imise.utils.FileTools.ensureEmptyDirectory;
-import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -15,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
-import de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType;
+import de.uni_leipzig.life.csv2fhir.OutputFileType;
 
 /**
  * @author fmeineke (02.11.2020), AXS (21.11.2021)
@@ -77,7 +76,7 @@ public class Excel2Fhir {
      * @throws IOException
      */
     public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
-        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, JSON, false);
+        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, Integer.MAX_VALUE);
     }
 
     /**
@@ -87,17 +86,16 @@ public class Excel2Fhir {
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
-     * @param outputFileType
-     * @param convertFilesPerPatient
+     * @param patientsPerBundle
+     * @param outputFileTypes
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient)
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, false);
+            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, patientsPerBundle, false, outputFileTypes);
         }
     }
 
@@ -108,14 +106,13 @@ public class Excel2Fhir {
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
-     * @param outputFileType
-     * @param convertFilesPerPatient
+     * @param patientsPerBundle
+     * @param outputFileTypes
      * @throws IOException
      */
-    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient)
+    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
-        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, outputFileType, convertFilesPerPatient, true);
+        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, patientsPerBundle, true, outputFileTypes);
     }
 
     /**
@@ -125,13 +122,13 @@ public class Excel2Fhir {
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
-     * @param outputFileType
-     * @param convertFilesPerPatient
+     * @param outputFileTypes
+     * @param patientsPerBundle
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, OutputFileType outputFileType,
-            boolean convertFilesPerPatient, boolean createAndCleanOutputDirectories) throws IOException {
+    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir,
+            int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes) throws IOException {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
@@ -139,7 +136,7 @@ public class Excel2Fhir {
         Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator);
         try {
-            converter.convertFiles(outputFileType, convertFilesPerPatient);
+            converter.convertFiles(patientsPerBundle, outputFileTypes);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }

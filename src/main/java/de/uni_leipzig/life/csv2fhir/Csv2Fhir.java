@@ -1,6 +1,8 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
+import static de.uni_leipzig.life.csv2fhir.OutputFileType.NDJSON;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.File;
@@ -25,6 +27,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
+import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +35,9 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Alphabetical;
+import de.uni_leipzig.imise.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -44,38 +46,6 @@ public class Csv2Fhir {
 
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Csv2Fhir.class);
-
-    /**
-     * @author AXS (07.11.2021)
-     */
-    public static enum OutputFileType {
-
-        JSON {
-            @Override
-            public IParser getParser() {
-                return fhirContext.newJsonParser();
-            }
-        },
-
-        XML {
-            @Override
-            public IParser getParser() {
-                return fhirContext.newXmlParser();
-            }
-        };
-
-        public String getFileExtension() {
-            return "." + name().toLowerCase();
-        }
-
-        /** The context to generate the parser */
-        private static final FhirContext fhirContext = FhirContext.forR4();
-
-        /**
-         * @return the parser to write the bundles
-         */
-        public abstract IParser getParser();
-    }
 
     /**  */
     private final File inputDirectory;
@@ -163,88 +133,155 @@ public class Csv2Fhir {
     }
 
     /**
-     * @param convertFilesPerPatient
+     * @param patientsPerBundle
+     * @param outputFileTypes
      * @throws Exception
      */
-    public void convertFiles(OutputFileType outputFileType, boolean convertFilesPerPatient) throws Exception {
-        if (convertFilesPerPatient) {
-            convertFilesPerPatient(outputFileType);
-        } else {
-            convertFiles(outputFileType);
-        }
-    }
-
-    /**
-     * @param outputFileType
-     * @throws Exception
-     */
-    public void convertFiles(OutputFileType outputFileType) throws Exception {
-        convertFiles(outputFileType, null);
-    }
-
-    /**
-     * @param outputFileType
-     * @throws Exception
-     */
-    private void convertFilesPerPatient(OutputFileType outputFileType) throws Exception {
+    public void convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
         Collection<String> pids = getValues(Person + ".csv", Person.getPIDColumnIdentifier(), true, true);
+        int pids2ConvertCount = pids.size();
+        Bundle bundle = null;
+        Bundle ndjsonBundle = null; //ndjson files contains new line delimited single json files so we need a new bundle for each line
+        NDJsonFile ndjsonFile = null;
+
+        List<OutputFileType> baseFileTypes = new ArrayList<>();
+        List<OutputFileType> compressedFileTypes = new ArrayList<>();
+        if (outputFileTypes.length == 0) {
+            baseFileTypes.add(JSON);
+        } else {
+            for (OutputFileType outputFileType : outputFileTypes) {
+                if (outputFileType == NDJSON) {
+                    ndjsonBundle = createTransactionBundle();
+                    File ndjsonOutputFile = new File(outputDirectory, outputFileNameBase + NDJSON.getFileExtension());
+                    ndjsonFile = new NDJsonFile(ndjsonOutputFile, validator);
+                } else if (outputFileType.isCompressedFileType()) {
+                    compressedFileTypes.add(outputFileType);
+                } else {
+                    baseFileTypes.add(outputFileType);
+                }
+            }
+        }
+
+        int bundlePIDCount = 0;
+        int fullPIDCount = 0;
+        String firstPID = null;
+        String lastPID = null;
+
         for (String pid : pids) {
-            LOG.info("Start create Fhir-Json-Bundle for Patient-ID " + pid + " ...");
+            fullPIDCount++;
+            if (bundlePIDCount++ == 0) {
+                firstPID = pid;
+                if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
+                    bundle = createTransactionBundle();
+                }
+            }
+            if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
+                lastPID = pid;
+            }
+            LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
             Stopwatch stopwatch = Stopwatch.createStarted();
-            convertFiles(outputFileType, pid);
+            String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
+            fillBundlesWithCSVData(bundle, ndjsonBundle, filter);
+            // However, since we do not want to attach just any diagnosis to these
+            // Part-Of-Encounters, after ALL diagnoses have been converted, we must
+            // select an appropriate one. Which one this can be is not yet
+            // determined during the conversion, so it has to be done afterwards.
+            if (bundle != null) {
+                BundlePostProcessor.convert(bundle);
+            }
+            if (ndjsonFile != null) {
+                BundlePostProcessor.convert(ndjsonBundle);
+                ndjsonFile.appendBundle(ndjsonBundle);
+                ndjsonBundle = createTransactionBundle();
+            }
+            pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
+            if (lastPID != null) {
+                String fileNameExtendsion = firstPID == lastPID ? "-" + firstPID : "-" + firstPID + "-" + lastPID;
+                writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
+                bundle = createTransactionBundle();
+                if (ndjsonFile != null) {
+                    ndjsonFile.closeWriterAndRenameOrDeleteIfEmpty(outputFileNameBase + fileNameExtendsion + NDJSON.getFileExtension());
+                    File ndjsonOutputFile = new File(outputDirectory, outputFileNameBase + NDJSON.getFileExtension());
+                    if (fullPIDCount != pids2ConvertCount) {
+                        ndjsonFile = new NDJsonFile(ndjsonOutputFile, validator);
+                    }
+                }
+                bundlePIDCount = 0;
+                firstPID = null;
+                lastPID = null;
+            }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
         }
     }
 
     /**
-     * @param outputFileType
-     * @param pid if not null or empty than the reuslt bundle contains only
-     *            values of this patient (all values are filtered with this id)
-     * @throws Exception
+     * @return
      */
-    private void convertFiles(OutputFileType outputFileType, String pid) throws Exception {
-        String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
+    private static Bundle createTransactionBundle() {
         Bundle bundle = new Bundle();
         bundle.setType(Bundle.BundleType.TRANSACTION);
-        convertFiles(bundle, filter);
-        // However, since we do not want to attach just any diagnosis to these
-        // Part-Of-Encounters, after ALL diagnoses have been converted, we must
-        // select an appropriate one. Which one this can be is not yet
-        // determined during the conversion, so it has to be done afterwards.
-        BundlePostProcessor.convert(bundle);
-        pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
-        writeOutputFile(bundle, pid == null ? "" : "-" + pid, outputFileType);
+        return bundle;
     }
 
     /**
      * @param bundle
      * @param fileNameExtension
-     * @param outputFileType
+     * @param baseFileTypes
+     * @param compressedFileTypes
      * @throws IOException
      */
-    private void writeOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
-            throws IOException {
+    private void writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws IOException {
         if (bundle != null && !bundle.getEntry().isEmpty()) {
             if (validator == null || !validator.validateBundle(bundle).isError()) {
-                String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
-                        + outputFileType.getFileExtension();
-                File outputFile = new File(outputDirectory, fileName);
-                LOG.info("writing file " + fileName);
-                try (FileWriter fileWriter = new FileWriter(outputFile)) {
-                    outputFileType.getParser()
-                            .setPrettyPrint(true)
-                            .encodeResourceToWriter(bundle, fileWriter);
+                for (int i = baseFileTypes.size() - 1; i >= 0; i--) {
+                    OutputFileType baseFileType = baseFileTypes.get(i);
+                    File baseFile = writeBaseOutputFile(bundle, fileNameExtension, baseFileType);
+                    for (int j = compressedFileTypes.size() - 1; j >= 0; j--) {
+                        OutputFileType compressedFileType = compressedFileTypes.get(j);
+                        if (compressedFileType.getBaseFileType() == baseFileType) {
+                            compressBaseFile(baseFile, compressedFileType);
+                            compressedFileTypes.remove(j);
+                        }
+                    }
                 }
             }
         }
     }
 
     /**
+     * @param baseFile
+     * @param outputFileType
+     */
+    private static void compressBaseFile(File baseFile, OutputFileType outputFileType) {
+        Sys.err1(baseFile + " -> " + outputFileType);
+    }
+
+    /**
      * @param bundle
+     * @param fileNameExtension
+     * @param outputFileType
+     */
+    private File writeBaseOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType) throws IOException {
+        String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
+                + outputFileType.getFileExtension();
+        File outputFile = new File(outputDirectory, fileName);
+        LOG.info("writing file " + fileName);
+        try (FileWriter fileWriter = new FileWriter(outputFile)) {
+            outputFileType.getParser()
+                    .setPrettyPrint(true)
+                    .encodeResourceToWriter(bundle, fileWriter);
+        }
+        return outputFile;
+    }
+
+    /**
+     * @param bundle
+     * @param ndjsonBundle
      * @param filterID
+     * @return
      * @throws Exception
      */
-    private ConverterResult convertFiles(Bundle bundle, String filterID) throws Exception {
+    private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult();
@@ -275,12 +312,8 @@ public class Csv2Fhir {
                         }
                         List<? extends Resource> list = table.convert(record, result, validator);
                         for (Resource resource : list) {
-                            BundleEntryComponent entry = bundle.addEntry();
-                            entry.setResource(resource);
-                            BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
-                            entry.setRequest(requestComponent);
-                            String url = requestComponent.getUrl();
-                            entry.setFullUrl(url);
+                            addEntry(bundle, resource);
+                            addEntry(ndjsonBundle, resource);
                         }
                     } catch (Exception e) {
                         LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
@@ -291,6 +324,40 @@ public class Csv2Fhir {
         }
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
         return result;
+    }
+
+    /**
+     * @param bundle
+     * @param resource
+     * @throws Exception
+     */
+    private static void addEntry(Bundle bundle, Resource resource) throws Exception {
+        if (bundle != null) {
+            //prevent adding some resources twice to the bundle
+            //Medications can be created multiple with the same ID (if
+            //multiple patients in the same bundle get the same medication)
+            Class<? extends Resource> newResourceClass = resource.getClass();
+            if (newResourceClass == Medication.class) {
+                String newResourceID = resource.getId();
+                List<BundleEntryComponent> entries = bundle.getEntry();
+                for (BundleEntryComponent bundleEntry : entries) {
+                    Resource existingResource = bundleEntry.getResource();
+                    String existingResourceID = existingResource.getId();
+                    if (existingResourceID.equals(newResourceID)) {
+                        Class<? extends Resource> existingResourceClassclass1 = existingResource.getClass();
+                        if (existingResourceClassclass1 == newResourceClass) {
+                            return;
+                        }
+                    }
+                }
+            }
+            BundleEntryComponent entry = bundle.addEntry();
+            entry.setResource(resource);
+            BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
+            entry.setRequest(requestComponent);
+            String url = requestComponent.getUrl();
+            entry.setFullUrl(url);
+        }
     }
 
     /**

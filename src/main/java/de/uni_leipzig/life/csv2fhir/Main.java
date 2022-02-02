@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.Csv2Fhir.OutputFileType.JSON;
+import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
 
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -54,7 +54,7 @@ public class Main implements Callable<Integer> {
         }
         FHIRValidator validator = validateBundles ? new FHIRValidator() : null;
         Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile, validator);
-        converter.convertFiles(JSON);
+        converter.convertFiles(Integer.MAX_VALUE, JSON);
         return 0;
     }
 }
