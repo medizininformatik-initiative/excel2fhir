@@ -2,7 +2,6 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
-import static de.uni_leipzig.life.csv2fhir.OutputFileType.NDJSON;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.File;
@@ -37,7 +36,6 @@ import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Alphabetical;
-import de.uni_leipzig.imise.utils.Sys;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -140,25 +138,29 @@ public class Csv2Fhir {
     public void convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
         Collection<String> pids = getValues(Person + ".csv", Person.getPIDColumnIdentifier(), true, true);
         int pids2ConvertCount = pids.size();
-        Bundle bundle = null;
-        Bundle ndjsonBundle = null; //ndjson files contains new line delimited single json files so we need a new bundle for each line
-        NDJsonFile ndjsonFile = null;
+        Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
+        Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
+        MultiSinglePatientBundlesFileWriter multiSinglePatientBundlesFileWriter = null;
 
+        //we must check which file types should be written
         List<OutputFileType> baseFileTypes = new ArrayList<>();
         List<OutputFileType> compressedFileTypes = new ArrayList<>();
         if (outputFileTypes.length == 0) {
-            baseFileTypes.add(JSON);
+            baseFileTypes.add(JSON); // no type specified -> default is plain JSON
         } else {
             for (OutputFileType outputFileType : outputFileTypes) {
-                if (outputFileType == NDJSON) {
-                    ndjsonBundle = createTransactionBundle();
-                    File ndjsonOutputFile = new File(outputDirectory, outputFileNameBase + NDJSON.getFileExtension());
-                    ndjsonFile = new NDJsonFile(ndjsonOutputFile, validator);
-                } else if (outputFileType.isCompressedFileType()) {
-                    compressedFileTypes.add(outputFileType);
-                } else {
-                    baseFileTypes.add(outputFileType);
+                if (!outputFileType.isMultiSinglePatientBundlesFileType()) { //NDJSON or ZIPJSON will be processed later
+                    if (outputFileType.isCompressedFileType()) {
+                        compressedFileTypes.add(outputFileType);
+                    } else {
+                        baseFileTypes.add(outputFileType);
+                    }
                 }
+            }
+            //is only not null if the outputFileTypes contains NDJSON or ZIPJSON
+            multiSinglePatientBundlesFileWriter = MultiSinglePatientBundlesFileWriter.create(outputDirectory, outputFileNameBase, validator, outputFileTypes);
+            if (multiSinglePatientBundlesFileWriter != null) {
+                singlePatientBundle = createTransactionBundle();
             }
         }
 
@@ -181,7 +183,7 @@ public class Csv2Fhir {
             LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
             Stopwatch stopwatch = Stopwatch.createStarted();
             String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
-            fillBundlesWithCSVData(bundle, ndjsonBundle, filter);
+            fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
             // However, since we do not want to attach just any diagnosis to these
             // Part-Of-Encounters, after ALL diagnoses have been converted, we must
             // select an appropriate one. Which one this can be is not yet
@@ -189,21 +191,21 @@ public class Csv2Fhir {
             if (bundle != null) {
                 BundlePostProcessor.convert(bundle);
             }
-            if (ndjsonFile != null) {
-                BundlePostProcessor.convert(ndjsonBundle);
-                ndjsonFile.appendBundle(ndjsonBundle);
-                ndjsonBundle = createTransactionBundle();
+            if (multiSinglePatientBundlesFileWriter != null) {
+                //same convertion here as with the bundle
+                BundlePostProcessor.convert(singlePatientBundle);
+                multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
+                singlePatientBundle = createTransactionBundle();
             }
             pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
             if (lastPID != null) {
                 String fileNameExtendsion = firstPID == lastPID ? "-" + firstPID : "-" + firstPID + "-" + lastPID;
                 writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                 bundle = createTransactionBundle();
-                if (ndjsonFile != null) {
-                    ndjsonFile.closeWriterAndRenameOrDeleteIfEmpty(outputFileNameBase + fileNameExtendsion + NDJSON.getFileExtension());
-                    File ndjsonOutputFile = new File(outputDirectory, outputFileNameBase + NDJSON.getFileExtension());
+                if (multiSinglePatientBundlesFileWriter != null) {
+                    multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
                     if (fullPIDCount != pids2ConvertCount) {
-                        ndjsonFile = new NDJsonFile(ndjsonOutputFile, validator);
+                        multiSinglePatientBundlesFileWriter.reset();
                     }
                 }
                 bundlePIDCount = 0;
@@ -230,30 +232,38 @@ public class Csv2Fhir {
      * @param compressedFileTypes
      * @throws IOException
      */
-    private void writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws IOException {
+    private void writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws Exception {
+        List<OutputFileType> compressedFileTypesCopy = new ArrayList<>(compressedFileTypes); //copy the global list because we remove from it
         if (bundle != null && !bundle.getEntry().isEmpty()) {
             if (validator == null || !validator.validateBundle(bundle).isError()) {
-                for (int i = baseFileTypes.size() - 1; i >= 0; i--) {
-                    OutputFileType baseFileType = baseFileTypes.get(i);
+                for (OutputFileType baseFileType : baseFileTypes) {
                     File baseFile = writeBaseOutputFile(bundle, fileNameExtension, baseFileType);
-                    for (int j = compressedFileTypes.size() - 1; j >= 0; j--) {
-                        OutputFileType compressedFileType = compressedFileTypes.get(j);
+                    for (int i = compressedFileTypesCopy.size() - 1; i >= 0; i--) {
+                        OutputFileType compressedFileType = compressedFileTypesCopy.get(i);
                         if (compressedFileType.getBaseFileType() == baseFileType) {
-                            compressBaseFile(baseFile, compressedFileType);
-                            compressedFileTypes.remove(j);
+                            compressedFileType.compress(baseFile);
+                            compressedFileTypesCopy.remove(i);
                         }
                     }
                 }
+                //for this compressed file types the base file type was not yet created
+                for (int i = 0; i < compressedFileTypesCopy.size(); i++) {
+                    OutputFileType compressedFileType = compressedFileTypesCopy.get(i);
+                    OutputFileType baseFileType = compressedFileType.getBaseFileType();
+                    File baseFile = writeBaseOutputFile(bundle, fileNameExtension, baseFileType);
+                    compressedFileType.compress(baseFile);
+                    compressedFileTypesCopy.remove(i--);
+                    for (int j = i; j > 0 && j < compressedFileTypesCopy.size(); j++) {
+                        OutputFileType nextCompressedFileType = compressedFileTypesCopy.get(j);
+                        if (nextCompressedFileType.getBaseFileType().equals(baseFileType)) {
+                            nextCompressedFileType.compress(baseFile);
+                            compressedFileTypesCopy.remove(j--);
+                        }
+                    }
+                    baseFile.delete();
+                }
             }
         }
-    }
-
-    /**
-     * @param baseFile
-     * @param outputFileType
-     */
-    private static void compressBaseFile(File baseFile, OutputFileType outputFileType) {
-        Sys.err1(baseFile + " -> " + outputFileType);
     }
 
     /**
