@@ -185,7 +185,7 @@ public abstract class Converter {
         Enum<?> patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
         if (id != null) {
-            return id.replace('_', '-'); //AXS: not sure why this!? Maybe fheuschkel made this because (some) FHIR Server will not accept IDs with an underscore?!
+            return id.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
         }
         error(patientIDColumnIdentifier + " empty for Record");
         return null;
