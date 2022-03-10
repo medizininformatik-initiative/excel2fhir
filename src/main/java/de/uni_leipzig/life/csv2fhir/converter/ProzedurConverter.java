@@ -20,6 +20,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns;
 
 public class ProzedurConverter extends Converter {
 
@@ -126,6 +127,11 @@ public class ProzedurConverter extends Converter {
         }
         kds = false;
         return null;
+    }
+
+    @Override
+    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+        return Procedure_Columns.Versorgungsfall_Nr;
     }
 
 }

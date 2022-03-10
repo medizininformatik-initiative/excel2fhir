@@ -23,6 +23,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnosisConverter extends Converter {
@@ -130,6 +131,11 @@ public class DiagnosisConverter extends Converter {
         }
         error("Can not parse " + Dokumentationsdatum + " for Record");
         return null;
+    }
+
+    @Override
+    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+        return Diagnosis_Columns.Versorgungsfall_Nr;
     }
 
 }

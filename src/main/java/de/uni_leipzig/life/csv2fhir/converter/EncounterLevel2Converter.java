@@ -1,9 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns.Fachabteilung;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns.Startdatum;
 
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +18,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns;
 
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
@@ -89,6 +90,11 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
         // should catch and log
         Encounter encounter = result.get(Abteilungsfall, Encounter.class, encounterID);
         EncounterLevel1Converter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+    }
+
+    @Override
+    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+        return EncounterLevel2_Columns.Versorgungsfall_Nr;
     }
 
 }

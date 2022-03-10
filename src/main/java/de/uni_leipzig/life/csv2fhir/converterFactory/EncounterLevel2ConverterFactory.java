@@ -11,11 +11,21 @@ import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter;
 
 public class EncounterLevel2ConverterFactory implements ConverterFactory {
 
-    public static enum Abteilungsfall_Columns implements TableColumnIdentifier {
+    public static enum EncounterLevel2_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
             public String toString() {
                 return "Patient-ID";
+            }
+        },
+        Versorgungsfall_Nr {
+            @Override
+            public String toString() {
+                return "Versorgungsfall-Nr";
+            }
+            @Override
+            public boolean isMandatory() {
+                return false;
             }
         },
         Startdatum,

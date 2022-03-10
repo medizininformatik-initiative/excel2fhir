@@ -27,6 +27,8 @@ import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Sys;
@@ -164,7 +166,15 @@ public abstract class Converter {
      */
     public String get(Object columnIdentifier) {
         String columnName = columnIdentifier.toString();
-        return record.get(columnName);
+        boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier && !((TableColumnIdentifier) columnIdentifier).isMandatory();
+        if (!tryCatch) {
+            return record.get(columnName);
+        }
+        try {
+            return record.get(columnName);
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /**
@@ -186,12 +196,12 @@ public abstract class Converter {
      * @throws Exception
      */
     private String parseEncounterId() throws Exception {
-        Enum<?> encounterIDColumnIdentifier = getEncounterIDColumnIdentifier();
+        Enum<?> encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
         //missing encounter number -> always encounter number 1
         String encounterNumber = "1";
         if (encounterIDColumnIdentifier != null) {
             String recordEncounterNumber = get(encounterIDColumnIdentifier);
-            if (recordEncounterNumber != null) {
+            if (!Strings.isNullOrEmpty(encounterNumber)) {
                 encounterNumber = recordEncounterNumber;
             }
         }
@@ -206,8 +216,7 @@ public abstract class Converter {
     /**
      * @return the enum identifier for the column with the patient ID
      */
-    protected Enum<?> getEncounterIDColumnIdentifier() {
-        //TODO AXS: subclasses must override this if they have a column identifier for the encounter number and the excel template must provide this column
+    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
         return null;
     }
 
@@ -516,15 +525,17 @@ public abstract class Converter {
         if (endDate == null) {
             endDate = startDate;
         }
-        //set endDate always obe day after startDate. Maybe we should deactivate this optional if errors in data should be detected
-        if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
-            endDate = DateUtil.addDays(endDate, 1);
-        }
-        if (startDate != null && startDate.after(endDate)) {
-            DateTimeType dummy = startDate;
-            startDate = endDate;
-            endDate = dummy;
-        }
+
+        //        //set endDate always obe day after startDate. Maybe we should (de)activate this optional if errors in data should be detected
+        //        if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
+        //            endDate = DateUtil.addDays(endDate, 1);
+        //        }
+        //        if (startDate != null && startDate.after(endDate)) {
+        //            DateTimeType dummy = startDate;
+        //            startDate = endDate;
+        //            endDate = dummy;
+        //        }
+
         return new Period().setStartElement(startDate).setEndElement(endDate);
     }
 

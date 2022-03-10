@@ -25,6 +25,16 @@ public class MedicationConverterFactory implements ConverterFactory {
                 return "Patient-ID";
             }
         },
+        Versorgungsfall_Nr {
+            @Override
+            public String toString() {
+                return "Versorgungsfall-Nr";
+            }
+            @Override
+            public boolean isMandatory() {
+                return false;
+            }
+        },
         Zeitstempel,
         FHIR_Resourcentyp,
         Medikationsplanart,

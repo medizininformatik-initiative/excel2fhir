@@ -22,7 +22,7 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.D
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.Abteilungsfall_Columns;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory;
@@ -43,7 +43,7 @@ public enum TableIdentifier {
 
     Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1ConverterFactory.class),
 
-    Abteilungsfall(Abteilungsfall_Columns.class, EncounterLevel2ConverterFactory.class),
+    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2ConverterFactory.class),
 
     Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverterFactory.class),
 

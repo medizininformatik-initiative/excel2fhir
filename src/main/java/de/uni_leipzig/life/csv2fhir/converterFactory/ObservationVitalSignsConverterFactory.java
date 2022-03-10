@@ -18,6 +18,16 @@ public class ObservationVitalSignsConverterFactory implements ConverterFactory {
                 return "Patient-ID";
             }
         },
+        Versorgungsfall_Nr {
+            @Override
+            public String toString() {
+                return "Versorgungsfall-Nr";
+            }
+            @Override
+            public boolean isMandatory() {
+                return false;
+            }
+        },
         Bezeichner,
         LOINC,
         Wert,

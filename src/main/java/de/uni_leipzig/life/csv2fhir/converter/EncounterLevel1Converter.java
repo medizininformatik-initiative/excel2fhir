@@ -28,6 +28,7 @@ import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -239,6 +240,11 @@ public class EncounterLevel1Converter extends Converter {
             //validity (and not null) should be checked later
         }
         return encounter;
+    }
+
+    @Override
+    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+        return EncounterLevel1_Columns.Versorgungsfall_Nr;
     }
 
 }
