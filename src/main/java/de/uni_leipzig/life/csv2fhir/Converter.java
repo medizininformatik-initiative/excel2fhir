@@ -530,11 +530,13 @@ public abstract class Converter {
         //        if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
         //            endDate = DateUtil.addDays(endDate, 1);
         //        }
-        //        if (startDate != null && startDate.after(endDate)) {
-        //            DateTimeType dummy = startDate;
-        //            startDate = endDate;
-        //            endDate = dummy;
-        //        }
+
+        //ensure that the period always starts with the lower date
+        if (startDate != null && startDate.after(endDate)) {
+            DateTimeType dummy = startDate;
+            startDate = endDate;
+            endDate = dummy;
+        }
 
         return new Period().setStartElement(startDate).setEndElement(endDate);
     }
