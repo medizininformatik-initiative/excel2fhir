@@ -51,6 +51,8 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
+import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
@@ -108,6 +110,11 @@ public class MedicationConverter extends Converter {
         return Medikation.getPIDColumnIdentifier();
     }
 
+    @Override
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
+        return Medication_Columns.Versorgungsfall_Nr;
+    }
+
     /**
      * @return
      * @throws Exception
@@ -129,8 +136,7 @@ public class MedicationConverter extends Converter {
      */
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
-        int nextId = result.getNextId(Medikation, MedicationStatement.class);
-        medicationStatement.setId(getEncounterId() + "-MS-" + nextId);
+        medicationStatement.setId(createId("-MS-", MedicationStatement.class));
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
         medicationStatement.setSubject(getPatientReference());
@@ -148,8 +154,7 @@ public class MedicationConverter extends Converter {
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        int nextId = result.getNextId(Medikation, MedicationAdministration.class);
-        medicationAdministration.setId(getEncounterId() + "-MA-" + nextId);
+        medicationAdministration.setId(createId("-MA-", MedicationAdministration.class));
         medicationAdministration.setStatus(COMPLETED);
         medicationAdministration.setSubject(getPatientReference());
         medicationAdministration.setContext(getEncounterReference());
@@ -157,6 +162,20 @@ public class MedicationConverter extends Converter {
         medicationAdministration.setEffective(convertTimestamp());
         medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
+    }
+
+    /**
+     * @param <T>
+     * @param suffix
+     * @param resourceType
+     * @return
+     * @throws Exception
+     */
+    private <T extends Resource> String createId(String suffix, Class<T> resourceType) throws Exception {
+        String encounterID = getEncounterId();
+        String superID = Strings.isNullOrEmpty(encounterID) ? getPatientId() : encounterID;
+        int nextIDNumber = result.getNextId(Medikation, resourceType);
+        return superID + suffix + nextIDNumber;
     }
 
     /**

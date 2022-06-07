@@ -32,6 +32,7 @@ import com.google.common.collect.ImmutableList;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -210,7 +211,7 @@ public class ObservationLaboratoryConverter extends Converter {
     }
 
     @Override
-    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
         return ObservationLaboratory_Columns.Versorgungsfall_Nr;
     }
 

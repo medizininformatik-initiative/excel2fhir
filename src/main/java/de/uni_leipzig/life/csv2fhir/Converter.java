@@ -164,7 +164,7 @@ public abstract class Converter {
      * @param columnIdentifier
      * @return
      */
-    public String get(Object columnIdentifier) {
+    public final String get(Object columnIdentifier) {
         String columnName = columnIdentifier.toString();
         boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier && !((TableColumnIdentifier) columnIdentifier).isMandatory();
         if (!tryCatch) {
@@ -192,18 +192,47 @@ public abstract class Converter {
     }
 
     /**
-     * @return
+     * In old excel files the column with the encounter number does not exists.
+     * That means that this number should always be 1 (in every table sheet) and
+     * there is always only 1 encounter per patient possible.</br>
+     * Now there is an extra column in every sheet for the encounter number so
+     * that we can define multiple encounters for 1 patient and add medication,
+     * diagnosis etc. to a special encounter.</br>
+     * To ensure that the files without the encounter number column will still
+     * be converted we set the value 1 if the column is missing. Same happens if
+     * the column exists and the value is mandatory but missing.</br>
+     * If the column is optional but exists then the value of the column will be
+     * inserted in the full ID. Only in this case the resulting ID can be
+     * <code>null</code> if the value in the record is empty.</br>
+     * If the column is optional and is not in the data then (for backward
+     * compatibility reason) the value will set to 1.
+     *
+     * @return the encounter id in the record or a default if the column is
+     *         mandatory.
      * @throws Exception
      */
     private String parseEncounterId() throws Exception {
-        Enum<?> encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
-        //missing encounter number -> always encounter number 1
-        String encounterNumber = "1";
-        if (encounterIDColumnIdentifier != null) {
-            String recordEncounterNumber = get(encounterIDColumnIdentifier);
-            if (!Strings.isNullOrEmpty(encounterNumber)) {
+        TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
+        //missing encounter number -> set it to 1 if the column does not exists in the table
+        if (encounterIDColumnIdentifier == null) {
+            return null;
+        }
+        String encounterIDColumnName = encounterIDColumnIdentifier.toString();
+        boolean columnExists = record.isMapped(encounterIDColumnName);
+        String encounterNumber = null;
+        if (columnExists) {
+            String recordEncounterNumber = record.get(encounterIDColumnName);
+            boolean valueExists = !Strings.isNullOrEmpty(recordEncounterNumber);
+            if (valueExists) {
                 encounterNumber = recordEncounterNumber;
+            } else if (encounterIDColumnIdentifier.isMandatory()) {
+                encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
             }
+        } else {
+            encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
+        }
+        if (encounterNumber == null) {
+            return null;
         }
         return pid + "-E-" + encounterNumber;
     }
@@ -216,7 +245,7 @@ public abstract class Converter {
     /**
      * @return the enum identifier for the column with the patient ID
      */
-    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
         return null;
     }
 
@@ -251,6 +280,9 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getEncounterReference(boolean checkExistence) throws Exception {
+        if (encounterID == null) { // can be optional
+            return null;
+        }
         return getReference(checkExistence ? Versorgungsfall : null, encounterID, Encounter.class);
     }
 
@@ -575,7 +607,9 @@ public abstract class Converter {
                 return null;
             }
         }
-        error(dateColumnName + " empty for Record");
+        if (dateColumnName instanceof TableColumnIdentifier && ((TableColumnIdentifier) dateColumnName).isMandatory()) {
+            error(dateColumnName + " empty for Record");
+        }
         return null;
     }
 
@@ -593,7 +627,9 @@ public abstract class Converter {
                 return null;
             }
         }
-        error(dateColumnName + " empty for Record");
+        if (dateColumnName instanceof TableColumnIdentifier && ((TableColumnIdentifier) dateColumnName).isMandatory()) {
+            error(dateColumnName + " empty for Record");
+        }
         return null;
     }
 

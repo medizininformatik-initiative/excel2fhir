@@ -11,6 +11,12 @@ import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 
 public class EncounterLevel1ConverterFactory implements ConverterFactory {
 
+    /**
+     * Value that will be set if the mandatory column "Versorgungsfall-Nr" is
+     * missing in the data table sheets.
+     */
+    public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
+
     public static enum EncounterLevel1_Columns implements TableColumnIdentifier {
         Patient_ID {
             @Override
@@ -24,8 +30,8 @@ public class EncounterLevel1ConverterFactory implements ConverterFactory {
                 return "Versorgungsfall-Nr";
             }
             @Override
-            public boolean isMandatory() {
-                return false;
+            public String getDefaultIfMissing() {
+                return DEFAULT_ENCOUNTER_ID_NUMBER;
             }
         },
         Startdatum,

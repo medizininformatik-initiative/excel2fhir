@@ -92,8 +92,16 @@ public enum TableIdentifier {
     public Collection<Enum<? extends TableColumnIdentifier>> getMandatoryColumns() {
         ImmutableList.Builder<Enum<? extends TableColumnIdentifier>> mandatoryColumns = ImmutableList.builder();
         for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
-            if (((TableColumnIdentifier) columnIndentifier).isMandatory()) {
-                mandatoryColumns.add(columnIndentifier);
+            TableColumnIdentifier tableColumnIdentifier = (TableColumnIdentifier) columnIndentifier;
+            if (tableColumnIdentifier.isMandatory()) {
+                // A cloumn can be mandatory but missing in the data. In this case
+                // there must be defined a default value to provide the mandatory
+                // value. If the column is mandatory and no default is defined
+                // then the column will be added here as the strict mandatory column
+                // which is needed to convert the table.
+                if (tableColumnIdentifier.getDefaultIfMissing() == null) {
+                    mandatoryColumns.add(columnIndentifier);
+                }
             }
         }
         return mandatoryColumns.build();
@@ -138,20 +146,21 @@ public enum TableIdentifier {
         }
         Converter converter = converterFactory.create(csvRecord, result, validator);
         List<? extends Resource> resources = converter.convert(); //should never return null!
+        //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
+        List<Resource> validResources = new ArrayList<>();
         //validate every resource and remove if invalid
-        for (int i = resources.size() - 1; i >= 0; i--) {
+        for (int i = 0; i < resources.size(); i++) {
             Resource resource = resources.get(i);
             ValidationResultType validationResult = ERROR;
             if (resource != null) {
                 validationResult = validator == null ? VALID : validator.validate(resource);
             }
-            if (validationResult == ERROR) {
-                resources.remove(i);
+            if (validationResult != ERROR) {
+                validResources.add(resource);
             }
         }
-
-        result.addAll(this, resources);
-        return resources;
+        result.addAll(this, validResources);
+        return validResources;
     }
 
     /**

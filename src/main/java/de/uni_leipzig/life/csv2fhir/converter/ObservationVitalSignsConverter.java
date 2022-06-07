@@ -27,6 +27,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 
 public class ObservationVitalSignsConverter extends Converter {
@@ -68,7 +69,7 @@ public class ObservationVitalSignsConverter extends Converter {
     }
 
     @Override
-    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
         return ObservationVitalSigns_Columns.Versorgungsfall_Nr;
     }
 

@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converterFactory;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.DEFAULT_ENCOUNTER_ID_NUMBER;
+
 import org.apache.commons.csv.CSVRecord;
 
 import de.uni_leipzig.imise.FHIRValidator;
@@ -34,9 +36,13 @@ public class MedicationConverterFactory implements ConverterFactory {
             public boolean isMandatory() {
                 return false;
             }
+            @Override
+            public String getDefaultIfMissing() {
+                return DEFAULT_ENCOUNTER_ID_NUMBER;
+            }
         },
         Zeitstempel,
-        FHIR_Resourcentyp,
+        Medikationstyp,
         Medikationsplanart,
         Wirksubstanz_aus_Praeparat_Handelsname {
             @Override

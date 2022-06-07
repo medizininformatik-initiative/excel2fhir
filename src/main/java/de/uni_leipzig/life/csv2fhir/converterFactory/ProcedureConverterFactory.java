@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converterFactory;
 
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.DEFAULT_ENCOUNTER_ID_NUMBER;
+
 import org.apache.commons.csv.CSVRecord;
 
 import de.uni_leipzig.imise.FHIRValidator;
@@ -24,8 +26,8 @@ public class ProcedureConverterFactory implements ConverterFactory {
                 return "Versorgungsfall-Nr";
             }
             @Override
-            public boolean isMandatory() {
-                return false;
+            public String getDefaultIfMissing() {
+                return DEFAULT_ENCOUNTER_ID_NUMBER;
             }
         },
         Prozedurentext,

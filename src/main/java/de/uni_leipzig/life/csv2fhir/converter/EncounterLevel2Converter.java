@@ -18,6 +18,7 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns;
 
 /**
@@ -93,7 +94,7 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
     }
 
     @Override
-    protected Enum<?> getMainEncounterNumberColumnIdentifier() {
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
         return EncounterLevel2_Columns.Versorgungsfall_Nr;
     }
 
