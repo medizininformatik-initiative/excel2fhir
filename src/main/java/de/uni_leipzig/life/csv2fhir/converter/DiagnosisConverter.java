@@ -60,6 +60,11 @@ public class DiagnosisConverter extends Converter {
             return Collections.emptyList();
         }
 
+        //enable this to get the reference from condition to encounter. This is optional
+        //but it creates a circle, because the encounter has also a reference list to all
+        //diagnosis.
+        //condition.setEncounter(getEncounterReference());
+
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
         String encounterId = getEncounterId();
         String diagnosisUseIdentifier = get(Typ);
