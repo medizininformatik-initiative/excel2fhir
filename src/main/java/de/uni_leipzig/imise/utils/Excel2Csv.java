@@ -105,15 +105,16 @@ public class Excel2Csv {
                         boolean skipEmptyRow = false;
                         for (int col = 0; col < maxCol; col++) {
                             Cell cell = row.getCell(col);
-                            String cellValue;
+                            String cellValue = null;
                             CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
+                            CellType formulaResultType = cellType == CellType.FORMULA ? cell.getCachedFormulaResultType() : null;
                             if (cellType == CellType.BLANK) {
                                 if (col == 0) {
                                     skipEmptyRow = true;
                                     break;
                                 }
                                 cellValue = "";
-                            } else if (cellType == CellType.NUMERIC || cellType == CellType.FORMULA) {
+                            } else if (cellType == CellType.NUMERIC || formulaResultType == CellType.NUMERIC) {
                                 if (DateUtil.isCellDateFormatted(cell)) {
                                     // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein String
                                     cellValue = DATE_FORMAT.format(cell.getDateCellValue());
@@ -127,11 +128,10 @@ public class Excel2Csv {
                                     } else {
                                         cellValue = "" + d;
                                     }
-
                                     cellValue = cellValue.replace(",", ".");
                                     cellValue = cellValue.replaceAll("\\.0$", "");
                                 }
-                            } else if (cellType == CellType.STRING) {
+                            } else if (cellType == CellType.STRING || formulaResultType == CellType.STRING) {
                                 cellValue = cell.getStringCellValue();
                             } else {
                                 LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
@@ -143,7 +143,7 @@ public class Excel2Csv {
                             // clean value inclusive bon-breaking whitespace occured in ICD
                             cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
                             // "No Value" used in UKE
-                            if (cellValue.equals("#NV")) {
+                            if ("#NV".equals(cellValue)) {
                                 cellValue = "";
                             }
                             if (cellValue.contains(DELIM)) {
