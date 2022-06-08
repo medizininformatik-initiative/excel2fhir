@@ -94,6 +94,14 @@ public class MedicationConverterFactory implements ConverterFactory {
         }
     }
 
+    /**
+     *
+     */
+    public static enum Medikationstyp_Values implements StringEqualsIgnoreCase {
+        Verordnung,
+        Gabe;
+    }
+
     @Override
     public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         return new MedicationConverter(record, result, validator);

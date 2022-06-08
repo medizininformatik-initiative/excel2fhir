@@ -9,13 +9,13 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterF
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Einzeldosis;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.FHIR_UserSelected;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Medikationsplanart;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Medikationstyp;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.PZN_Code;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Therapieendedatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Therapiestartdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns.Zeitstempel;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medikationsplanart_Values.Vor_Aufnahme;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medikationstyp_Values.Verordnung;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static java.util.Collections.singletonList;
 import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
@@ -97,7 +97,7 @@ public class MedicationConverter extends Converter {
             }
             resources.add(medication);
         }
-        if (Vor_Aufnahme.equals(get(Medikationsplanart))) {
+        if (Verordnung.equals(get(Medikationstyp))) {
             resources.add(parseMedicationStatement());
         } else {
             resources.add(parseMedicationAdministration());
