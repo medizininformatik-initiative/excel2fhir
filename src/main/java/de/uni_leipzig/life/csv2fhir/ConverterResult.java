@@ -2,8 +2,12 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getBaseId;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.hl7.fhir.r4.model.Condition;
@@ -18,6 +22,8 @@ import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+
+import de.uni_leipzig.imise.utils.Alphabetical;
 
 /**
  * @author AXS (29.11.2021)
@@ -53,12 +59,16 @@ public class ConverterResult {
      */
     private final Multimap<TableIdentifier, ConvertedResources<? extends Resource>> createdResources = ArrayListMultimap.create();
 
+    /**  */
+    private ConverterResultStatistics statistics = null;
+
     /**
      * @param tableSource
      * @param resource
      */
     @SuppressWarnings("unchecked")
     public <T extends Resource> void add(TableIdentifier tableSource, T resource) {
+        statistics = null;
         Collection<ConvertedResources<? extends Resource>> typedConverterResults = createdResources.get(tableSource);
         ConvertedResources<T> typedConverterResult = null;
         Class<T> resourceClass = (Class<T>) resource.getClass();
@@ -151,6 +161,101 @@ public class ConverterResult {
      */
     public <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType) {
         return getResourceCount(tableSource, resourceType) + 1;
+    }
+
+    /**
+     * @return
+     */
+    public ConverterResultStatistics getStatistics() {
+        if (statistics == null) {
+            statistics = new ConverterResultStatistics().add(this);
+        }
+        return statistics;
+    }
+
+    @Override
+    public String toString() {
+        return getStatistics().toString();
+    }
+
+    /**
+     * Can store the one count for each Resource type and output it
+     * appropriately via the toString() function.
+     *
+     * @author AXS (07.06.2022)
+     */
+    public static final class ConverterResultStatistics {
+
+        /** Maps from a resource type to the count of this type. */
+        private final Map<Class<? extends Resource>, Integer> stats = new HashMap<>();
+
+        /**
+         * Adds the values from the other statistics to this.
+         *
+         * @param other
+         */
+        public ConverterResultStatistics add(ConverterResultStatistics other) {
+            for (Class<? extends Resource> resourceType : other.stats.keySet()) {
+                Integer value2Add = other.stats.get(resourceType);
+                add(resourceType, value2Add);
+            }
+            return this;
+        }
+
+        /**
+         * Adds the values from the statistics of the given
+         * {@link ConverterResult} to this.
+         *
+         * @param result
+         */
+        public ConverterResultStatistics add(ConverterResult result) {
+            add(result.createdResources);
+            return this;
+        }
+
+        /**
+         * @param createdResources
+         */
+        private void add(Multimap<TableIdentifier, ConvertedResources<? extends Resource>> createdResources) {
+            for (TableIdentifier key : createdResources.keySet()) {
+                Collection<ConvertedResources<? extends Resource>> resources = createdResources.get(key);
+                for (ConvertedResources<? extends Resource> convertedResource : resources) {
+                    Class<? extends Resource> resourceType = convertedResource.getContentType();
+                    int count = convertedResource.size();
+                    add(resourceType, count);
+                }
+            }
+        }
+
+        /**
+         * @param resourceType
+         * @param value2Add
+         */
+        private void add(Class<? extends Resource> resourceType, int value2Add) {
+            Integer oldCount = stats.getOrDefault(resourceType, 0);
+            stats.put(resourceType, oldCount + value2Add);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            int fullCount = 0;
+            List<Class<? extends Resource>> resourceTypes = new ArrayList<>(stats.keySet());
+            Alphabetical.sort(resourceTypes);
+            for (Class<? extends Resource> resourceType : resourceTypes) {
+                sb.append("\t");
+                sb.append(resourceType.getSimpleName());
+                sb.append("=");
+                int value = stats.getOrDefault(resourceType, 0);
+                sb.append(value);
+                sb.append("\n");
+                fullCount += value;
+            }
+            sb.append("\tFull Resource Count=");
+            sb.append(fullCount);
+            return sb.toString();
+        }
+
     }
 
 }

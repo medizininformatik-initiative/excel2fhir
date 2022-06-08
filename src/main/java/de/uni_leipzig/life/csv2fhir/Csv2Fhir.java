@@ -36,6 +36,7 @@ import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Alphabetical;
+import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
 
 /**
  * @author fheuschkel (02.11.2020)
@@ -169,6 +170,8 @@ public class Csv2Fhir {
         String firstPID = null;
         String lastPID = null;
 
+        ConverterResultStatistics fullStatistics = new ConverterResultStatistics();
+
         for (String pid : pids) {
             fullPIDCount++;
             if (bundlePIDCount++ == 0) {
@@ -183,7 +186,8 @@ public class Csv2Fhir {
             LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
             Stopwatch stopwatch = Stopwatch.createStarted();
             String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
-            fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
+            ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
+            ConverterResultStatistics statistics = bundlesWithCSVData.getStatistics();
             // However, since we do not want to attach just any diagnosis to these
             // Part-Of-Encounters, after ALL diagnoses have been converted, we must
             // select an appropriate one. Which one this can be is not yet
@@ -213,7 +217,10 @@ public class Csv2Fhir {
                 lastPID = null;
             }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
+            LOG.info("Patient " + pid + " statistics:\n" + statistics);
+            fullStatistics.add(statistics);
         }
+        LOG.info("All Bundles Statistics:\n" + fullStatistics);
     }
 
     /**
