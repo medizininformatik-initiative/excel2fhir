@@ -217,10 +217,10 @@ public class Csv2Fhir {
                 lastPID = null;
             }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
-            LOG.info("Patient " + pid + " statistics:\n" + statistics);
+            LOG.info("Patient " + pid + " bundle content:\n" + statistics);
             fullStatistics.add(statistics);
         }
-        LOG.info("All Bundles Statistics:\n" + fullStatistics);
+        LOG.info("All bundles content:\n" + fullStatistics);
     }
 
     /**

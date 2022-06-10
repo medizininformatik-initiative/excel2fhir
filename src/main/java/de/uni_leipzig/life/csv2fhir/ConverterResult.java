@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
@@ -20,7 +21,9 @@ import org.hl7.fhir.r4.model.Person;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Resource;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import de.uni_leipzig.imise.utils.Alphabetical;
@@ -187,7 +190,10 @@ public class ConverterResult {
     public static final class ConverterResultStatistics {
 
         /** Maps from a resource type to the count of this type. */
-        private final Map<Class<? extends Resource>, Integer> stats = new HashMap<>();
+        private final Map<Class<? extends Resource>, Integer> resourceCounts = new HashMap<>();
+
+        /** Maps from a resource type to the a set of all IDs . */
+        private final Multimap<Class<? extends Resource>, String> resourceIDs = HashMultimap.create();
 
         /**
          * Adds the values from the other statistics to this.
@@ -195,9 +201,9 @@ public class ConverterResult {
          * @param other
          */
         public ConverterResultStatistics add(ConverterResultStatistics other) {
-            for (Class<? extends Resource> resourceType : other.stats.keySet()) {
-                Integer value2Add = other.stats.get(resourceType);
-                add(resourceType, value2Add);
+            for (Class<? extends Resource> resourceType : other.resourceCounts.keySet()) {
+                Collection<String> ids2Add = other.resourceIDs.get(resourceType);
+                add(resourceType, ids2Add);
             }
             return this;
         }
@@ -221,8 +227,8 @@ public class ConverterResult {
                 Collection<ConvertedResources<? extends Resource>> resources = createdResources.get(key);
                 for (ConvertedResources<? extends Resource> convertedResource : resources) {
                     Class<? extends Resource> resourceType = convertedResource.getContentType();
-                    int count = convertedResource.size();
-                    add(resourceType, count);
+                    Set<String> ids = convertedResource.keySet();
+                    add(resourceType, ids);
                 }
             }
         }
@@ -231,29 +237,85 @@ public class ConverterResult {
          * @param resourceType
          * @param value2Add
          */
-        private void add(Class<? extends Resource> resourceType, int value2Add) {
-            Integer oldCount = stats.getOrDefault(resourceType, 0);
-            stats.put(resourceType, oldCount + value2Add);
+        private void add(Class<? extends Resource> resourceType, Collection<String> ids) {
+            Integer oldCount = resourceCounts.getOrDefault(resourceType, 0);
+            int value2Add = ids.size();
+            resourceCounts.put(resourceType, oldCount + value2Add);
+            resourceIDs.putAll(resourceType, ids);
         }
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            int fullCount = 0;
-            List<Class<? extends Resource>> resourceTypes = new ArrayList<>(stats.keySet());
+            return getResultTable("        ");
+        }
+
+        /**
+         * @param indentation String before every table line
+         * @return
+         */
+        private String getResultTable(String indentation) {
+            List<Class<? extends Resource>> resourceTypes = new ArrayList<>(resourceCounts.keySet());
             Alphabetical.sort(resourceTypes);
+            int maxNameLength = getMaxStringLength(resourceTypes) + 8; //some whitespaces after the longest string
+            int maxDigitsCount = getMaxStringLength(resourceCounts.values());
+            StringBuilder sb = new StringBuilder();
+            int maxLineLength;
+            Integer totalCount = 0;
+            int totalUniqueCount = 0;
             for (Class<? extends Resource> resourceType : resourceTypes) {
-                sb.append("\t");
-                sb.append(resourceType.getSimpleName());
-                sb.append("=");
-                int value = stats.getOrDefault(resourceType, 0);
-                sb.append(value);
-                sb.append("\n");
-                fullCount += value;
+                StringBuilder line = new StringBuilder(indentation); //some indentation
+                line.append(Strings.padEnd(resourceType.getSimpleName(), maxNameLength, ' '));
+                line.append(": ");
+                Integer count = resourceCounts.get(resourceType);
+                totalCount += count;
+                line.append(Strings.padStart(count.toString(), maxDigitsCount, ' '));
+                Collection<String> uniqueIDs = resourceIDs.get(resourceType);
+                int uniqueCount = uniqueIDs.size();
+                totalUniqueCount += uniqueCount;
+                if (uniqueCount != count) {
+                    line.append(" (unique : ");
+                    line.append(uniqueCount);
+                    line.append(")");
+                }
+                line.append("\n");
+                maxLineLength = Math.max(maxNameLength, line.length() - 1);
+                sb.append(line);
             }
-            sb.append("\tFull Resource Count=");
-            sb.append(fullCount);
+            //first build the total line
+            StringBuilder totalLine = new StringBuilder(indentation);
+            totalLine.append(Strings.padEnd("total", maxNameLength, ' '));
+            totalLine.append(": ");
+            totalLine.append(Strings.padStart(totalCount.toString(), maxDigitsCount, ' '));
+            maxLineLength = Math.max(maxNameLength, totalLine.length()); // if there is no created resource then maxLineLength is still 0 here
+            if (totalUniqueCount != totalCount) {
+                totalLine.append(" (unique : ");
+                totalLine.append(totalUniqueCount);
+                totalLine.append(")");
+            }
+
+            String delimiterLine = Strings.padEnd(indentation, maxLineLength, '-');
+            sb.append(delimiterLine);
+            sb.append("\n");
+            sb.append(totalLine);
             return sb.toString();
+        }
+
+        /**
+         * @param objectsToString
+         * @return
+         */
+        private static int getMaxStringLength(Collection<?> objectsToString) {
+            int maxLength = 0;
+            Integer sumOfInt = 0;
+            for (Object o : objectsToString) {
+                String s = o instanceof Class<?> ? ((Class<?>) o).getSimpleName() : o.toString();
+                int length = s.length();
+                if (length > maxLength) {
+                    maxLength = length;
+                }
+                sumOfInt += o instanceof Integer ? (Integer) o : 0;
+            }
+            return Math.max(maxLength, sumOfInt.toString().length());
         }
 
     }
