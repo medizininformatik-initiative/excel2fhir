@@ -71,7 +71,7 @@ public class BundlePostProcessor {
                             if (!diagnoses.isEmpty()) {
                                 //a reference to the first diagnose which has a coded diagnose use from the follwing
                                 //iterable will be added to the child encuonter
-                                Iterable<String> diagnosisUseCodesInAddingOrder = EncounterLevel1Converter.diagnosisRoleKeyMapper.getValuesInAddingOrder();
+                                Iterable<String> diagnosisUseCodesInAddingOrder = EncounterLevel1Converter.DIAGNOSIS_ROLE_RESOURCES.getValuesInAddingOrder();
                                 for (String preferedDiagnosisUseCode : diagnosisUseCodesInAddingOrder) {
                                     for (DiagnosisComponent diagnosis : diagnoses) {
                                         CodeableConcept use = diagnosis.getUse();

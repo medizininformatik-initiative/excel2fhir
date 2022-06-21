@@ -40,13 +40,13 @@ public class EncounterLevel1Converter extends Converter {
      * Maps from human readable encounter types to the correspondig code system
      * code and contains some more resources for the encounters.
      */
-    public static final CodeSystemMapper ENCOUNTER_RESOURECES = new CodeSystemMapper("EncounterLevel1_Class.map");
+    public static final CodeSystemMapper ENCOUNTER_LEVEL1_CLASS_RESOURCES = new CodeSystemMapper("EncounterLevel1_Class.map");
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
      * code system code.
      */
-    public static final CodeSystemMapper diagnosisRoleKeyMapper = new CodeSystemMapper("Diagnosis_Role.map");
+    public static final CodeSystemMapper DIAGNOSIS_ROLE_RESOURCES = new CodeSystemMapper("Diagnosis_Role.map");
 
     /**
      * @param record
@@ -99,7 +99,7 @@ public class EncounterLevel1Converter extends Converter {
      * @throws Exception
      */
     private Coding getClass_() throws Exception {
-        Coding coding = createCoding(ENCOUNTER_RESOURECES.getCodeSystem(), Versorgungsfallklasse, ERROR);
+        Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Versorgungsfallklasse, ERROR);
         return setCorrectCodeAndDisplayInClassCoding(coding);
     }
 
@@ -110,8 +110,8 @@ public class EncounterLevel1Converter extends Converter {
         if (coding != null) {
             //replace the code string from by the correct code and display from the resource map
             String code = coding.getCode();
-            String realCode = ENCOUNTER_RESOURECES.get(code);
-            String display = ENCOUNTER_RESOURECES.getFirstBackwardKey(realCode);
+            String realCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get(code);
+            String display = ENCOUNTER_LEVEL1_CLASS_RESOURCES.getFirstBackwardKey(realCode);
             coding.setCode(realCode);
             coding.setDisplay(display);
         }
@@ -122,7 +122,7 @@ public class EncounterLevel1Converter extends Converter {
      * @return
      */
     protected static Meta getMeta() {
-        return new Meta().addProfile(ENCOUNTER_RESOURECES.getProfile());
+        return new Meta().addProfile(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getProfile());
     }
 
     /**
@@ -149,9 +149,9 @@ public class EncounterLevel1Converter extends Converter {
      * @return
      */
     public static CodeableConcept createDiagnosisUse(String useIdentifier) {
-        String codeSystem = diagnosisRoleKeyMapper.getCodeSystem();
-        String code = diagnosisRoleKeyMapper.getHumanToCode(useIdentifier);
-        String display = diagnosisRoleKeyMapper.getCodeToHuman(code);
+        String codeSystem = DIAGNOSIS_ROLE_RESOURCES.getCodeSystem();
+        String code = DIAGNOSIS_ROLE_RESOURCES.getHumanToCode(useIdentifier);
+        String display = DIAGNOSIS_ROLE_RESOURCES.getCodeToHuman(code);
         CodeableConcept diagnosisUse = new CodeableConcept();
         diagnosisUse.addCoding()
                 .setSystem(codeSystem)
@@ -188,8 +188,8 @@ public class EncounterLevel1Converter extends Converter {
     private static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
         if (diagnosisUseIdentifier == null) { // default for missing values
-            String defaultDiagnosisRoleCode = diagnosisRoleKeyMapper.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
-            diagnosisUseIdentifier = diagnosisRoleKeyMapper.getFirstBackwardKey(defaultDiagnosisRoleCode);
+            String defaultDiagnosisRoleCode = DIAGNOSIS_ROLE_RESOURCES.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
+            diagnosisUseIdentifier = DIAGNOSIS_ROLE_RESOURCES.getFirstBackwardKey(defaultDiagnosisRoleCode);
         }
         // encounter should be only null in error cases, but mybe we
         // should catch and log
@@ -224,16 +224,16 @@ public class EncounterLevel1Converter extends Converter {
      * @param period
      * @return
      */
-    public static Encounter createDefault(String pid, String id, String dizID, Period period) {
+    private static Encounter createDefault(String pid, String id, String dizID, Period period) {
         Encounter encounter = new Encounter();
         encounter.setMeta(getMeta());
         encounter.setId(id);
         encounter.setIdentifier(createIdentifier(id, dizID));
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
         //encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "stationaer"));
-        String defaultClassCode = ENCOUNTER_RESOURECES.get("DEFAULT_CLASS_CODE");
-        String defaultDisplay = ENCOUNTER_RESOURECES.getFirstBackwardKey(defaultClassCode);
-        encounter.setClass_(createCoding(ENCOUNTER_RESOURECES.getCodeSystem(), defaultClassCode, defaultDisplay));
+        String defaultClassCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get("DEFAULT_CLASS_CODE");
+        String defaultDisplay = ENCOUNTER_LEVEL1_CLASS_RESOURCES.getFirstBackwardKey(defaultClassCode);
+        encounter.setClass_(createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), defaultClassCode, defaultDisplay));
         encounter.setSubject(createReference(Patient.class, pid));
         try {
             encounter.setPeriod(period);
