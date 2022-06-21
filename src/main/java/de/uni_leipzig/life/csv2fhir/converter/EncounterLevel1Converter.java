@@ -40,7 +40,7 @@ public class EncounterLevel1Converter extends Converter {
      * Maps from human readable encounter types to the correspondig code system
      * code and contains some more resources for the encounters.
      */
-    public static final CodeSystemMapper ENCOUNTER_RESOURECES = new CodeSystemMapper("Encounter.map");
+    public static final CodeSystemMapper ENCOUNTER_RESOURECES = new CodeSystemMapper("EncounterLevel1_Class.map");
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
@@ -106,7 +106,7 @@ public class EncounterLevel1Converter extends Converter {
     /**
      * @param coding
      */
-    public Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
+    private Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
         if (coding != null) {
             //replace the code string from by the correct code and display from the resource map
             String code = coding.getCode();
