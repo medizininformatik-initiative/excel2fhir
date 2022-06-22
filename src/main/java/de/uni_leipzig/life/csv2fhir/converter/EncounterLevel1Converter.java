@@ -24,6 +24,8 @@ import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
+import com.google.common.collect.ImmutableList;
+
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -41,6 +43,9 @@ public class EncounterLevel1Converter extends Converter {
      * code and contains some more resources for the encounters.
      */
     public static final CodeSystemMapper ENCOUNTER_LEVEL1_CLASS_RESOURCES = new CodeSystemMapper("EncounterLevel1_Class.map");
+
+    /** Map with the encounter types and its displays. */
+    public static final CodeSystemMapper ENCOUNTER_TYPE_RESOURCES = new CodeSystemMapper("Encounter_Type.map");
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
@@ -75,6 +80,7 @@ public class EncounterLevel1Converter extends Converter {
         encounter.setClass_(getClass_());
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
+        encounter.setType(getEncounterType());
         return Collections.singletonList(encounter);
     }
 
@@ -246,6 +252,17 @@ public class EncounterLevel1Converter extends Converter {
     @Override
     protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
         return EncounterLevel1_Columns.Versorgungsfall_Nr;
+    }
+
+    /**
+     * @return the type of the encounter as {@link CodeableConcept}.
+     */
+    protected List<CodeableConcept> getEncounterType() {
+        String simpleClassName = getClass().getSimpleName();
+        String codeSystemURL = ENCOUNTER_TYPE_RESOURCES.getCodeSystem();
+        String typeCode = ENCOUNTER_TYPE_RESOURCES.get(simpleClassName + "_TYPE_CODE");
+        String typeDisplay = ENCOUNTER_TYPE_RESOURCES.get(simpleClassName + "_TYPE_DISPLAY");
+        return ImmutableList.of(createCodeableConcept(codeSystemURL, typeCode, typeDisplay, null));
     }
 
 }

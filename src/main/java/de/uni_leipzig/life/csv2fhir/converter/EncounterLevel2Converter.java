@@ -58,7 +58,7 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
         encounter.setServiceType(createCodeableConcept(Fachabteilung, departmentKeyMapper));
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
-        //        encounter.setLocation(convertLocation()); bringt nichts
+        encounter.setType(getEncounterType());
         encounter.setPartOf(getEncounterReference());
         return Collections.singletonList(encounter);
     }
