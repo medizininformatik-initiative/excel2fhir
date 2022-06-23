@@ -10,6 +10,7 @@ import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFacto
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
+import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.UNKNOWN;
 
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +65,7 @@ public class PersonConverter extends Converter {
         patient.setId(getPatientId());
         patient.setIdentifier(parseIdentifier());
         patient.addName(parseName());
-        patient.setGender(parseSex());
+        patient.setGender(parseGender());
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         //        patient.addGeneralPractitioner(parseHealthProvider());
@@ -116,29 +117,38 @@ public class PersonConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private AdministrativeGender parseSex() throws Exception {
-        String sex = get(Geschlecht);
-        if (sex != null) {
-            if (sex.length() != 0) {
-                switch (sex) {
+    private AdministrativeGender parseGender() throws Exception {
+        String gender = get(Geschlecht);
+        if (gender != null) {
+            if (gender.length() != 0) {
+                switch (gender) {
                 case "m":
+                case "male":
                 case "männlich":
                     return MALE;
                 case "w":
                 case "weiblich":
+                case "female":
+                case "f":
                     return FEMALE;
                 case "d":
                 case "divers":
+                case "other":
+                case "unbestimmt":
                     return OTHER;
+                case "x":
+                case "unbekannt":
+                case "unknown":
+                    return UNKNOWN;
                 default:
-                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + sex + "> not parsable for Record: " + this);
+                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + gender + "> not parsable for Record: " + this);
                 }
             }
             warning("Geschlecht empty for Record");
-            return null;
+            return UNKNOWN;
         }
         warning("Geschlecht not found");
-        return null;
+        return UNKNOWN;
     }
 
     /**
