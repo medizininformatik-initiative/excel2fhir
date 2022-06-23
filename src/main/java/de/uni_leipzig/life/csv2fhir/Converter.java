@@ -13,17 +13,23 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.r4.model.CodeSystem;
+import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Encounter;
+import org.hl7.fhir.r4.model.Extension;
+import org.hl7.fhir.r4.model.Factory;
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -639,6 +645,35 @@ public abstract class Converter {
     @Override
     public String toString() {
         return record.toString();
+    }
+
+    /**
+     * @return
+     */
+    public static Extension getUnknownDataAbsentReason() {
+        Pair<String, String> urlAndCode = getDataAbsentReasonUrlAndCode();
+        Extension dataAbsentReason = Factory.newExtension(urlAndCode.getLeft(), new CodeType(urlAndCode.getRight()), true);
+        return dataAbsentReason;
+    }
+
+    /**
+     * @return a {@link CodeableConcept} that represents a valid unknown data
+     *         absent reason for {@link Observation} values.
+     */
+    public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
+        Pair<String, String> urlAndCode = getDataAbsentReasonUrlAndCode();
+        return createCodeableConcept(urlAndCode.getLeft(), urlAndCode.getRight());
+    }
+
+    /**
+     * @return
+     */
+    private static Pair<String, String> getDataAbsentReasonUrlAndCode() {
+        DataAbsentReason unknown = DataAbsentReason.UNKNOWN;
+        //String url = "http://hl7.org/fhir/StructureDefinition/data-absent-reason";
+        String url = unknown.getSystem(); // this here is an other url (CodeSystem instead of StructureDefinition)
+        String code = unknown.toCode();
+        return Pair.of(url, code);
     }
 
 }

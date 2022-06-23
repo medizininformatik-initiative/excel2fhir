@@ -149,27 +149,8 @@ public class ObservationLaboratoryConverter extends Converter {
         if (observationValue != null) {
             observation.setValue(observationValue);
         } else {
-            observation.setDataAbsentReason(createUnknownDataAbsentReason());
+            observation.setDataAbsentReason(getUnknownDataAbsentReasonCodeableConcept());
         }
-    }
-
-    /**
-     * @return a {@link CodeableConcept} that represents a valid unknown data
-     *         absent reason for {@link Observation} values.
-     */
-    public static CodeableConcept createUnknownDataAbsentReason() {
-        //needed to be a valid in KDS validating
-        //copied from examples of extracted validation package de.medizininformatikinitiative.kerndatensatz.laborbefund-1.0.6.tgz
-        //    "dataAbsentReason":
-        //    {
-        //        "coding": [
-        //          {
-        //            "system": "http://terminology.hl7.org/CodeSystem/data-absent-reason",
-        //            "code": "unknown"
-        //          }
-        //       ]
-        //    },
-        return createCodeableConcept("http://terminology.hl7.org/CodeSystem/data-absent-reason", "unknown");
     }
 
     /**

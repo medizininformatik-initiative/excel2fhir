@@ -96,19 +96,22 @@ public class PersonConverter extends Converter {
     private HumanName parseName() {
         String forename = get(Vorname);
         String surname = get(Nachname);
-
-        if (forename == null) {
-            forename = "Vorname-" + getPatientId();
-            warning("Empty " + Vorname + " replaced by " + forename);
+        HumanName humanName = new HumanName();
+        if (Strings.isNullOrEmpty(surname)) {
+            warning("Empty " + Nachname + " -> Create Data Absent Reason \"unknown\"");
+            StringType familyElement = humanName.getFamilyElement();
+            familyElement.addExtension(getUnknownDataAbsentReason());
+        } else {
+            humanName.setFamily(surname).setUse(NameUse.OFFICIAL);
         }
-        if (surname == null) {
-            surname = "Nachname-" + getPatientId();
-            warning("Empty " + Nachname + " replaced by " + surname);
-        }
-
-        HumanName humanName = new HumanName().setFamily(surname).setUse(NameUse.OFFICIAL);
-        for (String name : forename.split(" ")) {
-            humanName.addGiven(name);
+        if (Strings.isNullOrEmpty(forename)) {
+            warning("Empty " + Vorname + " -> Create Data Absent Reason \"unknown\"");
+            StringType givenElement = humanName.addGivenElement();
+            givenElement.addExtension(getUnknownDataAbsentReason());
+        } else {
+            for (String name : forename.split(" ")) {
+                humanName.addGiven(name);
+            }
         }
         return humanName;
     }
