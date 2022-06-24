@@ -52,7 +52,7 @@ public class ConsentConverter extends Converter {
     /**
      *
      */
-    private static final ResourceMapper CONSENT_RESOURCES = new ResourceMapper("Consent.map");
+    private static final ResourceMapper CONSENT_RESOURCES = ResourceMapper.of("Consent.map");
 
     /**
      *
