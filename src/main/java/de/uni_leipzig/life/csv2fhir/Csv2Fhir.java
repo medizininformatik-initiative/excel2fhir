@@ -188,10 +188,6 @@ public class Csv2Fhir {
             String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
             ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
             ConverterResultStatistics statistics = bundlesWithCSVData.getStatistics();
-            // However, since we do not want to attach just any diagnosis to these
-            // Part-Of-Encounters, after ALL diagnoses have been converted, we must
-            // select an appropriate one. Which one this can be is not yet
-            // determined during the conversion, so it has to be done afterwards.
             if (bundle != null) {
                 BundlePostProcessor.convert(bundle);
             }
@@ -202,9 +198,10 @@ public class Csv2Fhir {
                 singlePatientBundle = createTransactionBundle();
             }
             pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
+            boolean bundleSavedAsFile = false;
             if (lastPID != null) {
                 String fileNameExtendsion = firstPID == lastPID ? "-" + firstPID : "-" + firstPID + "-" + lastPID;
-                writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
+                bundleSavedAsFile = writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                 bundle = createTransactionBundle();
                 if (multiSinglePatientBundlesFileWriter != null) {
                     multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
@@ -218,7 +215,9 @@ public class Csv2Fhir {
             }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
             LOG.info("Patient " + pid + " bundle content:\n" + statistics);
-            fullStatistics.add(statistics);
+            if (bundleSavedAsFile) {
+                fullStatistics.add(statistics);
+            }
         }
         LOG.info("All bundles content:\n" + fullStatistics);
     }
@@ -239,8 +238,9 @@ public class Csv2Fhir {
      * @param compressedFileTypes
      * @throws IOException
      */
-    private void writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws Exception {
+    private boolean writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws Exception {
         List<OutputFileType> compressedFileTypesCopy = new ArrayList<>(compressedFileTypes); //copy the global list because we remove from it
+        boolean written = false;
         if (bundle != null && !bundle.getEntry().isEmpty()) {
             if (validator == null || !validator.validateBundle(bundle).isError()) {
                 for (OutputFileType baseFileType : baseFileTypes) {
@@ -252,6 +252,7 @@ public class Csv2Fhir {
                             compressedFileTypesCopy.remove(i);
                         }
                     }
+                    written = true;
                 }
                 //for this compressed file types the base file type was not yet created
                 for (int i = 0; i < compressedFileTypesCopy.size(); i++) {
@@ -268,9 +269,11 @@ public class Csv2Fhir {
                         }
                     }
                     baseFile.delete();
+                    written = true;
                 }
             }
         }
+        return written;
     }
 
     /**
