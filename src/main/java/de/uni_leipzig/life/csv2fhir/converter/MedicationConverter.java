@@ -27,6 +27,7 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DateTimeType;
@@ -249,9 +250,12 @@ public class MedicationConverter extends Converter {
         String askCodeSystem = "http://fhir.de/CodeSystem/ask";
         Coding askCoding = createCoding(askCodeSystem, ASK, FHIR_UserSelected);
         if (askCoding == null) {
-            // fake to be KDS conform
-            warning("no ask code");
-            askCoding = createCoding(askCodeSystem, "<DUMMY VALUE FOR KDS Warning Suppression - no test value available>", "no code defined");
+            // data absent reason to be KDS conform
+            warning("no ask code -> set \"unknown\" data absent reason");
+            askCoding = new Coding();
+            askCoding.setSystem(askCodeSystem);
+            CodeType codeElement = askCoding.getCodeElement();
+            codeElement.addExtension(getUnknownDataAbsentReason());
         }
         return askCoding;
     }
@@ -275,7 +279,11 @@ public class MedicationConverter extends Converter {
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> userSelectedIndicatorColumnName) {
         String code = get(codeColumnName);
+        // Exception for PZN codes: These must be extended to 8 digits with leading 0s.
         if (code != null) {
+            if (PZN_Code == codeColumnName) {
+                code = Strings.padStart(code, 8, '0');
+            }
             Coding coding = createCoding(codeSystem, code);
             String selectedColumnValue = get(userSelectedIndicatorColumnName);
             if (!Strings.isNullOrEmpty(selectedColumnValue)) {
