@@ -9,6 +9,7 @@ import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -160,7 +161,7 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    protected final String getEncounterId() throws Exception {
+    public final String getEncounterId() throws Exception {
         return encounterID;
     }
 
@@ -170,8 +171,8 @@ public abstract class Converter {
      * @param columnIdentifier
      * @return
      */
-    public final String get(Object columnIdentifier) {
-        String columnName = columnIdentifier.toString();
+    public String get(Object columnIdentifier) {
+        String columnName = Objects.toString(columnIdentifier, null);
         boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier && !((TableColumnIdentifier) columnIdentifier).isMandatory();
         if (!tryCatch) {
             return record.get(columnName);
