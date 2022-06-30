@@ -404,6 +404,7 @@ public abstract class Converter {
             error(errorMessage);
         } else if (errorLevelIfCodeIsMissing == WARNING) {
             warning(errorMessage);
+            return getUnknownDataAbsentReasonCodeableConcept();
         }
         return null;
     }
@@ -586,15 +587,36 @@ public abstract class Converter {
      * @throws Exception
      */
     public static Quantity getUcumQuantity(BigDecimal value, String ucumCode) throws Exception {
-        ucumCode = UcumMapper.getValidUcumCode(ucumCode);
-        String ucumUnit = UcumMapper.getUcumUnit(ucumCode);
-        Quantity quantity = new Quantity()
-                .setSystem("http://unitsofmeasure.org")
-                .setValue(value);
 
-        if (!ucumCode.isEmpty()) {
-            quantity.setCode(ucumCode)
-                    .setUnit(ucumUnit);
+        String ucumUnit = null;
+        if (!Strings.isNullOrEmpty(ucumCode)) {
+            ucumCode = UcumMapper.getValidUcumCode(ucumCode);
+            ucumUnit = UcumMapper.getUcumUnit(ucumCode);
+        } else {
+            ucumCode = null;
+        }
+        //all values invalid -> return null
+        if (ucumCode == null && ucumUnit == null && value == null) {
+            return null;
+        }
+        Quantity quantity = new Quantity().setSystem("http://unitsofmeasure.org");
+        if (value != null) {
+            quantity.setValue(value);
+        } else {
+            quantity.getValueElement()
+                    .addExtension(getUnknownDataAbsentReason());
+        }
+        if (!Strings.isNullOrEmpty(ucumCode)) {
+            quantity.setCode(ucumCode);
+        } else {
+            quantity.getCodeElement()
+                    .addExtension(getUnknownDataAbsentReason());
+        }
+        if (!Strings.isNullOrEmpty(ucumUnit)) {
+            quantity.setUnit(ucumUnit);
+        } else {
+            quantity.getUnitElement()
+                    .addExtension(getUnknownDataAbsentReason());
         }
         return quantity;
     }

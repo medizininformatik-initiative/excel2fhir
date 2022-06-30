@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.PROFILE;
@@ -53,7 +53,7 @@ public class ObservationVitalSignsConverter extends Converter {
         observation.setSubject(getPatientReference()); // if null then observation is invalid
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         observation.setEffective(parseObservationTimestamp(this, Zeitstempel));
-        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, ERROR));
+        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, WARNING));
         //set value or value absent reason
         Quantity observationValue = parseObservationValue(this, Wert, Einheit);
         setValueOrAbsentReason(observation, observationValue);

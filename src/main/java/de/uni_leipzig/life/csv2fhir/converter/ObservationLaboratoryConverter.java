@@ -125,18 +125,16 @@ public class ObservationLaboratoryConverter extends Converter {
      * @throws Exception
      */
     public static Quantity parseObservationValue(Converter converter, Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier) throws Exception {
-        BigDecimal value;
+        BigDecimal value = null;
         try {
             String valueString = converter.get(valueColumnIdentifier);
             value = parseDecimal(valueString);
         } catch (Exception e) {
-            converter.error(valueColumnIdentifier + " is not a numerical value for Record");
-            return null;
+            converter.warning(valueColumnIdentifier + " is not a numerical value for Record");
         }
         String unit = converter.get(unitColumnIdentifier);
         if (isNullOrEmpty(unit)) {
-            converter.error(unitColumnIdentifier + " is empty for Record");
-            return null;
+            converter.warning(unitColumnIdentifier + " is empty for Record");
         }
         return getUcumQuantity(value, unit);
     }
