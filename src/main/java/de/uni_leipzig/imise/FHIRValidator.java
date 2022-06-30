@@ -130,11 +130,14 @@ public class FHIRValidator {
      * one of this error message parts then the error will be ignored.
      */
     private static final String[] VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS = {
-            "Validation failed für \"http://loinc.org",
+            "Validation failed für \"http://loinc.org#",
+            "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn#",
+            "Validation failed für \"http://snomed.info/sct#",
+            "Validation failed für \"http://unitsofmeasure.org#",
+
             "Unknown code 'http://loinc.org#",
-            "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn",
-            //"http://terminology.hl7.org/CodeSystem/v2-0203#OBI",  //generates only a warning
-            "Validation failed für \"http://snomed.info/sct",
+            "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
+            "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
 
     };
 
