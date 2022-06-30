@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
+import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
@@ -64,6 +65,10 @@ public class Excel2FhirMain implements Callable<Integer> {
             "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
     static boolean validateBundles = false;
 
+    @Option(names = {"-vll",
+            "--validation-log-level"}, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
+    static ValidationResultType minLogLevel = ValidationResultType.ERROR;
+
     /**
      * @param args
      */
@@ -105,7 +110,7 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         try {
             List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
-            Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles);
+            Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles, minLogLevel);
             if (inputFile != null) {
                 excel2Fhir.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             } else {

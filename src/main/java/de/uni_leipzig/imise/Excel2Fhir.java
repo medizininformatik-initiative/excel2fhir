@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.UcumMapper;
+import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
@@ -41,8 +42,12 @@ public class Excel2Fhir {
     /**
      * @param validate
      */
-    public Excel2Fhir(boolean validate) {
-        validator = validate ? new FHIRValidator() : null;
+    /**
+     * @param validate
+     * @param minLogLevel
+     */
+    public Excel2Fhir(boolean validate, ValidationResultType minLogLevel) {
+        validator = validate ? new FHIRValidator(minLogLevel) : null;
     }
 
     /**

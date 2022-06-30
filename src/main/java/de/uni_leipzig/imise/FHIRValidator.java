@@ -56,18 +56,13 @@ public class FHIRValidator {
      *
      */
     public enum ValidationResultType {
-        ERROR {
-            @Override
-            public boolean isError() {
-                return true;
-            }
-        },
-        WARNING,
+        ERROR,
         IGNORED,
+        WARNING,
         VALID;
 
         public boolean isError() {
-            return false;
+            return this == ERROR;
         }
     }
 
@@ -126,6 +121,13 @@ public class FHIRValidator {
     private final ResultCounter fullResultCounter = new ResultCounter();
 
     /**
+     * Determines which messeages are logged. Only messages with the same or an
+     * lower ordinal()-Value are logged. If <code>null</code> then nothing will
+     * be logged.
+     */
+    private final ValidationResultType minLogLevel;
+
+    /**
      * If the validation result of a full bundle or a single resource contains
      * one of this error message parts then the error will be ignored.
      */
@@ -154,9 +156,18 @@ public class FHIRValidator {
     };
 
     /**
-     *
-     */
+    *
+    */
     public FHIRValidator() {
+        this(ValidationResultType.ERROR);
+    }
+
+    /**
+     * @param minLogLevel Determines which messeages are logged. Only messages
+     *            with the same or an lower ordinal()-Value are logged.
+     */
+    public FHIRValidator(ValidationResultType minLogLevel) {
+        this.minLogLevel = minLogLevel;
         // Create a validator. Note that for good performance you can create as many validator objects
         // as you like, but you should reuse the same validation support object in all of the,.
         FhirContext fhirContext = FhirContext.forR4();
@@ -301,6 +312,7 @@ public class FHIRValidator {
     /**
      * @param resourceAsJson
      * @param strict
+     * @param minLogLevel
      * @return
      */
     public ValidationResultType validate(String resourceAsJson, boolean strict) {
@@ -322,24 +334,32 @@ public class FHIRValidator {
 
             if (!isIgnorableError(validationMessage, strict)) {
                 if (severity == ResultSeverityEnum.ERROR) {
-                    LOG.error(logMessage);
+                    if (log(ValidationResultType.ERROR)) {
+                        LOG.error(logMessage);
+                    }
                     bundleResultCounter.errors++;
                     fullResultCounter.errors++;
                     resultType = ValidationResultType.ERROR;
                 } else if (severity == ResultSeverityEnum.WARNING) {
-                    LOG.warn(logMessage);
+                    if (log(ValidationResultType.WARNING)) {
+                        LOG.warn(logMessage);
+                    }
                     bundleResultCounter.warnings++;
                     fullResultCounter.warnings++;
                     if (resultType.ordinal() > ValidationResultType.WARNING.ordinal()) {
                         resultType = ValidationResultType.WARNING;
                     }
                 } else {
-                    LOG.info(logMessage);
+                    if (log(ValidationResultType.VALID)) {
+                        LOG.info(logMessage);
+                    }
                     bundleResultCounter.valid++;
                     fullResultCounter.valid++;
                 }
             } else {
-                LOG.info("IGNORED " + logMessage);
+                if (log(ValidationResultType.IGNORED)) {
+                    LOG.info("IGNORED " + logMessage);
+                }
                 bundleResultCounter.ignored++;
                 fullResultCounter.ignored++;
                 if (resultType.ordinal() > ValidationResultType.IGNORED.ordinal()) {
@@ -353,7 +373,21 @@ public class FHIRValidator {
     }
 
     /**
+     * @param logLevel
+     * @return
+     */
+    private boolean log(ValidationResultType logLevel) {
+        return minLogLevel != null && minLogLevel.ordinal() >= logLevel.ordinal();
+    }
+
+    /**
      * @param validationMessage
+     * @param strict only if <code>false</code> the the
+     *            {@link #VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS}
+     *            are ignored too. This is used to ignore errors that are
+     *            allowed for a single resource (strcit = <code>false</code>)
+     *            but not allowed in the whole bundle (strict =
+     *            <code>true</code>).
      * @return <code>true</code> if the text of the message contains a String of
      *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
      */
@@ -375,15 +409,15 @@ public class FHIRValidator {
     }
 
     /**
-     * @param f
+     * @param file
      * @return
      * @throws ConfigurationException
      * @throws DataFormatException
      * @throws IOException
      */
-    static public Bundle readBundle(File f) throws ConfigurationException, DataFormatException, IOException {
+    static public Bundle readBundle(File file) throws ConfigurationException, DataFormatException, IOException {
         FhirContext ctx = FhirContext.forR4();
-        try (FileInputStream resourceStream = new FileInputStream(f)) {
+        try (FileInputStream resourceStream = new FileInputStream(file)) {
             IBaseResource r = ctx.newJsonParser().parseResource(resourceStream);
             assert r instanceof Bundle;
             return (Bundle) r;

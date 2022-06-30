@@ -129,8 +129,8 @@ public abstract class Converter {
     /**
      * @param msg
      */
-    protected void warning(String msg) {
-        warning(msg, 0);
+    public void warning(String msg) {
+        warning(msg, 1);
     }
 
     /**
