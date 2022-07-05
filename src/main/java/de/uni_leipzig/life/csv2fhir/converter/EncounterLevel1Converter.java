@@ -23,6 +23,7 @@ import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.UriType;
 
 import com.google.common.collect.ImmutableList;
 
@@ -142,12 +143,17 @@ public class EncounterLevel1Converter extends Converter {
                         new Identifier()
                                 .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
                                 .setValue(dizID));
-        return Collections.singletonList(
-                new Identifier()
-                        .setSystem("http://dummyurl") // must be an formal correct url!
-                        .setValue(encounterID)
-                        .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
-                        .setAssigner(reference));
+
+        Identifier identifier = new Identifier()
+                .setValue(encounterID)
+                .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
+                .setAssigner(reference);
+
+        //identifier.setSystem("http://dummyurl") // must be an formal correct url but we add a Data Absent Reason
+        UriType systemElement = identifier.getSystemElement();
+        systemElement.addExtension(getUnknownDataAbsentReason());
+
+        return Collections.singletonList(identifier);
     }
 
     /**
