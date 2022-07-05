@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.Excel2Csv;
+import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
 
@@ -28,6 +29,9 @@ public class Excel2Fhir {
     /**  */
     private final FHIRValidator validator;
 
+    /** Counters for all created resources */
+    private final ConverterResultStatistics allFilesStatistics = new ConverterResultStatistics();
+
     /**
      * @param excelFile
      * @return
@@ -39,9 +43,6 @@ public class Excel2Fhir {
         return targetCSVDir;
     }
 
-    /**
-     * @param validate
-     */
     /**
      * @param validate
      * @param minLogLevel
@@ -141,13 +142,15 @@ public class Excel2Fhir {
         Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator);
         try {
-            converter.convertFiles(patientsPerBundle, outputFileTypes);
+            ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
+            allFilesStatistics.add(converterStatistics);
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);
         }
+        LOG.info("All bundles of all files content:\n" + allFilesStatistics);
     }
 
 }

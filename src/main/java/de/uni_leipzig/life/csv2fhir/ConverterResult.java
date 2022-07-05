@@ -244,6 +244,14 @@ public class ConverterResult {
             resourceIDs.putAll(resourceType, ids);
         }
 
+        /**
+         *
+         */
+        public void reset() {
+            resourceCounts.clear();
+            resourceIDs.clear();
+        }
+
         @Override
         public String toString() {
             return getResultTable("        ");

@@ -61,6 +61,9 @@ public class Csv2Fhir {
     /** The validator to validate all separate Resoruces and then the bundle */
     private final FHIRValidator validator;
 
+    /** Counters for all resources created from one set of CSV files */
+    private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
+
     /**
      * @param inputDirectory
      * @param outputFileNameBase
@@ -136,7 +139,13 @@ public class Csv2Fhir {
      * @param outputFileTypes
      * @throws Exception
      */
-    public void convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
+    /**
+     * @param patientsPerBundle
+     * @param outputFileTypes
+     * @return the counters of all created resources
+     * @throws Exception
+     */
+    public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
         Collection<String> pids = getValues(Person + ".csv", Person.getPIDColumnIdentifier(), true, true);
         int pids2ConvertCount = pids.size();
         Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
@@ -170,7 +179,7 @@ public class Csv2Fhir {
         String firstPID = null;
         String lastPID = null;
 
-        ConverterResultStatistics fullStatistics = new ConverterResultStatistics();
+        fileSetStatistics.reset();
 
         for (String pid : pids) {
             fullPIDCount++;
@@ -187,7 +196,7 @@ public class Csv2Fhir {
             Stopwatch stopwatch = Stopwatch.createStarted();
             String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
             ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
-            ConverterResultStatistics statistics = bundlesWithCSVData.getStatistics();
+            ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
             if (bundle != null) {
                 BundlePostProcessor.convert(bundle);
             }
@@ -214,12 +223,13 @@ public class Csv2Fhir {
                 lastPID = null;
             }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
-            LOG.info("Patient " + pid + " bundle content:\n" + statistics);
+            LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
             if (bundleSavedAsFile) {
-                fullStatistics.add(statistics);
+                fileSetStatistics.add(singleBundleStatistics);
             }
         }
-        LOG.info("All bundles content:\n" + fullStatistics);
+        LOG.info("All bundles of current file set content:\n" + fileSetStatistics);
+        return fileSetStatistics;
     }
 
     /**
@@ -427,4 +437,5 @@ public class Csv2Fhir {
         requestComponent = requestComponent.setUrl(url);
         return requestComponent;
     }
+
 }
