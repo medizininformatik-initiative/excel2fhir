@@ -129,7 +129,7 @@ public abstract class Converter {
      * @throws Exception
      */
     public void error(String msg) throws Exception {
-        throw new Exception("Error on " + getErrorMessageBody(msg));
+        throw new Exception("Error on " + getLogMessageBody(msg));
     }
 
     /**
@@ -143,14 +143,28 @@ public abstract class Converter {
      * @param msg
      */
     protected void warning(String msg, int stackTraceBackwardSteps) {
-        LOG.warn(getErrorMessageBody(msg) + "     " + Sys.getStackTraceStep(3 + stackTraceBackwardSteps));
+        LOG.warn(getLogMessageBody(msg) + "     " + Sys.getStackTraceStep(3 + stackTraceBackwardSteps));
+    }
+
+    /**
+     * @param msg
+     */
+    public void info(String msg) {
+        warning(msg, 1);
+    }
+
+    /**
+     * @param msg
+     */
+    protected void info(String msg, int stackTraceBackwardSteps) {
+        LOG.info(getLogMessageBody(msg) + "     " + Sys.getStackTraceStep(3 + stackTraceBackwardSteps));
     }
 
     /**
      * @param msg
      * @return
      */
-    protected String getErrorMessageBody(String msg) {
+    protected String getLogMessageBody(String msg) {
         return getClass().getSimpleName().replaceFirst("Converter", "") + ": " + msg + ":" + record.getRecordNumber() + "! "
                 + record.toString();
     }

@@ -68,7 +68,7 @@ public class PersonConverter extends Converter {
         patient.setGender(parseGender());
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
-        //        patient.addGeneralPractitioner(parseHealthProvider());
+        patient.addGeneralPractitioner(parseHealthProvider());
         return Collections.singletonList(patient);
     }
 
@@ -199,7 +199,6 @@ public class PersonConverter extends Converter {
                 .setLine(List.of(new StringType("Dummy Street 1")));
     }
 
-    // not used yet
     /**
      * @return
      * @throws Exception
@@ -209,7 +208,7 @@ public class PersonConverter extends Converter {
         if (!Strings.isNullOrEmpty(practitioner)) {
             return new Reference().setDisplay(practitioner);
         }
-        error(Krankenkasse + " empty for Record");
+        info(Krankenkasse + " empty for Record");
         return null;
     }
 }
