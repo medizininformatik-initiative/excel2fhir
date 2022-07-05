@@ -136,11 +136,12 @@ public class FHIRValidator {
             "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn#",
             "Validation failed für \"http://snomed.info/sct#",
             "Validation failed für \"http://unitsofmeasure.org#",
+            "Validation failed für \"http://fhir.de/CodeSystem/ask#",
 
             "Unknown code 'http://loinc.org#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
-
+            "Unknown code 'http://fhir.de/CodeSystem/bfarm/ops#",
     };
 
     /**
