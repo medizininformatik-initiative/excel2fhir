@@ -1,7 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Enddatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Startdatum;
@@ -105,7 +105,7 @@ public class EncounterLevel1Converter extends Converter {
      * @throws Exception
      */
     private Coding getClass_() throws Exception {
-        Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Versorgungsfallklasse, ERROR);
+        Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Versorgungsfallklasse, WARNING);
         return setCorrectCodeAndDisplayInClassCoding(coding);
     }
 

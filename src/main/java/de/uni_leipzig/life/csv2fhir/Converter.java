@@ -2,6 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
@@ -15,6 +16,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -489,16 +491,17 @@ public abstract class Converter {
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName, EmptyRecordValueErrorLevel errorLevelIfCodeIsMissing) throws Exception {
         String code = record.get(codeColumnName);
-        if (code != null) {
-            return createCoding(codeSystem, code);
+        if (code == null && errorLevelIfCodeIsMissing != IGNORE) {
+            String errorMessage = codeColumnName + " empty for Record";
+            if (errorLevelIfCodeIsMissing == ERROR) {
+                error(errorMessage);
+                return null;
+            }
+            if (errorLevelIfCodeIsMissing == WARNING) {
+                warning(errorMessage);
+            }
         }
-        String errorMessage = codeColumnName + " empty for Record";
-        if (errorLevelIfCodeIsMissing == ERROR) {
-            error(errorMessage);
-        } else {
-            warning(errorMessage);
-        }
-        return null;
+        return createCoding(codeSystem, code);
     }
 
     /**
@@ -507,9 +510,12 @@ public abstract class Converter {
      * @return a new {@link Coding} with the given values
      */
     public static Coding createCoding(String codeSystem, String code) {
-        return new Coding()
-                .setSystem(codeSystem)
-                .setCode(code);
+        Coding coding = new Coding().setSystem(codeSystem);
+        if (!Strings.isNullOrEmpty(code)) {
+            return coding.setCode(code);
+        }
+        coding.getCodeElement().addExtension(getUnknownDataAbsentReason());
+        return coding;
     }
 
     /**
@@ -519,10 +525,30 @@ public abstract class Converter {
      * @return a new {@link Coding} with the given values
      */
     public static Coding createCoding(String codeSystem, String code, String display) {
-        return new Coding()
-                .setSystem(codeSystem)
-                .setCode(code)
-                .setDisplay(display);
+        Coding coding = createCoding(codeSystem, code);
+        coding.setDisplay(display);
+        return coding;
+    }
+
+    /**
+     * @param coding
+     * @return
+     */
+    public boolean isDataAbsentReason(Coding coding) {
+        if (coding != null) {
+            String code = coding.getCode();
+            DataAbsentReason dataAbsentReason = null;
+            try {
+                dataAbsentReason = DataAbsentReason.fromCode(code);
+            } catch (FHIRException e) {
+                //ignore the org.hl7.fhir.exceptions.FHIRException: Unknown DataAbsentReason code
+            }
+            if (dataAbsentReason != null) {
+                String system = coding.getSystem();
+                return dataAbsentReason.getSystem().equals(system);
+            }
+        }
+        return false;
     }
 
     /**
@@ -588,17 +614,12 @@ public abstract class Converter {
      * @throws Exception
      */
     public static Quantity getUcumQuantity(BigDecimal value, String ucumCode) throws Exception {
-
         String ucumUnit = null;
         if (!Strings.isNullOrEmpty(ucumCode)) {
             ucumCode = UcumMapper.getValidUcumCode(ucumCode);
             ucumUnit = UcumMapper.getUcumUnit(ucumCode);
         } else {
             ucumCode = null;
-        }
-        //all values invalid -> return null
-        if (ucumCode == null && ucumUnit == null && value == null) {
-            return null;
         }
         Quantity quantity = new Quantity().setSystem("http://unitsofmeasure.org");
         if (value != null) {

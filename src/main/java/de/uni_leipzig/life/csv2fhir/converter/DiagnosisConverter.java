@@ -63,39 +63,37 @@ public class DiagnosisConverter extends Converter {
 
     @Override
     public List<Resource> convert() throws Exception {
-        List<String> icdCodes = parseICDCodes();
-        if (isEmpty(icdCodes)) {
-            return null;
-        }
         List<Resource> conditions = new ArrayList<>();
+        List<String> icdCodes = parseICDCodes();
+        if (!isEmpty(icdCodes)) {
+            for (int i = 0; i < icdCodes.size(); i++) {
+                String icdCode = icdCodes.get(i);
+                Condition condition = new Condition();
+                // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
+                String id = getDiagnoseId(i);
+                condition.setId(id);
+                condition.setIdentifier(Collections.singletonList(new Identifier().setValue(id)));
+                condition.setMeta(new Meta().addProfile(PROFILE));
+                //        condition.addCategory(convertCategory());
+                condition.setCode(convertCode(icdCode));
+                condition.setSubject(getPatientReference());
+                condition.setRecordedDateElement(convertRecordedDate());
 
-        for (int i = 0; i < icdCodes.size(); i++) {
-            String icdCode = icdCodes.get(i);
-            Condition condition = new Condition();
-            // Nicht im Profil, aber notwendig für Fall Aufnahmediagnose
-            String id = getDiagnoseId(i);
-            condition.setId(id);
-            condition.setIdentifier(Collections.singletonList(new Identifier().setValue(id)));
-            condition.setMeta(new Meta().addProfile(PROFILE));
-            //        condition.addCategory(convertCategory());
-            condition.setCode(convertCode(icdCode));
-            condition.setSubject(getPatientReference());
-            condition.setRecordedDateElement(convertRecordedDate());
+                if (!isValid(condition)) {
+                    return Collections.emptyList();
+                }
 
-            if (!isValid(condition)) {
-                return Collections.emptyList();
+                //enable this to get the reference from condition to encounter. This is optional
+                //but it creates a circle, because the encounter has also a reference list to all
+                //diagnosis.
+                //condition.setEncounter(getEncounterReference());
+
+                //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+                String encounterId = getEncounterId();
+                String diagnosisUseIdentifier = get(Typ);
+                EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                conditions.add(condition);
             }
-
-            //enable this to get the reference from condition to encounter. This is optional
-            //but it creates a circle, because the encounter has also a reference list to all
-            //diagnosis.
-            //condition.setEncounter(getEncounterReference());
-
-            //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
-            String encounterId = getEncounterId();
-            String diagnosisUseIdentifier = get(Typ);
-            EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
-            conditions.add(condition);
         }
         return conditions;
     }

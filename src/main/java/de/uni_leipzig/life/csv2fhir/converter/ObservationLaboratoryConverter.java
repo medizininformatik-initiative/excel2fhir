@@ -70,9 +70,7 @@ public class ObservationLaboratoryConverter extends Converter {
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         observation.setEffective(parseObservationTimestamp(this, Zeitstempel_Abnahme));
         observation.setCode(parseObservationCode());
-        //set value or value absent reason
-        Quantity observationValue = parseObservationValue(this, Messwert, Einheit);
-        setValueOrAbsentReason(observation, observationValue);
+        observation.setValue(parseObservationValue(this, Messwert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
         observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
         return Collections.singletonList(observation);
@@ -90,9 +88,8 @@ public class ObservationLaboratoryConverter extends Converter {
     private CodeableConcept parseObservationCode() throws Exception {
         String loincCodeSystem = "http://loinc.org";
         Coding loincCoding = createCoding(loincCodeSystem, LOINC, IGNORE);
-        if (loincCoding == null) {
+        if (isDataAbsentReason(loincCoding)) {
             warning(LOINC + " empty for Record -> creating empty code");
-            loincCoding = createCoding(loincCodeSystem, null);
         }
         return createCodeableConcept(loincCoding, Parameter);
     }
@@ -137,18 +134,6 @@ public class ObservationLaboratoryConverter extends Converter {
             converter.warning(unitColumnIdentifier + " is empty for Record");
         }
         return getUcumQuantity(value, unit);
-    }
-
-    /**
-     * @param observation
-     * @param observationValue
-     */
-    public static void setValueOrAbsentReason(Observation observation, Quantity observationValue) {
-        if (observationValue != null) {
-            observation.setValue(observationValue);
-        } else {
-            observation.setDataAbsentReason(getUnknownDataAbsentReasonCodeableConcept());
-        }
     }
 
     /**

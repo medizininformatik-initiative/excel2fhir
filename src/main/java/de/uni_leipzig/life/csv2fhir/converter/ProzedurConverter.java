@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
+import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurencode;
@@ -79,7 +79,7 @@ public class ProzedurConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
-        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode, ERROR);
+        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode, WARNING);
         if (procedureCoding != null) {
             procedureCoding.setVersion("2020"); // just to be KDS compatible
             return createCodeableConcept(procedureCoding, Prozedurentext);
