@@ -159,9 +159,9 @@ public class PersonConverter extends Converter {
      */
     private Address parseAddress() {
         String address = get(Anschrift);
-        Address a;
+        Address addressResource;
         if (address != null) {
-            a = new Address();
+            addressResource = new Address();
             String[] addressSplitByComma = address.split(",");
             if (addressSplitByComma.length == 2) {
                 String[] addressPlzAndCity = addressSplitByComma[1].split(" ");
@@ -171,32 +171,33 @@ public class PersonConverter extends Converter {
                     city.append(addressPlzAndCity[i]);
                 }
                 List<StringType> l = Collections.singletonList(new StringType(addressSplitByComma[0]));
-                a.setCity(city.toString()).setPostalCode(plz).setLine(l);
+                addressResource.setCity(city.toString()).setPostalCode(plz).setLine(l);
             } else {
                 // "12345 ORT"
                 String[] addressPlzAndCity = address.split(" ");
                 if (addressPlzAndCity.length == 2) {
                     String plz = addressPlzAndCity[0];
                     String city = addressPlzAndCity[1];
-                    a.setCity(city).setPostalCode(plz).setText(address);
+                    addressResource.setCity(city).setPostalCode(plz).setText(address);
                 } else {
-                    a.setText(address);
+                    addressResource.setText(address);
                 }
             }
-            return a.setType(AddressType.BOTH).setCountry("DE");
+            return addressResource.setType(AddressType.BOTH).setCountry("DE");
         }
-        warning("On " + Person + ": " + Anschrift + " empty. Creating dummy address. " + this);
-        return getDummyAddress(); //KDS-Validator needs an Address
+        warning("On " + Person + ": " + Anschrift + " empty. " + this);
+        return getDataAbsentAddress(); //needed to be KDS compliant
     }
 
     /**
-     * @return a dummy address
+     * @return an address filled with UNKNOWN data absent reasons
      */
-    public Address getDummyAddress() {
-        return new Address()
-                .setCity("Dummy City")
-                .setPostalCode("00000")
-                .setLine(List.of(new StringType("Dummy Street 1")));
+    public Address getDataAbsentAddress() {
+        Address address = new Address();
+        address.addExtension(getUnknownDataAbsentReason());
+        //address.getCityElement().addExtension(getUnknownDataAbsentReason());
+        //address.getPostalCodeElement().addExtension(getUnknownDataAbsentReason());
+        return address;
     }
 
     /**
