@@ -64,6 +64,9 @@ public abstract class Converter {
     }
 
     /**  */
+    private final static Extension DATA_ABSENT_REASON_UNKNOWN = createUnknownDataAbsentReason();
+
+    /**  */
     final String pid;
 
     /**  */
@@ -695,6 +698,13 @@ public abstract class Converter {
      * @return
      */
     public static Extension getUnknownDataAbsentReason() {
+        return DATA_ABSENT_REASON_UNKNOWN;
+    }
+
+    /**
+     * @return
+     */
+    private static Extension createUnknownDataAbsentReason() {
         Pair<String, String> urlAndCode = getDataAbsentReasonUrlAndCode();
         Extension dataAbsentReason = Factory.newExtension(urlAndCode.getLeft(), new CodeType(urlAndCode.getRight()), true);
         return dataAbsentReason;
