@@ -169,7 +169,7 @@ public class ObservationLaboratoryConverter extends Converter {
     /**
      * @return the always same category for laboratory observations
      */
-    public static List<CodeableConcept> getLaborytoryObservationFixedCategory() {
+    private static List<CodeableConcept> getLaborytoryObservationFixedCategory() {
         Coding laboratoryCategory1 = new Coding()
                 .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
                 .setCode("laboratory")
