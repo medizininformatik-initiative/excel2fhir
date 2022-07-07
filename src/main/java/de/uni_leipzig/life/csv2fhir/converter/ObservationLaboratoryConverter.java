@@ -69,7 +69,8 @@ public class ObservationLaboratoryConverter extends Converter {
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         setEffective(observation, this, Zeitstempel_Abnahme);
         observation.setCode(parseObservationCode());
-        observation.setValue(parseObservationValue(this, Messwert, Einheit));
+        observation.setCode(parseLoincCodeableConcept(LOINC, Parameter));
+        observation.setValue(parseObservationValue(Messwert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
         observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
         return Collections.singletonList(observation);
@@ -80,17 +81,31 @@ public class ObservationLaboratoryConverter extends Converter {
         return Laborbefund.getPIDColumnIdentifier();
     }
 
+    @Override
+    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
+        return ObservationLaboratory_Columns.Versorgungsfall_Nr;
+    }
+
     /**
      * @return
      * @throws Exception
      */
-    private CodeableConcept parseObservationCode() throws Exception {
+    protected CodeableConcept parseObservationCode() throws Exception {
         String loincCodeSystem = "http://loinc.org";
         Coding loincCoding = createCoding(loincCodeSystem, LOINC);
         if (isDataAbsentReason(loincCoding)) {
             warning(LOINC + " empty for Record -> creating \"unknown\" Data Absent Reason");
         }
         return createCodeableConcept(loincCoding, Parameter);
+    }
+
+    /**
+     * @param loincCodeColumnIdentifier
+     * @param loincTextColumnIdentifier
+     * @return
+     */
+    protected CodeableConcept parseLoincCodeableConcept(Enum<?> loincCodeColumnIdentifier, Enum<?> loincTextColumnIdentifier) {
+        return createCodeableConcept("http://loinc.org", loincCodeColumnIdentifier, loincTextColumnIdentifier);
     }
 
     /**
@@ -116,17 +131,17 @@ public class ObservationLaboratoryConverter extends Converter {
      * @return
      * @throws Exception
      */
-    public static Quantity parseObservationValue(Converter converter, Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier) throws Exception {
+    public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier) throws Exception {
         BigDecimal value = null;
         try {
-            String valueString = converter.get(valueColumnIdentifier);
+            String valueString = get(valueColumnIdentifier);
             value = parseDecimal(valueString);
         } catch (Exception e) {
-            converter.warning(valueColumnIdentifier + " is not a numerical value for Record");
+            warning(valueColumnIdentifier + " is not a numerical value for Record");
         }
-        String unit = converter.get(unitColumnIdentifier);
+        String unit = get(unitColumnIdentifier);
         if (isNullOrEmpty(unit)) {
-            converter.warning(unitColumnIdentifier + " is empty for Record");
+            warning(unitColumnIdentifier + " is empty for Record");
         }
         return getUcumQuantity(value, unit);
     }
@@ -167,11 +182,6 @@ public class ObservationLaboratoryConverter extends Converter {
                 .addCoding(laboratoryCategory1)
                 .addCoding(laboratoryCatgeory2);
         return ImmutableList.of(laboratoryCategories);
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return ObservationLaboratory_Columns.Versorgungsfall_Nr;
     }
 
 }

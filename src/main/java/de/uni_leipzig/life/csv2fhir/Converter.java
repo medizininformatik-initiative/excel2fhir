@@ -1,8 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
@@ -383,30 +381,6 @@ public abstract class Converter {
      * Creates a new {@link CodeableConcept} to which coding is added. This code
      * has the passed {@link CodeSystem} and as code value the value from the
      * column with the name codeColumnName from the {@link CSVRecord}.
-     *
-     * @param codeSystem the code system of the contained {@link Coding}
-     * @param codeColumnName Name of the column with the code value for the
-     *            {@link Coding}
-     * @param errorLevelIfCodeIsMissing {@link EmptyRecordValueErrorLevel#ERROR}
-     *            means that an error will be thrown if the value in the column
-     *            with the codeColumName is <code>null</code>.
-     *            {@link EmptyRecordValueErrorLevel#WARNING} only prints a
-     *            warning message and {@link EmptyRecordValueErrorLevel#IGNORE}
-     *            or <code>null</code> will ignore this case.
-     * @return a new {@link CodeableConcept} or <code>null</code> if the code
-     *         value is missing
-     * @throws Exception if errorLevelIfCodeIsMissing is
-     *             {@link EmptyRecordValueErrorLevel#ERROR} and the code value
-     *             is missing.
-     */
-    public CodeableConcept createCodeableConcept(String codeSystem, Enum<?> codeColumnName, EmptyRecordValueErrorLevel errorLevelIfCodeIsMissing) throws Exception {
-        return createCodeableConcept(codeSystem, codeColumnName, null, errorLevelIfCodeIsMissing);
-    }
-
-    /**
-     * Creates a new {@link CodeableConcept} to which coding is added. This code
-     * has the passed {@link CodeSystem} and as code value the value from the
-     * column with the name codeColumnName from the {@link CSVRecord}.
      * Additionally the returned {@link CodeableConcept} gets the text from the
      * column textColumnName.
      *
@@ -415,31 +389,21 @@ public abstract class Converter {
      *            {@link Coding}
      * @param textColumnName Name of the column with the text for the returned
      *            {@link CodeableConcept}
-     * @param errorLevelIfCodeIsMissing {@link EmptyRecordValueErrorLevel#ERROR}
-     *            means that an error will be thrown if the value in the column
-     *            with the codeColumName is <code>null</code>.
-     *            {@link EmptyRecordValueErrorLevel#WARNING} only prints a
-     *            warning message and {@link EmptyRecordValueErrorLevel#IGNORE}
-     *            or <code>null</code> will ignore this case.
-     * @return a new {@link CodeableConcept} or <code>null</code> if the code
-     *         value is missing
-     * @throws Exception if errorLevelIfCodeIsMissing is
-     *             {@link EmptyRecordValueErrorLevel#ERROR} and the code value
-     *             is missing.
+     * @return a new {@link CodeableConcept} or if missing and mandatory then a
+     *         data absent reasond or if not mandatory then <code>null</code>
      */
-    public CodeableConcept createCodeableConcept(String codeSystem, Enum<?> codeColumnName, Enum<?> textColumnName, EmptyRecordValueErrorLevel errorLevelIfCodeIsMissing) throws Exception {
+    public CodeableConcept createCodeableConcept(String codeSystem, Enum<?> codeColumnName, Enum<?> textColumnName) {
         String code = record.get(codeColumnName);
         if (code != null) {
             Coding coding = createCoding(codeSystem, code);
             return createCodeableConcept(coding, textColumnName);
         }
         String errorMessage = codeColumnName + " empty for Record";
-        if (errorLevelIfCodeIsMissing == ERROR) {
-            error(errorMessage);
-        } else if (errorLevelIfCodeIsMissing == WARNING) {
-            warning(errorMessage);
-            return getUnknownDataAbsentReasonCodeableConcept();
+        if (isMandatory(codeColumnName)) {
+            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
+            return getUnknownDataAbsentReasonCodeableConcept().setText(record.get(textColumnName));
         }
+        warning(errorMessage);
         return null;
     }
 

@@ -1,12 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.PROFILE;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.getIdentifier;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.parseObservationValue;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.setEffective;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.LOINC;
@@ -23,12 +17,11 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 
-public class ObservationVitalSignsConverter extends Converter {
+public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
     /**
      * @param record
@@ -51,8 +44,8 @@ public class ObservationVitalSignsConverter extends Converter {
         observation.setSubject(getPatientReference()); // if null then observation is invalid
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
         setEffective(observation, this, Zeitstempel);
-        observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, WARNING));
-        observation.setValue(parseObservationValue(this, Wert, Einheit));
+        observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
+        observation.setValue(parseObservationValue(Wert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
         observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
         //        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation);
