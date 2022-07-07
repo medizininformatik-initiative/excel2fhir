@@ -1,7 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Enddatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Startdatum;
@@ -25,6 +24,7 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.UriType;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.FHIRValidator;
@@ -106,21 +106,23 @@ public class EncounterLevel1Converter extends Converter {
      * @throws Exception
      */
     private Coding getClass_() throws Exception {
-        Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Versorgungsfallklasse, WARNING);
+        Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Versorgungsfallklasse);
         return setCorrectCodeAndDisplayInClassCoding(coding);
     }
 
     /**
      * @param coding
      */
-    private Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
+    private static Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
         if (coding != null) {
             //replace the code string from by the correct code and display from the resource map
             String code = coding.getCode();
-            String realCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get(code);
-            String display = ENCOUNTER_LEVEL1_CLASS_RESOURCES.getFirstBackwardKey(realCode);
-            coding.setCode(realCode);
-            coding.setDisplay(display);
+            if (!Strings.isNullOrEmpty(code)) { // is null if the Coding has only a Data Absent Reason Extension
+                String realCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get(code);
+                String display = ENCOUNTER_LEVEL1_CLASS_RESOURCES.getFirstBackwardKey(realCode);
+                coding.setCode(realCode);
+                coding.setDisplay(display);
+            }
         }
         return coding;
     }

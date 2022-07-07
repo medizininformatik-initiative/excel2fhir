@@ -2,8 +2,8 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.ERROR;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.WARNING;
+import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
@@ -130,6 +130,20 @@ public abstract class Converter {
      */
     public void error(String msg) throws Exception {
         throw new Exception("Error on " + getLogMessageBody(msg));
+    }
+
+    /**
+     * @param msg
+     */
+    public void err(String msg) {
+        err(msg, 1);
+    }
+
+    /**
+     * @param msg
+     */
+    protected void err(String msg, int stackTraceBackwardSteps) {
+        LOG.error(getLogMessageBody(msg) + "     " + Sys.getStackTraceStep(3 + stackTraceBackwardSteps));
     }
 
     /**
@@ -494,29 +508,17 @@ public abstract class Converter {
      *
      * @param codeSystem the code system to set
      * @param codeColumnName Name of the column with the code
-     * @param errorLevelIfCodeIsMissing {@link EmptyRecordValueErrorLevel#ERROR}
-     *            means that an error will be thrown if the value in the column
-     *            with the codeColumName is <code>null</code>.
-     *            {@link EmptyRecordValueErrorLevel#WARNING} only prints a
-     *            warning message and any other value
-     *            {@link EmptyRecordValueErrorLevel#IGNORE} or <code>null</code>
-     *            will ignore this case.
      * @return a new {@link Coding}
-     * @throws Exception if errorLevelIfCodeIsMissing is
-     *             {@link EmptyRecordValueErrorLevel#ERROR} and the code value
-     *             is missing.
      */
-    public Coding createCoding(String codeSystem, Enum<?> codeColumnName, EmptyRecordValueErrorLevel errorLevelIfCodeIsMissing) throws Exception {
+    public Coding createCoding(String codeSystem, Enum<?> codeColumnName) {
         String code = record.get(codeColumnName);
-        if (code == null && errorLevelIfCodeIsMissing != IGNORE) {
+        if (Strings.isNullOrEmpty(code)) {
             String errorMessage = codeColumnName + " empty for Record";
-            if (errorLevelIfCodeIsMissing == ERROR) {
-                error(errorMessage);
+            if (!isMandatory(codeColumnName)) {
+                warning(errorMessage);
                 return null;
             }
-            if (errorLevelIfCodeIsMissing == WARNING) {
-                warning(errorMessage);
-            }
+            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
         }
         return createCoding(codeSystem, code);
     }

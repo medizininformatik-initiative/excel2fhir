@@ -1,7 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static de.uni_leipzig.life.csv2fhir.Converter.EmptyRecordValueErrorLevel.IGNORE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.LOINC;
@@ -87,9 +86,9 @@ public class ObservationLaboratoryConverter extends Converter {
      */
     private CodeableConcept parseObservationCode() throws Exception {
         String loincCodeSystem = "http://loinc.org";
-        Coding loincCoding = createCoding(loincCodeSystem, LOINC, IGNORE);
+        Coding loincCoding = createCoding(loincCodeSystem, LOINC);
         if (isDataAbsentReason(loincCoding)) {
-            warning(LOINC + " empty for Record -> creating empty code");
+            warning(LOINC + " empty for Record -> creating \"unknown\" Data Absent Reason");
         }
         return createCodeableConcept(loincCoding, Parameter);
     }

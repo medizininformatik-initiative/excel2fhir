@@ -23,4 +23,14 @@ public interface TableColumnIdentifier {
         return null;
     }
 
+    /**
+     * @param potencialTableColumnIdentifier
+     * @return <code>true</code> if the {@link Enum} is an
+     *         {@link TableColumnIdentifier} and this TableColumnIdentifier
+     *         returns <code>true</code> on {@link #isMandatory()}.
+     */
+    public static boolean isMandatory(Enum<?> potencialTableColumnIdentifier) {
+        return potencialTableColumnIdentifier instanceof TableColumnIdentifier && ((TableColumnIdentifier) potencialTableColumnIdentifier).isMandatory();
+    }
+
 }
