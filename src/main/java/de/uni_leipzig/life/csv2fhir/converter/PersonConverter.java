@@ -100,14 +100,14 @@ public class PersonConverter extends Converter {
         if (Strings.isNullOrEmpty(surname)) {
             warning("Empty " + Nachname + " -> Create Data Absent Reason \"unknown\"");
             StringType familyElement = humanName.getFamilyElement();
-            familyElement.addExtension(getUnknownDataAbsentReason());
+            familyElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         } else {
             humanName.setFamily(surname).setUse(NameUse.OFFICIAL);
         }
         if (Strings.isNullOrEmpty(forename)) {
             warning("Empty " + Vorname + " -> Create Data Absent Reason \"unknown\"");
             StringType givenElement = humanName.addGivenElement();
-            givenElement.addExtension(getUnknownDataAbsentReason());
+            givenElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         } else {
             for (String name : forename.split(" ")) {
                 humanName.addGiven(name);
@@ -194,7 +194,7 @@ public class PersonConverter extends Converter {
      */
     public Address getDataAbsentAddress() {
         Address address = new Address();
-        address.addExtension(getUnknownDataAbsentReason());
+        address.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         //address.getCityElement().addExtension(getUnknownDataAbsentReason());
         //address.getPostalCodeElement().addExtension(getUnknownDataAbsentReason());
         return address;

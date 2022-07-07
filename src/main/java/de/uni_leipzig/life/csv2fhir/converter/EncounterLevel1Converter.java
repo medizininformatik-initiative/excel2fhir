@@ -153,7 +153,7 @@ public class EncounterLevel1Converter extends Converter {
 
         //identifier.setSystem("http://dummyurl") // must be an formal correct url but we add a Data Absent Reason
         UriType systemElement = identifier.getSystemElement();
-        systemElement.addExtension(getUnknownDataAbsentReason());
+        systemElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
 
         return Collections.singletonList(identifier);
     }

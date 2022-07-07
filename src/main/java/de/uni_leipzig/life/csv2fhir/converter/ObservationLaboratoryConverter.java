@@ -120,7 +120,7 @@ public class ObservationLaboratoryConverter extends Converter {
         } catch (Exception e) {
             converter.warning("Can not parse " + timestampColumnIdentifier + " for Record -> set \"unknown\" Data Absent Reason");
             DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
-            effectiveDateTimeType.addExtension(getUnknownDataAbsentReason());
+            effectiveDateTimeType.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
     }
 

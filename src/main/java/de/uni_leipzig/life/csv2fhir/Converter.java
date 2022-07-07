@@ -5,6 +5,8 @@ import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
+import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
+import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +15,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
@@ -62,7 +63,10 @@ public abstract class Converter {
     }
 
     /**  */
-    private final static Extension DATA_ABSENT_REASON_UNKNOWN = createUnknownDataAbsentReason();
+    public static final Extension DATA_ABSENT_REASON_UNKNOWN = createDataAbsentReason(UNKNOWN);
+
+    /**  */
+    public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
 
     /**  */
     final String pid;
@@ -497,7 +501,7 @@ public abstract class Converter {
         if (!Strings.isNullOrEmpty(code)) {
             return coding.setCode(code);
         }
-        coding.getCodeElement().addExtension(getUnknownDataAbsentReason());
+        coding.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
         return coding;
     }
 
@@ -609,19 +613,19 @@ public abstract class Converter {
             quantity.setValue(value);
         } else {
             quantity.getValueElement()
-                    .addExtension(getUnknownDataAbsentReason());
+                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
         if (!Strings.isNullOrEmpty(ucumCode)) {
             quantity.setCode(ucumCode);
         } else {
             quantity.getCodeElement()
-                    .addExtension(getUnknownDataAbsentReason());
+                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
         if (!Strings.isNullOrEmpty(ucumUnit)) {
             quantity.setUnit(ucumUnit);
         } else {
             quantity.getUnitElement()
-                    .addExtension(getUnknownDataAbsentReason());
+                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
         return quantity;
     }
@@ -677,17 +681,8 @@ public abstract class Converter {
     /**
      * @return
      */
-    public static Extension getUnknownDataAbsentReason() {
-        return DATA_ABSENT_REASON_UNKNOWN;
-    }
-
-    /**
-     * @return
-     */
-    private static Extension createUnknownDataAbsentReason() {
-        Pair<String, String> urlAndCode = getDataAbsentReasonUrlAndCode();
-        Extension dataAbsentReason = Factory.newExtension(urlAndCode.getLeft(), new CodeType(urlAndCode.getRight()), true);
-        return dataAbsentReason;
+    private static Extension createDataAbsentReason(DataAbsentReason dataAbsentReason) {
+        return Factory.newExtension(dataAbsentReason.getSystem(), new CodeType(dataAbsentReason.toCode()), true);
     }
 
     /**
@@ -695,19 +690,15 @@ public abstract class Converter {
      *         absent reason for {@link Observation} values.
      */
     public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
-        Pair<String, String> urlAndCode = getDataAbsentReasonUrlAndCode();
-        return createCodeableConcept(urlAndCode.getLeft(), urlAndCode.getRight());
+        return getDataAbsentReasonCodeableConcept(DataAbsentReason.UNKNOWN);
     }
 
     /**
+     * @param dataAbsentReason
      * @return
      */
-    private static Pair<String, String> getDataAbsentReasonUrlAndCode() {
-        DataAbsentReason unknown = DataAbsentReason.UNKNOWN;
-        //String url = "http://hl7.org/fhir/StructureDefinition/data-absent-reason";
-        String url = unknown.getSystem(); // this here is an other url (CodeSystem instead of StructureDefinition)
-        String code = unknown.toCode();
-        return Pair.of(url, code);
+    public static CodeableConcept getDataAbsentReasonCodeableConcept(DataAbsentReason dataAbsentReason) {
+        return createCodeableConcept(dataAbsentReason.getSystem(), dataAbsentReason.toCode());
     }
 
 }

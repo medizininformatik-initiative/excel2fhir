@@ -1,7 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getResource;
-import static de.uni_leipzig.life.csv2fhir.Converter.getUnknownDataAbsentReason;
+import static de.uni_leipzig.life.csv2fhir.Converter.DATA_ABSENT_REASON_UNKNOWN;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER;
 
@@ -110,7 +110,7 @@ public class BundlePostProcessor {
             DiagnosisComponent diagnosisComponent = new DiagnosisComponent();
             Reference condition = diagnosisComponent.getCondition();
             StringType referenceElement_ = condition.getReferenceElement_();
-            referenceElement_.addExtension(getUnknownDataAbsentReason());
+            referenceElement_.addExtension(DATA_ABSENT_REASON_UNKNOWN);
             diagnoses.add(diagnosisComponent);
             encounter.setDiagnosis(diagnoses);
         }
@@ -137,7 +137,7 @@ public class BundlePostProcessor {
         Coding class_ = encounter.getClass_();
         if (class_.isEmpty()) {
             Coding coding = new Coding();
-            coding.addExtension(getUnknownDataAbsentReason());
+            coding.addExtension(DATA_ABSENT_REASON_UNKNOWN);
             encounter.setClass_(coding);
         }
 

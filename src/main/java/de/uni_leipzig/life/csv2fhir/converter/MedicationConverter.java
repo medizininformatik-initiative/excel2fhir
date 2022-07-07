@@ -255,7 +255,7 @@ public class MedicationConverter extends Converter {
             askCoding = new Coding();
             askCoding.setSystem(askCodeSystem);
             CodeType codeElement = askCoding.getCodeElement();
-            codeElement.addExtension(getUnknownDataAbsentReason());
+            codeElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
         return askCoding;
     }
