@@ -12,9 +12,13 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Resource;
+
+import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
@@ -22,6 +26,13 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
+
+    /**
+     * Category for all Observation of this type. These Observations have no
+     * proper code system (like laboratory observations) so we set here data
+     * absent reasons.
+     */
+    private static List<CodeableConcept> VITAL_SIGNS_OBSERVATION_FIXED_CATEGORY = getVitalObservationFixedCategory();
 
     /**
      * @param record
@@ -47,9 +58,31 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
         observation.setValue(parseObservationValue(Wert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
-        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
-        //        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation);
+        observation.setCategory(getVitalObservationFixedCategory());
+        //String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation); // for debug
         return Collections.singletonList(observation);
+    }
+
+    /**
+     * Codes from file
+     * hl7.fhir.r4.core-4.0.1/package/ValueSet-observation-vitalsignresult.json
+     * are the same from https://loinc.org/85353-1/
+     *
+     * @return the always same category for vital signs observations
+     */
+    private static List<CodeableConcept> getVitalObservationFixedCategory() {
+        Coding vitalCategory1 = new Coding()
+                .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
+                .setCode("vital-signs")
+                .setDisplay("Vital Signs");
+        Coding vitalCatgeory2 = new Coding()
+                .setSystem("http://loinc.org")
+                .setCode("85353-1")
+                .setDisplay("Vital signs, weight, height, head circumference, oxygen saturation and BMI panel");
+        CodeableConcept vitalCategories = new CodeableConcept()
+                .addCoding(vitalCategory1)
+                .addCoding(vitalCatgeory2);
+        return ImmutableList.of(vitalCategories);
     }
 
     @Override
