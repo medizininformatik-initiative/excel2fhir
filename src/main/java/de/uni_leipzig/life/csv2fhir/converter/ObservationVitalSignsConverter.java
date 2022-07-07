@@ -5,8 +5,8 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentati
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.LABORYTORY_OBSERVATION_FIXED_CATEGORY;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.PROFILE;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.getIdentifier;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.parseObservationTimestamp;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.parseObservationValue;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.setEffective;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.LOINC;
@@ -44,13 +44,13 @@ public class ObservationVitalSignsConverter extends Converter {
     public List<Resource> convert() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class);
-        String id = getEncounterId() + "-OK-" + nextId;
+        String id = getEncounterId() + "-OV-" + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
         observation.setSubject(getPatientReference()); // if null then observation is invalid
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
-        observation.setEffective(parseObservationTimestamp(this, Zeitstempel));
+        setEffective(observation, this, Zeitstempel);
         observation.setCode(createCodeableConcept("http://loinc.org", LOINC, Bezeichner, WARNING));
         observation.setValue(parseObservationValue(this, Wert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));

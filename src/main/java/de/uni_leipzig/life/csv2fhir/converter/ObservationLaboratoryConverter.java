@@ -68,7 +68,7 @@ public class ObservationLaboratoryConverter extends Converter {
         observation.setStatus(FINAL);
         observation.setSubject(getPatientReference()); // if null then observation is invalid
         observation.setEncounter(getEncounterReference()); // if null then observation is invalid
-        observation.setEffective(parseObservationTimestamp(this, Zeitstempel_Abnahme));
+        setEffective(observation, this, Zeitstempel_Abnahme);
         observation.setCode(parseObservationCode());
         observation.setValue(parseObservationValue(this, Messwert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
@@ -95,23 +95,19 @@ public class ObservationLaboratoryConverter extends Converter {
     }
 
     /**
+     * @param observation
      * @param converter
      * @param timestampColumnIdentifier
-     * @return
-     * @throws Exception
      */
-    public static DateTimeType parseObservationTimestamp(Converter converter, Enum<?> timestampColumnIdentifier) throws Exception {
-        String timestamp = converter.get(timestampColumnIdentifier);
-        if (!isNullOrEmpty(timestamp)) {
-            try {
-                return DateUtil.parseDateTimeType(timestamp);
-            } catch (Exception eYear) {
-                converter.error("Can not parse " + timestampColumnIdentifier + " for Record");
-                return null;
-            }
+    public static void setEffective(Observation observation, Converter converter, Enum<?> timestampColumnIdentifier) {
+        try {
+            String timestamp = converter.get(timestampColumnIdentifier);
+            observation.setEffective(DateUtil.parseDateTimeType(timestamp));
+        } catch (Exception e) {
+            converter.warning("Can not parse " + timestampColumnIdentifier + " for Record -> set \"unknown\" Data Absent Reason");
+            DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
+            effectiveDateTimeType.addExtension(getUnknownDataAbsentReason());
         }
-        converter.error(timestampColumnIdentifier + " empty for Record");
-        return null;
     }
 
     /**
