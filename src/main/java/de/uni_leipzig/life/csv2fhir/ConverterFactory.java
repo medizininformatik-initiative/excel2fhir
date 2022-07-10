@@ -2,7 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import org.apache.commons.csv.CSVRecord;
 
-import de.uni_leipzig.imise.FHIRValidator;
+import de.uni_leipzig.imise.validate.FHIRValidator;
 
 /**
  * @author fheuschkel (02.11.2020), AXS (18.11.2021)

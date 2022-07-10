@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 
-import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
+import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier;

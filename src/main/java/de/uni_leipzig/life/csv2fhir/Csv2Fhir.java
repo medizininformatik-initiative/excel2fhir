@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 
-import de.uni_leipzig.imise.FHIRValidator;
 import de.uni_leipzig.imise.utils.Alphabetical;
+import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
 
 /**
@@ -90,13 +90,6 @@ public class Csv2Fhir {
                 .withAllowMissingColumnNames(true)
                 .withFirstRecordAsHeader();
         this.validator = validator;
-    }
-
-    /**
-     * @return the validator
-     */
-    public FHIRValidator getValidator() {
-        return validator;
     }
 
     /**

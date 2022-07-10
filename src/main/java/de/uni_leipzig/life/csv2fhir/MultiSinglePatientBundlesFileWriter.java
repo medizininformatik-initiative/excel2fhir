@@ -17,10 +17,11 @@ import java.util.zip.ZipOutputStream;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
+
+import de.uni_leipzig.imise.validate.FHIRValidator;
+
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
-
-import de.uni_leipzig.imise.FHIRValidator;
 
 /**
  * Handler to write ndjson and zip files with multiple bundles in it.

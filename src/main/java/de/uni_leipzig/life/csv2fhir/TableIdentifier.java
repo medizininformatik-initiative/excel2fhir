@@ -1,7 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.imise.FHIRValidator.ValidationResultType.ERROR;
-import static de.uni_leipzig.imise.FHIRValidator.ValidationResultType.VALID;
+import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR;
+import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.VALID;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -13,8 +13,8 @@ import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.collect.ImmutableList;
 
-import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.imise.validate.FHIRValidator;
+import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory;

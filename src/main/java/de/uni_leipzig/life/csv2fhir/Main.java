@@ -5,8 +5,8 @@ import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
 import java.io.File;
 import java.util.concurrent.Callable;
 
-import de.uni_leipzig.imise.FHIRValidator;
-import de.uni_leipzig.imise.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.imise.validate.FHIRValidator;
+import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 

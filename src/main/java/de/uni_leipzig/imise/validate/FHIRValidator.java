@@ -1,4 +1,4 @@
-package de.uni_leipzig.imise;
+package de.uni_leipzig.imise.validate;
 
 import static de.uni_leipzig.imise.utils.StringUtils.getNumberSignSurroundedLogStrings;
 

@@ -26,7 +26,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.base.Strings;
 
-import de.uni_leipzig.imise.FHIRValidator;
+import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
