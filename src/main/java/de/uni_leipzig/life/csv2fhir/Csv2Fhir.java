@@ -4,11 +4,13 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -294,7 +296,17 @@ public class Csv2Fhir {
                     .setPrettyPrint(true)
                     .encodeResourceToWriter(bundle, fileWriter);
         }
+        appendNewLineAtEOF(outputFile);
         return outputFile;
+    }
+
+    /**
+     * @param file
+     * @throws IOException
+     */
+    private static void appendNewLineAtEOF(File file) throws IOException {
+        Writer output = new BufferedWriter(new FileWriter(file, true)).append("\n");
+        output.close();
     }
 
     /**
