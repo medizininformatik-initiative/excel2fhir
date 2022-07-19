@@ -69,6 +69,8 @@ public class PersonConverter extends Converter {
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         patient.addGeneralPractitioner(parseHealthProvider());
+        //        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient); // for debug
+        //        Sys.out1(resourceAsJson);
         return Collections.singletonList(patient);
     }
 
@@ -92,12 +94,20 @@ public class PersonConverter extends Converter {
         String forename = get(Vorname);
         String surname = get(Nachname);
         HumanName humanName = new HumanName();
+        //for unknown reasons a Data Absent Reason in name is not valid -> so we set dummy names
         if (Strings.isNullOrEmpty(surname)) {
+            surname = "DUMMY_SURNAME";
+        }
+        if (Strings.isNullOrEmpty(surname)) { //should never happen while we must set the dummy name to be valid
             warning("Empty " + Nachname + " -> Create Data Absent Reason \"unknown\"");
             StringType familyElement = humanName.getFamilyElement();
             familyElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         } else {
             humanName.setFamily(surname).setUse(NameUse.OFFICIAL);
+        }
+        // same dummy name reason here
+        if (Strings.isNullOrEmpty(forename)) {
+            forename = "DUMMY_NAME";
         }
         if (Strings.isNullOrEmpty(forename)) {
             warning("Empty " + Vorname + " -> Create Data Absent Reason \"unknown\"");
