@@ -13,6 +13,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,9 @@ public class Csv2Fhir {
 
     /** Counters for all resources created from one set of CSV files */
     private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
+
+    /** Cache for the parsed records */
+    private final Map<TableIdentifier, List<CSVRecord>> tableIdentifierToParsedRecords = new HashMap<>();
 
     /**
      * @param inputDirectory
@@ -321,40 +325,47 @@ public class Csv2Fhir {
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult();
         for (TableIdentifier table : TableIdentifier.values()) {
-            String fileName = table.getCsvFileName();
-            File file = new File(inputDirectory, fileName);
-            if (!file.exists() || file.isDirectory()) {
-                continue;
-            }
-            try (Reader in = new FileReader(file)) {
-                CSVParser csvParser = csvFormat.parse(in);
-                LOG.info("Start parsing File:" + fileName);
-                Map<String, Integer> headerMap = csvParser.getHeaderMap();
-                Collection<String> neededColumnNames = table.getMandatoryColumnNames();
-                if (isColumnMissing(headerMap, neededColumnNames)) {
-                    csvParser.close();
-                    LOG.error("Error - File: " + fileName + " not convertable!");
+            List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
+            if (parsedRecords == null) {
+                String fileName = table.getCsvFileName();
+                File file = new File(inputDirectory, fileName);
+                if (!file.exists() || file.isDirectory()) {
                     continue;
                 }
-                for (CSVRecord record : csvParser) {
-                    try {
-                        if (!Strings.isNullOrEmpty(filterID)) {
-                            String idColumnName = table.getPIDColumnIdentifier().toString();
-                            String p = record.get(idColumnName);
-                            if (!p.toUpperCase().matches(filterID)) {
-                                continue;
-                            }
-                        }
-                        List<? extends Resource> list = table.convert(record, result, validator);
-                        for (Resource resource : list) {
-                            addEntry(bundle, resource);
-                            addEntry(ndjsonBundle, resource);
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
+                try (Reader in = new FileReader(file)) {
+                    CSVParser csvParser = csvFormat.parse(in);
+                    LOG.info("Start parsing File:" + fileName);
+                    Map<String, Integer> headerMap = csvParser.getHeaderMap();
+                    Collection<String> neededColumnNames = table.getMandatoryColumnNames();
+                    if (isColumnMissing(headerMap, neededColumnNames)) {
+                        csvParser.close();
+                        LOG.error("Error - File: " + fileName + " not convertable!");
+                        continue;
                     }
+                    parsedRecords = csvParser.getRecords();
+                    tableIdentifierToParsedRecords.put(table, parsedRecords);
+                    csvParser.close();
                 }
-                csvParser.close();
+            }
+            for (int i = 0; i < parsedRecords.size(); i++) {
+                CSVRecord record = parsedRecords.get(i);
+                try {
+                    if (!Strings.isNullOrEmpty(filterID)) {
+                        String idColumnName = table.getPIDColumnIdentifier().toString();
+                        String p = record.get(idColumnName);
+                        if (!p.toUpperCase().matches(filterID)) {
+                            continue;
+                        }
+                        parsedRecords.remove(i);
+                    }
+                    List<? extends Resource> list = table.convert(record, result, validator);
+                    for (Resource resource : list) {
+                        addEntry(bundle, resource);
+                        addEntry(ndjsonBundle, resource);
+                    }
+                } catch (Exception e) {
+                    LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
+                }
             }
         }
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
