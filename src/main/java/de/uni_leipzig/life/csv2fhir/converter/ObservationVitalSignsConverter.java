@@ -28,9 +28,10 @@ import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConver
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
     /**
-     * Category for all Observation of this type. These Observations have no
-     * proper code system (like laboratory observations) so we set here data
-     * absent reasons.
+     * Category for all Observation of this type.<br>
+     * Unfortunately, observations with this actually correct category are not
+     * recognized as valid, which is why the vital sign observations continue to
+     * be assigned the category of laboratory observations.
      */
     private static List<CodeableConcept> VITAL_SIGNS_OBSERVATION_FIXED_CATEGORY = getVitalObservationFixedCategory();
 
@@ -58,13 +59,16 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
         observation.setValue(parseObservationValue(Wert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
-        observation.setCategory(getVitalObservationFixedCategory());
+        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY); //TODO: add the correct category if validator can accept it
         //String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation); // for debug
         return Collections.singletonList(observation);
     }
 
     /**
-     * Codes from file
+     * TODO: Change the ObservationVital Category if the ICU Package can be used
+     * This here is the correct Category if all packages could be used to
+     * validate the resources. But until now (08.07.22) there is no valid ICU
+     * Package, which should contain the Codes from file
      * hl7.fhir.r4.core-4.0.1/package/ValueSet-observation-vitalsignresult.json
      * are the same from https://loinc.org/85353-1/
      *
