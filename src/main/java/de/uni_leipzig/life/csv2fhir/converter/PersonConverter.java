@@ -72,11 +72,6 @@ public class PersonConverter extends Converter {
         return Collections.singletonList(patient);
     }
 
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Person.getPIDColumnIdentifier();
-    }
-
     /**
      * @return
      * @throws Exception

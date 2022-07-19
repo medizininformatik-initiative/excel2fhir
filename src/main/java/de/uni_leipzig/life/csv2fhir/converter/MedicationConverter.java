@@ -52,8 +52,6 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
@@ -104,16 +102,6 @@ public class MedicationConverter extends Converter {
             resources.add(parseMedicationAdministration());
         }
         return resources;
-    }
-
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Medikation.getPIDColumnIdentifier();
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return Medication_Columns.Versorgungsfall_Nr;
     }
 
     /**

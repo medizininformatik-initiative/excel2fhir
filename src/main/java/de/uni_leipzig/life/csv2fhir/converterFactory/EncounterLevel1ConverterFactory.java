@@ -18,22 +18,6 @@ public class EncounterLevel1ConverterFactory implements ConverterFactory {
     public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
 
     public static enum EncounterLevel1_Columns implements TableColumnIdentifier {
-        Patient_ID {
-            @Override
-            public String toString() {
-                return "Patient-ID";
-            }
-        },
-        Versorgungsfall_Nr {
-            @Override
-            public String toString() {
-                return "Versorgungsfall-Nr";
-            }
-            @Override
-            public String getDefaultIfMissing() {
-                return DEFAULT_ENCOUNTER_ID_NUMBER;
-            }
-        },
         Startdatum,
         Enddatum,
         Versorgungsfallklasse,

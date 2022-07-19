@@ -29,8 +29,6 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 public class DiagnosisConverter extends Converter {
@@ -140,11 +138,6 @@ public class DiagnosisConverter extends Converter {
         return icdCodes;
     }
 
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Diagnose.getPIDColumnIdentifier();
-    }
-
     /**
      * @param nextIDOffset
      * @return
@@ -203,11 +196,6 @@ public class DiagnosisConverter extends Converter {
         }
         error("Can not parse " + Dokumentationsdatum + " for Record");
         return null;
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return Diagnosis_Columns.Versorgungsfall_Nr;
     }
 
 }

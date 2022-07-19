@@ -108,11 +108,6 @@ public class ConsentConverter extends Converter {
         return Collections.singletonList(consentPolicyComponent);
     }
 
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Consent.getPIDColumnIdentifier();
-    }
-
     /**
      * @param consentDate
      * @return

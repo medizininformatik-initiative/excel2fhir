@@ -2,6 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR;
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.VALID;
+import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.DEFAULT_ENCOUNTER_ID_NUMBER;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -62,6 +63,32 @@ public enum TableIdentifier {
         }
     };
 
+    /**
+     * Table column identifier which are the same in all tables.
+     */
+    public static enum DefaultTableColumnNames implements TableColumnIdentifier {
+        Patient_ID {
+            @Override
+            public String toString() {
+                return "Patient-ID";
+            }
+        },
+        Versorgungsfall_Nr {
+            @Override
+            public String toString() {
+                return "Versorgungsfall-Nr";
+            }
+            @Override
+            public String getDefaultIfMissing() {
+                return DEFAULT_ENCOUNTER_ID_NUMBER;
+            }
+            @Override
+            public boolean isMandatory() {
+                return false;
+            }
+        },
+    }
+
     /** The class with the converter factory for this data type */
     private final Class<? extends ConverterFactory> converterFactoryClass;
 
@@ -71,9 +98,6 @@ public enum TableIdentifier {
     /** The class with the enum with the definition of the table columns */
     private final Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass;
 
-    /** The column identifier for the patien ID in the table */
-    private final Enum<?> pidColumnIdentifier;
-
     /**
      * @param columnIdentifiersClass
      * @param converterFactoryClass
@@ -81,7 +105,6 @@ public enum TableIdentifier {
     private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends ConverterFactory> converterFactoryClass) {
         this.columnIdentifiersClass = columnIdentifiersClass;
         this.converterFactoryClass = converterFactoryClass;
-        pidColumnIdentifier = columnIdentifiersClass.getEnumConstants()[0]; //should always declared as the first value!
     }
 
     /**
@@ -122,8 +145,8 @@ public enum TableIdentifier {
     /**
      * @return the identifier for the PID column in the table
      */
-    public final Enum<?> getPIDColumnIdentifier() {
-        return pidColumnIdentifier;
+    public TableColumnIdentifier getPIDColumnIdentifier() {
+        return DefaultTableColumnNames.Patient_ID;
     }
 
     /**

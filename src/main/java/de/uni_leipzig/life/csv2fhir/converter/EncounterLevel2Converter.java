@@ -18,8 +18,6 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns;
 
 /**
  * @author fheuschkel (29.10.2020), fmeinecke, AXS
@@ -40,11 +38,6 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
      */
     public EncounterLevel2Converter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
         super(record, result, validator);
-    }
-
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Abteilungsfall.getPIDColumnIdentifier();
     }
 
     @Override
@@ -91,11 +84,6 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
         // should catch and log
         Encounter encounter = result.get(Abteilungsfall, Encounter.class, encounterID);
         EncounterLevel1Converter.addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return EncounterLevel2_Columns.Versorgungsfall_Nr;
     }
 
 }

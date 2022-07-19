@@ -19,8 +19,6 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns;
 
 public class ProzedurConverter extends Converter {
 
@@ -66,11 +64,6 @@ public class ProzedurConverter extends Converter {
         EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
 
         return singletonList(procedure);
-    }
-
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Prozedur.getPIDColumnIdentifier();
     }
 
     /**
@@ -127,11 +120,6 @@ public class ProzedurConverter extends Converter {
         }
         kds = false;
         return null;
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return Procedure_Columns.Versorgungsfall_Nr;
     }
 
 }

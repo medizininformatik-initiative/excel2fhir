@@ -31,8 +31,6 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -83,11 +81,6 @@ public class EncounterLevel1Converter extends Converter {
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         encounter.setType(getEncounterType());
         return Collections.singletonList(encounter);
-    }
-
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Versorgungsfall.getPIDColumnIdentifier();
     }
 
     /**
@@ -255,11 +248,6 @@ public class EncounterLevel1Converter extends Converter {
             //validity (and not null) should be checked later
         }
         return encounter;
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return EncounterLevel1_Columns.Versorgungsfall_Nr;
     }
 
     /**

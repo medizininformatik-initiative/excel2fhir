@@ -12,16 +12,6 @@ import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 public class ConsentConverterFactory implements ConverterFactory {
 
     public static enum Consent_Columns implements TableColumnIdentifier {
-        Patient_ID {
-            @Override
-            public String toString() {
-                return "Patient-ID";
-            }
-            @Override
-            public boolean isMandatory() {
-                return true;
-            }
-        },
         Datum_Einwilligung,
         PDAT_Einwilligung,
         KKDAT_retro_Einwilligung,

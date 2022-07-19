@@ -40,6 +40,7 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.imise.validate.FHIRValidator;
+import de.uni_leipzig.life.csv2fhir.TableIdentifier.DefaultTableColumnNames;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
@@ -224,7 +225,7 @@ public abstract class Converter {
      * @throws Exception
      */
     protected String parsePatientId() throws Exception {
-        Enum<?> patientIDColumnIdentifier = getPatientIDColumnIdentifier();
+        TableColumnIdentifier patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
         if (id != null) {
             return id.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
@@ -282,13 +283,15 @@ public abstract class Converter {
     /**
      * @return the enum identifier for the column with the patient ID
      */
-    protected abstract Enum<?> getPatientIDColumnIdentifier();
+    protected TableColumnIdentifier getPatientIDColumnIdentifier() {
+        return DefaultTableColumnNames.Patient_ID;
+    }
 
     /**
      * @return the enum identifier for the column with the patient ID
      */
     protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return null;
+        return DefaultTableColumnNames.Versorgungsfall_Nr;
     }
 
     /**

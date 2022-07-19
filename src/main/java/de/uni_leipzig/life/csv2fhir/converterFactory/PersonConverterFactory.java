@@ -12,12 +12,6 @@ import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 public class PersonConverterFactory implements ConverterFactory {
 
     public static enum Person_Columns implements TableColumnIdentifier {
-        Patient_ID {
-            @Override
-            public String toString() {
-                return "Patient-ID";
-            }
-        },
         Vorname,
         Nachname,
         Anschrift,

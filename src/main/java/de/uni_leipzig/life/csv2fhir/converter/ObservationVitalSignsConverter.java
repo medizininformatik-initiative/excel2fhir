@@ -22,8 +22,6 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
@@ -87,16 +85,6 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
                 .addCoding(vitalCategory1)
                 .addCoding(vitalCatgeory2);
         return ImmutableList.of(vitalCategories);
-    }
-
-    @Override
-    protected Enum<?> getPatientIDColumnIdentifier() {
-        return Klinische_Dokumentation.getPIDColumnIdentifier();
-    }
-
-    @Override
-    protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return ObservationVitalSigns_Columns.Versorgungsfall_Nr;
     }
 
 }
