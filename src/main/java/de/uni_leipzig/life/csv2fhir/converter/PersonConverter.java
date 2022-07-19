@@ -59,7 +59,7 @@ public class PersonConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         Patient patient = new Patient();
         patient.setMeta(new Meta().addProfile(PROFILE));
         patient.setId(getPatientId());

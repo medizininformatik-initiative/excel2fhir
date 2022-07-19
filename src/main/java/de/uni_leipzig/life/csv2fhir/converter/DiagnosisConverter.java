@@ -60,7 +60,7 @@ public class DiagnosisConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         List<Resource> conditions = new ArrayList<>();
         List<String> icdCodes = parseICDCodes();
         if (!isEmpty(icdCodes)) {

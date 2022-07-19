@@ -41,7 +41,7 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         int nextId = result.getNextId(Abteilungsfall, Encounter.class);
         Encounter encounter = new Encounter();
         encounter.setId(getEncounterId() + "-A-" + nextId);

@@ -84,7 +84,7 @@ public class MedicationConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         List<Resource> resources = new ArrayList<>();
         String medicationId = getMedicationId();
 

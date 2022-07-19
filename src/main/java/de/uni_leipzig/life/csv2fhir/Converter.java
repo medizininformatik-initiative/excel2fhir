@@ -116,7 +116,16 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    public abstract List<? extends Resource> convert() throws Exception;
+    public List<? extends Resource> convert() throws Exception {
+        //TODO: Check here if all mandatory columns are empty or contain only '-' to avoid that many generated resources consist only of Data Absent Reasons. Return an empty list in this case.
+        return convertInternal();
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected abstract List<? extends Resource> convertInternal() throws Exception;
 
     /**
      * @param resource

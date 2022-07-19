@@ -44,7 +44,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class);
         String id = getEncounterId() + "-OV-" + nextId;

@@ -56,7 +56,7 @@ public class ObservationLaboratoryConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Laborbefund, Observation.class);
         String id = getEncounterId() + "-OL-" + nextId;

@@ -39,17 +39,17 @@ public class DiagnosisConverterTest {
 
         //doReturn(null).when(recordMock).get("ICD");
         when(recordMock.get("ICD")).thenReturn(null);
-        List<Resource> convertedResources = diagnosisConverterUnderTest.convert();
+        List<Resource> convertedResources = diagnosisConverterUnderTest.convertInternal();
         assertNull(convertedResources);
 
         when(recordMock.get("ICD")).thenReturn("");
         Assertions.assertThrows(Exception.class, () -> {
-            diagnosisConverterUnderTest.convert();
+            diagnosisConverterUnderTest.convertInternal();
         });
 
         when(recordMock.get("ICD")).thenReturn(" \t ");
         Assertions.assertThrows(Exception.class, () -> {
-            diagnosisConverterUnderTest.convert();
+            diagnosisConverterUnderTest.convertInternal();
         });
 
         testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34", "A12.34");
@@ -81,7 +81,7 @@ public class DiagnosisConverterTest {
 
         when(recordMock.get(ICD.toString())).thenReturn(codeInput);
         when(resultMock.get(Versorgungsfall, Encounter.class, diagnosisConverter.getEncounterId())).thenReturn(new Encounter());
-        List<Resource> convertedResources = diagnosisConverter.convert();
+        List<Resource> convertedResources = diagnosisConverter.convertInternal();
         int convertedResourcesCount = convertedResources == null ? 0 : convertedResources.size();
         assertEquals(convertedResourcesCount, expectedResultCodes.length);
         Set<String> conditionIDs = new HashSet<>();

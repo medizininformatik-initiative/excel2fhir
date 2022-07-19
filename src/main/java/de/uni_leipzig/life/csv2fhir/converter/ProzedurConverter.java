@@ -37,7 +37,7 @@ public class ProzedurConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         Procedure procedure = new Procedure();
         int nextId = result.getNextId(Prozedur, Procedure.class);
         procedure.setId(getEncounterId() + "-P-" + nextId);

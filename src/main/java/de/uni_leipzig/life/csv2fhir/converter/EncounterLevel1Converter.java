@@ -70,7 +70,7 @@ public class EncounterLevel1Converter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         Encounter encounter = new Encounter();
         encounter.setMeta(getMeta());
         encounter.setId(getEncounterId());

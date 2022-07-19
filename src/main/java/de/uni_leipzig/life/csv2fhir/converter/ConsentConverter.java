@@ -70,7 +70,7 @@ public class ConsentConverter extends Converter {
     }
 
     @Override
-    public List<Resource> convert() throws Exception {
+    protected List<Resource> convertInternal() throws Exception {
         DateType consentDate = parseDate(Datum_Einwilligung);
         if (consentDate == null) {
             return Collections.emptyList();
