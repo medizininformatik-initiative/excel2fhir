@@ -206,10 +206,9 @@ public class Csv2Fhir {
                 singlePatientBundle = createTransactionBundle();
             }
             pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
-            boolean bundleSavedAsFile = false;
             if (lastPID != null) {
                 String fileNameExtendsion = firstPID == lastPID ? "-" + firstPID : "-" + firstPID + "-" + lastPID;
-                bundleSavedAsFile = writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
+                writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                 bundle = createTransactionBundle();
                 if (multiSinglePatientBundlesFileWriter != null) {
                     multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
@@ -223,9 +222,7 @@ public class Csv2Fhir {
             }
             LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
             LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
-            if (bundleSavedAsFile) {
-                fileSetStatistics.add(singleBundleStatistics);
-            }
+            fileSetStatistics.add(singleBundleStatistics);
         }
         LOG.info("All bundles of current file set content:\n" + fileSetStatistics);
         return fileSetStatistics;
