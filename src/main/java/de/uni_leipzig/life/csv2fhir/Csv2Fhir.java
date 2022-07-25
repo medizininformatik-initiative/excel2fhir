@@ -74,9 +74,10 @@ public class Csv2Fhir {
      * @param inputDirectory
      * @param outputFileNameBase
      * @param validator
+     * @param converterOptionsFileName
      */
-    public Csv2Fhir(File inputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
-        this(inputDirectory, inputDirectory, outputFileNameBase, validator);
+    public Csv2Fhir(File inputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator, @Nullable String converterOptionsFileName) {
+        this(inputDirectory, inputDirectory, outputFileNameBase, validator, converterOptionsFileName);
     }
 
     /**
@@ -84,8 +85,9 @@ public class Csv2Fhir {
      * @param outputDirectory
      * @param outputFileNameBase
      * @param validator
+     * @param converterOptionsFileName
      */
-    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator, @Nullable String converterOptionsFileName) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -96,6 +98,7 @@ public class Csv2Fhir {
                 .withAllowMissingColumnNames(true)
                 .withFirstRecordAsHeader();
         this.validator = validator;
+        ConverterOptions.putValues(converterOptionsFileName);
     }
 
     /**

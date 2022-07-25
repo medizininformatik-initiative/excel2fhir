@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONSENT;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Consent;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns.Datum_Einwilligung;
 import static org.apache.logging.log4j.util.Strings.isNotBlank;
@@ -76,7 +77,7 @@ public class ConsentConverter extends Converter {
             return Collections.emptyList();
         }
         Consent consent = new Consent();
-        int nextId = result.getNextId(Consent, Consent.class);
+        int nextId = result.getNextId(Consent, Consent.class, START_ID_CONSENT);
         String pid = getPatientId();
         String id = pid + "-CO-" + nextId;
         consent.setId(id);

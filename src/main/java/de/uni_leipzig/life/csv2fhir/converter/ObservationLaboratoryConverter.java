@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_LABORATORY;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Einheit;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.LOINC;
@@ -58,7 +59,7 @@ public class ObservationLaboratoryConverter extends Converter {
     @Override
     protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
-        int nextId = result.getNextId(Laborbefund, Observation.class);
+        int nextId = result.getNextId(Laborbefund, Observation.class, START_ID_OBSERVATION_LABORATORY);
         String id = getEncounterId() + "-OL-" + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));

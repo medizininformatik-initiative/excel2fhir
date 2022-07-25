@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_ENCOUNTER_LEVEL_2;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns.Enddatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns.Fachabteilung;
@@ -42,7 +43,7 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
-        int nextId = result.getNextId(Abteilungsfall, Encounter.class);
+        int nextId = result.getNextId(Abteilungsfall, Encounter.class, START_ID_ENCOUNTER_LEVEL_2);
         Encounter encounter = new Encounter();
         encounter.setId(getEncounterId() + "-A-" + nextId);
         encounter.setMeta(getMeta());

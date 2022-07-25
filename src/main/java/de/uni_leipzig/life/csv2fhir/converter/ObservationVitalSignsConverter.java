@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_VITAL_SIGNS;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Einheit;
@@ -46,7 +47,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
     @Override
     protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
-        int nextId = result.getNextId(Klinische_Dokumentation, Observation.class);
+        int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
         String id = getEncounterId() + "-OV-" + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));

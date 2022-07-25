@@ -27,6 +27,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import de.uni_leipzig.imise.utils.Alphabetical;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
 
 /**
  * @author AXS (29.11.2021)
@@ -158,12 +159,21 @@ public class ConverterResult {
     }
 
     /**
-     * @param tableSource
-     * @param resourceType
+     * @param <T> Subtype of the Resource
+     * @param tableSource Combination of this parameter and the resourceType
+     *            identifies the correct counter.
+     * @param resourceType The resource type
+     * @param startIndex Via {@link IntOption#getValue()} the start index can be
+     *            identified. An other start index than the default 1 is useful
+     *            if we want to add e.g. additional Observations to an existing
+     *            patient who has already Observation. With the default
+     *            parameter we would create a new Observation with the ID of an
+     *            existing one which would be overwritten on the server if we
+     *            post both to the server.
      * @return
      */
-    public <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType) {
-        return getResourceCount(tableSource, resourceType) + 1;
+    public final <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType, IntOption startIndex) {
+        return getResourceCount(tableSource, resourceType) + startIndex.getValue();
     }
 
     /**

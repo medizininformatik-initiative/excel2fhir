@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurencode;
@@ -39,7 +40,7 @@ public class ProzedurConverter extends Converter {
     @Override
     protected List<Resource> convertInternal() throws Exception {
         Procedure procedure = new Procedure();
-        int nextId = result.getNextId(Prozedur, Procedure.class);
+        int nextId = result.getNextId(Prozedur, Procedure.class, START_ID_PROCEDURE);
         procedure.setId(getEncounterId() + "-P-" + nextId);
         //        procedure.addExtension(new Extension()
         //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")

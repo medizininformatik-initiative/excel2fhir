@@ -51,6 +51,7 @@ import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
@@ -163,7 +164,13 @@ public class MedicationConverter extends Converter {
     private <T extends Resource> String createId(String suffix, Class<T> resourceType) throws Exception {
         String encounterID = getEncounterId();
         String superID = Strings.isNullOrEmpty(encounterID) ? getPatientId() : encounterID;
-        int nextIDNumber = result.getNextId(Medikation, resourceType);
+        IntOption startID = null;
+        if (resourceType.isAssignableFrom(MedicationAdministration.class)) {
+            startID = IntOption.START_ID_MEDICATION_ADMINISTRATION;
+        } else if (resourceType.isAssignableFrom(MedicationStatement.class)) {
+            startID = IntOption.START_ID_MEDICATION_STATEMENT;
+        }
+        int nextIDNumber = result.getNextId(Medikation, resourceType, startID);
         return superID + suffix + nextIDNumber;
     }
 

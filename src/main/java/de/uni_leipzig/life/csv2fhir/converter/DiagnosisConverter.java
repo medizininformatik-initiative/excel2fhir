@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_DIAGNOSIS;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Dokumentationsdatum;
@@ -149,7 +150,7 @@ public class DiagnosisConverter extends Converter {
             error("ICD empty");
             return null;
         }
-        int nextId = result.getNextId(Diagnose, Condition.class) + nextIDOffset;
+        int nextId = result.getNextId(Diagnose, Condition.class, START_ID_DIAGNOSIS) + nextIDOffset;
         return getPatientId() + "-CD-" + nextId;
     }
 

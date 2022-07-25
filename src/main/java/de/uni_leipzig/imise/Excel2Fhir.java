@@ -7,6 +7,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +143,8 @@ public class Excel2Fhir {
         }
         String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
-        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator);
+        String sourceFileBaseName = getAbsoluteFileNameWithoutLastExtension(sourceExcelFile);
+        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator, sourceFileBaseName);
         try {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
             allFilesStatistics.add(converterStatistics);
@@ -152,6 +155,19 @@ public class Excel2Fhir {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);
         }
         LOG.info("All bundles of all files content:\n" + allFilesStatistics);
+    }
+
+    /**
+     * @param file
+     * @return a string with the absolute filename without any extension
+     */
+    private static String getAbsoluteFileNameWithoutLastExtension(@Nonnull File file) {
+        String name = file.getAbsolutePath();
+        int pointIndex = name.lastIndexOf('.');
+        if (pointIndex >= 0) {
+            name = name.substring(0, pointIndex);
+        }
+        return name;
     }
 
 }

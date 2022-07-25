@@ -2,8 +2,8 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getResource;
 import static de.uni_leipzig.life.csv2fhir.Converter.DATA_ABSENT_REASON_UNKNOWN;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER;
 
 import java.util.List;
 

@@ -1,11 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
+import javax.annotation.Nullable;
 
 /**
  * @author AXS (03.12.2021)
@@ -23,17 +23,29 @@ public class ResourceMapper extends Properties {
     /**
      * Loads the properties files from the resources.
      *
-     * @param resourceFileName
+     * @param resourceFileNames
+     * @return true if at least one file could be loaded
      */
-    public void load(String... resourceFileNames) {
+    public boolean load(@Nullable String... resourceFileNames) {
+        boolean loaded = false;
         for (String resourceFileName : resourceFileNames) {
-            URL mapFile = ClassLoader.getSystemResource(resourceFileName);
-            try (InputStream inputStream = mapFile.openStream()) {
+            try {
+                File resourceFile = new File(resourceFileName);
+                URL mapFile = null;
+                if (resourceFile.canRead()) {
+                    mapFile = resourceFile.toURI().toURL();
+                } else {
+                    mapFile = ClassLoader.getSystemResource(resourceFileName);
+                }
+                InputStream inputStream = mapFile.openStream();
                 load(inputStream);
+                inputStream.close();
+                loaded = true;
             } catch (Exception e) {
-                e.printStackTrace();
+                // ignore
             }
         }
+        return loaded;
     }
 
     /**
@@ -42,25 +54,6 @@ public class ResourceMapper extends Properties {
      */
     public static ResourceMapper of(String... resourceFileNames) {
         return new ResourceMapper(resourceFileNames);
-    }
-
-    /**
-     * Set of String values that can be interpreted as booleans with value
-     * "true".
-     */
-    private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j");
-
-    /**
-     * @param key
-     * @return
-     */
-    public boolean getBoolean(String key) {
-        Object object = get(key);
-        if (object == null) {
-            return false;
-        }
-        String value = object.toString().trim().toLowerCase();
-        return trueValues.contains(value);
     }
 
 }
