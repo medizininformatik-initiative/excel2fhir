@@ -347,16 +347,17 @@ public class Csv2Fhir {
                     csvParser.close();
                 }
             }
+            boolean filter = !Strings.isNullOrEmpty(filterID);
             for (int i = 0; i < parsedRecords.size(); i++) {
                 CSVRecord record = parsedRecords.get(i);
                 try {
-                    if (!Strings.isNullOrEmpty(filterID)) {
+                    if (filter) {
                         String idColumnName = table.getPIDColumnIdentifier().toString();
                         String p = record.get(idColumnName);
                         if (!p.toUpperCase().matches(filterID)) {
                             continue;
                         }
-                        parsedRecords.remove(i);
+                        parsedRecords.remove(i--);
                     }
                     List<? extends Resource> list = table.convert(record, result, validator);
                     for (Resource resource : list) {
