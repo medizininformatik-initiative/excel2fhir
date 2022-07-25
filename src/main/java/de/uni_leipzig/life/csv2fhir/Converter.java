@@ -308,7 +308,7 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getPatientReference() throws Exception {
-        return getPatientReference(true);
+        return getPatientReference(false);
     }
 
     /**

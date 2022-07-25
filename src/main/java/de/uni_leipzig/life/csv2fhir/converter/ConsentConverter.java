@@ -1,6 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONSENT;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Consent;
 import static de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns.Datum_Einwilligung;
@@ -27,7 +26,6 @@ import org.hl7.fhir.r4.model.Consent.provisionComponent;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -83,7 +81,7 @@ public class ConsentConverter extends Converter {
         consent.setId(id);
         consent.setMeta(new Meta().addProfile(res("CONSENT_PROFILE")));
         consent.setStatus(ConsentState.ACTIVE);
-        consent.setPatient(createReference(Patient.class, pid));
+        consent.setPatient(getPatientReference());
         consent.setDateTime(consentDate.getValue());
         consent.setScope(createCodeableConcept(res("CONSENT_SCOPE_CODING_SYSTEM"), res("CONSENT_SCOPE_CODING_CODE")));
         consent.setCategory(Collections.singletonList(createCodeableConcept(res("CONSENT_CATEGORY_CODING_SYSTEM"), res("CONSENT_CATEGORY_CODING_CODE"))));
