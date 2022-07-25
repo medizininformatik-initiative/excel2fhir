@@ -321,6 +321,7 @@ public class Csv2Fhir {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult();
+        boolean filter = !Strings.isNullOrEmpty(filterID);
         for (TableIdentifier table : TableIdentifier.values()) {
             List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
             if (parsedRecords == null) {
@@ -344,14 +345,13 @@ public class Csv2Fhir {
                     csvParser.close();
                 }
             }
-            boolean filter = !Strings.isNullOrEmpty(filterID);
             for (int i = 0; i < parsedRecords.size(); i++) {
                 CSVRecord record = parsedRecords.get(i);
                 try {
                     if (filter) {
-                        String idColumnName = table.getPIDColumnIdentifier().toString();
-                        String p = record.get(idColumnName);
-                        if (!p.toUpperCase().matches(filterID)) {
+                        String pidColumnName = table.getPIDColumnIdentifier().toString();
+                        String pid = record.get(pidColumnName);
+                        if (!pid.toUpperCase().matches(filterID)) {
                             continue;
                         }
                         parsedRecords.remove(i--);
