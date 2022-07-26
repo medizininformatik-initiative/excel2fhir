@@ -1,12 +1,12 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Anschrift;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Geburtsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Geschlecht;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Krankenkasse;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Nachname;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns.Vorname;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Anschrift;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Geburtsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Geschlecht;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Krankenkasse;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Nachname;
+import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Vorname;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
@@ -34,8 +34,24 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class PersonConverter extends Converter {
+
+    /**
+     *
+     */
+    public static enum Person_Columns implements TableColumnIdentifier {
+        Vorname,
+        Nachname,
+        Anschrift,
+        Geburtsdatum,
+        Geschlecht,
+        Krankenkasse
+    }
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";

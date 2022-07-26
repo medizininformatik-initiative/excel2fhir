@@ -2,7 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR;
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.VALID;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.DEFAULT_ENCOUNTER_ID_NUMBER;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.DEFAULT_ENCOUNTER_ID_NUMBER;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -16,24 +16,24 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter.EncounterLevel2_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory.EncounterLevel2_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory.Medication_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory.Person_Columns;
 import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns;
 
 /**
  * @author AXS (18.11.2021)

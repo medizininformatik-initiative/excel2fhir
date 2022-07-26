@@ -6,19 +6,9 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterFactory;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
-import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 
 public class PersonConverterFactory implements ConverterFactory {
-
-    public static enum Person_Columns implements TableColumnIdentifier {
-        Vorname,
-        Nachname,
-        Anschrift,
-        Geburtsdatum,
-        Geschlecht,
-        Krankenkasse
-    }
 
     @Override
     public Converter create(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {

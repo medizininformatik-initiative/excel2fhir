@@ -2,7 +2,7 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONSENT;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Consent;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory.Consent_Columns.Datum_Einwilligung;
+import static de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns.Datum_Einwilligung;
 import static org.apache.logging.log4j.util.Strings.isNotBlank;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.DENY;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.PERMIT;
@@ -35,12 +35,35 @@ import com.google.common.collect.Multimap;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 
 /**
  * @author AXS (18.01.2022)
  */
 public class ConsentConverter extends Converter {
+
+    /**
+     *
+     */
+    public static enum Consent_Columns implements TableColumnIdentifier {
+        Datum_Einwilligung,
+        PDAT_Einwilligung,
+        KKDAT_retro_Einwilligung,
+        KKDAT_Einwilligung,
+        BIOMAT_Einwilligung,
+        BIOMAT_Zusatz_Einwilligung;
+
+        @Override
+        public String toString() {
+            return name().replace('_', ' ');
+        }
+
+        @Override
+        public boolean isMandatory() {
+            return false;
+        }
+    }
 
     /**
      * Default duration of a consent (only some consents have a smaller

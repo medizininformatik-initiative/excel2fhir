@@ -1,8 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.ICD;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.ICD;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

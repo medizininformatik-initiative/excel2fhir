@@ -3,10 +3,10 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_DIAGNOSIS;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.ICD;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory.Diagnosis_Columns.Typ;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.ICD;
+import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Typ;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
@@ -30,9 +30,23 @@ import com.google.common.base.Strings;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class DiagnosisConverter extends Converter {
+
+    /**
+     *
+     */
+    public static enum Diagnosis_Columns implements TableColumnIdentifier {
+        Bezeichner,
+        ICD,
+        Dokumentationsdatum,
+        Typ
+    }
 
     /**
      * Patterns to find valid ICD 10 Codes in a given String. They are sorted

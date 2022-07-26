@@ -2,11 +2,11 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_VITAL_SIGNS;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Wert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory.ObservationVitalSigns_Columns.Zeitstempel;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
 import java.util.Collections;
@@ -17,14 +17,30 @@ import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
+
+    /**
+     *
+     */
+    public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
+        Bezeichner,
+        LOINC,
+        Wert,
+        Einheit,
+        Zeitstempel
+    }
 
     /**
      * Category for all Observation of this type.<br>

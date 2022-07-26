@@ -2,9 +2,9 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurencode;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory.Procedure_Columns.Prozedurentext;
+import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurencode;
+import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurentext;
 import static java.util.Collections.singletonList;
 
 import java.util.Collections;
@@ -20,8 +20,21 @@ import org.hl7.fhir.r4.model.Resource;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class ProzedurConverter extends Converter {
+
+    /**
+     *
+     */
+    public static enum Procedure_Columns implements TableColumnIdentifier {
+        Prozedurentext,
+        Prozedurencode,
+        Dokumentationsdatum,
+    }
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure";

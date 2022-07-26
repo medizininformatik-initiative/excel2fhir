@@ -3,11 +3,11 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_LABORATORY;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.LOINC;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Messwert;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Parameter;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory.ObservationLaboratory_Columns.Zeitstempel_Abnahme;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Einheit;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Messwert;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Parameter;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Zeitstempel_Abnahme;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
@@ -32,9 +32,30 @@ import com.google.common.collect.ImmutableList;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
 public class ObservationLaboratoryConverter extends Converter {
+
+    /**
+     *
+     */
+    public static enum ObservationLaboratory_Columns implements TableColumnIdentifier {
+        LOINC,
+        Parameter,
+        Messwert,
+        Einheit,
+        Zeitstempel_Abnahme {
+            @Override
+            public String toString() {
+                return "Zeitstempel (Abnahme)";
+            }
+        },
+        //Methode //not used
+    }
 
     /**  */
     static final String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab";

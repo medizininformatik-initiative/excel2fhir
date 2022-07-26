@@ -2,9 +2,9 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Enddatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Startdatum;
-import static de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory.EncounterLevel1_Columns.Versorgungsfallklasse;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns.Versorgungsfallklasse;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,11 +31,27 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
+import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
  */
 public class EncounterLevel1Converter extends Converter {
+
+    /**
+     *
+     */
+    public static enum EncounterLevel1_Columns implements TableColumnIdentifier {
+        Startdatum,
+        Enddatum,
+        Versorgungsfallklasse,
+    }
+
+    /**
+     * Value that will be set if the mandatory column "Versorgungsfall-Nr" is
+     * missing in the data table sheets.
+     */
+    public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
 
     /**
      * Maps from human readable encounter types to the correspondig code system
