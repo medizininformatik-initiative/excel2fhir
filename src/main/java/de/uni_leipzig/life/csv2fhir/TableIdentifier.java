@@ -16,47 +16,47 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter;
 import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter.EncounterLevel2_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter;
 import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 import de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ConsentConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.DiagnosisConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel1ConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.EncounterLevel2ConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.MedicationConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationLaboratoryConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ObservationVitalSignsConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.PersonConverterFactory;
-import de.uni_leipzig.life.csv2fhir.converterFactory.ProcedureConverterFactory;
 
 /**
  * @author AXS (18.11.2021)
  */
 public enum TableIdentifier {
 
-    Person(Person_Columns.class, PersonConverterFactory.class),
+    Person(Person_Columns.class, PersonConverter.class),
 
-    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1ConverterFactory.class),
+    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
 
-    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2ConverterFactory.class),
+    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2Converter.class),
 
-    Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverterFactory.class),
+    Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverter.class),
 
-    Diagnose(Diagnosis_Columns.class, DiagnosisConverterFactory.class),
+    Diagnose(Diagnosis_Columns.class, DiagnosisConverter.class),
 
-    Prozedur(Procedure_Columns.class, ProcedureConverterFactory.class),
+    Prozedur(Procedure_Columns.class, ProzedurConverter.class),
 
-    Medikation(Medication_Columns.class, MedicationConverterFactory.class),
+    Medikation(Medication_Columns.class, MedicationConverter.class),
 
-    Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverterFactory.class),
+    Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverter.class),
 
-    Consent(Consent_Columns.class, ConsentConverterFactory.class) {
+    Consent(Consent_Columns.class, ConsentConverter.class) {
         @Override
         public String toString() {
             return Person.toString(); // Consent data are on the patient sheet
@@ -86,25 +86,26 @@ public enum TableIdentifier {
             public boolean isMandatory() {
                 return false;
             }
-        },
+        };
     }
 
     /** The class with the converter factory for this data type */
-    private final Class<? extends ConverterFactory> converterFactoryClass;
-
-    /** The converter factory for this data type */
-    private ConverterFactory converterFactory;
+    private Constructor<? extends Converter> converterConstructor = null;
 
     /** The class with the enum with the definition of the table columns */
     private final Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass;
 
     /**
      * @param columnIdentifiersClass
-     * @param converterFactoryClass
+     * @param converterClass
      */
-    private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends ConverterFactory> converterFactoryClass) {
+    private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends Converter> converterClass) {
         this.columnIdentifiersClass = columnIdentifiersClass;
-        this.converterFactoryClass = converterFactoryClass;
+        try {
+            converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -145,7 +146,7 @@ public enum TableIdentifier {
     /**
      * @return the identifier for the PID column in the table
      */
-    public TableColumnIdentifier getPIDColumnIdentifier() {
+    protected TableColumnIdentifier getPIDColumnIdentifier() {
         return DefaultTableColumnNames.Patient_ID;
     }
 
@@ -164,10 +165,7 @@ public enum TableIdentifier {
      * @throws Exception
      */
     public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator) throws Exception {
-        if (converterFactory == null) {
-            converterFactory = createConverter();
-        }
-        Converter converter = converterFactory.create(csvRecord, result, validator);
+        Converter converter = converterConstructor.newInstance(csvRecord, result, validator);
         List<? extends Resource> resources = converter.convert(); //should never return null!
         //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
         List<Resource> validResources = new ArrayList<>();
@@ -184,16 +182,6 @@ public enum TableIdentifier {
         }
         result.addAll(this, validResources);
         return validResources;
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    private final ConverterFactory createConverter() throws Exception {
-        Constructor<? extends ConverterFactory> emptyConverterFactoyryConstructor = converterFactoryClass.getConstructor();
-        ConverterFactory converterFactory = emptyConverterFactoyryConstructor.newInstance();
-        return converterFactory;
     }
 
     @Override
