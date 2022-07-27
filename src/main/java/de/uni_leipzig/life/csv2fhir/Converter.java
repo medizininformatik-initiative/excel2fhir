@@ -5,6 +5,7 @@ import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
@@ -35,7 +36,7 @@ import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Sys;
@@ -50,6 +51,12 @@ public abstract class Converter {
 
     /**  */
     protected static Logger LOG = LoggerFactory.getLogger(Converter.class);
+
+    /** Char of whitesace */
+    private static final char WHITE_SPACE = (char) 32;
+
+    /** An empty list as default return value for empty records */
+    private static final List<? extends Resource> EMPTY_RESOURCE_LIST = ImmutableList.of();
 
     /**
      * Specifies how to handle missing values.
@@ -97,6 +104,11 @@ public abstract class Converter {
     protected final FHIRValidator validator;
 
     /**
+     * The enum with the column identifiers (initialized by refelection).
+     */
+    private final Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass;
+
+    /**
      * @param record
      * @param result
      * @param validator Validator to validate resources. Can be
@@ -110,6 +122,7 @@ public abstract class Converter {
         pid = parsePatientId();
         encounterID = parseEncounterId();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
+        columnIdentifiersClass = reflectColumnIdentifiersClass();
     }
 
     /**
@@ -117,7 +130,9 @@ public abstract class Converter {
      * @throws Exception
      */
     public List<? extends Resource> convert() throws Exception {
-        //TODO: Check here if all mandatory columns are empty or contain only '-' to avoid that many generated resources consist only of Data Absent Reasons. Return an empty list in this case.
+        if (isEmptyCSVRecord()) {
+            return EMPTY_RESOURCE_LIST;
+        }
         return convertInternal();
     }
 
@@ -126,6 +141,52 @@ public abstract class Converter {
      * @throws Exception
      */
     protected abstract List<? extends Resource> convertInternal() throws Exception;
+
+    /**
+     * Checks if the records contains no (valid) values. A value is valid if it
+     * is not null and not only consists of whitespace characters or minus signs
+     * '-'.
+     *
+     * @return <code>true</code> if the record contains no values.
+     */
+    private boolean isEmptyCSVRecord() {
+        for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
+            String value = record.get(columnIndentifier);
+            if (value != null && !isBlank(value.replace('-', WHITE_SPACE))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @return The class with the enum with the definition of the table columns
+     */
+    public Class<? extends Enum<? extends TableColumnIdentifier>> getColumnIdentifiersClass() {
+        return columnIdentifiersClass;
+    }
+
+    /**
+     * @return The class with the enum with the definition of the table columns
+     */
+    private Class<? extends Enum<? extends TableColumnIdentifier>> reflectColumnIdentifiersClass() {
+        return reflectColumnIdentifiersClass(getClass());
+    }
+
+    /**
+     * @param converterClass
+     * @return The class with the enum with the definition of the table columns
+     *         in the passed converter class
+     */
+    @SuppressWarnings("unchecked") //it's checked
+    public static Class<? extends Enum<? extends TableColumnIdentifier>> reflectColumnIdentifiersClass(Class<? extends Converter> converterClass) {
+        for (Class<?> declaredClass : converterClass.getDeclaredClasses()) {
+            if (Enum.class.isAssignableFrom(declaredClass) && TableColumnIdentifier.class.isAssignableFrom(declaredClass)) {
+                return (Class<? extends Enum<? extends TableColumnIdentifier>>) declaredClass.asSubclass(Enum.class);
+            }
+        }
+        return null;
+    }
 
     /**
      * @param resource
@@ -274,7 +335,7 @@ public abstract class Converter {
         String encounterNumber = null;
         if (columnExists) {
             String recordEncounterNumber = record.get(encounterIDColumnName);
-            boolean valueExists = !Strings.isNullOrEmpty(recordEncounterNumber);
+            boolean valueExists = !isBlank(recordEncounterNumber);
             if (valueExists) {
                 encounterNumber = recordEncounterNumber;
             } else if (encounterIDColumnIdentifier.isMandatory()) {
@@ -492,7 +553,7 @@ public abstract class Converter {
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName) {
         String code = record.get(codeColumnName);
-        if (Strings.isNullOrEmpty(code)) {
+        if (isBlank(code)) {
             String errorMessage = codeColumnName + " empty for Record";
             if (!isMandatory(codeColumnName)) {
                 warning(errorMessage);
@@ -510,7 +571,7 @@ public abstract class Converter {
      */
     public static Coding createCoding(String codeSystem, String code) {
         Coding coding = new Coding().setSystem(codeSystem);
-        if (!Strings.isNullOrEmpty(code)) {
+        if (!isBlank(code)) {
             return coding.setCode(code);
         }
         coding.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
@@ -614,7 +675,7 @@ public abstract class Converter {
      */
     public static Quantity getUcumQuantity(BigDecimal value, String ucumCode) throws Exception {
         String ucumUnit = null;
-        if (!Strings.isNullOrEmpty(ucumCode)) {
+        if (!isBlank(ucumCode)) {
             ucumCode = UcumMapper.getValidUcumCode(ucumCode);
             ucumUnit = UcumMapper.getUcumUnit(ucumCode);
         } else {
@@ -627,13 +688,13 @@ public abstract class Converter {
             quantity.getValueElement()
                     .addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
-        if (!Strings.isNullOrEmpty(ucumCode)) {
+        if (!isBlank(ucumCode)) {
             quantity.setCode(ucumCode);
         } else {
             quantity.getCodeElement()
                     .addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
-        if (!Strings.isNullOrEmpty(ucumUnit)) {
+        if (!isBlank(ucumUnit)) {
             quantity.setUnit(ucumUnit);
         } else {
             quantity.getUnitElement()
