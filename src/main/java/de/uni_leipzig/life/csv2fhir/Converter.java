@@ -338,12 +338,11 @@ public abstract class Converter {
             boolean valueExists = !isBlank(recordEncounterNumber);
             if (valueExists) {
                 encounterNumber = recordEncounterNumber;
-            } else if (encounterIDColumnIdentifier.isMandatory()) {
-                encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
             }
         } else {
             encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
         }
+        //is still null if the column exists but the value is missing
         if (encounterNumber == null) {
             return null;
         }
