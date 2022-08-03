@@ -385,7 +385,7 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getEncounterReference() throws Exception {
-        return getEncounterReference(true);
+        return getEncounterReference(false);
     }
 
     /**
