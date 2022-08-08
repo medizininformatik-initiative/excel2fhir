@@ -89,18 +89,16 @@ public class MedicationConverter extends Converter {
         ASK,
         FHIR_UserSelected,
         Darreichungsform,
-        //Tagesdosis,
+        Therapiestartdatum,
+        Therapieendedatum,
+        Einzeldosis,
+        Einheit,
         Anzahl_Dosen_pro_Tag {
             @Override
             public String toString() {
                 return "Anzahl Dosen pro Tag";
             }
         },
-        Therapiestartdatum,
-        Therapieendedatum,
-        Einzeldosis,
-        Einheit,
-        //KombinationsAMI,
     }
 
     /**
