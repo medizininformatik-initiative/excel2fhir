@@ -64,12 +64,13 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
     protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
-        String id = getEncounterId() + "-OV-" + nextId;
+        Reference encounterReference = getEncounterReference();
+        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + "-OV-" + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
         observation.setSubject(getPatientReference()); // if null then observation is invalid
-        observation.setEncounter(getEncounterReference()); // if null then observation is invalid
+        observation.setEncounter(encounterReference);
         setEffective(observation, this, Zeitstempel);
         observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
         observation.setValue(parseObservationValue(Wert, Einheit));

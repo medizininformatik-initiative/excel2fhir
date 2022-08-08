@@ -55,7 +55,10 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
     protected List<Resource> convertInternal() throws Exception {
         int nextId = result.getNextId(Abteilungsfall, Encounter.class, START_ID_ENCOUNTER_LEVEL_2);
         Encounter encounter = new Encounter();
-        encounter.setId(getEncounterId() + "-A-" + nextId);
+        Reference superEncounterReference = getEncounterReference();
+        // If the super encounter is defined for this sub encounter so we can use it for the id. If not we can only use the PID
+        String id = (superEncounterReference != null ? getEncounterId() : getPatientId()) + "-A-" + nextId;
+        encounter.setId(id);
         encounter.setMeta(getMeta());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);
         //encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "IMP", "inpatient encounter")); //correct class code will be added in the BundlePostProcessor because it comes from the main level 1 encounter
@@ -63,7 +66,7 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
         encounter.setSubject(getPatientReference());
         encounter.setPeriod(createPeriod(Startdatum, Enddatum));
         encounter.setType(getEncounterType());
-        encounter.setPartOf(getEncounterReference());
+        encounter.setPartOf(superEncounterReference);
         return Collections.singletonList(encounter);
     }
 

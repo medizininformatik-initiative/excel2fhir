@@ -6,6 +6,7 @@ import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure
 import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurencode;
 import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurentext;
 import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +55,9 @@ public class ProzedurConverter extends Converter {
     protected List<Resource> convertInternal() throws Exception {
         Procedure procedure = new Procedure();
         int nextId = result.getNextId(Prozedur, Procedure.class, START_ID_PROCEDURE);
-        procedure.setId(getEncounterId() + "-P-" + nextId);
+        String encounterId = getEncounterId();
+        String id = (isBlank(encounterId) ? getPatientId() : encounterId) + "-P-" + nextId;
+        procedure.setId(id);
         //        procedure.addExtension(new Extension()
         //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         //                .setValue(convertRecordedDate()));
@@ -74,9 +77,9 @@ public class ProzedurConverter extends Converter {
             return Collections.emptyList();
         }
         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
-        String encounterId = getEncounterId();
-        EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
-
+        if (!isBlank(encounterId)) {
+            EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
+        }
         return singletonList(procedure);
     }
 

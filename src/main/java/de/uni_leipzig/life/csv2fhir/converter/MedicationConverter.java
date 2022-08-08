@@ -18,6 +18,7 @@ import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medicat
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medikationstyp_Values.Verordnung;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static java.util.Collections.singletonList;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
 import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
@@ -46,8 +47,6 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.SimpleQuantity;
 import org.hl7.fhir.r4.model.Type;
-
-import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -230,7 +229,7 @@ public class MedicationConverter extends Converter {
      */
     private <T extends Resource> String createId(String suffix, Class<T> resourceType) throws Exception {
         String encounterID = getEncounterId();
-        String superID = Strings.isNullOrEmpty(encounterID) ? getPatientId() : encounterID;
+        String superID = isBlank(encounterID) ? getPatientId() : encounterID;
         IntOption startID = null;
         if (resourceType.isAssignableFrom(MedicationAdministration.class)) {
             startID = IntOption.START_ID_MEDICATION_ADMINISTRATION;
@@ -251,7 +250,7 @@ public class MedicationConverter extends Converter {
             CodeableConcept askCodeableConcept = new CodeableConcept(askCoding);
             m.setItem(askCodeableConcept);
         } catch (Exception e) {
-            warning("cannot set ATC");
+            warning("cannot set ASK");
         }
         try {
             m.setStrength(getDoseRate());
@@ -299,7 +298,7 @@ public class MedicationConverter extends Converter {
      */
     private Reference getMedicationReference() throws Exception {
         String medicationId = getMedicationId();
-        if (Strings.isNullOrEmpty(medicationId)) {
+        if (isBlank(medicationId)) {
             return null;
         }
         return createReference(Medication.class, medicationId);
@@ -344,11 +343,11 @@ public class MedicationConverter extends Converter {
         // Exception for PZN codes: These must be extended to 8 digits with leading 0s.
         if (code != null) {
             if (PZN_Code == codeColumnName) {
-                code = Strings.padStart(code, 8, '0');
+                code = com.google.common.base.Strings.padStart(code, 8, '0');
             }
             Coding coding = createCoding(codeSystem, code);
             String selectedColumnValue = get(userSelectedIndicatorColumnName);
-            if (!Strings.isNullOrEmpty(selectedColumnValue)) {
+            if (!isBlank(selectedColumnValue)) {
                 String codeColumnNameString = codeColumnName.toString();
                 if (codeColumnNameString.toLowerCase().contains(selectedColumnValue.toLowerCase())) {
                     coding.setUserSelected(true);

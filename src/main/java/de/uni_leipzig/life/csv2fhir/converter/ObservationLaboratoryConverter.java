@@ -81,12 +81,14 @@ public class ObservationLaboratoryConverter extends Converter {
     protected List<Resource> convertInternal() throws Exception {
         Observation observation = new Observation();
         int nextId = result.getNextId(Laborbefund, Observation.class, START_ID_OBSERVATION_LABORATORY);
-        String id = getEncounterId() + "-OL-" + nextId;
+        Reference encounterReference = getEncounterReference();
+        // If the encounter is defined for this Observation so we can use it for the id. If not we can only use the PID
+        String id = (encounterReference != null ? getEncounterId() : getPatientId()) + "-OL-" + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
         observation.setSubject(getPatientReference()); // if null then observation is invalid
-        observation.setEncounter(getEncounterReference()); // if null then observation is invalid
+        observation.setEncounter(encounterReference);
         setEffective(observation, this, Zeitstempel_Abnahme);
         observation.setCode(parseObservationCode());
         observation.setCode(parseLoincCodeableConcept(LOINC, Parameter));

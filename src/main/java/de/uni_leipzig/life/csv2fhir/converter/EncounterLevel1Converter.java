@@ -89,7 +89,11 @@ public class EncounterLevel1Converter extends Converter {
     protected List<Resource> convertInternal() throws Exception {
         Encounter encounter = new Encounter();
         encounter.setMeta(getMeta());
-        encounter.setId(getEncounterId());
+        String encounterId = getEncounterId();
+        if (encounterId == null) { //should be only null if the column exists but the value is absent
+            error("Encounter ID should not be empty! ");
+        }
+        encounter.setId(encounterId);
         encounter.setIdentifier(convertIdentifier());
         encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
         encounter.setClass_(getClass_());
@@ -226,6 +230,11 @@ public class EncounterLevel1Converter extends Converter {
      * @param diagnosisUseIdentifier
      */
     public static void addDiagnosisToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+        // the encounter can be null, if the diagnosis is defined with an
+        // empty or not present encounter number in the current dataset
+        if (encounter == null) {
+            return;
+        }
         // construct a valid DiagnosisComponent from condition or
         // procedure to add it as reference to the encounter
         Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis);

@@ -8,6 +8,7 @@ import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosi
 import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.ICD;
 import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Typ;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.logging.log4j.util.Strings.isBlank;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,8 +25,6 @@ import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
-
-import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -77,6 +76,7 @@ public class DiagnosisConverter extends Converter {
     @Override
     protected List<Resource> convertInternal() throws Exception {
         List<Resource> conditions = new ArrayList<>();
+        //it is possible that there ist more than on code in the cell
         List<String> icdCodes = parseICDCodes();
         if (!isEmpty(icdCodes)) {
             for (int i = 0; i < icdCodes.size(); i++) {
@@ -103,8 +103,11 @@ public class DiagnosisConverter extends Converter {
 
                 //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
                 String encounterId = getEncounterId();
-                String diagnosisUseIdentifier = get(Typ);
-                EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                //encounterId is optional
+                if (!isBlank(encounterId)) {
+                    String diagnosisUseIdentifier = get(Typ);
+                    EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                }
                 conditions.add(condition);
             }
         }
@@ -117,15 +120,11 @@ public class DiagnosisConverter extends Converter {
      */
     private List<String> parseICDCodes() throws Exception {
         String code = get(ICD);
-        if (code == null) {
-            return null;
-        }
-        code = code.trim();
-        if (Strings.isNullOrEmpty(code)) {
+        if (isBlank(code)) {
             error(ICD + " empty for record");
             return null;
         }
-        code = code.toUpperCase();
+        code = code.trim().toUpperCase();
         List<String> icdCodes = extractICDCodes(code);
         return icdCodes;
     }
@@ -165,7 +164,8 @@ public class DiagnosisConverter extends Converter {
             return null;
         }
         int nextId = result.getNextId(Diagnose, Condition.class, START_ID_DIAGNOSIS) + nextIDOffset;
-        return getPatientId() + "-CD-" + nextId;
+        String encounterId = getEncounterId();
+        return (encounterId == null ? getPatientId() : encounterId) + "-D-" + nextId;
     }
 
     /**
