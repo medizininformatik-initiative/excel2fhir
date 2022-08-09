@@ -89,12 +89,6 @@ public abstract class Converter {
     private final CSVRecord record;
 
     /**  */
-    protected boolean kds = true;
-
-    /**  */
-    protected boolean kds_strict = true;
-
-    /**  */
     protected final ConverterResult result;
 
     /**

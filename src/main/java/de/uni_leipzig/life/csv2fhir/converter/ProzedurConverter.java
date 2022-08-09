@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
 import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Dokumentationsdatum;
@@ -58,6 +60,7 @@ public class ProzedurConverter extends Converter {
         String encounterId = getEncounterId();
         String id = (isBlank(encounterId) ? getPatientId() : encounterId) + "-P-" + nextId;
         procedure.setId(id);
+        procedure.setMeta(new Meta().addProfile(PROFILE));
         //        procedure.addExtension(new Extension()
         //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         //                .setValue(convertRecordedDate()));
@@ -67,18 +70,22 @@ public class ProzedurConverter extends Converter {
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
 
-        if (kds) {
-            procedure.setMeta(new Meta().addProfile(PROFILE));
-        } else if (kds_strict) {
+        //enable this to get the reference from condition to encounter. This is optional
+        //but it creates a circle, because the encounter has also a reference list to all
+        //diagnosis. This is false by default.
+        if (SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER.is()) {
+            procedure.setEncounter(getEncounterReference());
+        }
+
+        if (!isValid(procedure)) { //check validity before adding the refence from encounter to this
             return Collections.emptyList();
         }
 
-        if (!isValid(procedure)) {
-            return Collections.emptyList();
-        }
-        //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
-        if (!isBlank(encounterId)) {
-            EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
+        if (SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION.is()) { // default is true
+            //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+            if (!isBlank(encounterId)) {
+                EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
+            }
         }
         return singletonList(procedure);
     }
@@ -130,12 +137,10 @@ public class ProzedurConverter extends Converter {
                 display = "Other category";
                 break;
             default:
-                kds = false;
                 return null;
             }
             return createCoding("http://snomed.info/sct", code, display);
         }
-        kds = false;
         return null;
     }
 

@@ -60,6 +60,31 @@ public class ConverterOptions {
         SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION,
 
         /**
+         * Enable to set a the optional reference from procedures (conditions)
+         * to encounters. </br>
+         * If <code>true</code> then circle references in the data are possible,
+         * if the encounters have a reference to all procedures (conditions).
+         * Some FHIR-Servers don't accept such circle references. In this case
+         * the corresponding option
+         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION}
+         * must be set to <code>false</code>.</br>
+         * The Default is <code>false</code>.
+         */
+        SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER,
+        /**
+         * Enable to set the references from the encounters to the procedures
+         * (conditions). </br>
+         * If <code>true</code> then circle references in the data are possible,
+         * if the procedures (conditions) have a reference to their encounters.
+         * Some FHIR-Servers don't accept such circle references. In this case
+         * the corresponding option
+         * {@link BooleanOption#SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER}
+         * must be set to <code>false</code>.</br>
+         * The Default is <code>true</code>.
+         */
+        SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION,
+
+        /**
          * If <code>true</code>, then Sub Encounters will have a diagnosis of
          * the Super Encounter attached instead of a Data Absent Reason. If the
          * Super Encounter has a main diagnosis (chief complaint), it is
@@ -107,7 +132,7 @@ public class ConverterOptions {
         }
 
         /** All BooleanOptions whose default value is <code>true</code>. */
-        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION);
+        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION, SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION);
 
         /**
          * @return Default-Wert dieser Property
