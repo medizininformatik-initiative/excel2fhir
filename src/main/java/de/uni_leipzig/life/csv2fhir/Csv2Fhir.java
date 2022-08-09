@@ -2,6 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Konvertierungsoptionen;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.BufferedWriter;
@@ -74,10 +75,9 @@ public class Csv2Fhir {
      * @param inputDirectory
      * @param outputFileNameBase
      * @param validator
-     * @param converterOptionsFileName
      */
-    public Csv2Fhir(File inputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator, @Nullable String converterOptionsFileName) {
-        this(inputDirectory, inputDirectory, outputFileNameBase, validator, converterOptionsFileName);
+    public Csv2Fhir(File inputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
+        this(inputDirectory, inputDirectory, outputFileNameBase, validator);
     }
 
     /**
@@ -85,9 +85,8 @@ public class Csv2Fhir {
      * @param outputDirectory
      * @param outputFileNameBase
      * @param validator
-     * @param converterOptionsFileName
      */
-    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator, @Nullable String converterOptionsFileName) {
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -98,7 +97,11 @@ public class Csv2Fhir {
                 .withAllowMissingColumnNames(true)
                 .withFirstRecordAsHeader();
         this.validator = validator;
-        ConverterOptions.putValues(converterOptionsFileName);
+        // If there is no Konvertierungsoptionen.csv file in the outputLocal directory (that was extracted
+        // from the Excel file) then only the default options are loaded from the resources. If the file
+        // exists then it is loaded after the defaults are loaded.
+        String internalConverterOptionsFileName = new File(inputDirectory, Konvertierungsoptionen.toString()).toString() + ".csv";
+        ConverterOptions.putValues(internalConverterOptionsFileName);
     }
 
     /**
@@ -326,46 +329,48 @@ public class Csv2Fhir {
         ConverterResult result = new ConverterResult();
         boolean filter = !Strings.isNullOrEmpty(filterID);
         for (TableIdentifier table : TableIdentifier.values()) {
-            List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
-            if (parsedRecords == null) {
-                String fileName = table.getCsvFileName();
-                File file = new File(inputDirectory, fileName);
-                if (!file.exists() || file.isDirectory()) {
-                    continue;
-                }
-                try (Reader in = new FileReader(file)) {
-                    CSVParser csvParser = csvFormat.parse(in);
-                    LOG.info("Start parsing File:" + fileName);
-                    Map<String, Integer> headerMap = csvParser.getHeaderMap();
-                    Collection<String> neededColumnNames = table.getMandatoryColumnNames();
-                    if (isColumnMissing(headerMap, neededColumnNames)) {
-                        csvParser.close();
-                        LOG.error("Error - File: " + fileName + " not convertable!");
+            if (table.isConvertableTableSheet()) {
+                List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
+                if (parsedRecords == null) {
+                    String fileName = table.getCsvFileName();
+                    File file = new File(inputDirectory, fileName);
+                    if (!file.exists() || file.isDirectory()) {
                         continue;
                     }
-                    parsedRecords = csvParser.getRecords();
-                    tableIdentifierToParsedRecords.put(table, parsedRecords);
-                    csvParser.close();
-                }
-            }
-            for (int i = 0; i < parsedRecords.size(); i++) {
-                CSVRecord record = parsedRecords.get(i);
-                try {
-                    if (filter) {
-                        String pidColumnName = table.getPIDColumnIdentifier().toString();
-                        String pid = record.get(pidColumnName);
-                        if (!pid.toUpperCase().matches(filterID)) {
+                    try (Reader in = new FileReader(file)) {
+                        CSVParser csvParser = csvFormat.parse(in);
+                        LOG.info("Start parsing File:" + fileName);
+                        Map<String, Integer> headerMap = csvParser.getHeaderMap();
+                        Collection<String> neededColumnNames = table.getMandatoryColumnNames();
+                        if (isColumnMissing(headerMap, neededColumnNames)) {
+                            csvParser.close();
+                            LOG.error("Error - File: " + fileName + " not convertable!");
                             continue;
                         }
-                        parsedRecords.remove(i--);
+                        parsedRecords = csvParser.getRecords();
+                        tableIdentifierToParsedRecords.put(table, parsedRecords);
+                        csvParser.close();
                     }
-                    List<? extends Resource> list = table.convert(record, result, validator);
-                    for (Resource resource : list) {
-                        addEntry(bundle, resource);
-                        addEntry(ndjsonBundle, resource);
+                }
+                for (int i = 0; i < parsedRecords.size(); i++) {
+                    CSVRecord record = parsedRecords.get(i);
+                    try {
+                        if (filter) {
+                            String pidColumnName = table.getPIDColumnIdentifier().toString();
+                            String pid = record.get(pidColumnName);
+                            if (!pid.toUpperCase().matches(filterID)) {
+                                continue;
+                            }
+                            parsedRecords.remove(i--);
+                        }
+                        List<? extends Resource> list = table.convert(record, result, validator);
+                        for (Resource resource : list) {
+                            addEntry(bundle, resource);
+                            addEntry(ndjsonBundle, resource);
+                        }
+                    } catch (Exception e) {
+                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
                     }
-                } catch (Exception e) {
-                    LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
                 }
             }
         }

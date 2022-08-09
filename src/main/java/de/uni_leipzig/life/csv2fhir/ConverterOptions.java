@@ -21,10 +21,10 @@ public class ConverterOptions {
     private static final ResourceMapper CONVERTER_OPTIONS = ResourceMapper.of("Converter_Options.config");
 
     /**
-     * @param optionsAbsoluteFileName
+     * @param optionsAbsoluteFileName options file to load
      */
     public static void putValues(String optionsAbsoluteFileName) {
-        //add or owerwrite the defaults with the project specific option values
+        //add or overwrite the defaults with the project specific option values
         if (!CONVERTER_OPTIONS.load(optionsAbsoluteFileName)) {
             CONVERTER_OPTIONS.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
         }

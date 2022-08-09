@@ -61,7 +61,9 @@ public enum TableIdentifier {
         public String toString() {
             return Person.toString(); // Consent data are on the patient sheet
         }
-    };
+    },
+
+    Konvertierungsoptionen;
 
     /**
      * Table column identifier which are the same in all tables.
@@ -95,6 +97,10 @@ public enum TableIdentifier {
     /** The class with the enum with the definition of the table columns */
     private final Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass;
 
+    private TableIdentifier() {
+        this(null, null);
+    }
+
     /**
      * @param columnIdentifiersClass
      * @param converterClass
@@ -102,7 +108,9 @@ public enum TableIdentifier {
     private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends Converter> converterClass) {
         this.columnIdentifiersClass = columnIdentifiersClass;
         try {
-            converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class);
+            if (converterClass != null) {
+                converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,16 +123,18 @@ public enum TableIdentifier {
      */
     public Collection<Enum<? extends TableColumnIdentifier>> getMandatoryColumns() {
         ImmutableList.Builder<Enum<? extends TableColumnIdentifier>> mandatoryColumns = ImmutableList.builder();
-        for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
-            TableColumnIdentifier tableColumnIdentifier = (TableColumnIdentifier) columnIndentifier;
-            if (tableColumnIdentifier.isMandatory()) {
-                // A cloumn can be mandatory but missing in the data. In this case
-                // there must be defined a default value to provide the mandatory
-                // value. If the column is mandatory and no default is defined
-                // then the column will be added here as the strict mandatory column
-                // which is needed to convert the table.
-                if (tableColumnIdentifier.getDefaultIfMissing() == null) {
-                    mandatoryColumns.add(columnIndentifier);
+        if (columnIdentifiersClass != null) {
+            for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
+                TableColumnIdentifier tableColumnIdentifier = (TableColumnIdentifier) columnIndentifier;
+                if (tableColumnIdentifier.isMandatory()) {
+                    // A cloumn can be mandatory but missing in the data. In this case
+                    // there must be defined a default value to provide the mandatory
+                    // value. If the column is mandatory and no default is defined
+                    // then the column will be added here as the strict mandatory column
+                    // which is needed to convert the table.
+                    if (tableColumnIdentifier.getDefaultIfMissing() == null) {
+                        mandatoryColumns.add(columnIndentifier);
+                    }
                 }
             }
         }
@@ -223,6 +233,14 @@ public enum TableIdentifier {
             excelSheetNames.add(csvFileName.getExcelSheetName());
         }
         return excelSheetNames;
+    }
+
+    /**
+     * @return <code>true</code> if this table identifier has convertable
+     *         columns and a constructor fpr the converter.
+     */
+    public boolean isConvertableTableSheet() {
+        return columnIdentifiersClass != null && converterConstructor != null;
     }
 
 }
