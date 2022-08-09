@@ -35,29 +35,29 @@ public class ConverterOptions {
      */
     public static enum BooleanOption {
         /**
-         * Enable to set a the optional reference from conditions (diagnosis) to
+         * Enable to set a the optional reference from diagnoses (conditions) to
          * encounters. </br>
          * If <code>true</code> then circle references in the data are possible,
-         * if the encounters have a reference to all diagnosis (conditions).
+         * if the encounters have a reference to all diagnoses (conditions).
          * Some FHIR-Servers don't accept such circle references. In this case
          * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSES_CONDITION}
+         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION}
          * must be set to <code>false</code>.</br>
          * The Default is <code>false</code>.
          */
-        SET_REFERENCE_FROM_DIAGNOSES_CONDITION_TO_ENCOUNTER,
+        SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER,
         /**
-         * Enable to set the references from the encounters to the conditions
-         * (diagnosis). </br>
+         * Enable to set the references from the encounters to the diagnoses
+         * (conditions). </br>
          * If <code>true</code> then circle references in the data are possible,
-         * if the diagnosis (conditions) have a reference to their encounter.
+         * if the diagnoses (conditions) have a reference to their encounter.
          * Some FHIR-Servers don't accept such circle references. In this case
          * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_DIAGNOSES_CONDITION_TO_ENCOUNTER}
+         * {@link BooleanOption#SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER}
          * must be set to <code>false</code>.</br>
          * The Default is <code>true</code>.
          */
-        SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSES_CONDITION,
+        SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION,
 
         /**
          * If <code>true</code>, then Sub Encounters will have a diagnosis of
@@ -107,7 +107,7 @@ public class ConverterOptions {
         }
 
         /** All BooleanOptions whose default value is <code>true</code>. */
-        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSES_CONDITION);
+        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION);
 
         /**
          * @return Default-Wert dieser Property

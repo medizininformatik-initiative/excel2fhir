@@ -1,8 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_DIAGNOSES_CONDITION_TO_ENCOUNTER;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSES_CONDITION;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_DIAGNOSIS;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Bezeichner;
@@ -94,28 +94,26 @@ public class DiagnosisConverter extends Converter {
                 condition.setSubject(getPatientReference());
                 condition.setRecordedDateElement(convertRecordedDate());
 
-                if (!isValid(condition)) {
-                    return Collections.emptyList();
-                }
-
                 //enable this to get the reference from condition to encounter. This is optional
                 //but it creates a circle, because the encounter has also a reference list to all
                 //diagnosis. This is false by default.
-                if (SET_REFERENCE_FROM_DIAGNOSES_CONDITION_TO_ENCOUNTER.is()) {
+                if (SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER.is()) {
                     condition.setEncounter(getEncounterReference());
                 }
 
-                //usually this is true by default
-                if (SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSES_CONDITION.is()) {
-                    //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
-                    String encounterId = getEncounterId();
-                    //encounterId is optional
-                    if (!isBlank(encounterId)) {
-                        String diagnosisUseIdentifier = get(Typ);
-                        EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                if (isValid(condition)) { //check validity before adding the refence from encounter to this
+                    //usually this is true by default
+                    if (SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION.is()) {
+                        //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+                        String encounterId = getEncounterId();
+                        //encounterId is optional
+                        if (!isBlank(encounterId)) {
+                            String diagnosisUseIdentifier = get(Typ);
+                            EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                        }
                     }
+                    conditions.add(condition);
                 }
-                conditions.add(condition);
             }
         }
         return conditions;
