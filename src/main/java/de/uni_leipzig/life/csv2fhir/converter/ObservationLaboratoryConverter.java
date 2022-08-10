@@ -54,7 +54,6 @@ public class ObservationLaboratoryConverter extends Converter {
                 return "Zeitstempel (Abnahme)";
             }
         },
-        //Methode //not used
     }
 
     /**  */
