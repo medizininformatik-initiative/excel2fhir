@@ -109,8 +109,8 @@ public class ProzedurConverter extends Converter {
      */
     private Coding convertSnomedCategory() throws Exception {
         String code = get(Prozedurencode);
+        String display = null;
         if (code != null) {
-            String display;
             switch (code.charAt(0)) {
             case '1':
                 code = "103693007";
@@ -137,11 +137,10 @@ public class ProzedurConverter extends Converter {
                 display = "Other category";
                 break;
             default:
-                return null;
+                break;
             }
-            return createCoding("http://snomed.info/sct", code, display);
         }
-        return null;
+        return createCoding("http://snomed.info/sct", code, display);
     }
 
 }
