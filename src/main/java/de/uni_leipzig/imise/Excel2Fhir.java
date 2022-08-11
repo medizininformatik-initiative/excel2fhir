@@ -139,9 +139,9 @@ public class Excel2Fhir {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
-        String fileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
+        String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "_";
         Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
-        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileName, validator);
+        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileBaseName, validator);
         try {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
             allFilesStatistics.add(converterStatistics);

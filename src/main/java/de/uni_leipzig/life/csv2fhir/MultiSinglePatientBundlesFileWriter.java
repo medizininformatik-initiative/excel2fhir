@@ -17,11 +17,10 @@ import java.util.zip.ZipOutputStream;
 
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
-
-import de.uni_leipzig.imise.validate.FHIRValidator;
-
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
+
+import de.uni_leipzig.imise.validate.FHIRValidator;
 
 /**
  * Handler to write ndjson and zip files with multiple bundles in it.
@@ -144,7 +143,7 @@ public class MultiSinglePatientBundlesFileWriter {
                                 .encodeResourceToString(bundle);
                         try (InputStream bundleInputStream = new ByteArrayInputStream(encodedBundle.getBytes(UTF_8))) {
                             String pid = extractPatientID(bundle);
-                            ZipEntry zipEntry = new ZipEntry(outputFileNameBase + "-" + pid + ZIPJSON.getBaseFileType().getFileExtension());
+                            ZipEntry zipEntry = new ZipEntry(outputFileNameBase + pid + ZIPJSON.getBaseFileType().getFileExtension());
                             zipJsonOutputStream.putNextEntry(zipEntry);
                             byte[] bytes = new byte[1024];
                             int length;

@@ -63,6 +63,7 @@ public class Excel2Csv {
     public static void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
+        String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
         try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
             for (Sheet dataSheet : workbook) {
@@ -73,7 +74,7 @@ public class Excel2Csv {
                 }
                 // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
                 // Wir setzten nun aber nur auf UTF
-                String csvFile = FilenameUtils.concat(csvDirBasename, sheetName + ".csv");
+                String csvFile = FilenameUtils.concat(csvDirBasename, sourceFileName + "_" + sheetName + ".csv");
                 OutputStream os = new FileOutputStream(new File(csvFile));
                 String charSet = "UTF-8";
                 //                String charSet = "ISO-8859-1";

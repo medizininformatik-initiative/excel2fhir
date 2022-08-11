@@ -103,24 +103,24 @@ public class Csv2Fhir {
         // If there is no Konvertierungsoptionen.csv file in the outputLocal directory (that was extracted
         // from the Excel file) then only the default options are loaded from the resources. If the file
         // exists then it is loaded after the defaults are loaded.
-        String internalConverterOptionsFileName = new File(inputDirectory, Konvertierungsoptionen.toString()).toString() + ".csv";
+        String internalConverterOptionsFileName = new File(inputDirectory, outputFileNameBase + Konvertierungsoptionen.toString()).toString() + ".csv";
         converterOptions = new ConverterOptions(internalConverterOptionsFileName);
     }
 
     /**
-     * @param csvFileName
+     * @param csvFileBaseName
      * @param columnName
      * @param distinct
      * @param alphabetical
      * @return
      * @throws IOException
      */
-    public Collection<String> getValues(String csvFileName, Object columnName, boolean distinct, boolean alphabetical)
+    private Collection<String> getValues(TableIdentifier csvFileBaseName, Object columnName, boolean distinct, boolean alphabetical)
             throws IOException {
         String columnNameString = String.valueOf(columnName);
         Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
-        File file = new File(inputDirectory, csvFileName);
 
+        File file = new File(inputDirectory, outputFileNameBase + csvFileBaseName + ".csv");
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
@@ -154,7 +154,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
-        Collection<String> pids = getValues(Person + ".csv", Person.getPIDColumnIdentifier(), true, true);
+        Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
         int pids2ConvertCount = pids.size();
         Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
         Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
@@ -216,7 +216,7 @@ public class Csv2Fhir {
             }
             pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
             if (lastPID != null) {
-                String fileNameExtendsion = firstPID == lastPID ? "-" + firstPID : "-" + firstPID + "-" + lastPID;
+                String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
                 writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                 bundle = createTransactionBundle();
                 if (multiSinglePatientBundlesFileWriter != null) {
@@ -335,7 +335,7 @@ public class Csv2Fhir {
             if (table.isConvertableTableSheet()) {
                 List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
                 if (parsedRecords == null) {
-                    String fileName = table.getCsvFileName();
+                    String fileName = table.getCsvFileName(outputFileNameBase);
                     File file = new File(inputDirectory, fileName);
                     if (!file.exists() || file.isDirectory()) {
                         continue;

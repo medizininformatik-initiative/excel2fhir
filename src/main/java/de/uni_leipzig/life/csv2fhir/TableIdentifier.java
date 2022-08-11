@@ -200,26 +200,21 @@ public enum TableIdentifier {
     }
 
     /**
+     * @param baseName
      * @return
      */
-    public String getCsvFileName() {
-        return toString() + ".csv";
+    public String getCsvFileName(String baseName) {
+        return baseName + toString() + ".csv";
     }
 
     /**
+     * @param baseName
      * @return
      */
-    public String getExcelSheetName() {
-        return toString();
-    }
-
-    /**
-     * @return
-     */
-    public static List<String> getCsvFileNames() {
+    public static List<String> getCsvFileNames(String baseName) {
         List<String> csvFileNames = new ArrayList<>();
         for (TableIdentifier csvFileName : values()) {
-            csvFileNames.add(csvFileName.getCsvFileName());
+            csvFileNames.add(csvFileName.getCsvFileName(baseName));
         }
         return csvFileNames;
     }
@@ -230,7 +225,7 @@ public enum TableIdentifier {
     public static List<String> getExcelSheetNames() {
         List<String> excelSheetNames = new ArrayList<>();
         for (TableIdentifier csvFileName : values()) {
-            excelSheetNames.add(csvFileName.getExcelSheetName());
+            excelSheetNames.add(csvFileName.toString());
         }
         return excelSheetNames;
     }

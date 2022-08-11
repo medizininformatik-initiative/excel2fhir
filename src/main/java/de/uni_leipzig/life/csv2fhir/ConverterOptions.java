@@ -38,7 +38,7 @@ public class ConverterOptions {
     /**
      * @param optionsAbsoluteFileName options file to load
      */
-    public void putValues(String optionsAbsoluteFileName) {
+    private void putValues(String optionsAbsoluteFileName) {
         //add or overwrite the defaults with the project specific option values
         if (!options.load(optionsAbsoluteFileName)) {
             options.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
