@@ -29,24 +29,30 @@ import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
  */
 public class BundlePostProcessor {
 
-    /** the processed bundle */
+    /** The processed bundle */
     private final Bundle bundle;
+
+    /** The options for the conversion */
+    private final ConverterOptions converterOptions;
 
     /**
      * @param bundle the processed bundle
+     * @param converterOptions The options for the conversion
      */
-    private BundlePostProcessor(Bundle bundle) {
+    private BundlePostProcessor(Bundle bundle, ConverterOptions converterOptions) {
         this.bundle = bundle;
+        this.converterOptions = converterOptions;
     }
 
     /**
      * Adds all sub encounters at least one diagnose from the super encounter if
      * exists.
      *
-     * @param bundle
+     * @param bundle the processed bundle
+     * @param converterOptions The options for the conversion
      */
-    public static void convert(Bundle bundle) {
-        BundlePostProcessor postProcessor = new BundlePostProcessor(bundle);
+    public static void convert(Bundle bundle, ConverterOptions converterOptions) {
+        BundlePostProcessor postProcessor = new BundlePostProcessor(bundle, converterOptions);
         postProcessor.addMissingDiagnosesAndClassToLevel2Encounters();
     }
 
@@ -70,7 +76,7 @@ public class BundlePostProcessor {
      * @param encounter
      */
     private void addMissingDiagnosesFromSuperEncounter(Encounter encounter) {
-        if (ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER.is()) {
+        if (converterOptions.is(ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER)) {
             List<DiagnosisComponent> diagnoses = encounter.getDiagnosis();
             if (diagnoses.isEmpty()) {
                 Encounter superEncounter = getSuperEncounter(encounter);
@@ -124,7 +130,7 @@ public class BundlePostProcessor {
      * @param encounter
      */
     private void addMissingClassCodingFromSuperencounter(Encounter encounter) {
-        if (ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER.is()) {
+        if (converterOptions.is(ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER)) {
             Coding class_ = encounter.getClass_();
             if (class_.isEmpty()) {
                 //copy encounter class from super encounter to sub encounter

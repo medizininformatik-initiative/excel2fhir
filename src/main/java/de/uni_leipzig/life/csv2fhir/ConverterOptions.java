@@ -1,5 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -18,22 +20,74 @@ public class ConverterOptions {
     public static final String CONVERTER_OPTIONS_FILE_EXTENSION = ".config";
 
     /** Map with all default options for the converting process */
-    private static final ResourceMapper CONVERTER_OPTIONS = ResourceMapper.of("Converter_Options.config");
+    private final ResourceMapper options = ResourceMapper.of("Converter_Options.config");
+
+    /** Cache for the boolean values */
+    private final Map<BooleanOption, Boolean> booleanValues = new HashMap<>();
+
+    /** Cache for the int values */
+    private final Map<IntOption, Integer> intValues = new HashMap<>();
 
     /**
      * @param optionsAbsoluteFileName options file to load
      */
-    public static void putValues(String optionsAbsoluteFileName) {
+    public ConverterOptions(String optionsAbsoluteFileName) {
+        putValues(optionsAbsoluteFileName);
+    }
+
+    /**
+     * @param optionsAbsoluteFileName options file to load
+     */
+    public void putValues(String optionsAbsoluteFileName) {
         //add or overwrite the defaults with the project specific option values
-        if (!CONVERTER_OPTIONS.load(optionsAbsoluteFileName)) {
-            CONVERTER_OPTIONS.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
+        if (!options.load(optionsAbsoluteFileName)) {
+            options.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
         }
+    }
+
+    /**
+     * @param booleanOption
+     * @return
+     */
+    public boolean is(BooleanOption booleanOption) {
+        Boolean value = booleanValues.get(booleanOption);
+        if (value == null) {
+            Object mapValueContent = options.get(booleanOption.toString());
+            if (mapValueContent == null) {
+                value = booleanOption.getDefault();
+            } else {
+                String v = mapValueContent.toString().trim().toLowerCase();
+                value = BooleanOption.trueValues.contains(v);
+            }
+            booleanValues.put(booleanOption, value);
+        }
+        return value;
+    }
+
+    /**
+     * @param intOption
+     * @return the value of this option
+     * @throws NumberFormatException if the found string in the properties
+     *             cannot be parsed as an integer.
+     */
+    public int getValue(IntOption intOption) {
+        Integer value = intValues.get(intOption);
+        if (value == null) {
+            Object mapValueContent = options.get(toString());
+            if (mapValueContent == null) {
+                value = intOption.getDefault();
+            } else {
+                value = Integer.valueOf(mapValueContent.toString().trim());
+            }
+            intValues.put(intOption, value);
+        }
+        return value;
     }
 
     /**
      * Boolean Options
      */
-    public static enum BooleanOption {
+    public enum BooleanOption {
         /**
          * Enable to set a the optional reference from diagnoses (conditions) to
          * encounters. </br>
@@ -104,32 +158,10 @@ public class ConverterOptions {
         ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
 
         /**
-         * Caches the boolean value from the resource map
-         */
-        private Boolean is = null;
-
-        /**
          * Set of String values that can be interpreted as booleans with value
          * "true".
          */
         private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j", "1");
-
-        /**
-         * @param optionResourceName
-         * @return
-         */
-        public boolean is() {
-            if (is == null) {
-                Object mapValueContent = CONVERTER_OPTIONS.get(toString());
-                if (mapValueContent == null) {
-                    is = getDefault();
-                } else {
-                    String value = mapValueContent.toString().trim().toLowerCase();
-                    is = trueValues.contains(value);
-                }
-            }
-            return is;
-        }
 
         /** All BooleanOptions whose default value is <code>true</code>. */
         private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION, SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION);
@@ -137,23 +169,10 @@ public class ConverterOptions {
         /**
          * @return Default-Wert dieser Property
          */
-        public boolean getDefault() {
+        private boolean getDefault() {
             return DEFAULT_TRUE_PROERTIES.contains(this);
         }
 
-        /**
-         * @param converterOptions
-         * @return <code>true</code> if at least one of the parameter returns
-         *         {@link ConverterOptions#is()} == <code>true</code>.
-         */
-        public static boolean is(BooleanOption... booleanOptions) {
-            for (BooleanOption booleanOption : booleanOptions) {
-                if (booleanOption.is()) {
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 
     /**
@@ -178,9 +197,6 @@ public class ConverterOptions {
         /** Default value of the int option */
         private final int defaultValue;
 
-        /** Value of the int option */
-        private Integer value;
-
         /**
          * Creates an int option with the default value 1
          */
@@ -198,26 +214,9 @@ public class ConverterOptions {
         }
 
         /**
-         * @return the value of this option
-         * @throws NumberFormatException if the found string in the properties
-         *             cannot be parsed as an integer.
-         */
-        public int getValue() {
-            if (value == null) {
-                Object mapValueContent = CONVERTER_OPTIONS.get(toString());
-                if (mapValueContent == null) {
-                    value = getDefault();
-                } else {
-                    value = Integer.valueOf(mapValueContent.toString().trim());
-                }
-            }
-            return value;
-        }
-
-        /**
          * @return the default value of this option
          */
-        public int getDefault() {
+        private int getDefault() {
             return defaultValue;
         }
 

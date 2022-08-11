@@ -35,6 +35,11 @@ import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
 public class ConverterResult {
 
     /**
+     * The options which contains the idStart values.
+     */
+    private final ConverterOptions converterOptions;
+
+    /**
      * Maps from the Resource type and the id to the resource created by this
      * converter.<br>
      * Must be a {@link Multimap} because from the
@@ -65,6 +70,20 @@ public class ConverterResult {
 
     /**  */
     private ConverterResultStatistics statistics = null;
+
+    /**
+     * @param converterOptions The options which contains the idStart values.
+     */
+    public ConverterResult(ConverterOptions converterOptions) {
+        this.converterOptions = converterOptions;
+    }
+
+    /**
+     * @return
+     */
+    public ConverterOptions getConverterOptions() {
+        return converterOptions;
+    }
 
     /**
      * @param tableSource
@@ -173,7 +192,7 @@ public class ConverterResult {
      * @return
      */
     public final <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType, IntOption startIndex) {
-        return getResourceCount(tableSource, resourceType) + startIndex.getValue();
+        return getResourceCount(tableSource, resourceType) + converterOptions.getValue(startIndex);
     }
 
     /**

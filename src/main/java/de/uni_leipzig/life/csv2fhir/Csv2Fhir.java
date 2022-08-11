@@ -65,6 +65,9 @@ public class Csv2Fhir {
     /** The validator to validate all separate Resoruces and then the bundle */
     private final FHIRValidator validator;
 
+    /** The options to convert the current csv file set. */
+    private final ConverterOptions converterOptions;
+
     /** Counters for all resources created from one set of CSV files */
     private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
 
@@ -101,7 +104,7 @@ public class Csv2Fhir {
         // from the Excel file) then only the default options are loaded from the resources. If the file
         // exists then it is loaded after the defaults are loaded.
         String internalConverterOptionsFileName = new File(inputDirectory, Konvertierungsoptionen.toString()).toString() + ".csv";
-        ConverterOptions.putValues(internalConverterOptionsFileName);
+        converterOptions = new ConverterOptions(internalConverterOptionsFileName);
     }
 
     /**
@@ -203,11 +206,11 @@ public class Csv2Fhir {
             ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
             ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
             if (bundle != null) {
-                BundlePostProcessor.convert(bundle);
+                BundlePostProcessor.convert(bundle, converterOptions);
             }
             if (multiSinglePatientBundlesFileWriter != null) {
                 //same convertion here as with the bundle
-                BundlePostProcessor.convert(singlePatientBundle);
+                BundlePostProcessor.convert(singlePatientBundle, converterOptions);
                 multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
                 singlePatientBundle = createTransactionBundle();
             }
@@ -326,7 +329,7 @@ public class Csv2Fhir {
     private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
-        ConverterResult result = new ConverterResult();
+        ConverterResult result = new ConverterResult(converterOptions);
         boolean filter = !Strings.isNullOrEmpty(filterID);
         for (TableIdentifier table : TableIdentifier.values()) {
             if (table.isConvertableTableSheet()) {

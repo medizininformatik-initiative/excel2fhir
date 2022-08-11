@@ -30,6 +30,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
@@ -97,13 +98,14 @@ public class DiagnosisConverter extends Converter {
                 //enable this to get the reference from condition to encounter. This is optional
                 //but it creates a circle, because the encounter has also a reference list to all
                 //diagnosis. This is false by default.
-                if (SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER.is()) {
+                ConverterOptions converterOptions = result.getConverterOptions();
+                if (converterOptions.is(SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER)) {
                     condition.setEncounter(getEncounterReference());
                 }
 
                 if (isValid(condition)) { //check validity before adding the refence from encounter to this
                     //usually this is true by default
-                    if (SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION.is()) {
+                    if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION)) {
                         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
                         String encounterId = getEncounterId();
                         //encounterId is optional
