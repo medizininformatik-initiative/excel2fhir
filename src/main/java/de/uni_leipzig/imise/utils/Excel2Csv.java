@@ -34,6 +34,9 @@ public class Excel2Csv {
     /**  */
     private static final String QUOTE = "\"";
 
+    /** Replacement for Quotes in values of Excel cells */
+    public static final String QUOTE_ESCAPE = "~Q~";
+
     /**  */
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
@@ -147,6 +150,10 @@ public class Excel2Csv {
                             if ("#NV".equals(cellValue)) {
                                 cellValue = "";
                             }
+                            // We must escape all quotes in the values to prevent errors
+                            // on reading the CSV-file with Java. There is no standard
+                            // for escaping quotes in CSV so we use our own escape sequence.
+                            cellValue = cellValue.replace("\"", QUOTE_ESCAPE);
                             if (cellValue.contains(DELIM)) {
                                 cellValue = QUOTE + cellValue + QUOTE;
                             }

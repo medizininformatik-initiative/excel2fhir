@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.UcumMapper;
+import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier.DefaultTableColumnNames;
@@ -274,14 +275,20 @@ public abstract class Converter {
     public String get(Object columnIdentifier) {
         String columnName = Objects.toString(columnIdentifier, null);
         boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier && !((TableColumnIdentifier) columnIdentifier).isMandatory();
-        if (!tryCatch) {
-            return record.get(columnName);
+        String entry = null;
+        if (tryCatch) {
+            try {
+                entry = record.get(columnName);
+            } catch (Exception e) {
+                entry = "";
+            }
+        } else {
+            entry = record.get(columnName);
         }
-        try {
-            return record.get(columnName);
-        } catch (Exception e) {
-            return "";
-        }
+        // replace the escaped quotes from Excel2Csv with
+        // real quotes
+        entry = entry.replace(Excel2Csv.QUOTE_ESCAPE, "\"");
+        return entry;
     }
 
     /**
