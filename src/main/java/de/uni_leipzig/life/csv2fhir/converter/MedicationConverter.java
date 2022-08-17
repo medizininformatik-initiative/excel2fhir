@@ -418,7 +418,7 @@ public class MedicationConverter extends Converter {
         if (ucumCode != null) {
             return new Ratio()
                     .setNumerator(
-                            getUcumQuantity(getDose(), ucumCode))
+                            getUcumQuantity(getDose(), ucumCode, null))
                     .setDenominator(
                             new Quantity().setValue(new BigDecimal(1))
                                     .setSystem("http://XXX")

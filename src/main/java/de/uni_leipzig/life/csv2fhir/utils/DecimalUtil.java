@@ -1,15 +1,11 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
 import java.math.BigDecimal;
-import java.util.regex.Pattern;
 
 /**
  * @author fheuschkel (02.11.2020)
  */
 public class DecimalUtil {
-
-    /**  */
-    static Pattern pattern = Pattern.compile("-?\\d+(\\.\\d*)?");
 
     /**
      * @param s
@@ -17,9 +13,29 @@ public class DecimalUtil {
      * @throws Exception
      */
     public static BigDecimal parseDecimal(String s) throws Exception {
-        if (s != null && pattern.matcher(s).matches()) {
-            return new BigDecimal(s);
-        }
-        throw new Exception();
+        s = s.trim().replace(',', '.');
+        return new BigDecimal(s);
     }
+
+    /**
+     * @param s
+     * @return
+     */
+    public static String parseComparator(String s) {
+        s = s.trim();
+        if (s.startsWith("<=")) {
+            return "<=";
+        }
+        if (s.startsWith(">=")) {
+            return ">=";
+        }
+        if (s.startsWith("<")) {
+            return "<";
+        }
+        if (s.startsWith(">")) {
+            return ">";
+        }
+        return null;
+    }
+
 }

@@ -8,6 +8,7 @@ import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConver
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Messwert;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Parameter;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Zeitstempel_Abnahme;
+import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseComparator;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
@@ -144,8 +145,13 @@ public class ObservationLaboratoryConverter extends Converter {
      */
     public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier) throws Exception {
         BigDecimal value = null;
+        String comparator = null;
         try {
             String valueString = get(valueColumnIdentifier);
+            comparator = parseComparator(valueString);
+            if (comparator != null) {
+                valueString = valueString.replace(comparator, "");
+            }
             value = parseDecimal(valueString);
         } catch (Exception e) {
             warning(valueColumnIdentifier + " is not a numerical value for Record");
@@ -154,7 +160,7 @@ public class ObservationLaboratoryConverter extends Converter {
         if (isNullOrEmpty(unit)) {
             warning(unitColumnIdentifier + " is empty for Record");
         }
-        return getUcumQuantity(value, unit);
+        return getUcumQuantity(value, unit, comparator);
     }
 
     /**

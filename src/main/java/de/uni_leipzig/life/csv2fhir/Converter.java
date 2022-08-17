@@ -30,6 +30,7 @@ import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
+import org.hl7.fhir.r4.model.Quantity.QuantityComparator;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
@@ -670,10 +671,11 @@ public abstract class Converter {
     /**
      * @param value
      * @param ucumCode
+     * @param comparator
      * @return
      * @throws Exception
      */
-    public static Quantity getUcumQuantity(BigDecimal value, String ucumCode) throws Exception {
+    public static Quantity getUcumQuantity(BigDecimal value, String ucumCode, String comparator) throws Exception {
         String ucumUnit = null;
         if (!isBlank(ucumCode)) {
             ucumCode = UcumMapper.getValidUcumCode(ucumCode);
@@ -699,6 +701,10 @@ public abstract class Converter {
         } else {
             quantity.getUnitElement()
                     .addExtension(DATA_ABSENT_REASON_UNKNOWN);
+        }
+        if (!isBlank(comparator)) {
+            QuantityComparator quantityComparator = QuantityComparator.fromCode(comparator);
+            quantity.setComparator(quantityComparator);
         }
         return quantity;
     }
