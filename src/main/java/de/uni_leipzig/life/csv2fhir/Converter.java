@@ -288,7 +288,9 @@ public abstract class Converter {
         }
         // replace the escaped quotes from Excel2Csv with
         // real quotes
-        entry = entry.replace(Excel2Csv.QUOTE_ESCAPE, "\"");
+        if (entry != null) {
+            entry = entry.replace(Excel2Csv.QUOTE_ESCAPE, "\"");
+        }
         return entry;
     }
 
