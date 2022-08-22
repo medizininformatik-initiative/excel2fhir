@@ -1,10 +1,15 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Range;
 
 import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 
@@ -76,7 +81,7 @@ public class ConverterOptions {
     public int getValue(IntOption intOption) {
         Integer value = intValues.get(intOption);
         if (value == null) {
-            Object mapValueContent = options.get(toString());
+            Object mapValueContent = options.get(intOption.toString());
             if (mapValueContent == null) {
                 value = intOption.getDefault();
             } else {
@@ -215,7 +220,15 @@ public class ConverterOptions {
         START_ID_MEDICATION_STATEMENT,
         START_ID_OBSERVATION_LABORATORY,
         START_ID_OBSERVATION_VITAL_SIGNS,
-        START_ID_PROCEDURE;
+        START_ID_PROCEDURE,
+
+        /**
+         * The last number in all patient IDs of an data set will be increased
+         * by this value. At the beginning this number will be added to all
+         * patient IDs.</br>
+         * Default value is 0.
+         */
+        PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0);
 
         /** Default value of the int option */
         private final int defaultValue;
@@ -278,10 +291,57 @@ public class ConverterOptions {
     }
 
     /**
+     * @param s
+     * @return the substring positions of the last integer number in this string
+     */
+    private static Range<Integer> getLastNumberStringBounds(String s) {
+        // this is probably still faster than using a RegExp
+        int start = -1;
+        int end = -1;
+        for (int i = s.length() - 1; i > 0; i--) {
+            char c = s.charAt(i);
+            if (Character.isDigit(c)) {
+                if (end == -1) {
+                    end = i + 1;
+                }
+                start = i;
+            } else if (end != -1) {
+                break;
+            }
+        }
+        return Range.closedOpen(start, end);
+    }
+
+    /**
+     * @param pid
+     * @return
+     */
+    public String getIncreasedLastPidNumber(String pid, int value) {
+        Range<Integer> lastNumberStringBounds = getLastNumberStringBounds(pid);
+        int start = lastNumberStringBounds.lowerEndpoint();
+        int end = lastNumberStringBounds.upperEndpoint();
+        String preNumberString = pid.substring(0, start);
+        String numberSubString = pid.substring(start, end);
+        String afterNumberString = pid.substring(end);
+        int numberLength = numberSubString.length();
+        Integer number = Integer.valueOf(numberSubString);
+        number += value;
+        numberSubString = number.toString();
+        if (numberSubString.length() < numberLength) {
+            numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
+        }
+        return preNumberString + numberSubString + afterNumberString;
+    }
+
+    /**
      * @param pid
      * @return
      */
     public String getFullPID(String pid) {
+        int value = getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET);
+        if (value > 0) {
+            pid = getIncreasedLastPidNumber(pid, value);
+        }
         pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
         return pid.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
     }
