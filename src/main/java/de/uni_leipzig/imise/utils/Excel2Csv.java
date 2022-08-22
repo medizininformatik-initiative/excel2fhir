@@ -45,25 +45,39 @@ public class Excel2Csv {
 
     /**
      * @param excelFile
-     * @param sheetNames
+     * @param sheetNamePatterns
      * @throws IOException
      */
-    public static void splitExcel(File excelFile, Collection<String> sheetNames) throws IOException {
+    public static void splitExcel(File excelFile, Collection<String> sheetNamePatterns) throws IOException {
         String basename = FilenameUtils.removeExtension(excelFile.getPath());
         File csvDir = new File(basename);
-        splitExcel(excelFile, sheetNames, csvDir);
+        splitExcel(excelFile, sheetNamePatterns, csvDir);
+    }
+
+    /**
+     * @param s
+     * @param patterns
+     * @return
+     */
+    private static boolean matches(String s, Collection<String> patterns) {
+        for (String pattern : patterns) {
+            if (s.matches(pattern)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * @param sourceExcelFile
-     * @param sheetNames if not <code>null</code> then only the sheets with a
-     *            name in this collection will be convertert to csv. If
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets
+     *            with a name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
      * @param targetCsvDir
      * @throws IOException
      */
     @SuppressWarnings("null")
-    public static void splitExcel(File sourceExcelFile, Collection<String> sheetNames, File targetCsvDir) throws IOException {
+    public static void splitExcel(File sourceExcelFile, Collection<String> sheetNamePatterns, File targetCsvDir) throws IOException {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
@@ -71,9 +85,11 @@ public class Excel2Csv {
         try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
-                if (sheetNames != null && !sheetNames.contains(sheetName)) {
-                    LOG.info("Skip sheet \"" + sheetName + "\"");
-                    continue;
+                if (sheetNamePatterns != null) {
+                    if (!matches(sheetName, sheetNamePatterns)) {
+                        LOG.info("Skip sheet \"" + sheetName + "\"");
+                        continue;
+                    }
                 }
                 // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
                 // Wir setzten nun aber nur auf UTF
