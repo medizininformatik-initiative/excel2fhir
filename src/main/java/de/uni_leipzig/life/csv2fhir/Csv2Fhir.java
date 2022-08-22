@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_COUNT;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Konvertierungsoptionen;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
@@ -204,49 +205,51 @@ public class Csv2Fhir {
             String firstPID = null;
             String lastPID = null;
 
-            for (String pid : pids) {
-                fullPIDCount++;
-                if (bundlePIDCount++ == 0) {
-                    firstPID = converterOptions.getFullPID(pid);
-                    if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
-                        bundle = createTransactionBundle();
-                    }
-                }
-                if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
-                    lastPID = converterOptions.getFullPID(pid);
-                }
-                LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
-                Stopwatch stopwatch = Stopwatch.createStarted();
-                String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
-                ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter, converterOptions);
-                ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
-                if (bundle != null) {
-                    BundlePostProcessor.convert(bundle, converterOptions);
-                }
-                if (multiSinglePatientBundlesFileWriter != null) {
-                    //same convertion here as with the bundle
-                    BundlePostProcessor.convert(singlePatientBundle, converterOptions);
-                    multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
-                    singlePatientBundle = createTransactionBundle();
-                }
-                pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
-                if (lastPID != null) {
-                    String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
-                    writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
-                    bundle = createTransactionBundle();
-                    if (multiSinglePatientBundlesFileWriter != null) {
-                        multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
-                        if (fullPIDCount != pids2ConvertCount) {
-                            multiSinglePatientBundlesFileWriter.reset();
+            for (; converterOptions.loopCounter <= converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT); converterOptions.loopCounter++) {
+                for (String pid : pids) {
+                    fullPIDCount++;
+                    if (bundlePIDCount++ == 0) {
+                        firstPID = converterOptions.getFullPID(pid);
+                        if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
+                            bundle = createTransactionBundle();
                         }
                     }
-                    bundlePIDCount = 0;
-                    firstPID = null;
-                    lastPID = null;
+                    if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
+                        lastPID = converterOptions.getFullPID(pid);
+                    }
+                    LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
+                    Stopwatch stopwatch = Stopwatch.createStarted();
+                    String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
+                    ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter, converterOptions);
+                    ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
+                    if (bundle != null) {
+                        BundlePostProcessor.convert(bundle, converterOptions);
+                    }
+                    if (multiSinglePatientBundlesFileWriter != null) {
+                        //same convertion here as with the bundle
+                        BundlePostProcessor.convert(singlePatientBundle, converterOptions);
+                        multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
+                        singlePatientBundle = createTransactionBundle();
+                    }
+                    pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
+                    if (lastPID != null) {
+                        String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
+                        writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
+                        bundle = createTransactionBundle();
+                        if (multiSinglePatientBundlesFileWriter != null) {
+                            multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
+                            if (fullPIDCount != pids2ConvertCount) {
+                                multiSinglePatientBundlesFileWriter.reset();
+                            }
+                        }
+                        bundlePIDCount = 0;
+                        firstPID = null;
+                        lastPID = null;
+                    }
+                    LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
+                    LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
+                    fileSetStatistics.add(singleBundleStatistics);
                 }
-                LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
-                LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
-                fileSetStatistics.add(singleBundleStatistics);
             }
         }
         LOG.info("All bundles of current file set content:\n" + fileSetStatistics);

@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_OFFSET;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,9 @@ import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
  * @author AXS (24.06.2022)
  */
 public class ConverterOptions {
+
+    /** Counter for the loops through the patient IDs */
+    public int loopCounter = 0;
 
     /**
      * Default file extension for files with converter options. If an option
@@ -228,7 +232,23 @@ public class ConverterOptions {
          * patient IDs.</br>
          * Default value is 0.
          */
-        PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0);
+        PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0),
+        /**
+         * The last number in all patient IDs of an data set will be increased
+         * by this value on every loop. This number should be greater or equal
+         * to the difference between the highest and the lowast number in all
+         * patient IDs. If not then some patients can be generated with the same
+         * ID.</br>
+         * Default value is 0.
+         */
+        PID_LAST_NUMBER_INCREASE_LOOP_OFFSET(0),
+        /**
+         * Count of repetitions of increasings of the patient ID. If you want to
+         * expand a data set n times then set this value to n and the
+         * PID_LAST_NUMBER_INCREASE_START_OFFSET in the described way.</br>
+         * Default value is 0.
+         */
+        PID_LAST_NUMBER_INCREASE_LOOP_COUNT(0);
 
         /** Default value of the int option */
         private final int defaultValue;
@@ -338,9 +358,10 @@ public class ConverterOptions {
      * @return
      */
     public String getFullPID(String pid) {
-        int value = getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET);
-        if (value > 0) {
-            pid = getIncreasedLastPidNumber(pid, value);
+        int loopOffset = loopCounter == 0 ? 0 : loopCounter * getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET);
+        int pidOffset = getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET) + loopOffset;
+        if (pidOffset > 0) {
+            pid = getIncreasedLastPidNumber(pid, pidOffset);
         }
         pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
         return pid.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
