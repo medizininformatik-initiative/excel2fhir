@@ -48,10 +48,11 @@ public class ProzedurConverter extends Converter {
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public ProzedurConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public ProzedurConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override

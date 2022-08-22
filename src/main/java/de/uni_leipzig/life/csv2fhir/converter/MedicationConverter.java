@@ -50,6 +50,7 @@ import org.hl7.fhir.r4.model.Type;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
@@ -142,10 +143,11 @@ public class MedicationConverter extends Converter {
     /**
      * @param record
      * @param validator
+     * @param result
      * @throws Exception
      */
-    public MedicationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public MedicationConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override

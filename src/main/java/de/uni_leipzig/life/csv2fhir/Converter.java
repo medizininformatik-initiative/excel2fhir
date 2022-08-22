@@ -99,6 +99,9 @@ public abstract class Converter {
      */
     protected final FHIRValidator validator;
 
+    /** The Converteroptions with the */
+    protected final ConverterOptions options;
+
     /**
      * The enum with the column identifiers (initialized by refelection).
      */
@@ -109,12 +112,14 @@ public abstract class Converter {
      * @param result
      * @param validator Validator to validate resources. Can be
      *            <code>null</code> if nothing should be validated.
+     * @param options
      * @throws Exception
      */
-    public Converter(CSVRecord record, ConverterResult result, @Nullable FHIRValidator validator) throws Exception {
+    public Converter(CSVRecord record, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
         this.record = record;
         this.result = result;
         this.validator = validator;
+        this.options = options;
         pid = parsePatientId();
         encounterID = parseEncounterId();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
@@ -302,7 +307,7 @@ public abstract class Converter {
         TableColumnIdentifier patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
         if (id != null) {
-            return id.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
+            return options.getFullPID(id);
         }
         error(patientIDColumnIdentifier + " empty for Record");
         return null;

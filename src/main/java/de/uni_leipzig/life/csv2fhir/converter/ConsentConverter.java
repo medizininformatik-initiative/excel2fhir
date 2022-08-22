@@ -34,6 +34,7 @@ import com.google.common.collect.Multimap;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
@@ -85,10 +86,11 @@ public class ConsentConverter extends Converter {
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public ConsentConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public ConsentConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override

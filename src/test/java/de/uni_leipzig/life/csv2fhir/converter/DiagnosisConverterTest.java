@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +21,11 @@ import org.hl7.fhir.r4.model.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -34,13 +36,20 @@ public class DiagnosisConverterTest {
         CSVRecord recordMock = mock(CSVRecord.class);
         doReturn("PID1").when(recordMock).get("Patient-ID");
         ConverterResult resultMock = mock(ConverterResult.class);
+        ConverterOptions optionsMock = mock(ConverterOptions.class);
+        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER);
+        doReturn(true).when(optionsMock).is(Mockito.any(BooleanOption.class));
+        doReturn(optionsMock).when(resultMock).getConverterOptions();
+
+        doReturn("PID1").when(recordMock).get("Patient-ID");
         //FHIRValidator validator = mock(FHIRValidator.class);
-        DiagnosisConverter diagnosisConverterUnderTest = new DiagnosisConverter(recordMock, resultMock, null);
+        DiagnosisConverter diagnosisConverterUnderTest = new DiagnosisConverter(recordMock, resultMock, null, new ConverterOptions(""));
 
         //doReturn(null).when(recordMock).get("ICD");
         when(recordMock.get("ICD")).thenReturn(null);
-        List<Resource> convertedResources = diagnosisConverterUnderTest.convertInternal();
-        assertNull(convertedResources);
+        Assertions.assertThrows(Exception.class, () -> {
+            diagnosisConverterUnderTest.convertInternal();
+        });
 
         when(recordMock.get("ICD")).thenReturn("");
         Assertions.assertThrows(Exception.class, () -> {

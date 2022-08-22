@@ -18,6 +18,7 @@ import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
@@ -45,10 +46,11 @@ public class EncounterLevel2Converter extends EncounterLevel1Converter {
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public EncounterLevel2Converter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public EncounterLevel2Converter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override

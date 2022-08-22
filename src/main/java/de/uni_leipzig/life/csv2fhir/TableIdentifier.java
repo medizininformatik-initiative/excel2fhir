@@ -63,7 +63,13 @@ public enum TableIdentifier {
         }
     },
 
-    Konvertierungsoptionen;
+    Konvertierungsoptionen {
+        @Override
+        protected String getTableNamePattern() {
+            //we can have multiple table sheets with converter options
+            return ".*" + toString() + ".*";
+        }
+    };
 
     /**
      * Table column identifier which are the same in all tables.
@@ -109,11 +115,15 @@ public enum TableIdentifier {
         this.columnIdentifiersClass = columnIdentifiersClass;
         try {
             if (converterClass != null) {
-                converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class);
+                converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    protected String getTableNamePattern() {
+        return toString();
     }
 
     /**
@@ -171,11 +181,12 @@ public enum TableIdentifier {
      * @param csvRecord
      * @param result
      * @param validator
+     * @param options
      * @return
      * @throws Exception
      */
-    public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator) throws Exception {
-        Converter converter = converterConstructor.newInstance(csvRecord, result, validator);
+    public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        Converter converter = converterConstructor.newInstance(csvRecord, result, validator, options);
         List<? extends Resource> resources = converter.convert(); //should never return null!
         //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
         List<Resource> validResources = new ArrayList<>();
@@ -226,7 +237,7 @@ public enum TableIdentifier {
     public static List<String> getExcelSheetNamePatterns() {
         List<String> acceptedSheetNamePatterns = new ArrayList<>();
         for (TableIdentifier csvFileName : values()) {
-            acceptedSheetNamePatterns.add(csvFileName.toString());
+            acceptedSheetNamePatterns.add(csvFileName.getTableNamePattern());
         }
         return acceptedSheetNamePatterns;
     }

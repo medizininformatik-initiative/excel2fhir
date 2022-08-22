@@ -23,6 +23,7 @@ import org.hl7.fhir.r4.model.Resource;
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
@@ -54,10 +55,11 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public ObservationVitalSignsConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public ObservationVitalSignsConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override

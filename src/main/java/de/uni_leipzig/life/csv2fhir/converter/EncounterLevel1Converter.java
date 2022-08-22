@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableList;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.CodeSystemMapper;
 import de.uni_leipzig.life.csv2fhir.Converter;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
@@ -72,10 +73,11 @@ public class EncounterLevel1Converter extends Converter {
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public EncounterLevel1Converter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public EncounterLevel1Converter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     /**

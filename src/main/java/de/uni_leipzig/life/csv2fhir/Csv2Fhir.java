@@ -66,7 +66,7 @@ public class Csv2Fhir {
     private final FHIRValidator validator;
 
     /** The options to convert the current csv file set. */
-    private final ConverterOptions converterOptions;
+    private final List<ConverterOptions> allConverterOptions;
 
     /** Counters for all resources created from one set of CSV files */
     private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
@@ -100,11 +100,26 @@ public class Csv2Fhir {
                 .withAllowMissingColumnNames(true)
                 .withFirstRecordAsHeader();
         this.validator = validator;
+        allConverterOptions = loadConverterOptions(inputDirectory, outputFileNameBase);
+    }
+
+    /**
+     * @return
+     */
+    private static final List<ConverterOptions> loadConverterOptions(File inputDirectory, String outputFileNameBase) {
+        List<ConverterOptions> allConverterOptions = new ArrayList<>();
         // If there is no Konvertierungsoptionen.csv file in the outputLocal directory (that was extracted
         // from the Excel file) then only the default options are loaded from the resources. If the file
         // exists then it is loaded after the defaults are loaded.
-        String internalConverterOptionsFileName = new File(inputDirectory, outputFileNameBase + Konvertierungsoptionen.toString()).toString() + ".csv";
-        converterOptions = new ConverterOptions(internalConverterOptionsFileName);
+        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern().toString() + ".csv";
+        for (File file : inputDirectory.listFiles()) {
+            String fileName = file.getName();
+            if (fileName.matches(converterOptionsFileNamePattern)) {
+                ConverterOptions converterOptions = new ConverterOptions(file.getAbsolutePath());
+                allConverterOptions.add(converterOptions);
+            }
+        }
+        return allConverterOptions;
     }
 
     /**
@@ -154,84 +169,84 @@ public class Csv2Fhir {
      * @throws Exception
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
-        Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
-        int pids2ConvertCount = pids.size();
-        Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
-        Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
-        MultiSinglePatientBundlesFileWriter multiSinglePatientBundlesFileWriter = null;
+        for (ConverterOptions converterOptions : allConverterOptions) {
+            Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
+            int pids2ConvertCount = pids.size();
+            Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
+            Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
+            MultiSinglePatientBundlesFileWriter multiSinglePatientBundlesFileWriter = null;
 
-        //we must check which file types should be written
-        List<OutputFileType> baseFileTypes = new ArrayList<>();
-        List<OutputFileType> compressedFileTypes = new ArrayList<>();
-        if (outputFileTypes.length == 0) {
-            baseFileTypes.add(JSON); // no type specified -> default is plain JSON
-        } else {
-            for (OutputFileType outputFileType : outputFileTypes) {
-                if (!outputFileType.isMultiSinglePatientBundlesFileType()) { //NDJSON or ZIPJSON will be processed later
-                    if (outputFileType.isCompressedFileType()) {
-                        compressedFileTypes.add(outputFileType);
-                    } else {
-                        baseFileTypes.add(outputFileType);
+            //we must check which file types should be written
+            List<OutputFileType> baseFileTypes = new ArrayList<>();
+            List<OutputFileType> compressedFileTypes = new ArrayList<>();
+            if (outputFileTypes.length == 0) {
+                baseFileTypes.add(JSON); // no type specified -> default is plain JSON
+            } else {
+                for (OutputFileType outputFileType : outputFileTypes) {
+                    if (!outputFileType.isMultiSinglePatientBundlesFileType()) { //NDJSON or ZIPJSON will be processed later
+                        if (outputFileType.isCompressedFileType()) {
+                            compressedFileTypes.add(outputFileType);
+                        } else {
+                            baseFileTypes.add(outputFileType);
+                        }
                     }
                 }
-            }
-            //is only not null if the outputFileTypes contains NDJSON or ZIPJSON
-            multiSinglePatientBundlesFileWriter = MultiSinglePatientBundlesFileWriter.create(outputDirectory, outputFileNameBase, validator, outputFileTypes);
-            if (multiSinglePatientBundlesFileWriter != null) {
-                singlePatientBundle = createTransactionBundle();
-            }
-        }
-
-        int bundlePIDCount = 0;
-        int fullPIDCount = 0;
-        String firstPID = null;
-        String lastPID = null;
-
-        fileSetStatistics.reset();
-
-        for (String pid : pids) {
-            fullPIDCount++;
-            if (bundlePIDCount++ == 0) {
-                firstPID = pid;
-                if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
-                    bundle = createTransactionBundle();
-                }
-            }
-            if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
-                lastPID = pid;
-            }
-            LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
-            Stopwatch stopwatch = Stopwatch.createStarted();
-            String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
-            ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter);
-            ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
-            if (bundle != null) {
-                BundlePostProcessor.convert(bundle, converterOptions);
-            }
-            if (multiSinglePatientBundlesFileWriter != null) {
-                //same convertion here as with the bundle
-                BundlePostProcessor.convert(singlePatientBundle, converterOptions);
-                multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
-                singlePatientBundle = createTransactionBundle();
-            }
-            pid = pid.replace('_', '-'); // see comment at Converter#parsePatientId()
-            if (lastPID != null) {
-                String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
-                writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
-                bundle = createTransactionBundle();
+                //is only not null if the outputFileTypes contains NDJSON or ZIPJSON
+                multiSinglePatientBundlesFileWriter = MultiSinglePatientBundlesFileWriter.create(outputDirectory, outputFileNameBase, validator, outputFileTypes);
                 if (multiSinglePatientBundlesFileWriter != null) {
-                    multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
-                    if (fullPIDCount != pids2ConvertCount) {
-                        multiSinglePatientBundlesFileWriter.reset();
+                    singlePatientBundle = createTransactionBundle();
+                }
+            }
+
+            int bundlePIDCount = 0;
+            int fullPIDCount = 0;
+            String firstPID = null;
+            String lastPID = null;
+
+            for (String pid : pids) {
+                fullPIDCount++;
+                if (bundlePIDCount++ == 0) {
+                    firstPID = converterOptions.getFullPID(pid);
+                    if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
+                        bundle = createTransactionBundle();
                     }
                 }
-                bundlePIDCount = 0;
-                firstPID = null;
-                lastPID = null;
+                if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
+                    lastPID = converterOptions.getFullPID(pid);
+                }
+                LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
+                Stopwatch stopwatch = Stopwatch.createStarted();
+                String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
+                ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter, converterOptions);
+                ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
+                if (bundle != null) {
+                    BundlePostProcessor.convert(bundle, converterOptions);
+                }
+                if (multiSinglePatientBundlesFileWriter != null) {
+                    //same convertion here as with the bundle
+                    BundlePostProcessor.convert(singlePatientBundle, converterOptions);
+                    multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
+                    singlePatientBundle = createTransactionBundle();
+                }
+                pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
+                if (lastPID != null) {
+                    String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
+                    writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
+                    bundle = createTransactionBundle();
+                    if (multiSinglePatientBundlesFileWriter != null) {
+                        multiSinglePatientBundlesFileWriter.closeWriterAndRenameOrDeleteIfEmpty(fileNameExtendsion);
+                        if (fullPIDCount != pids2ConvertCount) {
+                            multiSinglePatientBundlesFileWriter.reset();
+                        }
+                    }
+                    bundlePIDCount = 0;
+                    firstPID = null;
+                    lastPID = null;
+                }
+                LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
+                LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
+                fileSetStatistics.add(singleBundleStatistics);
             }
-            LOG.info("Finished create Fhir-Json-Bundle for Patient-ID " + pid + " in " + stopwatch.stop());
-            LOG.info("Patient " + pid + " bundle content:\n" + singleBundleStatistics);
-            fileSetStatistics.add(singleBundleStatistics);
         }
         LOG.info("All bundles of current file set content:\n" + fileSetStatistics);
         return fileSetStatistics;
@@ -323,13 +338,14 @@ public class Csv2Fhir {
      * @param bundle
      * @param ndjsonBundle
      * @param filterID
+     * @param options
      * @return
      * @throws Exception
      */
-    private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID) throws Exception {
+    private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID, ConverterOptions options) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
-        ConverterResult result = new ConverterResult(converterOptions);
+        ConverterResult result = new ConverterResult(options);
         boolean filter = !Strings.isNullOrEmpty(filterID);
         for (TableIdentifier table : TableIdentifier.values()) {
             if (table.isConvertableTableSheet()) {
@@ -364,9 +380,9 @@ public class Csv2Fhir {
                             if (!pid.toUpperCase().matches(filterID)) {
                                 continue;
                             }
-                            parsedRecords.remove(i--);
+                            //parsedRecords.remove(i--); //we can not remove it if we have more than one ConverterOptions file!
                         }
-                        List<? extends Resource> list = table.convert(record, result, validator);
+                        List<? extends Resource> list = table.convert(record, result, validator, options);
                         for (Resource resource : list) {
                             addEntry(bundle, resource);
                             addEntry(ndjsonBundle, resource);

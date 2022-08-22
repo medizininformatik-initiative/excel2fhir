@@ -70,10 +70,11 @@ public class DiagnosisConverter extends Converter {
      * @param record
      * @param result
      * @param validator
+     * @param options
      * @throws Exception
      */
-    public DiagnosisConverter(CSVRecord record, ConverterResult result, FHIRValidator validator) throws Exception {
-        super(record, result, validator);
+    public DiagnosisConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, result, validator, options);
     }
 
     @Override
