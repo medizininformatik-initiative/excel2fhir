@@ -28,6 +28,9 @@ public class ConverterOptions {
     /** Cache for the int values */
     private final Map<IntOption, Integer> intValues = new HashMap<>();
 
+    /** Cache for the string values */
+    private final Map<StringOption, String> stringValues = new HashMap<>();
+
     /**
      * @param optionsAbsoluteFileName options file to load
      */
@@ -80,6 +83,26 @@ public class ConverterOptions {
                 value = Integer.valueOf(mapValueContent.toString().trim());
             }
             intValues.put(intOption, value);
+        }
+        return value;
+    }
+
+    /**
+     * @param stringOption
+     * @return the value of this option
+     * @throws NumberFormatException if the found string in the properties
+     *             cannot be parsed as an integer.
+     */
+    public String getValue(StringOption stringOption) {
+        String value = stringValues.get(stringOption);
+        if (value == null) {
+            Object mapValueContent = options.get(stringOption.toString());
+            if (mapValueContent == null) {
+                value = stringOption.getDefault();
+            } else {
+                value = String.valueOf(mapValueContent.toString());
+            }
+            stringValues.put(stringOption, value);
         }
         return value;
     }
@@ -220,6 +243,47 @@ public class ConverterOptions {
             return defaultValue;
         }
 
+    }
+
+    /**
+     * String options
+     */
+    public static enum StringOption {
+
+        /**
+         * This prefix will be added to all patient IDs.</br>
+         * The default is an empty string.
+         */
+        PID_PREFIX,
+        /**
+         * This suffix will be added to all patient IDs.</br>
+         * The default is an empty string.
+         */
+        PID_SUFFIX;
+
+        private final String defaultValue;
+
+        private String getDefault() {
+            return defaultValue;
+        }
+
+        private StringOption() {
+            this("");
+        }
+
+        private StringOption(String defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+    }
+
+    /**
+     * @param pid
+     * @return
+     */
+    public String getFullPID(String pid) {
+        pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
+        return pid.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
     }
 
 }
