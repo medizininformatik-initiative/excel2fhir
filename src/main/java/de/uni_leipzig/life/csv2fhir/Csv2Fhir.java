@@ -169,9 +169,10 @@ public class Csv2Fhir {
      * @throws Exception
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
+        Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
+        int pids2ConvertCount = pids.size();
+
         for (ConverterOptions converterOptions : allConverterOptions) {
-            Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
-            int pids2ConvertCount = pids.size();
             Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
             Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
             MultiSinglePatientBundlesFileWriter multiSinglePatientBundlesFileWriter = null;
