@@ -158,8 +158,8 @@ public class ConverterOptions {
         ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
 
         /**
-         * Set of String values that can be interpreted as booleans with value
-         * "true".
+         * Set of String values which can be interpreted as booleans with value
+         * <code>true</code>.
          */
         private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j", "1");
 

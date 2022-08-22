@@ -77,19 +77,19 @@ public class Excel2Fhir {
 
     /**
      * @param excelDir
-     * @param sheetNames if not <code>null</code> then only the sheets with a
-     *            name in this collection will be convertert to csv. If
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets
+     *            with a name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames) throws IOException {
-        convertAllExcelInDir(sourceExcelDir, sheetNames, null, null, Integer.MAX_VALUE);
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNamePatterns) throws IOException {
+        convertAllExcelInDir(sourceExcelDir, sheetNamePatterns, null, null, Integer.MAX_VALUE);
     }
 
     /**
      * @param sourceExcelDir
-     * @param sheetNames if not <code>null</code> then only the sheets with a
-     *            name in this collection will be convertert to csv. If
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets
+     *            with a name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
@@ -97,19 +97,19 @@ public class Excel2Fhir {
      * @param outputFileTypes
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNames, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNamePatterns, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, patientsPerBundle, false, outputFileTypes);
+            convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, false, outputFileTypes);
         }
     }
 
     /**
      * @param sourceExcelFile
-     * @param sheetNames if not <code>null</code> then only the sheets with a
-     *            name in this collection will be convertert to csv. If
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets
+     *            with a name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
@@ -117,15 +117,15 @@ public class Excel2Fhir {
      * @param outputFileTypes
      * @throws IOException
      */
-    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
+    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
-        convertExcelFile(sourceExcelFile, sheetNames, tempDir, resultDir, patientsPerBundle, true, outputFileTypes);
+        convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true, outputFileTypes);
     }
 
     /**
      * @param sourceExcelFile
-     * @param sheetNames if not <code>null</code> then only the sheets with a
-     *            name in this collection will be convertert to csv. If
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets
+     *            with a name in this collection will be convertert to csv. If
      *            <code>null</code> then all sheet will be convertet.
      * @param tempDir
      * @param resultDir
@@ -134,13 +134,13 @@ public class Excel2Fhir {
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNames, File tempDir, File resultDir,
+    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir, File resultDir,
             int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes) throws IOException {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
         String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "_";
-        Excel2Csv.splitExcel(sourceExcelFile, sheetNames, tempDir);
+        Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileBaseName, validator);
         try {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);

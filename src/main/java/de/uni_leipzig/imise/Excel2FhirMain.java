@@ -109,15 +109,15 @@ public class Excel2FhirMain implements Callable<Integer> {
             initDirectoriesAndLogger();
         }
         try {
-            List<String> excelSheetNames = TableIdentifier.getExcelSheetNames();
+            List<String> excelSheetNamePatterns = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles, minLogLevel);
             if (inputFile != null) {
-                excel2Fhir.convertExcelFile(inputFile, excelSheetNames, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+                excel2Fhir.convertExcelFile(inputFile, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             } else {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNames, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             }
         } catch (Exception e) {
             e.printStackTrace();

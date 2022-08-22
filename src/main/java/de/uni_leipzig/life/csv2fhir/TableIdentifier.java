@@ -220,14 +220,15 @@ public enum TableIdentifier {
     }
 
     /**
-     * @return
+     * @return a list of the accepted Excel Sheet Names. These names are
+     *         interpreted as regular expressions.
      */
-    public static List<String> getExcelSheetNames() {
-        List<String> excelSheetNames = new ArrayList<>();
+    public static List<String> getExcelSheetNamePatterns() {
+        List<String> acceptedSheetNamePatterns = new ArrayList<>();
         for (TableIdentifier csvFileName : values()) {
-            excelSheetNames.add(csvFileName.toString());
+            acceptedSheetNamePatterns.add(csvFileName.toString());
         }
-        return excelSheetNames;
+        return acceptedSheetNamePatterns;
     }
 
     /**
