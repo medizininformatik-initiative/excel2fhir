@@ -190,7 +190,7 @@ public class MultiSinglePatientBundlesFileWriter {
             ndjsonWriter.close();
         }
         if (!deleteIfEmpty(ndjsonFile)) {
-            String newFileName = outputFileNameBase + nameExtension + NDJSON.getFileExtension();
+            String newFileName = getFileName(nameExtension, NDJSON);
             File newFile = new File(ndjsonFile.getParentFile(), newFileName);
             ndjsonFile.renameTo(newFile);
         }
@@ -198,10 +198,20 @@ public class MultiSinglePatientBundlesFileWriter {
             zipJsonOutputStream.close();
         }
         if (!deleteIfEmpty(zipJsonFile)) {
-            String newFileName = outputFileNameBase + nameExtension + ZIPJSON.getFileExtension();
+            String newFileName = getFileName(nameExtension, ZIPJSON);
             File newFile = new File(zipJsonFile.getParentFile(), newFileName);
             zipJsonFile.renameTo(newFile);
         }
+    }
+
+    /**
+     * @param nameExtension
+     * @param outputFileType
+     * @return
+     */
+    private String getFileName(String nameExtension, OutputFileType outputFileType) {
+        String newFileName = outputFileNameBase + nameExtension + outputFileType.getFileExtension();
+        return newFileName.replaceAll("__", "_");
     }
 
     /**

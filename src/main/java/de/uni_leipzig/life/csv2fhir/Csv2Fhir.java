@@ -235,7 +235,10 @@ public class Csv2Fhir {
                     }
                     pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
                     if (lastPID != null) {
-                        String fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
+                        String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
+                        if (pids.size() > patientsPerBundle) {
+                            fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
+                        }
                         writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                         bundle = createTransactionBundle();
                         if (multiSinglePatientBundlesFileWriter != null) {

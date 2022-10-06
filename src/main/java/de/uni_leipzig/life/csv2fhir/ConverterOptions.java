@@ -367,4 +367,11 @@ public class ConverterOptions {
         return pid.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
     }
 
+    /**
+     * @return
+     */
+    public String getPrefixWithSuffix() {
+        return getValue(StringOption.PID_PREFIX) + getValue(StringOption.PID_SUFFIX);
+    }
+
 }
