@@ -225,6 +225,7 @@ public class ConverterOptions {
         START_ID_OBSERVATION_LABORATORY,
         START_ID_OBSERVATION_VITAL_SIGNS,
         START_ID_PROCEDURE,
+        START_ID_DOCUMENT_REFERENCE,
 
         /**
          * The last number in all patient IDs of an data set will be increased

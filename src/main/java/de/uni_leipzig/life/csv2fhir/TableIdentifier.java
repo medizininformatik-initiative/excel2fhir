@@ -20,6 +20,8 @@ import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter;
 import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter;
+import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter;
@@ -51,6 +53,8 @@ public enum TableIdentifier {
     Diagnose(Diagnosis_Columns.class, DiagnosisConverter.class),
 
     Prozedur(Procedure_Columns.class, ProzedurConverter.class),
+
+    DocumentReference(DocumentReference_Columns.class, DocumentReferenceConverter.class),
 
     Medikation(Medication_Columns.class, MedicationConverter.class),
 
