@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  excel2fhir:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - "../input:/app/input"
+      - "../outputGlobal:/app/outputGlobal"
+      - "../outputLocal:/app/outputLocal"
