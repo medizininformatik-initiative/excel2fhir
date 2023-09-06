@@ -119,7 +119,7 @@ public class DocumentReferenceConverter extends Converter {
         documentReference.setSecurityLabel(cc);
 
         DocumentReferenceContextComponent c = new DocumentReferenceContextComponent();
-        c.setEncounter(Collections.singletonList(getEncounterReference()));
+        c.setEncounter(getEncounterReferences());
         documentReference.setContext(c);
 
         boolean embed = isYesValue(get(Embed));

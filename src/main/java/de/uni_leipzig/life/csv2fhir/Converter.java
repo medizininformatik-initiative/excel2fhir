@@ -10,6 +10,8 @@ import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -43,6 +45,7 @@ import com.google.common.collect.ImmutableSet;
 
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
+import de.uni_leipzig.imise.utils.StringUtils;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier.DefaultTableColumnNames;
@@ -90,7 +93,7 @@ public abstract class Converter {
     final String pid;
 
     /**  */
-    final String encounterID;
+    final List<String> encounterIDs;
 
     /**  */
     final String dizID;
@@ -129,7 +132,7 @@ public abstract class Converter {
         this.validator = validator;
         this.options = options;
         pid = parsePatientId();
-        encounterID = parseEncounterId();
+        encounterIDs = parseEncounterIds();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
         columnIdentifiersClass = reflectColumnIdentifiersClass();
     }
@@ -277,7 +280,15 @@ public abstract class Converter {
      * @throws Exception
      */
     public final String getEncounterId() throws Exception {
-        return encounterID;
+        return encounterIDs.isEmpty() ? null : encounterIDs.get(0);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    public final List<String> getEncounterIds() throws Exception {
+        return encounterIDs;
     }
 
     /**
@@ -337,11 +348,11 @@ public abstract class Converter {
      * If the column is optional and is not in the data then (for backward
      * compatibility reason) the value will set to 1.
      *
-     * @return the encounter id in the record or a default if the column is
+     * @return the encounter ids in the record or a default if the column is
      *         mandatory.
      * @throws Exception
      */
-    private String parseEncounterId() throws Exception {
+    private List<String> parseEncounterIds() throws Exception {
         TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
         //missing encounter number -> set it to 1 if the column does not exists in the table
         if (encounterIDColumnIdentifier == null) {
@@ -349,21 +360,23 @@ public abstract class Converter {
         }
         String encounterIDColumnName = encounterIDColumnIdentifier.toString();
         boolean columnExists = record.isMapped(encounterIDColumnName);
-        String encounterNumber = null;
+        List<String> encounterNumbers = null;
         if (columnExists) {
-            String recordEncounterNumber = record.get(encounterIDColumnName);
-            boolean valueExists = !isBlank(recordEncounterNumber);
-            if (valueExists) {
-                encounterNumber = recordEncounterNumber;
+            String recordEncounterNumbers = record.get(encounterIDColumnName);
+            if (!isBlank(recordEncounterNumbers)) {
+                encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
             }
         } else {
-            encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
+            encounterNumbers = Collections.singletonList(encounterIDColumnIdentifier.getDefaultIfMissing());
         }
         //is still null if the column exists but the value is missing
-        if (encounterNumber == null) {
-            return null;
+        if (encounterNumbers == null || encounterNumbers.isEmpty()) {
+            return Collections.emptyList();
         }
-        return pid + "-E-" + encounterNumber;
+        for (int i = encounterNumbers.size() - 1; i >= 0; i--) {
+            encounterNumbers.set(i, pid + "-E-" + encounterNumbers.get(i));
+        }
+        return encounterNumbers;
     }
 
     /**
@@ -402,19 +415,32 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getEncounterReference() throws Exception {
-        return getEncounterReference(false);
+        return getEncounterReference(getEncounterId(), false);
     }
 
     /**
+     * @param encounterId
      * @param checkExistence
      * @return
      * @throws Exception
      */
-    protected Reference getEncounterReference(boolean checkExistence) throws Exception {
-        if (encounterID == null) { // can be optional
+    protected Reference getEncounterReference(String encounterId, boolean checkExistence) throws Exception {
+        if (encounterId == null) { // can be optional
             return null;
         }
-        return getReference(checkExistence ? Versorgungsfall : null, encounterID, Encounter.class);
+        return getReference(checkExistence ? Versorgungsfall : null, encounterId, Encounter.class);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected List<Reference> getEncounterReferences() throws Exception {
+        List<Reference> encounterReferences = new ArrayList<>(encounterIDs.size());
+        for (String encounterId : encounterIDs) {
+            encounterReferences.add(getEncounterReference(encounterId, false));
+        }
+        return encounterReferences;
     }
 
     /**
