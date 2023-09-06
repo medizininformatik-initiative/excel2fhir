@@ -12,6 +12,7 @@ import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -38,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
@@ -77,6 +79,12 @@ public abstract class Converter {
 
     /**  */
     public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
+
+    /**
+     * All strings as a grep pattern that can be interpreted as 'yes' in English
+     * and German.
+     */
+    public static final Set<String> GENERAL_YES_VALUES = ImmutableSet.of("ja", "j", "1", "y", "yes", "true", "x");
 
     /**  */
     final String pid;
@@ -785,6 +793,14 @@ public abstract class Converter {
      */
     public static CodeableConcept getDataAbsentReasonCodeableConcept(DataAbsentReason dataAbsentReason) {
         return createCodeableConcept(dataAbsentReason.getSystem(), dataAbsentReason.toCode());
+    }
+
+    /**
+     * @param value
+     * @return
+     */
+    public static final boolean isYesValue(String value) {
+        return GENERAL_YES_VALUES.contains(value.trim());
     }
 
 }

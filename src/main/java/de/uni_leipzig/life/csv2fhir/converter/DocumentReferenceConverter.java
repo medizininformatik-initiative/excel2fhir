@@ -122,7 +122,7 @@ public class DocumentReferenceConverter extends Converter {
         c.setEncounter(Collections.singletonList(getEncounterReference()));
         documentReference.setContext(c);
 
-        boolean embed = "ja".equals(get(Embed));
+        boolean embed = isYesValue(get(Embed));
         Attachment a = createAttachment(Paths.get(get(URI)), embed);
         documentReference.setContent(Collections.singletonList(new DocumentReferenceContentComponent(a)));
 
