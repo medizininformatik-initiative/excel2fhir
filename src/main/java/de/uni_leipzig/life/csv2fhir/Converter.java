@@ -356,7 +356,7 @@ public abstract class Converter {
         TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
         //missing encounter number -> set it to 1 if the column does not exists in the table
         if (encounterIDColumnIdentifier == null) {
-            return null;
+            return Collections.emptyList();
         }
         String encounterIDColumnName = encounterIDColumnIdentifier.toString();
         boolean columnExists = record.isMapped(encounterIDColumnName);
@@ -367,7 +367,7 @@ public abstract class Converter {
                 encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
             }
         } else {
-            encounterNumbers = Collections.singletonList(encounterIDColumnIdentifier.getDefaultIfMissing());
+            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a mutable list!
         }
         //is still null if the column exists but the value is missing
         if (encounterNumbers == null || encounterNumbers.isEmpty()) {
