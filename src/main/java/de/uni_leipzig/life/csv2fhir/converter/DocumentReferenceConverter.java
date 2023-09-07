@@ -71,7 +71,7 @@ public class DocumentReferenceConverter extends Converter {
         DocumentReference documentReference = new DocumentReference();
         int nextId = result.getNextId(DocumentReference, DocumentReference.class, START_ID_DOCUMENT_REFERENCE);
         String encounterId = getEncounterId();
-        String id = (isBlank(encounterId) ? getPatientId() : encounterId) + "-D-" + nextId;
+        String id = (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.DOCUMENT_REFERENCE + nextId;
         documentReference.setId(id);
         // No official profile available
         // documentReference.setMeta(new Meta().addProfile(PROFILE));

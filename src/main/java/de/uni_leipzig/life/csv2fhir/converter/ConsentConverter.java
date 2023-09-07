@@ -100,7 +100,7 @@ public class ConsentConverter extends Converter {
         Consent consent = new Consent();
         int nextId = result.getNextId(Consent, Consent.class, START_ID_CONSENT);
         String pid = getPatientId();
-        String id = pid + "-CO-" + nextId;
+        String id = pid + ResourceIdSuffix.CONSENT + nextId;
         consent.setId(id);
         consent.setMeta(new Meta().addProfile(res("CONSENT_PROFILE")));
         consent.setStatus(ConsentState.ACTIVE);

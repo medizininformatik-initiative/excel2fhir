@@ -60,7 +60,7 @@ public class ProzedurConverter extends Converter {
         Procedure procedure = new Procedure();
         int nextId = result.getNextId(Prozedur, Procedure.class, START_ID_PROCEDURE);
         String encounterId = getEncounterId();
-        String id = (isBlank(encounterId) ? getPatientId() : encounterId) + "-P-" + nextId;
+        String id = (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.PROCEDURE + nextId;
         procedure.setId(id);
         procedure.setMeta(new Meta().addProfile(PROFILE));
         //        procedure.addExtension(new Extension()

@@ -192,7 +192,7 @@ public class MedicationConverter extends Converter {
      */
     private MedicationStatement parseMedicationStatement() throws Exception {
         MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(createId("-MS-", MedicationStatement.class));
+        medicationStatement.setId(createId(MedicationStatement.class));
         medicationStatement.setStatus(ACTIVE);
         medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
         medicationStatement.setSubject(getPatientReference());
@@ -210,7 +210,7 @@ public class MedicationConverter extends Converter {
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
         medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(createId("-MA-", MedicationAdministration.class));
+        medicationAdministration.setId(createId(MedicationAdministration.class));
         medicationAdministration.setStatus(COMPLETED);
         medicationAdministration.setSubject(getPatientReference());
         medicationAdministration.setContext(getEncounterReference());
@@ -222,19 +222,21 @@ public class MedicationConverter extends Converter {
 
     /**
      * @param <T>
-     * @param suffix
      * @param resourceType
      * @return
      * @throws Exception
      */
-    private <T extends Resource> String createId(String suffix, Class<T> resourceType) throws Exception {
+    private <T extends Resource> String createId(Class<T> resourceType) throws Exception {
         String encounterID = getEncounterId();
         String superID = isBlank(encounterID) ? getPatientId() : encounterID;
         IntOption startID = null;
+        String suffix = null;
         if (resourceType.isAssignableFrom(MedicationAdministration.class)) {
             startID = IntOption.START_ID_MEDICATION_ADMINISTRATION;
+            suffix = ResourceIdSuffix.MEDICATION_ADMINISTRATION.toString();
         } else if (resourceType.isAssignableFrom(MedicationStatement.class)) {
             startID = IntOption.START_ID_MEDICATION_STATEMENT;
+            suffix = ResourceIdSuffix.MEDICATION_STATEMENT.toString();
         }
         int nextIDNumber = result.getNextId(Medikation, resourceType, startID);
         return superID + suffix + nextIDNumber;

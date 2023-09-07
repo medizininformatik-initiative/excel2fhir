@@ -173,7 +173,7 @@ public class DiagnosisConverter extends Converter {
         }
         int nextId = result.getNextId(Diagnose, Condition.class, START_ID_DIAGNOSIS) + nextIDOffset;
         String encounterId = getEncounterId();
-        return (encounterId == null ? getPatientId() : encounterId) + "-D-" + nextId;
+        return (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.CONDITION + nextId;
     }
 
     /**
