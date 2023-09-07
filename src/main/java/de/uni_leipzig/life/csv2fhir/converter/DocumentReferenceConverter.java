@@ -123,8 +123,11 @@ public class DocumentReferenceConverter extends Converter {
         documentReference.setContext(c);
 
         boolean embed = isYesValue(get(Embed));
-        Attachment a = createAttachment(Paths.get(get(URI)), embed);
-        documentReference.setContent(Collections.singletonList(new DocumentReferenceContentComponent(a)));
+        String filePath = get(URI);
+        if (!isBlank(filePath)) {
+            Attachment a = createAttachment(Paths.get(filePath), embed);
+            documentReference.setContent(Collections.singletonList(new DocumentReferenceContentComponent(a)));
+        }
 
         return singletonList(documentReference);
     }

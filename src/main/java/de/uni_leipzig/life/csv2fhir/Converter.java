@@ -826,7 +826,7 @@ public abstract class Converter {
      * @return
      */
     public static final boolean isYesValue(String value) {
-        return GENERAL_YES_VALUES.contains(value.trim());
+        return !isBlank(value) && GENERAL_YES_VALUES.contains(value.trim());
     }
 
 }
