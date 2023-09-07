@@ -2,8 +2,8 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_DOCUMENT_REFERENCE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.DocumentReference;
+import static de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns.Dateipfad;
 import static de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns.Embed;
-import static de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns.URI;
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 
@@ -45,7 +45,7 @@ public class DocumentReferenceConverter extends Converter {
      *
      */
     public static enum DocumentReference_Columns implements TableColumnIdentifier {
-        URI,
+        Dateipfad,
         Embed,
     }
 
@@ -123,7 +123,7 @@ public class DocumentReferenceConverter extends Converter {
         documentReference.setContext(c);
 
         boolean embed = isYesValue(get(Embed));
-        String filePath = get(URI);
+        String filePath = get(Dateipfad);
         if (!isBlank(filePath)) {
             Attachment a = createAttachment(Paths.get(filePath), embed);
             documentReference.setContent(Collections.singletonList(new DocumentReferenceContentComponent(a)));
