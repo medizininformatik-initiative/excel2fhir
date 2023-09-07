@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Strings;
+
 /**
  * Used to format the logging output.
  *
@@ -106,8 +108,10 @@ public class StringUtils {
      *         are added
      */
     public static final <T extends Collection<String>> T parseCollection(String s, String delim, T collectionToFill) {
-        String[] values = s.trim().split("\\s*\\" + delim + "\\s*");
-        collectionToFill.addAll(Arrays.asList(values));
+        if (!Strings.isNullOrEmpty(s)) {
+            String[] values = s.trim().split("\\s*\\" + delim + "\\s*");
+            collectionToFill.addAll(Arrays.asList(values));
+        }
         return collectionToFill;
     }
 
