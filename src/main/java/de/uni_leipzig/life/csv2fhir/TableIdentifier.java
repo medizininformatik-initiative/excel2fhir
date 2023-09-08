@@ -32,8 +32,8 @@ import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
-import de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.PatientConverter;
+import de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns;
 
@@ -42,7 +42,7 @@ import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Colum
  */
 public enum TableIdentifier {
 
-    Person(Person_Columns.class, PersonConverter.class),
+    Person(Person_Columns.class, PatientConverter.class),
 
     Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
 

@@ -1,12 +1,12 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Anschrift;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Geburtsdatum;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Geschlecht;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Krankenkasse;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Nachname;
-import static de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns.Vorname;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Anschrift;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geburtsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geschlecht;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Krankenkasse;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Nachname;
+import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Vorname;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.MALE;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.OTHER;
@@ -40,7 +40,7 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
  */
-public class PersonConverter extends Converter {
+public class PatientConverter extends Converter {
 
     /**
      * toString() result of these enum values are the names of the columns in
@@ -66,7 +66,7 @@ public class PersonConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public PersonConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public PatientConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, result, validator, options);
     }
 
