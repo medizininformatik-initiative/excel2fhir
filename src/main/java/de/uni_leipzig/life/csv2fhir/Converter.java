@@ -581,8 +581,25 @@ public abstract class Converter {
      * @return a new {@link CodeableConcept}
      */
     public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text) {
-        Coding coding = createCoding(codeSystem, code);
-        coding.setDisplay(display);
+        Coding coding = createCoding(codeSystem, code, display);
+        return new CodeableConcept(coding).setText(text);
+    }
+
+    /**
+     * Creates a new {@link CodeableConcept} with the given code, code system
+     * and display for the contained {@link Coding}. Additionally the returned
+     * {@link CodeableConcept} gets the text from parameter <code>text</code>.
+     *
+     * @param codeSystem the code system of the contained {@link Coding}
+     * @param code the code of the contained {@link Coding}
+     * @param display
+     * @param text
+     * @param version
+     * @return a new {@link CodeableConcept}
+     */
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text, String version) {
+        Coding coding = createCoding(codeSystem, code, display);
+        coding.setVersion(version);
         return new CodeableConcept(coding).setText(text);
     }
 
@@ -629,6 +646,19 @@ public abstract class Converter {
     public static Coding createCoding(String codeSystem, String code, String display) {
         Coding coding = createCoding(codeSystem, code);
         coding.setDisplay(display);
+        return coding;
+    }
+
+    /**
+     * @param codeSystem the code system to set
+     * @param code the code to set
+     * @param display the display text to set for the returned {@link Coding}
+     * @param version
+     * @return a new {@link Coding} with the given values
+     */
+    public static Coding createCoding(String codeSystem, String code, String display, String version) {
+        Coding coding = createCoding(codeSystem, code, display);
+        coding.setVersion(version);
         return coding;
     }
 

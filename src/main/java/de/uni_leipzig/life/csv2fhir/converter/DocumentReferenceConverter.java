@@ -14,15 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Attachment;
 import org.hl7.fhir.r4.model.CodeableConcept;
-import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.DocumentReference.DocumentReferenceContentComponent;
 import org.hl7.fhir.r4.model.DocumentReference.DocumentReferenceContextComponent;
@@ -95,38 +92,28 @@ public class DocumentReferenceConverter extends Converter {
         // loinc.setVersion("2.74");
         // loinc.setDisplay("Hospital Letter");
 
-        Coding kdl = createCoding("http://dvmd.de/fhir/CodeSystem/kdl", "AD0101");
-        kdl.setVersion("2023");
-        kdl.setDisplay("Arztberichte");
-        documentReference.setCategory(Collections.singletonList(new CodeableConcept(kdl)));
+        //TODO: Enable DocumentResource category filling by excel input data
+        CodeableConcept category = createCodeableConcept("http://dvmd.de/fhir/CodeSystem/kdl", "AD0101", "Arztberichte", null, "2023");
+        documentReference.setCategory(singletonList(category));
 
-        kdl = createCoding("http://dvmd.de/fhir/CodeSystem/kdl", "AD010104");
-        kdl.setVersion("2023");
-        kdl.setDisplay("Entlassungsbericht extern");
-        documentReference.setType(new CodeableConcept(kdl));
+        //TODO: Enable DocumentResource type filling by excel input data
+        CodeableConcept type = createCodeableConcept("http://dvmd.de/fhir/CodeSystem/kdl", "AD010104", "Entlassungsbericht extern", null, "2023");
+        documentReference.setType(type);
 
-        List<CodeableConcept> cc = new Vector<>();
-        Coding c1 = createCoding("http://terminology.hl7.org/CodeSystem/v3-Confidentiality", "L");
-        c1.setVersion("4.0.1");
-        c1.setDisplay("low");
-        cc.add(new CodeableConcept(c1));
+        //TODO: Enable DocumentResource securityLabel filling by excel input data
+        CodeableConcept securityLabel1 = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v3-Confidentiality", "L", "low", null, "4.0.1");
+        CodeableConcept securityLabel2 = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v3-ActReason", "HTEST", "test health data", null, "4.0.1");
+        documentReference.setSecurityLabel(List.of(securityLabel1, securityLabel2));
 
-        Coding c2 = createCoding("http://terminology.hl7.org/CodeSystem/v3-ActReason", "HTEST");
-        c2.setVersion("4.0.1");
-        c2.setDisplay("test health data");
-        cc.add(new CodeableConcept(c2));
-
-        documentReference.setSecurityLabel(cc);
-
-        DocumentReferenceContextComponent c = new DocumentReferenceContextComponent();
-        c.setEncounter(getEncounterReferences());
-        documentReference.setContext(c);
+        DocumentReferenceContextComponent context = new DocumentReferenceContextComponent();
+        context.setEncounter(getEncounterReferences());
+        documentReference.setContext(context);
 
         boolean embed = isYesValue(get(Embed));
         String filePath = get(Dateipfad);
         if (!isBlank(filePath)) {
-            Attachment a = createAttachment(Paths.get(filePath), embed);
-            documentReference.setContent(Collections.singletonList(new DocumentReferenceContentComponent(a)));
+            Attachment attachment = createAttachment(Paths.get(filePath), embed);
+            documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
         }
 
         return singletonList(documentReference);
@@ -136,13 +123,12 @@ public class DocumentReferenceConverter extends Converter {
      * Create Attachment from file
      *
      * @param file
-     * @param embed if true embed file as binary else just add URL
+     * @param embed if <code>true</code> embed file as binary else just add URL
      * @return new FHIR Attachment
      * @throws IOException
      */
     public static Attachment createAttachment(Path file, boolean embed) throws IOException {
         Attachment att = new Attachment();
-
         if (embed) {
             // Read unlimited
             byte[] bytes = Files.readAllBytes(file);
