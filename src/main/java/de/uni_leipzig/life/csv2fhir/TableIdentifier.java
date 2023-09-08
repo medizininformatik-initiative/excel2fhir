@@ -34,8 +34,8 @@ import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
 import de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter;
-import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns;
 
 /**
  * @author AXS (18.11.2021)
@@ -52,7 +52,7 @@ public enum TableIdentifier {
 
     Diagnose(Diagnosis_Columns.class, ConditionConverter.class),
 
-    Prozedur(Procedure_Columns.class, ProzedurConverter.class),
+    Prozedur(Procedure_Columns.class, ProcedureConverter.class),
 
     DocumentReference(DocumentReference_Columns.class, DocumentReferenceConverter.class),
 
