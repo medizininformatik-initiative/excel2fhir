@@ -122,31 +122,41 @@ public class DocumentReferenceConverter extends Converter {
     /**
      * Create Attachment from file
      *
-     * @param file
+     * @param path
      * @param embed if <code>true</code> embed file as binary else just add URL
      * @return new FHIR Attachment
      * @throws IOException
      */
-    public static Attachment createAttachment(Path file, boolean embed) throws IOException {
-        Attachment att = new Attachment();
+    public static Attachment createAttachment(Path path, boolean embed) throws IOException {
+        Attachment attachment = new Attachment();
+        File file = path.toFile();
         if (embed) {
+            if (file.canRead()) {
             // Read unlimited
-            byte[] bytes = Files.readAllBytes(file);
-            att.setData(bytes);
+                byte[] bytes = Files.readAllBytes(path);
+                attachment.setData(bytes);
             // optional
-            att.setSize(bytes.length);
+                attachment.setSize(bytes.length);
+            } else {
+                attachment.getDataElement().addExtension(DATA_ABSENT_REASON_ERROR);
+                attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+            }
         } else {
-            att.setUrl(file.toUri().toURL().toExternalForm());
-            att.setSize((int) Files.size(file));
+            attachment.setUrl(path.toUri().toURL().toExternalForm());
+            attachment.setSize((int) Files.size(path));
         }
-        att.setContentType(getContentType(file.toFile()));
+        attachment.setContentType(getContentType(file));
         // optional
-        att.setTitle(file.getFileName().toString());
+        attachment.setTitle(path.getFileName().toString());
         // When attachment was first created
         // For now: take file creation time
         // Better (?): date, when document was written
-        att.setCreation(new Date(((FileTime) Files.getAttribute(file, "creationTime")).toMillis()));
-        return att;
+        if (file.canRead()) {
+            attachment.setCreation(new Date(((FileTime) Files.getAttribute(path, "creationTime")).toMillis()));
+        } else {
+            attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+        }
+        return attachment;
     }
 
     /**

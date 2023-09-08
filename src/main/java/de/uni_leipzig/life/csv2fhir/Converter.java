@@ -6,6 +6,7 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static org.apache.logging.log4j.util.Strings.isBlank;
+import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
@@ -29,7 +30,6 @@ import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Factory;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
@@ -82,6 +82,9 @@ public abstract class Converter {
 
     /**  */
     public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
+
+    /**  */
+    public static final Extension DATA_ABSENT_REASON_ERROR = createDataAbsentReason(ERROR);
 
     /**
      * All strings as a grep pattern that can be interpreted as 'yes' in English
@@ -837,10 +840,18 @@ public abstract class Converter {
 
     /**
      * @return a {@link CodeableConcept} that represents a valid unknown data
-     *         absent reason for {@link Observation} values.
+     *         absent reason.
      */
     public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
         return getDataAbsentReasonCodeableConcept(DataAbsentReason.UNKNOWN);
+    }
+
+    /**
+     * @return a {@link CodeableConcept} that represents a valid error data
+     *         absent reason.
+     */
+    public static CodeableConcept getErrorDataAbsentReasonCodeableConcept() {
+        return getDataAbsentReasonCodeableConcept(DataAbsentReason.ERROR);
     }
 
     /**
