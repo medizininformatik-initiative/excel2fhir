@@ -63,8 +63,9 @@ import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 public class MedicationConverter extends Converter {
 
     /**
-    *
-    */
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
+     */
     public static enum Medication_Columns implements TableColumnIdentifier {
         Zeitstempel,
         Medikationstyp,

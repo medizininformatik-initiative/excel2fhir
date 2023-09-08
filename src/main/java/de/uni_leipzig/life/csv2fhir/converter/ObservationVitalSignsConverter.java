@@ -33,7 +33,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Bezeichner,

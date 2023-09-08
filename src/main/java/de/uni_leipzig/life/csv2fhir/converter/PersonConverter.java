@@ -43,7 +43,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class PersonConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum Person_Columns implements TableColumnIdentifier {
         Vorname,
