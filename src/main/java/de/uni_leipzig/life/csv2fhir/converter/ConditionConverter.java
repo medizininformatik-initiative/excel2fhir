@@ -1,8 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Bezeichner;
@@ -101,13 +101,13 @@ public class ConditionConverter extends Converter {
                 //but it creates a circle, because the encounter has also a reference list to all
                 //diagnosis. This is false by default.
                 ConverterOptions converterOptions = result.getConverterOptions();
-                if (converterOptions.is(SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER)) {
+                if (converterOptions.is(SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER)) {
                     condition.setEncounter(getEncounterReference());
                 }
 
                 if (isValid(condition)) { //check validity before adding the refence from encounter to this
                     //usually this is true by default
-                    if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION)) {
+                    if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION)) {
                         //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
                         String encounterId = getEncounterId();
                         //encounterId is optional

@@ -37,7 +37,7 @@ public class ConditionConverterTest {
         doReturn("PID1").when(recordMock).get("Patient-ID");
         ConverterResult resultMock = mock(ConverterResult.class);
         ConverterOptions optionsMock = mock(ConverterOptions.class);
-        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER);
+        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER);
         doReturn(true).when(optionsMock).is(Mockito.any(BooleanOption.class));
         doReturn(optionsMock).when(resultMock).getConverterOptions();
 
