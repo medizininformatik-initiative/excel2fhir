@@ -3,7 +3,7 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_DIAGNOSIS;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationsdatum;
@@ -172,7 +172,7 @@ public class ConditionConverter extends Converter {
             error("ICD empty");
             return null;
         }
-        int nextId = result.getNextId(Diagnose, Condition.class, START_ID_DIAGNOSIS) + nextIDOffset;
+        int nextId = result.getNextId(Diagnose, Condition.class, START_ID_CONDITION) + nextIDOffset;
         String encounterId = getEncounterId();
         return (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.CONDITION + nextId;
     }

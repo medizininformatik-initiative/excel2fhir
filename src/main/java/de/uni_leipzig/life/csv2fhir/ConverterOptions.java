@@ -218,7 +218,7 @@ public class ConverterOptions {
          * the default is 1.
          */
         START_ID_CONSENT,
-        START_ID_DIAGNOSIS,
+        START_ID_CONDITION,
         START_ID_ENCOUNTER_LEVEL_2,
         START_ID_MEDICATION_ADMINISTRATION,
         START_ID_MEDICATION_STATEMENT,
