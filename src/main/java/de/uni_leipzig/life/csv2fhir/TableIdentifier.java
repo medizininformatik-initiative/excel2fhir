@@ -18,8 +18,8 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter;
-import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
@@ -50,7 +50,7 @@ public enum TableIdentifier {
 
     Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverter.class),
 
-    Diagnose(Diagnosis_Columns.class, DiagnosisConverter.class),
+    Diagnose(Diagnosis_Columns.class, ConditionConverter.class),
 
     Prozedur(Procedure_Columns.class, ProzedurConverter.class),
 
