@@ -6,12 +6,16 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static org.apache.logging.log4j.util.Strings.isBlank;
+import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -26,7 +30,6 @@ import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Factory;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
@@ -38,9 +41,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
+import de.uni_leipzig.imise.utils.StringUtils;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier.DefaultTableColumnNames;
@@ -79,10 +84,19 @@ public abstract class Converter {
     public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
 
     /**  */
+    public static final Extension DATA_ABSENT_REASON_ERROR = createDataAbsentReason(ERROR);
+
+    /**
+     * All strings as a grep pattern that can be interpreted as 'yes' in English
+     * and German.
+     */
+    public static final Set<String> GENERAL_YES_VALUES = ImmutableSet.of("ja", "j", "1", "y", "yes", "true", "x");
+
+    /**  */
     final String pid;
 
     /**  */
-    final String encounterID;
+    final List<String> encounterIDs;
 
     /**  */
     final String dizID;
@@ -121,7 +135,7 @@ public abstract class Converter {
         this.validator = validator;
         this.options = options;
         pid = parsePatientId();
-        encounterID = parseEncounterId();
+        encounterIDs = parseEncounterIds();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
         columnIdentifiersClass = reflectColumnIdentifiersClass();
     }
@@ -269,7 +283,15 @@ public abstract class Converter {
      * @throws Exception
      */
     public final String getEncounterId() throws Exception {
-        return encounterID;
+        return encounterIDs.isEmpty() ? null : encounterIDs.get(0);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    public final List<String> getEncounterIds() throws Exception {
+        return encounterIDs;
     }
 
     /**
@@ -329,33 +351,35 @@ public abstract class Converter {
      * If the column is optional and is not in the data then (for backward
      * compatibility reason) the value will set to 1.
      *
-     * @return the encounter id in the record or a default if the column is
+     * @return the encounter ids in the record or a default if the column is
      *         mandatory.
      * @throws Exception
      */
-    private String parseEncounterId() throws Exception {
+    private List<String> parseEncounterIds() throws Exception {
         TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
         //missing encounter number -> set it to 1 if the column does not exists in the table
         if (encounterIDColumnIdentifier == null) {
-            return null;
+            return Collections.emptyList();
         }
         String encounterIDColumnName = encounterIDColumnIdentifier.toString();
         boolean columnExists = record.isMapped(encounterIDColumnName);
-        String encounterNumber = null;
+        List<String> encounterNumbers = null;
         if (columnExists) {
-            String recordEncounterNumber = record.get(encounterIDColumnName);
-            boolean valueExists = !isBlank(recordEncounterNumber);
-            if (valueExists) {
-                encounterNumber = recordEncounterNumber;
+            String recordEncounterNumbers = record.get(encounterIDColumnName);
+            if (!isBlank(recordEncounterNumbers)) {
+                encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
             }
         } else {
-            encounterNumber = encounterIDColumnIdentifier.getDefaultIfMissing();
+            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a mutable list!
         }
         //is still null if the column exists but the value is missing
-        if (encounterNumber == null) {
-            return null;
+        if (encounterNumbers == null || encounterNumbers.isEmpty()) {
+            return Collections.emptyList();
         }
-        return pid + "-E-" + encounterNumber;
+        for (int i = encounterNumbers.size() - 1; i >= 0; i--) {
+            encounterNumbers.set(i, pid + "-E-" + encounterNumbers.get(i));
+        }
+        return encounterNumbers;
     }
 
     /**
@@ -394,19 +418,32 @@ public abstract class Converter {
      * @throws Exception
      */
     protected Reference getEncounterReference() throws Exception {
-        return getEncounterReference(false);
+        return getEncounterReference(getEncounterId(), false);
     }
 
     /**
+     * @param encounterId
      * @param checkExistence
      * @return
      * @throws Exception
      */
-    protected Reference getEncounterReference(boolean checkExistence) throws Exception {
-        if (encounterID == null) { // can be optional
+    protected Reference getEncounterReference(String encounterId, boolean checkExistence) throws Exception {
+        if (encounterId == null) { // can be optional
             return null;
         }
-        return getReference(checkExistence ? Versorgungsfall : null, encounterID, Encounter.class);
+        return getReference(checkExistence ? Versorgungsfall : null, encounterId, Encounter.class);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    protected List<Reference> getEncounterReferences() throws Exception {
+        List<Reference> encounterReferences = new ArrayList<>(encounterIDs.size());
+        for (String encounterId : encounterIDs) {
+            encounterReferences.add(getEncounterReference(encounterId, false));
+        }
+        return encounterReferences;
     }
 
     /**
@@ -547,8 +584,25 @@ public abstract class Converter {
      * @return a new {@link CodeableConcept}
      */
     public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text) {
-        Coding coding = createCoding(codeSystem, code);
-        coding.setDisplay(display);
+        Coding coding = createCoding(codeSystem, code, display);
+        return new CodeableConcept(coding).setText(text);
+    }
+
+    /**
+     * Creates a new {@link CodeableConcept} with the given code, code system
+     * and display for the contained {@link Coding}. Additionally the returned
+     * {@link CodeableConcept} gets the text from parameter <code>text</code>.
+     *
+     * @param codeSystem the code system of the contained {@link Coding}
+     * @param code the code of the contained {@link Coding}
+     * @param display
+     * @param text
+     * @param version
+     * @return a new {@link CodeableConcept}
+     */
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text, String version) {
+        Coding coding = createCoding(codeSystem, code, display);
+        coding.setVersion(version);
         return new CodeableConcept(coding).setText(text);
     }
 
@@ -595,6 +649,19 @@ public abstract class Converter {
     public static Coding createCoding(String codeSystem, String code, String display) {
         Coding coding = createCoding(codeSystem, code);
         coding.setDisplay(display);
+        return coding;
+    }
+
+    /**
+     * @param codeSystem the code system to set
+     * @param code the code to set
+     * @param display the display text to set for the returned {@link Coding}
+     * @param version
+     * @return a new {@link Coding} with the given values
+     */
+    public static Coding createCoding(String codeSystem, String code, String display, String version) {
+        Coding coding = createCoding(codeSystem, code, display);
+        coding.setVersion(version);
         return coding;
     }
 
@@ -773,10 +840,18 @@ public abstract class Converter {
 
     /**
      * @return a {@link CodeableConcept} that represents a valid unknown data
-     *         absent reason for {@link Observation} values.
+     *         absent reason.
      */
     public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
         return getDataAbsentReasonCodeableConcept(DataAbsentReason.UNKNOWN);
+    }
+
+    /**
+     * @return a {@link CodeableConcept} that represents a valid error data
+     *         absent reason.
+     */
+    public static CodeableConcept getErrorDataAbsentReasonCodeableConcept() {
+        return getDataAbsentReasonCodeableConcept(DataAbsentReason.ERROR);
     }
 
     /**
@@ -785,6 +860,14 @@ public abstract class Converter {
      */
     public static CodeableConcept getDataAbsentReasonCodeableConcept(DataAbsentReason dataAbsentReason) {
         return createCodeableConcept(dataAbsentReason.getSystem(), dataAbsentReason.toCode());
+    }
+
+    /**
+     * @param value
+     * @return
+     */
+    public static final boolean isYesValue(String value) {
+        return !isBlank(value) && GENERAL_YES_VALUES.contains(value.trim());
     }
 
 }

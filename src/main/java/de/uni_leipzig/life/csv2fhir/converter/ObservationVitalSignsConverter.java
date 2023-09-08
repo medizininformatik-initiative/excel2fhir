@@ -67,7 +67,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
         Reference encounterReference = getEncounterReference();
-        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + "-OV-" + nextId;
+        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + ResourceIdSuffix.OBSERVATION_VITALSIGNS + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
