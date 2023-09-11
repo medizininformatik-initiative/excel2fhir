@@ -127,11 +127,11 @@ public class ConverterOptions {
          * if the encounters have a reference to all diagnoses (conditions).
          * Some FHIR-Servers don't accept such circle references. In this case
          * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION}
-         * must be set to <code>false</code>.</br>
+         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION} must
+         * be set to <code>false</code>.</br>
          * The Default is <code>false</code>.
          */
-        SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER,
+        SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER,
         /**
          * Enable to set the references from the encounters to the diagnoses
          * (conditions). </br>
@@ -139,11 +139,11 @@ public class ConverterOptions {
          * if the diagnoses (conditions) have a reference to their encounter.
          * Some FHIR-Servers don't accept such circle references. In this case
          * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER}
-         * must be set to <code>false</code>.</br>
+         * {@link BooleanOption#SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER} must
+         * be set to <code>false</code>.</br>
          * The Default is <code>true</code>.
          */
-        SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION,
+        SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION,
 
         /**
          * Enable to set a the optional reference from procedures (conditions)
@@ -196,7 +196,7 @@ public class ConverterOptions {
         private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j", "1");
 
         /** All BooleanOptions whose default value is <code>true</code>. */
-        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_DIAGNOSIS_CONDITION, SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION);
+        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION, SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION);
 
         /**
          * @return Default-Wert dieser Property
@@ -218,7 +218,7 @@ public class ConverterOptions {
          * the default is 1.
          */
         START_ID_CONSENT,
-        START_ID_DIAGNOSIS,
+        START_ID_CONDITION,
         START_ID_ENCOUNTER_LEVEL_2,
         START_ID_MEDICATION_ADMINISTRATION,
         START_ID_MEDICATION_STATEMENT,

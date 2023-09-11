@@ -43,7 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 public class ConsentConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum Consent_Columns implements TableColumnIdentifier {
         Datum_Einwilligung,

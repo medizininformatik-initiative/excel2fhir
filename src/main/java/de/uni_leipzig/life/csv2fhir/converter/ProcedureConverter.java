@@ -4,9 +4,9 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_RE
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
-import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurencode;
-import static de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns.Prozedurentext;
+import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Prozedurencode;
+import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Prozedurentext;
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 
@@ -29,10 +29,11 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
  */
-public class ProzedurConverter extends Converter {
+public class ProcedureConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum Procedure_Columns implements TableColumnIdentifier {
         Prozedurentext,
@@ -51,7 +52,7 @@ public class ProzedurConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public ProzedurConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ProcedureConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, result, validator, options);
     }
 

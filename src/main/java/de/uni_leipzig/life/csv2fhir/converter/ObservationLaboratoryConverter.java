@@ -43,7 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 public class ObservationLaboratoryConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum ObservationLaboratory_Columns implements TableColumnIdentifier {
         LOINC,

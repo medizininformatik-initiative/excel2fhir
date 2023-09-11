@@ -34,12 +34,13 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 
 /**
- * @author FAM (24.07.2023)
+ * @author FAM (24.07.2023), AXS (06.08.23)
  */
 public class DocumentReferenceConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum DocumentReference_Columns implements TableColumnIdentifier {
         Dateipfad,
@@ -122,7 +123,7 @@ public class DocumentReferenceConverter extends Converter {
     /**
      * Create Attachment from file
      *
-     * @param path
+     * @param path path to file
      * @param embed if <code>true</code> embed file as binary else just add URL
      * @return new FHIR Attachment
      * @throws IOException
@@ -132,10 +133,10 @@ public class DocumentReferenceConverter extends Converter {
         File file = path.toFile();
         if (embed) {
             if (file.canRead()) {
-            // Read unlimited
+                // Read unlimited
                 byte[] bytes = Files.readAllBytes(path);
                 attachment.setData(bytes);
-            // optional
+                // optional
                 attachment.setSize(bytes.length);
             } else {
                 attachment.getDataElement().addExtension(DATA_ABSENT_REASON_ERROR);

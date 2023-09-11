@@ -4,12 +4,13 @@ package de.uni_leipzig.life.csv2fhir.converter;
  * For all resources except patient, the encounters and medication, a unique
  * string must be specified to expand the respective encounter or patient ID to
  * generate an ID for the resource. Unique means that 2 different resource types
- * must not have the same ID.
+ * must not have the same ID and so not the same suffix string here.
  *
  * @author AXS (06.09.2023)
  */
 public enum ResourceIdSuffix {
 
+    // If a resource type is added, then the suffix must be different from all others.
     CONSENT("CO"),
     CONDITION("C"),
     DOCUMENT_REFERENCE("DR"),

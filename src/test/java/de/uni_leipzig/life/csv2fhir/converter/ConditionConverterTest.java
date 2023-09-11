@@ -1,8 +1,8 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
-import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns.ICD;
+import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.ICD;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -29,7 +29,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DiagnosisConverterTest {
+public class ConditionConverterTest {
 
     @Test
     public void convertTest() throws Exception {
@@ -37,13 +37,13 @@ public class DiagnosisConverterTest {
         doReturn("PID1").when(recordMock).get("Patient-ID");
         ConverterResult resultMock = mock(ConverterResult.class);
         ConverterOptions optionsMock = mock(ConverterOptions.class);
-        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_DIAGNOSIS_CONDITION_TO_ENCOUNTER);
+        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER);
         doReturn(true).when(optionsMock).is(Mockito.any(BooleanOption.class));
         doReturn(optionsMock).when(resultMock).getConverterOptions();
 
         doReturn("PID1").when(recordMock).get("Patient-ID");
         //FHIRValidator validator = mock(FHIRValidator.class);
-        DiagnosisConverter diagnosisConverterUnderTest = new DiagnosisConverter(recordMock, resultMock, null, new ConverterOptions(""));
+        ConditionConverter diagnosisConverterUnderTest = new ConditionConverter(recordMock, resultMock, null, new ConverterOptions(""));
 
         //doReturn(null).when(recordMock).get("ICD");
         when(recordMock.get("ICD")).thenReturn(null);
@@ -84,7 +84,7 @@ public class DiagnosisConverterTest {
      * @param codeInput
      * @param resultCodes
      */
-    private static void testConvert(DiagnosisConverter diagnosisConverter, CSVRecord recordMock, ConverterResult resultMock, String codeInput, String... expectedResultCodes) throws Exception {
+    private static void testConvert(ConditionConverter diagnosisConverter, CSVRecord recordMock, ConverterResult resultMock, String codeInput, String... expectedResultCodes) throws Exception {
         String recordedDate = "02.10.2020 00:00";
         doReturn(recordedDate).when(recordMock).get(Dokumentationsdatum.toString());
 
@@ -104,7 +104,7 @@ public class DiagnosisConverterTest {
             assertEquals(codingCode, expectedResultCodes[i]);
             conditionIDs.add(condition.getId());
         }
-        //check whether laways different IDs are generated
+        //check whether always different IDs are generated
         assertEquals(conditionIDs.size(), convertedResourcesCount);
     }
 }
