@@ -43,7 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 public class ObservationLaboratoryConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum ObservationLaboratory_Columns implements TableColumnIdentifier {
         LOINC,
@@ -85,7 +86,7 @@ public class ObservationLaboratoryConverter extends Converter {
         int nextId = result.getNextId(Laborbefund, Observation.class, START_ID_OBSERVATION_LABORATORY);
         Reference encounterReference = getEncounterReference();
         // If the encounter is defined for this Observation so we can use it for the id. If not we can only use the PID
-        String id = (encounterReference != null ? getEncounterId() : getPatientId()) + "-OL-" + nextId;
+        String id = (encounterReference != null ? getEncounterId() : getPatientId()) + ResourceIdSuffix.OBSERVATION_LABORATORY + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);

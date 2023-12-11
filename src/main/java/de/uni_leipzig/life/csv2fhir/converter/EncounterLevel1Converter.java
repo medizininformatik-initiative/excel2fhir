@@ -40,7 +40,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class EncounterLevel1Converter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum EncounterLevel1_Columns implements TableColumnIdentifier {
         Startdatum,

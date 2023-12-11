@@ -18,8 +18,10 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter;
-import de.uni_leipzig.life.csv2fhir.converter.DiagnosisConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter;
+import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter;
@@ -30,17 +32,17 @@ import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.PersonConverter;
-import de.uni_leipzig.life.csv2fhir.converter.PersonConverter.Person_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter;
-import de.uni_leipzig.life.csv2fhir.converter.ProzedurConverter.Procedure_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.PatientConverter;
+import de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns;
 
 /**
  * @author AXS (18.11.2021)
  */
 public enum TableIdentifier {
 
-    Person(Person_Columns.class, PersonConverter.class),
+    Person(Person_Columns.class, PatientConverter.class),
 
     Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
 
@@ -48,9 +50,11 @@ public enum TableIdentifier {
 
     Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverter.class),
 
-    Diagnose(Diagnosis_Columns.class, DiagnosisConverter.class),
+    Diagnose(Diagnosis_Columns.class, ConditionConverter.class),
 
-    Prozedur(Procedure_Columns.class, ProzedurConverter.class),
+    Prozedur(Procedure_Columns.class, ProcedureConverter.class),
+
+    DocumentReference(DocumentReference_Columns.class, DocumentReferenceConverter.class),
 
     Medikation(Medication_Columns.class, MedicationConverter.class),
 

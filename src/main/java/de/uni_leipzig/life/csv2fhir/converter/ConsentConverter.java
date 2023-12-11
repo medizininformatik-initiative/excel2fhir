@@ -7,11 +7,9 @@ import static org.apache.logging.log4j.util.Strings.isNotBlank;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.DENY;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.PERMIT;
 
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 public class ConsentConverter extends Converter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum Consent_Columns implements TableColumnIdentifier {
         Datum_Einwilligung,
@@ -102,7 +101,7 @@ public class ConsentConverter extends Converter {
         Consent consent = new Consent();
         int nextId = result.getNextId(Consent, Consent.class, START_ID_CONSENT);
         String pid = getPatientId();
-        String id = pid + "-CO-" + nextId;
+        String id = pid + ResourceIdSuffix.CONSENT + nextId;
         consent.setId(id);
         consent.setMeta(new Meta().addProfile(res("CONSENT_PROFILE")));
         consent.setStatus(ConsentState.ACTIVE);
@@ -172,7 +171,7 @@ public class ConsentConverter extends Converter {
                 for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.get(provisionGroupIndex)) {
                     provisionComponent subProvision = provision.addProvision();
                     // permit or deny
-                    ConsentProvisionType provisionType = STATIC_CONSENT_DATA.isConsentYesValue(consentValue) ? PERMIT : DENY;
+                    ConsentProvisionType provisionType = isYesValue(consentValue) ? PERMIT : DENY;
                     subProvision.setType(provisionType);
                     // provision period
                     int durationYears = STATIC_CONSENT_DATA.provisionIndexToDurationYears.getOrDefault(subProvisionIndex, CONSENT_DEFAULT_DURATION_THIRTY_YEARS);
@@ -188,7 +187,6 @@ public class ConsentConverter extends Converter {
                     CodeableConcept coding = createCodeableConcept(system, code, display, null);
                     subProvision.addCode(coding);
                 }
-
             }
         }
     }
@@ -227,8 +225,6 @@ public class ConsentConverter extends Converter {
         /**  */
         private final Map<Integer, Integer> provisionIndexToDurationYears = new HashMap<>();
 
-        private static final HashSet<String> CONSENT_YES_VALUES = initConsentYesValues();
-
         /**
          *
          */
@@ -254,31 +250,6 @@ public class ConsentConverter extends Converter {
                     }
                 }
             }
-        }
-
-        /**
-         * @return
-         */
-        private static HashSet<String> initConsentYesValues() {
-            HashSet<String> yesValues = new HashSet<>();
-            String resourceYesValues = CONSENT_RESOURCES.getProperty("CONSENT_VALUE_YES");
-            String[] values = resourceYesValues.split("\\s*\\|\\s*");
-            yesValues.addAll(Arrays.asList(values));
-            return yesValues;
-        }
-
-        /**
-         * @param value
-         * @return
-         */
-        public boolean isConsentYesValue(String value) {
-            value = value.trim();
-            for (String yesValue : CONSENT_YES_VALUES) {
-                if (yesValue.equalsIgnoreCase(value)) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         /**

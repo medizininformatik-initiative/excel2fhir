@@ -15,12 +15,11 @@ import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medicat
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Therapiestartdatum;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Zeitstempel;
-import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medikationstyp_Values.Verordnung;
+import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medikationstyp_Values.MedicationAdministration;
+import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medikationstyp_Values.MedicationRequest;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.util.Strings.isBlank;
-import static org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus.COMPLETED;
-import static org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus.ACTIVE;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -38,7 +37,12 @@ import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Medication.MedicationIngredientComponent;
 import org.hl7.fhir.r4.model.MedicationAdministration;
 import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationDosageComponent;
+import org.hl7.fhir.r4.model.MedicationAdministration.MedicationAdministrationStatus;
+import org.hl7.fhir.r4.model.MedicationRequest;
+import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestIntent;
+import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestStatus;
 import org.hl7.fhir.r4.model.MedicationStatement;
+import org.hl7.fhir.r4.model.MedicationStatement.MedicationStatementStatus;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Quantity;
@@ -47,6 +51,8 @@ import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.SimpleQuantity;
 import org.hl7.fhir.r4.model.Type;
+
+import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -63,8 +69,9 @@ import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 public class MedicationConverter extends Converter {
 
     /**
-    *
-    */
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
+     */
     public static enum Medication_Columns implements TableColumnIdentifier {
         Zeitstempel,
         Medikationstyp,
@@ -121,18 +128,26 @@ public class MedicationConverter extends Converter {
     *
     */
     public static enum Medikationstyp_Values implements StringEqualsIgnoreCase {
-        Verordnung,
-        Gabe;
+        // The value in the column Medikationstyp must contain this string (compared as pattern).
+        // If the value in this column is somethis like "Verordnung (MedicationRequest)" then a
+        // MedicationRequest will be created, because MedicationRequest.toString() can be found in
+        // this value.
+        MedicationRequest,
+        MedicationAdministration,
+        MedicationStatement
     }
 
     /**  */
-    String PROFILE_ADM = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
+    String PROFILE_MEDICATION_REQUEST = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest";
 
     /**  */
-    String PROFILE_STM = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
+    String PROFILE_MEDICATION_ADMINISTRATION = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration";
 
     /**  */
-    String PROFILE_MED = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
+    String PROFILE_MEDICATION_STATEMENT = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement";
+
+    /**  */
+    String PROFILE_MEDICATION = "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication";
     // https://simplifier.net/medizininformatikinitiative-modulmedikation/medication-duplicate-3
 
     /*
@@ -163,10 +178,12 @@ public class MedicationConverter extends Converter {
             }
             resources.add(medication);
         }
-        if (Verordnung.equals(get(Medikationstyp))) {
-            resources.add(parseMedicationStatement());
-        } else {
+        if (matches(MedicationRequest, Medikationstyp)) {
+            resources.add(parseMedicationRequest());
+        } else if (matches(MedicationAdministration, Medikationstyp)) {
             resources.add(parseMedicationAdministration());
+        } else {
+            resources.add(parseMedicationStatement());
         }
         return resources;
     }
@@ -177,7 +194,7 @@ public class MedicationConverter extends Converter {
      */
     private Medication parseMedication() throws Exception {
         Medication medication = new Medication();
-        medication.setMeta(new Meta().addProfile(PROFILE_MED));
+        medication.setMeta(new Meta().addProfile(PROFILE_MEDICATION));
         String medicationId = getMedicationId();
         medication.setId(medicationId);
         medication.setIdentifier(singletonList(new Identifier().setValue(medicationId))); // identifier is optional for medication
@@ -190,17 +207,18 @@ public class MedicationConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private MedicationStatement parseMedicationStatement() throws Exception {
-        MedicationStatement medicationStatement = new MedicationStatement();
-        medicationStatement.setId(createId("-MS-", MedicationStatement.class));
-        medicationStatement.setStatus(ACTIVE);
-        medicationStatement.setMeta(new Meta().addProfile(PROFILE_STM));
-        medicationStatement.setSubject(getPatientReference());
-        medicationStatement.setContext(getEncounterReference());
-        medicationStatement.setMedication(getMedicationReference());
-        medicationStatement.setEffective(convertTimestamp());
-        medicationStatement.addDosage(convertDosageStatement());
-        return medicationStatement;
+    private MedicationRequest parseMedicationRequest() throws Exception {
+        MedicationRequest medicationRequest = new MedicationRequest();
+        medicationRequest.setMeta(new Meta().addProfile(PROFILE_MEDICATION_REQUEST));
+        medicationRequest.setId(createId(MedicationRequest.class));
+        medicationRequest.setSubject(getPatientReference());
+        medicationRequest.setEncounter(getEncounterReference());
+        medicationRequest.setMedication(getMedicationReference());
+        medicationRequest.setStatus(MedicationRequestStatus.ACTIVE);
+        medicationRequest.setAuthoredOnElement(convertTimestamp());
+        medicationRequest.setDosageInstruction(convertDosageRequest());
+        medicationRequest.setIntent(MedicationRequestIntent.ORDER);
+        return medicationRequest;
     }
 
     /**
@@ -209,32 +227,54 @@ public class MedicationConverter extends Converter {
      */
     private MedicationAdministration parseMedicationAdministration() throws Exception {
         MedicationAdministration medicationAdministration = new MedicationAdministration();
-        medicationAdministration.setMeta(new Meta().addProfile(PROFILE_ADM));
-        medicationAdministration.setId(createId("-MA-", MedicationAdministration.class));
-        medicationAdministration.setStatus(COMPLETED);
+        medicationAdministration.setMeta(new Meta().addProfile(PROFILE_MEDICATION_ADMINISTRATION));
+        medicationAdministration.setId(createId(MedicationAdministration.class));
         medicationAdministration.setSubject(getPatientReference());
         medicationAdministration.setContext(getEncounterReference());
         medicationAdministration.setMedication(getMedicationReference());
+        medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
         medicationAdministration.setEffective(convertTimestamp());
         medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
     }
 
     /**
+     * @return
+     * @throws Exception
+     */
+    private MedicationStatement parseMedicationStatement() throws Exception {
+        MedicationStatement medicationStatement = new MedicationStatement();
+        medicationStatement.setMeta(new Meta().addProfile(PROFILE_MEDICATION_STATEMENT));
+        medicationStatement.setId(createId(MedicationStatement.class));
+        medicationStatement.setSubject(getPatientReference());
+        medicationStatement.setContext(getEncounterReference());
+        medicationStatement.setMedication(getMedicationReference());
+        medicationStatement.setStatus(MedicationStatementStatus.ACTIVE);
+        medicationStatement.setEffective(convertTimestamp());
+        medicationStatement.addDosage(convertDosageStatement());
+        return medicationStatement;
+    }
+
+    /**
      * @param <T>
-     * @param suffix
      * @param resourceType
      * @return
      * @throws Exception
      */
-    private <T extends Resource> String createId(String suffix, Class<T> resourceType) throws Exception {
+    private <T extends Resource> String createId(Class<T> resourceType) throws Exception {
         String encounterID = getEncounterId();
         String superID = isBlank(encounterID) ? getPatientId() : encounterID;
         IntOption startID = null;
-        if (resourceType.isAssignableFrom(MedicationAdministration.class)) {
+        String suffix = null;
+        if (resourceType.isAssignableFrom(MedicationRequest.class)) {
+            startID = IntOption.START_ID_MEDICATION_REQUEST;
+            suffix = ResourceIdSuffix.MEDICATION_REQUEST.toString();
+        } else if (resourceType.isAssignableFrom(MedicationAdministration.class)) {
             startID = IntOption.START_ID_MEDICATION_ADMINISTRATION;
+            suffix = ResourceIdSuffix.MEDICATION_ADMINISTRATION.toString();
         } else if (resourceType.isAssignableFrom(MedicationStatement.class)) {
             startID = IntOption.START_ID_MEDICATION_STATEMENT;
+            suffix = ResourceIdSuffix.MEDICATION_STATEMENT.toString();
         }
         int nextIDNumber = result.getNextId(Medikation, resourceType, startID);
         return superID + suffix + nextIDNumber;
@@ -473,6 +513,24 @@ public class MedicationConverter extends Converter {
      * @return
      * @throws Exception
      */
+    private Dosage convertDosage() throws Exception {
+        Dosage d = new Dosage();
+        d.addDoseAndRate().setDose(convertQuantity());
+        return d;
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private List<Dosage> convertDosageRequest() throws Exception {
+        return ImmutableList.of(convertDosage());
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
     private MedicationAdministrationDosageComponent convertDosageAdministration() throws Exception {
         return new MedicationAdministrationDosageComponent().setDose(convertQuantity());
     }
@@ -482,9 +540,7 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private Dosage convertDosageStatement() throws Exception {
-        Dosage d = new Dosage();
-        d.addDoseAndRate().setDose(convertQuantity());
-        return d;
+        return convertDosage();
     }
 
 }

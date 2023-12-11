@@ -16,9 +16,6 @@ CONSENT_CATEGORY_CODING_CODE	59284-0
 
 CONSENT_POLICY_URI				https://www.medizininformatik-initiative.de/sites/default/files/2020-04/MII_AG-Consent_Einheitlicher-Mustertext_v1.6d.pdf
 
-#valid yes values in CSV/Excel files
-CONSENT_VALUE_YES				ja|j|1|y|yes|true|x
-
 #####################################################################################################################
 # Sources:
 # https://art-decor.org/art-decor/decor-valuesets--mide-?id=2.16.840.1.113883.3.1937.777.24.11.36&effectiveDate=2021-04-23T10:55:54&language=de-DE

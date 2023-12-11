@@ -33,7 +33,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
     /**
-     *
+     * toString() result of these enum values are the names of the columns in
+     * the correspunding excel sheet.
      */
     public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Bezeichner,
@@ -67,7 +68,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
         Reference encounterReference = getEncounterReference();
-        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + "-OV-" + nextId;
+        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + ResourceIdSuffix.OBSERVATION_VITALSIGNS + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
