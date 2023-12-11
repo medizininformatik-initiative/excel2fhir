@@ -132,16 +132,27 @@ public class FHIRValidator {
      * one of this error message parts then the error will be ignored.
      */
     private static final String[] VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS = {
-            "Validation failed für \"http://loinc.org#",
-            "Validation failed für \"http://fhir.de/CodeSystem/ifa/pzn#",
-            "Validation failed für \"http://snomed.info/sct#",
-            "Validation failed für \"http://unitsofmeasure.org#",
-            "Validation failed für \"http://fhir.de/CodeSystem/ask#",
+
+            // The validator the error  messages change from time to time. Newer messages
+            // uses ' instead of ".
+            "Validation failed für 'http://loinc.org#",
+            "Validation failed für 'http://fhir.de/CodeSystem/ifa/pzn#",
+            "Validation failed für 'http://snomed.info/sct#",
+            "Validation failed für 'http://unitsofmeasure.org#",
+            "Validation failed für 'http://fhir.de/CodeSystem/ask#",
 
             "Unknown code 'http://loinc.org#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
-            "Unknown code 'http://fhir.de/CodeSystem/bfarm/ops#",
+
+            "Could not validate code http://fhir.de/CodeSystem/bfarm/ops#",
+            "Could not validate code http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
+
+            // Following error message is generated for Observations -> the followng ignore string is
+            // the very last part of this message:
+            // Keiner der angegebenen Codes ist im Valueset 'IdentifierType' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), und ein Code sollte aus diesem Valueset stammen, es sei denn, er enthält keinen geeigneten Code) (Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI)
+            "Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
+
     };
 
     /**
