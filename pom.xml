@@ -60,7 +60,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.5.0</version>
+            <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest -->
@@ -74,7 +74,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
 
@@ -82,19 +82,19 @@
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-structures-r4</artifactId>
-            <version>6.8.0</version>
+            <version>6.10.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-validation-resources-r4 -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-validation-resources-r4</artifactId>
-            <version>6.8.0</version>
+            <version>6.10.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-validation -->
         <dependency>
             <groupId>ca.uhn.hapi.fhir</groupId>
             <artifactId>hapi-fhir-validation</artifactId>
-            <version>6.8.0</version>
+            <version>6.10.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
         <dependency>
@@ -106,19 +106,19 @@
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
-            <version>4.7.4</version>
+            <version>4.7.5</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.poi/poi -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>5.2.3</version>
+            <version>5.2.5</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.3</version>
+            <version>5.2.5</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple -->
         <dependency>

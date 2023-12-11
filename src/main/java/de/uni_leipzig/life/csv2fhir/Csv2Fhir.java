@@ -161,11 +161,6 @@ public class Csv2Fhir {
     /**
      * @param patientsPerBundle
      * @param outputFileTypes
-     * @throws Exception
-     */
-    /**
-     * @param patientsPerBundle
-     * @param outputFileTypes
      * @return the counters of all created resources
      * @throws Exception
      */

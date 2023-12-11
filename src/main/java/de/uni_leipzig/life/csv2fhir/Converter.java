@@ -5,6 +5,7 @@ import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
+import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
@@ -16,6 +17,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -868,6 +871,21 @@ public abstract class Converter {
      */
     public static final boolean isYesValue(String value) {
         return !isBlank(value) && GENERAL_YES_VALUES.contains(value.trim());
+    }
+
+    /**
+     * @param valuePattern the toString() value from this enum is the pattern
+     *            that must match the value of the record in the column with the
+     *            columnName
+     * @param columnName name of the column with the value to match
+     * @return <code>true</code> if the value matches the pattern
+     */
+    public final boolean matches(Enum<?> valuePattern, Enum<?> columnName) {
+        String patternString = valuePattern.toString();
+        Pattern pattern = Pattern.compile(patternString, CASE_INSENSITIVE);
+        String value = get(columnName);
+        Matcher matcher = pattern.matcher(value);
+        return matcher.find();
     }
 
 }
