@@ -131,7 +131,7 @@ public class FHIRValidator {
      * If the validation result of a full bundle or a single resource contains
      * one of this error message parts then the error will be ignored.
      */
-    private static final String[] VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS = {
+    private static final String[] VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS = {
 
             // The validator the error  messages change from time to time. Newer messages
             // uses ' instead of ".
@@ -405,7 +405,7 @@ public class FHIRValidator {
      */
     private static boolean isIgnorableError(SingleValidationMessage validationMessage, boolean strict) {
         String message = validationMessage.getMessage();
-        for (String ignoreMessagePart : VALIDATION_BUNLE_IGNORE_ERROR_MESSAGE_PARTS) {
+        for (String ignoreMessagePart : VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS) {
             if (message.contains(ignoreMessagePart)) {
                 return true;
             }
