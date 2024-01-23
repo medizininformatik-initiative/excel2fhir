@@ -94,12 +94,13 @@ public class Csv2Fhir {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
-        csvFormat = CSVFormat.DEFAULT
-                .withNullString("")
-                .withIgnoreSurroundingSpaces()
-                .withTrim(true)
-                .withAllowMissingColumnNames(true)
-                .withFirstRecordAsHeader();
+        csvFormat = CSVFormat.DEFAULT.builder()
+                .setNullString("")
+                .setIgnoreSurroundingSpaces(true)
+                .setTrim(true)
+                .setAllowMissingColumnNames(true)
+                .setHeader()
+                .setSkipHeaderRecord(true).build();
         this.validator = validator;
         allConverterOptions = loadConverterOptions(inputDirectory, outputFileNameBase);
     }

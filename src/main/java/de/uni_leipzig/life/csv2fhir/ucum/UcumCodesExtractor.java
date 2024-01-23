@@ -152,14 +152,15 @@ public class UcumCodesExtractor {
      * CSVFormat to parse the tsv-File with the name
      * {@link #UCUM_CONCEPTS_TSV_FILE_NAME}
      */
-    private static final CSVFormat TSV_FORMAT = CSVFormat.DEFAULT
-            .withDelimiter('\t')
-            .withNullString("")
-            .withIgnoreSurroundingSpaces()
-            .withTrim(true)
-            .withAllowMissingColumnNames(true)
-            .withFirstRecordAsHeader();
-
+    private static final CSVFormat TSV_FORMAT = CSVFormat.DEFAULT.builder()
+            .setDelimiter(('\t'))
+    		.setNullString("")
+            .setIgnoreSurroundingSpaces(true)
+            .setTrim(true)
+            .setAllowMissingColumnNames(true)
+            .setHeader()
+            .setSkipHeaderRecord(true).build();
+    
     /**
      * @param ucumCodeToDisplayMapper
      * @throws IOException
