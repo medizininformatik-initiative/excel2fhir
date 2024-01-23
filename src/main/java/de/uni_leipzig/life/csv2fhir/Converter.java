@@ -168,13 +168,18 @@ public abstract class Converter {
      * @return <code>true</code> if the record contains no values.
      */
     private boolean isEmptyCSVRecord() {
-        for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
+    	// FM 
+    	boolean ret = true;
+    	for (String columnIndentifier : record.getParser().getHeaderNames()) {
+// FM --> AXS: Diese Methode funktoninert nicht mit Leerzeichen im Headercols -  getEnumConstants liefert name() nicht strings
+//        for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
             String value = record.get(columnIndentifier);
             if (value != null && !isBlank(value.replace('-', WHITE_SPACE))) {
-                return false;
+                ret = false;
+                break;
             }
         }
-        return true;
+        return ret;
     }
 
     /**
