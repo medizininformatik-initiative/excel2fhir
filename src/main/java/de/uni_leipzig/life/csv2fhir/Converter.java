@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeSystem;
@@ -168,15 +169,19 @@ public abstract class Converter {
      * @return <code>true</code> if the record contains no values.
      */
     private boolean isEmptyCSVRecord() {
-    	boolean ret = true;
-    	for (String columnIndentifier : record.getParser().getHeaderNames()) {
-            String value = record.get(columnIndentifier);
-            if (value != null && !isBlank(value.replace('-', WHITE_SPACE))) {
-                ret = false;
-                break;
+        boolean isEmpty = true;
+        try (CSVParser parser = record.getParser()) {
+            for (String columnIdentifier : parser.getHeaderNames()) {
+                String value = record.get(columnIdentifier);
+                if (value != null && !isBlank(value.replace('-', WHITE_SPACE))) {
+                    isEmpty = false;
+                    break;
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return ret;
+        return isEmpty;
     }
 
     /**
