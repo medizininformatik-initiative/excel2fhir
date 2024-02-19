@@ -16,10 +16,10 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
-import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
+import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;

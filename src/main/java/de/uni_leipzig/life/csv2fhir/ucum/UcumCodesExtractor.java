@@ -154,13 +154,13 @@ public class UcumCodesExtractor {
      */
     private static final CSVFormat TSV_FORMAT = CSVFormat.DEFAULT.builder()
             .setDelimiter(('\t'))
-    		.setNullString("")
+            .setNullString("")
             .setIgnoreSurroundingSpaces(true)
             .setTrim(true)
             .setAllowMissingColumnNames(true)
             .setHeader()
             .setSkipHeaderRecord(true).build();
-    
+
     /**
      * @param ucumCodeToDisplayMapper
      * @throws IOException
