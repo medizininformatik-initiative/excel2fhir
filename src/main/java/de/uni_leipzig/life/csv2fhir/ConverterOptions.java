@@ -346,9 +346,9 @@ public class ConverterOptions {
         String numberSubString = pid.substring(start, end);
         String afterNumberString = pid.substring(end);
         int numberLength = numberSubString.length();
-        Integer number = Integer.valueOf(numberSubString);
+        int number = Integer.parseInt(numberSubString);
         number += value;
-        numberSubString = number.toString();
+        numberSubString = Integer.toString(number);
         if (numberSubString.length() < numberLength) {
             numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
         }

@@ -343,7 +343,7 @@ public class ConverterResult {
          */
         private static int getMaxStringLength(Collection<?> objectsToString) {
             int maxLength = 0;
-            Integer sumOfInt = 0;
+            int sumOfInt = 0;
             for (Object o : objectsToString) {
                 String s = o instanceof Class<?> ? ((Class<?>) o).getSimpleName() : o.toString();
                 int length = s.length();
@@ -352,7 +352,7 @@ public class ConverterResult {
                 }
                 sumOfInt += o instanceof Integer ? (Integer) o : 0;
             }
-            return Math.max(maxLength, sumOfInt.toString().length());
+            return Math.max(maxLength, Integer.toString(sumOfInt).length());
         }
 
     }
