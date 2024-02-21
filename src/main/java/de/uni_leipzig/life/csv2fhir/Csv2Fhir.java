@@ -376,18 +376,24 @@ public class Csv2Fhir {
                         csvParser.close();
                     }
                 }
+                String previousPID = null;
                 for (int i = 0; i < parsedRecords.size(); i++) {
                     CSVRecord record = parsedRecords.get(i);
                     try {
                         if (filter) {
                             String pidColumnName = table.getPIDColumnIdentifier().toString();
                             String pid = record.get(pidColumnName);
+                            if (isNullOrEmpty(pid)) {
+                                pid = previousPID;
+                            } else {
+                                previousPID = pid;
+                            }
                             if (!pid.toUpperCase().matches(filterID)) {
                                 continue;
                             }
                             //parsedRecords.remove(i--); //we can not remove it if we have more than one ConverterOptions file!
                         }
-                        List<? extends Resource> list = table.convert(record, result, validator, options);
+                        List<? extends Resource> list = table.convert(record, previousPID, result, validator, options);
                         for (Resource resource : list) {
                             addEntry(bundle, resource);
                             addEntry(ndjsonBundle, resource);

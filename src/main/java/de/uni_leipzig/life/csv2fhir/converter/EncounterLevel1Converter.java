@@ -72,13 +72,14 @@ public class EncounterLevel1Converter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public EncounterLevel1Converter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public EncounterLevel1Converter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     /**

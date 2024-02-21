@@ -44,6 +44,7 @@ import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -127,18 +128,19 @@ public abstract class Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator Validator to validate resources. Can be
      *            <code>null</code> if nothing should be validated.
      * @param options
      * @throws Exception
      */
-    public Converter(CSVRecord record, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
+    public Converter(CSVRecord record, String previousRecordPID, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
         this.record = record;
         this.result = result;
         this.validator = validator;
         this.options = options;
-        pid = parsePatientId();
+        pid = parsePatientId(previousRecordPID);
         encounterIDs = parseEncounterIds();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
         columnIdentifiersClass = reflectColumnIdentifiersClass();
@@ -332,12 +334,16 @@ public abstract class Converter {
     }
 
     /**
+     * @param previousRecordPID
      * @return
      * @throws Exception
      */
-    protected String parsePatientId() throws Exception {
+    protected String parsePatientId(String previousRecordPID) throws Exception {
         TableColumnIdentifier patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
+        if (Strings.isNullOrEmpty(id)) {
+            id = previousRecordPID;
+        }
         if (id != null) {
             return options.getFullPID(id);
         }
@@ -441,7 +447,7 @@ public abstract class Converter {
         if (encounterId == null) { // can be optional
             return null;
         }
-        return getReference(checkExistence ? Versorgungsfall : null, encounterId, Encounter.class);
+        return getReference(checkExistence ? Fall : null, encounterId, Encounter.class);
     }
 
     /**

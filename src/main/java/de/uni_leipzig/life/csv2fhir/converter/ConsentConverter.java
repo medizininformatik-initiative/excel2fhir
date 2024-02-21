@@ -83,13 +83,14 @@ public class ConsentConverter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public ConsentConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public ConsentConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     @Override

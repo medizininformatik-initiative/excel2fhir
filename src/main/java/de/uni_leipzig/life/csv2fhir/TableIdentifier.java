@@ -119,7 +119,7 @@ public enum TableIdentifier {
         this.columnIdentifiersClass = columnIdentifiersClass;
         try {
             if (converterClass != null) {
-                converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
+                converterConstructor = converterClass.getConstructor(CSVRecord.class, String.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -183,14 +183,15 @@ public enum TableIdentifier {
 
     /**
      * @param csvRecord
+     * @param previousPID
      * @param result
      * @param validator
      * @param options
      * @return
      * @throws Exception
      */
-    public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        Converter converter = converterConstructor.newInstance(csvRecord, result, validator, options);
+    public List<? extends Resource> convert(CSVRecord csvRecord, String previousPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        Converter converter = converterConstructor.newInstance(csvRecord, previousPID, result, validator, options);
         List<? extends Resource> resources = converter.convert(); //should never return null!
         //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
         List<Resource> validResources = new ArrayList<>();

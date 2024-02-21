@@ -69,13 +69,14 @@ public class ConditionConverter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public ConditionConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public ConditionConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     @Override
@@ -211,8 +212,7 @@ public class ConditionConverter extends Converter {
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
             //extract a date from an encounter
-            String pid = parsePatientId();
-            DateTimeType encounterDate = getEncounterDate(result, pid);
+            DateTimeType encounterDate = getEncounterDate(result, getPatientId());
             if (encounterDate != null) {
                 warning("Can not parse " + Dokumentationsdatum + " for Record. Extract date from encounter. " + this);
                 return encounterDate;
