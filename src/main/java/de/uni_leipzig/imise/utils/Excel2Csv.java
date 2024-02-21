@@ -8,7 +8,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Cell;
@@ -122,17 +124,14 @@ public class Excel2Csv {
                         maxCol++;
                     }
                     for (Row row : dataSheet) {
-                        boolean skipEmptyRow = false;
+                        boolean skipEmptyRow = true;
+                        List<String> rowValues = new ArrayList<>();
                         for (int col = 0; col < maxCol; col++) {
                             Cell cell = row.getCell(col);
                             String cellValue = null;
                             CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
                             CellType formulaResultType = cellType == CellType.FORMULA ? cell.getCachedFormulaResultType() : null;
                             if (cellType == CellType.BLANK) {
-                                if (col == 0) {
-                                    skipEmptyRow = true;
-                                    break;
-                                }
                                 cellValue = "";
                             } else if (cellType == CellType.NUMERIC || formulaResultType == CellType.NUMERIC) {
                                 if (DateUtil.isCellDateFormatted(cell)) {
@@ -151,14 +150,13 @@ public class Excel2Csv {
                                     cellValue = cellValue.replace(",", ".");
                                     cellValue = cellValue.replaceAll("\\.0$", "");
                                 }
+                                skipEmptyRow = false;
                             } else if (cellType == CellType.STRING || formulaResultType == CellType.STRING) {
                                 cellValue = cell.getStringCellValue();
+                                skipEmptyRow = false;
                             } else {
                                 LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
                                 cellValue = "";
-                            }
-                            if (col > 0) {
-                                csv.print(DELIM);
                             }
                             // clean value inclusive bon-breaking whitespace occured in ICD
                             cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
@@ -173,9 +171,14 @@ public class Excel2Csv {
                             if (cellValue.contains(DELIM)) {
                                 cellValue = QUOTE + cellValue + QUOTE;
                             }
-                            csv.print(cellValue);
+                            rowValues.add(cellValue);
                         }
                         if (!skipEmptyRow) {
+                            for (int i = 0; i < rowValues.size() - 1; i++) {
+                                csv.print(rowValues.get(i));
+                                csv.print(DELIM);
+                            }
+                            csv.print(rowValues.get(rowValues.size() - 1));
                             csv.println();
                         }
                     }
