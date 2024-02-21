@@ -71,13 +71,6 @@ public class PatientConverter extends Converter {
         super(record, previousRecordPID, result, validator, options);
     }
 
-    /**
-     * Resets the static index counter
-     */
-    public static void reset() {
-        //no static counter to reset at the moment
-    }
-
     @Override
     protected List<Resource> convertInternal() throws Exception {
         Patient patient = new Patient();
