@@ -2,8 +2,8 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.logging.log4j.util.Strings.isBlank;
@@ -409,7 +409,7 @@ public abstract class Converter {
      * @return the enum identifier for the column with the patient ID
      */
     protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return DefaultTableColumnNames.Versorgungsfall_Nr;
+        return DefaultTableColumnNames.Fall_Nr;
     }
 
     /**

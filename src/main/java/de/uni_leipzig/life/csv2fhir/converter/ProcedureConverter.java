@@ -89,7 +89,7 @@ public class ProcedureConverter extends Converter {
         if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION)) { // default is true
             //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
             if (!isBlank(encounterId)) {
-                EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
+                EncounterConverter.addDiagnosisToEncounter(result, encounterId, procedure);
             }
         }
         return singletonList(procedure);

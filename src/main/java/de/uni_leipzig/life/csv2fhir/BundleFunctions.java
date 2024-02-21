@@ -1,7 +1,6 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Abteilungsfall;
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,8 +46,7 @@ public class BundleFunctions {
      * @return all encounters with the pid from the alrady parsed csv tables
      */
     public static Collection<Encounter> getEncounters(ConverterResult result, String pid) {
-        Collection<Encounter> encounters = getEncountersForPatient(result, Versorgungsfall, pid);
-        encounters.addAll(getEncountersForPatient(result, Abteilungsfall, pid));
+        Collection<Encounter> encounters = getEncountersForPatient(result, Fall, pid);
         return encounters;
     }
 
@@ -85,18 +83,10 @@ public class BundleFunctions {
      * @return
      */
     public static DateTimeType getEncounterDate(ConverterResult result, String pid) {
-        Collection<Encounter> mainEncounters = getEncountersForPatient(result, Versorgungsfall, pid);
-        DateTimeType encounterDate = getEncounterDate(mainEncounters, true);
-        Collection<Encounter> subEncounters = null;
+        Collection<Encounter> encounters = getEncountersForPatient(result, Fall, pid);
+        DateTimeType encounterDate = getEncounterDate(encounters, true);
         if (encounterDate == null) {
-            subEncounters = getEncountersForPatient(result, Abteilungsfall, pid);
-            encounterDate = getEncounterDate(subEncounters, true);
-        }
-        if (encounterDate == null) {
-            encounterDate = getEncounterDate(mainEncounters, false);
-        }
-        if (encounterDate == null) {
-            encounterDate = getEncounterDate(subEncounters, false);
+            encounterDate = getEncounterDate(encounters, false);
         }
         return encounterDate;
     }

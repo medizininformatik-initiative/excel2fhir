@@ -114,7 +114,7 @@ public class ConditionConverter extends Converter {
                         //encounterId is optional
                         if (!isBlank(encounterId)) {
                             String diagnosisUseIdentifier = get(Typ);
-                            EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                            EncounterConverter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
                         }
                     }
                     conditions.add(condition);

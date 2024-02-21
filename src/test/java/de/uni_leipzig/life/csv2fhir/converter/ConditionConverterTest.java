@@ -1,6 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationsdatum;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.ICD;
 import static org.mockito.Mockito.doReturn;
@@ -43,7 +43,7 @@ public class ConditionConverterTest {
 
         doReturn("PID1").when(recordMock).get("Patient-ID");
         //FHIRValidator validator = mock(FHIRValidator.class);
-        ConditionConverter diagnosisConverterUnderTest = new ConditionConverter(recordMock, resultMock, null, new ConverterOptions(""));
+        ConditionConverter diagnosisConverterUnderTest = new ConditionConverter(recordMock, null, resultMock, null, new ConverterOptions(""));
 
         //doReturn(null).when(recordMock).get("ICD");
         when(recordMock.get("ICD")).thenReturn(null);
@@ -89,7 +89,7 @@ public class ConditionConverterTest {
         doReturn(recordedDate).when(recordMock).get(Dokumentationsdatum.toString());
 
         when(recordMock.get(ICD.toString())).thenReturn(codeInput);
-        when(resultMock.get(Versorgungsfall, Encounter.class, diagnosisConverter.getEncounterId())).thenReturn(new Encounter());
+        when(resultMock.get(Fall, Encounter.class, diagnosisConverter.getEncounterId())).thenReturn(new Encounter());
         List<Resource> convertedResources = diagnosisConverter.convertInternal();
         int convertedResourcesCount = convertedResources == null ? 0 : convertedResources.size();
         assertEquals(convertedResourcesCount, expectedResultCodes.length);
