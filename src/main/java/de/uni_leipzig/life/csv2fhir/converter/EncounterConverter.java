@@ -58,26 +58,26 @@ public class EncounterConverter extends Converter {
      */
     public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
 
+    /** Map with the encounter types and its displays. */
+    public static final CodeSystemMapper ENCOUNTER_TYPE_RESOURCES = new CodeSystemMapper("Encounter_Type.map");
+
     /**
      * Maps from human readable encounter types to the correspondig code system
      * code and contains some more resources for the encounters.
      */
     public static final CodeSystemMapper ENCOUNTER_LEVEL1_CLASS_RESOURCES = new CodeSystemMapper("EncounterLevel1_Class.map");
 
-    /** Map with the encounter types and its displays. */
-    public static final CodeSystemMapper ENCOUNTER_TYPE_RESOURCES = new CodeSystemMapper("Encounter_Type.map");
+    /**
+     * Maps from human readable department description to the number code for
+     * the department.
+     */
+    private final CodeSystemMapper ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES = new CodeSystemMapper("EncounterLevel2_Department.map");
 
     /**
      * Maps from human readable diagnosis role description to the correspondig
      * code system code.
      */
     public static final CodeSystemMapper DIAGNOSIS_ROLE_RESOURCES = new CodeSystemMapper("Diagnosis_Role.map");
-
-    /**
-     * Maps from human readable department description to the number code for
-     * the department.
-     */
-    private final CodeSystemMapper DEPARTMENT_KEY_RESOURCES = new CodeSystemMapper("Department_Key.map");
 
     /**
      * If the column with the PID is empty then the last valid PID of a previous
