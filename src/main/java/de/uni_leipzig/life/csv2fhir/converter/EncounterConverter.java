@@ -1,11 +1,17 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_ENCOUNTER_LEVEL_2;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_ENCOUNTER_LEVEL_3;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Einrichtungskontaktklasse;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Fachabteilung;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Versorgungsstelle;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Versorgungsstellentyp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,9 +21,9 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
+import org.hl7.fhir.r4.model.Encounter.EncounterLocationComponent;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
-import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
@@ -79,22 +85,23 @@ public class EncounterConverter extends Converter {
      */
     public static final CodeSystemMapper DIAGNOSIS_ROLE_RESOURCES = new CodeSystemMapper("Diagnosis_Role.map");
 
-    /**
-     * If the column with the PID is empty then the last valid PID of a previous
-     * record is taken. This enables that the tbale mu´st no be filled in all
-     * columns with the same values and is better structured and more readable.
-     */
-    private static String previousPID;
-
-    /**
-     * Stores the ID of the last Encounter of level 1
-     */
+    /** ID of the last created Encounter of level 1 */
     private static String previousEncounterLevel1ID;
 
-    /**
-     * Stores the ID of the last Encounter of level 2
-     */
+    /** ID of the last created Encounter of level 2 */
     private static String previousEncounterLevel2ID;
+
+    /**
+     * Even if they (unfortunately) do not exist in the KDS, they are created
+     * here because of actual encounter types. This allows us to distinguish
+     * them clearly.
+     */
+    public static class EncounterLevel1 extends Encounter {
+    }
+    public static class EncounterLevel2 extends Encounter {
+    }
+    public static class EncounterLevel3 extends Encounter {
+    }
 
     /**
      * @param record
@@ -110,29 +117,91 @@ public class EncounterConverter extends Converter {
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
-        Encounter encounter = new Encounter();
-        encounter.setMeta(getMeta());
-        String encounterId = getEncounterId();
-        if (encounterId == null) { //should be only null if the column exists but the value is absent
-            error("Encounter ID should not be empty! ");
+        String encounterLevel1Id = getEncounterId();
+        List<Resource> encounters = new ArrayList<>();
+        if (!isNullOrEmpty(encounterLevel1Id)) {
+            if (encounterLevel1Id != previousEncounterLevel1ID) {
+                // generate Encounter Level 1
+                Encounter encounterLevel1 = new EncounterLevel1();
+
+                encounterLevel1.setId(encounterLevel1Id);
+                encounterLevel1.setIdentifier(convertIdentifier(encounterLevel1Id));
+                encounterLevel1.setSubject(getPatientReference());
+                encounterLevel1.setMeta(getMeta());
+                encounterLevel1.setClass_(getEncounterLevel1Class());
+                encounterLevel1.setType(getEncounterType(EncounterLevel1.class));
+                setPeriodAndStatus(encounterLevel1);
+
+                encounters.add(encounterLevel1);
+                previousEncounterLevel1ID = encounterLevel1Id;
+            }
+        } else {
+            String encounterClass = get(Einrichtungskontaktklasse);
+            if (!isNullOrEmpty(encounterClass)) {
+                error("Encounter ID is empty but encounter class (" + Einrichtungskontaktklasse + ") is given as " + encounterClass + "for record " + toString());
+            }
         }
-        encounter.setId(encounterId);
-        encounter.setIdentifier(convertIdentifier());
-        encounter.setStatus(Encounter.EncounterStatus.FINISHED);//TODO
-        encounter.setClass_(getClass_());
-        encounter.setSubject(getPatientReference());
-        encounter.setPeriod(createPeriod(Startdatum, Enddatum));
-        encounter.setType(getEncounterType());
-        return Collections.singletonList(encounter);
+        String department = get(Fachabteilung);
+        if (!isNullOrEmpty(department)) {
+            // generate Level 2 Encounter using DEPARTMENT_KEY_RESOURCES
+            Encounter encounterLevel2 = new EncounterLevel2();
+
+            int nextId = result.getNextId(Fall, EncounterLevel2.class, START_ID_ENCOUNTER_LEVEL_2);
+            String encounterLevel2Id = previousEncounterLevel1ID + ResourceIdSuffix.ENCOUNTER_LEVEL_2 + nextId;
+            encounterLevel2.setId(encounterLevel2Id);
+            encounterLevel2.setIdentifier(convertIdentifier(encounterLevel2Id));
+            encounterLevel2.setSubject(getPatientReference());
+            encounterLevel2.setPartOf(getEncounterReference(previousEncounterLevel1ID, false));
+            encounterLevel2.setMeta(getMeta());
+            encounterLevel2.setClass_(getEncounterLevel2Class());
+            encounterLevel2.setType(getEncounterType(EncounterLevel2.class));
+            encounterLevel2.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
+            setPeriodAndStatus(encounterLevel2);
+
+            encounters.add(encounterLevel2);
+            previousEncounterLevel2ID = encounterLevel2Id;
+        }
+        String supplyPoint = get(Versorgungsstelle);
+        String supplyPointType = get(Versorgungsstellentyp);
+        if (!isNullOrEmpty(supplyPoint) || !isNullOrEmpty(supplyPointType)) {
+            // generate Level 3 Encounter
+            Encounter encounterLevel3 = new EncounterLevel3();
+
+            int nextId = result.getNextId(Fall, EncounterLevel3.class, START_ID_ENCOUNTER_LEVEL_3);
+            String encounterLevel3Id = previousEncounterLevel2ID + ResourceIdSuffix.ENCOUNTER_LEVEL_3 + nextId;
+            encounterLevel3.setId(encounterLevel3Id);
+            encounterLevel3.setIdentifier(convertIdentifier(encounterLevel3Id));
+            encounterLevel3.setSubject(getPatientReference());
+            encounterLevel3.setPartOf(getEncounterReference(previousEncounterLevel2ID, false));
+            encounterLevel3.setMeta(getMeta());
+            encounterLevel3.setClass_(getEncounterLevel3Class());
+            encounterLevel3.setType(getEncounterType(EncounterLevel3.class));
+            // TODO: find out how to code a valid Servicetype for Encounters Level 3
+            //encounterLevel3.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
+            setPeriodAndStatus(encounterLevel3);
+
+            encounters.add(encounterLevel3);
+        }
+
+        return encounters;
     }
 
     /**
+     * @param encounter
+     * @throws Exception
+     */
+    protected void setPeriodAndStatus(Encounter encounter) throws Exception {
+        Period period = createPeriod(Startdatum, Enddatum);
+        encounter.setPeriod(period);
+        encounter.setStatus(period.hasEnd() ? Encounter.EncounterStatus.FINISHED : Encounter.EncounterStatus.INPROGRESS);
+    }
+
+    /**
+     * @param id generated Encounter ID
      * @return
      * @throws Exception
      */
-    private List<Identifier> convertIdentifier() throws Exception {
-        // generierte Encounternummer
-        String id = getEncounterId();
+    private List<Identifier> convertIdentifier(String id) throws Exception {
         String dizID = getDIZId();
         return createIdentifier(id, dizID);
     }
@@ -141,9 +210,27 @@ public class EncounterConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private Coding getClass_() throws Exception {
+    private Coding getEncounterLevel1Class() throws Exception {
         Coding coding = createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), Einrichtungskontaktklasse);
         return setCorrectCodeAndDisplayInClassCoding(coding);
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private Coding getEncounterLevel2Class() throws Exception {
+        //TODO: this should be another class as for the Level 1 Encounters from http://fhir.de/CodeSystem/kontaktart-de
+        return getEncounterLevel1Class();
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private Coding getEncounterLevel3Class() throws Exception {
+        //TODO: this should be another class as for the Level 1 Encounters, but don't know which one
+        return getEncounterLevel1Class();
     }
 
     /**
@@ -272,41 +359,33 @@ public class EncounterConverter extends Converter {
     }
 
     /**
-     * Creates a default Encounter for this converter class.
-     *
-     * @param pid
-     * @param dizID
-     * @param period
-     * @return
-     */
-    private static Encounter createDefault(String pid, String id, String dizID, Period period) {
-        Encounter encounter = new Encounter();
-        encounter.setMeta(getMeta());
-        encounter.setId(id);
-        encounter.setIdentifier(createIdentifier(id, dizID));
-        encounter.setStatus(Encounter.EncounterStatus.FINISHED);
-        //encounter.setClass_(createCoding(CLASS_CODE_SYSTEM, "stationaer"));
-        String defaultClassCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get("DEFAULT_CLASS_CODE");
-        String defaultDisplay = ENCOUNTER_LEVEL1_CLASS_RESOURCES.getFirstBackwardKey(defaultClassCode);
-        encounter.setClass_(createCoding(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getCodeSystem(), defaultClassCode, defaultDisplay));
-        encounter.setSubject(createReference(Patient.class, pid));
-        try {
-            encounter.setPeriod(period);
-        } catch (Exception e) {
-            //validity (and not null) should be checked later
-        }
-        return encounter;
-    }
-
-    /**
+     * @param encounterClass
      * @return the type of the encounter as {@link CodeableConcept}.
      */
-    protected List<CodeableConcept> getEncounterType() {
-        String simpleClassName = getClass().getSimpleName();
+    protected List<CodeableConcept> getEncounterType(Class<? extends Encounter> encounterClass) {
+        String simpleClassName = encounterClass.getSimpleName();
         String codeSystemURL = ENCOUNTER_TYPE_RESOURCES.getCodeSystem();
         String typeCode = ENCOUNTER_TYPE_RESOURCES.get(simpleClassName + "_TYPE_CODE");
         String typeDisplay = ENCOUNTER_TYPE_RESOURCES.get(simpleClassName + "_TYPE_DISPLAY");
         return ImmutableList.of(createCodeableConcept(codeSystemURL, typeCode, typeDisplay, null));
+    }
+
+    /**
+     * @return
+     * @throws Exception
+     */
+    private List<EncounterLocationComponent> convertLocation() throws Exception {
+        Identifier identifier = new Identifier();
+        identifier.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
+        identifier.setValue(get(Fachabteilung));
+        Reference reference = new Reference();
+        reference.setIdentifier(identifier);
+
+        EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
+        encounterLocationComponent.setLocation(reference);
+        encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
+        encounterLocationComponent.setPeriod(createPeriod(Startdatum, Enddatum));
+        return Collections.singletonList(encounterLocationComponent);
     }
 
 }
