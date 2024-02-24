@@ -384,6 +384,9 @@ public class Csv2Fhir {
                             String pidColumnName = table.getPIDColumnIdentifier().toString();
                             String pid = record.get(pidColumnName);
                             if (isNullOrEmpty(pid)) {
+                                if (isRecordEmpty(record, table.getMandatoryColumnNames())) {
+                                    continue;
+                                }
                                 pid = previousPID;
                             } else {
                                 previousPID = pid;
@@ -391,7 +394,6 @@ public class Csv2Fhir {
                             if (!pid.toUpperCase().matches(filterID)) {
                                 continue;
                             }
-                            //parsedRecords.remove(i--); //we can not remove it if we have more than one ConverterOptions file!
                         }
                         List<? extends Resource> list = table.convert(record, previousPID, result, validator, options);
                         for (Resource resource : list) {
@@ -470,6 +472,22 @@ public class Csv2Fhir {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param record
+     * @param mandatoryColumnsNames
+     * @return true if all values in the mandatory columns of the record are
+     *         empty
+     */
+    private static boolean isRecordEmpty(CSVRecord record, Collection<String> mandatoryColumnsNames) {
+        for (String columnName : mandatoryColumnsNames) {
+            String value = record.get(columnName);
+            if (!isNullOrEmpty(value)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
