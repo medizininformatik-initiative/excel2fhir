@@ -155,6 +155,13 @@ public class ConsentConverter extends Converter {
         DateTimeType consentDate = parseDateTimeType(Datum_Einwilligung);
         DateTimeType consentPeriodDate = parseDateTimeType(Datum_Einwilligung);
         addYears(consentPeriodDate, yearsDiff);
+        // in retorspective consents the consentDate is now greater than the
+        // consentPeriodDate -> we must switch them to be a valid period
+        if (!consentDate.before(consentPeriodDate)) {
+            DateTimeType dummy = consentDate;
+            consentDate = consentPeriodDate;
+            consentPeriodDate = dummy;
+        }
         return createPeriod(consentDate, consentPeriodDate);
     }
 
