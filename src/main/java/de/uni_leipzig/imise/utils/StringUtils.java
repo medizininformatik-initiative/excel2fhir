@@ -115,4 +115,45 @@ public class StringUtils {
         return collectionToFill;
     }
 
+    /**
+     * Concatenates the provided strings using the specified separator, ensuring
+     * that null or empty strings are skipped and that the separator does not
+     * appear at the end.
+     *
+     * @param separator the object to be used as the separator between the
+     *            strings. The object's toString() method will be used to
+     *            convert it to a String. If null, the method returns an empty
+     *            string.
+     * @param strings a variable number of String arguments to be concatenated.
+     *            If null, the method returns an empty string. Null or empty
+     *            strings within the array are ignored.
+     * @return a single concatenated String with the specified separator between
+     *         non-null and non-empty strings, or an empty string if no valid
+     *         strings are provided. Example:
+     *
+     *         <pre>
+     *         concatenate(", ", "Apple", null, "Banana", "Cherry", "")
+     *         // returns "Apple, Banana, Cherry"
+     *         </pre>
+     */
+    public static final String concatenate(Object separator, String... strings) {
+        if (separator == null || strings == null) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        String sep = separator.toString();
+
+        for (String str : strings) {
+            if (str != null && !str.isEmpty()) {
+                if (result.length() > 0) {
+                    result.append(sep);
+                }
+                result.append(str);
+            }
+        }
+
+        return result.toString();
+    }
+
 }
