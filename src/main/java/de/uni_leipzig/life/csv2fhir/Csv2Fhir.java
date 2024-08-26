@@ -31,6 +31,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
+import org.hl7.fhir.r4.model.Location;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -74,6 +75,12 @@ public class Csv2Fhir {
 
     /** Cache for the parsed records */
     private final Map<TableIdentifier, List<CSVRecord>> tableIdentifierToParsedRecords = new HashMap<>();
+
+    /*
+     * Resource classes which are not dependant of a patient (which have no
+     * subject reference)
+     */
+    private static final Set<Class<? extends Resource>> PID_INDIPENDENT_RESOURCE_TYPES = Set.of(Medication.class, Location.class);
 
     /**
      * @param inputDirectory
@@ -418,21 +425,13 @@ public class Csv2Fhir {
     private static void addEntry(Bundle bundle, Resource resource) throws Exception {
         if (bundle != null) {
             //prevent adding some resources twice to the bundle
-            //Medications can be created multiple with the same ID (if
-            //multiple patients in the same bundle get the same medication)
+            //Medications or Locations or ... can be created multiple with the same ID (if
+            //multiple patients in the same bundle get the same medication/location/...)
             Class<? extends Resource> newResourceClass = resource.getClass();
-            if (newResourceClass == Medication.class) {
+            if (PID_INDIPENDENT_RESOURCE_TYPES.contains(newResourceClass)) {
                 String newResourceID = resource.getId();
-                List<BundleEntryComponent> entries = bundle.getEntry();
-                for (BundleEntryComponent bundleEntry : entries) {
-                    Resource existingResource = bundleEntry.getResource();
-                    String existingResourceID = existingResource.getId();
-                    if (existingResourceID.equals(newResourceID)) {
-                        Class<? extends Resource> existingResourceClassclass1 = existingResource.getClass();
-                        if (existingResourceClassclass1 == newResourceClass) {
-                            return;
-                        }
-                    }
+                if (containsResource(bundle, newResourceClass, newResourceID)) {
+                    return;
                 }
             }
             BundleEntryComponent entry = bundle.addEntry();
@@ -442,6 +441,28 @@ public class Csv2Fhir {
             String url = requestComponent.getUrl();
             entry.setFullUrl(url);
         }
+    }
+
+    /**
+     * @param bundle
+     * @param resourceClass
+     * @param id
+     * @return <code>true</code> if the bundle contains a resource with the
+     *         given id.
+     */
+    public static final boolean containsResource(Bundle bundle, Class<? extends Resource> resourceClass, String id) {
+        List<BundleEntryComponent> entries = bundle.getEntry();
+        for (BundleEntryComponent bundleEntry : entries) {
+            Resource existingResource = bundleEntry.getResource();
+            Class<? extends Resource> existingResourceClass = existingResource.getClass();
+            if (resourceClass.isAssignableFrom(existingResourceClass)) {
+                String existingResourceID = existingResource.getId();
+                if (existingResourceID.equals(id)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

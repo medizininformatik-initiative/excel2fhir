@@ -143,7 +143,7 @@ public class EncounterConverter extends Converter {
     @Override
     protected List<Resource> convertInternal() throws Exception {
         // return list
-        List<Resource> encounters = new ArrayList<>();
+        List<Resource> encountersAndLocations = new ArrayList<>();
 
         String encounterLevel1Id = getEncounterId();
         String departmentName = get(Fachabteilung);
@@ -171,7 +171,7 @@ public class EncounterConverter extends Converter {
             encounterLevel1.setType(getEncounterType(EncounterLevel1.class));
             setPeriodAndStatus(encounterLevel1);
 
-            encounters.add(encounterLevel1);
+            encountersAndLocations.add(encounterLevel1);
             previousEncounterLevel1ID = encounterLevel1Id;
             previousEncounterLevel1 = encounterLevel1;
         }
@@ -201,13 +201,10 @@ public class EncounterConverter extends Converter {
             }
             setPeriodAndStatus(encounterLevel2);
 
-            encounters.add(encounterLevel2);
+            encountersAndLocations.add(encounterLevel2);
             previousEncounterLevel2 = encounterLevel2;
             previousEncounterLevel2ID = encounterLevel2Id;
             previousDepartmentName = departmentName;
-            //            previousWardName = RANDOM_DEFULT_VALUE;
-            //            previousRoomName = RANDOM_DEFULT_VALUE;
-            //            previousBedName = RANDOM_DEFULT_VALUE;
         }
 
         if (createLevel3Encounter) {
@@ -223,14 +220,18 @@ public class EncounterConverter extends Converter {
             encounterLevel3.setMeta(getMeta());
             encounterLevel3.setClass_(getEncounterLevel3Class());
             encounterLevel3.setType(getEncounterType(EncounterLevel3.class));
-            encounterLevel3.setLocation(getOrCreateLocations(departmentName, wardName, roomName, bedName));
+            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(departmentName, wardName, roomName, bedName);
+            encounterLevel3.setLocation(locationComponents);
             // TODO: find out how to code a valid Servicetype for Encounters Level 3
             setPeriodAndStatus(encounterLevel3);
 
-            encounters.add(encounterLevel3);
+            encountersAndLocations.add(encounterLevel3);
+            for (EncounterLocationComponent locationComponent : locationComponents) {
+                Location location = locationComponent.getLocationTarget();
+                encountersAndLocations.add(location);
+            }
         }
-
-        return encounters;
+        return encountersAndLocations;
     }
 
     /**
@@ -280,7 +281,7 @@ public class EncounterConverter extends Converter {
      */
     private static final EncounterLocationComponent getOrCreateLocationInternal(LocationType locationType, String departmentName, String wardName, String roomName, String bedName) {
         // null values will be ignored
-        String locationID = StringUtils.concatenate("_", departmentName, wardName, roomName, bedName);
+        String locationID = StringUtils.concatenate("-", departmentName, wardName, roomName, bedName);
         Location location = locationIDToLocation.get(locationID);
         if (location == null) {
             location = new Location();
@@ -299,7 +300,6 @@ public class EncounterConverter extends Converter {
     }
 
     /**
-     * @param locationType
      * @param departmentName
      * @param wardName
      * @param roomName
