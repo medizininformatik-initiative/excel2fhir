@@ -286,15 +286,20 @@ public class EncounterConverter extends Converter {
         if (location == null) {
             location = new Location();
             location.setId(locationID);
-            location.setName(locationID);
+            location.setName(locationID.replace('-', ' '));
             location.setIdentifier(List.of(createLocationIdentifier(locationType, locationID)));
             location.setStatus(LocationStatus.ACTIVE);
+            location.setPhysicalType(locationType.physicalType);
 
             locationIDToLocation.put(locationID, location);
 
         }
         EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
-        encounterLocationComponent.setLocation(createReference(Location.class, locationID));
+        encounterLocationComponent.setPhysicalType(locationType.physicalType);
+        Reference reference = createReference(Location.class, locationID);
+        reference.setDisplay(locationID.replace('-', ' '));
+        reference.setIdentifier(createLocationIdentifier(locationType, locationID));
+        encounterLocationComponent.setLocation(reference);
         encounterLocationComponent.setLocationTarget(location);
         return encounterLocationComponent;
     }
