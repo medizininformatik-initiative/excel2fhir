@@ -639,7 +639,7 @@ public abstract class Converter {
                 warning(errorMessage);
                 return null;
             }
-            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
+            warning(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
         }
         return createCoding(codeSystem, code);
     }
