@@ -282,11 +282,12 @@ public class EncounterConverter extends Converter {
     private static final EncounterLocationComponent getOrCreateLocationInternal(LocationType locationType, String departmentName, String wardName, String roomName, String bedName) {
         // null values will be ignored
         String locationID = StringUtils.concatenate("-", departmentName, wardName, roomName, bedName);
+        locationID = locationID.replace(' ', '-'); // whitespaces are not allwoed in IDs
         Location location = locationIDToLocation.get(locationID);
         if (location == null) {
             location = new Location();
             location.setId(locationID);
-            location.setName(locationID.replace('-', ' '));
+            location.setName(StringUtils.concatenate(" ", departmentName, wardName, roomName, bedName));
             location.setIdentifier(List.of(createLocationIdentifier(locationType, locationID)));
             location.setStatus(LocationStatus.ACTIVE);
             location.setPhysicalType(locationType.physicalType);
