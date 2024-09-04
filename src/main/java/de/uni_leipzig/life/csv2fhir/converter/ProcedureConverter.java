@@ -47,13 +47,14 @@ public class ProcedureConverter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public ProcedureConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public ProcedureConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     @Override
@@ -88,7 +89,7 @@ public class ProcedureConverter extends Converter {
         if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION)) { // default is true
             //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
             if (!isBlank(encounterId)) {
-                EncounterLevel1Converter.addDiagnosisToEncounter(result, encounterId, procedure);
+                EncounterConverter.addDiagnosisToEncounter(result, encounterId, procedure);
             }
         }
         return singletonList(procedure);

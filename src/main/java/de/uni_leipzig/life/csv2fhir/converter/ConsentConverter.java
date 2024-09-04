@@ -83,13 +83,14 @@ public class ConsentConverter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public ConsentConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public ConsentConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     @Override
@@ -154,6 +155,13 @@ public class ConsentConverter extends Converter {
         DateTimeType consentDate = parseDateTimeType(Datum_Einwilligung);
         DateTimeType consentPeriodDate = parseDateTimeType(Datum_Einwilligung);
         addYears(consentPeriodDate, yearsDiff);
+        // in retorspective consents the consentDate is now greater than the
+        // consentPeriodDate -> we must switch them to be a valid period
+        if (!consentDate.before(consentPeriodDate)) {
+            DateTimeType dummy = consentDate;
+            consentDate = consentPeriodDate;
+            consentPeriodDate = dummy;
+        }
         return createPeriod(consentDate, consentPeriodDate);
     }
 

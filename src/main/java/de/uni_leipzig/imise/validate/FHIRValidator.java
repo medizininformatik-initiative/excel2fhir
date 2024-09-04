@@ -152,6 +152,7 @@ public class FHIRValidator {
             // the very last part of this message:
             // Keiner der angegebenen Codes ist im Valueset 'IdentifierType' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), und ein Code sollte aus diesem Valueset stammen, es sei denn, er enthält keinen geeigneten Code) (Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI)
             "Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
+            "Profil Reference 'http://fhir.de/ConsentManagement/StructureDefinition/Consent'", // konnte nicht aufgelöst werden, wurde also nicht überprüft"
 
     };
 
@@ -163,8 +164,7 @@ public class FHIRValidator {
      * resp. CSV entry than the resource itself.
      */
     private static final String[] VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS = {
-            "Falls der Encounter abgeschlossen wurde muss eine Diagnose bekannt sein",
-            "Encounter.class: mindestens erforderlich = 1, aber nur gefunden 0",
+            // empty at the moment
     };
 
     /**

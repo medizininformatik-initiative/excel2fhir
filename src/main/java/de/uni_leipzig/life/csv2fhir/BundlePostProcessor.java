@@ -20,7 +20,8 @@ import org.hl7.fhir.r4.model.StringType;
 
 import com.google.common.base.Objects;
 
-import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel1;
 
 /**
  * Post-processing of a bundle.
@@ -63,9 +64,11 @@ public class BundlePostProcessor {
         for (BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof Encounter) {
-                Encounter encounter = (Encounter) resource;
-                addMissingDiagnosesFromSuperEncounter(encounter);
-                addMissingClassCodingFromSuperencounter(encounter);
+                if (!(resource instanceof EncounterLevel1)) {
+                    Encounter encounter = (Encounter) resource;
+                    addMissingDiagnosesFromSuperEncounter(encounter);
+                    addMissingClassCodingFromSuperencounter(encounter);
+                }
             }
         }
     }
@@ -87,7 +90,7 @@ public class BundlePostProcessor {
                     if (!diagnoses.isEmpty()) {
                         //a reference to the first diagnose which has a coded diagnose use from the follwing
                         //iterable will be added to the child encuonter
-                        Iterable<String> diagnosisUseCodesInAddingOrder = EncounterLevel1Converter.DIAGNOSIS_ROLE_RESOURCES.getValuesInAddingOrder();
+                        Iterable<String> diagnosisUseCodesInAddingOrder = EncounterConverter.DIAGNOSIS_ROLE_RESOURCES.getValuesInAddingOrder();
                         for (String preferedDiagnosisUseCode : diagnosisUseCodesInAddingOrder) {
                             for (DiagnosisComponent diagnosis : diagnoses) {
                                 CodeableConcept use = diagnosis.getUse();
@@ -111,16 +114,18 @@ public class BundlePostProcessor {
             }
         }
         //the Encounter still has no diagnosis -> add "unknown" Data Absent Reason
-        List<DiagnosisComponent> diagnoses = encounter.getDiagnosis();
-        if (diagnoses.isEmpty()) {
-            DiagnosisComponent diagnosisComponent = new DiagnosisComponent();
-            Reference condition = diagnosisComponent.getCondition();
-            StringType referenceElement_ = condition.getReferenceElement_();
-            referenceElement_.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            diagnoses.add(diagnosisComponent);
-            encounter.setDiagnosis(diagnoses);
-        }
+        if (EncounterConverter.isLevel1Encounter(encounter)) {
+            List<DiagnosisComponent> diagnoses = encounter.getDiagnosis();
 
+            if (diagnoses.isEmpty()) {
+                DiagnosisComponent diagnosisComponent = new DiagnosisComponent();
+                Reference condition = diagnosisComponent.getCondition();
+                StringType referenceElement_ = condition.getReferenceElement_();
+                referenceElement_.addExtension(DATA_ABSENT_REASON_UNKNOWN);
+                diagnoses.add(diagnosisComponent);
+                encounter.setDiagnosis(diagnoses);
+            }
+        }
     }
 
     /**

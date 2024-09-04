@@ -55,13 +55,14 @@ public class DocumentReferenceConverter extends Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator
      * @param options
      * @throws Exception
      */
-    public DocumentReferenceConverter(CSVRecord record, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        super(record, result, validator, options);
+    public DocumentReferenceConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
     }
 
     @Override
@@ -112,11 +113,9 @@ public class DocumentReferenceConverter extends Converter {
 
         boolean embed = isYesValue(get(Embed));
         String filePath = get(Dateipfad);
-        if (!isBlank(filePath)) {
-            Attachment attachment = createAttachment(Paths.get(filePath), embed);
-            documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
-        }
-
+        Path path = !isBlank(filePath) ? Paths.get(filePath) : null;
+        Attachment attachment = createAttachment(path, embed);
+        documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
         return singletonList(documentReference);
     }
 
@@ -130,6 +129,9 @@ public class DocumentReferenceConverter extends Converter {
      */
     public static Attachment createAttachment(Path path, boolean embed) throws IOException {
         Attachment attachment = new Attachment();
+        if (path == null) {
+            path = new File("").toPath();
+        }
         File file = path.toFile();
         if (embed) {
             if (file.canRead()) {
@@ -146,7 +148,10 @@ public class DocumentReferenceConverter extends Converter {
             attachment.setUrl(path.toUri().toURL().toExternalForm());
             attachment.setSize((int) Files.size(path));
         }
-        attachment.setContentType(getContentType(file));
+        String contentType = getContentType(file);
+        // available type: https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
+        attachment.setContentType(contentType != null ? contentType : "text"); // set "text" as default
+
         // optional
         attachment.setTitle(path.getFileName().toString());
         // When attachment was first created

@@ -1,9 +1,10 @@
 package de.uni_leipzig.life.csv2fhir;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
 import static de.uni_leipzig.life.csv2fhir.TableColumnIdentifier.isMandatory;
+import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Versorgungsfall;
 import static de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateType;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.logging.log4j.util.Strings.isBlank;
@@ -44,6 +45,7 @@ import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -53,6 +55,7 @@ import de.uni_leipzig.imise.utils.StringUtils;
 import de.uni_leipzig.imise.utils.Sys;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.TableIdentifier.DefaultTableColumnNames;
+import de.uni_leipzig.life.csv2fhir.converter.ResourceIdSuffix;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
@@ -127,18 +130,19 @@ public abstract class Converter {
 
     /**
      * @param record
+     * @param previousRecordPID
      * @param result
      * @param validator Validator to validate resources. Can be
      *            <code>null</code> if nothing should be validated.
      * @param options
      * @throws Exception
      */
-    public Converter(CSVRecord record, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
+    public Converter(CSVRecord record, String previousRecordPID, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
         this.record = record;
         this.result = result;
         this.validator = validator;
         this.options = options;
-        pid = parsePatientId();
+        pid = parsePatientId(previousRecordPID);
         encounterIDs = parseEncounterIds();
         dizID = pid.toUpperCase().replaceAll("[^A-Z]", "");
         columnIdentifiersClass = reflectColumnIdentifiersClass();
@@ -332,12 +336,16 @@ public abstract class Converter {
     }
 
     /**
+     * @param previousRecordPID
      * @return
      * @throws Exception
      */
-    protected String parsePatientId() throws Exception {
+    protected String parsePatientId(String previousRecordPID) throws Exception {
         TableColumnIdentifier patientIDColumnIdentifier = getPatientIDColumnIdentifier();
         String id = get(patientIDColumnIdentifier);
+        if (Strings.isNullOrEmpty(id)) {
+            id = previousRecordPID;
+        }
         if (id != null) {
             return options.getFullPID(id);
         }
@@ -387,7 +395,7 @@ public abstract class Converter {
             return Collections.emptyList();
         }
         for (int i = encounterNumbers.size() - 1; i >= 0; i--) {
-            encounterNumbers.set(i, pid + "-E-" + encounterNumbers.get(i));
+            encounterNumbers.set(i, pid + ResourceIdSuffix.ENCOUNTER_LEVEL_1 + encounterNumbers.get(i));
         }
         return encounterNumbers;
     }
@@ -403,7 +411,7 @@ public abstract class Converter {
      * @return the enum identifier for the column with the patient ID
      */
     protected TableColumnIdentifier getMainEncounterNumberColumnIdentifier() {
-        return DefaultTableColumnNames.Versorgungsfall_Nr;
+        return DefaultTableColumnNames.Fall_Nr;
     }
 
     /**
@@ -441,7 +449,7 @@ public abstract class Converter {
         if (encounterId == null) { // can be optional
             return null;
         }
-        return getReference(checkExistence ? Versorgungsfall : null, encounterId, Encounter.class);
+        return getReference(checkExistence ? Fall : null, encounterId, Encounter.class);
     }
 
     /**
@@ -631,7 +639,7 @@ public abstract class Converter {
                 warning(errorMessage);
                 return null;
             }
-            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
+            warning(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
         }
         return createCoding(codeSystem, code);
     }
@@ -703,52 +711,34 @@ public abstract class Converter {
      *         by the column names in the {@link CSVRecord} of this converter
      */
     public Period createPeriod(Enum<?> startDateColumnName, Enum<?> endDateColumnName) throws Exception {
+        String endDateValue = null;
         DateTimeType startDate = null;
         DateTimeType endDate = null;
         try {
             String startDateValue = record.get(startDateColumnName);
             startDate = DateUtil.parseDateTimeType(startDateValue);
         } catch (Exception e) {
-        }
-        try {
-            String endDateValue = record.get(endDateColumnName);
-            endDate = DateUtil.parseDateTimeType(endDateValue);
-        } catch (Exception e) {
-        }
-        try {
-            return createPeriod(startDate, endDate);
-        } catch (Exception e) {
-            error("Can not parse " + startDateColumnName + " or " + endDateColumnName + " as date for Record " + record);
+            error("Can not parse " + startDateColumnName + " as date for Record " + record);
             return null;
         }
+        try {
+            endDateValue = record.get(endDateColumnName);
+            endDate = DateUtil.parseDateTimeType(endDateValue);
+        } catch (Exception e) {
+            if (!isNullOrEmpty(endDateValue)) {
+                error("Can not parse " + endDateColumnName + " as date for Record " + record);
+                return null;
+            }
+        }
+        return createPeriod(startDate, endDate);
     }
 
     /**
      * @param startDate
      * @param endDate
      * @return
-     * @throws Exception
      */
-    public Period createPeriod(DateTimeType startDate, DateTimeType endDate) throws Exception {
-        if (startDate == null) {
-            startDate = endDate;
-        }
-        if (endDate == null) {
-            endDate = startDate;
-        }
-
-        //        //set endDate always obe day after startDate. Maybe we should (de)activate this optional if errors in data should be detected
-        //        if (startDate != null && endDate != null && (startDate.equals(endDate) || endDate.before(startDate))) {
-        //            endDate = DateUtil.addDays(endDate, 1);
-        //        }
-
-        //ensure that the period always starts with the lower date
-        if (startDate != null && startDate.after(endDate)) {
-            DateTimeType dummy = startDate;
-            startDate = endDate;
-            endDate = dummy;
-        }
-
+    public Period createPeriod(DateTimeType startDate, DateTimeType endDate) {
         return new Period().setStartElement(startDate).setEndElement(endDate);
     }
 

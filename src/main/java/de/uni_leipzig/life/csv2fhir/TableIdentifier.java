@@ -2,7 +2,7 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR;
 import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.VALID;
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.DEFAULT_ENCOUNTER_ID_NUMBER;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.DEFAULT_ENCOUNTER_ID_NUMBER;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -22,10 +22,8 @@ import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter.Consent_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter;
 import de.uni_leipzig.life.csv2fhir.converter.DocumentReferenceConverter.DocumentReference_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter;
-import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel1Converter.EncounterLevel1_Columns;
-import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter;
-import de.uni_leipzig.life.csv2fhir.converter.EncounterLevel2Converter.EncounterLevel2_Columns;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter;
+import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter;
 import de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter;
@@ -44,9 +42,11 @@ public enum TableIdentifier {
 
     Person(Person_Columns.class, PatientConverter.class),
 
-    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
-
-    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2Converter.class),
+    //    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
+    //
+    //    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2Converter.class),
+    //
+    Fall(Encounter_Columns.class, EncounterConverter.class),
 
     Laborbefund(ObservationLaboratory_Columns.class, ObservationLaboratoryConverter.class),
 
@@ -85,10 +85,10 @@ public enum TableIdentifier {
                 return "Patient-ID";
             }
         },
-        Versorgungsfall_Nr {
+        Fall_Nr {
             @Override
             public String toString() {
-                return "Versorgungsfall-Nr";
+                return "Fall-Nr";
             }
             @Override
             public String getDefaultIfMissing() {
@@ -119,7 +119,7 @@ public enum TableIdentifier {
         this.columnIdentifiersClass = columnIdentifiersClass;
         try {
             if (converterClass != null) {
-                converterConstructor = converterClass.getConstructor(CSVRecord.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
+                converterConstructor = converterClass.getConstructor(CSVRecord.class, String.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -183,14 +183,15 @@ public enum TableIdentifier {
 
     /**
      * @param csvRecord
+     * @param previousPID
      * @param result
      * @param validator
      * @param options
      * @return
      * @throws Exception
      */
-    public List<? extends Resource> convert(CSVRecord csvRecord, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
-        Converter converter = converterConstructor.newInstance(csvRecord, result, validator, options);
+    public List<? extends Resource> convert(CSVRecord csvRecord, String previousPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+        Converter converter = converterConstructor.newInstance(csvRecord, previousPID, result, validator, options);
         List<? extends Resource> resources = converter.convert(); //should never return null!
         //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
         List<Resource> validResources = new ArrayList<>();
