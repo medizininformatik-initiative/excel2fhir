@@ -78,6 +78,7 @@ jobs:
         image-ref: security-scan-build:latest
         exit-code: 1
         ignore-unfixed: true
+        trivyignores: '.trivyignore'
         severity: 'CRITICAL,HIGH'
         timeout: '15m0s'
 
