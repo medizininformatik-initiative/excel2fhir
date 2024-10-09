@@ -82,36 +82,26 @@
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-structures-r4</artifactId>
-			<version>7.4.0</version>
+			<version>7.4.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-validation-resources-r4 -->
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-validation-resources-r4</artifactId>
-			<version>7.4.0</version>
+			<version>7.4.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-validation -->
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-validation</artifactId>
-			<version>7.4.0</version>
+			<version>7.4.3</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/hapi-fhir-caching-caffeine -->
 		<dependency>
 			<groupId>ca.uhn.hapi.fhir</groupId>
 			<artifactId>hapi-fhir-caching-caffeine</artifactId>
-			<version>7.4.0</version>
+			<version>7.4.3</version>
 		</dependency>
-		<!-- The next dependency was only added to omit the older version 6.3.11 from the validation package,
-		     which causes a highly vulnerable error message in the github ci pipeline.
-		     This should be removed a newer version than 7.4.0 is used for the hapi-fhir-validation package! -->
-		<!-- https://mvnrepository.com/artifact/ca.uhn.hapi.fhir/org.hl7.fhir.dstu2016may -->
-		<dependency>
-			<groupId>ca.uhn.hapi.fhir</groupId>
-			<artifactId>org.hl7.fhir.dstu2016may</artifactId>
-			<version>6.3.25</version>
-		</dependency>
-
 
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
 		<dependency>
