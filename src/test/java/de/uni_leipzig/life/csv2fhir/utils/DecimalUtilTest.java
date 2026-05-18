@@ -1,12 +1,12 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.math.BigDecimal;
 
-import org.junit.jupiter.api.Assertions;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class DecimalUtilTest {
 
@@ -30,7 +30,7 @@ public class DecimalUtilTest {
         assertEquals(dec, new BigDecimal("6.2"));
         dec = DecimalUtil.parseDecimal("6,2");
         assertEquals(dec, new BigDecimal("6.2"));
-        Assertions.assertThrows(Exception.class, () -> {
+        Assert.assertThrows(Exception.class, () -> {
             DecimalUtil.parseDecimal("aaa");
         });
 
