@@ -3,18 +3,18 @@ package de.uni_leipzig.imise.utils;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.collection.ArrayMatching.arrayContaining;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotEquals;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-import org.testng.annotations.Test;
-import org.testng.collections.Lists;
+import org.junit.Test;
 
 public class AlphabeticalTest {
 
@@ -25,9 +25,13 @@ public class AlphabeticalTest {
         assertEquals(localizedComparator1, localizedComparator2);
         Locale defaultLocale = Locale.getDefault();
         Locale newLocale = Locale.GERMAN.equals(defaultLocale) ? Locale.ENGLISH : Locale.GERMAN;
-        Locale.setDefault(newLocale);
-        localizedComparator2 = Alphabetical.getLocalizedComparator();
-        assertNotEquals(localizedComparator1, localizedComparator2);
+        try {
+            Locale.setDefault(newLocale);
+            localizedComparator2 = Alphabetical.getLocalizedComparator();
+            assertNotEquals(localizedComparator1, localizedComparator2);
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 
     @Test
@@ -41,20 +45,20 @@ public class AlphabeticalTest {
         when(mock2.toString()).thenReturn("1.1 a.");
         when(mock3.toString()).thenReturn("1.2");
 
-        mocks = Lists.newArrayList(mock1, mock2);
+        mocks = new ArrayList<>(Arrays.asList(mock1, mock2));
         Alphabetical.insert(mocks, mock3);
         assertThat(mocks, contains(mock1, mock2, mock3));
 
-        mocks = Lists.newArrayList(mock2, mock3);
+        mocks = new ArrayList<>(Arrays.asList(mock2, mock3));
         Alphabetical.insert(mocks, mock1);
         assertThat(mocks, contains(mock1, mock2, mock3));
 
-        mocks = Lists.newArrayList(mock1, mock3);
+        mocks = new ArrayList<>(Arrays.asList(mock1, mock3));
         Alphabetical.insert(mocks, mock2);
         assertThat(mocks, contains(mock1, mock2, mock3));
 
         Object mock21 = mock2;
-        mocks = Lists.newArrayList(mock1, mock2, mock3);
+        mocks = new ArrayList<>(Arrays.asList(mock1, mock2, mock3));
         Alphabetical.insert(mocks, mock21);
         assertThat(mocks, contains(mock1, mock2, mock21, mock3));
 
@@ -141,9 +145,9 @@ public class AlphabeticalTest {
         when(mock4.toString()).thenReturn("1.1 a.");
 
         //sorted list
-        List<Object> mocksList = Lists.newArrayList(mock1, mock2, mock3);
+        List<Object> mocksList = new ArrayList<>(Arrays.asList(mock1, mock2, mock3));
         int index = Alphabetical.binarySearch(mocksList, mock4);
-        assertEquals(index, 1);
+        assertEquals(1, index);
     }
 
 }
