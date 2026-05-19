@@ -11,8 +11,8 @@ import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medicat
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.FHIR_UserSelected;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Medikationstyp;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.PZN_Code;
-import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Therapieendedatum;
-import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Therapiestartdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Therapieende;
+import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Therapiestart;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Wirksubstanz_aus_Praeparat_Handelsname;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.Zeitstempel;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medikationstyp_Values.MedicationAdministration;
@@ -97,8 +97,8 @@ public class MedicationConverter extends Converter {
         ASK,
         FHIR_UserSelected,
         Darreichungsform,
-        Therapiestartdatum,
-        Therapieendedatum,
+        Therapiestart,
+        Therapieende,
         Einzeldosis,
         Einheit,
         Anzahl_Dosen_pro_Tag {
@@ -427,8 +427,8 @@ public class MedicationConverter extends Converter {
      */
     private Type convertPeriod() throws Exception {
         try {
-            String s = get(Therapiestartdatum);
-            String e = get(Therapieendedatum);
+            String s = get(Therapiestart);
+            String e = get(Therapieende);
             if (StringUtils.isBlank(s)) {
                 if (StringUtils.isBlank(e)) {
                     // no date given
@@ -448,7 +448,7 @@ public class MedicationConverter extends Converter {
             // complete Period
             return new Period().setStartElement(start).setEndElement(end);
         } catch (Exception e) {
-            error("Can not parse " + Therapiestartdatum + " or " + Therapieendedatum);
+            error("Can not parse " + Therapiestart + " or " + Therapieende);
         }
         return null;
     }

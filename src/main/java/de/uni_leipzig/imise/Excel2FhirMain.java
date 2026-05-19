@@ -120,7 +120,8 @@ public class Excel2FhirMain implements Callable<Integer> {
                 excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOG.error(e.getMessage(), e);
+            return 1;
         }
         return 0;
     }

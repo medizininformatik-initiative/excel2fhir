@@ -6,7 +6,7 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_RE
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Diagnose;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Bezeichner;
-import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationsdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationszeitpunkt;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.ICD;
 import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Typ;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -47,7 +47,7 @@ public class ConditionConverter extends Converter {
     public static enum Diagnosis_Columns implements TableColumnIdentifier {
         Bezeichner,
         ICD,
-        Dokumentationsdatum,
+        Dokumentationszeitpunkt,
         Typ
     }
 
@@ -208,17 +208,17 @@ public class ConditionConverter extends Converter {
      */
     private DateTimeType convertRecordedDate() throws Exception {
         try {
-            String date = get(Dokumentationsdatum);
+            String date = get(Dokumentationszeitpunkt);
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
             //extract a date from an encounter
             DateTimeType encounterDate = getEncounterDate(result, getPatientId());
             if (encounterDate != null) {
-                warning("Can not parse " + Dokumentationsdatum + " for Record. Extract date from encounter. " + this);
+                warning("Can not parse " + Dokumentationszeitpunkt + " for Record. Extract date from encounter. " + this);
                 return encounterDate;
             }
         }
-        error("Can not parse " + Dokumentationsdatum + " for Record");
+        error("Can not parse " + Dokumentationszeitpunkt + " for Record");
         return null;
     }
 

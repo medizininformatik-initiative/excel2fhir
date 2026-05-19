@@ -7,9 +7,9 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_E
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Bett;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Einrichtungskontaktklasse;
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Ende;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Start;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Station;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Zimmer;
 
@@ -60,8 +60,8 @@ public class EncounterConverter extends Converter {
      * the correspunding excel sheet.
      */
     public static enum Encounter_Columns implements TableColumnIdentifier {
-        Startdatum,
-        Enddatum,
+        Start,
+        Ende,
         Einrichtungskontaktklasse,
         Fachabteilung,
         Station,
@@ -360,7 +360,7 @@ public class EncounterConverter extends Converter {
      * @throws Exception
      */
     protected void setPeriodAndStatus(Encounter encounter) throws Exception {
-        Period period = createPeriod(Startdatum, Enddatum);
+        Period period = createPeriod(Start, Ende);
         encounter.setPeriod(period);
         EncounterStatus status = period.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS;
         encounter.setStatus(status);
@@ -573,7 +573,7 @@ public class EncounterConverter extends Converter {
     //        EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
     //        encounterLocationComponent.setLocation(reference);
     //        encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
-    //        encounterLocationComponent.setPeriod(createPeriod(Startdatum, Enddatum));
+    //        encounterLocationComponent.setPeriod(createPeriod(Start, Ende));
     //        return Collections.singletonList(encounterLocationComponent);
     //    }
     //
