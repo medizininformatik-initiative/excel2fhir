@@ -33,13 +33,16 @@ public class Excel2FhirMain implements Callable<Integer> {
     /** the project directory */
     public static final File APPLICATION_DIR = getApplicationDir();
 
+    /** Default input template for a checkout without additional arguments. */
+    private static final File DEFAULT_INPUT_FILE = new File(APPLICATION_DIR, "FHIR_Testdatengenerator_Vorlage.xlsx");
+
     @Option(names = {"-f",
             "--input-file"}, paramLabel = "INPUT-File", description = "Input excel file. If specified the input directory is ignored.")
     static File inputFile;
 
     @Option(names = {"-i",
             "--input-directory"}, paramLabel = "INPUT-DIRECTORY", description = "Input directory for the excel file")
-    static File inputDirectory = new File(APPLICATION_DIR, "input");
+    static File inputDirectory;
 
     @Option(names = {"-o",
             "--output-directory"}, paramLabel = "OUTPUT-DIRECTORY", description = "Output directory for the result json file(s).")
@@ -73,8 +76,6 @@ public class Excel2FhirMain implements Callable<Integer> {
      * @param args
      */
     public static void main(String[] args) {
-        initDirectoriesAndLogger();
-
         LOG.info("Started...");
         Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -92,7 +93,7 @@ public class Excel2FhirMain implements Callable<Integer> {
      *
      */
     public static void initDirectoriesAndLogger() {
-        File defaultOutputDirectory = inputFile != null ? inputFile.getParentFile() : inputDirectory.getParentFile();
+        File defaultOutputDirectory = getInputFileOrDirectory().getParentFile();
         if (tempDirectory == null) {
             tempDirectory = new File(defaultOutputDirectory, "outputLocal");
         }
@@ -101,6 +102,20 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         File absoluteLogFile = new File(tempDirectory, Excel2FhirMain.class.getSimpleName() + ".log");
         FileLogger.addRootFileLogger(absoluteLogFile, logFileContentLayout);
+    }
+
+    /**
+     * @return the explicitly configured input file or directory, or the default
+     *         template in the application directory.
+     */
+    private static File getInputFileOrDirectory() {
+        if (inputFile != null) {
+            return inputFile;
+        }
+        if (inputDirectory != null) {
+            return inputDirectory;
+        }
+        return DEFAULT_INPUT_FILE;
     }
 
     @Override
@@ -113,11 +128,13 @@ public class Excel2FhirMain implements Callable<Integer> {
             Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles, minLogLevel);
             if (inputFile != null) {
                 excel2Fhir.convertExcelFile(inputFile, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
-            } else {
+            } else if (inputDirectory != null) {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
                 excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+            } else {
+                excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
