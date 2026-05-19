@@ -131,7 +131,6 @@ public class DocumentReferenceConverter extends Converter {
         Attachment attachment = new Attachment();
         if (path == null) {
             attachment.getDataElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
             attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
             attachment.setContentType("text");
             return attachment;
@@ -146,14 +145,11 @@ public class DocumentReferenceConverter extends Converter {
                 attachment.setSize(bytes.length);
             } else {
                 attachment.getDataElement().addExtension(DATA_ABSENT_REASON_ERROR);
-                attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
             }
         } else {
             attachment.setUrl(path.toUri().toURL().toExternalForm());
             if (file.isFile()) {
                 attachment.setSize((int) Files.size(path));
-            } else {
-                attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
             }
         }
         String contentType = getContentType(file);

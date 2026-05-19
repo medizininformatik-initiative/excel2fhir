@@ -32,7 +32,7 @@ public class DocumentReferenceConverterTest {
 
         assertNull(attachment.getData());
         assertTrue(attachment.getDataElement().hasExtension());
-        assertTrue(attachment.getSizeElement().hasExtension());
+        assertNull(attachment.getSizeElement().getValue());
         assertTrue(attachment.getCreationElement().hasExtension());
         assertEquals("text", attachment.getContentType());
     }
@@ -44,7 +44,7 @@ public class DocumentReferenceConverterTest {
         Attachment attachment = DocumentReferenceConverter.createAttachment(file, false);
 
         assertTrue(attachment.hasUrl());
-        assertTrue(attachment.getSizeElement().hasExtension());
+        assertNull(attachment.getSizeElement().getValue());
         assertTrue(attachment.getCreationElement().hasExtension());
         assertEquals("does-not-exist.pdf", attachment.getTitle());
     }
@@ -57,7 +57,7 @@ public class DocumentReferenceConverterTest {
 
         assertNull(attachment.getData());
         assertTrue(attachment.getDataElement().hasExtension());
-        assertTrue(attachment.getSizeElement().hasExtension());
+        assertNull(attachment.getSizeElement().getValue());
         assertTrue(attachment.getCreationElement().hasExtension());
     }
 }
