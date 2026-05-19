@@ -130,11 +130,15 @@ public class DocumentReferenceConverter extends Converter {
     public static Attachment createAttachment(Path path, boolean embed) throws IOException {
         Attachment attachment = new Attachment();
         if (path == null) {
-            path = new File("").toPath();
+            attachment.getDataElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+            attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+            attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+            attachment.setContentType("text");
+            return attachment;
         }
         File file = path.toFile();
         if (embed) {
-            if (file.canRead()) {
+            if (file.isFile() && file.canRead()) {
                 // Read unlimited
                 byte[] bytes = Files.readAllBytes(path);
                 attachment.setData(bytes);
@@ -146,18 +150,25 @@ public class DocumentReferenceConverter extends Converter {
             }
         } else {
             attachment.setUrl(path.toUri().toURL().toExternalForm());
-            attachment.setSize((int) Files.size(path));
+            if (file.isFile()) {
+                attachment.setSize((int) Files.size(path));
+            } else {
+                attachment.getSizeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
+            }
         }
         String contentType = getContentType(file);
         // available type: https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
         attachment.setContentType(contentType != null ? contentType : "text"); // set "text" as default
 
         // optional
-        attachment.setTitle(path.getFileName().toString());
+        Path fileName = path.getFileName();
+        if (fileName != null) {
+            attachment.setTitle(fileName.toString());
+        }
         // When attachment was first created
         // For now: take file creation time
         // Better (?): date, when document was written
-        if (file.canRead()) {
+        if (file.isFile() && file.canRead()) {
             attachment.setCreation(new Date(((FileTime) Files.getAttribute(path, "creationTime")).toMillis()));
         } else {
             attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
