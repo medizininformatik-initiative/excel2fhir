@@ -5,7 +5,7 @@ WORKDIR /tmp/
 RUN mvn clean install
 
 
-FROM eclipse-temurin:17-jre
+FROM amazoncorretto:17-alpine
 
 COPY --from=MAVEN_TOOL_CHAIN /tmp/target/excel2fhir.jar /app/excel2fhir.jar
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
@@ -14,4 +14,4 @@ COPY docker/docker-entrypoint.sh /app/
 WORKDIR /app
 USER 1001
 
-ENTRYPOINT  bash docker-entrypoint.sh
+ENTRYPOINT  sh docker-entrypoint.sh
