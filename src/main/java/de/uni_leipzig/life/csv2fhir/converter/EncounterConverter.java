@@ -38,7 +38,6 @@ import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.UriType;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -55,6 +54,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
  */
 public class EncounterConverter extends Converter {
+
+    public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
 
     /**
      * toString() result of these enum values are the names of the columns in
@@ -493,12 +494,9 @@ public class EncounterConverter extends Converter {
 
         Identifier identifier = new Identifier()
                 .setValue(encounterID)
+                .setSystem(ENCOUNTER_IDENTIFIER_SYSTEM)
                 .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
                 .setAssigner(reference);
-
-        //identifier.setSystem("http://dummyurl") // must be an formal correct url but we add a Data Absent Reason
-        UriType systemElement = identifier.getSystemElement();
-        systemElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
 
         return Collections.singletonList(identifier);
     }

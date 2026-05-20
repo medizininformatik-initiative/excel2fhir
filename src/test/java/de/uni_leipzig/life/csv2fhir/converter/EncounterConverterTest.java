@@ -2,6 +2,7 @@ package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -54,6 +55,9 @@ public class EncounterConverterTest {
         assertEquals(
                 "Location/Innere-INT1-R102",
                 wardEncounters.get(1).getLocation().get(1).getLocation().getReference());
+        assertEncounterIdentifierSystem(facilityEncounters);
+        assertEncounterIdentifierSystem(departmentEncounters);
+        assertEncounterIdentifierSystem(wardEncounters);
     }
 
     @Test
@@ -102,5 +106,12 @@ public class EncounterConverterTest {
         }
         encounters.sort(Comparator.comparing(Encounter::getId));
         return encounters;
+    }
+
+    private static void assertEncounterIdentifierSystem(List<Encounter> encounters) {
+        for (Encounter encounter : encounters) {
+            assertEquals(EncounterConverter.ENCOUNTER_IDENTIFIER_SYSTEM, encounter.getIdentifierFirstRep().getSystem());
+            assertFalse(encounter.getIdentifierFirstRep().getSystemElement().hasExtension());
+        }
     }
 }
