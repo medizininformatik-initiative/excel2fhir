@@ -420,6 +420,9 @@ public class FHIRValidator {
      * @return
      */
     private static boolean matchesLocation(String location, String locationPart) {
+        if (location == null) {
+            return false;
+        }
         if (location.equals(locationPart)) {
             return true;
         }

@@ -65,8 +65,9 @@ public class Excel2Fhir {
     private static void createAndCleanOutputDirectories(File sourceExcelFileOrDirectory, File targetCSVDir,
             File targetJSONDir)
             throws IOException {
-        File sourceExcelDir = sourceExcelFileOrDirectory.isDirectory() ? sourceExcelFileOrDirectory
-                : sourceExcelFileOrDirectory.getParentFile();
+        File absoluteSourceExcelFileOrDirectory = sourceExcelFileOrDirectory.getAbsoluteFile();
+        File sourceExcelDir = absoluteSourceExcelFileOrDirectory.isDirectory() ? absoluteSourceExcelFileOrDirectory
+                : absoluteSourceExcelFileOrDirectory.getParentFile();
         // create and reset directories
         if (targetCSVDir == null) {
             targetCSVDir = getTargetCSVDir(sourceExcelDir);

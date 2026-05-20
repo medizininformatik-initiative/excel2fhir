@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -154,10 +155,25 @@ public class EncounterConverter extends Converter {
         String previousEncounterLevel2ID = previousEncounterLevel2 == null ? null : previousEncounterLevel2.getId();
 
         boolean recordHasLevel1EncounterID = !isNullOrEmpty(encounterLevel1Id);
-        boolean createLevel1Encounter = recordHasLevel1EncounterID && encounterLevel1Id != previousEncounterLevel1ID;
-        boolean createLevel2Encounter = !isNullOrEmpty(departmentName) || departmentName != previousDepartmentName;
-        boolean createLevel3Encounter = createLevel2Encounter || !isNullOrEmpty(wardName) || !isNullOrEmpty(roomName) || !isNullOrEmpty(bedName);
-        createLevel2Encounter = createLevel3Encounter; // even if there is no department we must create a Level2 Encounter if Level3 must be cretated
+        boolean createLevel1Encounter = recordHasLevel1EncounterID && !Objects.equals(encounterLevel1Id, previousEncounterLevel1ID);
+        boolean hasLocationDetails = !isNullOrEmpty(wardName) || !isNullOrEmpty(roomName) || !isNullOrEmpty(bedName);
+        boolean hasDepartmentName = !isNullOrEmpty(departmentName);
+        boolean departmentChanged = hasDepartmentName && !Objects.equals(departmentName, previousDepartmentName);
+        boolean hasActiveLevel1Encounter = createLevel1Encounter || previousEncounterLevel1 != null;
+
+        if (createLevel1Encounter) {
+            previousEncounterLevel2 = null;
+            previousEncounterLevel2ID = null;
+            previousDepartmentName = RANDOM_DEFULT_VALUE;
+        }
+
+        boolean createLevel2Encounter = hasActiveLevel1Encounter
+                && (departmentChanged || (previousEncounterLevel2 == null && (hasDepartmentName || hasLocationDetails)));
+        boolean createLevel3Encounter = hasLocationDetails;
+        String effectiveDepartmentName = hasDepartmentName ? departmentName : previousDepartmentName;
+        if (Objects.equals(effectiveDepartmentName, RANDOM_DEFULT_VALUE)) {
+            effectiveDepartmentName = null;
+        }
 
         if (createLevel1Encounter) {
             // generate Encounter Level 1
@@ -220,7 +236,7 @@ public class EncounterConverter extends Converter {
             encounterLevel3.setMeta(getMeta());
             encounterLevel3.setClass_(getEncounterLevel3Class());
             encounterLevel3.setType(getEncounterType(EncounterLevel3.class));
-            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(departmentName, wardName, roomName, bedName);
+            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(effectiveDepartmentName, wardName, roomName, bedName);
             encounterLevel3.setLocation(locationComponents);
             // TODO: find out how to code a valid Servicetype for Encounters Level 3
             setPeriodAndStatus(encounterLevel3);
@@ -239,6 +255,13 @@ public class EncounterConverter extends Converter {
      */
     public static final Collection<Location> getLocations() {
         return locationIDToLocation.values();
+    }
+
+    static void resetStateForTesting() {
+        previousEncounterLevel1 = null;
+        previousEncounterLevel2 = null;
+        previousDepartmentName = RANDOM_DEFULT_VALUE;
+        locationIDToLocation.clear();
     }
 
     /**
@@ -364,15 +387,25 @@ public class EncounterConverter extends Converter {
         encounter.setPeriod(period);
         EncounterStatus status = period.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS;
         encounter.setStatus(status);
-        Period parentPeriod = null;
         if (encounter instanceof EncounterLevel2 || encounter instanceof EncounterLevel3) {
-            parentPeriod = previousEncounterLevel1.getPeriod();
-            previousEncounterLevel1.setStatus(status);
+            updateParentPeriodAndStatus(previousEncounterLevel1, period, status);
         }
         if (encounter instanceof EncounterLevel3) {
-            parentPeriod = previousEncounterLevel2.getPeriod();
-            previousEncounterLevel2.setStatus(status);
+            updateParentPeriodAndStatus(previousEncounterLevel2, period, status);
         }
+    }
+
+    /**
+     * @param parentEncounter
+     * @param period
+     * @param status
+     */
+    private static void updateParentPeriodAndStatus(Encounter parentEncounter, Period period, EncounterStatus status) {
+        if (parentEncounter == null) {
+            return;
+        }
+        parentEncounter.setStatus(status);
+        Period parentPeriod = parentEncounter.getPeriod();
         if (parentPeriod != null) {
             // the top level encounter already has the maximum end
             if (parentPeriod.hasEnd()) {
