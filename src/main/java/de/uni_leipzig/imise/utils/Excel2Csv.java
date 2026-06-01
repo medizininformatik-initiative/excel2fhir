@@ -88,7 +88,8 @@ public class Excel2Csv {
         Stopwatch stopwatch = Stopwatch.createStarted();
         String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
-        try (Workbook workbook = new XSSFWorkbook(new FileInputStream(sourceExcelFile))) {
+        try (FileInputStream sourceInputStream = new FileInputStream(sourceExcelFile);
+                Workbook workbook = new XSSFWorkbook(sourceInputStream)) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
                 if (sheetNamePatterns != null) {
