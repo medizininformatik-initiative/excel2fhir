@@ -10,7 +10,7 @@ public interface StringEqualsIgnoreCase {
      * @return <code>true</code> if the given string is case insensitive equals to
      *         this.toString().
      */
-    public default boolean equals(String s) {
+    public default boolean equalsIgnoreCase(String s) {
         return toString().equalsIgnoreCase(s);
     }
 
