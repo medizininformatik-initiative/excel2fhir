@@ -19,7 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
@@ -160,7 +159,7 @@ public class ConditionConverter extends Converter {
                     icdCode = icdCode.substring(0, icdCode.length() - 1);
                 }
                 icdCodes.add(icdCode);
-                sourceString = StringUtils.remove(sourceString, icdCode);
+                sourceString = sourceString.replace(icdCode, "");
                 matcher = pattern.matcher(sourceString);
             }
         }

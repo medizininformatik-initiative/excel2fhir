@@ -132,8 +132,14 @@ public class FileLogger {
         logContextConfig.addAppender(fileAppender);
         AppenderRef appenderRef = AppenderRef.createAppenderRef("File", null, null);
         AppenderRef[] refs = new AppenderRef[] { appenderRef };
-        LoggerConfig loggerConfig = LoggerConfig.createLogger(false, level, "de", "true", refs, null, logContextConfig,
-                null);
+        LoggerConfig loggerConfig = LoggerConfig.newBuilder()
+                .withAdditivity(false)
+                .withLevel(level)
+                .withLoggerName("de")
+                .withIncludeLocation("true")
+                .withRefs(refs)
+                .withConfig(logContextConfig)
+                .build();
         loggerConfig.addAppender(fileAppender, null, null);
         logContextConfig.addLogger("de", loggerConfig);
         logContext.updateLoggers();
@@ -148,8 +154,19 @@ public class FileLogger {
     private static Appender getFileAppender(String relativeOrAbsolutePathToFile, Configuration logContextConfig,
             String pattern) {
         PatternLayout logLayout = getLayout(logContextConfig, pattern);
-        Appender fileAppender = FileAppender.createAppender(relativeOrAbsolutePathToFile, "false", "false", "File",
-                "false", "false", "true", "4000", logLayout, null, "false", null, logContextConfig);
+        Appender fileAppender = FileAppender.newBuilder()
+                .withFileName(relativeOrAbsolutePathToFile)
+                .withAppend(false)
+                .withLocking(false)
+                .setName("File")
+                .setImmediateFlush(false)
+                .setIgnoreExceptions(false)
+                .setBufferedIo(true)
+                .setBufferSize(4000)
+                .setLayout(logLayout)
+                .setConfiguration(logContextConfig)
+                .withAdvertise(false)
+                .build();
         fileAppender.start();
         return fileAppender;
     }

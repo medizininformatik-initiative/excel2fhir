@@ -266,9 +266,10 @@ public class FileHandler {
      * @return
      */
     public static String readFile(final File file) {
-        File[] files;
         String toString = "";
-        files = splitFile(file);
+        File[] files = new File[] {
+                file
+        };
         for (File f : files) {
             try (FileReader fr = new FileReader(f)) {
                 char[] chars = new char[(int) f.length()];
