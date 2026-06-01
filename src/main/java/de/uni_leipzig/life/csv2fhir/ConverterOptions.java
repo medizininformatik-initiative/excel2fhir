@@ -23,8 +23,8 @@ public class ConverterOptions {
     public int loopCounter = 0;
 
     /**
-     * Default file extension for files with converter options. If an option
-     * file could not be found with the given name it will
+     * Default file extension for files with converter options. If an option file
+     * could not be found with the given name it will
      */
     public static final String CONVERTER_OPTIONS_FILE_EXTENSION = ".config";
 
@@ -51,7 +51,7 @@ public class ConverterOptions {
      * @param optionsAbsoluteFileName options file to load
      */
     private void putValues(String optionsAbsoluteFileName) {
-        //add or overwrite the defaults with the project specific option values
+        // add or overwrite the defaults with the project specific option values
         if (!options.load(optionsAbsoluteFileName)) {
             options.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
         }
@@ -78,8 +78,8 @@ public class ConverterOptions {
     /**
      * @param intOption
      * @return the value of this option
-     * @throws NumberFormatException if the found string in the properties
-     *             cannot be parsed as an integer.
+     * @throws NumberFormatException if the found string in the properties cannot
+     *                               be parsed as an integer.
      */
     public int getValue(IntOption intOption) {
         Integer value = intValues.get(intOption);
@@ -88,18 +88,28 @@ public class ConverterOptions {
             if (mapValueContent == null) {
                 value = intOption.getDefault();
             } else {
-                value = Integer.valueOf(mapValueContent.toString().trim());
+                value = parseIntOption(intOption, mapValueContent);
             }
             intValues.put(intOption, value);
         }
         return value;
     }
 
+    private static Integer parseIntOption(IntOption intOption, Object mapValueContent) {
+        String value = mapValueContent.toString().trim();
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid integer value for converter option " + intOption + ": " + value,
+                    e);
+        }
+    }
+
     /**
      * @param stringOption
      * @return the value of this option
-     * @throws NumberFormatException if the found string in the properties
-     *             cannot be parsed as an integer.
+     * @throws NumberFormatException if the found string in the properties cannot
+     *                               be parsed as an integer.
      */
     public String getValue(StringOption stringOption) {
         String value = stringValues.get(stringOption);
@@ -122,35 +132,34 @@ public class ConverterOptions {
         /**
          * Enable to set a the optional reference from diagnoses (conditions) to
          * encounters. </br>
-         * If <code>true</code> then circle references in the data are possible,
-         * if the encounters have a reference to all diagnoses (conditions).
-         * Some FHIR-Servers don't accept such circle references. In this case
-         * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION} must
-         * be set to <code>false</code>.</br>
+         * If <code>true</code> then circle references in the data are possible, if the
+         * encounters have a reference to all diagnoses (conditions). Some FHIR-Servers
+         * don't accept such circle references. In this case the corresponding option
+         * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION} must be set
+         * to <code>false</code>.</br>
          * The Default is <code>false</code>.
          */
         SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER,
         /**
          * Enable to set the references from the encounters to the diagnoses
          * (conditions). </br>
-         * If <code>true</code> then circle references in the data are possible,
-         * if the diagnoses (conditions) have a reference to their encounter.
-         * Some FHIR-Servers don't accept such circle references. In this case
-         * the corresponding option
-         * {@link BooleanOption#SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER} must
-         * be set to <code>false</code>.</br>
+         * If <code>true</code> then circle references in the data are possible, if the
+         * diagnoses (conditions) have a reference to their encounter. Some
+         * FHIR-Servers don't accept such circle references. In this case the
+         * corresponding option
+         * {@link BooleanOption#SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER} must be set
+         * to <code>false</code>.</br>
          * The Default is <code>true</code>.
          */
         SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION,
 
         /**
-         * Enable to set a the optional reference from procedures (conditions)
-         * to encounters. </br>
-         * If <code>true</code> then circle references in the data are possible,
-         * if the encounters have a reference to all procedures (conditions).
-         * Some FHIR-Servers don't accept such circle references. In this case
-         * the corresponding option
+         * Enable to set a the optional reference from procedures (conditions) to
+         * encounters. </br>
+         * If <code>true</code> then circle references in the data are possible, if the
+         * encounters have a reference to all procedures (conditions). Some
+         * FHIR-Servers don't accept such circle references. In this case the
+         * corresponding option
          * {@link BooleanOption#SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION}
          * must be set to <code>false</code>.</br>
          * The Default is <code>false</code>.
@@ -159,10 +168,10 @@ public class ConverterOptions {
         /**
          * Enable to set the references from the encounters to the procedures
          * (conditions). </br>
-         * If <code>true</code> then circle references in the data are possible,
-         * if the procedures (conditions) have a reference to their encounters.
-         * Some FHIR-Servers don't accept such circle references. In this case
-         * the corresponding option
+         * If <code>true</code> then circle references in the data are possible, if the
+         * procedures (conditions) have a reference to their encounters. Some
+         * FHIR-Servers don't accept such circle references. In this case the
+         * corresponding option
          * {@link BooleanOption#SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER}
          * must be set to <code>false</code>.</br>
          * The Default is <code>true</code>.
@@ -170,20 +179,18 @@ public class ConverterOptions {
         SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION,
 
         /**
-         * If <code>true</code>, then Sub Encounters will have a diagnosis of
-         * the Super Encounter attached instead of a Data Absent Reason. If the
-         * Super Encounter has a main diagnosis (chief complaint), it is
-         * preferred.</br>
-         * If <code>false</code>, the non-existing diagnoses are supplemented by
-         * an "unknown" Data Absent Reason.
+         * If <code>true</code>, then Sub Encounters will have a diagnosis of the Super
+         * Encounter attached instead of a Data Absent Reason. If the Super Encounter
+         * has a main diagnosis (chief complaint), it is preferred.</br>
+         * If <code>false</code>, the non-existing diagnoses are supplemented by an
+         * "unknown" Data Absent Reason.
          */
         ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER,
         /**
-         * If <code>true</code>, then Sub Encounters will have the same class
-         * coding like the Super Encounter attached instead of a Data Absent
-         * Reason.</br>
-         * If <code>false</code>, the non-existing class codings are
-         * supplemented by an "unknown" Data Absent Reason.</br>
+         * If <code>true</code>, then Sub Encounters will have the same class coding
+         * like the Super Encounter attached instead of a Data Absent Reason.</br>
+         * If <code>false</code>, the non-existing class codings are supplemented by an
+         * "unknown" Data Absent Reason.</br>
          * Every Encounter needs at least one class coding to be valid.
          */
         ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER,
@@ -199,7 +206,8 @@ public class ConverterOptions {
          * Set of String values which can be interpreted as booleans with value
          * <code>true</code>.
          */
-        private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j", "1");
+        private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j",
+                "1");
 
         /** All BooleanOptions whose default value is <code>true</code>. */
         private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(
@@ -225,10 +233,9 @@ public class ConverterOptions {
      */
     public static enum IntOption {
         /**
-         * Start index counter for the number that will be added on the first
-         * element of this type. The only resource type that will not get such
-         * an index counter is Person. If the value is missing in this map then
-         * the default is 1.
+         * Start index counter for the number that will be added on the first element
+         * of this type. The only resource type that will not get such an index counter
+         * is Person. If the value is missing in this map then the default is 1.
          */
         START_ID_CONSENT,
         START_ID_CONDITION,
@@ -243,24 +250,22 @@ public class ConverterOptions {
         START_ID_DOCUMENT_REFERENCE,
 
         /**
-         * The last number in all patient IDs of an data set will be increased
-         * by this value. At the beginning this number will be added to all
-         * patient IDs.</br>
+         * The last number in all patient IDs of an data set will be increased by this
+         * value. At the beginning this number will be added to all patient IDs.</br>
          * Default value is 0.
          */
         PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0),
         /**
-         * The last number in all patient IDs of an data set will be increased
-         * by this value on every loop. This number should be greater or equal
-         * to the difference between the highest and the lowast number in all
-         * patient IDs. If not then some patients can be generated with the same
-         * ID.</br>
+         * The last number in all patient IDs of an data set will be increased by this
+         * value on every loop. This number should be greater or equal to the
+         * difference between the highest and the lowast number in all patient IDs. If
+         * not then some patients can be generated with the same ID.</br>
          * Default value is 0.
          */
         PID_LAST_NUMBER_INCREASE_LOOP_OFFSET(0),
         /**
-         * Count of repetitions of increasings of the patient ID. If you want to
-         * expand a data set n times then set this value to n and the
+         * Count of repetitions of increasings of the patient ID. If you want to expand
+         * a data set n times then set this value to n and the
          * PID_LAST_NUMBER_INCREASE_START_OFFSET in the described way.</br>
          * Default value is 0.
          */
@@ -334,7 +339,7 @@ public class ConverterOptions {
         // this is probably still faster than using a RegExp
         int start = -1;
         int end = -1;
-        for (int i = s.length() - 1; i > 0; i--) {
+        for (int i = s.length() - 1; i >= 0; i--) {
             char c = s.charAt(i);
             if (Character.isDigit(c)) {
                 if (end == -1) {
@@ -356,17 +361,28 @@ public class ConverterOptions {
         Range<Integer> lastNumberStringBounds = getLastNumberStringBounds(pid);
         int start = lastNumberStringBounds.lowerEndpoint();
         int end = lastNumberStringBounds.upperEndpoint();
+        if (start < 0 || end < 0) {
+            throw new IllegalArgumentException("PID does not contain a number to increase: " + pid);
+        }
         String preNumberString = pid.substring(0, start);
         String numberSubString = pid.substring(start, end);
         String afterNumberString = pid.substring(end);
         int numberLength = numberSubString.length();
-        int number = Integer.parseInt(numberSubString);
+        int number = parsePidNumber(pid, numberSubString);
         number += value;
         numberSubString = Integer.toString(number);
         if (numberSubString.length() < numberLength) {
             numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
         }
         return preNumberString + numberSubString + afterNumberString;
+    }
+
+    private static int parsePidNumber(String pid, String numberSubString) {
+        try {
+            return Integer.parseInt(numberSubString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("PID contains an invalid number to increase: " + pid, e);
+        }
     }
 
     /**
@@ -380,7 +396,7 @@ public class ConverterOptions {
             pid = getIncreasedLastPidNumber(pid, pidOffset);
         }
         pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
-        return pid.replace('_', '-'); //AXS: (Some) FHIR Server will not accept IDs with an underscore!
+        return pid.replace('_', '-'); // AXS: (Some) FHIR Server will not accept IDs with an underscore!
     }
 
     /**

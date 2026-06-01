@@ -36,40 +36,43 @@ public class Excel2FhirMain implements Callable<Integer> {
     /** Default input template for a checkout without additional arguments. */
     private static final File DEFAULT_INPUT_FILE = new File(APPLICATION_DIR, "FHIR_Testdatengenerator_Vorlage.xlsx");
 
-    @Option(names = {"-f",
-            "--input-file"}, paramLabel = "INPUT-File", description = "Input excel file. If specified the input directory is ignored.")
+    @Option(names = { "-f",
+            "--input-file" }, paramLabel = "INPUT-File", description = "Input excel file. If specified the input directory is ignored.")
     static File inputFile;
 
-    @Option(names = {"-i",
-            "--input-directory"}, paramLabel = "INPUT-DIRECTORY", description = "Input directory for the excel file")
+    @Option(names = { "-i",
+            "--input-directory" }, paramLabel = "INPUT-DIRECTORY", description = "Input directory for the excel file")
     static File inputDirectory;
 
-    @Option(names = {"-o",
-            "--output-directory"}, paramLabel = "OUTPUT-DIRECTORY", description = "Output directory for the result json file(s).")
+    @Option(names = { "-o",
+            "--output-directory" }, paramLabel = "OUTPUT-DIRECTORY", description = "Output directory for the result json file(s).")
     static File outputDirectory;
 
-    @Option(names = {"-t",
-            "--temp-directory"}, paramLabel = "TEMP-DIRECTORY", description = "Temp directory for csv files converted from input files and needed to create output files. If parameter is missing then the temp directory is the input directory.")
+    @Option(names = { "-t",
+            "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Temp directory for csv files converted from input files and needed to create output files. If parameter is missing then the temp directory is the input directory.")
     static File tempDirectory;
 
-    @Option(names = {"-r",
-            "--result-file-format"}, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Result file format (comma separated) \"JSON\" (default), \"XML\", \"NDJSON\", \"JSONGZIP\" or \"JSONBZ2\".")
-    static OutputFileType[] outputFileTypes = {OutputFileType.JSON};
+    @Option(names = { "-r",
+            "--result-file-format" }, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Result file format (comma separated) \"JSON\" (default), \"XML\", \"NDJSON\", \"JSONGZIP\" or \"JSONBZ2\".")
+    static OutputFileType[] outputFileTypes = { OutputFileType.JSON };
 
-    @Option(names = {"-p",
-            "--patients-count"}, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
+    @Option(names = { "-p",
+            "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
     static int patientsPerBundle = Integer.MAX_VALUE;
 
-    @Option(names = {"-l",
-            "--log-layout"}, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
-    static LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; //the console log layout is set in the projects log4j2.xml file!
+    @Option(names = { "-l",
+            "--log-layout" }, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
+    static LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; // the console log
+                                                                                                  // layout is set in
+                                                                                                  // the projects
+                                                                                                  // log4j2.xml file!
 
-    @Option(names = {"-v",
-            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
+    @Option(names = { "-v",
+            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
     static boolean validateBundles = false;
 
-    @Option(names = {"-vll",
-            "--validation-log-level"}, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
+    @Option(names = { "-vll",
+            "--validation-log-level" }, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
     static ValidationResultType minLogLevel = ValidationResultType.ERROR;
 
     /**
@@ -127,14 +130,17 @@ public class Excel2FhirMain implements Callable<Integer> {
             List<String> excelSheetNamePatterns = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles, minLogLevel);
             if (inputFile != null) {
-                excel2Fhir.convertExcelFile(inputFile, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+                excel2Fhir.convertExcelFile(inputFile, excelSheetNamePatterns, tempDirectory, outputDirectory,
+                        patientsPerBundle, outputFileTypes);
             } else if (inputDirectory != null) {
                 if (!inputDirectory.isDirectory()) {
                     throw new Exception("Provided input Directory is NOT a directory!");
                 }
-                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory,
+                        patientsPerBundle, outputFileTypes);
             } else {
-                excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory, patientsPerBundle, outputFileTypes);
+                excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory,
+                        patientsPerBundle, outputFileTypes);
             }
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);

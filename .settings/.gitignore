@@ -1,1 +1,4 @@
-/org.eclipse.jdt.core.prefs
+/*
+!/.gitignore
+!/org.eclipse.jdt.core.prefs
+!/org.eclipse.jdt.ui.prefs

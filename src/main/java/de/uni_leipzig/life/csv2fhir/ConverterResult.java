@@ -66,7 +66,8 @@ public class ConverterResult {
      * {@link ConvertedResources}<{@link MedicationStatement}>,
      * {@link ConvertedResources}<{@link MedicationAdministration}>},<br>
      */
-    private final Multimap<TableIdentifier, ConvertedResources<? extends Resource>> createdResources = ArrayListMultimap.create();
+    private final Multimap<TableIdentifier, ConvertedResources<? extends Resource>> createdResources = ArrayListMultimap
+            .create();
 
     /**  */
     private ConverterResultStatistics statistics = null;
@@ -112,9 +113,10 @@ public class ConverterResult {
      *
      * @param resources
      * @throws ClassCastException if at least one resource in the collection has
-     *             not the generic type of this result.
+     *                            not the generic type of this result.
      */
-    public <T extends Resource> void addAll(TableIdentifier tableSource, Collection<T> resources) throws ClassCastException {
+    public <T extends Resource> void addAll(TableIdentifier tableSource, Collection<T> resources)
+            throws ClassCastException {
         for (T resource : resources) {
             add(tableSource, resource);
         }
@@ -178,20 +180,21 @@ public class ConverterResult {
     }
 
     /**
-     * @param <T> Subtype of the Resource
-     * @param tableSource Combination of this parameter and the resourceType
-     *            identifies the correct counter.
+     * @param <T>          Subtype of the Resource
+     * @param tableSource  Combination of this parameter and the resourceType
+     *                     identifies the correct counter.
      * @param resourceType The resource type
-     * @param startIndex Via {@link IntOption#getValue()} the start index can be
-     *            identified. An other start index than the default 1 is useful
-     *            if we want to add e.g. additional Observations to an existing
-     *            patient who has already Observation. With the default
-     *            parameter we would create a new Observation with the ID of an
-     *            existing one which would be overwritten on the server if we
-     *            post both to the server.
+     * @param startIndex   Via {@link IntOption#getValue()} the start index can be
+     *                     identified. An other start index than the default 1 is
+     *                     useful if we want to add e.g. additional Observations to
+     *                     an existing patient who has already Observation. With
+     *                     the default parameter we would create a new Observation
+     *                     with the ID of an existing one which would be
+     *                     overwritten on the server if we post both to the server.
      * @return
      */
-    public final <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType, IntOption startIndex) {
+    public final <T extends Resource> int getNextId(TableIdentifier tableSource, Class<T> resourceType,
+            IntOption startIndex) {
         return getResourceCount(tableSource, resourceType) + converterOptions.getValue(startIndex);
     }
 
@@ -211,8 +214,8 @@ public class ConverterResult {
     }
 
     /**
-     * Can store the one count for each Resource type and output it
-     * appropriately via the toString() function.
+     * Can store the one count for each Resource type and output it appropriately
+     * via the toString() function.
      *
      * @author AXS (07.06.2022)
      */
@@ -238,8 +241,8 @@ public class ConverterResult {
         }
 
         /**
-         * Adds the values from the statistics of the given
-         * {@link ConverterResult} to this.
+         * Adds the values from the statistics of the given {@link ConverterResult} to
+         * this.
          *
          * @param result
          */
@@ -264,7 +267,7 @@ public class ConverterResult {
 
         /**
          * @param resourceType
-         * @param value2Add
+         * @param ids
          */
         private void add(Class<? extends Resource> resourceType, Collection<String> ids) {
             Integer oldCount = resourceCounts.getOrDefault(resourceType, 0);
@@ -293,14 +296,14 @@ public class ConverterResult {
         private String getResultTable(String indentation) {
             List<Class<? extends Resource>> resourceTypes = new ArrayList<>(resourceCounts.keySet());
             Alphabetical.sort(resourceTypes);
-            int maxNameLength = getMaxStringLength(resourceTypes) + 8; //some whitespaces after the longest string
+            int maxNameLength = getMaxStringLength(resourceTypes) + 8; // some whitespaces after the longest string
             int maxDigitsCount = getMaxStringLength(resourceCounts.values());
             StringBuilder sb = new StringBuilder();
             int maxLineLength;
-            Integer totalCount = 0;
+            int totalCount = 0;
             int totalUniqueCount = 0;
             for (Class<? extends Resource> resourceType : resourceTypes) {
-                StringBuilder line = new StringBuilder(indentation); //some indentation
+                StringBuilder line = new StringBuilder(indentation); // some indentation
                 line.append(Strings.padEnd(resourceType.getSimpleName(), maxNameLength, ' '));
                 line.append(": ");
                 Integer count = resourceCounts.get(resourceType);
@@ -318,12 +321,13 @@ public class ConverterResult {
                 maxLineLength = Math.max(maxNameLength, line.length() - 1);
                 sb.append(line);
             }
-            //first build the total line
+            // first build the total line
             StringBuilder totalLine = new StringBuilder(indentation);
             totalLine.append(Strings.padEnd("total", maxNameLength, ' '));
             totalLine.append(": ");
-            totalLine.append(Strings.padStart(totalCount.toString(), maxDigitsCount, ' '));
-            maxLineLength = Math.max(maxNameLength, totalLine.length()); // if there is no created resource then maxLineLength is still 0 here
+            totalLine.append(Strings.padStart(Integer.toString(totalCount), maxDigitsCount, ' '));
+            maxLineLength = Math.max(maxNameLength, totalLine.length()); // if there is no created resource then
+                                                                         // maxLineLength is still 0 here
             if (totalUniqueCount != totalCount) {
                 totalLine.append(" (unique : ");
                 totalLine.append(totalUniqueCount);

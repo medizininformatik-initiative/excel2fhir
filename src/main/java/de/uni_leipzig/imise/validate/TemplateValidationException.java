@@ -3,7 +3,8 @@ package de.uni_leipzig.imise.validate;
 import java.io.IOException;
 
 /**
- * Exception thrown if an Excel input template contains blocking validation errors.
+ * Exception thrown if an Excel input template contains blocking validation
+ * errors.
  */
 public class TemplateValidationException extends IOException {
 

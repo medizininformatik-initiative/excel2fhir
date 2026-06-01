@@ -109,7 +109,7 @@ public enum OutputFileType {
      * @return
      */
     public void compress(@SuppressWarnings("unused") File file) throws Exception {
-        //default do nothing
+        // default do nothing
     }
 
 }

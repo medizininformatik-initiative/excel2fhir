@@ -58,8 +58,8 @@ public class EncounterConverter extends Converter {
     public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Encounter_Columns implements TableColumnIdentifier {
         Start,
@@ -84,17 +84,19 @@ public class EncounterConverter extends Converter {
      * Maps from human readable encounter types to the correspondig code system
      * code and contains some more resources for the encounters.
      */
-    public static final CodeSystemMapper ENCOUNTER_LEVEL1_CLASS_RESOURCES = new CodeSystemMapper("EncounterLevel1_Class.map");
+    public static final CodeSystemMapper ENCOUNTER_LEVEL1_CLASS_RESOURCES = new CodeSystemMapper(
+            "EncounterLevel1_Class.map");
 
     /**
-     * Maps from human readable department description to the number code for
-     * the department.
+     * Maps from human readable department description to the number code for the
+     * department.
      */
-    private final CodeSystemMapper ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES = new CodeSystemMapper("EncounterLevel2_Department.map");
+    private final CodeSystemMapper ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES = new CodeSystemMapper(
+            "EncounterLevel2_Department.map");
 
     /**
-     * Maps from human readable diagnosis role description to the correspondig
-     * code system code.
+     * Maps from human readable diagnosis role description to the correspondig code
+     * system code.
      */
     public static final CodeSystemMapper DIAGNOSIS_ROLE_RESOURCES = new CodeSystemMapper("Diagnosis_Role.map");
 
@@ -103,7 +105,7 @@ public class EncounterConverter extends Converter {
      * record is taken. This enables that the tbale mu´st no be filled in all
      * columns with the same values and is better structured and more readable.
      */
-    //    private static String previousPatientReference;
+    // private static String previousPatientReference;
 
     private static Encounter previousEncounterLevel1;
     private static Encounter previousEncounterLevel2;
@@ -112,21 +114,23 @@ public class EncounterConverter extends Converter {
 
     // random string to identify a null value in the first rows
     private static String previousDepartmentName = RANDOM_DEFULT_VALUE;
-    //    private static String previousWardName = RANDOM_DEFULT_VALUE;
-    //    private static String previousRoomName = RANDOM_DEFULT_VALUE;
-    //    private static String previousBedName = RANDOM_DEFULT_VALUE;
+    // private static String previousWardName = RANDOM_DEFULT_VALUE;
+    // private static String previousRoomName = RANDOM_DEFULT_VALUE;
+    // private static String previousBedName = RANDOM_DEFULT_VALUE;
 
     private static final Map<String, Location> locationIDToLocation = new HashMap<>();
 
     /**
-     * Even if they (unfortunately) do not exist in the KDS, they are created
-     * here because of actual encounter types. This allows us to distinguish
-     * them clearly.
+     * Even if they (unfortunately) do not exist in the KDS, they are created here
+     * because of actual encounter types. This allows us to distinguish them
+     * clearly.
      */
     public static class EncounterLevel1 extends Encounter {
     }
+
     public static class EncounterLevel2 extends Encounter {
     }
+
     public static class EncounterLevel3 extends Encounter {
     }
 
@@ -138,7 +142,8 @@ public class EncounterConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public EncounterConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public EncounterConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -156,7 +161,8 @@ public class EncounterConverter extends Converter {
         String previousEncounterLevel2ID = previousEncounterLevel2 == null ? null : previousEncounterLevel2.getId();
 
         boolean recordHasLevel1EncounterID = !isNullOrEmpty(encounterLevel1Id);
-        boolean createLevel1Encounter = recordHasLevel1EncounterID && !Objects.equals(encounterLevel1Id, previousEncounterLevel1ID);
+        boolean createLevel1Encounter = recordHasLevel1EncounterID
+                && !Objects.equals(encounterLevel1Id, previousEncounterLevel1ID);
         boolean hasLocationDetails = !isNullOrEmpty(wardName) || !isNullOrEmpty(roomName) || !isNullOrEmpty(bedName);
         boolean hasDepartmentName = !isNullOrEmpty(departmentName);
         boolean departmentChanged = hasDepartmentName && !Objects.equals(departmentName, previousDepartmentName);
@@ -169,7 +175,8 @@ public class EncounterConverter extends Converter {
         }
 
         boolean createLevel2Encounter = hasActiveLevel1Encounter
-                && (departmentChanged || (previousEncounterLevel2 == null && (hasDepartmentName || hasLocationDetails)));
+                && (departmentChanged
+                        || (previousEncounterLevel2 == null && (hasDepartmentName || hasLocationDetails)));
         boolean createLevel3Encounter = hasLocationDetails;
         String effectiveDepartmentName = hasDepartmentName ? departmentName : previousDepartmentName;
         if (Objects.equals(effectiveDepartmentName, RANDOM_DEFULT_VALUE)) {
@@ -196,7 +203,8 @@ public class EncounterConverter extends Converter {
         if (!recordHasLevel1EncounterID) {
             String encounterLevel1Class = get(Einrichtungskontaktklasse);
             if (!isNullOrEmpty(encounterLevel1Class)) {
-                error("Encounter ID is empty but encounter class (" + Einrichtungskontaktklasse + ") is given as " + encounterLevel1Class + "for record " + toString());
+                error("Encounter ID is empty but encounter class (" + Einrichtungskontaktklasse + ") is given as "
+                        + encounterLevel1Class + "for record " + toString());
             }
         }
 
@@ -214,7 +222,8 @@ public class EncounterConverter extends Converter {
             encounterLevel2.setClass_(getEncounterLevel2Class());
             encounterLevel2.setType(getEncounterType(EncounterLevel2.class));
             if (!isNullOrEmpty(departmentName)) {
-                encounterLevel2.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
+                encounterLevel2
+                        .setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
             }
             setPeriodAndStatus(encounterLevel2);
 
@@ -237,7 +246,8 @@ public class EncounterConverter extends Converter {
             encounterLevel3.setMeta(getMeta());
             encounterLevel3.setClass_(getEncounterLevel3Class());
             encounterLevel3.setType(getEncounterType(EncounterLevel3.class));
-            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(effectiveDepartmentName, wardName, roomName, bedName);
+            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(effectiveDepartmentName,
+                    wardName, roomName, bedName);
             encounterLevel3.setLocation(locationComponents);
             // TODO: find out how to code a valid Servicetype for Encounters Level 3
             setPeriodAndStatus(encounterLevel3);
@@ -267,7 +277,7 @@ public class EncounterConverter extends Converter {
 
     /**
      * @param departmentName
-     * @param wardName a not null value only creates a location
+     * @param wardName       a not null value only creates a location
      * @return
      */
     private static final EncounterLocationComponent getOrCreateLocationWard(String departmentName, String wardName) {
@@ -277,10 +287,11 @@ public class EncounterConverter extends Converter {
     /**
      * @param departmentName
      * @param wardName
-     * @param roomName not null
+     * @param roomName       not null
      * @return
      */
-    private static final EncounterLocationComponent getOrCreateLocationRoom(String departmentName, String wardName, String roomName) {
+    private static final EncounterLocationComponent getOrCreateLocationRoom(String departmentName, String wardName,
+            String roomName) {
         return getOrCreateLocationInternal(LocationType.ROOM, departmentName, wardName, roomName, null);
     }
 
@@ -288,10 +299,11 @@ public class EncounterConverter extends Converter {
      * @param departmentName
      * @param wardName
      * @param roomName
-     * @param bedName not null
+     * @param bedName        not null
      * @return
      */
-    private static final EncounterLocationComponent getOrCreateLocationBed(String departmentName, String wardName, String roomName, String bedName) {
+    private static final EncounterLocationComponent getOrCreateLocationBed(String departmentName, String wardName,
+            String roomName, String bedName) {
         return getOrCreateLocationInternal(LocationType.BED, departmentName, wardName, roomName, bedName);
     }
 
@@ -303,7 +315,8 @@ public class EncounterConverter extends Converter {
      * @param bedName
      * @return
      */
-    private static final EncounterLocationComponent getOrCreateLocationInternal(LocationType locationType, String departmentName, String wardName, String roomName, String bedName) {
+    private static final EncounterLocationComponent getOrCreateLocationInternal(LocationType locationType,
+            String departmentName, String wardName, String roomName, String bedName) {
         // null values will be ignored
         String locationID = StringUtils.concatenate("-", departmentName, wardName, roomName, bedName);
         locationID = locationID.replace(' ', '-'); // whitespaces are not allwoed in IDs
@@ -336,7 +349,8 @@ public class EncounterConverter extends Converter {
      * @param bedName
      * @return
      */
-    private static final List<EncounterLocationComponent> getOrCreateLocations(String departmentName, String wardName, String roomName, String bedName) {
+    private static final List<EncounterLocationComponent> getOrCreateLocations(String departmentName, String wardName,
+            String roomName, String bedName) {
         List<EncounterLocationComponent> locationComponents = new ArrayList<>();
         if (!isNullOrEmpty(wardName)) {
             locationComponents.add(getOrCreateLocationWard(departmentName, wardName));
@@ -363,7 +377,8 @@ public class EncounterConverter extends Converter {
 
         private LocationType(String identifierSystem, String physicalTypeCode) {
             this.identifierSystem = identifierSystem;
-            physicalType = createCodeableConcept("http://terminology.hl7.org/CodeSystem/location-physical-type", physicalTypeCode);
+            physicalType = createCodeableConcept("http://terminology.hl7.org/CodeSystem/location-physical-type",
+                    physicalTypeCode);
         }
     }
 
@@ -443,7 +458,8 @@ public class EncounterConverter extends Converter {
      * @throws Exception
      */
     private static Coding getEncounterLevel2Class() throws Exception {
-        // same as Level 1 here (see https://simplifier.net/packages/de.basisprofil.r4/1.4.0/files/656744)
+        // same as Level 1 here (see
+        // https://simplifier.net/packages/de.basisprofil.r4/1.4.0/files/656744)
         return previousEncounterLevel1 != null ? previousEncounterLevel1.getClass_() : null;
     }
 
@@ -452,7 +468,8 @@ public class EncounterConverter extends Converter {
      * @throws Exception
      */
     private static Coding getEncounterLevel3Class() throws Exception {
-        // same as Level 1 here (see https://simplifier.net/packages/de.basisprofil.r4/1.4.0/files/656744)
+        // same as Level 1 here (see
+        // https://simplifier.net/packages/de.basisprofil.r4/1.4.0/files/656744)
         return previousEncounterLevel1 != null ? previousEncounterLevel1.getClass_() : null;
     }
 
@@ -461,7 +478,8 @@ public class EncounterConverter extends Converter {
      */
     private static Coding setCorrectCodeAndDisplayInClassCoding(Coding coding) {
         if (coding != null) {
-            //replace the code string from by the correct code and display from the resource map
+            // replace the code string from by the correct code and display from the
+            // resource map
             String code = coding.getCode();
             if (!Strings.isNullOrEmpty(code)) { // is null if the Coding has only a Data Absent Reason Extension
                 String realCode = ENCOUNTER_LEVEL1_CLASS_RESOURCES.get(code);
@@ -489,7 +507,8 @@ public class EncounterConverter extends Converter {
         Reference reference = new Reference()
                 .setIdentifier(
                         new Identifier()
-                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
+                                .setSystem(
+                                        "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
                                 .setValue(dizID));
 
         Identifier identifier = new Identifier()
@@ -523,7 +542,7 @@ public class EncounterConverter extends Converter {
      * @param procedure
      */
     public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Procedure procedure) {
-        addDiagnosisToEncounter(result, encounterID, procedure, null);
+        addDiagnosisResourceToEncounter(result, encounterID, procedure, null);
     }
 
     /**
@@ -532,8 +551,9 @@ public class EncounterConverter extends Converter {
      * @param condition
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Condition condition, String diagnosisUseIdentifier) {
-        addDiagnosisToEncounter(result, encounterID, (Resource) condition, diagnosisUseIdentifier);
+    public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Condition condition,
+            String diagnosisUseIdentifier) {
+        addDiagnosisResourceToEncounter(result, encounterID, condition, diagnosisUseIdentifier);
     }
 
     /**
@@ -542,8 +562,10 @@ public class EncounterConverter extends Converter {
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    private static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
-        // The KDS definition needs a diagnosis use (min cardinality 1), but a procedure doesn't have this -> arbitrary default
+    private static void addDiagnosisResourceToEncounter(ConverterResult result, String encounterID,
+            Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+        // The KDS definition needs a diagnosis use (min cardinality 1), but a
+        // procedure doesn't have this -> arbitrary default
         if (diagnosisUseIdentifier == null) { // default for missing values
             String defaultDiagnosisRoleCode = DIAGNOSIS_ROLE_RESOURCES.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
             diagnosisUseIdentifier = DIAGNOSIS_ROLE_RESOURCES.getFirstBackwardKey(defaultDiagnosisRoleCode);
@@ -551,7 +573,7 @@ public class EncounterConverter extends Converter {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Fall, Encounter.class, encounterID);
-        addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+        addDiagnosisResourceToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
     }
 
     /**
@@ -559,7 +581,8 @@ public class EncounterConverter extends Converter {
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
+    private static void addDiagnosisResourceToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis,
+            String diagnosisUseIdentifier) {
         // the encounter can be null, if the diagnosis is defined with an
         // empty or not present encounter number in the current dataset
         if (encounter == null) {
@@ -590,23 +613,25 @@ public class EncounterConverter extends Converter {
         return ImmutableList.of(createCodeableConcept(codeSystemURL, typeCode, typeDisplay, null));
     }
 
-    //    /**
-    //     * @return
-    //     * @throws Exception
-    //     */
-    //    private List<EncounterLocationComponent> convertLocation() throws Exception {
-    //        Identifier identifier = new Identifier();
-    //        identifier.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
-    //        identifier.setValue(get(Fachabteilung));
-    //        Reference reference = new Reference();
-    //        reference.setIdentifier(identifier);
+    // /**
+    // * @return
+    // * @throws Exception
+    // */
+    // private List<EncounterLocationComponent> convertLocation() throws Exception
+    // {
+    // Identifier identifier = new Identifier();
+    // identifier.setSystem("https://diz.mii.de/fhir/CodeSystem/TestOrganisationAbteilungen");
+    // identifier.setValue(get(Fachabteilung));
+    // Reference reference = new Reference();
+    // reference.setIdentifier(identifier);
     //
-    //        EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
-    //        encounterLocationComponent.setLocation(reference);
-    //        encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
-    //        encounterLocationComponent.setPeriod(createPeriod(Start, Ende));
-    //        return Collections.singletonList(encounterLocationComponent);
-    //    }
+    // EncounterLocationComponent encounterLocationComponent = new
+    // EncounterLocationComponent();
+    // encounterLocationComponent.setLocation(reference);
+    // encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
+    // encounterLocationComponent.setPeriod(createPeriod(Start, Ende));
+    // return Collections.singletonList(encounterLocationComponent);
+    // }
     //
     /**
      * @param encounter

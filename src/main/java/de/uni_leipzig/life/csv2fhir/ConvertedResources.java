@@ -39,7 +39,7 @@ public class ConvertedResources<T extends Resource> implements Iterable<T> {
     }
 
     /**
-     * @param key
+     * @param id
      * @return
      * @see java.util.Map#get(java.lang.Object)
      */

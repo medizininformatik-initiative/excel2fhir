@@ -13,7 +13,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.base.Strings;
 
@@ -28,8 +33,8 @@ public class FileHandler {
 
     /**
      * Liefert <code>true</code> zurück, wenn das übergebene {@link File}
-     * beschreibbar ist. Sollte die Datei noch nicht existieren, wird sie
-     * angelegt. <br>
+     * beschreibbar ist. Sollte die Datei noch nicht existieren, wird sie angelegt.
+     * <br>
      * Achtung: Es werden immer Dateien und keine Verzeichnisse angelegt.
      *
      * @param file
@@ -42,13 +47,12 @@ public class FileHandler {
     /**
      * Liefert <code>true</code> zurück, wenn das übergebene {@link File}
      * beschreibbar ist. Sollte die Datei noch nicht existieren und
-     * <code>testonly</code> ist <code>false</code>, dann wird die Datei
-     * angelegt. Achtung: Es werden immer Dateien und keine Verzeichnisse
-     * angelegt.
+     * <code>testonly</code> ist <code>false</code>, dann wird die Datei angelegt.
+     * Achtung: Es werden immer Dateien und keine Verzeichnisse angelegt.
      *
-     * @param file Datei deren Beschreibbarkeit getestet werden soll
+     * @param file     Datei deren Beschreibbarkeit getestet werden soll
      * @param testonly wenn <code>false</code> wird die Datei angelegt, wenn sie
-     *            noch nicht existiert
+     *                 noch nicht existiert
      * @return <code>true</code> wenn das übergebene {@link File} geschrieben
      *         werden kann
      */
@@ -61,28 +65,31 @@ public class FileHandler {
             return file.canWrite();
         }
 
-        //file existiert nicht
-        File dir = new File(file.getParent());
+        // file existiert nicht
         try {
-            //wenn das Verzeichnis noch nicht vorhanden ist und sich nicht anlegen lässt
-            if (!dir.exists() && !dir.mkdirs()) {
+            // wenn das Verzeichnis noch nicht vorhanden ist und sich nicht anlegen lässt
+            File dir = file.getParentFile();
+            if (dir != null && !dir.exists() && !dir.mkdirs()) {
                 return false;
             }
-            file.createNewFile();
+            boolean created = file.createNewFile();
+            if (!created && !file.exists()) {
+                return false;
+            }
             if (testonly) {
-                file.delete();
+                return created ? file.delete() : file.canWrite();
             }
         } catch (Exception e) {
             return false;
         }
-        return true;
+        return file.canWrite();
     }
 
     /**
-     * Liefert das Verzeichnis, wenn der Pfad zum übergebenen Verzeichnis
-     * existiert und man daraus lesen darf. Wird ein File und kein Directory
-     * übergeben, dann wird das Directory dieses Files geprüft. Ist es nicht
-     * lesbar, kommt <code>null</code> zurück.
+     * Liefert das Verzeichnis, wenn der Pfad zum übergebenen Verzeichnis existiert
+     * und man daraus lesen darf. Wird ein File und kein Directory übergeben, dann
+     * wird das Directory dieses Files geprüft. Ist es nicht lesbar, kommt
+     * <code>null</code> zurück.
      *
      * @param path
      * @return
@@ -92,7 +99,7 @@ public class FileHandler {
             return null;
         }
         File dir = !path.isDirectory() ? path.getParentFile() : path;
-        //kann null sein, wenn einfach nur ein Filename übergeben wurde
+        // kann null sein, wenn einfach nur ein Filename übergeben wurde
         if (dir != null && dir.canRead()) {
             return dir;
         }
@@ -118,7 +125,7 @@ public class FileHandler {
      * Kopiert alle Daten aus <code>source</code> in <code>dest</code>.
      *
      * @param source Eingangsdatenstrom
-     * @param dest Ausgangsdatenstrom
+     * @param dest   Ausgangsdatenstrom
      * @return
      */
     public static final boolean copy(final InputStream source, final OutputStream dest) {
@@ -152,7 +159,7 @@ public class FileHandler {
      * überschrieben.
      *
      * @param source - die Quelldatei-URL
-     * @param dest - die Zieldatei
+     * @param dest   - die Zieldatei
      * @return true, wenn das Kopieren geklappt hat
      */
     public static final boolean copyFile(final URL source, final File dest) {
@@ -173,7 +180,7 @@ public class FileHandler {
      * überschrieben.
      *
      * @param source - die Quelldatei-URL
-     * @param dest - die Zieldatei
+     * @param dest   - die Zieldatei
      * @return true, wenn das Kopieren geklappt hat
      */
     public static final boolean copyFile(final InputStream source, final File dest) {
@@ -190,7 +197,7 @@ public class FileHandler {
      * überschrieben.
      *
      * @param source - die Quelldatei
-     * @param dest - die Zieldatei
+     * @param dest   - die Zieldatei
      * @return true, wenn das Kopieren geklappt hat
      */
     public static boolean copyFile(final File source, final File dest) {
@@ -252,16 +259,17 @@ public class FileHandler {
     }
 
     /**
-     * Liest den Inhalt von <code>file</code> in einen String aus und gibt
-     * diesen wieder.
+     * Liest den Inhalt von <code>file</code> in einen String aus und gibt diesen
+     * wieder.
      *
      * @param file
      * @return
      */
     public static String readFile(final File file) {
-        File[] files;
         String toString = "";
-        files = splitFile(file);
+        File[] files = new File[] {
+                file
+        };
         for (File f : files) {
             try (FileReader fr = new FileReader(f)) {
                 char[] chars = new char[(int) f.length()];
@@ -282,10 +290,10 @@ public class FileHandler {
      * besteht, falls die zulässige Zeichenanzahl nicht überschritten wird. <br>
      * Sonst wird eine Exception geworfen.
      * <p>
-     * Ziel: Zerlegt <code>file</code> in einzelne Dateien, sodass die Anzahl
-     * ihrer Zeichen kleiner als {@link Integer#MAX_VALUE} ist. Damit können
-     * dann alle Zeichen der einzelnen Dateien in jeweils einem
-     * <code>charArray</code> erfasst werden.
+     * Ziel: Zerlegt <code>file</code> in einzelne Dateien, sodass die Anzahl ihrer
+     * Zeichen kleiner als {@link Integer#MAX_VALUE} ist. Damit können dann alle
+     * Zeichen der einzelnen Dateien in jeweils einem <code>charArray</code>
+     * erfasst werden.
      *
      * @param file
      * @return
@@ -309,30 +317,31 @@ public class FileHandler {
      */
     public static File createTempFile(final String prefix, final String suffix) {
 
-        File tmpFile = null;
-
         try {
-            tmpFile = File.createTempFile(prefix, suffix);
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-------");
+            Path tmpFilePath = Files.createTempFile(prefix, suffix, PosixFilePermissions.asFileAttribute(permissions));
+            File tmpFile = tmpFilePath.toFile();
             tmpFile.deleteOnExit();
+            return tmpFile;
 
-        } catch (IOException e) {
+        } catch (IOException | UnsupportedOperationException e) {
             e.printStackTrace();
         }
 
-        return tmpFile;
+        return null;
     }
 
     /**
-     * Traversiert das gesamte Verzeichnis <code>parent</code> und gibt eine
-     * Liste aller enthaltenen Dateien wieder.<br>
+     * Traversiert das gesamte Verzeichnis <code>parent</code> und gibt eine Liste
+     * aller enthaltenen Dateien wieder.<br>
      * Es werden dabei nur Dateien mit dem spezifizierten Suffix in die Liste
      * übernommen.<br>
      * Diese Dateien werden an die übergebene Liste angefügt, welche am Ende der
      * Traversierung zurückgegeben wird.
      *
-     * @param parent zu durchsuchendes Verzeichnis
+     * @param parent        zu durchsuchendes Verzeichnis
      * @param fileExtension Dateisuffix (z.B. <code>.java</code>)
-     * @param allFiles zu füllende Liste
+     * @param allFiles      zu füllende Liste
      * @return
      */
     public static List<File> traverse(final File parent, final String fileExtension, final List<File> allFiles) {
@@ -366,7 +375,7 @@ public class FileHandler {
      * @return
      */
     public static File getNextNotExistingFile(final String filePath, String extension, final boolean restartCounter) {
-        if (filePath == null || filePath.trim().equals("")) {
+        if (filePath == null || filePath.trim().isEmpty()) {
             return null;
         }
         File f = null;
@@ -389,14 +398,14 @@ public class FileHandler {
 
     /**
      * Liefert die Endung der Datei, wenn wenigestens ein Punkt im Dateinamen
-     * steht. Ist der Punkt das letzte Zeichen, kommt ein leerer String zurück
-     * (bei withDot == false) oder nur der Punktt (bei withDot == true). Ist
-     * kein Punkt vorhanden, kommt immer <code>null</code> zurück.
+     * steht. Ist der Punkt das letzte Zeichen, kommt ein leerer String zurück (bei
+     * withDot == false) oder nur der Punktt (bei withDot == true). Ist kein Punkt
+     * vorhanden, kommt immer <code>null</code> zurück.
      *
-     * @param file Datei deren Endung ermittelt werden soll
-     * @param withDot wenn <code>true</code>, dann enthält der Rückgabe-String
-     *            am Anfang den Punkt (wenn der Dateiname mind. einen Punkt
-     *            enthält)
+     * @param file    Datei deren Endung ermittelt werden soll
+     * @param withDot wenn <code>true</code>, dann enthält der Rückgabe-String am
+     *                Anfang den Punkt (wenn der Dateiname mind. einen Punkt
+     *                enthält)
      * @return Endung der Datei mit oder ohne Punkt oder null, wenn kein Punkt
      *         vorhanden ist
      */
@@ -405,15 +414,15 @@ public class FileHandler {
     }
 
     /**
-     * Liefert die Endung des Dateinames, wenn wenigestens ein Punkt im
-     * Dateinamen steht. Ist der Punkt das letzte Zeichen, kommt ein leerer
-     * String zurück (bei withDot == false) oder nur der Punktt (bei withDot ==
-     * true). Ist kein Punkt vorhanden, kommt immer <code>null</code> zurück.
+     * Liefert die Endung des Dateinames, wenn wenigestens ein Punkt im Dateinamen
+     * steht. Ist der Punkt das letzte Zeichen, kommt ein leerer String zurück (bei
+     * withDot == false) oder nur der Punktt (bei withDot == true). Ist kein Punkt
+     * vorhanden, kommt immer <code>null</code> zurück.
      *
      * @param fileName Name der Datei deren Endung ermittelt werden soll
-     * @param withDot wenn <code>true</code>, dann enthält der Rückgabe-String
-     *            am Anfang den Punkt (wenn der Dateiname mind. einen Punkt
-     *            enthält)
+     * @param withDot  wenn <code>true</code>, dann enthält der Rückgabe-String am
+     *                 Anfang den Punkt (wenn der Dateiname mind. einen Punkt
+     *                 enthält)
      * @return Endung der Datei mit oder ohne Punkt oder null, wenn kein Punkt
      *         vorhanden ist
      */
@@ -432,8 +441,8 @@ public class FileHandler {
      * Ersetzt alle für einen Dateinamen ungültigen Zeichen in dem übergebenen
      * String durch Unterstriche "_".
      *
-     * @param fileName Name einer Datei. Dies darf kein Pfad sein, da
-     *            Pfadtrenner hier auch raus fliegen.
+     * @param fileName Name einer Datei. Dies darf kein Pfad sein, da Pfadtrenner
+     *                 hier auch raus fliegen.
      * @return
      */
     public static String removeInvalidFileNameCharacters(final String fileName) {
@@ -442,13 +451,13 @@ public class FileHandler {
     }
 
     /**
-     * Searches the file for a line starting with the passed prefix. The first
-     * line that is found is returned.
+     * Searches the file for a line starting with the passed prefix. The first line
+     * that is found is returned.
      *
-     * @param file The file that will be searched.
-     * @param linePrefix The prefix with which the line should begin.
-     * @param removePrefix If <code>true</code> then the line is returned
-     *            without the prefix.
+     * @param file         The file that will be searched.
+     * @param linePrefix   The prefix with which the line should begin.
+     * @param removePrefix If <code>true</code> then the line is returned without
+     *                     the prefix.
      * @return First line in the file with the specified prefix.
      */
     public static String getLine(final File file, final String linePrefix, final boolean removePrefix) {

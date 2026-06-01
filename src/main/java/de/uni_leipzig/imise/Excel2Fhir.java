@@ -82,7 +82,7 @@ public class Excel2Fhir {
     }
 
     /**
-     * @param excelDir
+     * @param sourceExcelDir
      * @param sheetNamePatterns if not <code>null</code> then only the sheets with
      *                          a name in this collection will be convertert to
      *                          csv. If <code>null</code> then all sheet will be

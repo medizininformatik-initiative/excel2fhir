@@ -43,8 +43,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class PatientConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Person_Columns implements TableColumnIdentifier {
         Vorname,
@@ -57,7 +57,8 @@ public class PatientConverter extends Converter {
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
-    // @see https://simplifier.net/MedizininformatikInitiative-ModulPerson/PatientIn
+    // @see
+    // https://simplifier.net/MedizininformatikInitiative-ModulPerson/PatientIn
 
     /**
      * @param record
@@ -67,7 +68,8 @@ public class PatientConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public PatientConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public PatientConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator,
+            ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -82,8 +84,10 @@ public class PatientConverter extends Converter {
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         patient.addGeneralPractitioner(parseHealthProvider());
-        //        String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient); // for debug
-        //        Sys.out1(resourceAsJson);
+        // String resourceAsJson =
+        // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient);
+        // // for debug
+        // Sys.out1(resourceAsJson);
         return Collections.singletonList(patient);
     }
 
@@ -107,11 +111,12 @@ public class PatientConverter extends Converter {
         String forename = get(Vorname);
         String surname = get(Nachname);
         HumanName humanName = new HumanName();
-        //for unknown reasons a Data Absent Reason in name is not valid -> so we set dummy names
+        // for unknown reasons a Data Absent Reason in name is not valid -> so we set
+        // dummy names
         if (Strings.isNullOrEmpty(surname)) {
             surname = "DUMMY_SURNAME";
         }
-        if (Strings.isNullOrEmpty(surname)) { //should never happen while we must set the dummy name to be valid
+        if (Strings.isNullOrEmpty(surname)) { // should never happen while we must set the dummy name to be valid
             warning("Empty " + Nachname + " -> Create Data Absent Reason \"unknown\"");
             StringType familyElement = humanName.getFamilyElement();
             familyElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
@@ -162,7 +167,8 @@ public class PatientConverter extends Converter {
                 case "unknown":
                     return UNKNOWN;
                 default:
-                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + gender + "> not parsable for Record: " + this);
+                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + gender
+                            + "> not parsable for Record: " + this);
                 }
             }
             warning("Geschlecht empty for Record");
@@ -204,7 +210,7 @@ public class PatientConverter extends Converter {
             return addressResource.setType(AddressType.BOTH).setCountry("DE");
         }
         warning("On " + Person + ": " + Anschrift + " empty. " + this);
-        return getDataAbsentAddress(); //needed to be KDS compliant
+        return getDataAbsentAddress(); // needed to be KDS compliant
     }
 
     /**
@@ -213,8 +219,8 @@ public class PatientConverter extends Converter {
     public Address getDataAbsentAddress() {
         Address address = new Address();
         address.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        //address.getCityElement().addExtension(getUnknownDataAbsentReason());
-        //address.getPostalCodeElement().addExtension(getUnknownDataAbsentReason());
+        // address.getCityElement().addExtension(getUnknownDataAbsentReason());
+        // address.getPostalCodeElement().addExtension(getUnknownDataAbsentReason());
         return address;
     }
 

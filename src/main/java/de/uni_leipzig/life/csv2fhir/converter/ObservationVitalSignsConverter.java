@@ -33,8 +33,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Bezeichner,
@@ -47,8 +47,8 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
     /**
      * Category for all Observation of this type.<br>
      * Unfortunately, observations with this actually correct category are not
-     * recognized as valid, which is why the vital sign observations continue to
-     * be assigned the category of laboratory observations.
+     * recognized as valid, which is why the vital sign observations continue to be
+     * assigned the category of laboratory observations.
      */
     private static List<CodeableConcept> VITAL_SIGNS_OBSERVATION_FIXED_CATEGORY = getVitalObservationFixedCategory();
 
@@ -60,7 +60,8 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
      * @param options
      * @throws Exception
      */
-    public ObservationVitalSignsConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ObservationVitalSignsConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -69,7 +70,8 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         Observation observation = new Observation();
         int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
         Reference encounterReference = getEncounterReference();
-        String id = (encounterReference == null ? getPatientId() : getEncounterId()) + ResourceIdSuffix.OBSERVATION_VITALSIGNS + nextId;
+        String id = (encounterReference == null ? getPatientId() : getEncounterId())
+                + ResourceIdSuffix.OBSERVATION_VITALSIGNS + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
@@ -79,18 +81,21 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
         observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
         observation.setValue(parseObservationValue(Wert, Einheit));
         observation.setIdentifier(getIdentifier(id, getDIZId()));
-        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY); //TODO: add the correct category if validator can accept it
-        //String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation); // for debug
+        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY); // TODO: add the correct category if validator
+                                                                        // can accept it
+        // String resourceAsJson =
+        // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation);
+        // // for debug
         return Collections.singletonList(observation);
     }
 
     /**
      * TODO: Change the ObservationVital Category if the ICU Package can be used
-     * This here is the correct Category if all packages could be used to
-     * validate the resources. But until now (08.07.22) there is no valid ICU
-     * Package, which should contain the Codes from file
-     * hl7.fhir.r4.core-4.0.1/package/ValueSet-observation-vitalsignresult.json
-     * are the same from https://loinc.org/85353-1/
+     * This here is the correct Category if all packages could be used to validate
+     * the resources. But until now (08.07.22) there is no valid ICU Package, which
+     * should contain the Codes from file
+     * hl7.fhir.r4.core-4.0.1/package/ValueSet-observation-vitalsignresult.json are
+     * the same from https://loinc.org/85353-1/
      *
      * @return the always same category for vital signs observations
      */

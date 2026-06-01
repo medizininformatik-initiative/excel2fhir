@@ -39,9 +39,9 @@ public abstract class FilesConverter<T> {
     protected int filesCount;
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
+     * @param source     The directory with the files or a specific file to convert
+     * @param target     The directory where the converted files are stored or a
+     *                   specific target file
      * @param fileFilter The filter for the files in the source directory
      */
     public FilesConverter(final File source, final File target, final FileFilter fileFilter) {
@@ -49,82 +49,90 @@ public abstract class FilesConverter<T> {
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
-     * @param fileExtension The file extension for the filter of the files in
-     *            the source directory
+     * @param source        The directory with the files or a specific file to
+     *                      convert
+     * @param target        The directory where the converted files are stored or a
+     *                      specific target file
+     * @param fileExtension The file extension for the filter of the files in the
+     *                      source directory
      */
     public FilesConverter(final File source, final File target, final String fileExtension) {
         this(source, target, createFileFilter(fileExtension), false);
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
-     * @param printDebug If <code>true</code> the passed files will be printed
-     *            to System.out
+     * @param source     The directory with the files or a specific file to convert
+     * @param target     The directory where the converted files are stored or a
+     *                   specific target file
+     * @param printDebug If <code>true</code> the passed files will be printed to
+     *                   System.out
      */
     public FilesConverter(final File source, final File target, final boolean printDebug) {
         this(source, target, (FileFilter) null, printDebug);
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
-     * @param fileExtension The file extension for the filter of the files in
-     *            the source directory
-     * @param printDebug If <code>true</code> the passed files will be printed
-     *            to System.out
+     * @param source        The directory with the files or a specific file to
+     *                      convert
+     * @param target        The directory where the converted files are stored or a
+     *                      specific target file
+     * @param fileExtension The file extension for the filter of the files in the
+     *                      source directory
+     * @param printDebug    If <code>true</code> the passed files will be printed
+     *                      to System.out
      */
     public FilesConverter(final File source, final File target, final String fileExtension, final boolean printDebug) {
         this(source, target, fileExtension, 0, -1, printDebug);
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
-     * @param fileExtension The file extension for the filter of the files in
-     *            the source directory
+     * @param source         The directory with the files or a specific file to
+     *                       convert
+     * @param target         The directory where the converted files are stored or
+     *                       a specific target file
+     * @param fileExtension  The file extension for the filter of the files in the
+     *                       source directory
      * @param startFileIndex number of files which should be skipped in the
-     *            directory
-     * @param filesCount number of files that should be processed after the
-     *            startFileIndex, if exists. -1 or > files count means all.
-     * @param printDebug If <code>true</code> the passed files will be printed
-     *            to System.out
+     *                       directory
+     * @param filesCount     number of files that should be processed after the
+     *                       startFileIndex, if exists. -1 or > files count means
+     *                       all.
+     * @param printDebug     If <code>true</code> the passed files will be printed
+     *                       to System.out
      */
-    public FilesConverter(final File source, final File target, final String fileExtension, final int startFileIndex, final int filesCount, final boolean printDebug) {
+    public FilesConverter(final File source, final File target, final String fileExtension, final int startFileIndex,
+            final int filesCount, final boolean printDebug) {
         this(source, target, createFileFilter(fileExtension), startFileIndex, filesCount, printDebug);
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
+     * @param source     The directory with the files or a specific file to convert
+     * @param target     The directory where the converted files are stored or a
+     *                   specific target file
      * @param fileFilter The filter for the files in the source directory
-     * @param printDebug If <code>true</code> the passed files will be printed
-     *            to System.out
+     * @param printDebug If <code>true</code> the passed files will be printed to
+     *                   System.out
      */
     public FilesConverter(final File source, final File target, final FileFilter fileFilter, final boolean printDebug) {
         this(source, target, fileFilter, 0, -1, printDebug);
     }
 
     /**
-     * @param source The directory with the files or a specific file to convert
-     * @param target The directory where the converted files are stored or a
-     *            specific target file
-     * @param fileFilter The filter for the files in the source directory
+     * @param source         The directory with the files or a specific file to
+     *                       convert
+     * @param target         The directory where the converted files are stored or
+     *                       a specific target file
+     * @param fileFilter     The filter for the files in the source directory
      * @param startFileIndex number of files which should be skipped in the
-     *            directory
-     * @param filesCount number of files that should be processed after the
-     *            startFileIndex, if exists. -1 or > files count means all.
-     * @param printDebug If <code>true</code> the passed files will be printed
-     *            to System.out
+     *                       directory
+     * @param filesCount     number of files that should be processed after the
+     *                       startFileIndex, if exists. -1 or > files count means
+     *                       all.
+     * @param printDebug     If <code>true</code> the passed files will be printed
+     *                       to System.out
      */
-    public FilesConverter(final File source, final File target, final FileFilter fileFilter, final int startFileIndex, final int filesCount, final boolean printDebug) {
+    public FilesConverter(final File source, final File target, final FileFilter fileFilter, final int startFileIndex,
+            final int filesCount, final boolean printDebug) {
         this.source = source;
         this.target = target;
         this.fileFilter = fileFilter;
@@ -134,12 +142,12 @@ public abstract class FilesConverter<T> {
     }
 
     /**
-     * @return all files from the source directory passed through the fileFilter
-     *         or only the source file if source is a file
+     * @return all files from the source directory passed through the fileFilter or
+     *         only the source file if source is a file
      */
     public File[] listFiles() {
         if (source.isFile()) {
-            return new File[] {source};
+            return new File[] { source };
         }
         return source.listFiles(fileFilter);
     }
@@ -192,9 +200,9 @@ public abstract class FilesConverter<T> {
 
     /**
      * @param sourceFile
-     * @return the full target file name generated by the source file name and
-     *         the target directory or always the target if it is a file itself
-     *         (and not a directory).
+     * @return the full target file name generated by the source file name and the
+     *         target directory or always the target if it is a file itself (and
+     *         not a directory).
      */
     protected File getTargetFile(final File sourceFile) {
         if (!target.exists() || !target.isDirectory()) {

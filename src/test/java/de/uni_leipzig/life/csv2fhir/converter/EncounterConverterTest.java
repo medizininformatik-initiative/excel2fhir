@@ -72,15 +72,18 @@ public class EncounterConverterTest {
 
         assertEquals(2, departmentEncounters.size());
         assertEquals(2, wardEncounters.size());
-        assertEquals("Encounter/" + departmentEncounters.get(0).getId(), wardEncounters.get(0).getPartOf().getReference());
-        assertEquals("Encounter/" + departmentEncounters.get(1).getId(), wardEncounters.get(1).getPartOf().getReference());
+        assertEquals("Encounter/" + departmentEncounters.get(0).getId(),
+                wardEncounters.get(0).getPartOf().getReference());
+        assertEquals("Encounter/" + departmentEncounters.get(1).getId(),
+                wardEncounters.get(1).getPartOf().getReference());
     }
 
     private static ConverterResult convertRecords(String csv) throws Exception {
         ConverterResult result = new ConverterResult(new ConverterOptions(""));
         String previousPatientId = null;
         for (CSVRecord record : createRecords(csv)) {
-            EncounterConverter converter = new EncounterConverter(record, previousPatientId, result, null, new ConverterOptions(""));
+            EncounterConverter converter = new EncounterConverter(record, previousPatientId, result, null,
+                    new ConverterOptions(""));
             previousPatientId = converter.getPatientId();
             for (Resource resource : converter.convertInternal()) {
                 result.add(Fall, resource);

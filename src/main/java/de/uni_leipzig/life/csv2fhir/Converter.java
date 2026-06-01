@@ -132,12 +132,13 @@ public abstract class Converter {
      * @param record
      * @param previousRecordPID
      * @param result
-     * @param validator Validator to validate resources. Can be
-     *            <code>null</code> if nothing should be validated.
+     * @param validator         Validator to validate resources. Can be
+     *                          <code>null</code> if nothing should be validated.
      * @param options
      * @throws Exception
      */
-    public Converter(CSVRecord record, String previousRecordPID, ConverterResult result, @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
+    public Converter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            @Nullable FHIRValidator validator, ConverterOptions options) throws Exception {
         this.record = record;
         this.result = result;
         this.validator = validator;
@@ -166,9 +167,8 @@ public abstract class Converter {
     protected abstract List<? extends Resource> convertInternal() throws Exception;
 
     /**
-     * Checks if the records contains no (valid) values. A value is valid if it
-     * is not null and not only consists of whitespace characters or minus signs
-     * '-'.
+     * Checks if the records contains no (valid) values. A value is valid if it is
+     * not null and not only consists of whitespace characters or minus signs '-'.
      *
      * @return <code>true</code> if the record contains no values.
      */
@@ -204,13 +204,15 @@ public abstract class Converter {
 
     /**
      * @param converterClass
-     * @return The class with the enum with the definition of the table columns
-     *         in the passed converter class
+     * @return The class with the enum with the definition of the table columns in
+     *         the passed converter class
      */
-    @SuppressWarnings("unchecked") //it's checked
-    public static Class<? extends Enum<? extends TableColumnIdentifier>> reflectColumnIdentifiersClass(Class<? extends Converter> converterClass) {
+    @SuppressWarnings("unchecked") // it's checked
+    public static Class<? extends Enum<? extends TableColumnIdentifier>> reflectColumnIdentifiersClass(
+            Class<? extends Converter> converterClass) {
         for (Class<?> declaredClass : converterClass.getDeclaredClasses()) {
-            if (Enum.class.isAssignableFrom(declaredClass) && TableColumnIdentifier.class.isAssignableFrom(declaredClass)) {
+            if (Enum.class.isAssignableFrom(declaredClass)
+                    && TableColumnIdentifier.class.isAssignableFrom(declaredClass)) {
                 return (Class<? extends Enum<? extends TableColumnIdentifier>>) declaredClass.asSubclass(Enum.class);
             }
         }
@@ -281,7 +283,8 @@ public abstract class Converter {
      * @return
      */
     protected String getLogMessageBody(String msg) {
-        return getClass().getSimpleName().replaceFirst("Converter", "") + ": " + msg + ":" + record.getRecordNumber() + "! "
+        return getClass().getSimpleName().replaceFirst("Converter", "") + ": " + msg + ":" + record.getRecordNumber()
+                + "! "
                 + record.toString();
     }
 
@@ -316,7 +319,8 @@ public abstract class Converter {
      */
     public String get(Object columnIdentifier) {
         String columnName = Objects.toString(columnIdentifier, null);
-        boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier && !((TableColumnIdentifier) columnIdentifier).isMandatory();
+        boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier
+                && !((TableColumnIdentifier) columnIdentifier).isMandatory();
         String entry = null;
         if (tryCatch) {
             try {
@@ -357,12 +361,12 @@ public abstract class Converter {
      * In old excel files the column with the encounter number does not exists.
      * That means that this number should always be 1 (in every table sheet) and
      * there is always only 1 encounter per patient possible.</br>
-     * Now there is an extra column in every sheet for the encounter number so
-     * that we can define multiple encounters for 1 patient and add medication,
+     * Now there is an extra column in every sheet for the encounter number so that
+     * we can define multiple encounters for 1 patient and add medication,
      * diagnosis etc. to a special encounter.</br>
-     * To ensure that the files without the encounter number column will still
-     * be converted we set the value 1 if the column is missing. Same happens if
-     * the column exists and the value is mandatory but missing.</br>
+     * To ensure that the files without the encounter number column will still be
+     * converted we set the value 1 if the column is missing. Same happens if the
+     * column exists and the value is mandatory but missing.</br>
      * If the column is optional but exists then the value of the column will be
      * inserted in the full ID. Only in this case the resulting ID can be
      * <code>null</code> if the value in the record is empty.</br>
@@ -375,7 +379,8 @@ public abstract class Converter {
      */
     private List<String> parseEncounterIds() throws Exception {
         TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
-        //missing encounter number -> set it to 1 if the column does not exists in the table
+        // missing encounter number -> set it to 1 if the column does not exists in the
+        // table
         if (encounterIDColumnIdentifier == null) {
             return Collections.emptyList();
         }
@@ -388,9 +393,11 @@ public abstract class Converter {
                 encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
             }
         } else {
-            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a mutable list!
+            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a
+                                                                                                            // mutable
+                                                                                                            // list!
         }
-        //is still null if the column exists but the value is missing
+        // is still null if the column exists but the value is missing
         if (encounterNumbers == null || encounterNumbers.isEmpty()) {
             return Collections.emptyList();
         }
@@ -471,9 +478,11 @@ public abstract class Converter {
      * @return
      * @throws Exception
      */
-    private Reference getReference(TableIdentifier tableIdentifier, String elementID, Class<? extends Resource> referenceType) throws Exception {
+    private Reference getReference(TableIdentifier tableIdentifier, String elementID,
+            Class<? extends Resource> referenceType) throws Exception {
         if (tableIdentifier != null) {
-            Resource resource = result.get(tableIdentifier, referenceType, elementID); //must exists in this bundle to create a valid reference
+            Resource resource = result.get(tableIdentifier, referenceType, elementID); // must exists in this bundle to
+                                                                                       // create a valid reference
             if (resource == null) {
                 return null;
             }
@@ -493,16 +502,17 @@ public abstract class Converter {
      * Creates a {@link CodeableConcept} from the columns with the given name of
      * the {@link CSVRecord} of this converter and the given codeSystemMapper.
      *
-     * @param codeColumnName Name of the column with the human readable code
-     * @param codeSystemMapper a mapper that maps from the human readable code
-     *            to a code from a code system. This mapper must return the code
-     *            system via the function
-     *            {@link CodeSystemMapper#getCodeSystem()}
+     * @param codeColumnName   Name of the column with the human readable code
+     * @param codeSystemMapper a mapper that maps from the human readable code to a
+     *                         code from a code system. This mapper must return the
+     *                         code system via the function
+     *                         {@link CodeSystemMapper#getCodeSystem()}
      * @return a new {@link CodeableConcept}
-     * @throws Exception if the {@link CSVRecord} returns <code>null</code> for
-     *             the codeColumnName
+     * @throws Exception if the {@link CSVRecord} returns <code>null</code> for the
+     *                   codeColumnName
      */
-    public CodeableConcept createCodeableConcept(Enum<?> codeColumnName, CodeSystemMapper codeSystemMapper) throws Exception {
+    public CodeableConcept createCodeableConcept(Enum<?> codeColumnName, CodeSystemMapper codeSystemMapper)
+            throws Exception {
         String humanText = record.get(codeColumnName);
         if (humanText == null) {
             error(codeColumnName + " empty for Record");
@@ -520,15 +530,15 @@ public abstract class Converter {
     /**
      * Creates a new {@link CodeableConcept} to which coding is added. This code
      * has the passed {@link CodeSystem} and as code value the value from the
-     * column with the name codeColumnName from the {@link CSVRecord}.
-     * Additionally the returned {@link CodeableConcept} gets the text from the
-     * column textColumnName.
+     * column with the name codeColumnName from the {@link CSVRecord}. Additionally
+     * the returned {@link CodeableConcept} gets the text from the column
+     * textColumnName.
      *
-     * @param codeSystem the code system of the contained {@link Coding}
+     * @param codeSystem     the code system of the contained {@link Coding}
      * @param codeColumnName Name of the column with the code value for the
-     *            {@link Coding}
+     *                       {@link Coding}
      * @param textColumnName Name of the column with the text for the returned
-     *            {@link CodeableConcept}
+     *                       {@link CodeableConcept}
      * @return a new {@link CodeableConcept} or if missing and mandatory then a
      *         data absent reasond or if not mandatory then <code>null</code>
      */
@@ -552,10 +562,10 @@ public abstract class Converter {
      * Additionally the returned {@link CodeableConcept} gets the text from the
      * column textColumnName.
      *
-     * @param coding the {@link Coding} to set for the returned
-     *            {@link CodeableConcept}
+     * @param coding         the {@link Coding} to set for the returned
+     *                       {@link CodeableConcept}
      * @param textColumnName Name of the column with the text for the returned
-     *            {@link CodeableConcept}
+     *                       {@link CodeableConcept}
      * @return a new {@link CodeableConcept}
      */
     public CodeableConcept createCodeableConcept(Coding coding, Enum<?> textColumnName) {
@@ -568,7 +578,7 @@ public abstract class Converter {
      * for the contained {@link Coding}.
      *
      * @param codeSystem the code system of the contained {@link Coding}
-     * @param code the code of the contained {@link Coding}
+     * @param code       the code of the contained {@link Coding}
      * @return a new {@link CodeableConcept}
      */
     public static CodeableConcept createCodeableConcept(String codeSystem, String code) {
@@ -582,7 +592,7 @@ public abstract class Converter {
      * {@link CodeableConcept} gets the text from parameter <code>text</code>.
      *
      * @param codeSystem the code system of the contained {@link Coding}
-     * @param code the code of the contained {@link Coding}
+     * @param code       the code of the contained {@link Coding}
      * @param text
      * @return a new {@link CodeableConcept}
      */
@@ -591,12 +601,12 @@ public abstract class Converter {
     }
 
     /**
-     * Creates a new {@link CodeableConcept} with the given code, code system
-     * and display for the contained {@link Coding}. Additionally the returned
+     * Creates a new {@link CodeableConcept} with the given code, code system and
+     * display for the contained {@link Coding}. Additionally the returned
      * {@link CodeableConcept} gets the text from parameter <code>text</code>.
      *
      * @param codeSystem the code system of the contained {@link Coding}
-     * @param code the code of the contained {@link Coding}
+     * @param code       the code of the contained {@link Coding}
      * @param display
      * @param text
      * @return a new {@link CodeableConcept}
@@ -607,18 +617,19 @@ public abstract class Converter {
     }
 
     /**
-     * Creates a new {@link CodeableConcept} with the given code, code system
-     * and display for the contained {@link Coding}. Additionally the returned
+     * Creates a new {@link CodeableConcept} with the given code, code system and
+     * display for the contained {@link Coding}. Additionally the returned
      * {@link CodeableConcept} gets the text from parameter <code>text</code>.
      *
      * @param codeSystem the code system of the contained {@link Coding}
-     * @param code the code of the contained {@link Coding}
+     * @param code       the code of the contained {@link Coding}
      * @param display
      * @param text
      * @param version
      * @return a new {@link CodeableConcept}
      */
-    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text, String version) {
+    public static CodeableConcept createCodeableConcept(String codeSystem, String code, String display, String text,
+            String version) {
         Coding coding = createCoding(codeSystem, code, display);
         coding.setVersion(version);
         return new CodeableConcept(coding).setText(text);
@@ -627,7 +638,7 @@ public abstract class Converter {
     /**
      * Creates a new {@link Coding} with the given parameters.
      *
-     * @param codeSystem the code system to set
+     * @param codeSystem     the code system to set
      * @param codeColumnName Name of the column with the code
      * @return a new {@link Coding}
      */
@@ -646,7 +657,7 @@ public abstract class Converter {
 
     /**
      * @param codeSystem the code system to set
-     * @param code the code to set
+     * @param code       the code to set
      * @return a new {@link Coding} with the given values
      */
     public static Coding createCoding(String codeSystem, String code) {
@@ -660,8 +671,8 @@ public abstract class Converter {
 
     /**
      * @param codeSystem the code system to set
-     * @param code the code to set
-     * @param display the display text to set for the returned {@link Coding}
+     * @param code       the code to set
+     * @param display    the display text to set for the returned {@link Coding}
      * @return a new {@link Coding} with the given values
      */
     public static Coding createCoding(String codeSystem, String code, String display) {
@@ -672,8 +683,8 @@ public abstract class Converter {
 
     /**
      * @param codeSystem the code system to set
-     * @param code the code to set
-     * @param display the display text to set for the returned {@link Coding}
+     * @param code       the code to set
+     * @param display    the display text to set for the returned {@link Coding}
      * @param version
      * @return a new {@link Coding} with the given values
      */
@@ -694,7 +705,8 @@ public abstract class Converter {
             try {
                 dataAbsentReason = DataAbsentReason.fromCode(code);
             } catch (FHIRException e) {
-                //ignore the org.hl7.fhir.exceptions.FHIRException: Unknown DataAbsentReason code
+                // ignore the org.hl7.fhir.exceptions.FHIRException: Unknown DataAbsentReason
+                // code
             }
             if (dataAbsentReason != null) {
                 String system = coding.getSystem();
@@ -707,8 +719,8 @@ public abstract class Converter {
     /**
      * @param startDateColumnName
      * @param endDateColumnName
-     * @return a {@link Period} object filled with the start and end date given
-     *         by the column names in the {@link CSVRecord} of this converter
+     * @return a {@link Period} object filled with the start and end date given by
+     *         the column names in the {@link CSVRecord} of this converter
      */
     public Period createPeriod(Enum<?> startDateColumnName, Enum<?> endDateColumnName) throws Exception {
         String endDateValue = null;
@@ -847,8 +859,8 @@ public abstract class Converter {
     }
 
     /**
-     * @return a {@link CodeableConcept} that represents a valid error data
-     *         absent reason.
+     * @return a {@link CodeableConcept} that represents a valid error data absent
+     *         reason.
      */
     public static CodeableConcept getErrorDataAbsentReasonCodeableConcept() {
         return getDataAbsentReasonCodeableConcept(DataAbsentReason.ERROR);
@@ -871,10 +883,10 @@ public abstract class Converter {
     }
 
     /**
-     * @param valuePattern the toString() value from this enum is the pattern
-     *            that must match the value of the record in the column with the
-     *            columnName
-     * @param columnName name of the column with the value to match
+     * @param valuePattern the toString() value from this enum is the pattern that
+     *                     must match the value of the record in the column with
+     *                     the columnName
+     * @param columnName   name of the column with the value to match
      * @return <code>true</code> if the value matches the pattern
      */
     public final boolean matches(Enum<?> valuePattern, Enum<?> columnName) {

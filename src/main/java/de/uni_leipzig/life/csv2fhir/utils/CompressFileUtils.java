@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
@@ -19,7 +20,8 @@ public class CompressFileUtils {
      */
     public static void compressGzip(File source) throws IOException {
         File target = new File(source.getAbsolutePath() + ".gz");
-        try (GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(target));
+        try (OutputStream targetOutputStream = new FileOutputStream(target);
+                GZIPOutputStream out = new GZIPOutputStream(targetOutputStream);
                 FileInputStream fis = new FileInputStream(source)) {
             // copy file
             byte[] buffer = new byte[1024];
@@ -36,7 +38,8 @@ public class CompressFileUtils {
      */
     public static void compressBZ2(File source) throws IOException {
         File target = new File(source.getAbsolutePath() + ".bz2");
-        try (BZip2CompressorOutputStream gos = new BZip2CompressorOutputStream(new FileOutputStream(target));
+        try (OutputStream targetOutputStream = new FileOutputStream(target);
+                BZip2CompressorOutputStream gos = new BZip2CompressorOutputStream(targetOutputStream);
                 FileInputStream fis = new FileInputStream(source)) {
             // copy file
             byte[] buffer = new byte[1024];

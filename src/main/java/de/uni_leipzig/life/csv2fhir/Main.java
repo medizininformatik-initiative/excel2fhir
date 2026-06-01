@@ -35,12 +35,12 @@ public class Main implements Callable<Integer> {
     /**
      *
      */
-    @Option(names = {"-v",
-            "--validate-bundles"}, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
+    @Option(names = { "-v",
+            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
     static boolean validateBundles = false;
 
-    @Option(names = {"-vll",
-            "--validation-log-level"}, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
+    @Option(names = { "-vll",
+            "--validation-log-level" }, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
     static ValidationResultType minLogLevel = null;
 
     /**
