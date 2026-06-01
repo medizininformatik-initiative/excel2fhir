@@ -300,7 +300,7 @@ public class ConverterResult {
             int maxDigitsCount = getMaxStringLength(resourceCounts.values());
             StringBuilder sb = new StringBuilder();
             int maxLineLength;
-            Integer totalCount = 0;
+            int totalCount = 0;
             int totalUniqueCount = 0;
             for (Class<? extends Resource> resourceType : resourceTypes) {
                 StringBuilder line = new StringBuilder(indentation); // some indentation
@@ -325,7 +325,7 @@ public class ConverterResult {
             StringBuilder totalLine = new StringBuilder(indentation);
             totalLine.append(Strings.padEnd("total", maxNameLength, ' '));
             totalLine.append(": ");
-            totalLine.append(Strings.padStart(totalCount.toString(), maxDigitsCount, ' '));
+            totalLine.append(Strings.padStart(Integer.toString(totalCount), maxDigitsCount, ' '));
             maxLineLength = Math.max(maxNameLength, totalLine.length()); // if there is no created resource then
                                                                          // maxLineLength is still 0 here
             if (totalUniqueCount != totalCount) {
