@@ -542,7 +542,7 @@ public class EncounterConverter extends Converter {
      * @param procedure
      */
     public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Procedure procedure) {
-        addDiagnosisToEncounter(result, encounterID, procedure, null);
+        addDiagnosisResourceToEncounter(result, encounterID, procedure, null);
     }
 
     /**
@@ -553,7 +553,7 @@ public class EncounterConverter extends Converter {
      */
     public static void addDiagnosisToEncounter(ConverterResult result, String encounterID, Condition condition,
             String diagnosisUseIdentifier) {
-        addDiagnosisToEncounter(result, encounterID, (Resource) condition, diagnosisUseIdentifier);
+        addDiagnosisResourceToEncounter(result, encounterID, condition, diagnosisUseIdentifier);
     }
 
     /**
@@ -562,7 +562,7 @@ public class EncounterConverter extends Converter {
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    private static void addDiagnosisToEncounter(ConverterResult result, String encounterID,
+    private static void addDiagnosisResourceToEncounter(ConverterResult result, String encounterID,
             Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
         // The KDS definition needs a diagnosis use (min cardinality 1), but a
         // procedure doesn't have this -> arbitrary default
@@ -573,7 +573,7 @@ public class EncounterConverter extends Converter {
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Fall, Encounter.class, encounterID);
-        addDiagnosisToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
+        addDiagnosisResourceToEncounter(encounter, conditionOrProcedureAsDiagnosis, diagnosisUseIdentifier);
     }
 
     /**
@@ -581,7 +581,7 @@ public class EncounterConverter extends Converter {
      * @param conditionOrProcedureAsDiagnosis
      * @param diagnosisUseIdentifier
      */
-    public static void addDiagnosisToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis,
+    private static void addDiagnosisResourceToEncounter(Encounter encounter, Resource conditionOrProcedureAsDiagnosis,
             String diagnosisUseIdentifier) {
         // the encounter can be null, if the diagnosis is defined with an
         // empty or not present encounter number in the current dataset
