@@ -375,7 +375,7 @@ public class FileHandler {
      * @return
      */
     public static File getNextNotExistingFile(final String filePath, String extension, final boolean restartCounter) {
-        if (filePath == null || filePath.trim().equals("")) {
+        if (filePath == null || filePath.trim().isEmpty()) {
             return null;
         }
         File f = null;
