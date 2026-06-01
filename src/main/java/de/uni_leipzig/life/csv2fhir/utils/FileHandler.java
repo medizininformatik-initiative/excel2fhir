@@ -66,20 +66,23 @@ public class FileHandler {
         }
 
         // file existiert nicht
-        File dir = new File(file.getParent());
         try {
             // wenn das Verzeichnis noch nicht vorhanden ist und sich nicht anlegen lässt
-            if (!dir.exists() && !dir.mkdirs()) {
+            File dir = file.getParentFile();
+            if (dir != null && !dir.exists() && !dir.mkdirs()) {
                 return false;
             }
-            file.createNewFile();
+            boolean created = file.createNewFile();
+            if (!created && !file.exists()) {
+                return false;
+            }
             if (testonly) {
-                file.delete();
+                return created ? file.delete() : file.canWrite();
             }
         } catch (Exception e) {
             return false;
         }
-        return true;
+        return file.canWrite();
     }
 
     /**

@@ -74,8 +74,10 @@ public abstract class JSONFilesConverter extends FilesConverter<JSONObject> {
         // Write JSON file
         try {
             File parentFile = targetFile.getParentFile();
-            parentFile.mkdirs();
-            targetFile.createNewFile();
+            if (parentFile != null && !parentFile.exists() && !parentFile.mkdirs()) {
+                LOG.error("Could not create directory \"" + parentFile + "\"");
+                return;
+            }
         } catch (Exception e) {
             LOG.error("\"" + targetFile + "\"");
             return;
