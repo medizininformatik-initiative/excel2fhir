@@ -170,14 +170,51 @@ Examples include:
 
 ## Docker
 
-A Docker setup is available for running the default template:
+Docker can be used without a local Java or Maven installation. The compose setup mounts
+the repository root read-only as `/app/input` and writes generated files to the host
+directories `outputGlobal/` and `outputLocal/`.
+
+Run the bundled default template:
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build
+docker compose -f docker/docker-compose.yml run --rm excel2fhir
 ```
 
-The compose setup mounts `outputGlobal/` and `outputLocal/` from the repository root into
-the container.
+Run the demo workbook from the repository:
+
+```bash
+docker compose -f docker/docker-compose.yml run --rm excel2fhir \
+  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx
+```
+
+Run a self-edited workbook stored in the repository directory. Replace
+`my-workbook.xlsx` with the actual file name:
+
+```bash
+docker compose -f docker/docker-compose.yml run --rm excel2fhir \
+  -f /app/input/my-workbook.xlsx
+```
+
+Write one JSON bundle per patient:
+
+```bash
+docker compose -f docker/docker-compose.yml run --rm excel2fhir \
+  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
+  -p 1
+```
+
+Additional CLI options can be passed after the service name. If no output or temp
+directory is provided, the Docker entrypoint defaults to `/app/outputGlobal` and
+`/app/outputLocal`, which are mounted to `outputGlobal/` and `outputLocal/` on the host.
+
+Example with FHIR validation and NDJSON output:
+
+```bash
+docker compose -f docker/docker-compose.yml run --rm excel2fhir \
+  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
+  -v \
+  -r JSON,NDJSON
+```
 
 ## Development
 
