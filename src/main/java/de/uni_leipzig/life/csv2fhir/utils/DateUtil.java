@@ -10,7 +10,6 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -26,7 +25,7 @@ import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
 public class DateUtil {
 
     /**  */
-    static List<String> formatStrings = Arrays.asList("dd.MM.yyyy hh:mm", "yyyy");
+    static List<String> formatStrings = List.of("dd.MM.yyyy HH:mm", "dd.MM.yyyy HH:mm:ss", "yyyy");
 
     /**
      * @param date
@@ -191,6 +190,47 @@ public class DateUtil {
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm");
             return LocalDateTime.parse(date, formatter);
+        } catch (DateTimeParseException e) {
+            return tryTimeFormat3(date);
+        }
+    }
+
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
+    private static LocalDateTime tryTimeFormat3(String date) throws Exception {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy H:mm:ss");
+            return LocalDateTime.parse(date, formatter);
+        } catch (DateTimeParseException e) {
+            return tryTimeFormat4(date);
+        }
+    }
+
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
+    private static LocalDateTime tryTimeFormat4(String date) throws Exception {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd H:mm:ss");
+            return LocalDateTime.parse(date, formatter);
+        } catch (DateTimeParseException e) {
+            return tryTimeFormat5(date);
+        }
+    }
+
+    /**
+     * @param date
+     * @return
+     * @throws Exception
+     */
+    private static LocalDateTime tryTimeFormat5(String date) throws Exception {
+        try {
+            return LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } catch (DateTimeParseException e) {
             throw new Exception();
         }

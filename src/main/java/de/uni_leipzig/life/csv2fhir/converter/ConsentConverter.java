@@ -20,7 +20,7 @@ import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.Consent.ConsentPolicyComponent;
 import org.hl7.fhir.r4.model.Consent.ConsentProvisionType;
 import org.hl7.fhir.r4.model.Consent.ConsentState;
-import org.hl7.fhir.r4.model.Consent.provisionComponent;
+import org.hl7.fhir.r4.model.Consent.ProvisionComponent;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DateType;
 import org.hl7.fhir.r4.model.Meta;
@@ -137,8 +137,8 @@ public class ConsentConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private provisionComponent getProvision() throws Exception {
-        provisionComponent provision = new provisionComponent();
+    private ProvisionComponent getProvision() throws Exception {
+        ProvisionComponent provision = new ProvisionComponent();
         provision.setType(DENY);
         Period defaultPeriod = getPeriod(CONSENT_DEFAULT_DURATION_THIRTY_YEARS);
         provision.setPeriod(defaultPeriod);
@@ -170,14 +170,14 @@ public class ConsentConverter extends Converter {
      * @param defaultPeriod
      * @throws Exception
      */
-    private void addSubProvisions(provisionComponent provision, Period defaultPeriod) throws Exception {
+    private void addSubProvisions(ProvisionComponent provision, Period defaultPeriod) throws Exception {
         Set<Integer> provisionGroupIndices = STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.keySet();
         for (int provisionGroupIndex : provisionGroupIndices) {
             String consentGroupColumnName = STATIC_CONSENT_DATA.getProvisionGroupColumnName(provisionGroupIndex);
             String consentValue = get(consentGroupColumnName);
             if (isNotBlank(consentValue)) {
                 for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.get(provisionGroupIndex)) {
-                    provisionComponent subProvision = provision.addProvision();
+                    ProvisionComponent subProvision = provision.addProvision();
                     // permit or deny
                     ConsentProvisionType provisionType = isYesValue(consentValue) ? PERMIT : DENY;
                     subProvision.setType(provisionType);

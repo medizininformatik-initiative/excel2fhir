@@ -7,9 +7,9 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_E
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Bett;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Einrichtungskontaktklasse;
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Enddatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Ende;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Fachabteilung;
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Startdatum;
+import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Start;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Station;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Zimmer;
 
@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -37,7 +38,6 @@ import org.hl7.fhir.r4.model.Period;
 import org.hl7.fhir.r4.model.Procedure;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.UriType;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -55,13 +55,15 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
  */
 public class EncounterConverter extends Converter {
 
+    public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
+
     /**
      * toString() result of these enum values are the names of the columns in
      * the correspunding excel sheet.
      */
     public static enum Encounter_Columns implements TableColumnIdentifier {
-        Startdatum,
-        Enddatum,
+        Start,
+        Ende,
         Einrichtungskontaktklasse,
         Fachabteilung,
         Station,
@@ -154,10 +156,25 @@ public class EncounterConverter extends Converter {
         String previousEncounterLevel2ID = previousEncounterLevel2 == null ? null : previousEncounterLevel2.getId();
 
         boolean recordHasLevel1EncounterID = !isNullOrEmpty(encounterLevel1Id);
-        boolean createLevel1Encounter = recordHasLevel1EncounterID && encounterLevel1Id != previousEncounterLevel1ID;
-        boolean createLevel2Encounter = !isNullOrEmpty(departmentName) || departmentName != previousDepartmentName;
-        boolean createLevel3Encounter = createLevel2Encounter || !isNullOrEmpty(wardName) || !isNullOrEmpty(roomName) || !isNullOrEmpty(bedName);
-        createLevel2Encounter = createLevel3Encounter; // even if there is no department we must create a Level2 Encounter if Level3 must be cretated
+        boolean createLevel1Encounter = recordHasLevel1EncounterID && !Objects.equals(encounterLevel1Id, previousEncounterLevel1ID);
+        boolean hasLocationDetails = !isNullOrEmpty(wardName) || !isNullOrEmpty(roomName) || !isNullOrEmpty(bedName);
+        boolean hasDepartmentName = !isNullOrEmpty(departmentName);
+        boolean departmentChanged = hasDepartmentName && !Objects.equals(departmentName, previousDepartmentName);
+        boolean hasActiveLevel1Encounter = createLevel1Encounter || previousEncounterLevel1 != null;
+
+        if (createLevel1Encounter) {
+            previousEncounterLevel2 = null;
+            previousEncounterLevel2ID = null;
+            previousDepartmentName = RANDOM_DEFULT_VALUE;
+        }
+
+        boolean createLevel2Encounter = hasActiveLevel1Encounter
+                && (departmentChanged || (previousEncounterLevel2 == null && (hasDepartmentName || hasLocationDetails)));
+        boolean createLevel3Encounter = hasLocationDetails;
+        String effectiveDepartmentName = hasDepartmentName ? departmentName : previousDepartmentName;
+        if (Objects.equals(effectiveDepartmentName, RANDOM_DEFULT_VALUE)) {
+            effectiveDepartmentName = null;
+        }
 
         if (createLevel1Encounter) {
             // generate Encounter Level 1
@@ -220,7 +237,7 @@ public class EncounterConverter extends Converter {
             encounterLevel3.setMeta(getMeta());
             encounterLevel3.setClass_(getEncounterLevel3Class());
             encounterLevel3.setType(getEncounterType(EncounterLevel3.class));
-            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(departmentName, wardName, roomName, bedName);
+            List<EncounterLocationComponent> locationComponents = getOrCreateLocations(effectiveDepartmentName, wardName, roomName, bedName);
             encounterLevel3.setLocation(locationComponents);
             // TODO: find out how to code a valid Servicetype for Encounters Level 3
             setPeriodAndStatus(encounterLevel3);
@@ -239,6 +256,13 @@ public class EncounterConverter extends Converter {
      */
     public static final Collection<Location> getLocations() {
         return locationIDToLocation.values();
+    }
+
+    static void resetStateForTesting() {
+        previousEncounterLevel1 = null;
+        previousEncounterLevel2 = null;
+        previousDepartmentName = RANDOM_DEFULT_VALUE;
+        locationIDToLocation.clear();
     }
 
     /**
@@ -360,19 +384,29 @@ public class EncounterConverter extends Converter {
      * @throws Exception
      */
     protected void setPeriodAndStatus(Encounter encounter) throws Exception {
-        Period period = createPeriod(Startdatum, Enddatum);
+        Period period = createPeriod(Start, Ende);
         encounter.setPeriod(period);
         EncounterStatus status = period.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS;
         encounter.setStatus(status);
-        Period parentPeriod = null;
         if (encounter instanceof EncounterLevel2 || encounter instanceof EncounterLevel3) {
-            parentPeriod = previousEncounterLevel1.getPeriod();
-            previousEncounterLevel1.setStatus(status);
+            updateParentPeriodAndStatus(previousEncounterLevel1, period, status);
         }
         if (encounter instanceof EncounterLevel3) {
-            parentPeriod = previousEncounterLevel2.getPeriod();
-            previousEncounterLevel2.setStatus(status);
+            updateParentPeriodAndStatus(previousEncounterLevel2, period, status);
         }
+    }
+
+    /**
+     * @param parentEncounter
+     * @param period
+     * @param status
+     */
+    private static void updateParentPeriodAndStatus(Encounter parentEncounter, Period period, EncounterStatus status) {
+        if (parentEncounter == null) {
+            return;
+        }
+        parentEncounter.setStatus(status);
+        Period parentPeriod = parentEncounter.getPeriod();
         if (parentPeriod != null) {
             // the top level encounter already has the maximum end
             if (parentPeriod.hasEnd()) {
@@ -460,12 +494,9 @@ public class EncounterConverter extends Converter {
 
         Identifier identifier = new Identifier()
                 .setValue(encounterID)
+                .setSystem(ENCOUNTER_IDENTIFIER_SYSTEM)
                 .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
                 .setAssigner(reference);
-
-        //identifier.setSystem("http://dummyurl") // must be an formal correct url but we add a Data Absent Reason
-        UriType systemElement = identifier.getSystemElement();
-        systemElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
 
         return Collections.singletonList(identifier);
     }
@@ -573,7 +604,7 @@ public class EncounterConverter extends Converter {
     //        EncounterLocationComponent encounterLocationComponent = new EncounterLocationComponent();
     //        encounterLocationComponent.setLocation(reference);
     //        encounterLocationComponent.setStatus(Encounter.EncounterLocationStatus.COMPLETED);
-    //        encounterLocationComponent.setPeriod(createPeriod(Startdatum, Enddatum));
+    //        encounterLocationComponent.setPeriod(createPeriod(Start, Ende));
     //        return Collections.singletonList(encounterLocationComponent);
     //    }
     //

@@ -5,6 +5,5 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - "../input:/app/input"
       - "../outputGlobal:/app/outputGlobal"
       - "../outputLocal:/app/outputLocal"

@@ -102,7 +102,7 @@ public class ConditionConverterTest {
      */
     private static CSVRecord createRecord(String icdCode) throws Exception {
         String value = icdCode == null ? "" : icdCode;
-        String csv = "Patient-ID,Fall-Nr,Bezeichner,ICD,Dokumentationsdatum,Typ\n"
+        String csv = "Patient-ID,Fall-Nr,Bezeichner,ICD,Dokumentationszeitpunkt,Typ\n"
                 + "PID1,1,," + value + ",02.10.2020 00:00,\n";
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
                 .setNullString("")

@@ -68,8 +68,7 @@ public class ConverterOptions {
             if (mapValueContent == null) {
                 value = booleanOption.getDefault();
             } else {
-                String v = mapValueContent.toString().trim().toLowerCase();
-                value = BooleanOption.trueValues.contains(v);
+                value = BooleanOption.isTrue(mapValueContent);
             }
             booleanValues.put(booleanOption, value);
         }
@@ -187,7 +186,14 @@ public class ConverterOptions {
          * supplemented by an "unknown" Data Absent Reason.</br>
          * Every Encounter needs at least one class coding to be valid.
          */
-        ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
+        ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER,
+
+        /**
+         * If true, the Excel input template is validated strictly before the
+         * conversion starts. Strict validation aborts the conversion on inconsistent
+         * input data instead of generating fallback resources.
+         */
+        VALIDATE_STRICT;
 
         /**
          * Set of String values which can be interpreted as booleans with value
@@ -196,13 +202,20 @@ public class ConverterOptions {
         private static final Set<String> trueValues = ImmutableSet.of("true", "t", "wahr", "w", "yes", "y", "ja", "j", "1");
 
         /** All BooleanOptions whose default value is <code>true</code>. */
-        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION, SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION);
+        private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(
+                SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION,
+                SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION,
+                VALIDATE_STRICT);
 
         /**
          * @return Default-Wert dieser Property
          */
-        private boolean getDefault() {
+        public boolean getDefault() {
             return DEFAULT_TRUE_PROERTIES.contains(this);
+        }
+
+        public static boolean isTrue(Object value) {
+            return value != null && trueValues.contains(value.toString().trim().toLowerCase());
         }
 
     }
