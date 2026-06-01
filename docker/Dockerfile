@@ -12,7 +12,9 @@ COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
 COPY docker/docker-entrypoint.sh /app/
 
 WORKDIR /app
-RUN mkdir -p /app/outputGlobal /app/outputLocal && chmod +x /app/docker-entrypoint.sh
+RUN mkdir -p /app/outputGlobal /app/outputLocal \
+    && chown -R 1001:0 /app/outputGlobal /app/outputLocal \
+    && chmod +x /app/docker-entrypoint.sh
 USER 1001
 
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]
