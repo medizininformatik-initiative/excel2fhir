@@ -13,7 +13,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Set;
 
 import com.google.common.base.Strings;
 
@@ -308,17 +313,18 @@ public class FileHandler {
      */
     public static File createTempFile(final String prefix, final String suffix) {
 
-        File tmpFile = null;
-
         try {
-            tmpFile = File.createTempFile(prefix, suffix);
+            Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-------");
+            Path tmpFilePath = Files.createTempFile(prefix, suffix, PosixFilePermissions.asFileAttribute(permissions));
+            File tmpFile = tmpFilePath.toFile();
             tmpFile.deleteOnExit();
+            return tmpFile;
 
-        } catch (IOException e) {
+        } catch (IOException | UnsupportedOperationException e) {
             e.printStackTrace();
         }
 
-        return tmpFile;
+        return null;
     }
 
     /**
