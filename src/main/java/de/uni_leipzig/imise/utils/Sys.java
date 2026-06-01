@@ -60,7 +60,8 @@ public class Sys {
             print(null, stream, false, !appendFistTraceStepToLastMessageLine);
         } else if (message.length == 0) {
             print("", stream, false, !appendFistTraceStepToLastMessageLine);
-        } else if (message.length == 1) { //ich denke das ist der häufigste Fall und der sollte ohne init einer for-Schleife gehen -> daher extra
+        } else if (message.length == 1) { // ich denke das ist der häufigste Fall und der sollte ohne init einer
+                                          // for-Schleife gehen -> daher extra
             print(message[0], stream, false, !appendFistTraceStepToLastMessageLine);
         } else {
             for (int i = 0; i < message.length; i++) {
@@ -76,7 +77,8 @@ public class Sys {
         }
     }
 
-    private static final void print(final Object o, final PrintStream stream, final boolean indent, final boolean newLine) {
+    private static final void print(final Object o, final PrintStream stream, final boolean indent,
+            final boolean newLine) {
         String s = indent ? "      " + o : String.valueOf(o); // nicht über toString() gehen, weil es null sein kann
         if (newLine) {
             stream.println(s);

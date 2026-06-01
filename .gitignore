@@ -7,6 +7,10 @@
 /bin/
 /.classpath
 /.project
-/.settings
+/.settings/*
+!/.settings/
+!/.settings/.gitignore
+!/.settings/org.eclipse.jdt.core.prefs
+!/.settings/org.eclipse.jdt.ui.prefs
 /outputLocal/
 /outputGlobal/

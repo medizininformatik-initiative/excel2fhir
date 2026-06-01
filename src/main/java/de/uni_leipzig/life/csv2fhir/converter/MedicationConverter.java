@@ -69,8 +69,8 @@ import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
 public class MedicationConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Medication_Columns implements TableColumnIdentifier {
         Zeitstempel,
@@ -118,6 +118,7 @@ public class MedicationConverter extends Converter {
         Im_Verlauf,
         Am_letztzen_Tag,
         Bei_Entlassung;
+
         @Override
         public String toString() {
             return super.toString().replace('_', ' ');
@@ -128,9 +129,12 @@ public class MedicationConverter extends Converter {
     *
     */
     public static enum Medikationstyp_Values implements StringEqualsIgnoreCase {
-        // The value in the column Medikationstyp must contain this string (compared as pattern).
-        // If the value in this column is somethis like "Verordnung (MedicationRequest)" then a
-        // MedicationRequest will be created, because MedicationRequest.toString() can be found in
+        // The value in the column Medikationstyp must contain this string (compared as
+        // pattern).
+        // If the value in this column is somethis like "Verordnung
+        // (MedicationRequest)" then a
+        // MedicationRequest will be created, because MedicationRequest.toString() can
+        // be found in
         // this value.
         MedicationRequest,
         MedicationAdministration,
@@ -163,7 +167,8 @@ public class MedicationConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public MedicationConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public MedicationConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -199,7 +204,8 @@ public class MedicationConverter extends Converter {
         medication.setMeta(new Meta().addProfile(PROFILE_MEDICATION));
         String medicationId = getMedicationId();
         medication.setId(medicationId);
-        medication.setIdentifier(singletonList(new Identifier().setValue(medicationId))); // identifier is optional for medication
+        medication.setIdentifier(singletonList(new Identifier().setValue(medicationId))); // identifier is optional for
+                                                                                          // medication
         medication.setCode(convertMedicationCodeableConcept());
         medication.setIngredient(singletonList(getIngredient()));
         return medication;
@@ -366,19 +372,21 @@ public class MedicationConverter extends Converter {
     /**
      * @param codeSystem
      * @param codeColumnName
-     * @param userSelectedIndicatorColumnName Name of the column which contains
-     *            the indicator if the Coding is to set as
-     *            {@link Coding#setUserSelected(boolean)}. To set the generated
-     *            Coding as userSelected the value in this column must be
-     *            contained in the
-     *            <code>codeColumnName.toString()<code>. E.g the code column name
-     *            <code>toString()</code> is "ATC-Code" and the value in the
-     *            column with the name
-     *            <code>userSelectedIndicatorColumnName</code> is "ATC" or "atc"
-     *            or "ATC-Code" then the result Coding is set as user selected.
+     * @param userSelectedIndicatorColumnName Name of the column which contains the
+     *                                        indicator if the Coding is to set as
+     *                                        {@link Coding#setUserSelected(boolean)}.
+     *                                        To set the generated Coding as
+     *                                        userSelected the value in this column
+     *                                        must be contained in the
+     *                                        <code>codeColumnName.toString()<code>. E.g the code column name
+     *            <code>toString()</code>  is "ATC-Code" and the value in the
+     *                                        column with the name
+     *                                        <code>userSelectedIndicatorColumnName</code>
+     *                                        is "ATC" or "atc" or "ATC-Code" then
+     *                                        the result Coding is set as user
+     *                                        selected.
      * @return a new Coding with the given code system and code from the column
-     *         with the codeColumnName or <code>null</code> if the code is
-     *         missing.
+     *         with the codeColumnName or <code>null</code> if the code is missing.
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName, Enum<?> userSelectedIndicatorColumnName) {
         String code = get(codeColumnName);
@@ -400,24 +408,25 @@ public class MedicationConverter extends Converter {
         return null;
     }
 
-    //    /*
-    //     * Wenn kein start/end vorhanden, dann nehme einfach mal an "start unbekannt", "end = Zeitstempel/heute"
-    //     */
-    //    private  Type convertDateTime() throws Exception {
-    //        try {
+    // /*
+    // * Wenn kein start/end vorhanden, dann nehme einfach mal an "start
+    // unbekannt", "end = Zeitstempel/heute"
+    // */
+    // private Type convertDateTime() throws Exception {
+    // try {
     //
-    //            String e = record.get("Zeitstempel");
-    //            if (!StringUtils.isBlank(e)) {
-    //                return DateUtil.parseDateTimeType(e);
-    //                // Period with only end date
-    //                // DateTimeType end = DateUtil.parseDateTimeType(e);
-    //                //return new Period().setEndElement(end);
-    //            }
-    //        } catch (Exception e) {
-    //            error("Can not parse Zeitstempel");
-    //        }
-    //        return null;
-    //    }
+    // String e = record.get("Zeitstempel");
+    // if (!StringUtils.isBlank(e)) {
+    // return DateUtil.parseDateTimeType(e);
+    // // Period with only end date
+    // // DateTimeType end = DateUtil.parseDateTimeType(e);
+    // //return new Period().setEndElement(end);
+    // }
+    // } catch (Exception e) {
+    // error("Can not parse Zeitstempel");
+    // }
+    // return null;
+    // }
 
     /**
      * In den Testdaten leider häufig falsch / täglich wiederholt genutzt
@@ -508,7 +517,8 @@ public class MedicationConverter extends Converter {
         }
         String ucum = "1"; // see https://ucum.org/ucum.html#section-Examples-for-some-Non-Units.
         String synonym = get(Darreichungsform);
-        return new SimpleQuantity().setValue(value).setUnit(synonym).setSystem("http://unitsofmeasure.org").setCode(ucum);
+        return new SimpleQuantity().setValue(value).setUnit(synonym).setSystem("http://unitsofmeasure.org")
+                .setCode(ucum);
     }
 
     /**

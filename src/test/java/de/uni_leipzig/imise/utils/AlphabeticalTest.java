@@ -66,7 +66,8 @@ public class AlphabeticalTest {
 
     @Test
     public void sortTest() {
-        //sort(List<?>) and sort(T...) must have the same results -> test in one function
+        // sort(List<?>) and sort(T...) must have the same results -> test in one
+        // function
         Object mock1 = mock(Object.class);
         Object mock2 = mock(Object.class);
         Object mock3 = mock(Object.class);
@@ -144,7 +145,7 @@ public class AlphabeticalTest {
 
         when(mock4.toString()).thenReturn("1.1 a.");
 
-        //sorted list
+        // sorted list
         List<Object> mocksList = new ArrayList<>(Arrays.asList(mock1, mock2, mock3));
         int index = Alphabetical.binarySearch(mocksList, mock4);
         assertEquals(1, index);
