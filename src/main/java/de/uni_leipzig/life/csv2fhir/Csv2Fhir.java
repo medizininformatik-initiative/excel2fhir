@@ -120,7 +120,7 @@ public class Csv2Fhir {
         // If there is no Konvertierungsoptionen.csv file in the outputLocal directory (that was extracted
         // from the Excel file) then only the default options are loaded from the resources. If the file
         // exists then it is loaded after the defaults are loaded.
-        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern().toString() + ".csv";
+        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern() + ".csv";
         for (File file : inputDirectory.listFiles()) {
             String fileName = file.getName();
             if (fileName.matches(converterOptionsFileNamePattern)) {
@@ -148,7 +148,8 @@ public class Csv2Fhir {
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
-        try (CSVParser records = csvFormat.parse(new FileReader(file))) {
+        try (Reader reader = new FileReader(file);
+                CSVParser records = csvFormat.parse(reader)) {
             for (CSVRecord record : records) {
                 String pid = record.get(columnNameString);
                 if (pid != null) {
@@ -240,6 +241,9 @@ public class Csv2Fhir {
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
                         if (pids.size() > patientsPerBundle) {
+                            if (firstPID == null) {
+                                throw new IllegalStateException("Cannot build output file name extension without first patient ID");
+                            }
                             fileNameExtendsion = firstPID.equals(lastPID) ? firstPID : firstPID + "-" + lastPID;
                         }
                         writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
@@ -327,7 +331,7 @@ public class Csv2Fhir {
         String fileName = getOutputFileName(outputFileNameBase, fileNameExtension, outputFileType);
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
-        try (FileWriter fileWriter = new FileWriter(outputFile)) {
+        try (Writer fileWriter = new FileWriter(outputFile)) {
             outputFileType.getParser()
                     .setPrettyPrint(true)
                     .encodeResourceToWriter(bundle, fileWriter);
@@ -352,8 +356,9 @@ public class Csv2Fhir {
      * @throws IOException
      */
     private static void appendNewLineAtEOF(File file) throws IOException {
-        Writer output = new BufferedWriter(new FileWriter(file, true)).append("\n");
-        output.close();
+        try (Writer output = new BufferedWriter(new FileWriter(file, true))) {
+            output.append("\n");
+        }
     }
 
     /**
@@ -489,7 +494,7 @@ public class Csv2Fhir {
 
     /**
      * @param map
-     * @param neededColls
+     * @param neededColumnNames
      * @return
      */
     private static boolean isColumnMissing(Map<String, Integer> map, Collection<String> neededColumnNames) {

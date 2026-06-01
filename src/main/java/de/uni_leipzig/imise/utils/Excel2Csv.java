@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,10 +98,8 @@ public class Excel2Csv {
                 // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
                 // Wir setzten nun aber nur auf UTF
                 String csvFile = FilenameUtils.concat(csvDirBasename, sourceFileName + "_" + sheetName + ".csv");
-                OutputStream os = new FileOutputStream(new File(csvFile));
-                String charSet = "UTF-8";
-                //                String charSet = "ISO-8859-1";
-                try (PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, charSet))) {
+                try (OutputStream os = new FileOutputStream(new File(csvFile));
+                        PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
                     LOG.info("Creating " + csvFile);
                     // Annahme: Header ist in der ersten Zeile
                     // Annahme: Es gibt nur soviele Spalten wie Header
