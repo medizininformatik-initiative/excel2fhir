@@ -210,8 +210,7 @@ public class MultiSinglePatientBundlesFileWriter {
      * @return
      */
     private String getFileName(String nameExtension, OutputFileType outputFileType) {
-        String newFileName = outputFileNameBase + nameExtension + outputFileType.getFileExtension();
-        return newFileName.replaceAll("__", "_");
+        return Csv2Fhir.getOutputFileName(outputFileNameBase, nameExtension, outputFileType);
     }
 
     /**
