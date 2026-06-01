@@ -74,14 +74,16 @@ public class Excel2Csv {
 
     /**
      * @param sourceExcelFile
-     * @param sheetNamePatterns if not <code>null</code> then only the sheets
-     *            with a name in this collection will be convertert to csv. If
-     *            <code>null</code> then all sheet will be convertet.
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets with
+     *                          a name in this collection will be convertert to
+     *                          csv. If <code>null</code> then all sheet will be
+     *                          convertet.
      * @param targetCsvDir
      * @throws IOException
      */
     @SuppressWarnings("null")
-    public static void splitExcel(File sourceExcelFile, Collection<String> sheetNamePatterns, File targetCsvDir) throws IOException {
+    public static void splitExcel(File sourceExcelFile, Collection<String> sheetNamePatterns, File targetCsvDir)
+            throws IOException {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
@@ -108,8 +110,8 @@ public class Excel2Csv {
                     // Z�hle relevante Spalten
                     for (int col = 0; col < firstRow.getLastCellNum(); col++) {
                         // This looks fine but skips null cells
-                        //for (Cell cell : firstRow) {
-                        //  String s = cell.getStringCellValue();
+                        // for (Cell cell : firstRow) {
+                        // String s = cell.getStringCellValue();
                         Cell cell = firstRow.getCell(col);
                         if (cell == null) {
                             break;
@@ -130,12 +132,15 @@ public class Excel2Csv {
                             Cell cell = row.getCell(col);
                             String cellValue = null;
                             CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
-                            CellType formulaResultType = cellType == CellType.FORMULA ? cell.getCachedFormulaResultType() : null;
+                            CellType formulaResultType = cellType == CellType.FORMULA
+                                    ? cell.getCachedFormulaResultType()
+                                    : null;
                             if (cellType == CellType.BLANK) {
                                 cellValue = "";
                             } else if (cellType == CellType.NUMERIC || formulaResultType == CellType.NUMERIC) {
                                 if (DateUtil.isCellDateFormatted(cell)) {
-                                    // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein String
+                                    // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein
+                                    // String
                                     cellValue = DATE_FORMAT.format(cell.getDateCellValue());
                                 } else {
                                     // 11715311 wird ansonsten zu 1.1715311E7

@@ -43,8 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 public class ObservationLaboratoryConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum ObservationLaboratory_Columns implements TableColumnIdentifier {
         LOINC,
@@ -77,7 +77,8 @@ public class ObservationLaboratoryConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public ObservationLaboratoryConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ObservationLaboratoryConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -86,8 +87,10 @@ public class ObservationLaboratoryConverter extends Converter {
         Observation observation = new Observation();
         int nextId = result.getNextId(Laborbefund, Observation.class, START_ID_OBSERVATION_LABORATORY);
         Reference encounterReference = getEncounterReference();
-        // If the encounter is defined for this Observation so we can use it for the id. If not we can only use the PID
-        String id = (encounterReference != null ? getEncounterId() : getPatientId()) + ResourceIdSuffix.OBSERVATION_LABORATORY + nextId;
+        // If the encounter is defined for this Observation so we can use it for the
+        // id. If not we can only use the PID
+        String id = (encounterReference != null ? getEncounterId() : getPatientId())
+                + ResourceIdSuffix.OBSERVATION_LABORATORY + nextId;
         observation.setId(id);
         observation.setMeta(new Meta().addProfile(PROFILE));
         observation.setStatus(FINAL);
@@ -120,7 +123,8 @@ public class ObservationLaboratoryConverter extends Converter {
      * @param loincTextColumnIdentifier
      * @return
      */
-    protected CodeableConcept parseLoincCodeableConcept(Enum<?> loincCodeColumnIdentifier, Enum<?> loincTextColumnIdentifier) {
+    protected CodeableConcept parseLoincCodeableConcept(Enum<?> loincCodeColumnIdentifier,
+            Enum<?> loincTextColumnIdentifier) {
         return createCodeableConcept("http://loinc.org", loincCodeColumnIdentifier, loincTextColumnIdentifier);
     }
 
@@ -134,7 +138,8 @@ public class ObservationLaboratoryConverter extends Converter {
             String timestamp = converter.get(timestampColumnIdentifier);
             observation.setEffective(DateUtil.parseDateTimeType(timestamp));
         } catch (Exception e) {
-            converter.warning("Can not parse " + timestampColumnIdentifier + " for Record -> set \"unknown\" Data Absent Reason");
+            converter.warning(
+                    "Can not parse " + timestampColumnIdentifier + " for Record -> set \"unknown\" Data Absent Reason");
             DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
             effectiveDateTimeType.addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
@@ -147,7 +152,8 @@ public class ObservationLaboratoryConverter extends Converter {
      * @return
      * @throws Exception
      */
-    public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier) throws Exception {
+    public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier)
+            throws Exception {
         BigDecimal value = null;
         String comparator = null;
         try {
@@ -178,7 +184,8 @@ public class ObservationLaboratoryConverter extends Converter {
                 .setIdentifier(
                         new Identifier()
                                 .setValue(dizID)
-                                .setSystem("https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
+                                .setSystem(
+                                        "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
         return Arrays.asList(
                 new Identifier()
                         .setValue(observationID)

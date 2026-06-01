@@ -51,7 +51,8 @@ public abstract class JSONFilesConverter extends FilesConverter<JSONObject> {
      * @param filesCount
      * @param printDebug
      */
-    public JSONFilesConverter(final File source, final File target, final int startFileIndex, final int filesCount, final boolean printDebug) {
+    public JSONFilesConverter(final File source, final File target, final int startFileIndex, final int filesCount,
+            final boolean printDebug) {
         super(source, target, ".json", startFileIndex, filesCount, printDebug);
     }
 
@@ -70,7 +71,7 @@ public abstract class JSONFilesConverter extends FilesConverter<JSONObject> {
 
     @Override
     public void writeObject(final JSONObject convertedObject, final File targetFile) {
-        //Write JSON file
+        // Write JSON file
         try {
             File parentFile = targetFile.getParentFile();
             parentFile.mkdirs();
@@ -81,10 +82,10 @@ public abstract class JSONFilesConverter extends FilesConverter<JSONObject> {
         }
         try (FileWriter file = new FileWriter(targetFile)) {
 
-            //https://stackoverflow.com/questions/4105795/pretty-print-json-in-java
+            // https://stackoverflow.com/questions/4105795/pretty-print-json-in-java
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String prettyJsonString = gson.toJson(convertedObject);
-            //System.out.println(prettyJsonString);
+            // System.out.println(prettyJsonString);
             file.write(prettyJsonString);
             file.flush();
         } catch (Exception e) {

@@ -16,8 +16,8 @@ public interface TableColumnIdentifier {
 
     /**
      * @return If this value is absent but marked as mandatory then this default
-     *         value will be set. <code>null</code> is not a valid default value
-     *         so this will cause an error.
+     *         value will be set. <code>null</code> is not a valid default value so
+     *         this will cause an error.
      */
     public default String getDefaultIfMissing() {
         return null;
@@ -26,11 +26,12 @@ public interface TableColumnIdentifier {
     /**
      * @param potencialTableColumnIdentifier
      * @return <code>true</code> if the {@link Enum} is an
-     *         {@link TableColumnIdentifier} and this TableColumnIdentifier
-     *         returns <code>true</code> on {@link #isMandatory()}.
+     *         {@link TableColumnIdentifier} and this TableColumnIdentifier returns
+     *         <code>true</code> on {@link #isMandatory()}.
      */
     public static boolean isMandatory(Enum<?> potencialTableColumnIdentifier) {
-        return potencialTableColumnIdentifier instanceof TableColumnIdentifier && ((TableColumnIdentifier) potencialTableColumnIdentifier).isMandatory();
+        return potencialTableColumnIdentifier instanceof TableColumnIdentifier
+                && ((TableColumnIdentifier) potencialTableColumnIdentifier).isMandatory();
     }
 
 }

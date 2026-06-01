@@ -27,16 +27,16 @@ public class Alphabetical {
     public interface AlphabeticalSortTarget {
 
         /**
-         * @return a string used to compare 2 objects if the toString() method
-         *         of the objects return equal strings (second sort criterium)
+         * @return a string used to compare 2 objects if the toString() method of the
+         *         objects return equal strings (second sort criterium)
          */
         public String getSecondSortString();
 
     }
 
     /**
-     * Die Locale, dessen Comparator die Vergleiche herangezogen wird. Initial
-     * ist das die Locale des Systems.
+     * Die Locale, dessen Comparator die Vergleiche herangezogen wird. Initial ist
+     * das die Locale des Systems.
      */
     private static Locale locale = Locale.getDefault();
 
@@ -46,14 +46,14 @@ public class Alphabetical {
     private static Comparator<Object> localizedComparator = null;
 
     /**
-     * Liefert einen <code>Comparator</code> für die vom Benutzer gewählte
-     * Locale.
+     * Liefert einen <code>Comparator</code> für die vom Benutzer gewählte Locale.
      *
      * @return
      */
     public static final Comparator<Object> getLocalizedComparator() {
-        //wenn die Locale zwischenzeitlich geändert wurde -> neu setzen und somit auch wieder den
-        //richtigen Comparator holen
+        // wenn die Locale zwischenzeitlich geändert wurde -> neu setzen und somit auch
+        // wieder den
+        // richtigen Comparator holen
         Locale defaultLocale = Locale.getDefault();
         if (locale != defaultLocale) {
             locale = defaultLocale;
@@ -71,19 +71,17 @@ public class Alphabetical {
     ////////////////////////////////
     /**
      * Ein <code>Comparator</code>, der einen anderen <code>Comparator</code>
-     * umschließt und für die in compare(Object, Object) übergebenen Objecte
-     * erst toString() aufruft und dann den Vergleich an die compare(Object ,
-     * Object)-Methode des umschlossenen <code>Comparators</code> weiterleitet
-     * und desses Ergebnis zurückliefert. Der übergebene Comparator, ist immer
-     * ein <code>RuleBasedComparator</code>, den man für eine
-     * <code>Locale</code> über <code>Collator.getInstance(Locale)</code>
-     * abfragen kann.
+     * umschließt und für die in compare(Object, Object) übergebenen Objecte erst
+     * toString() aufruft und dann den Vergleich an die compare(Object ,
+     * Object)-Methode des umschlossenen <code>Comparators</code> weiterleitet und
+     * desses Ergebnis zurückliefert. Der übergebene Comparator, ist immer ein
+     * <code>RuleBasedComparator</code>, den man für eine <code>Locale</code> über
+     * <code>Collator.getInstance(Locale)</code> abfragen kann.
      */
     private static class ObjectToStringComparator implements Comparator<Object> {
 
         /**
-         * Der <code>Comparator</code> der eigentlich für den Vergleich benutzt
-         * wird.
+         * Der <code>Comparator</code> der eigentlich für den Vergleich benutzt wird.
          */
         private Comparator<Object> realComparator = null;
 
@@ -94,10 +92,10 @@ public class Alphabetical {
         private static final String STIRNG_CHAR_33 = new String(CHAR_33);
 
         /**
-         * Legt einen neuen Comparator an, der in seiner Compare-Methode einfach
-         * für die übergebenen Objekte <code>toString()</code> aufruft und dann
-         * die Strings über die <code>compare()</code>-Methode des übergebenen
-         * Komparators vergleicht.
+         * Legt einen neuen Comparator an, der in seiner Compare-Methode einfach für
+         * die übergebenen Objekte <code>toString()</code> aufruft und dann die Strings
+         * über die <code>compare()</code>-Methode des übergebenen Komparators
+         * vergleicht.
          *
          * @param stringComparator
          */
@@ -135,10 +133,14 @@ public class Alphabetical {
          */
         private String getCleanString(final Object o) {
             String s = String.valueOf(o);
-            //Leerzeichen und auch alle anderen Zeichen <32 werden Default-mäßig nach allen anderen Zeichen
-            //einsortiert (warum auch immer). Um Listen mit Zahlen der Form [1. a, 1.1. a, 1.2. a] in genau
-            //dieser Reiehnfolge sortiert zu bekommen (und nicht [1.1. a, 1.2 a., 1. a]), muss man Leerzeichen
-            //durch Ausrufezeichen mit char = 33 ersetzen. Die werden als erstes Zeichen "richtig" einsortiert.
+            // Leerzeichen und auch alle anderen Zeichen <32 werden Default-mäßig nach
+            // allen anderen Zeichen
+            // einsortiert (warum auch immer). Um Listen mit Zahlen der Form [1. a, 1.1. a,
+            // 1.2. a] in genau
+            // dieser Reiehnfolge sortiert zu bekommen (und nicht [1.1. a, 1.2 a., 1. a]),
+            // muss man Leerzeichen
+            // durch Ausrufezeichen mit char = 33 ersetzen. Die werden als erstes Zeichen
+            // "richtig" einsortiert.
             s = s.replaceAll("[\\s]", STIRNG_CHAR_33);
             return s;
         }
@@ -188,13 +190,13 @@ public class Alphabetical {
     }
 
     /**
-     * Liefert die Position, an der das übergebene Object in die bereits
-     * sortierte Liste eingefügt werden müsste.
+     * Liefert die Position, an der das übergebene Object in die bereits sortierte
+     * Liste eingefügt werden müsste.
      *
      * @param list sortierte Liste, in die das Objekt <code>o</code> eingefügt
-     *            werden soll
-     * @param o Objekt, das in die sortierte Liste <code>list</code> eingefügt
-     *            werden soll
+     *             werden soll
+     * @param o    Objekt, das in die sortierte Liste <code>list</code> eingefügt
+     *             werden soll
      * @return Position, an der das Objekt <code>o</code> in die sortierte Liste
      *         <code>list</code> eingefügt werden soll
      */
@@ -208,13 +210,13 @@ public class Alphabetical {
     }
 
     /**
-     * Liefert die Position, an der das übergebene Object in das bereits
-     * sortierte Array eingefügt werden müsste.
+     * Liefert die Position, an der das übergebene Object in das bereits sortierte
+     * Array eingefügt werden müsste.
      *
      * @param array sortiertes Array, in die das Objekt <code>o</code> eingefügt
-     *            werden soll
-     * @param o Objekt, das in die sortierte Liste <code>list</code> eingefügt
-     *            werden soll
+     *              werden soll
+     * @param o     Objekt, das in die sortierte Liste <code>list</code> eingefügt
+     *              werden soll
      * @return Position, an der das Objekt <code>o</code> in die sortierte Liste
      *         <code>list</code> eingefügt werden soll
      */
@@ -233,8 +235,8 @@ public class Alphabetical {
      * System-Locale vorgibt.
      *
      * @param list alphabetisch sortierte Liste, in der die Einfüge-Position des
-     *            Objektes <code>o</code> ermittelt werden soll
-     * @param o Objekt, dessen Einfüge-Position ermittelt werden soll
+     *             Objektes <code>o</code> ermittelt werden soll
+     * @param o    Objekt, dessen Einfüge-Position ermittelt werden soll
      * @return Einfüge-Position des Objektes <code>o</code>
      * @see Collections#binarySearch(java.util.List, java.lang.Object)
      */

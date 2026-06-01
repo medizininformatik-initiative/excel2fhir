@@ -43,8 +43,8 @@ public class FileTools {
 
     /**
      * @param dir2CreateOrClean
-     * @param ignoreDir if this dir equals the dir2CreateOrClean then nothing
-     *            will be deleted.
+     * @param ignoreDir         if this dir equals the dir2CreateOrClean then
+     *                          nothing will be deleted.
      * @throws IOException
      */
     public static final void ensureEmptyDirectory(File dir2CreateOrClean, File ignoreDir) throws IOException {

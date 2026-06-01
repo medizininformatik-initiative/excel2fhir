@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
+
 /**
  * Validates the current Excel input template contract before converting it.
  */
@@ -233,7 +234,8 @@ public class ExcelTemplateValidator {
                 parsedDateTimes.put(columnName, validateDateTime(sheet, row, columns, columnName, result, false));
             }
             for (DateRangeColumns rangeColumns : dateRangeColumns) {
-                validateDateRange(result, sheetName, rowIndex + 1, rangeColumns.startColumn + "/" + rangeColumns.endColumn,
+                validateDateRange(result, sheetName, rowIndex + 1,
+                        rangeColumns.startColumn + "/" + rangeColumns.endColumn,
                         parsedDateTimes.get(rangeColumns.startColumn), parsedDateTimes.get(rangeColumns.endColumn),
                         null);
             }

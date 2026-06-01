@@ -31,9 +31,9 @@ public class StringUtils {
     }
 
     /**
-     * Fills the passed string, if it is shorter, up to the passed length with
-     * the passed character. If its length is greater than or equal to the
-     * passed length, it remains unchanged.
+     * Fills the passed string, if it is shorter, up to the passed length with the
+     * passed character. If its length is greater than or equal to the passed
+     * length, it remains unchanged.
      *
      * @param s
      * @param c
@@ -72,10 +72,10 @@ public class StringUtils {
     }
 
     /**
-     * Splits a string with a delimiter into a collection. All substrings will
-     * be trimmed.
+     * Splits a string with a delimiter into a collection. All substrings will be
+     * trimmed.
      *
-     * @param s source string
+     * @param s     source string
      * @param delim delimiter to split the source string into parts
      * @return a set to which the parts of the splitted string are added
      */
@@ -84,10 +84,10 @@ public class StringUtils {
     }
 
     /**
-     * Splits a string with a delimiter into a collection. All substrings will
-     * be trimmed.
+     * Splits a string with a delimiter into a collection. All substrings will be
+     * trimmed.
      *
-     * @param s source string
+     * @param s     source string
      * @param delim delimiter to split the source string into parts
      * @return a list to which the parts of the splitted string are added
      */
@@ -96,16 +96,16 @@ public class StringUtils {
     }
 
     /**
-     * Splits a string with a delimiter into a collection. All substrings will
-     * be trimmed.
+     * Splits a string with a delimiter into a collection. All substrings will be
+     * trimmed.
      *
-     * @param <T> type of the Collection
-     * @param s source string
-     * @param delim delimiter to split the source string into parts
+     * @param <T>              type of the Collection
+     * @param s                source string
+     * @param delim            delimiter to split the source string into parts
      * @param collectionToFill on this collection the return values will be
-     *            appended
-     * @return the input collection to which the parts of the splitted string
-     *         are added
+     *                         appended
+     * @return the input collection to which the parts of the splitted string are
+     *         added
      */
     public static final <T extends Collection<String>> T parseCollection(String s, String delim, T collectionToFill) {
         if (!Strings.isNullOrEmpty(s)) {
@@ -120,13 +120,12 @@ public class StringUtils {
      * that null or empty strings are skipped and that the separator does not
      * appear at the end.
      *
-     * @param separator the object to be used as the separator between the
-     *            strings. The object's toString() method will be used to
-     *            convert it to a String. If null, the method returns an empty
-     *            string.
-     * @param strings a variable number of String arguments to be concatenated.
-     *            If null, the method returns an empty string. Null or empty
-     *            strings within the array are ignored.
+     * @param separator the object to be used as the separator between the strings.
+     *                  The object's toString() method will be used to convert it
+     *                  to a String. If null, the method returns an empty string.
+     * @param strings   a variable number of String arguments to be concatenated.
+     *                  If null, the method returns an empty string. Null or empty
+     *                  strings within the array are ignored.
      * @return a single concatenated String with the specified separator between
      *         non-null and non-empty strings, or an empty string if no valid
      *         strings are provided. Example:

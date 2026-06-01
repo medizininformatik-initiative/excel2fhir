@@ -81,9 +81,9 @@ public class FHIRValidator {
 
         /**
          * @param i
-         * @return a string value of i with at least the string length of the
-         *         current value of resources. The string is filled with leading
-         *         whitespaces if it is s
+         * @return a string value of i with at least the string length of the current
+         *         value of resources. The string is filled with leading whitespaces if
+         *         it is s
          */
         String toString(int i) {
             String s = String.valueOf(i);
@@ -122,18 +122,18 @@ public class FHIRValidator {
 
     /**
      * Determines which messeages are logged. Only messages with the same or an
-     * lower ordinal()-Value are logged. If <code>null</code> then nothing will
-     * be logged.
+     * lower ordinal()-Value are logged. If <code>null</code> then nothing will be
+     * logged.
      */
     private final ValidationResultType minLogLevel;
 
     /**
-     * If the validation result of a full bundle or a single resource contains
-     * one of this error message parts then the error will be ignored.
+     * If the validation result of a full bundle or a single resource contains one
+     * of this error message parts then the error will be ignored.
      */
     private static final String[] VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS = {
 
-            // The validator the error  messages change from time to time. Newer messages
+            // The validator the error messages change from time to time. Newer messages
             // uses ' instead of ".
             "Validation failed für 'http://loinc.org#",
             "Validation failed für 'http://fhir.de/CodeSystem/ifa/pzn#",
@@ -153,20 +153,26 @@ public class FHIRValidator {
             "Could not validate code http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Medication.code.coding[0]:Unable to expand value set",
 
-            // Following error message is generated for Observations -> the followng ignore string is
+            // Following error message is generated for Observations -> the followng ignore
+            // string is
             // the very last part of this message:
-            // Keiner der angegebenen Codes ist im Valueset 'IdentifierType' (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), und ein Code sollte aus diesem Valueset stammen, es sei denn, er enthält keinen geeigneten Code) (Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI)
+            // Keiner der angegebenen Codes ist im Valueset 'IdentifierType'
+            // (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), und ein Code sollte
+            // aus diesem Valueset stammen, es sei denn, er enthält keinen geeigneten Code)
+            // (Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI)
             "Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
-            "Profil Reference 'http://fhir.de/ConsentManagement/StructureDefinition/Consent'", // konnte nicht aufgelöst werden, wurde also nicht überprüft"
+            "Profil Reference 'http://fhir.de/ConsentManagement/StructureDefinition/Consent'", // konnte nicht aufgelöst
+                                                                                               // werden, wurde also
+                                                                                               // nicht überprüft"
 
     };
 
     /**
      * If the validation result of a single resource contains one of this error
      * message parts then the error will be ignored.<br>
-     * the following errors will/must be fixed in the BundlePostProcessor
-     * because the correct data for the resource comes from an other table sheet
-     * resp. CSV entry than the resource itself.
+     * the following errors will/must be fixed in the BundlePostProcessor because
+     * the correct data for the resource comes from an other table sheet resp. CSV
+     * entry than the resource itself.
      */
     private static final String[] VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS = {
             // empty at the moment
@@ -180,13 +186,15 @@ public class FHIRValidator {
     }
 
     /**
-     * @param minLogLevel Determines which messeages are logged. Only messages
-     *            with the same or an lower ordinal()-Value are logged.
+     * @param minLogLevel Determines which messeages are logged. Only messages with
+     *                    the same or an lower ordinal()-Value are logged.
      */
     public FHIRValidator(ValidationResultType minLogLevel) {
         this.minLogLevel = minLogLevel;
-        // Create a validator. Note that for good performance you can create as many validator objects
-        // as you like, but you should reuse the same validation support object in all of the,.
+        // Create a validator. Note that for good performance you can create as many
+        // validator objects
+        // as you like, but you should reuse the same validation support object in all
+        // of the,.
         FhirContext fhirContext = FhirContext.forR4();
         validator = fhirContext.newValidator();
         init();
@@ -215,7 +223,7 @@ public class FHIRValidator {
                 inputFiles = inputFileOrDirectory.listFiles();
                 validateOnlyOneFile = inputFiles.length < 2;
             } else {
-                inputFiles = new File[] {inputFileOrDirectory};
+                inputFiles = new File[] { inputFileOrDirectory };
             }
 
             for (File inputFile : inputFiles) {
@@ -270,7 +278,8 @@ public class FHIRValidator {
                 if (validatorPackage.isFile()) {
                     try {
                         LOG.info("Load Validation Package: " + validatorPackage.getCanonicalPath());
-                        npmPackageSupport.loadPackageFromClasspath(VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "/" + validatorPackage.getName());
+                        npmPackageSupport.loadPackageFromClasspath(
+                                VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "/" + validatorPackage.getName());
                     } catch (IOException e) {
                         LOG.error(e.getMessage(), e);
                     }
@@ -298,7 +307,8 @@ public class FHIRValidator {
     private File[] getValidatorPackages() {
         URL validatorPackagesDirURL = getClass().getClassLoader().getResource(VALIDATOR_PACKAGES_DIR_IN_RESOURCES);
         if (validatorPackagesDirURL == null) {
-            LOG.error("Could not find FHIR validator packages under directory name \"" + VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "\"");
+            LOG.error("Could not find FHIR validator packages under directory name \""
+                    + VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "\"");
             return null;
         }
         // replace "%20" encoded whitespaces by real whitespaces to find files
@@ -338,7 +348,7 @@ public class FHIRValidator {
         }
         ValidationResultType resultType = ValidationResultType.VALID;
         LOG.debug("Validated Resource Content \n" + resourceAsJson);
-        //ValidationResult validationResult = validator.validateWithResult(resource);
+        // ValidationResult validationResult = validator.validateWithResult(resource);
         ValidationResult validationResult = validator.validateWithResult(resourceAsJson);
         List<SingleValidationMessage> validationMessages = validationResult.getMessages();
         for (SingleValidationMessage validationMessage : validationMessages) {
@@ -347,7 +357,8 @@ public class FHIRValidator {
             Integer locationLine = validationMessage.getLocationLine();
             Integer locationCol = validationMessage.getLocationCol();
             String message = validationMessage.getMessage();
-            String logMessage = severity + " " + locationString + " Line " + locationLine + " Col " + locationCol + " : " + message;
+            String logMessage = severity + " " + locationString + " Line " + locationLine + " Col " + locationCol
+                    + " : " + message;
 
             if (!isIgnorableError(validationMessage, strict)) {
                 if (severity == ResultSeverityEnum.ERROR) {
@@ -437,12 +448,12 @@ public class FHIRValidator {
 
     /**
      * @param validationMessage
-     * @param strict only if <code>false</code> the the
-     *            {@link #VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS}
-     *            are ignored too. This is used to ignore errors that are
-     *            allowed for a single resource (strcit = <code>false</code>)
-     *            but not allowed in the whole bundle (strict =
-     *            <code>true</code>).
+     * @param strict            only if <code>false</code> the the
+     *                          {@link #VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS}
+     *                          are ignored too. This is used to ignore errors that
+     *                          are allowed for a single resource (strcit =
+     *                          <code>false</code>) but not allowed in the whole
+     *                          bundle (strict = <code>true</code>).
      * @return <code>true</code> if the text of the message contains a String of
      *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
      */
@@ -484,7 +495,8 @@ public class FHIRValidator {
      * @throws DataFormatException
      * @throws FileNotFoundException
      */
-    public ValidationResultType validateBundle(Bundle bundle) throws ConfigurationException, DataFormatException, FileNotFoundException {
+    public ValidationResultType validateBundle(Bundle bundle)
+            throws ConfigurationException, DataFormatException, FileNotFoundException {
         return validate(bundle);
     }
 
@@ -495,7 +507,7 @@ public class FHIRValidator {
     public Result getSingleResourcesValidationResult(Bundle bundle) {
         Result result = new Result();
         result.bundle = bundle;
-        List<BundleEntryComponent> entries = bundle.getEntry(); //is an ArrayList -> values can be changed
+        List<BundleEntryComponent> entries = bundle.getEntry(); // is an ArrayList -> values can be changed
         for (BundleEntryComponent e : entries) {
             ValidationResultType validateResultType = validate(e.getResource());
             if (validateResultType == ValidationResultType.ERROR) {

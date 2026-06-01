@@ -32,8 +32,8 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 public class ProcedureConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Procedure_Columns implements TableColumnIdentifier {
         Prozedurentext,
@@ -53,7 +53,8 @@ public class ProcedureConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public ProcedureConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ProcedureConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -65,29 +66,32 @@ public class ProcedureConverter extends Converter {
         String id = (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.PROCEDURE + nextId;
         procedure.setId(id);
         procedure.setMeta(new Meta().addProfile(PROFILE));
-        //        procedure.addExtension(new Extension()
-        //                .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
-        //                .setValue(convertRecordedDate()));
+        // procedure.addExtension(new Extension()
+        // .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
+        // .setValue(convertRecordedDate()));
         procedure.setPerformed(parseDateTimeType(Dokumentationszeitpunkt));
         procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
         procedure.setCategory(new CodeableConcept(convertSnomedCategory()));
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
 
-        //enable this to get the reference from condition to encounter. This is optional
-        //but it creates a circle, because the encounter has also a reference list to all
-        //diagnosis. This is false by default.
+        // enable this to get the reference from condition to encounter. This is
+        // optional
+        // but it creates a circle, because the encounter has also a reference list to
+        // all
+        // diagnosis. This is false by default.
         ConverterOptions converterOptions = result.getConverterOptions();
         if (converterOptions.is(SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER)) {
             procedure.setEncounter(getEncounterReference());
         }
 
-        if (!isValid(procedure)) { //check validity before adding the refence from encounter to this
+        if (!isValid(procedure)) { // check validity before adding the refence from encounter to this
             return Collections.emptyList();
         }
 
         if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION)) { // default is true
-            //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+            // now add an the encounter a reference to this procedure as diagnosis (Yes
+            // thats the logic of KDS!?)
             if (!isBlank(encounterId)) {
                 EncounterConverter.addDiagnosisToEncounter(result, encounterId, procedure);
             }

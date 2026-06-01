@@ -14,11 +14,11 @@ public final class ApplicationManager {
      * Returns the top directory where application data is located, i.e. the
      * installation directory.<br>
      *
-     * @param ignoreSubDir if the application is started from a subdirectory,
-     *            then this subdirectory is truncated here and only the file is
-     *            returned to the top directory. This happens if you start the
-     *            application directly from the jar file e.g. from the lib
-     *            directory. Then you have to upload one.
+     * @param ignoreSubDir if the application is started from a subdirectory, then
+     *                     this subdirectory is truncated here and only the file is
+     *                     returned to the top directory. This happens if you start
+     *                     the application directly from the jar file e.g. from the
+     *                     lib directory. Then you have to upload one.
      * @return path to the application
      */
     public static File getApplicationDir(final String ignoreSubDir) {

@@ -7,8 +7,8 @@ public interface StringEqualsIgnoreCase {
 
     /**
      * @param s
-     * @return <code>true</code> if the given string is case insensitive equals
-     *         to this.toString().
+     * @return <code>true</code> if the given string is case insensitive equals to
+     *         this.toString().
      */
     public default boolean equals(String s) {
         return toString().equalsIgnoreCase(s);

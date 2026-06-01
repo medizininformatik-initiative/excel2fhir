@@ -10,7 +10,8 @@ package de.uni_leipzig.life.csv2fhir.converter;
  */
 public enum ResourceIdSuffix {
 
-    // If a resource type is added, then the suffix must be different from all others.
+    // If a resource type is added, then the suffix must be different from all
+    // others.
     CONSENT("CO"),
     CONDITION("C"),
     DOCUMENT_REFERENCE("DR"),

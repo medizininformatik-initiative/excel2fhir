@@ -43,8 +43,8 @@ import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 public class ConsentConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Consent_Columns implements TableColumnIdentifier {
         Datum_Einwilligung,
@@ -66,8 +66,7 @@ public class ConsentConverter extends Converter {
     }
 
     /**
-     * Default duration of a consent (only some consents have a smaller
-     * duration).
+     * Default duration of a consent (only some consents have a smaller duration).
      */
     public static final int CONSENT_DEFAULT_DURATION_THIRTY_YEARS = 30;
 
@@ -89,7 +88,8 @@ public class ConsentConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public ConsentConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ConsentConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator,
+            ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
@@ -109,7 +109,8 @@ public class ConsentConverter extends Converter {
         consent.setPatient(getPatientReference());
         consent.setDateTime(consentDate.getValue());
         consent.setScope(createCodeableConcept(res("CONSENT_SCOPE_CODING_SYSTEM"), res("CONSENT_SCOPE_CODING_CODE")));
-        consent.setCategory(Collections.singletonList(createCodeableConcept(res("CONSENT_CATEGORY_CODING_SYSTEM"), res("CONSENT_CATEGORY_CODING_CODE"))));
+        consent.setCategory(Collections.singletonList(
+                createCodeableConcept(res("CONSENT_CATEGORY_CODING_SYSTEM"), res("CONSENT_CATEGORY_CODING_CODE"))));
         consent.setPolicy(getPolicy());
         consent.setProvision(getProvision());
         return Collections.singletonList(consent);
@@ -128,7 +129,7 @@ public class ConsentConverter extends Converter {
      */
     private static List<ConsentPolicyComponent> getPolicy() {
         ConsentPolicyComponent consentPolicyComponent = new ConsentPolicyComponent();
-        consentPolicyComponent.setUri(res("CONSENT_POLICY_URI")); //hier z.B. MII Broad Consent
+        consentPolicyComponent.setUri(res("CONSENT_POLICY_URI")); // hier z.B. MII Broad Consent
         return Collections.singletonList(consentPolicyComponent);
     }
 
@@ -176,13 +177,15 @@ public class ConsentConverter extends Converter {
             String consentGroupColumnName = STATIC_CONSENT_DATA.getProvisionGroupColumnName(provisionGroupIndex);
             String consentValue = get(consentGroupColumnName);
             if (isNotBlank(consentValue)) {
-                for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.get(provisionGroupIndex)) {
+                for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices
+                        .get(provisionGroupIndex)) {
                     ProvisionComponent subProvision = provision.addProvision();
                     // permit or deny
                     ConsentProvisionType provisionType = isYesValue(consentValue) ? PERMIT : DENY;
                     subProvision.setType(provisionType);
                     // provision period
-                    int durationYears = STATIC_CONSENT_DATA.provisionIndexToDurationYears.getOrDefault(subProvisionIndex, CONSENT_DEFAULT_DURATION_THIRTY_YEARS);
+                    int durationYears = STATIC_CONSENT_DATA.provisionIndexToDurationYears
+                            .getOrDefault(subProvisionIndex, CONSENT_DEFAULT_DURATION_THIRTY_YEARS);
                     Period period = defaultPeriod;
                     if (durationYears != CONSENT_DEFAULT_DURATION_THIRTY_YEARS) {
                         period = getPeriod(durationYears);
@@ -206,7 +209,7 @@ public class ConsentConverter extends Converter {
      */
     private static void addYears(DateTimeType date, int years) {
         date.add(Calendar.YEAR, years);
-        //always substract one day!
+        // always substract one day!
         int dayDiff = years < 0 ? 1 : -1;
         date.add(Calendar.DATE, dayDiff);
     }
@@ -243,13 +246,17 @@ public class ConsentConverter extends Converter {
                     String groupIndexString = key.substring(CONSENT_PROVISION_GROUP_KEY_PREFIX.length());
                     int groupIndex = Integer.parseInt(groupIndexString);
                     String groupMembersResourceString = CONSENT_RESOURCES.getProperty(key);
-                    String[] groupMembers = groupMembersResourceString.split("\\s"); //separated by spaces
+                    String[] groupMembers = groupMembersResourceString.split("\\s"); // separated by spaces
                     for (String groupMember : groupMembers) {
-                        int periodYearsStartIndex = groupMember.indexOf("("); //contains an other time perod than the standard 30 years
+                        int periodYearsStartIndex = groupMember.indexOf("("); // contains an other time perod than the
+                                                                              // standard 30 years
                         int durationYears = CONSENT_DEFAULT_DURATION_THIRTY_YEARS;
                         if (periodYearsStartIndex > 0) {
-                            String yearsString = groupMember.substring(periodYearsStartIndex + 1, groupMember.length() - 1); //last char must be a ')' in this case -> -1
-                            durationYears = "*".equals(yearsString) ? 0 : Integer.parseInt(yearsString); //a "*" means a single consent
+                            String yearsString = groupMember.substring(periodYearsStartIndex + 1,
+                                    groupMember.length() - 1); // last char must be a ')' in this case -> -1
+                            durationYears = "*".equals(yearsString) ? 0 : Integer.parseInt(yearsString); // a "*" means
+                                                                                                         // a single
+                                                                                                         // consent
                             groupMember = groupMember.substring(0, periodYearsStartIndex);
                         }
                         int groupMemberIndex = Integer.parseInt(groupMember);
