@@ -244,7 +244,7 @@ public class ConsentConverter extends Converter {
                 String key = String.valueOf(keyObject);
                 if (key.startsWith(CONSENT_PROVISION_GROUP_KEY_PREFIX)) {
                     String groupIndexString = key.substring(CONSENT_PROVISION_GROUP_KEY_PREFIX.length());
-                    int groupIndex = Integer.parseInt(groupIndexString);
+                    int groupIndex = parseConsentResourceInt(groupIndexString, key);
                     String groupMembersResourceString = CONSENT_RESOURCES.getProperty(key);
                     String[] groupMembers = groupMembersResourceString.split("\\s"); // separated by spaces
                     for (String groupMember : groupMembers) {
@@ -254,16 +254,30 @@ public class ConsentConverter extends Converter {
                         if (periodYearsStartIndex > 0) {
                             String yearsString = groupMember.substring(periodYearsStartIndex + 1,
                                     groupMember.length() - 1); // last char must be a ')' in this case -> -1
-                            durationYears = "*".equals(yearsString) ? 0 : Integer.parseInt(yearsString); // a "*" means
-                                                                                                         // a single
-                                                                                                         // consent
+                            durationYears = parseDurationYears(yearsString, key); // a "*" means a single consent
                             groupMember = groupMember.substring(0, periodYearsStartIndex);
                         }
-                        int groupMemberIndex = Integer.parseInt(groupMember);
+                        int groupMemberIndex = parseConsentResourceInt(groupMember, key);
                         provisionGroupIndexToGroupMemberIndices.put(groupIndex, groupMemberIndex);
                         provisionIndexToDurationYears.put(groupMemberIndex, durationYears);
                     }
                 }
+            }
+        }
+
+        private static int parseDurationYears(String yearsString, String resourceKey) {
+            if ("*".equals(yearsString)) {
+                return 0;
+            }
+            return parseConsentResourceInt(yearsString, resourceKey);
+        }
+
+        private static int parseConsentResourceInt(String value, String resourceKey) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalStateException("Invalid integer in consent resource " + resourceKey + ": " + value,
+                        e);
             }
         }
 

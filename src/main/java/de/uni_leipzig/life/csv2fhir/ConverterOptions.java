@@ -88,11 +88,21 @@ public class ConverterOptions {
             if (mapValueContent == null) {
                 value = intOption.getDefault();
             } else {
-                value = Integer.valueOf(mapValueContent.toString().trim());
+                value = parseIntOption(intOption, mapValueContent);
             }
             intValues.put(intOption, value);
         }
         return value;
+    }
+
+    private static Integer parseIntOption(IntOption intOption, Object mapValueContent) {
+        String value = mapValueContent.toString().trim();
+        try {
+            return Integer.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid integer value for converter option " + intOption + ": " + value,
+                    e);
+        }
     }
 
     /**
@@ -329,7 +339,7 @@ public class ConverterOptions {
         // this is probably still faster than using a RegExp
         int start = -1;
         int end = -1;
-        for (int i = s.length() - 1; i > 0; i--) {
+        for (int i = s.length() - 1; i >= 0; i--) {
             char c = s.charAt(i);
             if (Character.isDigit(c)) {
                 if (end == -1) {
@@ -351,17 +361,28 @@ public class ConverterOptions {
         Range<Integer> lastNumberStringBounds = getLastNumberStringBounds(pid);
         int start = lastNumberStringBounds.lowerEndpoint();
         int end = lastNumberStringBounds.upperEndpoint();
+        if (start < 0 || end < 0) {
+            throw new IllegalArgumentException("PID does not contain a number to increase: " + pid);
+        }
         String preNumberString = pid.substring(0, start);
         String numberSubString = pid.substring(start, end);
         String afterNumberString = pid.substring(end);
         int numberLength = numberSubString.length();
-        int number = Integer.parseInt(numberSubString);
+        int number = parsePidNumber(pid, numberSubString);
         number += value;
         numberSubString = Integer.toString(number);
         if (numberSubString.length() < numberLength) {
             numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
         }
         return preNumberString + numberSubString + afterNumberString;
+    }
+
+    private static int parsePidNumber(String pid, String numberSubString) {
+        try {
+            return Integer.parseInt(numberSubString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("PID contains an invalid number to increase: " + pid, e);
+        }
     }
 
     /**
