@@ -1,95 +1,71 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
-import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.Dokumentationsdatum;
-import static de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns.ICD;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Resource;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.Assert;
+import org.junit.Test;
 
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 
-@RunWith(MockitoJUnitRunner.class)
 public class ConditionConverterTest {
 
     @Test
     public void convertTest() throws Exception {
-        CSVRecord recordMock = mock(CSVRecord.class);
-        doReturn("PID1").when(recordMock).get("Patient-ID");
-        ConverterResult resultMock = mock(ConverterResult.class);
-        ConverterOptions optionsMock = mock(ConverterOptions.class);
-        //doReturn(true).when(optionsMock).is(BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER);
-        doReturn(true).when(optionsMock).is(Mockito.any(BooleanOption.class));
-        doReturn(optionsMock).when(resultMock).getConverterOptions();
+        ConverterResult result = new ConverterResult(new ConverterOptions(""));
 
-        doReturn("PID1").when(recordMock).get("Patient-ID");
-        //FHIRValidator validator = mock(FHIRValidator.class);
-        ConditionConverter diagnosisConverterUnderTest = new ConditionConverter(recordMock, null, resultMock, null, new ConverterOptions(""));
-
-        //doReturn(null).when(recordMock).get("ICD");
-        when(recordMock.get("ICD")).thenReturn(null);
-        Assertions.assertThrows(Exception.class, () -> {
-            diagnosisConverterUnderTest.convertInternal();
+        Assert.assertThrows(Exception.class, () -> {
+            newConditionConverter(null, result).convertInternal();
         });
 
-        when(recordMock.get("ICD")).thenReturn("");
-        Assertions.assertThrows(Exception.class, () -> {
-            diagnosisConverterUnderTest.convertInternal();
+        Assert.assertThrows(Exception.class, () -> {
+            newConditionConverter("", result).convertInternal();
         });
 
-        when(recordMock.get("ICD")).thenReturn(" \t ");
-        Assertions.assertThrows(Exception.class, () -> {
-            diagnosisConverterUnderTest.convertInternal();
+        Assert.assertThrows(Exception.class, () -> {
+            newConditionConverter(" \t ", result).convertInternal();
         });
 
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34", "A12.34");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.3", "A12.3");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.", "A12");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12", "A12");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34A12.34", "A12.34");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34A", "A12.34");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A1");
+        testConvert("A12.34", "A12.34");
+        testConvert("A12.3", "A12.3");
+        testConvert("A12.", "A12");
+        testConvert("A12", "A12");
+        testConvert("A12.34A12.34", "A12.34");
+        testConvert("A12.34A", "A12.34");
+        testConvert("A1");
 
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34A12.3", "A12.34", "A12.3");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34A12.", "A12.34", "A12");
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "A12.34A12.", "A12.34", "A12");
+        testConvert("A12.34A12.3", "A12.34", "A12.3");
+        testConvert("A12.34A12.", "A12.34", "A12");
+        testConvert("A12.34A12.", "A12.34", "A12");
 
-        testConvert(diagnosisConverterUnderTest, recordMock, resultMock, "F02.3*+G20.10", "F02.3", "G20.10");
+        testConvert("F02.3*+G20.10", "F02.3", "G20.10");
 
     }
 
     /**
-     * @param diagnosisConverter
-     * @param recordMock
-     * @param resultMock
      * @param codeInput
      * @param resultCodes
      */
-    private static void testConvert(ConditionConverter diagnosisConverter, CSVRecord recordMock, ConverterResult resultMock, String codeInput, String... expectedResultCodes) throws Exception {
-        String recordedDate = "02.10.2020 00:00";
-        doReturn(recordedDate).when(recordMock).get(Dokumentationsdatum.toString());
-
-        when(recordMock.get(ICD.toString())).thenReturn(codeInput);
-        when(resultMock.get(Fall, Encounter.class, diagnosisConverter.getEncounterId())).thenReturn(new Encounter());
+    private static void testConvert(String codeInput, String... expectedResultCodes) throws Exception {
+        ConverterResult result = new ConverterResult(new ConverterOptions(""));
+        Encounter encounter = new Encounter();
+        encounter.setId("PID1-E-1");
+        result.add(Fall, encounter);
+        ConditionConverter diagnosisConverter = newConditionConverter(codeInput, result);
         List<Resource> convertedResources = diagnosisConverter.convertInternal();
         int convertedResourcesCount = convertedResources == null ? 0 : convertedResources.size();
         assertEquals(convertedResourcesCount, expectedResultCodes.length);
@@ -106,5 +82,34 @@ public class ConditionConverterTest {
         }
         //check whether always different IDs are generated
         assertEquals(conditionIDs.size(), convertedResourcesCount);
+    }
+
+    /**
+     * @param icdCode
+     * @param result
+     * @return
+     * @throws Exception
+     */
+    private static ConditionConverter newConditionConverter(String icdCode, ConverterResult result) throws Exception {
+        CSVRecord record = createRecord(icdCode);
+        return new ConditionConverter(record, null, result, null, new ConverterOptions(""));
+    }
+
+    /**
+     * @param icdCode
+     * @return
+     * @throws Exception
+     */
+    private static CSVRecord createRecord(String icdCode) throws Exception {
+        String value = icdCode == null ? "" : icdCode;
+        String csv = "Patient-ID,Fall-Nr,Bezeichner,ICD,Dokumentationszeitpunkt,Typ\n"
+                + "PID1,1,," + value + ",02.10.2020 00:00,\n";
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                .setNullString("")
+                .setHeader()
+                .setSkipHeaderRecord(true)
+                .build();
+        CSVParser parser = csvFormat.parse(new StringReader(csv));
+        return parser.getRecords().get(0);
     }
 }

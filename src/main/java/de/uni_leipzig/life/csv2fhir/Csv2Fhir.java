@@ -438,8 +438,8 @@ public class Csv2Fhir {
             entry.setResource(resource);
             BundleEntryRequestComponent requestComponent = getRequestComponent(resource);
             entry.setRequest(requestComponent);
-            String url = requestComponent.getUrl();
-            entry.setFullUrl(url);
+            String fullUrl = "https://diz.de/" + requestComponent.getUrl();
+            entry.setFullUrl(fullUrl);
         }
     }
 

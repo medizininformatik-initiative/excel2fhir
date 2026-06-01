@@ -58,7 +58,10 @@ public class BothDirectionResourceMapper implements Map<String, String> {
          */
         public void load(String resourceFileName) {
             CodeSystemPropertiesLoader codeMapLoader = new CodeSystemPropertiesLoader();
-            URL mapFile = ClassLoader.getSystemResource(resourceFileName);
+            URL mapFile = BothDirectionResourceMapper.class.getClassLoader().getResource(resourceFileName);
+            if (mapFile == null) {
+                mapFile = Thread.currentThread().getContextClassLoader().getResource(resourceFileName);
+            }
             try (InputStream inputStream = mapFile.openStream()) {
                 codeMapLoader.load(inputStream);
             } catch (Exception e) {

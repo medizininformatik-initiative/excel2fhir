@@ -1,0 +1,81 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "baseBranchPatterns": [
+    "develop"
+  ],
+  "dependencyDashboard": true,
+  "labels": [
+    "dependencies"
+  ],
+  "prConcurrentLimit": 4,
+  "packageRules": [
+    {
+      "description": "Keep HAPI FHIR updates separate because validator behavior can change.",
+      "matchManagers": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "/^ca\\.uhn\\.hapi\\.fhir:/"
+      ],
+      "groupName": "HAPI FHIR"
+    },
+    {
+      "description": "Group low-risk Maven test dependencies.",
+      "matchManagers": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "junit:junit",
+        "org.mockito:mockito-core",
+        "org.hamcrest:hamcrest"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Maven test dependencies"
+    },
+    {
+      "description": "Group low-risk Maven runtime dependency patch and minor updates.",
+      "matchManagers": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "org.apache.commons:commons-csv",
+        "info.picocli:picocli",
+        "org.apache.poi:poi",
+        "org.apache.poi:poi-ooxml",
+        "org.apache.logging.log4j:log4j-api",
+        "org.apache.logging.log4j:log4j-core",
+        "org.apache.logging.log4j:log4j-slf4j-impl",
+        "org.apache.maven.plugins:maven-shade-plugin"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "Maven runtime and build dependencies"
+    },
+    {
+      "description": "Group GitHub Actions patch and minor updates.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Keep major updates separate for review.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

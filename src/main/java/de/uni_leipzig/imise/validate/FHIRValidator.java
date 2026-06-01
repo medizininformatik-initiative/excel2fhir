@@ -144,9 +144,14 @@ public class FHIRValidator {
             "Unknown code 'http://loinc.org#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
+            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/icd-10-gm|*",
 
             "Could not validate code http://fhir.de/CodeSystem/bfarm/ops#",
+            "Could not validate code http://fhir.de/CodeSystem/bfarm/atc#",
+
+            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/ops|*",
             "Could not validate code http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
+            "Medication.code.coding[0]:Unable to expand value set",
 
             // Following error message is generated for Observations -> the followng ignore string is
             // the very last part of this message:
@@ -394,6 +399,44 @@ public class FHIRValidator {
 
     /**
      * @param validationMessage
+     * @param messagePart
+     * @return
+     */
+    private static final boolean containsMessagePart(SingleValidationMessage validationMessage, String messagePart) {
+        String location = validationMessage.getLocationString();
+        String message = validationMessage.getMessage();
+        int separatorIndex = messagePart.indexOf(":");
+        if (separatorIndex > 0 && messagePart.substring(0, separatorIndex).contains(".")) {
+            String locationPart = messagePart.substring(0, separatorIndex);
+            String messagePartPart = messagePart.substring(separatorIndex + 1);
+            return matchesLocation(location, locationPart) && message.contains(messagePartPart);
+        }
+        return message.contains(messagePart);
+    }
+
+    /**
+     * @param location
+     * @param locationPart
+     * @return
+     */
+    private static boolean matchesLocation(String location, String locationPart) {
+        if (location == null) {
+            return false;
+        }
+        if (location.equals(locationPart)) {
+            return true;
+        }
+        int dotIndex = locationPart.indexOf(".");
+        if (dotIndex < 0) {
+            return false;
+        }
+        String resourceType = locationPart.substring(0, dotIndex);
+        String childPath = locationPart.substring(dotIndex + 1);
+        return location.contains("/*" + resourceType + "/") && location.endsWith("." + childPath);
+    }
+
+    /**
+     * @param validationMessage
      * @param strict only if <code>false</code> the the
      *            {@link #VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS}
      *            are ignored too. This is used to ignore errors that are
@@ -404,15 +447,14 @@ public class FHIRValidator {
      *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
      */
     private static boolean isIgnorableError(SingleValidationMessage validationMessage, boolean strict) {
-        String message = validationMessage.getMessage();
         for (String ignoreMessagePart : VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS) {
-            if (message.contains(ignoreMessagePart)) {
+            if (containsMessagePart(validationMessage, ignoreMessagePart)) {
                 return true;
             }
         }
         if (!strict) {
             for (String ignoreMessagePart : VALIDATION_SINGLE_RESOURCE_IGNORE_ERROR_MESSAGE_PARTS) {
-                if (message.contains(ignoreMessagePart)) {
+                if (containsMessagePart(validationMessage, ignoreMessagePart)) {
                     return true;
                 }
             }

@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
+import de.uni_leipzig.imise.validate.ExcelTemplateValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
@@ -26,6 +27,9 @@ public class Excel2Fhir {
 
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Excel2Fhir.class);
+
+    /**  */
+    private final ExcelTemplateValidator templateValidator = new ExcelTemplateValidator();
 
     /**  */
     private final FHIRValidator validator;
@@ -58,11 +62,13 @@ public class Excel2Fhir {
      * @param targetJSONDir
      * @throws IOException
      */
-    private static void createAndCleanOutputDirectories(File sourceExcelFileOrDirectory, File targetCSVDir, File targetJSONDir)
+    private static void createAndCleanOutputDirectories(File sourceExcelFileOrDirectory, File targetCSVDir,
+            File targetJSONDir)
             throws IOException {
-        File sourceExcelDir = sourceExcelFileOrDirectory.isDirectory() ? sourceExcelFileOrDirectory
-                : sourceExcelFileOrDirectory.getParentFile();
-        //create and reset directories
+        File absoluteSourceExcelFileOrDirectory = sourceExcelFileOrDirectory.getAbsoluteFile();
+        File sourceExcelDir = absoluteSourceExcelFileOrDirectory.isDirectory() ? absoluteSourceExcelFileOrDirectory
+                : absoluteSourceExcelFileOrDirectory.getParentFile();
+        // create and reset directories
         if (targetCSVDir == null) {
             targetCSVDir = getTargetCSVDir(sourceExcelDir);
         }
@@ -77,9 +83,10 @@ public class Excel2Fhir {
 
     /**
      * @param excelDir
-     * @param sheetNamePatterns if not <code>null</code> then only the sheets
-     *            with a name in this collection will be convertert to csv. If
-     *            <code>null</code> then all sheet will be convertet.
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets with
+     *                          a name in this collection will be convertert to
+     *                          csv. If <code>null</code> then all sheet will be
+     *                          convertet.
      * @throws IOException
      */
     public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNamePatterns) throws IOException {
@@ -88,45 +95,53 @@ public class Excel2Fhir {
 
     /**
      * @param sourceExcelDir
-     * @param sheetNamePatterns if not <code>null</code> then only the sheets
-     *            with a name in this collection will be convertert to csv. If
-     *            <code>null</code> then all sheet will be convertet.
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets with
+     *                          a name in this collection will be convertert to
+     *                          csv. If <code>null</code> then all sheet will be
+     *                          convertet.
      * @param tempDir
      * @param resultDir
      * @param patientsPerBundle
      * @param outputFileTypes
      * @throws IOException
      */
-    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNamePatterns, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
+    public void convertAllExcelInDir(File sourceExcelDir, Collection<String> sheetNamePatterns, File tempDir,
+            File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, false, outputFileTypes);
+            convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, false,
+                    outputFileTypes);
         }
     }
 
     /**
      * @param sourceExcelFile
-     * @param sheetNamePatterns if not <code>null</code> then only the sheets
-     *            with a name in this collection will be convertert to csv. If
-     *            <code>null</code> then all sheet will be convertet.
+     * @param sheetNamePatterns if not <code>null</code> then only the sheets with
+     *                          a name in this collection will be convertert to
+     *                          csv. If <code>null</code> then all sheet will be
+     *                          convertet.
      * @param tempDir
      * @param resultDir
      * @param patientsPerBundle
      * @param outputFileTypes
      * @throws IOException
      */
-    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir, File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
+    public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir,
+            File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
-        convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true, outputFileTypes);
+        convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true,
+                outputFileTypes);
     }
 
     /**
      * @param sourceExcelFile
-     * @param sheetNamePatterns if not <code>null</code> then only the sheets
-     *            with a name in this collection will be convertert to csv. If
-     *            <code>null</code> then all sheet will be convertet.
+     * @param sheetNamePatterns               if not <code>null</code> then only
+     *                                        the sheets with a name in this
+     *                                        collection will be convertert to csv.
+     *                                        If <code>null</code> then all sheet
+     *                                        will be convertet.
      * @param tempDir
      * @param resultDir
      * @param outputFileTypes
@@ -134,8 +149,11 @@ public class Excel2Fhir {
      * @param createAndCleanOutputDirectories
      * @throws IOException
      */
-    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir, File resultDir,
-            int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes) throws IOException {
+    private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir,
+            File resultDir,
+            int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes)
+            throws IOException {
+        templateValidator.validateAndThrow(sourceExcelFile);
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }

@@ -35,7 +35,10 @@ public class ResourceMapper extends Properties {
                 if (resourceFile.canRead()) {
                     mapFile = resourceFile.toURI().toURL();
                 } else {
-                    mapFile = ClassLoader.getSystemResource(resourceFileName);
+                    mapFile = ResourceMapper.class.getClassLoader().getResource(resourceFileName);
+                    if (mapFile == null) {
+                        mapFile = Thread.currentThread().getContextClassLoader().getResource(resourceFileName);
+                    }
                 }
                 InputStream inputStream = mapFile.openStream();
                 load(inputStream);
