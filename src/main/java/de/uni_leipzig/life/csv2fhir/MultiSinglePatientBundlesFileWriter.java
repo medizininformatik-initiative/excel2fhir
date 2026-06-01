@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -192,7 +194,7 @@ public class MultiSinglePatientBundlesFileWriter {
         if (!deleteIfEmpty(ndjsonFile)) {
             String newFileName = getFileName(nameExtension, NDJSON);
             File newFile = new File(ndjsonFile.getParentFile(), newFileName);
-            ndjsonFile.renameTo(newFile);
+            Files.move(ndjsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         if (zipJsonOutputStream != null) {
             zipJsonOutputStream.close();
@@ -200,7 +202,7 @@ public class MultiSinglePatientBundlesFileWriter {
         if (!deleteIfEmpty(zipJsonFile)) {
             String newFileName = getFileName(nameExtension, ZIPJSON);
             File newFile = new File(zipJsonFile.getParentFile(), newFileName);
-            zipJsonFile.renameTo(newFile);
+            Files.move(zipJsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
