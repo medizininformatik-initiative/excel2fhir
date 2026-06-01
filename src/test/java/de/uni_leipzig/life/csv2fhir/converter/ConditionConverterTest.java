@@ -58,7 +58,7 @@ public class ConditionConverterTest {
 
     /**
      * @param codeInput
-     * @param resultCodes
+     * @param expectedResultCodes
      */
     private static void testConvert(String codeInput, String... expectedResultCodes) throws Exception {
         ConverterResult result = new ConverterResult(new ConverterOptions(""));

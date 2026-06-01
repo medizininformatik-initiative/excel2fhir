@@ -146,7 +146,6 @@ public class ObservationLaboratoryConverter extends Converter {
     }
 
     /**
-     * @param converter
      * @param valueColumnIdentifier
      * @param unitColumnIdentifier
      * @return

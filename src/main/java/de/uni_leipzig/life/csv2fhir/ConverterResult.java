@@ -267,7 +267,7 @@ public class ConverterResult {
 
         /**
          * @param resourceType
-         * @param value2Add
+         * @param ids
          */
         private void add(Class<? extends Resource> resourceType, Collection<String> ids) {
             Integer oldCount = resourceCounts.getOrDefault(resourceType, 0);

@@ -19,7 +19,7 @@ public class FileTools {
     private static final Logger LOG = LoggerFactory.getLogger(FileTools.class);
 
     /**
-     * @param path
+     * @param file
      * @return
      * @throws IOException
      */

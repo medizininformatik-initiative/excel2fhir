@@ -157,8 +157,6 @@ public class JSONFunctions {
     /**
      * @param jsonArray
      * @param pathInJSONArrayEntryToString
-     * @param matchCondition
-     * @param conditionValues
      * @return
      */
     public static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray,
@@ -184,10 +182,8 @@ public class JSONFunctions {
 
     /**
      * @param jsonArray
-     * @param pathInJSONArrayEntryToString
-     * @param matchCondition
+     * @param pathInJSONArrayEntryToSubEntry
      * @param returnOnlyFirstValue
-     * @param conditionValues
      * @return
      */
     private static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray,
