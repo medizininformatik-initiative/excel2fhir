@@ -240,7 +240,7 @@ public class Csv2Fhir {
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
                         if (pids.size() > patientsPerBundle) {
-                            fileNameExtendsion = firstPID == lastPID ? firstPID : firstPID + "-" + lastPID;
+                            fileNameExtendsion = firstPID.equals(lastPID) ? firstPID : firstPID + "-" + lastPID;
                         }
                         writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
                         bundle = createTransactionBundle();
@@ -324,8 +324,7 @@ public class Csv2Fhir {
      * @param outputFileType
      */
     private File writeBaseOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType) throws IOException {
-        String fileName = outputFileNameBase + (Strings.isNullOrEmpty(fileNameExtension) ? "" : fileNameExtension)
-                + outputFileType.getFileExtension();
+        String fileName = getOutputFileName(outputFileNameBase, fileNameExtension, outputFileType);
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
         try (FileWriter fileWriter = new FileWriter(outputFile)) {
@@ -335,6 +334,17 @@ public class Csv2Fhir {
         }
         appendNewLineAtEOF(outputFile);
         return outputFile;
+    }
+
+    static String getOutputFileName(String outputFileNameBase, String fileNameExtension, OutputFileType outputFileType) {
+        String normalizedExtension = Strings.nullToEmpty(fileNameExtension);
+        String fileNameBase = Strings.isNullOrEmpty(normalizedExtension) ? removeTrailingSeparator(outputFileNameBase)
+                : outputFileNameBase + normalizedExtension;
+        return fileNameBase.replaceAll("__", "_") + outputFileType.getFileExtension();
+    }
+
+    private static String removeTrailingSeparator(String fileNameBase) {
+        return fileNameBase.endsWith("_") ? fileNameBase.substring(0, fileNameBase.length() - 1) : fileNameBase;
     }
 
     /**
