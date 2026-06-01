@@ -21,9 +21,9 @@ public class StringUtils {
      * passed string with the given character. If its length is greater than or
      * equal to the length of the second string, it remains unchanged.
      *
-     * @param s
+     * @param stringToFill
      * @param c
-     * @param newMinLenght
+     * @param stringWithMinLength
      * @return
      */
     public static String fillToLenght(final String stringToFill, char c, final String stringWithMinLength) {

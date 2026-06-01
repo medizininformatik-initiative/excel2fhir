@@ -165,7 +165,6 @@ public class BundlePostProcessor {
 
     /**
      * @param encounter
-     * @param bundle
      * @return
      */
     private Encounter getSuperEncounter(Encounter encounter) {

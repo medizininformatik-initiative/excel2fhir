@@ -90,7 +90,7 @@ public class BothDirectionResourceMapper implements Map<String, String> {
     }
 
     /**
-     * @param resourceFileName
+     * @param resourceFileNames
      */
     public BothDirectionResourceMapper(String... resourceFileNames) {
         for (String resourceFileName : resourceFileNames) {

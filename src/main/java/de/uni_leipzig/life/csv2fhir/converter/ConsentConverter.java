@@ -134,7 +134,6 @@ public class ConsentConverter extends Converter {
     }
 
     /**
-     * @param consentDate
      * @return
      * @throws Exception
      */
@@ -205,7 +204,6 @@ public class ConsentConverter extends Converter {
     /**
      * @param date
      * @param years
-     * @param minusOneDay
      */
     private static void addYears(DateTimeType date, int years) {
         date.add(Calendar.YEAR, years);

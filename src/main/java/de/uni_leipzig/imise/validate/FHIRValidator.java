@@ -339,7 +339,6 @@ public class FHIRValidator {
     /**
      * @param resourceAsJson
      * @param strict
-     * @param minLogLevel
      * @return
      */
     public ValidationResultType validate(String resourceAsJson, boolean strict) {

@@ -97,7 +97,7 @@ public class Alphabetical {
          * über die <code>compare()</code>-Methode des übergebenen Komparators
          * vergleicht.
          *
-         * @param stringComparator
+         * @param realComparator
          */
         public ObjectToStringComparator(final Comparator<Object> realComparator) {
             this.realComparator = realComparator;
