@@ -67,7 +67,7 @@ public class FHIRValidator {
     }
 
     /** Counters for the validation result */
-    private class ResultCounter {
+    private static class ResultCounter {
         /** count of all warnings in the bundle */
         int warnings = 0;
         /** count of all errors in the bundle */
@@ -99,7 +99,7 @@ public class FHIRValidator {
     }
 
     /** Counters for the validation result */
-    public class Result {
+    public static class Result {
         /** the bundle the result is created from */
         public Bundle bundle;
         /** the file of the bundle */
