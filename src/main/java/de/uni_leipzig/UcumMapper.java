@@ -23,19 +23,21 @@ public class UcumMapper {
     public static List<String> invalidUcumCodes = new ArrayList<>();
 
     /**
-     * Name of the map file that maps from a synonym to the correct UCUM code.
-     * This file is wtitten by the socond process.
+     * Name of the map file that maps from a synonym to the correct UCUM code. This
+     * file is wtitten by the socond process.
      */
     public static final String UCUM_MANUAL_CREATED_SYNONYM_TO_UCUM_CODE_MAP_RESOURCE_FILE_NAME = "ucum/UCUM_Synonyms_manual.map";
 
     /**
-     * Maps from a correct UCUM unit to its human readable code. One entry could
-     * be UCUM unit 'kg' -> UCUM code 'kilogram'.
+     * Maps from a correct UCUM unit to its human readable code. One entry could be
+     * UCUM unit 'kg' -> UCUM code 'kilogram'.
      */
-    private final BothDirectionResourceMapper validUcumCodeToDisplay = new BothDirectionResourceMapper(UcumCodesExtractor.UCUM_CODE_TO_DISPLAY_MAP_RESOURCE_FILE_NAME);
+    private final BothDirectionResourceMapper validUcumCodeToDisplay = new BothDirectionResourceMapper(
+            UcumCodesExtractor.UCUM_CODE_TO_DISPLAY_MAP_RESOURCE_FILE_NAME);
 
     /** Maps from a synonym to the correct ucum unit */
-    private final BothDirectionResourceMapper synonymUcumCodeToValidUcumCode = new BothDirectionResourceMapper(UcumCodesExtractor.UCUM_AUTOMATIC_CREATED_SYNONYM_TO_UCUM_CODE_MAP_RESOURCE_FILE_NAME,
+    private final BothDirectionResourceMapper synonymUcumCodeToValidUcumCode = new BothDirectionResourceMapper(
+            UcumCodesExtractor.UCUM_AUTOMATIC_CREATED_SYNONYM_TO_UCUM_CODE_MAP_RESOURCE_FILE_NAME,
             UCUM_MANUAL_CREATED_SYNONYM_TO_UCUM_CODE_MAP_RESOURCE_FILE_NAME);
 
     /** Singleton */
@@ -51,7 +53,8 @@ public class UcumMapper {
         if (Strings.isNullOrEmpty(validUcumCode)) {
 
             // replace all invalid chars by their valid UCUM chars
-            String correctedUcumCode = ucumCode.replace('´', '\'').replace('`', '\'').replace('²', '2').replace('³', '3').replace('µ', 'u');
+            String correctedUcumCode = ucumCode.replace('´', '\'').replace('`', '\'').replace('²', '2')
+                    .replace('³', '3').replace('µ', 'u');
 
             // special handling for degree sigm
             int degreeSignIndex = correctedUcumCode.indexOf('°');
@@ -60,15 +63,17 @@ public class UcumMapper {
                 // if there is a "°C" (but not "°Cel") -> replace by correct UCUM "Cel"
                 if (celDegreeIndex >= 0 && celDegreeIndex != correctedUcumCode.indexOf("°Cel")) {
                     correctedUcumCode = correctedUcumCode.replace("°C", "Cel");
-                } else { // all other cases (eg. "°K" or "°F" or "°Cel" or "°XXX") -> simple remove degree sign
+                } else { // all other cases (eg. "°K" or "°F" or "°Cel" or "°XXX") -> simple remove
+                         // degree sign
                     correctedUcumCode = correctedUcumCode.replace("°", "");
                 }
             }
 
-            //is it now a valid UCUM code ?
+            // is it now a valid UCUM code ?
             validUcumCode = getValidUcumCodeInternal(correctedUcumCode);
             if (Strings.isNullOrEmpty(validUcumCode)) {
-                //maybe there are spaces in the ucum code -> try the same procedure without spaces
+                // maybe there are spaces in the ucum code -> try the same procedure without
+                // spaces
                 if (ucumCode.contains(" ")) {
                     correctedUcumCode = ucumCode.replace(" ", "");
                     validUcumCode = getValidUcumCodeInternal(correctedUcumCode);
@@ -94,11 +99,11 @@ public class UcumMapper {
         if (mapper == null) {
             mapper = new UcumMapper();
         }
-        //it is already a valid UCUM code ?
+        // it is already a valid UCUM code ?
         if (mapper.validUcumCodeToDisplay.containsKey(ucumCode)) {
             return ucumCode;
         }
-        //try the synonyms
+        // try the synonyms
         return mapper.synonymUcumCodeToValidUcumCode.get(ucumCode);
     }
 

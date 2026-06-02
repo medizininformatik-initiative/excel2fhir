@@ -20,15 +20,15 @@ import org.hl7.fhir.r4.model.Resource;
 public class BundleFunctions {
 
     /**
-     * Returns the substring of the specified ID string after the first slash,
-     * or the string itself if it does not contain a slash.
+     * Returns the substring of the specified ID string after the first slash, or
+     * the string itself if it does not contain a slash.
      *
      * @param id
      * @return
      */
     public static String getBaseId(String id) {
         int index = id.indexOf('/');
-        //if index == -1 (= slash not found) then substring returns this
+        // if index == -1 (= slash not found) then substring returns this
         return id.substring(index + 1);
     }
 
@@ -56,7 +56,8 @@ public class BundleFunctions {
      * @param pid
      * @return all encounters with the pid from the alrady parsed csv tables
      */
-    public static Collection<Encounter> getEncountersForPatient(ConverterResult result, TableIdentifier identifier, String pid) {
+    public static Collection<Encounter> getEncountersForPatient(ConverterResult result, TableIdentifier identifier,
+            String pid) {
         Collection<Encounter> encounters = new ArrayList<>();
         if (pid != null) {
             for (Encounter encounter : result.getResources(identifier, Encounter.class)) {
@@ -112,22 +113,23 @@ public class BundleFunctions {
     /**
      * Finds a resource in a bundle by its type and ID.
      *
-     * @param <T> return value of the found element
-     * @param bundle the bundle to be searched
+     * @param <T>           return value of the found element
+     * @param bundle        the bundle to be searched
      * @param resourceClass the subclass of the resource to be returned
-     * @param id The ID string that the element must have. If this is not a
-     *            simple ID like "X0001" but a full reference ID like
-     *            "Encounter/X0001", then the ID is converted to a simple ID
-     *            before comparison (everything before the slash is removed).
-     * @return a resource with the given ID and type from the bundle. If not
-     *         found <code>null</code> is returned.
+     * @param id            The ID string that the element must have. If this is
+     *                      not a simple ID like "X0001" but a full reference ID
+     *                      like "Encounter/X0001", then the ID is converted to a
+     *                      simple ID before comparison (everything before the
+     *                      slash is removed).
+     * @return a resource with the given ID and type from the bundle. If not found
+     *         <code>null</code> is returned.
      */
     @SuppressWarnings("unchecked")
     public static <T extends Resource> T getResource(Bundle bundle, Class<? extends T> resourceClass, String id) {
-        //if the id is a reference -> we extract the real id
+        // if the id is a reference -> we extract the real id
         String baseId = getBaseId(id);
         List<BundleEntryComponent> bundleEntries = bundle.getEntry();
-        //check every entry if it has the correct class and id
+        // check every entry if it has the correct class and id
         for (BundleEntryComponent entry : bundleEntries) {
             Resource entryResource = entry.getResource();
             Class<? extends Resource> entryResourceClass = entryResource.getClass();

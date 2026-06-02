@@ -18,8 +18,8 @@ public class JSONFunctions {
 
     /**
      * @param jsonObject the source {@link JSONObject}
-     * @param keys the tag names to the nested {@link JSONObject} each separated
-     *            by the {@link #KEY_DELIMITER}
+     * @param keys       the tag names to the nested {@link JSONObject} each
+     *                   separated by the {@link #KEY_DELIMITER}
      * @return a nestet {@link JSONObject}
      */
     public static JSONObject getJSONObject(final JSONObject jsonObject, final String keys) {
@@ -71,7 +71,8 @@ public class JSONFunctions {
      * @param keys
      * @return
      */
-    private static Object getSubValue(JSONObject jsonObject, int nextKeyIndex, final boolean parent, final String... keys) {
+    private static Object getSubValue(JSONObject jsonObject, int nextKeyIndex, final boolean parent,
+            final String... keys) {
         String key = keys[nextKeyIndex++];
         Object entry = jsonObject.get(key);
         if (nextKeyIndex == keys.length) {
@@ -99,7 +100,8 @@ public class JSONFunctions {
      * @param keys
      * @return
      */
-    private static Object getSubValue(final JSONArray jsonArray, int nextKeyIndex, final boolean parent, final String... keys) {
+    private static Object getSubValue(final JSONArray jsonArray, int nextKeyIndex, final boolean parent,
+            final String... keys) {
         for (Object jsonArrayEntry : jsonArray) {
             if (jsonArrayEntry instanceof JSONObject) {
                 JSONObject subJSONObject = (JSONObject) jsonArrayEntry;
@@ -155,11 +157,10 @@ public class JSONFunctions {
     /**
      * @param jsonArray
      * @param pathInJSONArrayEntryToString
-     * @param matchCondition
-     * @param conditionValues
      * @return
      */
-    public static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray, final String pathInJSONArrayEntryToString,
+    public static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray,
+            final String pathInJSONArrayEntryToString,
             final StringMatchCondition matchCondition, final String... conditionValues) {
         return getEntriesWithValue(jsonArray, pathInJSONArrayEntryToString, matchCondition, false, conditionValues);
     }
@@ -171,7 +172,8 @@ public class JSONFunctions {
      * @param conditionValues
      * @return
      */
-    public static JSONObject getFirstEntryWithValue(final JSONArray jsonArray, final String pathInJSONArrayEntryToString,
+    public static JSONObject getFirstEntryWithValue(final JSONArray jsonArray,
+            final String pathInJSONArrayEntryToString,
             final StringMatchCondition matchCondition, final String... conditionValues) {
         List<JSONObject> jsonArrayEntriesWithValue = getEntriesWithValue(jsonArray, pathInJSONArrayEntryToString,
                 matchCondition, true, conditionValues);
@@ -186,8 +188,10 @@ public class JSONFunctions {
      * @param conditionValues
      * @return
      */
-    private static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray, final String pathInJSONArrayEntryToString,
-            final StringMatchCondition matchCondition, final boolean returnOnlyFirstValue, final String... conditionValues) {
+    private static List<JSONObject> getEntriesWithValue(final JSONArray jsonArray,
+            final String pathInJSONArrayEntryToString,
+            final StringMatchCondition matchCondition, final boolean returnOnlyFirstValue,
+            final String... conditionValues) {
         List<JSONObject> arrayEntries = new ArrayList<>();
         for (Object entry : jsonArray) {
             if (entry instanceof JSONObject) {
@@ -219,21 +223,19 @@ public class JSONFunctions {
     /**
      * @param jsonArray
      * @param pathInJSONArrayEntryToString
-     * @param matchCondition
-     * @param conditionValues
      * @return
      */
-    public static JSONObject getFirstEntryWithSubEntry(final JSONArray jsonArray, final String pathInJSONArrayEntryToString) {
-        List<JSONObject> jsonArrayEntriesWithSubEntry = getEntriesWithSubEntry(jsonArray, pathInJSONArrayEntryToString, true);
+    public static JSONObject getFirstEntryWithSubEntry(final JSONArray jsonArray,
+            final String pathInJSONArrayEntryToString) {
+        List<JSONObject> jsonArrayEntriesWithSubEntry = getEntriesWithSubEntry(jsonArray, pathInJSONArrayEntryToString,
+                true);
         return jsonArrayEntriesWithSubEntry.isEmpty() ? null : jsonArrayEntriesWithSubEntry.get(0);
     }
 
     /**
      * @param jsonArray
-     * @param pathInJSONArrayEntryToString
-     * @param matchCondition
+     * @param pathInJSONArrayEntryToSubEntry
      * @param returnOnlyFirstValue
-     * @param conditionValues
      * @return
      */
     private static List<JSONObject> getEntriesWithSubEntry(final JSONArray jsonArray,
@@ -318,8 +320,8 @@ public class JSONFunctions {
      *
      * @param sourceJSONObject the souce object
      * @param targetJSONObject the target object
-     * @param overwrite if <code>true</code> existing properties in the target
-     *            object will be replaced
+     * @param overwrite        if <code>true</code> existing properties in the
+     *                         target object will be replaced
      */
     @SuppressWarnings("unchecked")
     public static void transferProperties(final JSONObject sourceJSONObject, final JSONObject targetJSONObject,

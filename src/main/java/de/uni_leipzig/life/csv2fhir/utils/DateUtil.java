@@ -33,11 +33,11 @@ public class DateUtil {
      * @throws Exception
      */
     public static DateType parseDateType(String date) throws Exception {
-        //        return new DateType(
-        //                Date.from(parseLocalDate(date)
-        //                        .atStartOfDay(ZoneId.systemDefault())
-        //                        .toInstant()),
-        //                TemporalPrecisionEnum.DAY);
+        // return new DateType(
+        // Date.from(parseLocalDate(date)
+        // .atStartOfDay(ZoneId.systemDefault())
+        // .toInstant()),
+        // TemporalPrecisionEnum.DAY);
         for (String formatString : formatStrings) {
             try {
                 return new DateType(new SimpleDateFormat(formatString).parse(date));

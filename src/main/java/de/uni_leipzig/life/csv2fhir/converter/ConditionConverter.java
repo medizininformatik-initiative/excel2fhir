@@ -19,7 +19,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
@@ -41,8 +40,8 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 public class ConditionConverter extends Converter {
 
     /**
-     * toString() result of these enum values are the names of the columns in
-     * the correspunding excel sheet.
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
      */
     public static enum Diagnosis_Columns implements TableColumnIdentifier {
         Bezeichner,
@@ -52,15 +51,15 @@ public class ConditionConverter extends Converter {
     }
 
     /**
-     * Patterns to find valid ICD 10 Codes in a given String. They are sorted
-     * from the strongest to the weakest pattern.
+     * Patterns to find valid ICD 10 Codes in a given String. They are sorted from
+     * the strongest to the weakest pattern.
      */
     public static final Pattern[] VALID_ICD10_GM_PATTERNS = {
             Pattern.compile("[A-Z][0-9]{2}(\\.[0-9][0-9]|\\.[0-9]|\\.){0,1}"),
-            //            Pattern.compile("[A-Z][0-9][0-9]\\.[0-9][0-9]"),
-            //            Pattern.compile("[A-Z][0-9][0-9]\\.[0-9]"),
-            //            Pattern.compile("[A-Z][0-9][0-9]\\."),
-            //            Pattern.compile("[A-Z][0-9][0-9]"),
+            // Pattern.compile("[A-Z][0-9][0-9]\\.[0-9][0-9]"),
+            // Pattern.compile("[A-Z][0-9][0-9]\\.[0-9]"),
+            // Pattern.compile("[A-Z][0-9][0-9]\\."),
+            // Pattern.compile("[A-Z][0-9][0-9]"),
     };
 
     /**  */
@@ -75,14 +74,15 @@ public class ConditionConverter extends Converter {
      * @param options
      * @throws Exception
      */
-    public ConditionConverter(CSVRecord record, String previousRecordPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public ConditionConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         super(record, previousRecordPID, result, validator, options);
     }
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
         List<Resource> conditions = new ArrayList<>();
-        //it is possible that there ist more than on code in the cell
+        // it is possible that there ist more than on code in the cell
         List<String> icdCodes = parseICDCodes();
         if (!isEmpty(icdCodes)) {
             for (int i = 0; i < icdCodes.size(); i++) {
@@ -93,28 +93,32 @@ public class ConditionConverter extends Converter {
                 condition.setId(id);
                 condition.setIdentifier(Collections.singletonList(new Identifier().setValue(id)));
                 condition.setMeta(new Meta().addProfile(PROFILE));
-                //        condition.addCategory(convertCategory());
+                // condition.addCategory(convertCategory());
                 condition.setCode(convertCode(icdCode));
                 condition.setSubject(getPatientReference());
                 condition.setRecordedDateElement(convertRecordedDate());
 
-                //enable this to get the reference from condition to encounter. This is optional
-                //but it creates a circle, because the encounter has also a reference list to all
-                //diagnosis. This is false by default.
+                // enable this to get the reference from condition to encounter. This is
+                // optional
+                // but it creates a circle, because the encounter has also a reference list to
+                // all
+                // diagnosis. This is false by default.
                 ConverterOptions converterOptions = result.getConverterOptions();
                 if (converterOptions.is(SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER)) {
                     condition.setEncounter(getEncounterReference());
                 }
 
-                if (isValid(condition)) { //check validity before adding the refence from encounter to this
-                    //usually this is true by default
+                if (isValid(condition)) { // check validity before adding the refence from encounter to this
+                    // usually this is true by default
                     if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION)) {
-                        //now add an the encounter a reference to this procedure as diagnosis (Yes thats the logic of KDS!?)
+                        // now add an the encounter a reference to this procedure as diagnosis (Yes
+                        // thats the logic of KDS!?)
                         String encounterId = getEncounterId();
-                        //encounterId is optional
+                        // encounterId is optional
                         if (!isBlank(encounterId)) {
                             String diagnosisUseIdentifier = get(Typ);
-                            EncounterConverter.addDiagnosisToEncounter(result, encounterId, condition, diagnosisUseIdentifier);
+                            EncounterConverter.addDiagnosisToEncounter(result, encounterId, condition,
+                                    diagnosisUseIdentifier);
                         }
                     }
                     conditions.add(condition);
@@ -155,7 +159,7 @@ public class ConditionConverter extends Converter {
                     icdCode = icdCode.substring(0, icdCode.length() - 1);
                 }
                 icdCodes.add(icdCode);
-                sourceString = StringUtils.remove(sourceString, icdCode);
+                sourceString = sourceString.replace(icdCode, "");
                 matcher = pattern.matcher(sourceString);
             }
         }
@@ -211,10 +215,11 @@ public class ConditionConverter extends Converter {
             String date = get(Dokumentationszeitpunkt);
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
-            //extract a date from an encounter
+            // extract a date from an encounter
             DateTimeType encounterDate = getEncounterDate(result, getPatientId());
             if (encounterDate != null) {
-                warning("Can not parse " + Dokumentationszeitpunkt + " for Record. Extract date from encounter. " + this);
+                warning("Can not parse " + Dokumentationszeitpunkt + " for Record. Extract date from encounter. "
+                        + this);
                 return encounterDate;
             }
         }

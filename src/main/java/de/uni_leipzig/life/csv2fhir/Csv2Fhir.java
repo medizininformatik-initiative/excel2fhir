@@ -77,10 +77,11 @@ public class Csv2Fhir {
     private final Map<TableIdentifier, List<CSVRecord>> tableIdentifierToParsedRecords = new HashMap<>();
 
     /*
-     * Resource classes which are not dependant of a patient (which have no
-     * subject reference)
+     * Resource classes which are not dependant of a patient (which have no subject
+     * reference)
      */
-    private static final Set<Class<? extends Resource>> PID_INDIPENDENT_RESOURCE_TYPES = Set.of(Medication.class, Location.class);
+    private static final Set<Class<? extends Resource>> PID_INDIPENDENT_RESOURCE_TYPES = Set.of(Medication.class,
+            Location.class);
 
     /**
      * @param inputDirectory
@@ -97,7 +98,8 @@ public class Csv2Fhir {
      * @param outputFileNameBase
      * @param validator
      */
-    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase, @Nullable FHIRValidator validator) {
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
+            @Nullable FHIRValidator validator) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -117,10 +119,13 @@ public class Csv2Fhir {
      */
     private static final List<ConverterOptions> loadConverterOptions(File inputDirectory, String outputFileNameBase) {
         List<ConverterOptions> allConverterOptions = new ArrayList<>();
-        // If there is no Konvertierungsoptionen.csv file in the outputLocal directory (that was extracted
-        // from the Excel file) then only the default options are loaded from the resources. If the file
+        // If there is no Konvertierungsoptionen.csv file in the outputLocal directory
+        // (that was extracted
+        // from the Excel file) then only the default options are loaded from the
+        // resources. If the file
         // exists then it is loaded after the defaults are loaded.
-        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern().toString() + ".csv";
+        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern()
+                + ".csv";
         for (File file : inputDirectory.listFiles()) {
             String fileName = file.getName();
             if (fileName.matches(converterOptionsFileNamePattern)) {
@@ -139,7 +144,8 @@ public class Csv2Fhir {
      * @return
      * @throws IOException
      */
-    private Collection<String> getValues(TableIdentifier csvFileBaseName, Object columnName, boolean distinct, boolean alphabetical)
+    private Collection<String> getValues(TableIdentifier csvFileBaseName, Object columnName, boolean distinct,
+            boolean alphabetical)
             throws IOException {
         String columnNameString = String.valueOf(columnName);
         Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
@@ -148,7 +154,8 @@ public class Csv2Fhir {
         if (!file.exists() || file.isDirectory()) {
             return null;
         }
-        try (CSVParser records = csvFormat.parse(new FileReader(file))) {
+        try (Reader reader = new FileReader(file);
+                CSVParser records = csvFormat.parse(reader)) {
             for (CSVRecord record : records) {
                 String pid = record.get(columnNameString);
                 if (pid != null) {
@@ -172,25 +179,28 @@ public class Csv2Fhir {
      * @return the counters of all created resources
      * @throws Exception
      */
-    public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes) throws Exception {
+    public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
+            throws Exception {
         Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
 
         for (ConverterOptions converterOptions : allConverterOptions) {
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
 
-            Bundle bundle = null; //this bundle contains up to patientsPerBundle patients
-            Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the ndjson and zip files)
+            Bundle bundle = null; // this bundle contains up to patientsPerBundle patients
+            Bundle singlePatientBundle = null; // this bundle contains always only 1 patient (it is used to write the
+                                               // ndjson and zip files)
             MultiSinglePatientBundlesFileWriter multiSinglePatientBundlesFileWriter = null;
 
-            //we must check which file types should be written
+            // we must check which file types should be written
             List<OutputFileType> baseFileTypes = new ArrayList<>();
             List<OutputFileType> compressedFileTypes = new ArrayList<>();
             if (outputFileTypes.length == 0) {
                 baseFileTypes.add(JSON); // no type specified -> default is plain JSON
             } else {
                 for (OutputFileType outputFileType : outputFileTypes) {
-                    if (!outputFileType.isMultiSinglePatientBundlesFileType()) { //NDJSON or ZIPJSON will be processed later
+                    if (!outputFileType.isMultiSinglePatientBundlesFileType()) { // NDJSON or ZIPJSON will be processed
+                                                                                 // later
                         if (outputFileType.isCompressedFileType()) {
                             compressedFileTypes.add(outputFileType);
                         } else {
@@ -198,8 +208,9 @@ public class Csv2Fhir {
                         }
                     }
                 }
-                //is only not null if the outputFileTypes contains NDJSON or ZIPJSON
-                multiSinglePatientBundlesFileWriter = MultiSinglePatientBundlesFileWriter.create(outputDirectory, outputFileNameBase, validator, outputFileTypes);
+                // is only not null if the outputFileTypes contains NDJSON or ZIPJSON
+                multiSinglePatientBundlesFileWriter = MultiSinglePatientBundlesFileWriter.create(outputDirectory,
+                        outputFileNameBase, validator, outputFileTypes);
                 if (multiSinglePatientBundlesFileWriter != null) {
                     singlePatientBundle = createTransactionBundle();
                 }
@@ -210,7 +221,8 @@ public class Csv2Fhir {
             String firstPID = null;
             String lastPID = null;
 
-            for (; converterOptions.loopCounter <= converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT); converterOptions.loopCounter++) {
+            for (; converterOptions.loopCounter <= converterOptions
+                    .getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT); converterOptions.loopCounter++) {
                 for (String pid : pids) {
                     fullPIDCount++;
                     if (bundlePIDCount++ == 0) {
@@ -225,13 +237,14 @@ public class Csv2Fhir {
                     LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
                     Stopwatch stopwatch = Stopwatch.createStarted();
                     String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
-                    ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter, converterOptions);
+                    ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter,
+                            converterOptions);
                     ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
                     if (bundle != null) {
                         BundlePostProcessor.convert(bundle, converterOptions);
                     }
                     if (multiSinglePatientBundlesFileWriter != null) {
-                        //same convertion here as with the bundle
+                        // same convertion here as with the bundle
                         BundlePostProcessor.convert(singlePatientBundle, converterOptions);
                         multiSinglePatientBundlesFileWriter.appendBundle(singlePatientBundle);
                         singlePatientBundle = createTransactionBundle();
@@ -240,6 +253,10 @@ public class Csv2Fhir {
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
                         if (pids.size() > patientsPerBundle) {
+                            if (firstPID == null) {
+                                throw new IllegalStateException(
+                                        "Cannot build output file name extension without first patient ID");
+                            }
                             fileNameExtendsion = firstPID.equals(lastPID) ? firstPID : firstPID + "-" + lastPID;
                         }
                         writeOutputFile(bundle, fileNameExtendsion, baseFileTypes, compressedFileTypes);
@@ -280,8 +297,11 @@ public class Csv2Fhir {
      * @param compressedFileTypes
      * @throws IOException
      */
-    private boolean writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes, List<OutputFileType> compressedFileTypes) throws Exception {
-        List<OutputFileType> compressedFileTypesCopy = new ArrayList<>(compressedFileTypes); //copy the global list because we remove from it
+    private boolean writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes,
+            List<OutputFileType> compressedFileTypes) throws Exception {
+        List<OutputFileType> compressedFileTypesCopy = new ArrayList<>(compressedFileTypes); // copy the global list
+                                                                                             // because we remove from
+                                                                                             // it
         boolean written = false;
         if (bundle != null && !bundle.getEntry().isEmpty()) {
             if (validator == null || !validator.validateBundle(bundle).isError()) {
@@ -296,7 +316,7 @@ public class Csv2Fhir {
                     }
                     written = true;
                 }
-                //for this compressed file types the base file type was not yet created
+                // for this compressed file types the base file type was not yet created
                 for (int i = 0; i < compressedFileTypesCopy.size(); i++) {
                     OutputFileType compressedFileType = compressedFileTypesCopy.get(i);
                     OutputFileType baseFileType = compressedFileType.getBaseFileType();
@@ -323,11 +343,12 @@ public class Csv2Fhir {
      * @param fileNameExtension
      * @param outputFileType
      */
-    private File writeBaseOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType) throws IOException {
+    private File writeBaseOutputFile(Bundle bundle, String fileNameExtension, OutputFileType outputFileType)
+            throws IOException {
         String fileName = getOutputFileName(outputFileNameBase, fileNameExtension, outputFileType);
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
-        try (FileWriter fileWriter = new FileWriter(outputFile)) {
+        try (Writer fileWriter = new FileWriter(outputFile)) {
             outputFileType.getParser()
                     .setPrettyPrint(true)
                     .encodeResourceToWriter(bundle, fileWriter);
@@ -336,7 +357,8 @@ public class Csv2Fhir {
         return outputFile;
     }
 
-    static String getOutputFileName(String outputFileNameBase, String fileNameExtension, OutputFileType outputFileType) {
+    static String getOutputFileName(String outputFileNameBase, String fileNameExtension,
+            OutputFileType outputFileType) {
         String normalizedExtension = Strings.nullToEmpty(fileNameExtension);
         String fileNameBase = Strings.isNullOrEmpty(normalizedExtension) ? removeTrailingSeparator(outputFileNameBase)
                 : outputFileNameBase + normalizedExtension;
@@ -352,8 +374,9 @@ public class Csv2Fhir {
      * @throws IOException
      */
     private static void appendNewLineAtEOF(File file) throws IOException {
-        Writer output = new BufferedWriter(new FileWriter(file, true)).append("\n");
-        output.close();
+        try (Writer output = new BufferedWriter(new FileWriter(file, true))) {
+            output.append("\n");
+        }
     }
 
     /**
@@ -364,7 +387,8 @@ public class Csv2Fhir {
      * @return
      * @throws Exception
      */
-    private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID, ConverterOptions options) throws Exception {
+    private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID,
+            ConverterOptions options) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult(options);
@@ -418,7 +442,8 @@ public class Csv2Fhir {
                             addEntry(ndjsonBundle, resource);
                         }
                     } catch (Exception e) {
-                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record " + record);
+                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record "
+                                + record);
                     }
                 }
             }
@@ -434,9 +459,9 @@ public class Csv2Fhir {
      */
     private static void addEntry(Bundle bundle, Resource resource) throws Exception {
         if (bundle != null) {
-            //prevent adding some resources twice to the bundle
-            //Medications or Locations or ... can be created multiple with the same ID (if
-            //multiple patients in the same bundle get the same medication/location/...)
+            // prevent adding some resources twice to the bundle
+            // Medications or Locations or ... can be created multiple with the same ID (if
+            // multiple patients in the same bundle get the same medication/location/...)
             Class<? extends Resource> newResourceClass = resource.getClass();
             if (PID_INDIPENDENT_RESOURCE_TYPES.contains(newResourceClass)) {
                 String newResourceID = resource.getId();
@@ -457,8 +482,8 @@ public class Csv2Fhir {
      * @param bundle
      * @param resourceClass
      * @param id
-     * @return <code>true</code> if the bundle contains a resource with the
-     *         given id.
+     * @return <code>true</code> if the bundle contains a resource with the given
+     *         id.
      */
     public static final boolean containsResource(Bundle bundle, Class<? extends Resource> resourceClass, String id) {
         List<BundleEntryComponent> entries = bundle.getEntry();
@@ -489,12 +514,12 @@ public class Csv2Fhir {
 
     /**
      * @param map
-     * @param neededColls
+     * @param neededColumnNames
      * @return
      */
     private static boolean isColumnMissing(Map<String, Integer> map, Collection<String> neededColumnNames) {
         Set<String> columns = getTrimmedKeys(map);
-        if (!columns.containsAll(neededColumnNames)) {//Error message
+        if (!columns.containsAll(neededColumnNames)) {// Error message
             for (String s : neededColumnNames) {
                 if (!columns.contains(s)) {
                     LOG.info("Column " + s + " missing");
@@ -508,8 +533,7 @@ public class Csv2Fhir {
     /**
      * @param record
      * @param mandatoryColumnsNames
-     * @return true if all values in the mandatory columns of the record are
-     *         empty
+     * @return true if all values in the mandatory columns of the record are empty
      */
     private static boolean isRecordEmpty(CSVRecord record, Collection<String> mandatoryColumnsNames) {
         for (String columnName : mandatoryColumnsNames) {

@@ -42,9 +42,11 @@ public enum TableIdentifier {
 
     Person(Person_Columns.class, PatientConverter.class),
 
-    //    Versorgungsfall(EncounterLevel1_Columns.class, EncounterLevel1Converter.class),
+    // Versorgungsfall(EncounterLevel1_Columns.class,
+    // EncounterLevel1Converter.class),
     //
-    //    Abteilungsfall(EncounterLevel2_Columns.class, EncounterLevel2Converter.class),
+    // Abteilungsfall(EncounterLevel2_Columns.class,
+    // EncounterLevel2Converter.class),
     //
     Fall(Encounter_Columns.class, EncounterConverter.class),
 
@@ -70,7 +72,7 @@ public enum TableIdentifier {
     Konvertierungsoptionen {
         @Override
         protected String getTableNamePattern() {
-            //we can have multiple table sheets with converter options
+            // we can have multiple table sheets with converter options
             return ".*" + toString() + ".*";
         }
     };
@@ -90,10 +92,12 @@ public enum TableIdentifier {
             public String toString() {
                 return "Fall-Nr";
             }
+
             @Override
             public String getDefaultIfMissing() {
                 return DEFAULT_ENCOUNTER_ID_NUMBER;
             }
+
             @Override
             public boolean isMandatory() {
                 return false;
@@ -115,11 +119,13 @@ public enum TableIdentifier {
      * @param columnIdentifiersClass
      * @param converterClass
      */
-    private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass, Class<? extends Converter> converterClass) {
+    private TableIdentifier(Class<? extends Enum<? extends TableColumnIdentifier>> columnIdentifiersClass,
+            Class<? extends Converter> converterClass) {
         this.columnIdentifiersClass = columnIdentifiersClass;
         try {
             if (converterClass != null) {
-                converterConstructor = converterClass.getConstructor(CSVRecord.class, String.class, ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
+                converterConstructor = converterClass.getConstructor(CSVRecord.class, String.class,
+                        ConverterResult.class, FHIRValidator.class, ConverterOptions.class);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -131,8 +137,8 @@ public enum TableIdentifier {
     }
 
     /**
-     * @return Enum where the list of toString() methods of the elements
-     *         specifies the names of the table columns needed for conversion.
+     * @return Enum where the list of toString() methods of the elements specifies
+     *         the names of the table columns needed for conversion.
      * @see de.uni_leipzig.life.csv2fhir.ConverterFactory#getNeededColumns()
      */
     public Collection<Enum<? extends TableColumnIdentifier>> getMandatoryColumns() {
@@ -156,8 +162,8 @@ public enum TableIdentifier {
     }
 
     /**
-     * @return A collection with all column names of the table columns needed
-     *         for conversion.
+     * @return A collection with all column names of the table columns needed for
+     *         conversion.
      */
     public Collection<String> getMandatoryColumnNames() {
         ImmutableList.Builder<String> mandatoryColumnNames = ImmutableList.builder();
@@ -190,12 +196,14 @@ public enum TableIdentifier {
      * @return
      * @throws Exception
      */
-    public List<? extends Resource> convert(CSVRecord csvRecord, String previousPID, ConverterResult result, FHIRValidator validator, ConverterOptions options) throws Exception {
+    public List<? extends Resource> convert(CSVRecord csvRecord, String previousPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
         Converter converter = converterConstructor.newInstance(csvRecord, previousPID, result, validator, options);
-        List<? extends Resource> resources = converter.convert(); //should never return null!
-        //resources seems to be Immutable (we cannot remove elements) -> copy the valid elements to a new list
+        List<? extends Resource> resources = converter.convert(); // should never return null!
+        // resources seems to be Immutable (we cannot remove elements) -> copy the
+        // valid elements to a new list
         List<Resource> validResources = new ArrayList<>();
-        //validate every resource and remove if invalid
+        // validate every resource and remove if invalid
         for (int i = 0; i < resources.size(); i++) {
             Resource resource = resources.get(i);
             ValidationResultType validationResult = ERROR;
@@ -248,8 +256,8 @@ public enum TableIdentifier {
     }
 
     /**
-     * @return <code>true</code> if this table identifier has convertable
-     *         columns and a constructor fpr the converter.
+     * @return <code>true</code> if this table identifier has convertable columns
+     *         and a constructor fpr the converter.
      */
     public boolean isConvertableTableSheet() {
         return columnIdentifiersClass != null && converterConstructor != null;

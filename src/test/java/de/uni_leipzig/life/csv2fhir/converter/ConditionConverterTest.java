@@ -58,7 +58,7 @@ public class ConditionConverterTest {
 
     /**
      * @param codeInput
-     * @param resultCodes
+     * @param expectedResultCodes
      */
     private static void testConvert(String codeInput, String... expectedResultCodes) throws Exception {
         ConverterResult result = new ConverterResult(new ConverterOptions(""));
@@ -71,7 +71,7 @@ public class ConditionConverterTest {
         assertEquals(convertedResourcesCount, expectedResultCodes.length);
         Set<String> conditionIDs = new HashSet<>();
         for (int i = 0; i < convertedResourcesCount; i++) {
-            Condition condition = (Condition) convertedResources.get(i); //the potencial Nullpointer warning is wrong!
+            Condition condition = (Condition) convertedResources.get(i); // the potencial Nullpointer warning is wrong!
             CodeableConcept code = condition.getCode();
             List<Coding> codings = code.getCoding();
             assertEquals(codings.size(), 1);
@@ -80,7 +80,7 @@ public class ConditionConverterTest {
             assertEquals(codingCode, expectedResultCodes[i]);
             conditionIDs.add(condition.getId());
         }
-        //check whether always different IDs are generated
+        // check whether always different IDs are generated
         assertEquals(conditionIDs.size(), convertedResourcesCount);
     }
 

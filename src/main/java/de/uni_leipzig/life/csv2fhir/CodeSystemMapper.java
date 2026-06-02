@@ -14,8 +14,8 @@ public class CodeSystemMapper extends BothDirectionResourceMapper {
     public static final String PROFILE_RESOURCE_KEY = "PROFILE";
 
     /**
-     * As a convention, every code system map should contain this key, which
-     * maps to the valid code system URL.
+     * As a convention, every code system map should contain this key, which maps
+     * to the valid code system URL.
      */
     public static final String CODE_SYSTEM_URL_RESOURCE_KEY = "CODE_SYSTEM_URL";
 

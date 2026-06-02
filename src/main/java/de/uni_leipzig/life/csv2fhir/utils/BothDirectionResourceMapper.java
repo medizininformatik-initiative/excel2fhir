@@ -32,9 +32,8 @@ public class BothDirectionResourceMapper implements Map<String, String> {
     private final HashMap<String, String> backwardMap = new HashMap<>();
 
     /**
-     * Stores the values of the map in the order in which they are added the
-     * first time. If a value already exists in this map it will not be added
-     * again.
+     * Stores the values of the map in the order in which they are added the first
+     * time. If a value already exists in this map it will not be added again.
      */
     private final List<String> valuesAddingOrder = new ArrayList<>();
 
@@ -71,9 +70,9 @@ public class BothDirectionResourceMapper implements Map<String, String> {
 
         @Override
         public synchronized String put(Object key, Object value) {
-            //Sys.out1(key + " -> " + value);
-            String valueString = String.valueOf(value).trim(); //we trim!
-            //the const value 'EMPTY_STRING' means the empty string "" :)
+            // Sys.out1(key + " -> " + value);
+            String valueString = String.valueOf(value).trim(); // we trim!
+            // the const value 'EMPTY_STRING' means the empty string "" :)
             if (EMPTY_STRING.equals(valueString)) {
                 valueString = "";
             }
@@ -91,7 +90,7 @@ public class BothDirectionResourceMapper implements Map<String, String> {
     }
 
     /**
-     * @param resourceFileName
+     * @param resourceFileNames
      */
     public BothDirectionResourceMapper(String... resourceFileNames) {
         for (String resourceFileName : resourceFileNames) {
