@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- https://stackoverflow.com/questions/21206993/very-simple-log4j2-xml-configuration-file-using-console-and-file-appender -->
-<Configuration status="INFO">
+<Configuration status="WARN">
 	<Appenders>
 		<Console name="MESSAGE_ONLY" target="SYSTEM_OUT">
 			<PatternLayout pattern="%msg%n" />
@@ -18,11 +18,11 @@
 	<Loggers>
 		<!-- additivity="true" because only one logger catches the message if false -->
 <!-- 		DO NOT LOG WITH DEBUG WHEN YOU START THE VALIDATOR! The logfile size is then 1 - 5 GB -->
-		<Root level="info" additivity="true" includeLocation="true">
+		<Root level="warn" additivity="true" includeLocation="true">
 <!-- 			<AppenderRef ref="MyFile" /> -->
 <!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
 		</Root>
-		<logger name="de.uni_leipzig" level="info" additivity="true" includeLocation="true">
+		<logger name="de.uni_leipzig" level="warn" additivity="true" includeLocation="true">
 <!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
 			<AppenderRef ref="DATE_LEVEL_SOURCE" />
 <!-- 			<AppenderRef ref="DATE_LEVEL_SOURCE_LINENUMBER" /> -->
