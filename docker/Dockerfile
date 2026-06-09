@@ -1,11 +1,11 @@
-FROM maven:3.8.3-openjdk-17 AS maven_tool_chain
+FROM maven:3.8.5-openjdk-17 AS maven_tool_chain
 COPY pom.xml /tmp/
 COPY . /tmp/
 WORKDIR /tmp/
 RUN mvn clean install
 
 
-FROM amazoncorretto:17-alpine
+FROM amazoncorretto:17.0.19-alpine
 
 COPY --from=maven_tool_chain /tmp/target/excel2fhir.jar /app/excel2fhir.jar
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
