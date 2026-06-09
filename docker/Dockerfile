@@ -1,4 +1,4 @@
-FROM maven:3.8.3-openjdk-17 AS maven_tool_chain
+FROM maven:3.8.5-openjdk-17 AS maven_tool_chain
 COPY pom.xml /tmp/
 COPY . /tmp/
 WORKDIR /tmp/
