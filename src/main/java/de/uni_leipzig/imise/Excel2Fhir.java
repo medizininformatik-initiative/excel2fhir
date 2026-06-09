@@ -157,7 +157,7 @@ public class Excel2Fhir {
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
-        String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "_";
+        String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "-";
         Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileBaseName, validator);
         try {

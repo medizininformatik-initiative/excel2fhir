@@ -42,8 +42,6 @@ public class ExcelTemplateValidator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExcelTemplateValidator.class);
 
-    private static final String DATE_TIME_FORMAT = "dd.mm.yyyy hh:mm:ss";
-
     private static final Map<String, List<String>> EXPECTED_HEADERS = createExpectedHeaders();
 
     private final DataFormatter formatter = new DataFormatter(Locale.GERMANY);
@@ -252,11 +250,6 @@ public class ExcelTemplateValidator {
             }
             return null;
         }
-        if (cell != null && cell.getCellStyle() != null && !isExpectedDateTimeFormat(cell)) {
-            add(result, WARNING, sheet.getSheetName(), row.getRowNum() + 1, columnName,
-                    "Cell format should be " + DATE_TIME_FORMAT + " but is "
-                            + cell.getCellStyle().getDataFormatString());
-        }
         if (isExcelDateCell(cell)) {
             return new DateTimeType(cell.getDateCellValue());
         }
@@ -387,18 +380,6 @@ public class ExcelTemplateValidator {
     private Date evaluateDateFormula(Cell cell) {
         CellValue cellValue = formulaEvaluator.evaluate(cell);
         return DateUtil.getJavaDate(cellValue.getNumberValue());
-    }
-
-    private boolean isExpectedDateTimeFormat(Cell cell) {
-        String format = cell.getCellStyle().getDataFormatString();
-        if (format == null) {
-            return false;
-        }
-        String normalizedFormat = format.toLowerCase(Locale.ROOT)
-                .replace("\\", "")
-                .replace('/', '.')
-                .replace("m/d/yy", "dd.mm.yyyy");
-        return DATE_TIME_FORMAT.equals(normalizedFormat);
     }
 
     private List<String> getEncounterNumbers(Row row, Map<String, Integer> columns) {

@@ -1,5 +1,6 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
+import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
@@ -25,6 +26,7 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
+import de.uni_leipzig.life.csv2fhir.utils.TerminologyVersionUtil;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -106,7 +108,8 @@ public class ProcedureConverter extends Converter {
     private CodeableConcept convertProcedureCode() throws Exception {
         Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode);
         if (procedureCoding != null) {
-            procedureCoding.setVersion("2020"); // just to be KDS compatible
+            procedureCoding.setVersion(TerminologyVersionUtil
+                    .getOpsVersion(getEncounterDate(result, getPatientId(), getEncounterId())));
             return createCodeableConcept(procedureCoding, Prozedurentext);
         }
         return null;

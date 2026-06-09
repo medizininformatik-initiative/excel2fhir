@@ -6,15 +6,24 @@
 # An empty value must be marked as 'EMPTY_STRING'.
 #####################################################################################################################
 
-CONSENT_PROFILE					http://fhir.de/ConsentManagement/StructureDefinition/Consent
+CONSENT_PROFILE					https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung
 
 CONSENT_SCOPE_CODING_SYSTEM		http://terminology.hl7.org/CodeSystem/consentscope
 CONSENT_SCOPE_CODING_CODE		research
 
 CONSENT_CATEGORY_CODING_SYSTEM	http://loinc.org
-CONSENT_CATEGORY_CODING_CODE	59284-0
+CONSENT_CATEGORY_CODING_CODE	57016-8
 
-CONSENT_POLICY_URI				https://www.medizininformatik-initiative.de/sites/default/files/2020-04/MII_AG-Consent_Einheitlicher-Mustertext_v1.6d.pdf
+CONSENT_MII_CATEGORY_CODING_SYSTEM	https://www.medizininformatik-initiative.de/fhir/modul-consent/CodeSystem/mii-cs-consent-version-modules
+CONSENT_MII_CATEGORY_CODING_CODE	2.16.840.1.113883.3.1937.777.24.2.184
+
+CONSENT_RESULT_TYPE_CODING_SYSTEM	http://fhir.de/ConsentManagement/CodeSystem/ResultType
+CONSENT_RESULT_TYPE_CODING_CODE	document
+
+CONSENT_TEMPLATE_TYPE_CODING_SYSTEM	http://fhir.de/ConsentManagement/CodeSystem/TemplateType
+CONSENT_TEMPLATE_TYPE_CODING_CODE	CONSENT-OPT-IN
+
+CONSENT_POLICY_URI				urn:oid:2.16.840.1.113883.3.1937.777.24.2.1791
 
 #####################################################################################################################
 # Sources:

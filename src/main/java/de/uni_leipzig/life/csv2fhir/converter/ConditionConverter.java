@@ -33,6 +33,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
+import de.uni_leipzig.life.csv2fhir.utils.TerminologyVersionUtil;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -202,7 +203,7 @@ public class ConditionConverter extends Converter {
      */
     private CodeableConcept convertCode(String icdCode) throws Exception {
         Coding icdCoding = createCoding("http://fhir.de/CodeSystem/bfarm/icd-10-gm", icdCode);
-        icdCoding.setVersion("2020"); // just to be KDS compatible
+        icdCoding.setVersion(TerminologyVersionUtil.getIcd10GmVersion(getRelevantEncounterDate()));
         return createCodeableConcept(icdCoding, Bezeichner);
     }
 
@@ -216,7 +217,7 @@ public class ConditionConverter extends Converter {
             return DateUtil.parseDateTimeType(date);
         } catch (Exception e) {
             // extract a date from an encounter
-            DateTimeType encounterDate = getEncounterDate(result, getPatientId());
+            DateTimeType encounterDate = getRelevantEncounterDate();
             if (encounterDate != null) {
                 warning("Can not parse " + Dokumentationszeitpunkt + " for Record. Extract date from encounter. "
                         + this);
@@ -225,6 +226,10 @@ public class ConditionConverter extends Converter {
         }
         error("Can not parse " + Dokumentationszeitpunkt + " for Record");
         return null;
+    }
+
+    private DateTimeType getRelevantEncounterDate() throws Exception {
+        return getEncounterDate(result, getPatientId(), getEncounterId());
     }
 
 }

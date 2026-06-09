@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.createReference;
+import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Medikation;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.ASK;
 import static de.uni_leipzig.life.csv2fhir.converter.MedicationConverter.Medication_Columns.ATC_Code;
@@ -50,6 +51,8 @@ import org.hl7.fhir.r4.model.Ratio;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.SimpleQuantity;
+import org.hl7.fhir.r4.model.Timing;
+import org.hl7.fhir.r4.model.Timing.UnitsOfTime;
 import org.hl7.fhir.r4.model.Type;
 
 import com.google.common.collect.ImmutableList;
@@ -62,6 +65,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
 import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 import de.uni_leipzig.life.csv2fhir.utils.StringEqualsIgnoreCase;
+import de.uni_leipzig.life.csv2fhir.utils.TerminologyVersionUtil;
 
 /**
  * MedicationStatement bei "Vor Aufnahme" MedicationAdminstration sonst
@@ -311,10 +315,15 @@ public class MedicationConverter extends Converter {
     /**
      * @return
      */
-    private CodeableConcept convertMedicationCodeableConcept() {
+    private CodeableConcept convertMedicationCodeableConcept() throws Exception {
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected));
-        concept.addCoding(createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected));
+        Coding atcCoding = createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected);
+        if (atcCoding != null) {
+            atcCoding.setVersion(TerminologyVersionUtil
+                    .getAtcVersion(getEncounterDate(result, getPatientId(), getEncounterId())));
+        }
+        concept.addCoding(atcCoding);
         concept.setText(get(Wirksubstanz_aus_Praeparat_Handelsname));
         return concept;
     }
@@ -527,8 +536,23 @@ public class MedicationConverter extends Converter {
      */
     private Dosage convertDosage() throws Exception {
         Dosage d = new Dosage();
+        d.setTiming(convertDosageTiming());
         d.addDoseAndRate().setDose(convertQuantity());
         return d;
+    }
+
+    private Timing convertDosageTiming() throws Exception {
+        BigDecimal dosesPerDay = parseDecimal(get(Anzahl_Dosen_pro_Tag));
+        if (dosesPerDay.compareTo(BigDecimal.ZERO) <= 0) {
+            error(Anzahl_Dosen_pro_Tag + " must be greater than 0 for Record");
+            return null;
+        }
+        Timing timing = new Timing();
+        timing.getRepeat()
+                .setFrequency(dosesPerDay.intValue())
+                .setPeriod(1)
+                .setPeriodUnit(UnitsOfTime.D);
+        return timing;
     }
 
     /**

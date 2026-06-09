@@ -4,6 +4,7 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.hl7.fhir.r4.model.Bundle;
@@ -93,16 +94,42 @@ public class BundleFunctions {
     }
 
     /**
+     * Extract a date from the concrete encounter if available, otherwise use one
+     * encounter of the corresponding patient.
+     *
+     * @param result
+     * @param pid
+     * @param encounterId
+     * @return
+     */
+    public static DateTimeType getEncounterDate(ConverterResult result, String pid, String encounterId) {
+        if (encounterId != null && !encounterId.trim().isEmpty()) {
+            Encounter encounter = result.get(Fall, Encounter.class, encounterId);
+            DateTimeType encounterDate = getEncounterDate(Collections.singleton(encounter), true);
+            if (encounterDate == null) {
+                encounterDate = getEncounterDate(Collections.singleton(encounter), false);
+            }
+            if (encounterDate != null) {
+                return encounterDate;
+            }
+        }
+        return getEncounterDate(result, pid);
+    }
+
+    /**
      * @param encounters
      * @param checkStartDates
      * @return the first date entry found in one of the encounters
      */
     public static DateTimeType getEncounterDate(Collection<Encounter> encounters, boolean checkStartDates) {
         for (Encounter encounter : encounters) {
+            if (encounter == null) {
+                continue;
+            }
             Period period = encounter.getPeriod();
             if (period != null) {
                 DateTimeType date = checkStartDates ? period.getStartElement() : period.getEndElement();
-                if (date != null) {
+                if (date != null && date.hasValue()) {
                     return date;
                 }
             }

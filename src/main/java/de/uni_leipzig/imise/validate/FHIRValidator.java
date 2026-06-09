@@ -23,6 +23,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,9 @@ public class FHIRValidator {
 
     /** The directory with the validator packages in the resources */
     private static final String VALIDATOR_PACKAGES_DIR_IN_RESOURCES = "fhir";
+
+    /** FHIR version supported by this validator instance. */
+    private static final String SUPPORTED_FHIR_VERSION = "4.0.1";
 
     /**  */
     private final FhirValidator validator;
@@ -144,12 +148,13 @@ public class FHIRValidator {
             "Unknown code 'http://loinc.org#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
-            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/icd-10-gm|*",
+            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/icd-10-gm|",
 
             "Could not validate code http://fhir.de/CodeSystem/bfarm/ops#",
             "Could not validate code http://fhir.de/CodeSystem/bfarm/atc#",
 
-            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/ops|*",
+            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/ops|",
+            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/atc|",
             "Could not validate code http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
             "Medication.code.coding[0]:Unable to expand value set",
 
@@ -277,11 +282,18 @@ public class FHIRValidator {
             for (File validatorPackage : validatorPackages) {
                 if (validatorPackage.isFile()) {
                     try {
+                        if (!supportsConfiguredFhirVersion(validatorPackage)) {
+                            LOG.info("Skip Validation Package because it does not support FHIR "
+                                    + SUPPORTED_FHIR_VERSION + ": " + validatorPackage.getCanonicalPath());
+                            continue;
+                        }
                         LOG.info("Load Validation Package: " + validatorPackage.getCanonicalPath());
                         npmPackageSupport.loadPackageFromClasspath(
                                 VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "/" + validatorPackage.getName());
                     } catch (IOException e) {
                         LOG.error(e.getMessage(), e);
+                    } catch (RuntimeException e) {
+                        LOG.error("Could not load Validation Package " + validatorPackage.getName(), e);
                     }
                 }
             }
@@ -299,6 +311,18 @@ public class FHIRValidator {
             validator.registerValidatorModule(instanceValidator);
         }
         LOG.info("Finished Init FHIR Validator Bundles in " + stopwatch.stop());
+    }
+
+    /**
+     * Avoid loading packages for a different FHIR major version into the R4
+     * validator. Some dependency downloads contain both R4 and R5 packages, and R5
+     * resources can contain attributes unknown to HAPI's R4 parser.
+     */
+    private boolean supportsConfiguredFhirVersion(File validatorPackage) throws IOException {
+        try (FileInputStream packageInputStream = new FileInputStream(validatorPackage)) {
+            String fhirVersionList = NpmPackage.fromPackage(packageInputStream).fhirVersionList();
+            return Strings.isBlank(fhirVersionList) || fhirVersionList.contains(SUPPORTED_FHIR_VERSION);
+        }
     }
 
     /**

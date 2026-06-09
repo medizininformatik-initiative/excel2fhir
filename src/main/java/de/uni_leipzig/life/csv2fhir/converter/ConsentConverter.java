@@ -7,6 +7,7 @@ import static org.apache.logging.log4j.util.Strings.isNotBlank;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.DENY;
 import static org.hl7.fhir.r4.model.Consent.ConsentProvisionType.PERMIT;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,8 +110,7 @@ public class ConsentConverter extends Converter {
         consent.setPatient(getPatientReference());
         consent.setDateTime(consentDate.getValue());
         consent.setScope(createCodeableConcept(res("CONSENT_SCOPE_CODING_SYSTEM"), res("CONSENT_SCOPE_CODING_CODE")));
-        consent.setCategory(Collections.singletonList(
-                createCodeableConcept(res("CONSENT_CATEGORY_CODING_SYSTEM"), res("CONSENT_CATEGORY_CODING_CODE"))));
+        consent.setCategory(getCategory());
         consent.setPolicy(getPolicy());
         consent.setProvision(getProvision());
         return Collections.singletonList(consent);
@@ -131,6 +131,21 @@ public class ConsentConverter extends Converter {
         ConsentPolicyComponent consentPolicyComponent = new ConsentPolicyComponent();
         consentPolicyComponent.setUri(res("CONSENT_POLICY_URI")); // hier z.B. MII Broad Consent
         return Collections.singletonList(consentPolicyComponent);
+    }
+
+    /**
+     * @return
+     */
+    private static List<CodeableConcept> getCategory() {
+        List<CodeableConcept> category = new ArrayList<>();
+        category.add(createCodeableConcept(res("CONSENT_CATEGORY_CODING_SYSTEM"), res("CONSENT_CATEGORY_CODING_CODE")));
+        category.add(createCodeableConcept(res("CONSENT_MII_CATEGORY_CODING_SYSTEM"),
+                res("CONSENT_MII_CATEGORY_CODING_CODE")));
+        category.add(createCodeableConcept(res("CONSENT_RESULT_TYPE_CODING_SYSTEM"),
+                res("CONSENT_RESULT_TYPE_CODING_CODE")));
+        category.add(createCodeableConcept(res("CONSENT_TEMPLATE_TYPE_CODING_SYSTEM"),
+                res("CONSENT_TEMPLATE_TYPE_CODING_CODE")));
+        return category;
     }
 
     /**
