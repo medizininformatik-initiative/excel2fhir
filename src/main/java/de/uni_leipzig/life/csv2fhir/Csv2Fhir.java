@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -124,16 +125,50 @@ public class Csv2Fhir {
         // from the Excel file) then only the default options are loaded from the
         // resources. If the file
         // exists then it is loaded after the defaults are loaded.
-        String converterOptionsFileNamePattern = outputFileNameBase + Konvertierungsoptionen.getTableNamePattern()
-                + ".csv";
-        for (File file : inputDirectory.listFiles()) {
-            String fileName = file.getName();
-            if (fileName.matches(converterOptionsFileNamePattern)) {
-                ConverterOptions converterOptions = new ConverterOptions(file.getAbsolutePath());
-                allConverterOptions.add(converterOptions);
+        File[] inputFiles = inputDirectory.listFiles();
+        if (inputFiles != null) {
+            List<String> inputBaseNameVariants = getOutputFileNameBaseVariants(outputFileNameBase);
+            for (File file : inputFiles) {
+                String fileName = file.getName();
+                for (String inputBaseNameVariant : inputBaseNameVariants) {
+                    String converterOptionsFileNamePattern = inputBaseNameVariant
+                            + Konvertierungsoptionen.getTableNamePattern() + "\\.csv";
+                    if (fileName.matches(converterOptionsFileNamePattern)) {
+                        ConverterOptions converterOptions = new ConverterOptions(file.getAbsolutePath());
+                        allConverterOptions.add(converterOptions);
+                        break;
+                    }
+                }
             }
         }
+        if (allConverterOptions.isEmpty()) {
+            allConverterOptions.add(new ConverterOptions(""));
+        }
         return allConverterOptions;
+    }
+
+    private static List<String> getOutputFileNameBaseVariants(String outputFileNameBase) {
+        LinkedHashSet<String> variants = new LinkedHashSet<>();
+        variants.add(outputFileNameBase);
+
+        if (outputFileNameBase.endsWith("_")) {
+            variants.add(outputFileNameBase.substring(0, outputFileNameBase.length() - 1));
+            variants.add(outputFileNameBase.substring(0, outputFileNameBase.length() - 1) + "-");
+        } else if (outputFileNameBase.endsWith("-")) {
+            variants.add(outputFileNameBase.substring(0, outputFileNameBase.length() - 1));
+            variants.add(outputFileNameBase.substring(0, outputFileNameBase.length() - 1) + "_");
+        }
+        return new ArrayList<>(variants);
+    }
+
+    private File getCsvInputFile(String outputFileNameBase, String tableName) {
+        for (String inputBaseNameVariant : getOutputFileNameBaseVariants(outputFileNameBase)) {
+            File candidate = new File(inputDirectory, inputBaseNameVariant + tableName + ".csv");
+            if (candidate.exists() && candidate.isFile()) {
+                return candidate;
+            }
+        }
+        return new File(inputDirectory, outputFileNameBase + tableName + ".csv");
     }
 
     /**
@@ -150,8 +185,11 @@ public class Csv2Fhir {
         String columnNameString = String.valueOf(columnName);
         Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
 
-        File file = new File(inputDirectory, outputFileNameBase + csvFileBaseName + ".csv");
+        File file = getCsvInputFile(outputFileNameBase, csvFileBaseName.toString());
         if (!file.exists() || file.isDirectory()) {
+            LOG.error("Missing required patient input file for {}. Tried base names: {}",
+                    csvFileBaseName,
+                    getOutputFileNameBaseVariants(outputFileNameBase));
             return null;
         }
         try (Reader reader = new FileReader(file);
@@ -182,6 +220,10 @@ public class Csv2Fhir {
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
             throws Exception {
         Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
+        if (pids == null || pids.isEmpty()) {
+            LOG.error("No patient IDs found. Tried input bases: {}", getOutputFileNameBaseVariants(outputFileNameBase));
+            return fileSetStatistics;
+        }
 
         for (ConverterOptions converterOptions : allConverterOptions) {
 
@@ -252,7 +294,7 @@ public class Csv2Fhir {
                     pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
-                        if (pids.size() > patientsPerBundle) {
+                        if (pids.size() >= patientsPerBundle) {
                             if (firstPID == null) {
                                 throw new IllegalStateException(
                                         "Cannot build output file name extension without first patient ID");
@@ -397,8 +439,8 @@ public class Csv2Fhir {
             if (table.isConvertableTableSheet()) {
                 List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
                 if (parsedRecords == null) {
-                    String fileName = table.getCsvFileName(outputFileNameBase);
-                    File file = new File(inputDirectory, fileName);
+                    File file = getCsvInputFile(outputFileNameBase, table.toString());
+                    String fileName = file.getName();
                     if (!file.exists() || file.isDirectory()) {
                         continue;
                     }
