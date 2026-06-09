@@ -5,7 +5,7 @@ WORKDIR /tmp/
 RUN mvn clean install
 
 
-FROM amazoncorretto:17-alpine
+FROM amazoncorretto:17.0.19-alpine
 
 COPY --from=maven_tool_chain /tmp/target/excel2fhir.jar /app/excel2fhir.jar
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
