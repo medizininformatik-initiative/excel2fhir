@@ -160,16 +160,41 @@ public class Excel2Fhir {
         String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "-";
         Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
         Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileBaseName, validator);
+        boolean conversionFinished = false;
         try {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
             allFilesStatistics.add(converterStatistics);
+            conversionFinished = true;
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
+        }
+        if (conversionFinished) {
+            deleteGeneratedCsvFiles(sourceExcelFile, tempDir, resultDir);
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);
         }
         LOG.info("All bundles of all files content:\n" + allFilesStatistics);
+    }
+
+    private static void deleteGeneratedCsvFiles(File sourceExcelFile, File tempDir, File resultDir) throws IOException {
+        if (tempDir == null || tempDir.equals(resultDir) || !tempDir.isDirectory()) {
+            return;
+        }
+        if (resultDir != null && tempDir.getCanonicalFile().equals(resultDir.getCanonicalFile())) {
+            return;
+        }
+        String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
+        File[] generatedCsvFiles = tempDir.listFiles((dir, name) -> name.startsWith(sourceFileName + "_")
+                && name.toLowerCase().endsWith(".csv"));
+        if (generatedCsvFiles == null) {
+            return;
+        }
+        for (File generatedCsvFile : generatedCsvFiles) {
+            if (!generatedCsvFile.delete()) {
+                LOG.error("Could not delete generated CSV file " + generatedCsvFile);
+            }
+        }
     }
 
 }

@@ -192,18 +192,20 @@ public class MultiSinglePatientBundlesFileWriter {
      * @throws Exception
      */
     public void closeWriterAndRenameOrDeleteIfEmpty(String nameExtension) throws Exception {
-        if (ndjsonWriter != null) {
+        boolean writeNDJsonFile = ndjsonWriter != null;
+        boolean writeZipFile = zipJsonOutputStream != null;
+        if (writeNDJsonFile) {
             ndjsonWriter.close();
         }
-        if (!deleteIfEmpty(ndjsonFile)) {
+        if (writeNDJsonFile && !deleteIfEmpty(ndjsonFile)) {
             String newFileName = getFileName(nameExtension, NDJSON);
             File newFile = new File(ndjsonFile.getParentFile(), newFileName);
             Files.move(ndjsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        if (zipJsonOutputStream != null) {
+        if (writeZipFile) {
             zipJsonOutputStream.close();
         }
-        if (!deleteIfEmpty(zipJsonFile)) {
+        if (writeZipFile && !deleteIfEmpty(zipJsonFile)) {
             String newFileName = getFileName(nameExtension, ZIPJSON);
             File newFile = new File(zipJsonFile.getParentFile(), newFileName);
             Files.move(zipJsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);

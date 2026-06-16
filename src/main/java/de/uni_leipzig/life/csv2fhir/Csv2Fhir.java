@@ -268,13 +268,13 @@ public class Csv2Fhir {
                 for (String pid : pids) {
                     fullPIDCount++;
                     if (bundlePIDCount++ == 0) {
-                        firstPID = converterOptions.getFullPID(pid);
+                        firstPID = converterOptions.getFullPIDForFileName(pid);
                         if (!baseFileTypes.isEmpty() || !compressedFileTypes.isEmpty()) {
                             bundle = createTransactionBundle();
                         }
                     }
                     if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
-                        lastPID = converterOptions.getFullPID(pid);
+                        lastPID = converterOptions.getFullPIDForFileName(pid);
                     }
                     LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
                     Stopwatch stopwatch = Stopwatch.createStarted();
@@ -403,12 +403,18 @@ public class Csv2Fhir {
             OutputFileType outputFileType) {
         String normalizedExtension = Strings.nullToEmpty(fileNameExtension);
         String fileNameBase = Strings.isNullOrEmpty(normalizedExtension) ? removeTrailingSeparator(outputFileNameBase)
-                : outputFileNameBase + normalizedExtension;
+                : getOutputFileNameBase(outputFileNameBase, normalizedExtension) + normalizedExtension;
         return fileNameBase.replaceAll("__", "_") + outputFileType.getFileExtension();
     }
 
+    private static String getOutputFileNameBase(String outputFileNameBase, String fileNameExtension) {
+        return fileNameExtension.startsWith("_") ? removeTrailingSeparator(outputFileNameBase) : outputFileNameBase;
+    }
+
     private static String removeTrailingSeparator(String fileNameBase) {
-        return fileNameBase.endsWith("_") ? fileNameBase.substring(0, fileNameBase.length() - 1) : fileNameBase;
+        return fileNameBase.endsWith("_") || fileNameBase.endsWith("-")
+                ? fileNameBase.substring(0, fileNameBase.length() - 1)
+                : fileNameBase;
     }
 
     /**

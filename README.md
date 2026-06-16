@@ -87,20 +87,21 @@ By default, output is written next to the input workbook:
 - `outputGlobal/` contains the generated FHIR bundle files.
 
 The default result format is JSON. Additional output formats can be selected with
-`-r` / `--result-file-format`:
+`-r` / `--result-file-format` (or repeated `--result-file-format` arguments):
 
 - `JSON`
 - `XML`
 - `NDJSON`
 - `JSONGZIP`
 - `JSONBZ2`
+- `ZIPJSON`
 
 Example:
 
 ```bash
 java -jar target/excel2fhir.jar \
   -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
-  -r JSON,NDJSON
+  --result-file-format JSON --result-file-format NDJSON
 ```
 
 ## Command Line Options
@@ -213,7 +214,7 @@ Example with FHIR validation and NDJSON output:
 docker compose -f docker/docker-compose.yml run --rm excel2fhir \
   -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
   -v \
-  -r JSON,NDJSON
+  --result-file-format JSON --result-file-format NDJSON
 ```
 
 ## Development
@@ -247,3 +248,15 @@ docker/                                       Docker build and compose setup
 ## License
 
 See [LICENSE](LICENSE).
+
+## Reproducible Test Data Generation
+
+For migrated workbooks in the separate `kerndatensatz-testdaten` repository, use:
+
+```bash
+./scripts/generate-known-testdata.sh
+```
+
+The script is run from this generator repository and expects `kerndatensatz-testdaten` to be checked out next to it. If it is elsewhere, set `TESTDATA_ROOT` to the test-data repository's `Test_Data` directory.
+
+See `docs/reproduce-testdata.md` for details.

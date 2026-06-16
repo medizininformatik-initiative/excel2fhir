@@ -390,13 +390,23 @@ public class ConverterOptions {
      * @return
      */
     public String getFullPID(String pid) {
+        return getFullPIDForFileName(pid).replace('_', '-'); // AXS: (Some) FHIR Server will not accept IDs with an
+                                                             // underscore!
+    }
+
+    /**
+     * @param pid
+     * @return the PID including configured offsets/prefix/suffix, preserving the
+     *         original characters for output file names.
+     */
+    public String getFullPIDForFileName(String pid) {
         int loopOffset = loopCounter == 0 ? 0 : loopCounter * getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET);
         int pidOffset = getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET) + loopOffset;
         if (pidOffset > 0) {
             pid = getIncreasedLastPidNumber(pid, pidOffset);
         }
         pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
-        return pid.replace('_', '-'); // AXS: (Some) FHIR Server will not accept IDs with an underscore!
+        return pid;
     }
 
     /**
