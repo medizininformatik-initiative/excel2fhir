@@ -181,7 +181,7 @@ public class ExcelTemplateValidator {
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
-                List.of("Dokumentationszeitpunkt"), List.of());
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"), List.of(new DateRangeColumns("Beginn", "Ende")));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
                 List.of("Dokumentationszeitpunkt"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Laborbefund",
@@ -257,6 +257,14 @@ public class ExcelTemplateValidator {
             return new DateTimeType(evaluateDateFormula(cell));
         }
         try {
+            if ("Diagnose".equals(sheet.getSheetName())) {
+                if (de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(value) != null) {
+                    return null;
+                }
+                if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
+                    return new DateTimeType(value);
+                }
+            }
             return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
         } catch (Exception e) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
@@ -432,8 +440,9 @@ public class ExcelTemplateValidator {
                 "Fachabteilung", "Station", "Zimmer", "Bett", "Erklärung/Ausfüllhilfe"));
         headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Parameter", "Messwert",
                 "Einheit", "Zeitstempel (Abnahme)", "Erklärung/Ausfüllhilfe"));
-        headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "ICD",
-                "Dokumentationszeitpunkt", "Typ", "Erklärung/Ausfüllhilfe"));
+        headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",
+                "Zusatzcode", "Zusatzcodesystem", "Dokumentationszeitpunkt", "Beginn", "Ende",
+                "Klinischer Status", "Verifikationsstatus", "Typ", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
                 "Dokumentationszeitpunkt", "Erklärung/Ausfüllhilfe"));
         headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Zeitstempel", "Medikationstyp",

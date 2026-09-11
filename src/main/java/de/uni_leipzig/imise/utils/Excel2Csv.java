@@ -165,9 +165,14 @@ public class Excel2Csv {
                                 cellValue = "";
                             }
                             // clean value inclusive bon-breaking whitespace occured in ICD
-                            cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
+                            String columnName = firstRow.getCell(col).getStringCellValue();
+                            boolean literalDiagnosisCode = "Diagnose".equals(sheetName)
+                                    && ("Code".equals(columnName) || "Zusatzcode".equals(columnName));
+                            if (!literalDiagnosisCode) {
+                                cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
+                            }
                             // "No Value" used in UKE
-                            if ("#NV".equals(cellValue)) {
+                            if (!literalDiagnosisCode && "#NV".equals(cellValue)) {
                                 cellValue = "";
                             }
                             // We must escape all quotes in the values to prevent errors
