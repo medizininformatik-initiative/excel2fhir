@@ -24,13 +24,13 @@ public class DiagnosisWorkbookTest {
                 assertEquals("Typ", diagnoses.getRow(0).getCell(12).getStringCellValue());
                 assertEquals(CellType.STRING, diagnoses.getRow(1).getCell(3).getCellType());
                 assertEquals("@", diagnoses.getRow(1).getCell(3).getCellStyle().getDataFormatString());
-                for (String formula : List.of("Codes!$W$4:$W$22", "Codes!$X$4:$X$24",
-                        "Codes!$Y$4:$Y$24", "Codes!$Z$4:$Z$18", "Codes!$D$4:$D$13")) {
+                for (String formula : List.of("Codes!$W$30:$W$48", "Codes!$X$30:$X$50",
+                        "Codes!$Y$30:$Y$50", "Codes!$Z$30:$Z$44", "Codes!$D$4:$D$13")) {
                     assertTrue(formula, diagnoses.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
-                assertEquals("SNOMED CT (Version nicht angegeben)", book.getSheet("Codes").getRow(3).getCell(22).getStringCellValue());
-                assertEquals("ICD-10-GM 2026", book.getSheet("Codes").getRow(21).getCell(22).getStringCellValue());
+                assertEquals("SNOMED CT (Version nicht angegeben)", book.getSheet("Codes").getRow(29).getCell(22).getStringCellValue());
+                assertEquals("ICD-10-GM 2026", book.getSheet("Codes").getRow(47).getCell(22).getStringCellValue());
             }
         }
     }

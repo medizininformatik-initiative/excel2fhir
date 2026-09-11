@@ -36,14 +36,16 @@ Alte Dateien mit der Spalte ICD werden nicht mehr als neues Schema akzeptiert.
 
 ## Auswahlwerte
 
-Die bestehenden Listen bleiben erhalten. Ergänzt werden:
+Die bestehenden Listen bleiben erhalten. Die neuen Listen beginnen in Zeile 29
+(Überschriften), damit lange vorhandene Location-Erklärungen darüber frei bleiben.
+Ergänzt werden:
 
 | Liste | Quelle auf Codes | Ziel auf Diagnose |
 |---|---|---|
-| Codesystem einschließlich Version | W4:W22 | E2:E1031, G2:G1031 |
-| Klinischer Status und DAR | X4:X24 | K2:K1031 |
-| Verifikationsstatus und DAR | Y4:Y24 | L2:L1031 |
-| Expliziter Fehlwert | Z4:Z18 | D/F/H/I/J, Zeilen 2 bis 1031 |
+| Codesystem einschließlich Version | W30:W48 | E2:E1031, G2:G1031 |
+| Klinischer Status und DAR | X30:X50 | K2:K1031 |
+| Verifikationsstatus und DAR | Y30:Y50 | L2:L1031 |
+| Expliziter Fehlwert | Z30:Z44 | D/F/H/I/J, Zeilen 2 bis 1031 |
 | Diagnoserolle, bestehende Liste | D4:D13 | M2:M1031 |
 
 In der Demo reichen die vorbereiteten Dropdownbereiche bis Zeile 1006,
