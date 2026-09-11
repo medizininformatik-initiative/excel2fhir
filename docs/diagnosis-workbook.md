@@ -91,3 +91,20 @@ Nachher können Original und geprüftes Ziel getrennt vorliegen:
 - Beginn und Ende beschreiben den klinischen Verlauf, Dokumentationszeitpunkt die Erfassung.
 
 Es wird keine automatische SNOMED→ICD-10-GM-Übersetzung vorgenommen.
+
+## Geprüfte Profilregeln (KDS Basis 2026.0.1)
+
+| Eigenschaft | Kardinalität | Bedeutung für die Eingabe |
+|---|---|---|
+| code | 1..1 | Eine Diagnoseangabe wird benötigt. |
+| recordedDate | 1..1 | Dokumentationszeitpunkt oder ausdrücklicher DAR erforderlich für Profilkonformität. |
+| onsetDateTime | 0..1 | Optionaler Erkrankungsbeginn. |
+| abatementDateTime | 0..1 | Optionales Abklingen/Remission. |
+| clinicalStatus / verificationStatus | jeweils 0..1 | Optional, mit zusätzlichen Regeln abhängig vom Inhalt. |
+
+Leere Pflichtfelder bleiben für bewusst ungültige Testdaten möglich; die Eingabeprüfung
+setzt keinen automatischen DAR. Bei gesetztem Abatement verlangt `con-4` den klinischen
+Status Inaktiv, Abgeklungen oder Remission. Bei „Irrtümlich erfasst“ muss der klinische
+Status fehlen (`con-5`). Diese fachlichen Regeln prüft die optionale FHIR-Validierung.
+Die strikte Excel-Prüfung kontrolliert Auswahlwerte und Systemzuordnungen, sie ersetzt
+keine Profil- oder Terminologieprüfung.

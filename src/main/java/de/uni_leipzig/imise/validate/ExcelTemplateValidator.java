@@ -29,11 +29,13 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues;
 
 /**
  * Validates the current Excel input template contract before converting it.
@@ -227,6 +229,9 @@ public class ExcelTemplateValidator {
                             "Fall-Nr does not exist for this Patient-ID in Fall sheet");
                 }
             }
+            if ("Diagnose".equals(sheetName)) {
+                validateDiagnosisSelections(row, columns, result);
+            }
             Map<String, DateTimeType> parsedDateTimes = new HashMap<>();
             for (String columnName : dateTimeColumns) {
                 parsedDateTimes.put(columnName, validateDateTime(sheet, row, columns, columnName, result, false));
@@ -238,6 +243,48 @@ public class ExcelTemplateValidator {
                         null);
             }
         }
+    }
+
+    void validateDiagnosisSelections(Row row, Map<String, Integer> columns, TemplateValidationResult result) {
+        Map<String, Coding> systems =
+                DiagnosisValues.systems();
+        String firstSystem = null;
+        for (String[] pair : List.of(new String[] {"Code", "Codesystem"},
+                new String[] {"Zusatzcode", "Zusatzcodesystem"})) {
+            String code = get(row, columns, pair[0]);
+            if (isBlank(code)) {
+                continue;
+            }
+            String selection = get(row, columns, pair[1]);
+            var coding = systems.get(selection);
+            if (coding == null) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Explicit supported codesystem required");
+            } else if (coding.getSystem().equals(firstSystem)) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Duplicate coding system exceeds profile slice");
+            } else {
+                firstSystem = coding.getSystem();
+            }
+            try {
+                DiagnosisValues.absentReason(code);
+            } catch (Exception e) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[0], "Unknown explicit data absent reason");
+            }
+        }
+        Map<String, Map<String, String>> statuses = Map.of(
+                "Klinischer Status", DiagnosisValues.CLINICAL,
+                "Verifikationsstatus", DiagnosisValues.VERIFICATION);
+        statuses.forEach((column, values) -> {
+            String value = get(row, columns, column);
+            if (!isBlank(value) && !values.containsKey(value)) {
+                try {
+                    if (DiagnosisValues.absentReason(value) == null) {
+                        throw new IllegalArgumentException();
+                    }
+                } catch (Exception e) {
+                    add(result, ERROR, "Diagnose", row.getRowNum() + 1, column, "Unsupported status or data absent reason");
+                }
+            }
+        });
     }
 
     private DateTimeType validateDateTime(XSSFSheet sheet, Row row, Map<String, Integer> columns, String columnName,
@@ -258,7 +305,7 @@ public class ExcelTemplateValidator {
         }
         try {
             if ("Diagnose".equals(sheet.getSheetName())) {
-                if (de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(value) != null) {
+                if (DiagnosisValues.absentReason(value) != null) {
                     return null;
                 }
                 if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
