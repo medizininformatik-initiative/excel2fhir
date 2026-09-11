@@ -43,6 +43,26 @@ below. Then run `mvn clean test package` and exercise validation from the packag
 JAR. Profile availability is not proof of SNOMED code validity: a matching licensed
 terminology edition/service is still needed for that check.
 
+## Memory for profile validation
+
+The complete package set and HAPI's canonical model conversion need substantial
+heap during the first validation. On the tested Java 17 container, the default
+heap (about 1.94 GiB) and an explicit 2 GiB heap ran out of memory. The standard
+workbook completed with profile validation and no validation errors at 4 GiB heap.
+This is a tested setting, not a measured universal minimum.
+
+For the container's optional `-v` validation, provision sufficient container/host
+memory in addition to the Java heap and use the JVM's existing environment setting:
+
+```sh
+docker run --rm -e JAVA_TOOL_OPTIONS=-Xmx4g <image> -v
+```
+
+For standalone Java, the equivalent is `java -Xmx4g -jar excel2fhir.jar -v ...`.
+No new application option is introduced. Without `-v`, the profile validator is
+not instantiated. The packaged-JAR and container checks matter in addition to
+unit tests, which do not exercise the complete first-validation memory peak.
+
 ## Resolved packages
 
 The SHA-256 values identify the downloaded archives, not an independent signature.
