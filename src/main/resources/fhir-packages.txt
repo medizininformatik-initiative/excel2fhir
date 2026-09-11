@@ -1,0 +1,24 @@
+# Explicit load order; see docs/fhir-packages.md.
+# Cross-version R5 artifacts first, then authoritative R4 core definitions.
+# Remaining packages: older versions first, newest included version last.
+hl7.fhir.uv.xver-r5.r4-0.1.0.tgz
+hl7.fhir.r4.core-4.0.1.tgz
+de.basisprofil.r4-1.5.4.tgz
+de.einwilligungsmanagement-2.0.2.tgz
+de.fhir.medication-1.0.7.tgz
+de.ihe-d.terminology-3.0.1.tgz
+de.medizininformatikinitiative.kerndatensatz.base-2026.0.1.tgz
+de.medizininformatikinitiative.kerndatensatz.consent-2026.0.0.tgz
+de.medizininformatikinitiative.kerndatensatz.laborbefund-2026.0.3.tgz
+de.medizininformatikinitiative.kerndatensatz.medikation-2026.0.1.tgz
+de.medizininformatikinitiative.kerndatensatz.meta-2026.0.0.tgz
+hl7.fhir.uv.crmi-2.0.0.tgz
+hl7.fhir.uv.extensions.r4-5.2.0.tgz
+hl7.fhir.uv.extensions.r4-5.3.0.tgz
+hl7.fhir.uv.ipa-1.1.0.tgz
+hl7.fhir.uv.ips-2.0.0.tgz
+hl7.fhir.uv.smart-app-launch-2.0.0.tgz
+hl7.terminology.r4-6.2.0.tgz
+hl7.terminology.r4-6.5.0.tgz
+hl7.terminology.r4-7.1.0.tgz
+hl7.terminology.r4-7.2.0.tgz

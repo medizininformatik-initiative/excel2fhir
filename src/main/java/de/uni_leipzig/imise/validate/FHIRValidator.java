@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,7 +22,6 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.utilities.npm.NpmPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +44,6 @@ public class FHIRValidator {
 
     /**  */
     private static final Logger LOG = LoggerFactory.getLogger(FHIRValidator.class);
-
-    /** The directory with the validator packages in the resources */
-    private static final String VALIDATOR_PACKAGES_DIR_IN_RESOURCES = "fhir";
-
-    /** FHIR version supported by this validator instance. */
-    private static final String SUPPORTED_FHIR_VERSION = "4.0.1";
 
     /**  */
     private final FhirValidator validator;
@@ -276,77 +268,17 @@ public class FHIRValidator {
         LOG.info("Start Init FHIR Validator Bundles...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         FhirContext fhirContext = FhirContext.forR4();
-        NpmPackageValidationSupport npmPackageSupport = new NpmPackageValidationSupport(fhirContext);
-        File[] validatorPackages = getValidatorPackages();
-        if (validatorPackages != null) {
-            for (File validatorPackage : validatorPackages) {
-                if (validatorPackage.isFile()) {
-                    try {
-                        if (!supportsConfiguredFhirVersion(validatorPackage)) {
-                            LOG.info("Skip Validation Package because it does not support FHIR "
-                                    + SUPPORTED_FHIR_VERSION + ": " + validatorPackage.getCanonicalPath());
-                            continue;
-                        }
-                        LOG.info("Load Validation Package: " + validatorPackage.getCanonicalPath());
-                        npmPackageSupport.loadPackageFromClasspath(
-                                VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "/" + validatorPackage.getName());
-                    } catch (IOException e) {
-                        LOG.error(e.getMessage(), e);
-                    } catch (RuntimeException e) {
-                        LOG.error("Could not load Validation Package " + validatorPackage.getName(), e);
-                    }
-                }
-            }
-
-            // Create a support chain including the NPM Package Support
-            ValidationSupportChain validationSupportChain = new ValidationSupportChain(
-                    npmPackageSupport,
-                    new DefaultProfileValidationSupport(fhirContext),
-                    new CommonCodeSystemsTerminologyService(fhirContext),
-                    new InMemoryTerminologyServerValidationSupport(fhirContext),
-                    new SnapshotGeneratingValidationSupport(fhirContext));
-            CachingValidationSupport validationSupport = new CachingValidationSupport(validationSupportChain);
-
-            FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
-            validator.registerValidatorModule(instanceValidator);
-        }
+        NpmPackageValidationSupport npmPackageSupport = FhirPackageLoader.load(fhirContext);
+        ValidationSupportChain validationSupportChain = new ValidationSupportChain(
+                npmPackageSupport,
+                new DefaultProfileValidationSupport(fhirContext),
+                new CommonCodeSystemsTerminologyService(fhirContext),
+                new InMemoryTerminologyServerValidationSupport(fhirContext),
+                new SnapshotGeneratingValidationSupport(fhirContext));
+        CachingValidationSupport validationSupport = new CachingValidationSupport(validationSupportChain);
+        FhirInstanceValidator instanceValidator = new FhirInstanceValidator(validationSupport);
+        validator.registerValidatorModule(instanceValidator);
         LOG.info("Finished Init FHIR Validator Bundles in " + stopwatch.stop());
-    }
-
-    /**
-     * Avoid loading packages for a different FHIR major version into the R4
-     * validator. Some dependency downloads contain both R4 and R5 packages, and R5
-     * resources can contain attributes unknown to HAPI's R4 parser.
-     */
-    private boolean supportsConfiguredFhirVersion(File validatorPackage) throws IOException {
-        try (FileInputStream packageInputStream = new FileInputStream(validatorPackage)) {
-            String fhirVersionList = NpmPackage.fromPackage(packageInputStream).fhirVersionList();
-            return Strings.isBlank(fhirVersionList) || fhirVersionList.contains(SUPPORTED_FHIR_VERSION);
-        }
-    }
-
-    /**
-     * @return the validator packages or <code>null</code> in case of error
-     */
-    private File[] getValidatorPackages() {
-        URL validatorPackagesDirURL = getClass().getClassLoader().getResource(VALIDATOR_PACKAGES_DIR_IN_RESOURCES);
-        if (validatorPackagesDirURL == null) {
-            LOG.error("Could not find FHIR validator packages under directory name \""
-                    + VALIDATOR_PACKAGES_DIR_IN_RESOURCES + "\"");
-            return null;
-        }
-        // replace "%20" encoded whitespaces by real whitespaces to find files
-        File validatorPackagesDir = new File(validatorPackagesDirURL.getPath().replace("%20", " "));
-        if (!validatorPackagesDir.isDirectory() && validatorPackagesDir.canRead()) {
-            LOG.error("Could not read Validator packages directory  " + validatorPackagesDir.getPath());
-            return null;
-        }
-        File[] validatorPackages = validatorPackagesDir.listFiles();
-        if (validatorPackages.length == 0) {
-            LOG.error("Could not find FHIR validator packages in directory ");
-            return null;
-        }
-        return validatorPackages;
     }
 
     /**
