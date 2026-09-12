@@ -17,6 +17,8 @@ import tempfile
 import time
 from workbook_xml import read_sheets
 from diagnosis_mapping import map_diagnosis, mapping_metadata
+from clinical_import import prepare_clinical, SUPPORTED
+from clinical_events import prepare_events, prepare_documents, SHEETS
 
 ROOT = Path(__file__).resolve().parents[1]
 SNOMED = 'http://snomed.info/sct'
@@ -62,7 +64,13 @@ def prepare(bundle):
     born = datetime.strptime(patient['birthDate'], '%Y-%m-%d').strftime('%d.%m.%Y 00:00')
     rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), '', born,
                            {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']]])
-    fields(patient, {'name','birthDate','gender'})
+    address = (patient.get('address') or [{}])[0]
+    rows['Person'][0] += [''] * 7 + [', '.join(address.get('line',[])), address.get('postalCode',''),
+                                    address.get('city',''), address.get('state',''), address.get('country',''),
+                                    patient.get('deceasedDateTime','')]
+    fields(patient, {'name','birthDate','gender','address','deceasedDateTime'})
+    if len(patient.get('address',[]))>1:loss(patient,'address[1:]','Weitere Anschriften nicht übernommen')
+    for key in address.keys()-{'line','postalCode','city','state','country'}:loss(patient,'address[0].'+key,'Anschrift-Eigenschaft nicht übernommen')
     for key in name.keys() - {'given','family'}: loss(patient, 'name[0].'+key, 'Generator unterstützt Sachverhalt noch nicht')
     if len(patient.get('name', [])) > 1: loss(patient, 'name[1:]', 'Generator unterstützt Sachverhalt noch nicht')
     encounter_numbers = {}
@@ -98,8 +106,9 @@ def prepare(bundle):
     for e in entries:
         r = e.get('resource', {});typ = r.get('resourceType')
         if typ in ['Patient','Encounter']: continue
+        if typ in SUPPORTED or typ in SHEETS or typ == 'DocumentReference': continue
         if typ != 'Condition':
-            loss(r, '$', 'Bewusst nicht übernommen: erstes Diagnosepaket')
+            loss(r, '$', 'Noch nicht im klinischen Excel-Import umgesetzt')
             continue
         source_conditions += 1
         condition_rows[r['id']] = len(rows['Diagnose']) + 2
@@ -150,7 +159,19 @@ def prepare(bundle):
         for field in ['subject','encounter']:
             for key in r.get(field,{}).keys() - {'reference'}:loss(r,field+'.'+key,'Generator unterstützt Sachverhalt noch nicht')
     if not source_conditions:raise ValueError('No diagnoses: this package must not emit an administrative shell')
-    return rows, {'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
+    clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers)
+    rows.update(clinical_rows)
+    event_rows, event_report = prepare_events(entries, pid, encounter_numbers,
+        {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'})
+    rows.update(event_rows)
+    clinical_report['clinicalImports'].extend(event_report['clinicalImports'])
+    document_rows, document_report = prepare_documents(entries, pid, encounter_numbers)
+    rows['DocumentReference'] = document_rows
+    clinical_report['clinicalImports'].extend(document_report['clinicalImports'])
+    losses.extend(document_report['losses'])
+    losses.extend(event_report['losses'])
+    losses.extend(clinical_report.pop('losses'))
+    return rows, {**clinical_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
                   'diagnosisMapping': mapping_metadata(), 'diagnosisMappings': diagnosis_mappings,
@@ -160,6 +181,20 @@ def prepare(bundle):
                                  'Additional ICD-10-GM mappings are provisional approximations for synthetic test data',
                                  'Target release 2026 is explicit and independent of historical event dates',
                                  'No KDS conformance or complete SNOMED terminology validation performed']}
+
+
+def column_name(index):
+    result = ''
+    while index:
+        index, digit = divmod(index - 1, 26)
+        result = chr(65 + digit) + result
+    return result
+
+
+def column_number(name):
+    value = 0
+    for char in name: value = value * 26 + ord(char) - 64
+    return value
 
 
 def write_workbook(rows, output):
@@ -175,20 +210,29 @@ def write_workbook(rows, output):
                      if cell.endswith('1') and cell[:-1].isalpha() and value == 'Erklärung/Ausfüllhilfe'), None)
         if hint is None:
             raise ValueError('Missing template help boundary on sheet ' + name)
-        data_end = chr(ord(hint) - 1)
+        data_end = column_name(column_number(hint) - 1)
         op('clear',name,f'A2:{data_end}{last}')
     for name, values in rows.items():
-        if len(values)>1030:raise ValueError('Case exceeds the prepared 1030 input rows')
+        if len(values) > 1030:
+            # Extend the existing input-row formatting, never rebuild the sheet.
+            for i in range(1032, len(values) + 2):
+                op('copy', name, f'A2:{column_name(len(values[0]))}2', 'A' + str(i))
         for i,row in enumerate(values,2):
-            for j,value in enumerate(row):put(name,chr(65+j)+str(i),value)
+            op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in row))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
-        if values:op('text',name,f'A2:{chr(64+len(values[0]))}{len(values)+1}')
+        if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
     option_sheet='Konvertierungsoptionen'
     last=max(int(''.join(filter(str.isdigit,k)))for k in sheets[option_sheet])
     op('clear',option_sheet,f'A1:Z{last}')
     put(option_sheet,'A1','SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true')
     put(option_sheet,'A2','SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false')
     put(option_sheet,'A3','VALIDATE_STRICT = true')
+    put(option_sheet,'A4','SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER = true')
+    put(option_sheet,'A5','SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION = false')
+    apply_workbook_edits(template, ops, output)
+
+
+def apply_workbook_edits(template, ops, output, preview=None):
     office=Path('/Applications/LibreOffice.app/Contents')
     if office.exists():soffice=office/'MacOS/soffice';jars=office/'Resources/java/*'
     else:
@@ -211,7 +255,7 @@ def write_workbook(rows, output):
                     time.sleep(.1)
             else:raise RuntimeError('LibreOffice startup timed out')
             env=dict(os.environ, CSV2FHIR_UNO_PORT=str(port))
-            subprocess.run(['java','-cp',str(jars),str(ROOT/'scripts/WorkbookUno.java'),str(candidate),str(commands)],
+            subprocess.run(['java','-cp',str(jars),str(ROOT/'scripts/WorkbookUno.java'),str(candidate),str(commands)] + (preview or []),
                            check=True,timeout=90,env=env)
             output.parent.mkdir(parents=True,exist_ok=True)
             if output.exists():raise FileExistsError(output)

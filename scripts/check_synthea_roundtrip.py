@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import sys
 from diagnosis_mapping import map_diagnosis, mapping_metadata
+from check_clinical_roundtrip import check_clinical
 
 
 def check(source, target, report):
@@ -40,8 +41,9 @@ def check(source, target, report):
     assert original==converted, {'missing':list((original-converted).elements())[:2], 'extra':list((converted-original).elements())[:2]}
     for r in dst:
         if r['resourceType']=='Patient':continue
-        assert r['subject']['reference'] in target_ids
-        if r.get('encounter'):assert r['encounter']['reference'] in target_ids
+        for field in ['subject','patient','encounter','context']:
+            if r.get(field,{}).get('reference'): assert r[field]['reference'] in target_ids
+        for reference in r.get('result',[]): assert reference['reference'] in target_ids
     encounters={r['id']:r for r in dst if r['resourceType']=='Encounter'}
     for r in src:
         if r['resourceType']!='Encounter':continue
@@ -63,8 +65,9 @@ def check(source, target, report):
             if r.get('period',{}).get(date):
                 assert datetime.fromisoformat(found['period'][date].replace('Z','+00:00'))==datetime.fromisoformat(r['period'][date].replace('Z','+00:00'))
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
-    assert Counter(r['resourceType']for r in dst)==Counter(Patient=1,Encounter=source_encounters,Condition=sum(original.values()))
-    return {'conditions':sum(original.values()),'encounters':len(encounters),
+    assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters,Condition=sum(original.values()))
+    clinical = check_clinical(source, target, report)
+    return {'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
             'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
                 if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),
