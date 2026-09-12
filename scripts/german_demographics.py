@@ -4,29 +4,39 @@ Municipality/postcode pairs are real; streets and households are invented.
 No ethnicity, citizenship, consent or insurance is inferred or generated.
 """
 import hashlib
+from functools import lru_cache
 import json
 from pathlib import Path
 import re
 
 DATA_PATH = Path(__file__).with_name('mappings') / 'german-demographics.json'
+# Name-pool updates must not change previously assigned addresses.
+ADDRESS_VERSION = 'german-demographics-v1'
+
+
+@lru_cache(maxsize=1)
+def load_data(path, modified_ns, size):
+    raw = path.read_bytes()
+    return json.loads(raw), hashlib.sha256(raw).hexdigest()
 
 
 def identity(patient):
-    raw = DATA_PATH.read_bytes()
-    data = json.loads(raw)
+    stat = DATA_PATH.stat()
+    data, checksum = load_data(DATA_PATH, stat.st_mtime_ns, stat.st_size)
     def pick(label, values):
-        digest = hashlib.sha256((data['version']+'|'+patient['id']+'|'+label).encode()).digest()
+        version = data['version'] if label in ('given','family') else ADDRESS_VERSION
+        digest = hashlib.sha256((version+'|'+patient['id']+'|'+label).encode()).digest()
         return values[int.from_bytes(digest, 'big') % len(values)]
     names = data['givenNames'].get(patient.get('gender'), data['givenNames']['unknown'])
     name = {'given':[pick('given', names)], 'family':pick('family', data['familyNames'])}
     place = pick('place', data['places'])
     address = {k:place[k] for k in ('postalCode','city','state')}
     address.update(country='DE', line=[pick('street', data['streets'])+' '+str(pick('number', list(range(1, 100))))])
-    return {'version':data['version'], 'dataSha256':hashlib.sha256(raw).hexdigest(),
+    return {'version':data['version'], 'dataSha256':checksum,
             'sourcePatient':patient['id'], 'name':name, 'address':address,
             'placeSource':place['source'], 'status':'synthetic-replacement',
             'limitations':['Invented street/household; not a deliverable postal address',
-                           'Small unweighted name/place pools; not population-representative',
+                           'Unweighted names/places; not population-representative; name collisions remain possible',
                            'One current address; no residential history']}
 
 

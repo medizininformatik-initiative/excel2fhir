@@ -1,4 +1,6 @@
 import copy
+import json
+import hashlib
 import sys
 import unittest
 from pathlib import Path
@@ -6,9 +8,41 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from german_demographics import identity, localize_document_identity, check_patient
 from synthea_to_excel import prepare
 from test_synthea_import import bundle
+from build_german_name_pool import unique_names, read_pools
 
 
 class DemographicsTest(unittest.TestCase):
+    def test_large_normalized_pools_have_provenance_and_license(self):
+        root = Path(__file__).resolve().parents[2]
+        data = json.loads((root/'scripts/mappings/german-demographics.json').read_text())
+        self.assertGreaterEqual(len(data['familyNames']), 500)
+        for values in data['givenNames'].values():self.assertGreaterEqual(len(values), 300)
+        for values in [*data['givenNames'].values(), data['familyNames']]:
+            self.assertEqual(values, unique_names(values))
+            self.assertFalse(any('.' in n or any(c.isdigit() for c in n) for n in values))
+        self.assertIn('Öztürk', data['familyNames'])
+        self.assertIn('Nguyen', data['familyNames'])
+        self.assertEqual(data['nameSources']['license'], 'MIT')
+        self.assertIn('Copyright (c) 2012 Daniele Faraglia', (root/data['nameSources']['licenseFile']).read_text())
+        self.assertEqual(len(data['nameSources']['files']), 3)
+
+    def test_normalization_deduplicates_unicode_but_keeps_real_spelling_variants(self):
+        self.assertEqual(unique_names([' Müller ', 'Mu\u0308ller', 'MÜLLER', 'Muller', 'H.-Dieter']), ['Muller', 'Müller'])
+        source = "raise RuntimeError('must not execute')\nclass Provider:\n    last_names = ('Müller', 'Kaya')\n"
+        self.assertEqual(read_pools(source)['last_names'], ('Müller','Kaya'))
+
+    def test_name_pool_update_keeps_v1_address_assignment(self):
+        patient = bundle()['entry'][0]['resource']
+        root = Path(__file__).resolve().parents[2]
+        data = json.loads((root/'scripts/mappings/german-demographics.json').read_text())
+        def old_pick(label, values):
+            digest = hashlib.sha256(('german-demographics-v1|'+patient['id']+'|'+label).encode()).digest()
+            return values[int.from_bytes(digest,'big') % len(values)]
+        place = old_pick('place',data['places'])
+        expected = {k:place[k] for k in ('city','state','postalCode')}
+        expected.update(country='DE', line=[old_pick('street',data['streets'])+' '+str(old_pick('number',list(range(1,100))))])
+        self.assertEqual(identity(patient)['address'], expected)
+
     def test_independent_of_source_order_names_race_and_address(self):
         patient = bundle()['entry'][0]['resource']
         before = copy.deepcopy(patient)
