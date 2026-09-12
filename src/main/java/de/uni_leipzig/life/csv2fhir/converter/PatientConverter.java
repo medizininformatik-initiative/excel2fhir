@@ -82,7 +82,18 @@ public class PatientConverter extends Converter {
         patient.addName(parseName());
         patient.setGender(parseGender());
         patient.setBirthDateElement(parseDate(Geburtsdatum));
-        patient.addAddress(parseAddress());
+        String country = ClinicalValues.get(this, ClinicalValues.Column.Land);
+        if (country == null) patient.addAddress(parseAddress());
+        else {
+            Address address = new Address().setCountry(country).setType(AddressType.BOTH);
+            String street = ClinicalValues.get(this, ClinicalValues.Column.Straße);
+            if (street != null) address.addLine(street);
+            address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
+            address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
+            address.setState(ClinicalValues.get(this, ClinicalValues.Column.Bundesland));
+            patient.addAddress(address);
+        }
+        patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
         patient.addGeneralPractitioner(parseHealthProvider());
         // String resourceAsJson =
         // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient);

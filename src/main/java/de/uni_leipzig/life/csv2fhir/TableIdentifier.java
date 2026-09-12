@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.life.csv2fhir.converter.ClinicalEventConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
@@ -61,6 +62,12 @@ public enum TableIdentifier {
     Medikation(Medication_Columns.class, MedicationConverter.class),
 
     Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverter.class),
+
+    Allergie(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Allergy.class),
+    Impfung(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Vaccine.class),
+    Befundbericht(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Report.class),
+    Behandlungsplan(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Plan.class),
+    Hilfsmittel(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Equipment.class),
 
     Consent(Consent_Columns.class, ConsentConverter.class) {
         @Override

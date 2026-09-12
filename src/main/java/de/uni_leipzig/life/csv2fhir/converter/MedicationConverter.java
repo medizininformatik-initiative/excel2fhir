@@ -211,7 +211,8 @@ public class MedicationConverter extends Converter {
         medication.setIdentifier(singletonList(new Identifier().setValue(medicationId))); // identifier is optional for
                                                                                           // medication
         medication.setCode(convertMedicationCodeableConcept());
-        medication.setIngredient(singletonList(getIngredient()));
+        MedicationIngredientComponent ingredient = getIngredient();
+        if (!ingredient.isEmpty()) medication.setIngredient(singletonList(ingredient));
         return medication;
     }
 
@@ -226,10 +227,12 @@ public class MedicationConverter extends Converter {
         medicationRequest.setSubject(getPatientReference());
         medicationRequest.setEncounter(getEncounterReference());
         medicationRequest.setMedication(getMedicationReference());
-        medicationRequest.setStatus(MedicationRequestStatus.ACTIVE);
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        medicationRequest.setStatus(status == null ? MedicationRequestStatus.ACTIVE : MedicationRequestStatus.fromCode(status));
         medicationRequest.setAuthoredOnElement(convertTimestamp());
         medicationRequest.setDosageInstruction(convertDosageRequest());
-        medicationRequest.setIntent(MedicationRequestIntent.ORDER);
+        String intent = ClinicalValues.get(this, ClinicalValues.Column.Absicht);
+        medicationRequest.setIntent(intent == null ? MedicationRequestIntent.ORDER : MedicationRequestIntent.fromCode(intent));
         return medicationRequest;
     }
 
@@ -244,8 +247,11 @@ public class MedicationConverter extends Converter {
         medicationAdministration.setSubject(getPatientReference());
         medicationAdministration.setContext(getEncounterReference());
         medicationAdministration.setMedication(getMedicationReference());
-        medicationAdministration.setStatus(MedicationAdministrationStatus.COMPLETED);
-        medicationAdministration.setEffective(convertTimestamp());
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        medicationAdministration.setStatus(status == null ? MedicationAdministrationStatus.COMPLETED : MedicationAdministrationStatus.fromCode(status));
+        medicationAdministration.setEffective(ClinicalValues.get(this, ClinicalValues.Column.Ende) == null ? convertTimestamp()
+                : new org.hl7.fhir.r4.model.Period().setStartElement(convertTimestamp())
+                    .setEndElement(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Ende))));
         medicationAdministration.setDosage(convertDosageAdministration());
         return medicationAdministration;
     }
@@ -261,7 +267,8 @@ public class MedicationConverter extends Converter {
         medicationStatement.setSubject(getPatientReference());
         medicationStatement.setContext(getEncounterReference());
         medicationStatement.setMedication(getMedicationReference());
-        medicationStatement.setStatus(MedicationStatementStatus.ACTIVE);
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        medicationStatement.setStatus(status == null ? MedicationStatementStatus.ACTIVE : MedicationStatementStatus.fromCode(status));
         medicationStatement.setEffective(convertTimestamp());
         medicationStatement.addDosage(convertDosageStatement());
         return medicationStatement;
@@ -297,6 +304,13 @@ public class MedicationConverter extends Converter {
      */
     private MedicationIngredientComponent getIngredient() {
         MedicationIngredientComponent m = new MedicationIngredientComponent();
+        if (ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode) != null) {
+            String ingredient = ClinicalValues.get(this, ClinicalValues.Column.Wirkstoffcode);
+            if (ingredient == null) return m;
+            m.setItem(ClinicalValues.concept(ingredient,
+                    ClinicalValues.get(this, ClinicalValues.Column.Wirkstoffcodesystem), null));
+            return m;
+        }
         try {
             Coding askCoding = getASKCoding();
             CodeableConcept askCodeableConcept = new CodeableConcept(askCoding);
@@ -316,6 +330,9 @@ public class MedicationConverter extends Converter {
      * @return
      */
     private CodeableConcept convertMedicationCodeableConcept() throws Exception {
+        String sourceCode = ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode);
+        if (sourceCode != null) return ClinicalValues.concept(sourceCode,
+                ClinicalValues.get(this, ClinicalValues.Column.Codesystem), get(Wirksubstanz_aus_Praeparat_Handelsname));
         CodeableConcept concept = new CodeableConcept();
         concept.addCoding(createCoding("http://fhir.de/CodeSystem/ifa/pzn", PZN_Code, FHIR_UserSelected));
         Coding atcCoding = createCoding("http://fhir.de/CodeSystem/bfarm/atc", ATC_Code, FHIR_UserSelected);
@@ -333,6 +350,12 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private String getMedicationId() throws Exception {
+        String sourceCode = ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode);
+        if (sourceCode != null) {
+            String key = ClinicalValues.get(this, ClinicalValues.Column.Codesystem) + "|" + sourceCode
+                    + "|" + get(Darreichungsform) + "|" + ClinicalValues.get(this, ClinicalValues.Column.Wirkstoffcode);
+            return "Medication-" + java.util.UUID.nameUUIDFromBytes(key.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        }
         String id;
         String atc = get(ATC_Code);
         if (atc != null) {
@@ -508,7 +531,7 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private DateTimeType convertTimestamp() throws Exception {
-        return parseDateTimeType(Zeitstempel);
+        return ClinicalValues.date(get(Zeitstempel));
     }
 
     /**
@@ -536,6 +559,15 @@ public class MedicationConverter extends Converter {
      */
     private Dosage convertDosage() throws Exception {
         Dosage d = new Dosage();
+        if (ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode) != null) {
+            String text = ClinicalValues.get(this, ClinicalValues.Column.Dosierungstext);
+            if (text != null) d.setText(text);
+            String dose = get(Einzeldosis);
+            if (dose != null && !dose.isBlank()) d.addDoseAndRate().setDose(getUcumQuantity(parseDecimal(dose), get(Einheit), null));
+            String frequency = get(Anzahl_Dosen_pro_Tag);
+            if (frequency != null && !frequency.isBlank()) d.setTiming(convertDosageTiming());
+            return d;
+        }
         d.setTiming(convertDosageTiming());
         d.addDoseAndRate().setDose(convertQuantity());
         return d;
@@ -560,7 +592,8 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private List<Dosage> convertDosageRequest() throws Exception {
-        return ImmutableList.of(convertDosage());
+        Dosage dosage = convertDosage();
+        return dosage.isEmpty() ? java.util.Collections.emptyList() : ImmutableList.of(dosage);
     }
 
     /**
@@ -568,6 +601,14 @@ public class MedicationConverter extends Converter {
      * @throws Exception
      */
     private MedicationAdministrationDosageComponent convertDosageAdministration() throws Exception {
+        if (ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode) != null) {
+            String dose = get(Einzeldosis);
+            MedicationAdministrationDosageComponent dosage = new MedicationAdministrationDosageComponent();
+            if (dose != null && !dose.isBlank()) dosage.setDose(getUcumQuantity(parseDecimal(dose), get(Einheit), null));
+            String text = ClinicalValues.get(this, ClinicalValues.Column.Dosierungstext);
+            if (text != null) dosage.setText(text);
+            return dosage;
+        }
         return new MedicationAdministrationDosageComponent().setDose(convertQuantity());
     }
 

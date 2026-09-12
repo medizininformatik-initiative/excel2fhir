@@ -71,9 +71,13 @@ public class ProcedureConverter extends Converter {
         // procedure.addExtension(new Extension()
         // .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         // .setValue(convertRecordedDate()));
-        procedure.setPerformed(parseDateTimeType(Dokumentationszeitpunkt));
-        procedure.setStatus(Procedure.ProcedureStatus.COMPLETED);
-        procedure.setCategory(new CodeableConcept(convertSnomedCategory()));
+        var start = ClinicalValues.date(get(Dokumentationszeitpunkt));
+        var end = ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Ende));
+        procedure.setPerformed(end == null ? start : new org.hl7.fhir.r4.model.Period().setStartElement(start).setEndElement(end));
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        procedure.setStatus(status == null ? Procedure.ProcedureStatus.COMPLETED : Procedure.ProcedureStatus.fromCode(status));
+        Coding category = convertSnomedCategory();
+        if (category != null) procedure.setCategory(new CodeableConcept(category));
         procedure.setCode(convertProcedureCode());
         procedure.setSubject(getPatientReference());
 
@@ -106,6 +110,14 @@ public class ProcedureConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
+        String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
+        if (selection != null) {
+            CodeableConcept code = ClinicalValues.concept(get(Prozedurencode), selection, get(Prozedurentext));
+            Coding extra = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
+                    ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
+            if (extra != null) code.addCoding(extra);
+            return code;
+        }
         Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode);
         if (procedureCoding != null) {
             procedureCoding.setVersion(TerminologyVersionUtil
@@ -120,9 +132,13 @@ public class ProcedureConverter extends Converter {
      * @throws Exception
      */
     private Coding convertSnomedCategory() throws Exception {
+        String explicit = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
+        if (explicit != null) return ClinicalValues.coding(explicit, DiagnosisValues.SNOMED);
+        String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
+        if (selection != null && !selection.startsWith("OPS ")) return null;
         String code = get(Prozedurencode);
         String display = null;
-        if (code != null) {
+        if (code != null && !code.isBlank()) {
             switch (code.charAt(0)) {
             case '1':
                 code = "103693007";
@@ -149,7 +165,7 @@ public class ProcedureConverter extends Converter {
                 display = "Other category";
                 break;
             default:
-                break;
+                return null;
             }
         }
         return createCoding("http://snomed.info/sct", code, display);
