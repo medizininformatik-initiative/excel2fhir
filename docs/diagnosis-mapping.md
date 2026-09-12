@@ -9,11 +9,19 @@ Abrechnungs- oder klinische Kodierqualität.
 
 `scripts/diagnosis_mapping.py::map_diagnosis(condition)` liefert eine Entscheidung
 mit Quellcoding, optionalem Zielcoding, Status und Begründung. Sie verändert die
-Quelle nicht. Der erste Stand verwendet die versionierte Tabelle
+Quelle nicht. Der Import verwendet die versionierte Tabelle
 `scripts/mappings/synthea-diagnoses-icd10gm-2026.json`. Die Beurteilung basiert auf
 den Synthea-Bezeichnungen und dem offiziellen ICD-10-GM-Katalog 2026; sie ist eine
 Assistenzbeurteilung, keine unabhängige fachliche Prüfung. Es erfolgen keine
 Netzwerk- oder KI-Aufrufe während eines Imports.
+
+Fehlende klinische Details dürfen für die Testdatengenerierung durch feste,
+dokumentierte Annahmen ergänzt werden. Die Tabelle legt je Quellcode einen
+Zielcode fest; es gibt keine Zufallsauswahl und keine Einzelfallentscheidung beim
+Import. Der Synthea-Modulkontext dient beim Aufbau der Tabelle als Grundlage,
+wird zur Laufzeit aber nicht benötigt. Beispielsweise werden beide
+Fehlgeburtscodes als Spontanabort ohne Komplikation (O03.9) abgebildet. Das ist
+eine Testdatenannahme, keine aus dem individuellen Fall bewiesene Eigenschaft.
 
 Die Funktion unterscheidet:
 
@@ -36,17 +44,36 @@ und Versionen; ein nicht unterstütztes Quellcoding wird dort vor dem Mapping ab
 
 ICD-10-GM 2026 ist der feste Zielkatalog dieser Mappingversion, auch bei historischen
 Ereignissen. Er wird ausdrücklich als Zusatzcodesystem eingetragen. Originalcode,
-Diagnosebezeichnung, Zeitangaben, Status und Referenzen bleiben erhalten. Ein
+Diagnosebezeichnung, Zeitangaben und Referenzen bleiben erhalten. Ein
 Zusatzcoding erzeugt keine zusätzliche Condition.
+
+Bei den drei expliziten Verdachtskonzepten für Lungenkrebs, Prostatakrebs und
+COVID legt `targetVerificationStatus` in der Tabelle `provisional` fest.
+Ein fehlender oder von Synthea als `confirmed` exportierter Verifikationsstatus
+wird dann in Excel auf „Vorläufig“ gesetzt. Andere ausdrücklich gesetzte
+Statuswerte, insbesondere `refuted` und `entered-in-error`, bleiben erhalten.
+`verificationStatusChange` im Begleitbericht hält Ausgangswert und Zielstatus
+fest; der Rückvergleich prüft diese Änderung unabhängig vom Bericht.
+Bereits vorhandene ICD-10-GM-Codings haben weiterhin Vorrang und lösen keine
+Statusänderung aus.
 
 ## Abdeckung des produktiven Diagnoseinventars
 
-Mappingversion `synthea-diagnoses-icd10gm-2026-v2` beurteilt alle **333** unterschiedlichen
+Mappingversion `synthea-diagnoses-icd10gm-2026-v3` beurteilt alle **333** unterschiedlichen
 primären ConditionOnset-Codes in den produktiven Modulen des gepinnten
 Synthea-Checkouts `d9d07a6eef91ee5144293b42ab64224d84d124f8`. Das sind 409
-Quellvorkommen. **290** Konzepte erhalten eine näherungsweise Zuordnung, **43**
-bleiben mit individueller Begründung offen; **0** dieser Quellkonzepte sind noch
+Quellvorkommen. **320** Konzepte erhalten eine näherungsweise Zuordnung, **13**
+bleiben bewusst ohne ICD-Ergänzung; **0** dieser Quellkonzepte sind noch
 unbeurteilt. Diese Zahlen messen Abdeckung, keine Trefferquote.
+
+Ohne Ergänzung bleiben neun neutrale Angaben zu Militärdienst, Migration,
+Beschäftigung und Bildung sowie erhöhtes Suizidrisiko ohne Handlung, eine fällige
+Medikamentenprüfung, ein Suizidereignis ohne konkrete Schädigungsart und der
+Sterbeort Hospiz. Daraus wird keine zusätzliche Krankheit konstruiert. Konkrete
+Suizidmethoden werden dagegen auf eine passende Schädigung abgebildet; bei
+Versuchen ist deren Eintritt eine dokumentierte Testdatenannahme. Dies bedeutet
+nicht, dass ICD keine Codes für äußere Ursachen kennt: Ein solcher Zusatzcode
+allein wäre hier keine eigenständige ICD-Diagnose.
 
 Die frühere Gesamtzählung 334 enthielt den Platzhalter `1234` aus
 `src/main/resources/templates/modules/onset_distribution.json`. Dieser gehört
@@ -90,7 +117,10 @@ Die CI prüft die Auditlogik mit kleinen Fixtures.
 | Fracture subluxation of wrist | S62.8 | Grobe Frakturzuordnung; Subluxation nicht zusätzlich abgebildet. |
 | History of appendectomy | Z90.4 | Zustand nach Organverlust; keine neue Appendizitis. |
 | Full-time employment | offen | Beschäftigung allein wird nicht in eine Krankheit umgedeutet. |
-| Viral sinusitis | offen | Akut/chronisch nicht allein aus dieser Bezeichnung ableitbar. |
+| Viral sinusitis | J01.9 | Akuter Verlauf entsprechend dem auditierten Synthea-Pfad. |
+| Miscarriage in first/second trimester | O03.9 | Feste Annahme eines unkomplizierten Spontanaborts; Trimenon bleibt im Original. |
+| Meconium ileus | E84.1 | Darmmanifestation der Mukoviszidose; kein zusätzliches P75-Coding. |
+| Suspected lung cancer | C34.9 | Vorläufige Diagnose; kein gesicherter Tumorstatus. |
 
 Alle verwendeten Zielcodes wurden gegen das vorhandene offizielle CodeSystem und das
 ValueSet der terminalen ICD-10-GM-Codes 2026 auf Existenz, Bezeichnung und
@@ -106,18 +136,23 @@ Bildung, Beschäftigung oder Migration werden nicht pauschal in Krankheiten umge
 
 ## Breiter Laufzeittest
 
-Ein neuer unveränderter Synthea-Lauf mit Seed und Clinician-Seed 20260912,
+Ein unveränderter Synthea-Lauf mit Seed und Clinician-Seed 20260912,
 Referenz-/Enddatum 20260912, Alter 20–85 und vollständiger Historie erzeugte
 12 lebende plus 6 verstorbene Patienten. Die 18 Patienten enthalten **2.573**
 Conditions und **3.574** Encounters. Die 136 unterschiedlichen Diagnosekonzepte
 sind vollständig im beurteilten Bestand enthalten; es gibt keine zusätzlichen
 unbekannten Quellcodes oder abweichenden Bezeichnungen.
 
-Über den vollständigen Rückweg aller 18 Fälle werden **1.395** näherungsweise
+Mit Mappingversion v2 wurden über den vollständigen Rückweg aller 18 Fälle **1.395** näherungsweise
 ICD-10-GM-Codings ergänzt; **1.178** Diagnosezeilen bleiben bewusst ohne Ergänzung.
 Originalcodings, Diagnosezeiten, Statuswerte und Referenzen werden getrennt von
 den erwarteten Ergänzungen geprüft. Damit ist mehr Laufzeitabdeckung belegt,
 aber noch keine unabhängige Messung der medizinischen Mappinggenauigkeit.
+
+Der erneute Import derselben 18 Quelldateien mit v3 liefert **1.595** Ergänzungen,
+**978** Zeilen ohne Ergänzung und **eine** explizite Verifikationsstatusänderung.
+Diese Zahlen stammen aus der Importvorbereitung; sie sind kein erneuter
+vollständiger Excel-Rückweg aller 18 Fälle.
 
 ## Nachvollziehbarkeit und Verbesserung
 
