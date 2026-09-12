@@ -30,7 +30,7 @@ def map_diagnosis(condition):
     codings = condition.get('code', {}).get('coding', [])
     source = next((c for c in codings if c.get('system') == SNOMED), None)
     result = {'sourceId': condition.get('id'), 'sourceCoding': copy.deepcopy(source),
-              'status': 'unmapped', 'target': None, 'reason': ''}
+              'status': 'not-assessed', 'target': None, 'reason': ''}
     if any(c.get('system') == ICD10GM for c in codings):
         result.update(status='source-preserved', reason='Vorhandenes ICD-10-GM-Coding unverändert übernommen.')
         return result
@@ -42,7 +42,8 @@ def map_diagnosis(condition):
         result['reason'] = 'Quellcode oder explizite Quellversion nicht durch diese Mappingversion abgedeckt.'
         return result
     display = source.get('display') or condition.get('code', {}).get('text', '')
-    if ' '.join(display.split()).casefold() != ' '.join(entry['sourceDisplay'].split()).casefold():
+    accepted_displays = {' '.join(value.split()).casefold() for value in entry['sourceDisplays']}
+    if ' '.join(display.split()).casefold() not in accepted_displays:
         result['reason'] = 'Quellbezeichnung fehlt oder weicht von der beurteilten Bezeichnung ab.'
         return result
     result.update(status=entry['relation'], target=copy.deepcopy(entry['target']), reason=entry['reason'])

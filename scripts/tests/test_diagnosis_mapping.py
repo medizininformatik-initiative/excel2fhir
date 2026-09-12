@@ -51,6 +51,26 @@ class MappingTest(unittest.TestCase):
             condition = {'code': {'coding': [{'system': SNOMED, 'code': code, 'display': display}]}}
             self.assertIsNone(map_diagnosis(condition)['target'])
 
+    def test_only_production_display_variants_are_accepted(self):
+        for display in ['Sprain of ankle (disorder)', '  SPRAIN  of ankle (disorder)  ']:
+            condition = {'code': {'coding': [{'system': SNOMED, 'code': '44465007', 'display': display}]}}
+            self.assertEqual(map_diagnosis(condition)['target']['code'], 'S93.40')
+        # This misleading label occurred elsewhere in the broad inventory, not
+        # in the ConditionOnset state that actually emits this diabetes code.
+        wrong = {'code': {'coding': [{'system': SNOMED, 'code': '427089005', 'display': 'Male Infertility'}]}}
+        self.assertEqual(map_diagnosis(wrong)['status'], 'not-assessed')
+        placeholder = {'code': {'coding': [{'system': SNOMED, 'code': '1234', 'display': 'SNOMED Code'}]}}
+        self.assertEqual(map_diagnosis(placeholder)['status'], 'not-assessed')
+
+    def test_primary_secondary_and_historical_disease_remain_distinct(self):
+        cases = [('93761005', 'Primary malignant neoplasm of colon (disorder)', 'C18.9'),
+                 ('94260004', 'Metastatic malignant neoplasm to colon (disorder)', 'C78.5'),
+                 ('428251008', 'History of appendectomy (situation)', 'Z90.4'),
+                 ('74400008', 'Appendicitis (disorder)', 'K37')]
+        for code, display, expected in cases:
+            condition = {'code': {'coding': [{'system': SNOMED, 'code': code, 'display': display}]}}
+            self.assertEqual(map_diagnosis(condition)['target']['code'], expected)
+
     def test_roundtrip_checks_addition_and_does_not_trust_modified_report(self):
         source = self.source()
         _, report = prepare(source)
