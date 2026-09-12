@@ -1,5 +1,11 @@
 # Synthea-Diagnosen über Excel importieren
 
+Der Import wurde inzwischen um weitere klinische Ressourcen erweitert. Der
+aktuelle Umfang, die zusätzlichen Excel-Blätter und verbleibenden Lücken stehen
+in [Klinische Synthea-Fälle über Excel](synthea-clinical-import.md). Die folgenden
+Diagnose-Prüfergebnisse dokumentieren den früheren, engeren Umfang.
+
+
 Der erste Importumfang umfasst einen Patienten mit seinen Kontakten und Diagnosen.
 Andere Ressourcen und nicht darstellbare Eigenschaften werden mit Quell-ID und
 Feldpfad im Verlustbericht ausgewiesen. Das Ergebnis ist ein technischer Diagnosefall,
@@ -33,8 +39,8 @@ Vorlagenformatierung bleiben erhalten. Der Import setzt die bestehenden Optionen
 für direkte Condition→Encounter-Referenzen; es werden keine neuen CLI-Schalter
 oder Konvertierungsoptionen eingeführt.
 
-Der vorbereitete Eingabebereich umfasst höchstens 1.030 Zeilen je Tabelle. Größere
-Fälle werden vor der Dateierstellung abgelehnt. Erwartet wird genau ein Patient
+Der vorbereitete Eingabebereich wird für größere Fälle inzwischen durch Kopieren
+vorhandener Zeilenformate erweitert. Erwartet wird genau ein Patient
 pro Synthea-R4-Bundle. Defekte Patient-/Fallreferenzen, nicht unterstützte
 System-/Versionskombinationen und fehlende Diagnosen führen ebenfalls zum Abbruch.
 Es wird keine leere administrative Hülle als erfolgreicher Fall ausgegeben.
@@ -67,11 +73,9 @@ Die Ausfüllhilfen bleiben auch in der importierten Kopie erhalten. Die Auswahl
 für Aufnahmegrund und DAR verweist auf Codes!AA30:AA50; Klassen auf Codes!B4:B13.
 Unbekannte Kontaktklassen führen zum Abbruch.
 
-Patientenadressen werden derzeit ausgelassen, weil der bestehende Patientenkonverter
-das Land fest auf DE setzt. Der Verlustbericht nennt dies und die dort anschließend
-automatisch erzeugten Fehlwertangaben. Geburtsdatum und Kontaktdaten verwenden die
-bestehende Datumsverarbeitung; Kontaktzeitpunkte werden dafür in die lokale Zeitzone
-umgerechnet. Diagnosezeitangaben behalten FHIR-Präzision und Offset.
+Patientenadressen werden inzwischen über strukturierte Felder mit dem ursprünglichen
+Ländercode übernommen. Kontaktzeitpunkte verwenden die bestehende Datumsverarbeitung;
+Diagnosezeitangaben behalten FHIR-Präzision und Offset.
 
 ## Prüfung
 
