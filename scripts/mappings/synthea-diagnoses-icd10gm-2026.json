@@ -1,0 +1,329 @@
+{
+  "id": "synthea-diagnoses-icd10gm-2026-v1",
+  "sourceSystem": "http://snomed.info/sct",
+  "reviewStatus": "provisional-assistant-assessment-for-synthetic-test-data",
+  "sourceSyntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
+  "targetCatalogue": {
+    "url": "https://terminologien.bfarm.de/terminologies/bfarm.terminologien.icd10gm/2026.0.0/website-output/CodeSystem-icd10gm-2026/CodeSystem-icd10gm-2026.json",
+    "sha256": "baa792f2fbf4560e58d60bfbaa5e809d438569995aa9b7f9297eed58a5340eb9",
+    "terminalValueSetSha256": "0ab070e3dc30d92413512220f035f31bfcf18da5c998a8a9db31fb0bfc2a767c",
+    "copyright": "WHO, BfArM 1994-2025 - Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM)."
+  },
+  "entries": [
+    {
+      "sourceCode": "10509002",
+      "sourceDisplay": "Acute bronchitis (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "J20.9",
+        "display": "Akute Bronchitis, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Akute Bronchitis; kein Erreger angegeben."
+    },
+    {
+      "sourceCode": "10939881000119105",
+      "sourceDisplay": "Unhealthy alcohol drinking behavior (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z72.0",
+        "display": "Probleme mit Bezug auf: Konsum von Alkohol, Tabak, Arzneimitteln oder Drogen"
+      },
+      "relation": "approximate",
+      "reason": "Problematischer Alkoholkonsum; keine Abhängigkeit oder psychiatrische Diagnose angenommen."
+    },
+    {
+      "sourceCode": "109570002",
+      "sourceDisplay": "Primary dental caries (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "K02.9",
+        "display": "Zahnkaries, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Zahnkaries ohne Angabe von Tiefe oder Lokalisation."
+    },
+    {
+      "sourceCode": "125605004",
+      "sourceDisplay": "Fracture of bone (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T14.20",
+        "display": "Fraktur an einer nicht näher bezeichneten Körperregion: geschlossen oder o.n.A."
+      },
+      "relation": "approximate",
+      "reason": "Fraktur ohne Körperregion oder Offenheitsangabe; Ziel erlaubt ausdrücklich o.n.A."
+    },
+    {
+      "sourceCode": "160903007",
+      "sourceDisplay": "Full-time employment (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Vollzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage."
+    },
+    {
+      "sourceCode": "160904001",
+      "sourceDisplay": "Part-time employment (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Teilzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage."
+    },
+    {
+      "sourceCode": "160968000",
+      "sourceDisplay": "Risk activity involvement (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Risikoaktivität nicht spezifiziert; kein ausreichend begründeter Zielcode."
+    },
+    {
+      "sourceCode": "162864005",
+      "sourceDisplay": "Body mass index 30+ - obesity (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "E66.99",
+        "display": "Adipositas, nicht näher bezeichnet: Grad oder Ausmaß der Adipositas nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Adipositas erhalten; BMI-Untergrenze reicht nicht für einen bestimmten Grad."
+    },
+    {
+      "sourceCode": "18718003",
+      "sourceDisplay": "Gingival disease (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "K06.9",
+        "display": "Krankheit der Gingiva und des zahnlosen Alveolarkammes, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Nicht näher bezeichnete Gingivaerkrankung."
+    },
+    {
+      "sourceCode": "224299000",
+      "sourceDisplay": "Received higher education (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Bildungsabschluss ist keine Erkrankung oder belegte soziale Problemlage."
+    },
+    {
+      "sourceCode": "263102004",
+      "sourceDisplay": "Fracture subluxation of wrist (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "S62.8",
+        "display": "Fraktur sonstiger und nicht näher bezeichneter Teile des Handgelenkes und der Hand"
+      },
+      "relation": "approximate",
+      "reason": "Grobe Frakturzuordnung zu Handgelenk/Hand; Subluxation und genauer Knochen nicht abgebildet."
+    },
+    {
+      "sourceCode": "266948004",
+      "sourceDisplay": "Has a criminal record (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Vorstrafe allein belegt keinen aktuellen medizinischen Kontaktanlass."
+    },
+    {
+      "sourceCode": "271737000",
+      "sourceDisplay": "Anemia (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "D64.9",
+        "display": "Anämie, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Anämie ohne nähere Spezifikation."
+    },
+    {
+      "sourceCode": "314529007",
+      "sourceDisplay": "Medication review due (situation)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Fällige Medikamentenprüfung ist keine Diagnose; kein pauschaler Erkrankungscode."
+    },
+    {
+      "sourceCode": "361055000",
+      "sourceDisplay": "Misuses drugs (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z72.0",
+        "display": "Probleme mit Bezug auf: Konsum von Alkohol, Tabak, Arzneimitteln oder Drogen"
+      },
+      "relation": "approximate",
+      "reason": "Probleme durch Arzneimittel-/Drogenkonsum; keine Abhängigkeit oder Intoxikation angenommen."
+    },
+    {
+      "sourceCode": "384709000",
+      "sourceDisplay": "Sprain (morphologic abnormality)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T14.3",
+        "display": "Luxation, Verstauchung und Zerrung an einer nicht näher bezeichneten Körperregion"
+      },
+      "relation": "approximate",
+      "reason": "Verstauchung ohne Körperregion; Luxation/Zerrung im Zielbegriff eingeschlossen."
+    },
+    {
+      "sourceCode": "422650009",
+      "sourceDisplay": "Social isolation (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z60",
+        "display": "Kontaktanlässe mit Bezug auf die soziale Umgebung"
+      },
+      "relation": "approximate",
+      "reason": "Grobe Zuordnung zur sozialen Umgebung; Isolation im Zielcode nicht spezifisch abgebildet."
+    },
+    {
+      "sourceCode": "423315002",
+      "sourceDisplay": "Limited social contact (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z60",
+        "display": "Kontaktanlässe mit Bezug auf die soziale Umgebung"
+      },
+      "relation": "approximate",
+      "reason": "Grobe Zuordnung zur sozialen Umgebung; Kontaktumfang im Ziel nicht spezifisch abgebildet."
+    },
+    {
+      "sourceCode": "424393004",
+      "sourceDisplay": "Reports of violence in the environment (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Bericht über Gewalt in der Umgebung belegt keine eigene Verletzung oder Misshandlung."
+    },
+    {
+      "sourceCode": "428251008",
+      "sourceDisplay": "History of appendectomy (situation)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z90.4",
+        "display": "Verlust anderer Teile des Verdauungstraktes"
+      },
+      "relation": "approximate",
+      "reason": "Zustand nach Appendektomie als Verlust eines Verdauungsorganteils; keine erneute Appendizitis."
+    },
+    {
+      "sourceCode": "44465007",
+      "sourceDisplay": "Sprain of ankle (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "S93.40",
+        "display": "Verstauchung und Zerrung des oberen Sprunggelenkes: Teil nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Sprunggelenksverstauchung ohne Angabe eines konkreten Bandes; grobe Zuordnung zum oberen Sprunggelenk."
+    },
+    {
+      "sourceCode": "444814009",
+      "sourceDisplay": "Viral sinusitis (disorder)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Virale Sinusitis ohne eindeutige Verlaufsangabe; akut/chronisch nicht allein aus dem Text ableiten."
+    },
+    {
+      "sourceCode": "55822004",
+      "sourceDisplay": "Hyperlipidemia (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "E78.5",
+        "display": "Hyperlipidämie, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Hyperlipidämie ohne nähere Spezifikation."
+    },
+    {
+      "sourceCode": "66383009",
+      "sourceDisplay": "Gingivitis (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "K05.6",
+        "display": "Krankheit des Parodonts, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Verallgemeinerung auf Krankheit des Parodonts; akut/chronisch wird nicht erfunden."
+    },
+    {
+      "sourceCode": "706893006",
+      "sourceDisplay": "Victim of intimate partner abuse (finding)",
+      "target": null,
+      "relation": "unmapped",
+      "reason": "Art und zeitlicher Kontext der Partnerschaftsgewalt unklar; kein Verletzungs- oder Misshandlungscode erzwungen."
+    },
+    {
+      "sourceCode": "714628002",
+      "sourceDisplay": "Prediabetes (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "R73.08",
+        "display": "Abnormer Glukosetoleranztest und sonstige Formen des Prädiabetes"
+      },
+      "relation": "approximate",
+      "reason": "Prädiabetes ist im Ziel ausdrücklich enthalten; kein Diabetes-Typ erfunden."
+    },
+    {
+      "sourceCode": "73438004",
+      "sourceDisplay": "Unemployed (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z56",
+        "display": "Kontaktanlässe mit Bezug auf das Berufsleben"
+      },
+      "relation": "approximate",
+      "reason": "Grobe Zuordnung zum Berufsleben; Arbeitslosigkeit im Zielcode nicht spezifisch abgebildet."
+    },
+    {
+      "sourceCode": "73595000",
+      "sourceDisplay": "Stress (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "R45.7",
+        "display": "Emotioneller Schock oder Stress, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Stress als Symptom; keine psychiatrische Erkrankung angenommen."
+    },
+    {
+      "sourceCode": "74400008",
+      "sourceDisplay": "Appendicitis (disorder)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "K37",
+        "display": "Nicht näher bezeichnete Appendizitis"
+      },
+      "relation": "approximate",
+      "reason": "Appendizitis ohne nähere Spezifikation; keine Perforation oder akuter Verlauf ergänzt."
+    },
+    {
+      "sourceCode": "80583007",
+      "sourceDisplay": "Severe anxiety (panic) (finding)",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "R45.8",
+        "display": "Sonstige Symptome, die die Stimmung betreffen"
+      },
+      "relation": "approximate",
+      "reason": "Angst/Panik als Stimmungssymptom verallgemeinert; keine Panikstörung diagnostiziert."
+    }
+  ]
+}
