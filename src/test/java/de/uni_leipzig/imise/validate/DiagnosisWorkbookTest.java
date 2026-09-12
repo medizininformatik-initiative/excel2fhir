@@ -17,7 +17,8 @@ public class DiagnosisWorkbookTest {
         for (String name : List.of("FHIR_Testdatengenerator_Vorlage.xlsx", "FHIR_Testdatengenerator_Interpolar_Demo.xlsx")) {
             TemplateValidationResult result = new ExcelTemplateValidator().validate(new File(name));
             assertFalse(name + ": " + result.getIssues(), result.hasErrors());
-            try (XSSFWorkbook book = new XSSFWorkbook(new FileInputStream(name))) {
+            try (FileInputStream input = new FileInputStream(name);
+                    XSSFWorkbook book = new XSSFWorkbook(input)) {
                 var diagnoses = book.getSheet("Diagnose");
                 assertEquals("Code", diagnoses.getRow(0).getCell(3).getStringCellValue());
                 assertEquals("Codesystem", diagnoses.getRow(0).getCell(4).getStringCellValue());

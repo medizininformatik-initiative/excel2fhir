@@ -24,9 +24,12 @@ public final class DiagnosisValues {
     }
 
     private static Map<String, String> selections(String... pairs) {
+        if (pairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Selections require complete label/code pairs");
+        }
         Map<String, String> values = new LinkedHashMap<>();
-        for (int i = 0; i < pairs.length; i += 2) {
-            values.put(pairs[i], pairs[i + 1]);
+        for (int i = 1; i < pairs.length; i += 2) {
+            values.put(pairs[i - 1], pairs[i]);
         }
         return Collections.unmodifiableMap(values);
     }

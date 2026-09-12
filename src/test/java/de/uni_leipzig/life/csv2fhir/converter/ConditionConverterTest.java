@@ -83,7 +83,7 @@ public class ConditionConverterTest {
             printer.printRecord(row.values());
         }
         try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
-                .setNullString("").build().parse(new StringReader(csv.toString()))) {
+                .setNullString("").get().parse(new StringReader(csv.toString()))) {
             ConverterOptions options = new ConverterOptions("");
             ConditionConverter converter = new ConditionConverter(parser.getRecords().get(0), null,
                     new ConverterResult(options), null, options);
