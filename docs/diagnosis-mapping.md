@@ -18,13 +18,16 @@ Netzwerk- oder KI-Aufrufe während eines Imports.
 Die Funktion unterscheidet:
 
 - `approximate`: zusätzliches ICD-10-GM-Coding aus der Tabelle.
-- `unmapped`: keine ausreichend begründete oder noch keine beurteilte Zuordnung;
+- `unmapped`: beurteilt, aber keine ausreichend begründete Zuordnung;
   der Originalcode bleibt erhalten, der Zusatzcode bleibt leer.
+- `not-assessed`: Quellcode, Bezeichnung oder explizite Version sind noch nicht
+  durch den beurteilten Bestand abgedeckt; ebenfalls keine Ergänzung.
 - `source-preserved`: ein ICD-10-GM-Coding existiert bereits in der Quelle und
   wird unabhängig vom Tabellenvorschlag unverändert übernommen.
 
 Schlüssel ist der SNOMED-Code. Die mitgelieferte Bezeichnung wird zusätzlich gegen
-den beurteilten Text geprüft (Groß-/Kleinschreibung und Leerraum sind unerheblich).
+die beurteilten Texte aus den erzeugenden Modulzuständen geprüft
+(Groß-/Kleinschreibung und Leerraum sind unerheblich).
 Bei fehlendem `coding.display` wird `code.text` verwendet. Unbekannte Codes,
 abweichende Texte und nicht beurteilte explizite SNOMED-Versionen werden nicht
 erraten. So führt ein oberflächlich ähnlicher Text nicht zu beliebigen Zuordnungen.
@@ -36,13 +39,48 @@ Ereignissen. Er wird ausdrücklich als Zusatzcodesystem eingetragen. Originalcod
 Diagnosebezeichnung, Zeitangaben, Status und Referenzen bleiben erhalten. Ein
 Zusatzcoding erzeugt keine zusätzliche Condition.
 
-## Erste Abdeckung und Beispiele
+## Abdeckung des produktiven Diagnoseinventars
 
-Die erste Tabelle beurteilt sämtliche 30 unterschiedlichen Condition-Konzepte des
-bereits generierten Testpatienten. Davon erhalten 21 einen Zielcode; 9 bleiben
-bewusst offen. Auf die 76 Diagnosezeilen verteilt entstehen 37 Zusatzcodings.
-Diese Zahlen messen Abdeckung, keine Trefferquote. Der breitere Mappingpilot über
-das gesamte Synthea-Inventar ist damit noch nicht abgeschlossen.
+Mappingversion `synthea-diagnoses-icd10gm-2026-v2` beurteilt alle **333** unterschiedlichen
+primären ConditionOnset-Codes in den produktiven Modulen des gepinnten
+Synthea-Checkouts `d9d07a6eef91ee5144293b42ab64224d84d124f8`. Das sind 409
+Quellvorkommen. **290** Konzepte erhalten eine näherungsweise Zuordnung, **43**
+bleiben mit individueller Begründung offen; **0** dieser Quellkonzepte sind noch
+unbeurteilt. Diese Zahlen messen Abdeckung, keine Trefferquote.
+
+Die frühere Gesamtzählung 334 enthielt den Platzhalter `1234` aus
+`src/main/resources/templates/modules/onset_distribution.json`. Dieser gehört
+nicht zu den produktiven Modulen und wird nicht gemappt. Codes aus ConditionEnd,
+logischen Abfragen, anderen Ressourcentypen und deren Bezeichnungen sind ebenfalls
+keine zusätzlichen Diagnosequellen. Beispielsweise stammt die irreführende
+Bezeichnung „Male Infertility“ für Code `427089005` aus einer anderen Verwendung;
+der erzeugende ConditionOnset-Zustand bezeichnet damit Diabetes durch Mukoviszidose.
+Die Mappingfunktion übernimmt nur den dort belegten Text.
+
+Im geprüften Java-Quellcode ist State.ConditionOnset der einzige Aufrufer von
+`HealthRecord.conditionStart`. Logic.ActiveCondition kann bestehende Conditions
+kopieren; Death-/Lifecycle-Codes erzeugen keine zusätzlichen Condition-Diagnosen.
+Der R4-Exporter übernimmt `condition.codes.get(0)`. Alle produktiven
+ConditionOnset-Zustände dieses Standes enthalten genau ein SNOMED-Coding.
+Externe Module, remote ValueSets und benutzerdefinierte CodeMapper-/Flexporter-
+Konfigurationen sind ausdrücklich außerhalb dieses abgegrenzten Inventars.
+
+Jeder Tabelleneintrag enthält die erzeugenden Dateien und Zustände sowie die
+SHA-256-Prüfsummen der Moduldateien. Der Audit ist mit den vorhandenen externen
+Dateien reproduzierbar:
+
+```sh
+python3 scripts/audit_diagnosis_mapping.py /path/to/synthea \
+  /path/to/icd-gm2026.json /path/to/gm-terminal-vs.json
+```
+
+Er vergleicht die exakte Menge der Quellcodes, ihre Bezeichnungen und Fundstellen
+sowie Zielsystem, Version, Zielbezeichnungen und Endständigkeit. Neue oder
+veränderte Quellen und Kataloge werden so erkennbar. Die offiziellen Katalogdateien
+bleiben außerhalb des Repos; dieser vollständige Audit benötigt sie lokal.
+Die CI prüft die Auditlogik mit kleinen Fixtures.
+
+## Beispiele und Grenzen der Annäherung
 
 | Synthea-Bezeichnung | ICD-10-GM 2026 | Bewusste Vereinfachung |
 | --- | --- | --- |
@@ -54,10 +92,32 @@ das gesamte Synthea-Inventar ist damit noch nicht abgeschlossen.
 | Full-time employment | offen | Beschäftigung allein wird nicht in eine Krankheit umgedeutet. |
 | Viral sinusitis | offen | Akut/chronisch nicht allein aus dieser Bezeichnung ableitbar. |
 
-Alle 21 Zielcodes wurden gegen das vorhandene offizielle CodeSystem und das
+Alle verwendeten Zielcodes wurden gegen das vorhandene offizielle CodeSystem und das
 ValueSet der terminalen ICD-10-GM-Codes 2026 auf Existenz, Bezeichnung und
 Endständigkeit geprüft. Quellen-URL und Prüfsummen stehen in der Mappingdatei.
 Die vollständigen BfArM-Katalogdateien werden nicht im Repository dupliziert.
+
+Weitere bewusste Verallgemeinerungen stehen direkt in der Tabelle: etwa
+Knochenmarktransplantation ohne Annahme des aktuellen Immunsuppressionsstatus,
+Lungenkarzinom ohne Abbildung von Histologie/TNM-Stadium und regionale Frakturen,
+wenn die endständigen Zielcodes eine nicht bekannte Knochenstruktur voraussetzen.
+Verdachtsdiagnosen werden nicht zu bestätigten Tumoren. Soziale Merkmale wie
+Bildung, Beschäftigung oder Migration werden nicht pauschal in Krankheiten umgedeutet.
+
+## Breiter Laufzeittest
+
+Ein neuer unveränderter Synthea-Lauf mit Seed und Clinician-Seed 20260912,
+Referenz-/Enddatum 20260912, Alter 20–85 und vollständiger Historie erzeugte
+12 lebende plus 6 verstorbene Patienten. Die 18 Patienten enthalten **2.573**
+Conditions und **3.574** Encounters. Die 136 unterschiedlichen Diagnosekonzepte
+sind vollständig im beurteilten Bestand enthalten; es gibt keine zusätzlichen
+unbekannten Quellcodes oder abweichenden Bezeichnungen.
+
+Über den vollständigen Rückweg aller 18 Fälle werden **1.395** näherungsweise
+ICD-10-GM-Codings ergänzt; **1.178** Diagnosezeilen bleiben bewusst ohne Ergänzung.
+Originalcodings, Diagnosezeiten, Statuswerte und Referenzen werden getrennt von
+den erwarteten Ergänzungen geprüft. Damit ist mehr Laufzeitabdeckung belegt,
+aber noch keine unabhängige Messung der medizinischen Mappinggenauigkeit.
 
 ## Nachvollziehbarkeit und Verbesserung
 

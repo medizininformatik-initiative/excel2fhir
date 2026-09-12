@@ -99,6 +99,14 @@ Die erste Mappingversion ergänzt 37 ICD-10-GM-Codings; die 76 ursprünglichen
 SNOMED-Codings bleiben erhalten. Das sind 21 zugeordnete von 30 unterschiedlichen
 Quellkonzepten. Abdeckung und fachliche Genauigkeit sind getrennte Größen.
 
+Die aktuelle Version v2 beurteilt das vollständige produktive Diagnoseinventar
+dieses Synthea-Standes: 333 Quellkonzepte, davon 290 näherungsweise zugeordnet und
+43 bewusst offen. Ein weiterer Lauf mit 18 Patienten wurde vollständig über Excel
+zurückkonvertiert: 2.573 Diagnosen, 3.574 Kontakte, 148 Notfallkennzeichnungen und
+1.395 erwartete Zusatzcodings. Die 136 darin beobachteten Diagnosekonzepte sind
+vollständig durch den beurteilten Bestand abgedeckt. Quellenabgleich, Grenzen und
+Reproduktion stehen in der [Mapping-Dokumentation](diagnosis-mapping.md).
+
 Technischer Informationserhalt ist kein Nachweis fachlicher Kodiergültigkeit.
 Synthea kann z.B. auch einen SNOMED-Situationscode als Condition liefern. Die
 optionale FHIR-Validierung (`-v`) ist separat zu betrachten; der bestehende Validator
