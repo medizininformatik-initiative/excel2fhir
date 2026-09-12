@@ -6,9 +6,10 @@ import base64
 from pathlib import Path
 import sys
 from clinical_events import SCHEMAS, PERSON_EXTRA, DOCUMENT_EXTRA
-from clinical_import import OBS_EXTRA, PROCEDURE_EXTRA, MEDICATION_EXTRA, SYSTEMS
+from clinical_import import OBS_EXTRA, PROCEDURE_EXTRA, MEDICATION_EXTRA
 from synthea_to_excel import apply_workbook_edits, column_name, column_number
 from workbook_xml import read_sheets
+from clinical_selections import LISTS, SELECTIONS
 
 
 def extend(source, target):
@@ -17,9 +18,7 @@ def extend(source, target):
     def op(*args): ops.append('\t'.join(map(str, args)))
     def put(sheet, cell, value): op('set', sheet, cell, base64.b64encode(value.encode()).decode())
     lists = {
-        'AB': ['Codesysteme klinischer Angaben'] + list(SYSTEMS.values()) + ['ASK'] + ['OPS ' + str(y) for y in range(2009,2027)],
         'AC': ['Werttypen', 'Zahl', 'Text', 'Code', 'Ja/Nein', 'Komponenten', 'Fehlend'],
-        'AD': ['Messwertkategorien', 'laboratory', 'vital-signs', 'survey', 'social-history', 'exam', 'imaging', 'procedure', 'therapy', 'activity'],
         'AE': ['Prozedurstatus', 'preparation', 'in-progress', 'not-done', 'on-hold', 'stopped', 'completed', 'entered-in-error', 'unknown'],
         'AF': ['Messwertstatus', 'registered', 'preliminary', 'final', 'amended', 'corrected', 'cancelled', 'entered-in-error', 'unknown'],
         'AG': ['Medikationsstatus', 'active', 'on-hold', 'cancelled', 'completed', 'entered-in-error', 'stopped', 'draft', 'unknown', 'in-progress', 'not-done'],
@@ -34,10 +33,13 @@ def extend(source, target):
         'AP': ['Planstatus', 'draft', 'active', 'on-hold', 'revoked', 'completed', 'entered-in-error', 'unknown'],
         'AH': ['Verordnungsabsicht', 'proposal', 'plan', 'order', 'original-order', 'reflex-order', 'filler-order', 'instance-order', 'option'],
     }
+    lists.update(LISTS)
     for col, values in lists.items():
         # Extend the style of the existing centralized selection lists.
         op('copy', 'Codes', 'AA29:AA60', col+'29')
         op('clear', 'Codes', col+'29:'+col+'60')
+        if column_number(col) >= column_number('AR'):
+            op('width', 'Codes', column_number(col)-1, 9000)
         for i, value in enumerate(values, 29): put('Codes', col+str(i), value)
     for sheet, extra in {'Person': PERSON_EXTRA, 'DocumentReference': DOCUMENT_EXTRA, 'Prozedur': PROCEDURE_EXTRA, 'Laborbefund': OBS_EXTRA,
                          'Klinische Dokumentation': OBS_EXTRA, 'Medikation': MEDICATION_EXTRA}.items():
@@ -54,10 +56,11 @@ def extend(source, target):
             op('text', sheet, col+'1:'+col+'1031')
             put(sheet, col+'1', name)
             op('width', sheet, i-1, 5200 if 'system' in name else 4000)
-            selection = ('AB' if 'codesystem' in name.lower() else 'AC' if name=='Werttyp' else
+            selection = ('AC' if name=='Werttyp' else
                          'AD' if name=='Kategorie' and sheet!='Prozedur' else
                          ('AE' if sheet=='Prozedur' else 'AG' if sheet=='Medikation' else 'AQ' if sheet=='DocumentReference' else 'AF') if name=='Status' else
                          'AH' if name=='Absicht' else None)
+            selection = SELECTIONS.get(sheet, {}).get(name, selection)
             if selection:
                 end = 28 + len(lists[selection])
                 op('validation', sheet, col+'2:'+col+'1031', '$Codes.$'+selection+'$30:$'+selection+'$'+str(end), 'true')
@@ -102,10 +105,11 @@ def extend(source, target):
             op('text', sheet, col+'1:'+col+'1031')
             put(sheet, col+'1', name)
             op('width', sheet, i-1, 6000 if name in ['Bezeichner','Beschreibung','Erklärung/Ausfüllhilfe'] else 4500)
-            selection = {'Codesystem':'AB','Typ':'AI','Kategorie':'AJ','Kritikalität':'AK',
+            selection = {'Typ':'AI','Kategorie':'AJ','Kritikalität':'AK',
                          'Klinischer Status':'AL','Verifikationsstatus':'AM','Primärquelle':'AN',
                          'Absicht':'AH'}.get(name)
             if name=='Status': selection = 'AO' if sheet=='Hilfsmittel' else 'AP' if sheet=='Behandlungsplan' else 'AF' if sheet=='Befundbericht' else 'AE'
+            selection = SELECTIONS.get(sheet, {}).get(name, selection)
             if selection:
                 op('validation',sheet,col+'2:'+col+'1031', '$Codes.$'+selection+'$30:$'+selection+'$'+str(28+len(lists[selection])), 'true')
         hint=column_name(len(columns)+1)

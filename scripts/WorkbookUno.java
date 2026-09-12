@@ -79,6 +79,10 @@ public class WorkbookUno {
                     if (textFormat < 0) textFormat = formats.addNew("@", new com.sun.star.lang.Locale());
                     cells.setPropertyValue("NumberFormat", textFormat);
                     cells.setPropertyValue("CharFontName", "Calibri");
+                } else if (a[0].equals("rowHeight")) {
+                    XPropertySet rows = q(XPropertySet.class,
+                            q(XColumnRowRange.class, sheet.getCellRangeByName(a[2])).getRows());
+                    rows.setPropertyValue("Height", (int) Math.round(Double.parseDouble(a[3]) * 2540 / 72));
                 } else if (a[0].equals("width")) {
                     q(XPropertySet.class, q(XColumnRowRange.class, sheet).getColumns().getByIndex(Integer.parseInt(a[2])))
                             .setPropertyValue("Width", Integer.parseInt(a[3]));

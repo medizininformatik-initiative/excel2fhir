@@ -61,8 +61,9 @@ versteckten Roh-FHIR-Tab als Ersatz für eine bearbeitbare klinische Eingabe.
 
 Bestehende Zellen und Formatierungen werden mit LibreOffice/UNO weiterverwendet.
 Neue Spalten stehen vor der bisherigen Ausfüllhilfe. Vorhandene Beispieldaten
-wurden erhalten. Auswahllisten stehen im Blatt **Codes**, Bereiche AB bis AQ;
-vorhandene Diagnose- und Notfalllisten bleiben unverändert.
+wurden erhalten. Auswahllisten stehen im Blatt **Codes**, Bereiche AB bis BD;
+vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
+[je Eingabespalte abgegrenzt](clinical-selections.md).
 
 | Blatt | Vorher | Ergänzung |
 | --- | --- | --- |
