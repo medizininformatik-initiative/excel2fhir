@@ -61,7 +61,7 @@ versteckten Roh-FHIR-Tab als Ersatz für eine bearbeitbare klinische Eingabe.
 
 Bestehende Zellen und Formatierungen werden mit LibreOffice/UNO weiterverwendet.
 Neue Spalten stehen vor der bisherigen Ausfüllhilfe. Vorhandene Beispieldaten
-wurden erhalten. Auswahllisten stehen im Blatt **Codes**, Bereiche AB bis BD;
+wurden erhalten. Auswahllisten stehen im Blatt **Codes**, Bereiche AB bis BF;
 vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
 [je Eingabespalte abgegrenzt](clinical-selections.md).
 
@@ -118,6 +118,10 @@ Die neuen Ereignisressourcen beanspruchen zunächst FHIR-R4-Basisunterstützung.
 Labor, Prozeduren und Medikation verwenden die vorhandenen KDS-Profile.
 Eine vollständige KDS-/Terminologievalidierung bleibt getrennt vom Rückvergleich;
 insbesondere die benötigte SNOMED-Ausgabe ist lokal weiterhin nicht verfügbar.
+
+Die zusätzliche [Bewegungsanreicherung](synthea-movements.md) ergänzt Kontakte
+mit expliziten Elternbeziehungen; die folgenden Zahlen beschreiben den
+ursprünglichen Durchlauf vor dieser Anreicherung.
 
 ## Geprüfter Bestand vom 12. September 2026
 
