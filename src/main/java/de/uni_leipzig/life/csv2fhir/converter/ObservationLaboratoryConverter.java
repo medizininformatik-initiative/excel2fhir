@@ -145,7 +145,10 @@ public class ObservationLaboratoryConverter extends Converter {
         if (category == null) category = clinical ? "vital-signs" : "laboratory";
         observation.setCategory(Collections.singletonList(new CodeableConcept(new Coding(
                 "http://terminology.hl7.org/CodeSystem/observation-category", category, null))));
-        if (category.equals("laboratory")) observation.setMeta(new Meta().addProfile(PROFILE));
+        if (category.equals("laboratory")) {
+            observation.setCategory(getLaborytoryObservationFixedCategory());
+            observation.setMeta(new Meta().addProfile(PROFILE));
+        }
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
         observation.setStatus(status == null ? FINAL : Observation.ObservationStatus.fromCode(status));
         observation.setEffective(ClinicalValues.date(get(dateColumn)));

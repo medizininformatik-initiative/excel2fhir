@@ -9,6 +9,17 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void laboratoryHasBothRequiredCategoryCodings() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        Observation observation = (Observation)new ObservationLaboratoryConverter(
+                row(Map.of("LOINC", "718-7", "Messwert", "14", "Einheit", "g/dL"),
+                        ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertTrue(observation.getCategoryFirstRep().hasCoding(
+                "http://terminology.hl7.org/CodeSystem/observation-category", "laboratory"));
+        assertTrue(observation.getCategoryFirstRep().hasCoding("http://loinc.org", "26436-6"));
+        assertEquals(2, observation.getCategoryFirstRep().getCoding().size());
+    }
     private CSVRecord row(Map<String,String> values, Enum<?>[] columns) throws Exception {
         Map<String,String> data = new LinkedHashMap<>();
         data.put("Patient-ID", "patient"); data.put("Fall-Nr", "1");
