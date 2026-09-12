@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Synthea R4 bundle -> existing Excel template. Usage: script INPUT.json OUTPUT.xlsx.
-Only Patient, Encounter and Condition are imported; unhandled source fields
+Supported clinical resources and synthetic contacts are imported; unhandled source fields
 are identified in a separate loss report. Requires LibreOffice, Java and Python 3.
 """
 import base64
@@ -19,6 +19,7 @@ from workbook_xml import read_sheets
 from diagnosis_mapping import map_diagnosis, mapping_metadata
 from clinical_import import prepare_clinical, SUPPORTED
 from clinical_events import prepare_events, prepare_documents, SHEETS
+from synthea_movements import enrich
 
 ROOT = Path(__file__).resolve().parents[1]
 SNOMED = 'http://snomed.info/sct'
@@ -100,6 +101,7 @@ def prepare(bundle):
         for key in period.keys() - {'start','end'}:loss(r,'period.'+key,'Generator unterstützt Sachverhalt noch nicht')
         loss(r, 'id', 'Bewusst neu vergebene Fallnummer; Zuordnung im Bericht')
         loss(r, 'period', 'Zeitpunkte erhalten; Darstellung in lokaler Zeitzone')
+    rows['Fall'], movement_report = enrich(bundle, rows['Fall'], encounter_numbers)
     source_conditions = 0
     condition_rows = {}
     diagnosis_mappings = []
@@ -171,7 +173,7 @@ def prepare(bundle):
     losses.extend(document_report['losses'])
     losses.extend(event_report['losses'])
     losses.extend(clinical_report.pop('losses'))
-    return rows, {**clinical_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
+    return rows, {**clinical_report, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
                   'diagnosisMapping': mapping_metadata(), 'diagnosisMappings': diagnosis_mappings,

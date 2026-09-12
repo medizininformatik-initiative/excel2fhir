@@ -19,7 +19,9 @@ def check_clinical(source, target, report):
     src = {r['resource']['id']:r['resource'] for r in entries if 'id' in r.get('resource',{})}
     dst = [e['resource'] for e in target['entry']]
     wanted = Counter(r['resourceType'] for r in expected['clinicalImports'])
-    actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in ('Patient','Encounter','Condition','Medication'))
+    excluded = {'Patient','Encounter','Condition','Medication'}
+    if 'movements' in report: excluded.add('Location')
+    actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
     assert wanted == actual, {'expectedClinicalCounts':wanted,'actualClinicalCounts':actual}
     def code(cc):
         c=(cc.get('coding')or[{}])[0]

@@ -9,6 +9,7 @@ from pathlib import Path
 import sys
 from diagnosis_mapping import map_diagnosis, mapping_metadata
 from check_clinical_roundtrip import check_clinical
+from check_movements import check_movements
 
 
 def check(source, target, report):
@@ -65,9 +66,9 @@ def check(source, target, report):
             if r.get('period',{}).get(date):
                 assert datetime.fromisoformat(found['period'][date].replace('Z','+00:00'))==datetime.fromisoformat(r['period'][date].replace('Z','+00:00'))
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
-    assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters,Condition=sum(original.values()))
+    assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters+len(report.get('movements',{}).get('contacts',[])),Condition=sum(original.values()))
     clinical = check_clinical(source, target, report)
-    return {'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
+    return {'movements':check_movements(source,target,report),'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
             'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
                 if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),
