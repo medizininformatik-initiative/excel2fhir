@@ -73,8 +73,8 @@ Die Ausfüllhilfen bleiben auch in der importierten Kopie erhalten. Die Auswahl
 für Aufnahmegrund und DAR verweist auf Codes!AA30:AA50; Klassen auf Codes!B4:B13.
 Unbekannte Kontaktklassen führen zum Abbruch.
 
-Patientenadressen werden inzwischen über strukturierte Felder mit dem ursprünglichen
-Ländercode übernommen. Kontaktzeitpunkte verwenden die bestehende Datumsverarbeitung;
+Namen und Anschriften werden inzwischen durch [deutsche synthetische Personendaten](synthea-german-demographics.md)
+ersetzt. Kontaktzeitpunkte verwenden die bestehende Datumsverarbeitung;
 Diagnosezeitangaben behalten FHIR-Präzision und Offset.
 
 ## Prüfung

@@ -37,7 +37,7 @@ die Prüfsumme des Registers und die Entscheidungen je Ressource.
 
 | Ressource | Excel | Übernommener Umfang | Wesentliche verbleibende Details |
 | --- | --- | --- | --- |
-| Patient | Person | Name, Geburt, Geschlecht, erste strukturierte Anschrift mit Original-Land, Sterbezeitpunkt | Weitere Namen/Adressen, Kommunikation und weitere demografische Erweiterungen |
+| Patient | Person | Synthetische deutsche Namen/Anschrift; Geburt, Geschlecht, Sterbezeitpunkt aus Quelle | Wohnhistorie, Kommunikation und weitere demografische Erweiterungen |
 | Encounter | Fall | Klasse, Zeitraum, Patientbezug, explizite Notfallkennzeichnung | Einrichtung/Behandler, Gründe, Entlassungsdisposition |
 | Condition | Diagnose | Originalcode, optionaler ICD-Zusatz, drei Zeitangaben, Status, Kontakt | Weitere Synthea-Metadaten |
 | Procedure | Prozedur | Originalcode, optionaler Zusatzcode, Zeitraum, Status, optionale SNOMED-Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler, zusätzliche OPS-Zuordnung |
@@ -122,6 +122,11 @@ insbesondere die benötigte SNOMED-Ausgabe ist lokal weiterhin nicht verfügbar.
 Die zusätzliche [Bewegungsanreicherung](synthea-movements.md) ergänzt Kontakte
 mit expliziten Elternbeziehungen; die folgenden Zahlen beschreiben den
 ursprünglichen Durchlauf vor dieser Anreicherung.
+
+Die [Deutschland-Anpassung der Personendaten](synthea-german-demographics.md)
+ersetzt Namen und Anschriften sowie eindeutige generierte Namen in Dokumenten.
+Der Rückvergleich prüft diese bewussten Änderungen anhand des versionierten
+Vorrats. Die übrigen Dokumenttexte sind weiterhin in der Quellsprache.
 
 ## Geprüfter Bestand vom 12. September 2026
 
