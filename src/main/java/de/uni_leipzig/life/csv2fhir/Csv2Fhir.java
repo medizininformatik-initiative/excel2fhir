@@ -107,7 +107,7 @@ public class Csv2Fhir {
         csvFormat = CSVFormat.DEFAULT.builder()
                 .setNullString("")
                 .setIgnoreSurroundingSpaces(true)
-                .setTrim(true)
+                .setTrim(false)
                 .setAllowMissingColumnNames(true)
                 .setHeader()
                 .setSkipHeaderRecord(true).build();

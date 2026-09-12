@@ -331,11 +331,6 @@ public abstract class Converter {
         } else {
             entry = record.get(columnName);
         }
-        // replace the escaped quotes from Excel2Csv with
-        // real quotes
-        if (entry != null) {
-            entry = entry.replace(Excel2Csv.QUOTE_ESCAPE, "\"");
-        }
         return entry;
     }
 

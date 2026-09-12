@@ -164,23 +164,12 @@ public class Excel2Csv {
                                 LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
                                 cellValue = "";
                             }
-                            // clean value inclusive bon-breaking whitespace occured in ICD
-                            String columnName = firstRow.getCell(col).getStringCellValue();
-                            boolean literalDiagnosisCode = "Diagnose".equals(sheetName)
-                                    && ("Code".equals(columnName) || "Zusatzcode".equals(columnName));
-                            if (!literalDiagnosisCode) {
-                                cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
-                            }
-                            // "No Value" used in UKE
-                            if (!literalDiagnosisCode && "#NV".equals(cellValue)) {
-                                cellValue = "";
-                            }
-                            // We must escape all quotes in the values to prevent errors
-                            // on reading the CSV-file with Java. There is no standard
-                            // for escaping quotes in CSV so we use our own escape sequence.
-                            cellValue = cellValue.replace("\"", QUOTE_ESCAPE);
-                            if (cellValue.contains(DELIM)) {
-                                cellValue = QUOTE + cellValue + QUOTE;
+                            // Preserve literal cell contents. CSV represents embedded quotes by
+                            // doubling them and protects delimiters, newlines and edge whitespace.
+                            if (cellValue.contains(DELIM) || cellValue.contains("\"")
+                                    || cellValue.contains("\n") || cellValue.contains("\r")
+                                    || !cellValue.equals(cellValue.strip())) {
+                                cellValue = QUOTE + cellValue.replace("\"", "\"\"") + QUOTE;
                             }
                             rowValues.add(cellValue);
                         }
