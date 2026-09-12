@@ -25,6 +25,35 @@ import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel2
 import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel3;
 
 public class EncounterConverterTest {
+    private static final String CONTACT_HEADER = "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle),Kontakt-ID,Kontaktebene,Kontaktart,Übergeordneter Kontakt\n";
+    private static final String ROOT_CONTACT = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,,,,,,1,Einrichtungskontakt,,\n";
+    private static final String DEPARTMENT_CONTACT = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,,,,,a1,Abteilungskontakt,,1\n";
+
+    @Test public void explicitOperationAndReturnPreserveParentPeriodsAndLocationHierarchy() throws Exception {
+        ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + DEPARTMENT_CONTACT
+                + "PID1,1,2026-05-02T09:00:00Z,2026-05-02T11:00:00Z,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,op1,Versorgungsstellenkontakt,Operation,a1\n"
+                + "PID1,1,2026-05-02T11:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,v2,Versorgungsstellenkontakt,Normalstationär,a1\n");
+        assertEquals(1, getEncounters(result, EncounterLevel1.class).size());
+        assertEquals(1, getEncounters(result, EncounterLevel2.class).size());
+        assertEquals(2, getEncounters(result, EncounterLevel3.class).size());
+        Encounter operation = getEncounters(result, EncounterLevel3.class).stream()
+                .filter(e -> e.getType().stream().anyMatch(t -> t.hasCoding("http://fhir.de/CodeSystem/kontaktart-de", "operation")))
+                .findFirst().orElseThrow();
+        assertEquals("2026-05-02T09:00:00Z", operation.getPeriod().getStartElement().getValueAsString());
+        assertEquals("2026-05-01T08:00:00Z", getEncounters(result, EncounterLevel1.class).get(0).getPeriod().getStartElement().getValueAsString());
+        assertEquals("Encounter/" + getEncounters(result, EncounterLevel2.class).get(0).getId(), operation.getPartOf().getReference());
+        assertEquals(Encounter.EncounterLocationStatus.COMPLETED, operation.getLocationFirstRep().getStatus());
+        var room = result.get(Fall, org.hl7.fhir.r4.model.Location.class,
+                operation.getLocation().get(1).getLocation().getReference().substring("Location/".length()));
+        assertEquals(operation.getLocationFirstRep().getLocation().getReference(), room.getPartOf().getReference());
+    }
+
+    @Test public void explicitContactsRejectMissingParentsDuplicatesAndOutsidePeriods() {
+        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + DEPARTMENT_CONTACT));
+        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + ROOT_CONTACT + ROOT_CONTACT));
+        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + ROOT_CONTACT
+                + DEPARTMENT_CONTACT.replace("2026-05-03T12:00:00Z", "2026-05-04T12:00:00Z")));
+    }
 
     @Before
     public void resetEncounterState() {

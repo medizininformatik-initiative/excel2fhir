@@ -55,6 +55,115 @@ import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
  */
 public class EncounterConverter extends Converter {
 
+    public enum ContactColumn implements TableColumnIdentifier {
+        Kontakt_ID, Kontaktebene, Kontaktart, Übergeordneter_Kontakt;
+        @Override public boolean isMandatory() { return false; }
+        @Override public String toString() {
+            return this == Kontakt_ID ? "Kontakt-ID" : name().replace('_', ' ');
+        }
+    }
+
+    private String contact(ContactColumn column) {
+        String value = get(column);
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private String contactId(String key) throws Exception {
+        return key.equals(get("Fall-Nr")) ? getEncounterId()
+                : ClinicalValues.resourceId(getPatientId(), "Encounter", getEncounterId() + "|" + key);
+    }
+
+    private Encounter findContact(String id) {
+        for (Class<? extends Encounter> type : List.of(EncounterLevel1.class, EncounterLevel2.class, EncounterLevel3.class)) {
+            Encounter found = result.get(Fall, type, id);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    private List<Resource> explicitContact() throws Exception {
+        String key = contact(ContactColumn.Kontakt_ID);
+        String level = contact(ContactColumn.Kontaktebene);
+        String parentKey = contact(ContactColumn.Übergeordneter_Kontakt);
+        if (key == null || isNullOrEmpty(getEncounterId()))
+            throw new IllegalArgumentException("Explicit contacts require Fall-Nr and Kontakt-ID");
+        Map<String, String> levels = Map.of("Einrichtungskontakt", "einrichtungskontakt",
+                "Abteilungskontakt", "abteilungskontakt", "Versorgungsstellenkontakt", "versorgungsstellenkontakt");
+        if (!levels.containsKey(level)) throw new IllegalArgumentException("Unknown Kontaktebene: " + level);
+        boolean root = level.equals("Einrichtungskontakt");
+        if (root != key.equals(get("Fall-Nr")) || root != (parentKey == null))
+            throw new IllegalArgumentException("Root Kontakt-ID must equal Fall-Nr; children require a parent");
+        String id = contactId(key);
+        if (findContact(id) != null)
+            throw new IllegalArgumentException("Duplicate Kontakt-ID: " + key);
+        Encounter encounter = root ? new EncounterLevel1()
+                : level.equals("Abteilungskontakt") ? new EncounterLevel2() : new EncounterLevel3();
+        encounter.setId(id);
+        encounter.setSubject(getPatientReference());
+        encounter.setIdentifier(convertIdentifier(id));
+        encounter.setMeta(getMeta());
+        encounter.addType(createCodeableConcept("http://fhir.de/CodeSystem/Kontaktebene", levels.get(level), level, null));
+        Period period = new Period().setStartElement(ClinicalValues.date(get(Start)))
+                .setEndElement(ClinicalValues.date(get(Ende)));
+        if (period.hasStart() && period.hasEnd() && period.getStart().after(period.getEnd()))
+            throw new IllegalArgumentException("Contact start is after end");
+        encounter.setPeriod(period);
+        encounter.setStatus(period.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS);
+        Coding inputClass = getEncounterLevel1Class();
+        if (root) {
+            encounter.setClass_(inputClass);
+            var reason = AdmissionReasonValues.extension(get(Encounter_Columns.Aufnahmegrund));
+            if (reason != null) encounter.addExtension(reason);
+        } else {
+            Encounter parent = findContact(contactId(parentKey));
+            String parentLevel = level.equals("Abteilungskontakt") ? "einrichtungskontakt" : "abteilungskontakt";
+            if (parent == null || !parent.getSubject().getReference().equals(getPatientReference().getReference())
+                    || parent.getType().stream().noneMatch(t -> t.hasCoding("http://fhir.de/CodeSystem/Kontaktebene", parentLevel)))
+                throw new IllegalArgumentException("Parent must precede child and have the preceding Kontaktebene");
+            if (inputClass != null && inputClass.hasCode() && !inputClass.getCode().equals(parent.getClass_().getCode()))
+                throw new IllegalArgumentException("Child contact class differs from parent");
+            encounter.setClass_(parent.getClass_().copy());
+            encounter.setPartOf(new Reference("Encounter/" + parent.getId()));
+            Period bound = parent.getPeriod();
+            if ((bound.hasStart() && period.hasStart() && period.getStart().before(bound.getStart()))
+                    || (bound.hasEnd() && (!period.hasEnd() || period.getEnd().after(bound.getEnd()))))
+                throw new IllegalArgumentException("Child period outside parent period");
+            if (!isNullOrEmpty(get(Encounter_Columns.Aufnahmegrund)))
+                throw new IllegalArgumentException("Admission reason belongs to facility contact");
+        }
+        String kind = contact(ContactColumn.Kontaktart);
+        if (kind != null) {
+            Map<String, String> kinds = Map.of("Normalstationär", "normalstationaer", "Intensivstationär", "intensivstationaer",
+                    "Operation", "operation", "Untersuchung und Behandlung", "ub", "Konsil", "konsil");
+            if (!kinds.containsKey(kind)) throw new IllegalArgumentException("Unknown Kontaktart: " + kind);
+            encounter.addType(createCodeableConcept("http://fhir.de/CodeSystem/kontaktart-de", kinds.get(kind), kind, null));
+        }
+        if (!isNullOrEmpty(get(Fachabteilung)))
+            encounter.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
+        List<Resource> resources = new ArrayList<>();
+        resources.add(encounter);
+        Location parentLocation = null;
+        String locationKey = getDIZId() + "|" + Objects.toString(get(Fachabteilung), "");
+        String[] names = {get(Station), get(Zimmer), get(Bett)};
+        String[] physicalTypes = {"wa", "ro", "bd"};
+        for (int i = 0; i < names.length; i++) {
+            if (isNullOrEmpty(names[i])) continue;
+            locationKey += "|" + physicalTypes[i] + "|" + names[i];
+            Location location = new Location();
+            location.setId(ClinicalValues.resourceId(getDIZId(), "Location", locationKey));
+            location.setName(names[i]);
+            location.setStatus(LocationStatus.ACTIVE);
+            location.setPhysicalType(new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/location-physical-type", physicalTypes[i], null)));
+            if (parentLocation != null) location.setPartOf(new Reference("Location/" + parentLocation.getId()));
+            encounter.addLocation().setLocation(new Reference("Location/" + location.getId()))
+                    .setPhysicalType(location.getPhysicalType().copy()).setPeriod(period.copy())
+                    .setStatus(period.hasEnd() ? Encounter.EncounterLocationStatus.COMPLETED : Encounter.EncounterLocationStatus.ACTIVE);
+            resources.add(location);
+            parentLocation = location;
+        }
+        return resources;
+    }
+
     public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
 
     /**
@@ -155,6 +264,10 @@ public class EncounterConverter extends Converter {
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
+        if (contact(ContactColumn.Kontaktebene) != null) return explicitContact();
+        if (contact(ContactColumn.Kontakt_ID) != null || contact(ContactColumn.Kontaktart) != null
+                || contact(ContactColumn.Übergeordneter_Kontakt) != null)
+            throw new IllegalArgumentException("Kontaktebene required for explicit contact fields");
         // return list
         List<Resource> encountersAndLocations = new ArrayList<>();
 

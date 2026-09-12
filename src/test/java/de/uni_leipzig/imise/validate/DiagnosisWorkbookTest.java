@@ -34,7 +34,12 @@ public class DiagnosisWorkbookTest {
                 assertEquals("ICD-10-GM 2026", book.getSheet("Codes").getRow(47).getCell(22).getStringCellValue());
                 var encounters = book.getSheet("Fall");
                 assertEquals("Aufnahmegrund (4. Stelle)", encounters.getRow(0).getCell(9).getStringCellValue());
-                assertEquals("Erklärung/Ausfüllhilfe", encounters.getRow(0).getCell(10).getStringCellValue());
+                assertEquals("Kontakt-ID", encounters.getRow(0).getCell(10).getStringCellValue());
+                assertEquals("Erklärung/Ausfüllhilfe", encounters.getRow(0).getCell(14).getStringCellValue());
+                for (String formula : List.of("Codes!$BE$30:$BE$32", "Codes!$BF$30:$BF$34")) {
+                    assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
+                            .anyMatch(v -> formula.equals(v.getFormula1())));
+                }
                 assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                         .anyMatch(v -> "Codes!$AA$30:$AA$50".equals(v.getFormula1())));
                 assertEquals("Notfall", book.getSheet("Codes").getRow(34).getCell(26).getStringCellValue());
