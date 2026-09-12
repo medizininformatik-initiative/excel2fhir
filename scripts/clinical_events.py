@@ -1,6 +1,8 @@
 """Additional clinical sheets. Structured details outside these columns are reported."""
 from clinical_import import coding, UnsupportedValue
 import base64
+import hashlib
+from german_demographics import localize_document_identity
 
 COMMON = ['Patient-ID', 'Fall-Nr', 'Eintrag ID', 'Bezeichner', 'Code', 'Codesystem']
 SCHEMAS = {
@@ -96,7 +98,7 @@ PERSON_EXTRA = ['Straße','Postleitzahl','Ort','Bundesland','Land','Sterbezeitpu
 
 
 def prepare_documents(entries, pid, encounters):
-    rows=[];imports=[];losses=[]
+    rows=[];imports=[];losses=[];identity_changes=[]
     index={}
     for e in entries:
         r=e.get('resource',{})
@@ -121,11 +123,18 @@ def prepare_documents(entries, pid, encounters):
             a=attachments[0]['attachment']
             if not a.get('contentType','').startswith('text/plain'):raise UnsupportedValue('Nur eingebetteter Klartext wird derzeit übernommen')
             text=base64.b64decode(a.get('data',''),validate=True).decode('utf-8')
+            original = text
+            text, replacements = localize_document_identity(text, patient)
             if not text or len(text)>32767:raise UnsupportedValue('Dokument leer oder größer als Excel-Zellgrenze')
             code,system,label=coding(r.get('type',{}))
             rows.append([pid,nr,'','ja',text,r.get('status',''),r.get('date',''),code,system,label])
             imports.append({'resourceType':'DocumentReference','sourceId':r['id']})
+            identity_changes.append({'sourceId':r['id'], 'replacements':replacements,
+                'sourceTextSha256':hashlib.sha256(original.encode()).hexdigest(),
+                'targetTextSha256':hashlib.sha256(text.encode()).hexdigest(),
+                'translation':'deferred; source language and US context remain'})
+            if replacements:loss('content.attachment.data','Generierte Personennamen angepasst; keine Übersetzung des klinischen Textes')
             for k in r.keys()-{'resourceType','id','subject','status','date'}:
                 loss(k,'Teilweise übernommen: erster Dokumenttyp, Klartextinhalt und erster Kontakt; weitere Metadaten fehlen')
         except (UnsupportedValue,ValueError,KeyError)as ex:loss('$','Ressource ausgelassen: '+str(ex))
-    return rows,{'clinicalImports':imports,'losses':losses}
+    return rows,{'clinicalImports':imports,'losses':losses,'documentIdentityChanges':identity_changes}

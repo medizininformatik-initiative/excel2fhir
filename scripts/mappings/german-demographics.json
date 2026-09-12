@@ -1,0 +1,16 @@
+{
+  "version": "german-demographics-v1",
+  "givenNames": {
+    "female": ["Anna", "Fatma", "Elif", "Miriam", "Sofia", "Clara", "Aylin", "Derya", "Hanna", "Zeynep", "Maja", "Leonie", "Samira", "Nora", "Jasmin", "Emilia"],
+    "male": ["David", "Emre", "Jonas", "Mehmet", "Alexander", "Cem", "Noah", "Lukas", "Yusuf", "Paul", "Ali", "Daniel", "Karim", "Felix", "Amir", "Leon"],
+    "unknown": ["Kim", "Alex", "Robin", "Sascha", "Toni", "Mika"]
+  },
+  "familyNames": ["Müller", "Yılmaz", "Schneider", "Öztürk", "Weber", "Kaya", "Wagner", "Demir", "Becker", "Hoffmann", "Şahin", "Richter", "Kowalski", "Nguyen", "Rossi", "García", "Schulz", "Fischer", "Aydin", "Wolf", "Hassan", "Neumann", "König", "Bauer"],
+  "streets": ["Beispielweg", "Musterstraße", "Testdatenallee", "Beispielring"],
+  "places": [
+    {"postalCode":"10178", "city":"Berlin", "state":"Berlin", "source":"https://www.berlin.de/sehenswuerdigkeiten/3559880-3558930-rotes-rathaus.html"},
+    {"postalCode":"20095", "city":"Hamburg", "state":"Hamburg", "source":"https://www.hamburg.de/service/info/11297145/"},
+    {"postalCode":"80331", "city":"München", "state":"Bayern", "source":"https://stadt.muenchen.de/service/info/stadtverwaltung/10264283/"},
+    {"postalCode":"50667", "city":"Köln", "state":"Nordrhein-Westfalen", "source":"https://www.koeln.de/apps/strassen/rathausplatz"}
+  ]
+}

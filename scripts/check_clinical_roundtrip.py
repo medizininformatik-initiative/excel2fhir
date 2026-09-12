@@ -13,6 +13,7 @@ def check_clinical(source, target, report):
     expected['clinicalImports'].extend(event_report['clinicalImports'])
     document_rows, document_report = prepare_documents(entries, pid, report['encounterNumbers'])
     expected['clinicalImports'].extend(document_report['clinicalImports'])
+    assert report.get('documentIdentityChanges') == document_report['documentIdentityChanges'], 'Document identity report changed'
     assert report.get('clinicalMapping') == expected['clinicalMapping'], 'Clinical mapping version changed'
     assert report.get('clinicalImports', []) == expected['clinicalImports'], 'Clinical import report changed'
     assert report.get('clinicalMappings', []) == expected['clinicalMappings'], 'Clinical mapping report changed'

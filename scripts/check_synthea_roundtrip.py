@@ -10,6 +10,7 @@ import sys
 from diagnosis_mapping import map_diagnosis, mapping_metadata
 from check_clinical_roundtrip import check_clinical
 from check_movements import check_movements
+from german_demographics import check_patient
 
 
 def check(source, target, report):
@@ -20,6 +21,8 @@ def check(source, target, report):
     target_ids = {r['resourceType']+'/'+r['id'] for r in dst}
     target_ids.update(e.get('fullUrl')for e in target['entry']if e.get('fullUrl'))
     pid = report['sourcePatient'].replace('_','-')
+    demographic_check = check_patient(next(r for r in src if r['resourceType']=='Patient'),
+        next(r for r in dst if r['resourceType']=='Patient'), report)
     assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
     decisions = [map_diagnosis(r) for r in src if r['resourceType'] == 'Condition']
     assert report['diagnosisMappings'] == decisions, 'Mapping report differs from the versioned decisions'
@@ -68,7 +71,7 @@ def check(source, target, report):
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
     assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters+len(report.get('movements',{}).get('contacts',[])),Condition=sum(original.values()))
     clinical = check_clinical(source, target, report)
-    return {'movements':check_movements(source,target,report),'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
+    return {'demographics':demographic_check,'movements':check_movements(source,target,report),'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
             'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
                 if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),

@@ -20,6 +20,7 @@ from diagnosis_mapping import map_diagnosis, mapping_metadata
 from clinical_import import prepare_clinical, SUPPORTED
 from clinical_events import prepare_events, prepare_documents, SHEETS
 from synthea_movements import enrich
+from german_demographics import identity
 
 ROOT = Path(__file__).resolve().parents[1]
 SNOMED = 'http://snomed.info/sct'
@@ -61,18 +62,19 @@ def prepare(bundle):
         if expected == 'Patient' and target['id'] != pid:
             raise ValueError('Cross-patient reference')
         return target
-    name = patient.get('name', [{}])[0]
+    demographics = identity(patient)
+    name = demographics['name']
     born = datetime.strptime(patient['birthDate'], '%Y-%m-%d').strftime('%d.%m.%Y 00:00')
     rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), '', born,
                            {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']]])
-    address = (patient.get('address') or [{}])[0]
+    address = demographics['address']
     rows['Person'][0] += [''] * 7 + [', '.join(address.get('line',[])), address.get('postalCode',''),
                                     address.get('city',''), address.get('state',''), address.get('country',''),
                                     patient.get('deceasedDateTime','')]
     fields(patient, {'name','birthDate','gender','address','deceasedDateTime'})
+    for field in ('name','address'):
+        loss(patient, field, 'Bewusst durch synthetische deutsche Personendaten ersetzt; Zuordnung unter demographics')
     if len(patient.get('address',[]))>1:loss(patient,'address[1:]','Weitere Anschriften nicht übernommen')
-    for key in address.keys()-{'line','postalCode','city','state','country'}:loss(patient,'address[0].'+key,'Anschrift-Eigenschaft nicht übernommen')
-    for key in name.keys() - {'given','family'}: loss(patient, 'name[0].'+key, 'Generator unterstützt Sachverhalt noch nicht')
     if len(patient.get('name', [])) > 1: loss(patient, 'name[1:]', 'Generator unterstützt Sachverhalt noch nicht')
     encounter_numbers = {}
     encounter_mappings = []
@@ -170,10 +172,11 @@ def prepare(bundle):
     document_rows, document_report = prepare_documents(entries, pid, encounter_numbers)
     rows['DocumentReference'] = document_rows
     clinical_report['clinicalImports'].extend(document_report['clinicalImports'])
+    clinical_report['documentIdentityChanges'] = document_report['documentIdentityChanges']
     losses.extend(document_report['losses'])
     losses.extend(event_report['losses'])
     losses.extend(clinical_report.pop('losses'))
-    return rows, {**clinical_report, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
+    return rows, {**clinical_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
                   'diagnosisMapping': mapping_metadata(), 'diagnosisMappings': diagnosis_mappings,
