@@ -17,7 +17,15 @@ public class WorkbookUno {
     static PropertyValue prop(String name, Object value) {
         PropertyValue p = new PropertyValue(); p.Name = name; p.Value = value; return p;
     }
-    public static void main(String[] args) throws java.lang.Exception {
+    public static void main(String[] args) {
+        try {
+            run(args);
+        } catch (Throwable error) {
+            error.printStackTrace();
+            System.exit(1);
+        }
+    }
+    private static void run(String[] args) throws java.lang.Exception {
         XComponentContext local = Bootstrap.createInitialComponentContext(null);
         XUnoUrlResolver resolver = q(XUnoUrlResolver.class,
                 local.getServiceManager().createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver", local));
@@ -31,9 +39,20 @@ public class WorkbookUno {
         try {
             XSpreadsheetDocument book = q(XSpreadsheetDocument.class, doc);
             for (String line : Files.readAllLines(Path.of(args[1]), StandardCharsets.UTF_8)) {
+                if (line.isBlank()) continue;
                 String[] a = line.split("\t", -1);
+                if (a[0].equals("copySheet")) {
+                    book.getSheets().copyByName(a[2], a[1], (short) book.getSheets().getElementNames().length);
+                    continue;
+                }
                 XSpreadsheet sheet = q(XSpreadsheet.class, book.getSheets().getByName(a[1]));
-                if (a[0].equals("insert")) {
+                if (a[0].equals("row")) {
+                    int row = Integer.parseInt(a[2].substring(1)) - 1;
+                    Object[][] values = new Object[1][a.length - 3];
+                    for (int i = 3; i < a.length; i++) values[0][i - 3] =
+                            new String(Base64.getDecoder().decode(a[i]), StandardCharsets.UTF_8);
+                    q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4, row)).setDataArray(values);
+                } else if (a[0].equals("insert")) {
                     q(XColumnRowRange.class, sheet).getColumns().insertByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
                 } else if (a[0].equals("copy")) {
                     CellRangeAddress source = q(XCellRangeAddressable.class, sheet.getCellRangeByName(a[2])).getRangeAddress();
@@ -65,11 +84,11 @@ public class WorkbookUno {
                             .setPropertyValue("Width", Integer.parseInt(a[3]));
                 }
             }
-            if (args.length == 3) {
-                XSpreadsheet diagnosis = q(XSpreadsheet.class, book.getSheets().getByName("Diagnose"));
+            if (args.length >= 3) {
+                XSpreadsheet diagnosis = q(XSpreadsheet.class, book.getSheets().getByName(args.length >= 4 ? args[3] : "Diagnose"));
                 q(XStorable.class, doc).storeToURL(Path.of(args[2]).toUri().toString(),
                         new PropertyValue[] {prop("FilterName", "calc_pdf_Export"), prop("Overwrite", true),
-                                prop("FilterData", new PropertyValue[] {prop("Selection", diagnosis.getCellRangeByName("A1:N6")),
+                                prop("FilterData", new PropertyValue[] {prop("Selection", diagnosis.getCellRangeByName(args.length >= 5 ? args[4] : "A1:N6")),
                                         prop("SinglePageSheets", true)})});
             } else {
                 q(XStorable.class, doc).store();

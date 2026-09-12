@@ -195,6 +195,9 @@ public class ExcelTemplateValidator {
 
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
+        for (String sheet : List.of("Allergie", "Impfung", "Befundbericht", "Behandlungsplan", "Hilfsmittel")) {
+            validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"), List.of());
+        }
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
                 List.of("Dokumentationszeitpunkt", "Beginn", "Ende"), List.of(new DateRangeColumns("Beginn", "Ende")));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
@@ -218,6 +221,7 @@ public class ExcelTemplateValidator {
         }
         Map<String, Integer> columns = columnIndexes(sheet);
         String previousPatientId = null;
+        Set<String> entryIds = new HashSet<>();
         for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             if (isEmptyDataRow(row, columns)) {
@@ -244,6 +248,20 @@ public class ExcelTemplateValidator {
             }
             if ("Diagnose".equals(sheetName)) {
                 validateDiagnosisSelections(row, columns, result);
+            }
+            String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
+            if (columns.containsKey(idColumn)) {
+                String entryId = get(row, columns, idColumn);
+                String parentId = get(row, columns, "Komponente von");
+                if ("Eintrag ID".equals(idColumn) && isBlank(entryId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, idColumn, "Entry ID is required");
+                }
+                if (!isBlank(parentId) && !entryIds.contains(patientId + "|" + parentId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, "Komponente von", "Component parent must precede the component for the same patient");
+                }
+                if (!isBlank(entryId) && !entryIds.add(patientId + "|" + entryId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, idColumn, "Duplicate entry ID for this patient");
+                }
             }
             Map<String, DateTimeType> parsedDateTimes = new HashMap<>();
             for (String columnName : dateTimeColumns) {
@@ -317,13 +335,11 @@ public class ExcelTemplateValidator {
             return new DateTimeType(evaluateDateFormula(cell));
         }
         try {
-            if ("Diagnose".equals(sheet.getSheetName())) {
-                if (DiagnosisValues.absentReason(value) != null) {
-                    return null;
-                }
-                if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
-                    return new DateTimeType(value);
-                }
+            if (DiagnosisValues.absentReason(value) != null) {
+                return null;
+            }
+            if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
+                return new DateTimeType(value);
             }
             return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
         } catch (Exception e) {
@@ -495,24 +511,29 @@ public class ExcelTemplateValidator {
         headers.put("Person", Arrays.asList("Patient-ID", "Vorname", "Nachname", "Anschrift", "Geburtsdatum",
                 "Geschlecht", "Krankenkasse", "Datum Einwilligung", "PDAT Einwilligung",
                 "KKDAT retro Einwilligung", "KKDAT Einwilligung", "BIOMAT Einwilligung",
-                "BIOMAT Zusatz Einwilligung", "Erklärung/Ausfüllhilfe"));
+                "BIOMAT Zusatz Einwilligung", "Straße", "Postleitzahl", "Ort", "Bundesland", "Land", "Sterbezeitpunkt", "Erklärung/Ausfüllhilfe"));
         headers.put("Fall", Arrays.asList("Patient-ID", "Fall-Nr", "Start", "Ende", "Einrichtungskontaktklasse",
                 "Fachabteilung", "Station", "Zimmer", "Bett", AdmissionReasonValues.COLUMN, "Erklärung/Ausfüllhilfe"));
         headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Parameter", "Messwert",
-                "Einheit", "Zeitstempel (Abnahme)", "Erklärung/Ausfüllhilfe"));
+                "Einheit", "Zeitstempel (Abnahme)", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Codesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",
                 "Zusatzcode", "Zusatzcodesystem", "Dokumentationszeitpunkt", "Beginn", "Ende",
                 "Klinischer Status", "Verifikationsstatus", "Typ", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
-                "Dokumentationszeitpunkt", "Erklärung/Ausfüllhilfe"));
+                "Dokumentationszeitpunkt", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Erklärung/Ausfüllhilfe"));
         headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Zeitstempel", "Medikationstyp",
                 "Medikationsplanart", "Wirksubstanz aus Präparat/Handelsname", "ATC Code", "PZN Code", "ASK",
                 "FHIR_UserSelected", "Darreichungsform", "Therapiestart", "Therapieende", "Einzeldosis", "Einheit",
-                "Anzahl Dosen pro Tag", "Erklärung/Ausfüllhilfe"));
+                "Anzahl Dosen pro Tag", "Medikamentencode", "Codesystem", "Status", "Absicht", "Dosierungstext", "Ende", "Wirkstoffcode", "Wirkstoffcodesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "LOINC", "Wert",
-                "Einheit", "Zeitstempel", "Erklärung/Ausfüllhilfe"));
+                "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Codesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",
-                "Erklärung/Ausfüllhilfe"));
+                "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));
+        headers.put("Allergie", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Klinischer Status", "Verifikationsstatus", "Typ", "Kategorie", "Kritikalität", "Reaktionscode", "Reaktion", "Erklärung/Ausfüllhilfe"));
+        headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Erklärung/Ausfüllhilfe"));
+        headers.put("Befundbericht", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Ausgabezeitpunkt", "Ergebnisse", "Beschreibung", "Erklärung/Ausfüllhilfe"));
+        headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Ende", "Status", "Absicht", "Beschreibung", "Aktivitätscodes", "Erklärung/Ausfüllhilfe"));
+        headers.put("Hilfsmittel", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Status", "UDI", "Hersteller", "Erklärung/Ausfüllhilfe"));
         return headers;
     }
 
