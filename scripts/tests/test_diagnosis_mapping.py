@@ -45,11 +45,52 @@ class MappingTest(unittest.TestCase):
         condition['code']['text'] = condition['code']['coding'][0].pop('display')
         self.assertEqual(map_diagnosis(condition)['target']['code'], 'J20.9')
 
-    def test_social_facts_and_unspecified_course_are_not_fabricated_diseases(self):
+    def test_neutral_facts_and_tasks_are_not_fabricated_diseases(self):
         for code, display in [('160903007', 'Full-time employment (finding)'),
-                              ('444814009', 'Viral sinusitis (disorder)')]:
+                              ('314529007', 'Medication review due (situation)')]:
             condition = {'code': {'coding': [{'system': SNOMED, 'code': code, 'display': display}]}}
             self.assertIsNone(map_diagnosis(condition)['target'])
+
+    def test_missing_details_use_fixed_synthetic_defaults(self):
+        cases = [('19169002', 'Miscarriage in first trimester (disorder)', 'O03.9'),
+                 ('85116003', 'Miscarriage in second trimester (disorder)', 'O03.9'),
+                 ('444814009', 'Viral sinusitis (disorder)', 'J01.9'),
+                 ('206523001', 'Meconium ileus (disorder)', 'E84.1'),
+                 ('79619009', 'Mitral valve stenosis (disorder)', 'I05.0')]
+        for code, display, expected in cases:
+            source = self.source()
+            source['entry'][2]['resource']['code']['coding'][0].update(code=code, display=display)
+            before = copy.deepcopy(source)
+            rows, report = prepare(source)
+            self.assertEqual(rows['Diagnose'][0][5], expected)
+            self.assertEqual(source, before)
+            self.assertEqual(prepare(source), (rows, report))
+            self.assertTrue(report['diagnosisMappings'][0]['reason'])
+
+    def test_suspicion_uses_table_status_without_overwriting_refutation_or_existing_gm(self):
+        for code, display, target in [
+                ('162573006', 'Suspected lung cancer (situation)', 'C34.9'),
+                ('315268008', 'Suspected prostate cancer (situation)', 'C61'),
+                ('840544004', 'Suspected disease caused by Severe acute respiratory coronavirus 2 (situation)', 'B34.2')]:
+            source = self.source()
+            condition = source['entry'][2]['resource']
+            condition['code']['coding'][0].update(code=code, display=display)
+            for status in [None, 'confirmed', 'provisional', 'refuted', 'entered-in-error']:
+                condition.pop('verificationStatus', None)
+                if status:
+                    condition['verificationStatus'] = {'coding': [{
+                        'system': 'http://terminology.hl7.org/CodeSystem/condition-ver-status', 'code': status}]}
+                before = copy.deepcopy(source)
+                rows, report = prepare(source)
+                self.assertEqual(source, before)
+                self.assertEqual(rows['Diagnose'][0][5], target)
+                changed = report['diagnosisMappings'][0].get('verificationStatusChange')
+                self.assertEqual(bool(changed), status in [None, 'confirmed'])
+                if changed:
+                    self.assertEqual(rows['Diagnose'][0][11], 'Vorläufig')
+                    self.assertEqual(changed['from'], condition.get('verificationStatus'))
+            condition['code']['coding'].append({'system': ICD10GM, 'version': '2026', 'code': target})
+            self.assertNotIn('verificationStatusChange', map_diagnosis(condition))
 
     def test_only_production_display_variants_are_accepted(self):
         for display in ['Sprain of ankle (disorder)', '  SPRAIN  of ankle (disorder)  ']:
@@ -90,6 +131,32 @@ class MappingTest(unittest.TestCase):
         self.assertEqual(check(source, target, report)['additionalIcd10GmCodings'], 1)
         condition['code']['coding'][1]['code'] = 'J20.8'
         report['diagnosisMappings'][0]['target']['code'] = 'J20.8'
+        with self.assertRaises(AssertionError):
+            check(source, target, report)
+
+    def test_roundtrip_requires_reported_suspicion_status(self):
+        source = self.source()
+        condition = source['entry'][2]['resource']
+        condition['code']['coding'][0].update(code='162573006', display='Suspected lung cancer (situation)')
+        condition['verificationStatus'] = {'coding': [{
+            'system': 'http://terminology.hl7.org/CodeSystem/condition-ver-status', 'code': 'confirmed'}]}
+        _, report = prepare(source)
+        target = copy.deepcopy(source)
+        target['entry'] = target['entry'][:3]
+        encounter = target['entry'][1]['resource']
+        encounter['id'] = 'p-E-1'
+        encounter['class']['code'] = 'AMB'
+        encounter['extension'] = [{'url': 'http://fhir.de/StructureDefinition/Aufnahmegrund',
+            'extension': [{'url': 'VierteStelle', 'valueCoding': {
+                'system': 'http://fhir.de/CodeSystem/dkgev/AufnahmegrundVierteStelle', 'code': '7'}}]}]
+        converted = target['entry'][2]['resource']
+        converted['encounter']['reference'] = 'Encounter/p-E-1'
+        converted['code']['coding'].append(copy.deepcopy(report['diagnosisMappings'][0]['target']))
+        with self.assertRaises(AssertionError):
+            check(source, target, report)
+        converted['verificationStatus']['coding'][0]['code'] = 'provisional'
+        self.assertEqual(check(source, target, report)['verificationStatusChanges'], 1)
+        report['diagnosisMappings'][0]['verificationStatusChange']['to'] = 'confirmed'
         with self.assertRaises(AssertionError):
             check(source, target, report)
 

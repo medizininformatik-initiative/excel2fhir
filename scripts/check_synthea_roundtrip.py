@@ -32,6 +32,8 @@ def check(source, target, report):
         if original and encounter:
             encounter = 'Encounter/'+pid+'-E-'+report['encounterNumbers'][source_ids[encounter]]
         statuses = tuple(tuple(c['code']for c in r.get(field,{}).get('coding',[]))for field in ['clinicalStatus','verificationStatus'])
+        if original and 'verificationStatusChange' in decision:
+            statuses = (statuses[0], (decision['verificationStatusChange']['to'],))
         return (codings, r.get('recordedDate',''), r.get('onsetDateTime',''),r.get('abatementDateTime',''),encounter,statuses)
     original=Counter(signature(r,True)for r in src if r['resourceType']=='Condition')
     converted=Counter(signature(r,False)for r in dst if r['resourceType']=='Condition')
@@ -63,7 +65,9 @@ def check(source, target, report):
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
     assert Counter(r['resourceType']for r in dst)==Counter(Patient=1,Encounter=source_encounters,Condition=sum(original.values()))
     return {'conditions':sum(original.values()),'encounters':len(encounters),
-            'sourceDiagnosisValuesAndReferences':'preserved',
+            'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
+                if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
+            'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),
             'additionalIcd10GmCodings':sum(d['target'] is not None for d in decisions),
             'mappingDecisions':dict(Counter(d['status'] for d in decisions)),
             'emergencyMappings':len(report.get('encounterMappings',[])),

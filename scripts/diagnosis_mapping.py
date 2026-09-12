@@ -47,4 +47,14 @@ def map_diagnosis(condition):
         result['reason'] = 'Quellbezeichnung fehlt oder weicht von der beurteilten Bezeichnung ab.'
         return result
     result.update(status=entry['relation'], target=copy.deepcopy(entry['target']), reason=entry['reason'])
+    # Synthea exports confirmed even for concepts explicitly labelled suspected.
+    # Only the table's suspicion entries may adjust this; preserve refuted,
+    # entered-in-error and all other explicit non-confirmed source statuses.
+    verification = condition.get('verificationStatus', {}).get('coding', [])
+    if entry.get('targetVerificationStatus') and (not verification or (len(verification) == 1
+                and verification[0].get('system') == 'http://terminology.hl7.org/CodeSystem/condition-ver-status'
+                and verification[0].get('code') == 'confirmed')):
+        result['verificationStatusChange'] = {
+            'from': copy.deepcopy(condition.get('verificationStatus')),
+            'to': entry['targetVerificationStatus']}
     return result

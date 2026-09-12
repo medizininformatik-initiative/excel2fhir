@@ -1,5 +1,5 @@
 {
-  "id": "synthea-diagnoses-icd10gm-2026-v2",
+  "id": "synthea-diagnoses-icd10gm-2026-v3",
   "sourceSystem": "http://snomed.info/sct",
   "reviewStatus": "provisional-assistant-assessment-for-synthetic-test-data",
   "sourceSyntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
@@ -318,9 +318,14 @@
     },
     {
       "sourceCode": "1149222004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Überdosierung ohne im Quellkonzept festgelegte Substanz; kein Arzneimittel-/Drogentyp erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T50.9",
+        "display": "Vergiftung: Sonstige und nicht näher bezeichnete Arzneimittel, Drogen und biologisch aktive Substanzen"
+      },
+      "relation": "approximate",
+      "reason": "Arzneimittel-/Drogenüberdosierung aus den Opioid-Modulen; feste breite Testdatenzuordnung ohne Festlegung auf einen Wirkstoff.",
       "sourceDisplays": [
         "Overdose (disorder)"
       ],
@@ -629,9 +634,14 @@
     },
     {
       "sourceCode": "127294003",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Hirnverletzung mit ausdrücklich unklarem traumatischem/nichttraumatischem Mechanismus nicht auf Trauma reduziert.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "G93.9",
+        "display": "Krankheit des Gehirns, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Bleibende Hirnschädigung im Verletzungsmodul; als breite Gehirnerkrankung abgebildet, ohne Akutverletzung und Folgezustand näher zu unterscheiden.",
       "sourceDisplays": [
         "Traumatic or nontraumatic brain injury (disorder)"
       ],
@@ -1114,9 +1124,14 @@
     {
       "sourceCode": "160968000",
       "sourceDisplay": "Risk activity involvement (finding)",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Risikoaktivität nicht spezifiziert; kein ausreichend begründeter Zielcode.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z72.9",
+        "display": "Problem mit Bezug auf die Lebensführung, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Risikoaktivität im Substanzkonsum-Screening als allgemeines Problem der Lebensführung abgebildet; keine konkrete Abhängigkeit behauptet.",
       "sourceDisplays": [
         "Risk activity involvement (finding)"
       ],
@@ -1262,9 +1277,14 @@
     },
     {
       "sourceCode": "162573006",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Lungenkrebsverdacht ist kein bestätigter Tumor; Zielcode ohne Verdachtskennzeichen wäre missverständlich.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "C34.9",
+        "display": "Bösartige Neubildung: Bronchus oder Lunge, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Lungenkrebsverdacht als unspezifische Lungentumor-Diagnose mit vorläufigem Verifikationsstatus; Histologie und Stadium entfallen.",
       "sourceDisplays": [
         "Suspected lung cancer (situation)"
       ],
@@ -1280,7 +1300,8 @@
           "state": "Suspected Lung Cancer",
           "sha256": "84e474a85b39565585030773e0422a6bdfea142f15c07984da8c9425540cb082"
         }
-      ]
+      ],
+      "targetVerificationStatus": "provisional"
     },
     {
       "sourceCode": "162864005",
@@ -1443,9 +1464,14 @@
     },
     {
       "sourceCode": "19169002",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Abort im ersten Trimenon ohne Vollständigkeit/Komplikationsstatus; diese Angaben werden nicht erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "O03.9",
+        "display": "Spontanabort: Komplett oder nicht näher bezeichnet, ohne Komplikation"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Spontanabort ohne Komplikation, Vollständigkeit nicht näher bezeichnet. Trimenon bleibt im SNOMED-Original; keine individuelle Fallentscheidung.",
       "sourceDisplays": [
         "Miscarriage in first trimester (disorder)"
       ],
@@ -1597,9 +1623,14 @@
     },
     {
       "sourceCode": "200936003",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Lupus erythematodes ohne sichere Abgrenzung kutan/systemisch; kein Organbefall angenommen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "M32.9",
+        "display": "Systemischer Lupus erythematodes, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: systemischer Lupus ohne näheren Organbefall, entsprechend der systemischen Entzündung im Lupus-Modul; keine allgemeingültige Äquivalenz des Quellbegriffs.",
       "sourceDisplays": [
         "Lupus erythematosus (disorder)"
       ],
@@ -1712,9 +1743,14 @@
     },
     {
       "sourceCode": "206523001",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Mekoniumileus-Ziel P75 ist ein Manifestationscode mit ätiologischem Kontext; in diesem Einzel-Zusatzcoding nicht erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "E84.1",
+        "display": "Zystische Fibrose mit Darmmanifestationen"
+      },
+      "relation": "approximate",
+      "reason": "Mekoniumileus aus dem Mukoviszidose-Modul als zystische Fibrose mit Darmmanifestation verallgemeinert. Der spezifische Manifestationscode P75 wird nicht zusätzlich ausgegeben.",
       "sourceDisplays": [
         "Meconium ileus (disorder)"
       ],
@@ -2135,9 +2171,14 @@
     },
     {
       "sourceCode": "239720000",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Meniskusriss ohne Angabe akut-traumatisch oder degenerativ; diese Zuordnung wird nicht erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "S83.2",
+        "display": "Meniskusriss, akut"
+      },
+      "relation": "approximate",
+      "reason": "Feste Zuordnung als akuter Meniskusriss, entsprechend dem Knieverletzungs-Notfallpfad des auditierten Synthea-Moduls.",
       "sourceDisplays": [
         "Tear of meniscus of knee (disorder)"
       ],
@@ -2409,9 +2450,14 @@
     },
     {
       "sourceCode": "262521009",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Rückenmark und/oder Wirbelsäule verletzt: ohne Höhe/Struktur keine eindeutige regionale Verletzung ableitbar.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T14.9",
+        "display": "Verletzung, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Breite Verletzungszuordnung ohne Festlegung von Wirbelhöhe, Knochen- oder Rückenmarksschaden; spezifische Quellinformation bleibt in SNOMED.",
       "sourceDisplays": [
         "Traumatic injury of spinal cord and/or vertebral column (disorder)"
       ],
@@ -2492,9 +2538,14 @@
     },
     {
       "sourceCode": "266934004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Transportproblem beschreibt eine Zugangshürde; kein Krankheitscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z75.8",
+        "display": "Sonstige Probleme mit Bezug auf medizinische Betreuungsmöglichkeiten oder andere Gesundheitsversorgung"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Das Transportproblem behindert den Zugang zu Gesundheitsversorgung; als Versorgungsproblem verallgemeinert.",
       "sourceDisplays": [
         "Transport problem (finding)"
       ],
@@ -2510,9 +2561,14 @@
     {
       "sourceCode": "266948004",
       "sourceDisplay": "Has a criminal record (finding)",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Vorstrafe allein belegt keinen aktuellen medizinischen Kontaktanlass.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z65",
+        "display": "Kontaktanlässe mit Bezug auf andere psychosoziale Umstände"
+      },
+      "relation": "approximate",
+      "reason": "Vorstrafe als psychosozialer Kontaktanlass mit Bezug zu einer Verurteilung abgebildet; aktuelle Relevanz ist eine feste Testdatenannahme.",
       "sourceDisplays": [
         "Has a criminal record (finding)"
       ],
@@ -2636,9 +2692,14 @@
     },
     {
       "sourceCode": "267253006",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Chromosomenanomalie des Fetus ohne betroffene Chromosomen und unklaren Patientenkontext nicht auf konkrete Fehlbildung abgebildet.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "O35.1",
+        "display": "Betreuung der Mutter bei (Verdacht auf) Chromosomenanomalie beim Fetus"
+      },
+      "relation": "approximate",
+      "reason": "Fetale Chromosomenanomalie im Datensatz der Mutter aus dem Schwangerschaftsmodul; als Anlass mütterlicher Betreuung abgebildet, ohne bestimmtes Chromosom.",
       "sourceDisplays": [
         "Fetus with chromosomal abnormality (disorder)"
       ],
@@ -3057,9 +3118,14 @@
     },
     {
       "sourceCode": "287182007",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Suizidversuch durch Ersticken ohne belegten Organschaden; kein Verletzungscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T71",
+        "display": "Erstickung"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Suizidversuch durch Ersticken mit Erstickungsschädigung; kein bestimmter Organschaden ergänzt. Absicht bleibt im SNOMED-Original.",
       "sourceDisplays": [
         "Attempted suicide by suffocation"
       ],
@@ -3079,9 +3145,14 @@
     },
     {
       "sourceCode": "287185009",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Suizidversuch mit Schneiden/Stechen ohne Verletzungsbefund; kein konkreter Verletzungscode abgeleitet.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T14.1",
+        "display": "Offene Wunde an einer nicht näher bezeichneten Körperregion"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Suizidversuch durch Schneiden/Stechen verursacht eine offene Wunde; Körperregion bleibt unspezifisch, Absicht im SNOMED-Original.",
       "sourceDisplays": [
         "Attempted suicide by cutting or stabbing"
       ],
@@ -3101,9 +3172,14 @@
     },
     {
       "sourceCode": "287191006",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Suizid durch Ersticken als Ereignis/Todesumstand; kein Organbefund aus Methode abgeleitet.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T71",
+        "display": "Erstickung"
+      },
+      "relation": "approximate",
+      "reason": "Suizid durch Ersticken auf die Erstickungsschädigung abgebildet; Todesumstand und Absicht bleiben im SNOMED-Original.",
       "sourceDisplays": [
         "Suicide by suffocation"
       ],
@@ -3123,9 +3199,14 @@
     },
     {
       "sourceCode": "287193009",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Suizid mit Schusswaffe ohne Wundlokalisation; kein konkreter Verletzungscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T14.1",
+        "display": "Offene Wunde an einer nicht näher bezeichneten Körperregion"
+      },
+      "relation": "approximate",
+      "reason": "Suizid mit Schusswaffe als offene Wunde ohne Körperregion abgebildet; Absicht und Todesumstand bleiben im SNOMED-Original.",
       "sourceDisplays": [
         "Suicide using firearm (event)"
       ],
@@ -3282,9 +3363,14 @@
     },
     {
       "sourceCode": "30832001",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Patellarsehnenruptur ohne sicheren traumatischen/nichttraumatischen Mechanismus; keine entsprechende Ursache erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "S76.1",
+        "display": "Verletzung des Muskels und der Sehne des M. quadriceps femoris"
+      },
+      "relation": "approximate",
+      "reason": "Traumatische Patellarsehnenruptur als Verletzung des Kniestreckapparats; feste Zuordnung entsprechend dem Knieverletzungs-Notfallpfad.",
       "sourceDisplays": [
         "Rupture of patellar tendon (disorder)"
       ],
@@ -3365,9 +3451,14 @@
     },
     {
       "sourceCode": "315268008",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Prostatakrebsverdacht ist kein bestätigter Tumor; Zielcode ohne Verdachtskennzeichen wäre missverständlich.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "C61",
+        "display": "Bösartige Neubildung der Prostata"
+      },
+      "relation": "approximate",
+      "reason": "Prostatakrebsverdacht mit vorläufigem Verifikationsstatus; keine bestätigte Tumordiagnose aus dem Verdachtsbegriff ableiten.",
       "sourceDisplays": [
         "Suspected prostate cancer (situation)"
       ],
@@ -3378,7 +3469,8 @@
           "state": "Suspected_Prostate_Cancer",
           "sha256": "c139ad49b26a0d2bdb0bd4d2d0ba03170e1a769c00abe652f7a196eabd0841f6"
         }
-      ]
+      ],
+      "targetVerificationStatus": "provisional"
     },
     {
       "sourceCode": "32911000",
@@ -3607,9 +3699,14 @@
     },
     {
       "sourceCode": "36971009",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Sinusitis ohne Verlaufsangabe; akut/chronisch nicht aus Bezeichnung ableitbar.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "J32.9",
+        "display": "Chronische Sinusitis, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "ICD-Einschluss für Sinusitis o.n.A.; zusätzlich chronischer Entzündungspfad im auditierten Synthea-Modul.",
       "sourceDisplays": [
         "Sinusitis (disorder)"
       ],
@@ -4393,9 +4490,14 @@
     {
       "sourceCode": "424393004",
       "sourceDisplay": "Reports of violence in the environment (finding)",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Bericht über Gewalt in der Umgebung belegt keine eigene Verletzung oder Misshandlung.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z65",
+        "display": "Kontaktanlässe mit Bezug auf andere psychosoziale Umstände"
+      },
+      "relation": "approximate",
+      "reason": "Gewalt im Umfeld als psychosozialer Kontaktanlass verallgemeinert; persönliche Belastung als Testdatenannahme, keine eigene Misshandlung oder Verletzung behauptet.",
       "sourceDisplays": [
         "Reports of violence in the environment (finding)"
       ],
@@ -4843,9 +4945,14 @@
     {
       "sourceCode": "444814009",
       "sourceDisplay": "Viral sinusitis (disorder)",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Virale Sinusitis ohne eindeutige Verlaufsangabe; akut/chronisch nicht allein aus dem Text ableiten.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "J01.9",
+        "display": "Akute Sinusitis, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Feste Zuordnung zur akuten Sinusitis entsprechend dem kurzen viralen Erkrankungspfad in Synthea; Virusinformation bleibt im SNOMED-Original.",
       "sourceDisplays": [
         "Viral sinusitis (disorder)"
       ],
@@ -6225,9 +6332,14 @@
     },
     {
       "sourceCode": "698303004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Warten auf Knochenmarktransplantation beschreibt noch keinen Transplantationsstatus.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z75.2",
+        "display": "Wartezeit auf eine Untersuchung oder Behandlung"
+      },
+      "relation": "approximate",
+      "reason": "Warten auf Knochenmarktransplantation als Wartezeit auf Behandlung verallgemeinert; kein Status nach Transplantation und keine Dringlichkeit angenommen.",
       "sourceDisplays": [
         "Awaiting transplantation of bone marrow (situation)"
       ],
@@ -6242,9 +6354,14 @@
     },
     {
       "sourceCode": "698306007",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Warten auf Nierentransplantation beschreibt noch keinen Transplantationsstatus.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z75.2",
+        "display": "Wartezeit auf eine Untersuchung oder Behandlung"
+      },
+      "relation": "approximate",
+      "reason": "Warten auf Nierentransplantation als Wartezeit auf Behandlung verallgemeinert; kein Status nach Transplantation und keine Dringlichkeit angenommen.",
       "sourceDisplays": [
         "Awaiting transplantation of kidney (situation)"
       ],
@@ -6281,9 +6398,14 @@
     },
     {
       "sourceCode": "698754002",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Chronische Lähmung nach Rückenmarksläsion ohne Verteilung/Komplettheit; kein Para-/Tetraplegiecode erraten.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "G83.9",
+        "display": "Lähmungssyndrom, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Chronische Lähmung als nicht näher bezeichnetes Lähmungssyndrom; keine Para-/Tetraplegie oder Vollständigkeit angenommen.",
       "sourceDisplays": [
         "Chronic paralysis due to lesion of spinal cord (disorder)"
       ],
@@ -6365,9 +6487,14 @@
     {
       "sourceCode": "706893006",
       "sourceDisplay": "Victim of intimate partner abuse (finding)",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Art und zeitlicher Kontext der Partnerschaftsgewalt unklar; kein Verletzungs- oder Misshandlungscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T74.9",
+        "display": "Missbrauch von Personen, nicht näher bezeichnet"
+      },
+      "relation": "approximate",
+      "reason": "Partnerschaftsgewalt als nicht näher bezeichneter Missbrauch; feste Testdatenannahme eines aktuellen Zustands ohne Festlegung auf eine Gewaltart.",
       "sourceDisplays": [
         "Victim of intimate partner abuse (finding)"
       ],
@@ -6474,9 +6601,14 @@
     },
     {
       "sourceCode": "713458007",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Fehlende Transportmöglichkeit beschreibt eine Zugangshürde; kein Krankheitscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "Z75.8",
+        "display": "Sonstige Probleme mit Bezug auf medizinische Betreuungsmöglichkeiten oder andere Gesundheitsversorgung"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Fehlende Transportmöglichkeit behindert den Zugang zu Gesundheitsversorgung; als Versorgungsproblem verallgemeinert.",
       "sourceDisplays": [
         "Lack of access to transportation (finding)"
       ],
@@ -6799,9 +6931,14 @@
     },
     {
       "sourceCode": "79619009",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Mitralklappenstenose ohne rheumatische/nichtrheumatische Einordnung; diese Ursache wird nicht erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "I05.0",
+        "display": "Mitralklappenstenose"
+      },
+      "relation": "approximate",
+      "reason": "ICD-Einschluss erlaubt Mitralklappenstenose ohne ausdrückliche Bezeichnung als rheumatisch; kein Ausschluss allein wegen unbekannter Ursache.",
       "sourceDisplays": [
         "Mitral valve stenosis (disorder)"
       ],
@@ -6953,9 +7090,14 @@
     },
     {
       "sourceCode": "840544004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "COVID-Verdacht darf nicht automatisch als bestätigte Erkrankung codiert werden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "B34.2",
+        "display": "Infektion durch Coronaviren nicht näher bezeichneter Lokalisation"
+      },
+      "relation": "approximate",
+      "reason": "COVID-Verdacht als vorläufige Coronavirusinfektion unspezifischer Lokalisation verallgemeinert; SARS-CoV-2 bleibt im SNOMED-Original. Kein bestätigter COVID-Zusatzcode U07.2.",
       "sourceDisplays": [
         "Suspected disease caused by Severe acute respiratory coronavirus 2 (situation)"
       ],
@@ -6966,7 +7108,8 @@
           "state": "Suspected COVID",
           "sha256": "a0a47f3c6441c8d4a8b5872f2961bc7371ba8d548953b2837e9698164b282596"
         }
-      ]
+      ],
+      "targetVerificationStatus": "provisional"
     },
     {
       "sourceCode": "84114007",
@@ -7041,9 +7184,14 @@
     },
     {
       "sourceCode": "85116003",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Abort im zweiten Trimenon ohne Vollständigkeit/Komplikationsstatus; diese Angaben werden nicht erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "O03.9",
+        "display": "Spontanabort: Komplett oder nicht näher bezeichnet, ohne Komplikation"
+      },
+      "relation": "approximate",
+      "reason": "Feste Testdatenannahme: Spontanabort ohne Komplikation, Vollständigkeit nicht näher bezeichnet. Trimenon bleibt im SNOMED-Original; keine individuelle Fallentscheidung.",
       "sourceDisplays": [
         "Miscarriage in second trimester (disorder)"
       ],
@@ -7102,9 +7250,14 @@
     },
     {
       "sourceCode": "86849004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Suizidale Vergiftung ohne Stoffangabe; keine spezifische Vergiftung oder Folgeverletzung erfunden.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "T65.9",
+        "display": "Toxische Wirkung einer nicht näher bezeichneten Substanz"
+      },
+      "relation": "approximate",
+      "reason": "Suizidale Vergiftung ohne Stoffangabe als toxische Wirkung einer nicht näher bezeichneten Substanz verallgemeinert; Absicht bleibt im SNOMED-Original.",
       "sourceDisplays": [
         "Suicidal poisoning (disorder)"
       ],
@@ -7509,5 +7662,6 @@
     "r4PrimaryCodingEvidence": "src/main/java/org/mitre/synthea/export/FhirR4.java: condition() uses condition.codes.get(0)",
     "additionalSourceReview": "State.ConditionOnset is the only conditionStart caller; Logic.ActiveCondition copies existing conditions; Death/Lifecycle codes do not create Condition resources",
     "limitations": "Configured remote value sets, external modules and custom CodeMapper/Flexporter inputs are not part of this pinned inventory"
-  }
+  },
+  "generationPolicy": "One fixed target per source concept; missing clinical details may be filled by explicit synthetic test assumptions recorded in each reason. No random or runtime module-based selection."
 }

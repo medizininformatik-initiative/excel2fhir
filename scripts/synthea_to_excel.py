@@ -134,10 +134,13 @@ def prepare(bundle):
             if len(cs)!=1 or cs[0].get('system')!=system or cs[0].get('code')not in mapping:
                 raise ValueError('Unsupported '+field)
             return mapping[cs[0]['code']]
+        verification = status('verificationStatus','http://terminology.hl7.org/CodeSystem/condition-ver-status',VERIFICATION)
+        if 'verificationStatusChange' in decision:
+            verification = VERIFICATION[decision['verificationStatusChange']['to']]
         rows['Diagnose'].append([pid,nr,label,*chosen[0],*chosen[1],r.get('recordedDate',''),
                                 r.get('onsetDateTime',''),r.get('abatementDateTime',''),
                                 status('clinicalStatus','http://terminology.hl7.org/CodeSystem/condition-clinical',CLINICAL),
-                                status('verificationStatus','http://terminology.hl7.org/CodeSystem/condition-ver-status',VERIFICATION),''])
+                                verification,''])
         fields(r, {'subject','encounter','code','recordedDate','onsetDateTime','abatementDateTime','clinicalStatus','verificationStatus'})
         for key in r.get('code',{}).keys() - {'coding','text'}:loss(r,'code.'+key,'Generator unterstützt Sachverhalt noch nicht')
         for field in ['clinicalStatus','verificationStatus']:

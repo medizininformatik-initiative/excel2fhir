@@ -65,6 +65,9 @@ def audit(checkout, catalogue_path, terminal_path, mapping_path=None):
         if not entry['reason'] or entry['relation'] not in ('approximate', 'unmapped'):
             raise ValueError('Missing assessment: ' + code)
         target = entry['target']
+        if 'targetVerificationStatus' in entry and (
+                entry['targetVerificationStatus'] != 'provisional' or target is None):
+            raise ValueError('Invalid target verification status: ' + code)
         if (target is None) != (entry['relation'] == 'unmapped'):
             raise ValueError('Inconsistent mapping decision: ' + code)
         if target:
