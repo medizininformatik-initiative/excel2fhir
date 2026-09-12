@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
 import de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues;
+import de.uni_leipzig.life.csv2fhir.converter.AdmissionReasonValues;
 
 /**
  * Validates the current Excel input template contract before converting it.
@@ -172,6 +173,18 @@ public class ExcelTemplateValidator {
             validateDateRange(result, "Fall", rowIndex + 1, "Start/Ende", start, end, ERROR);
 
             String encounterNumber = get(row, columns, "Fall-Nr");
+            String admissionReason = get(row, columns, AdmissionReasonValues.COLUMN);
+            if (!isBlank(admissionReason)) {
+                try {
+                    AdmissionReasonValues.extension(admissionReason);
+                    if (isBlank(encounterNumber)) {
+                        throw new IllegalArgumentException("Facility encounter row required");
+                    }
+                } catch (RuntimeException e) {
+                    add(result, ERROR, "Fall", rowIndex + 1, AdmissionReasonValues.COLUMN,
+                            "Supported admission reason and explicit Fall-Nr required");
+                }
+            }
             if (!isBlank(patientId) && !isBlank(encounterNumber)) {
                 validateRequired(sheet, row, columns, "Einrichtungskontaktklasse", result);
                 encounterIds.add(patientId + "|" + encounterNumber);
@@ -484,7 +497,7 @@ public class ExcelTemplateValidator {
                 "KKDAT retro Einwilligung", "KKDAT Einwilligung", "BIOMAT Einwilligung",
                 "BIOMAT Zusatz Einwilligung", "Erklärung/Ausfüllhilfe"));
         headers.put("Fall", Arrays.asList("Patient-ID", "Fall-Nr", "Start", "Ende", "Einrichtungskontaktklasse",
-                "Fachabteilung", "Station", "Zimmer", "Bett", "Erklärung/Ausfüllhilfe"));
+                "Fachabteilung", "Station", "Zimmer", "Bett", AdmissionReasonValues.COLUMN, "Erklärung/Ausfüllhilfe"));
         headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Parameter", "Messwert",
                 "Einheit", "Zeitstempel (Abnahme)", "Erklärung/Ausfüllhilfe"));
         headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",

@@ -68,7 +68,13 @@ public class EncounterConverter extends Converter {
         Fachabteilung,
         Station,
         Zimmer,
-        Bett
+        Bett,
+        Aufnahmegrund;
+
+        @Override
+        public String toString() {
+            return this == Aufnahmegrund ? AdmissionReasonValues.COLUMN : name();
+        }
     }
 
     /**
@@ -193,6 +199,10 @@ public class EncounterConverter extends Converter {
             encounterLevel1.setMeta(getMeta());
             encounterLevel1.setClass_(getEncounterLevel1Class());
             encounterLevel1.setType(getEncounterType(EncounterLevel1.class));
+            var admissionReason = AdmissionReasonValues.extension(get(Encounter_Columns.Aufnahmegrund));
+            if (admissionReason != null) {
+                encounterLevel1.addExtension(admissionReason);
+            }
             setPeriodAndStatus(encounterLevel1);
 
             encountersAndLocations.add(encounterLevel1);
@@ -201,6 +211,9 @@ public class EncounterConverter extends Converter {
         }
 
         if (!recordHasLevel1EncounterID) {
+            if (!isNullOrEmpty(get(Encounter_Columns.Aufnahmegrund))) {
+                throw new IllegalArgumentException("Admission reason requires an explicit Fall-Nr");
+            }
             String encounterLevel1Class = get(Einrichtungskontaktklasse);
             if (!isNullOrEmpty(encounterLevel1Class)) {
                 error("Encounter ID is empty but encounter class (" + Einrichtungskontaktklasse + ") is given as "

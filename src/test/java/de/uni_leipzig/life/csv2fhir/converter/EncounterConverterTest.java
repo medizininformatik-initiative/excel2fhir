@@ -3,6 +3,7 @@ package de.uni_leipzig.life.csv2fhir.converter;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Fall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -31,12 +32,38 @@ public class EncounterConverterTest {
     }
 
     @Test
+    public void representsEmergencySeparatelyFromAmbulatoryClass() throws Exception {
+        ConverterResult result = convertRecords(
+                "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle)\n"
+                        + "PID1,1,01.05.2026 08:00,01.05.2026 12:00,ambulant,,,,,Notfall\n");
+        Encounter encounter = getEncounters(result, EncounterLevel1.class).get(0);
+        assertEquals("AMB", encounter.getClass_().getCode());
+        var reason = encounter.getExtensionByUrl(AdmissionReasonValues.EXTENSION);
+        var coding = (org.hl7.fhir.r4.model.Coding) reason.getExtensionByUrl("VierteStelle").getValue();
+        assertEquals(AdmissionReasonValues.SYSTEM, coding.getSystem());
+        assertEquals("7", coding.getCode());
+        assertFalse(encounter.hasHospitalization());
+        assertFalse(encounter.hasPriority());
+        assertFalse(encounter.getPeriod().hasExtension());
+    }
+
+    @Test
+    public void admissionReasonSupportsExplicitDarAndRejectsUnknownValues() {
+        var reason = AdmissionReasonValues.extension("!dar:masked");
+        var coding = (org.hl7.fhir.r4.model.Coding) reason.getExtensionByUrl("VierteStelle").getValue();
+        assertFalse(coding.getCodeElement().hasValue());
+        assertEquals("masked", coding.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
+        assertEquals(null, AdmissionReasonValues.extension(""));
+        assertThrows(IllegalArgumentException.class, () -> AdmissionReasonValues.extension("EMER"));
+    }
+
+    @Test
     public void repeatedOrEmptyDepartmentKeepsSameDepartmentEncounter() throws Exception {
         ConverterResult result = convertRecords(
-                "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett\n"
-                        + "PID1,1,01.05.2026 08:00,05.05.2026 12:00,stationaer,Innere,INT1,R101,\n"
-                        + ",,05.05.2026 12:00,10.05.2026 12:00,,,INT1,R102,\n"
-                        + ",,10.05.2026 12:00,15.05.2026 12:00,,Innere,INT2,R201,\n");
+                "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle)\n"
+                        + "PID1,1,01.05.2026 08:00,05.05.2026 12:00,stationaer,Innere,INT1,R101,,\n"
+                        + ",,05.05.2026 12:00,10.05.2026 12:00,,,INT1,R102,,\n"
+                        + ",,10.05.2026 12:00,15.05.2026 12:00,,Innere,INT2,R201,,\n");
 
         List<Encounter> departmentEncounters = getEncounters(result, EncounterLevel2.class);
         List<Encounter> wardEncounters = getEncounters(result, EncounterLevel3.class);
@@ -63,9 +90,9 @@ public class EncounterConverterTest {
     @Test
     public void changedDepartmentCreatesNewDepartmentEncounter() throws Exception {
         ConverterResult result = convertRecords(
-                "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett\n"
-                        + "PID1,1,01.05.2026 08:00,05.05.2026 12:00,stationaer,Innere,INT1,R101,\n"
-                        + ",,05.05.2026 12:00,10.05.2026 12:00,,Chirurgie,INT2,R201,\n");
+                "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle)\n"
+                        + "PID1,1,01.05.2026 08:00,05.05.2026 12:00,stationaer,Innere,INT1,R101,,\n"
+                        + ",,05.05.2026 12:00,10.05.2026 12:00,,Chirurgie,INT2,R201,,\n");
 
         List<Encounter> departmentEncounters = getEncounters(result, EncounterLevel2.class);
         List<Encounter> wardEncounters = getEncounters(result, EncounterLevel3.class);

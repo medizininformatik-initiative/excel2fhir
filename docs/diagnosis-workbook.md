@@ -108,3 +108,23 @@ Status Inaktiv, Abgeklungen oder Remission. Bei „Irrtümlich erfasst“ muss d
 Status fehlen (`con-5`). Diese fachlichen Regeln prüft die optionale FHIR-Validierung.
 Die strikte Excel-Prüfung kontrolliert Auswahlwerte und Systemzuordnungen, sie ersetzt
 keine Profil- oder Terminologieprüfung.
+
+## Aufnahmegrund im Blatt Fall
+
+Vorher folgte auf I „Bett“ direkt die Ausfüllhilfe in J. Jetzt steht in J
+„Aufnahmegrund (4. Stelle)“; die vorhandene Ausfüllhilfe ist nach K verschoben.
+Bestehende Beispieldaten erhalten keine erfundene Aufnahmegrund-Angabe.
+
+Die sechs Werte des CodeSystems `http://fhir.de/CodeSystem/dkgev/AufnahmegrundVierteStelle`
+sowie explizite DAR-Gründe stehen in Codes!AA30:AA50 und sind mit Fall!J2:J1031
+verknüpft. „Notfall“ erzeugt die Extension `http://fhir.de/StructureDefinition/Aufnahmegrund`
+mit Unterelement `VierteStelle` und Coding `7`. Andere Stellen werden nicht ergänzt.
+Leer lässt die Extension weg; DAR steht am Code des Coding. Die Angabe gehört auf
+die Zeile des Einrichtungskontakts mit ausdrücklicher Fall-Nr.
+
+Die Kontaktklasse wird separat gewählt. Für den Synthea-Notfallkontakt werden
+„ambulant“ und „Notfall“ eingetragen. „Notfall“ ist kein Wert der Kontaktklasse.
+Bereits im Generator unterstützte Klassen home health, virtual, short stay und
+pre-admission stehen zusätzlich auf Codes!B10:B13; die Fallauswahl verweist auf B4:B13.
+
+Quelle für diese Überleitung: [MII KDS Basis 2026.0.1, Einrichtungskontakt](https://medizininformatik-initiative.github.io/kerndatensatz-basis/de/StructureDefinition-mii-pr-fall-kontakt-gesundheitseinrichtung.html).
