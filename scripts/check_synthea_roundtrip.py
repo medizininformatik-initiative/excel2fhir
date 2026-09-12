@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import sys
+from diagnosis_mapping import map_diagnosis, mapping_metadata
 
 
 def check(source, target, report):
@@ -17,8 +18,16 @@ def check(source, target, report):
     target_ids = {r['resourceType']+'/'+r['id'] for r in dst}
     target_ids.update(e.get('fullUrl')for e in target['entry']if e.get('fullUrl'))
     pid = report['sourcePatient'].replace('_','-')
+    assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
+    decisions = [map_diagnosis(r) for r in src if r['resourceType'] == 'Condition']
+    assert report['diagnosisMappings'] == decisions, 'Mapping report differs from the versioned decisions'
     def signature(r, original):
-        codings = tuple(sorted((c['system'],c.get('version',''),c['code'])for c in r['code']['coding']))
+        expected_codings = list(r['code']['coding'])
+        if original:
+            decision = map_diagnosis(r)
+            if decision['target'] is not None:
+                expected_codings.append(decision['target'])
+        codings = tuple(sorted((c['system'],c.get('version',''),c['code'])for c in expected_codings))
         encounter = r.get('encounter',{}).get('reference','')
         if original and encounter:
             encounter = 'Encounter/'+pid+'-E-'+report['encounterNumbers'][source_ids[encounter]]
@@ -53,7 +62,12 @@ def check(source, target, report):
                 assert datetime.fromisoformat(found['period'][date].replace('Z','+00:00'))==datetime.fromisoformat(r['period'][date].replace('Z','+00:00'))
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
     assert Counter(r['resourceType']for r in dst)==Counter(Patient=1,Encounter=source_encounters,Condition=sum(original.values()))
-    return {'conditions':sum(original.values()),'encounters':len(encounters),'diagnosisValuesAndReferences':'preserved','emergencyMappings':len(report.get('encounterMappings',[])),'terminologyValidation':'not performed'}
+    return {'conditions':sum(original.values()),'encounters':len(encounters),
+            'sourceDiagnosisValuesAndReferences':'preserved',
+            'additionalIcd10GmCodings':sum(d['target'] is not None for d in decisions),
+            'mappingDecisions':dict(Counter(d['status'] for d in decisions)),
+            'emergencyMappings':len(report.get('encounterMappings',[])),
+            'terminologyValidation':'not performed'}
 
 if __name__=='__main__':
     if len(sys.argv)!=4:raise SystemExit(__doc__)

@@ -24,8 +24,8 @@ unberührt. Vorhandene Ausgabedateien werden nicht überschrieben.
 Ausgaben:
 
 - `case.xlsx`: eigenständig bearbeitbare und konvertierbare Excel-Datei.
-- `case.loss.json`: Quellhash, Zuordnung der Kontakte und Diagnosezeilen sowie
-  ausgelassene Ressourcen/Eigenschaften und bekannte Generatorergänzungen.
+- `case.loss.json`: Quellhash, Zuordnung der Kontakte und Diagnosezeilen,
+  begründete Mappingentscheidungen sowie ausgelassene Ressourcen/Eigenschaften.
 
 Die Beispieldaten und Einwilligungswerte der Vorlage werden in der Kopie entfernt.
 Es werden keine Einwilligungen erfunden. Die zentralen Auswahllisten und die
@@ -48,9 +48,12 @@ mvn -q compile exec:java \
 ```
 
 Danach werden Synthea und der Importer nicht mehr benötigt. Fachliche Änderungen
-können direkt in Excel vorgenommen werden. Eine automatische Terminologiezuordnung
-findet nicht statt. Ein vorhandenes zusätzliches ICD-10-GM-Coding kann übernommen
-werden; seine Version muss ausdrücklich angegeben sein.
+können direkt in Excel vorgenommen werden. Beim Synthea-Import ergänzt die
+[versionierte Mappingfunktion](diagnosis-mapping.md) näherungsweise passende
+ICD-10-GM-Codes für die bereits beurteilten Quellkonzepte. Ein vorhandenes
+ICD-10-GM-Coding hat Vorrang und wird unverändert übernommen; seine Version muss
+ausdrücklich angegeben sein. Die spätere Excel→FHIR-Konvertierung führt selbst
+kein Mapping aus.
 
 Synthea-Notfallkontakte (`EMER`) werden nach MII KDS Basis 2026.0.1 als `AMB`
 mit Aufnahmegrund-Extension, Unterelement `VierteStelle`, Code `7` übernommen.
@@ -82,12 +85,19 @@ python3 scripts/check_synthea_roundtrip.py \
 Der Rückvergleich prüft Anzahl, Codes/Versionen, Diagnosezeiten, Statuswerte,
 Kontaktklassen, Kontaktzeitpunkte und auflösbare Patient-/Fallbezüge. Die Prüfung
 bezieht sich auf den vereinbarten Importumfang, nicht auf alle Synthea-Eigenschaften.
+Zusatzcodings werden gegen die versionierte Mappingfunktion geprüft. Fehlende oder
+veränderte Ergänzungen sowie manipulierte Mappingberichte werden zurückgewiesen.
+Für den Rückvergleich ist derselbe Stand der Mappingdatei erforderlich, mit dem
+die Excel-Datei erzeugt wurde; der Bericht enthält ID und SHA-256-Prüfsumme.
 
 Erprobter Ausgangsstand: Synthea `d9d07a6eef91ee5144293b42ab64224d84d124f8`,
 Seed/Clinician-Seed 20260911, Referenz-/Enddatum 20260911, vollständige Historie.
 Ein tatsächlich generierter Patient wurde über Excel konvertiert: 76 Conditions,
 96 Encounters, ein Patient; die geprüften Werte und Referenzen stimmen überein.
 Alle vier Notfallkontakte enthalten nach dem Rückweg die Aufnahmegrund-Kennzeichnung.
+Die erste Mappingversion ergänzt 37 ICD-10-GM-Codings; die 76 ursprünglichen
+SNOMED-Codings bleiben erhalten. Das sind 21 zugeordnete von 30 unterschiedlichen
+Quellkonzepten. Abdeckung und fachliche Genauigkeit sind getrennte Größen.
 
 Technischer Informationserhalt ist kein Nachweis fachlicher Kodiergültigkeit.
 Synthea kann z.B. auch einen SNOMED-Situationscode als Condition liefern. Die
@@ -109,10 +119,11 @@ Ressourcen weg. Eine solche Ausgabe darf nicht als vollständig übernommener
 Diagnosefall gelten; der Rückvergleich erkennt die Verluste. Für vollständige
 Profilvalidierung mit dem aktuellen Paketbestand wurde ein Java-Heap von 4 GB geprüft.
 
-Beim geprüften Gesamtdurchlauf fehlte die vom Diagnose-ValueSet angeforderte
+Beim ursprünglichen Gesamtdurchlauf vor Einführung des Zusatzcodings fehlte die vom Diagnose-ValueSet angeforderte
 SNOMED-Ausgabe `http://snomed.info/sct/900000000000207008/version/20250701`.
 Die 152 Fehlermeldungen betrafen ausschließlich diese Terminologieprüfung;
 die Ausgabe mit `-v` enthielt deshalb nur den Patienten und 96 Kontakte, keine
 der 76 Diagnosen. Der Rückvergleich wies diese unvollständige Ausgabe wie erwartet
 zurück. Das belegt keine ungültigen SNOMED-Codes, sondern eine fehlende
 Validierungsgrundlage. Der normale Rückweg ohne `-v` erhält alle 76 Diagnosen.
+Das zusätzliche ICD-Coding ersetzt diese noch offene SNOMED-Prüfung nicht.

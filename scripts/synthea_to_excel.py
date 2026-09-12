@@ -16,6 +16,7 @@ import sys
 import tempfile
 import time
 from workbook_xml import read_sheets
+from diagnosis_mapping import map_diagnosis, mapping_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
 SNOMED = 'http://snomed.info/sct'
@@ -93,6 +94,7 @@ def prepare(bundle):
         loss(r, 'period', 'Zeitpunkte erhalten; Darstellung in lokaler Zeitzone')
     source_conditions = 0
     condition_rows = {}
+    diagnosis_mappings = []
     for e in entries:
         r = e.get('resource', {});typ = r.get('resourceType')
         if typ in ['Patient','Encounter']: continue
@@ -118,6 +120,11 @@ def prepare(bundle):
             for key in c.keys() - {'system','version','code'}:loss(r,'code.coding.'+key,'Bezeichner übernommen, Coding-Metadaten nicht separat darstellbar')
         if len(chosen)>2 or len({c.get('system')for c in coding}) != len(coding):
             raise ValueError('More codings than supported by the diagnosis sheet/profile')
+        decision = map_diagnosis(r)
+        diagnosis_mappings.append(decision)
+        if decision['target'] is not None:
+            target = decision['target']
+            chosen.append((target['code'], 'ICD-10-GM ' + target['version']))
         while len(chosen)<2:chosen.append(('',''))
         label = r.get('code',{}).get('text') or coding[0].get('display','')
         def status(field, system, mapping):
@@ -143,10 +150,13 @@ def prepare(bundle):
     return rows, {'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
+                  'diagnosisMapping': mapping_metadata(), 'diagnosisMappings': diagnosis_mappings,
                   'limitations':['Technical diagnosis case, not a complete clinical story',
                                  'Existing Patient converter inserts DAR for missing address',
                                  'Encounter status is derived from period; source identifiers are regenerated',
-                                 'No terminology mapping or KDS conformance validation performed']}
+                                 'Additional ICD-10-GM mappings are provisional approximations for synthetic test data',
+                                 'Target release 2026 is explicit and independent of historical event dates',
+                                 'No KDS conformance or complete SNOMED terminology validation performed']}
 
 
 def write_workbook(rows, output):
