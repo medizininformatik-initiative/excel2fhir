@@ -21,12 +21,12 @@ public class DiagnosisWorkbookTest {
                     XSSFWorkbook book = new XSSFWorkbook(input)) {
                 var person = book.getSheet("Person");
                 assertEquals("Geburtsdatum", person.getRow(0).getCell(3).getStringCellValue());
-                assertEquals("Straße", person.getRow(0).getCell(12).getStringCellValue());
-                assertEquals("Postleitzahl", person.getRow(0).getCell(13).getStringCellValue());
-                assertTrue(person.getRow(1).getCell(12).getStringCellValue().contains("1"));
-                assertEquals("53121", person.getRow(1).getCell(13).getStringCellValue());
-                assertEquals("Bonn", person.getRow(1).getCell(14).getStringCellValue());
-                assertEquals("DE", person.getRow(1).getCell(16).getStringCellValue());
+                assertEquals("Straße", person.getRow(0).getCell(11).getStringCellValue());
+                assertEquals("Postleitzahl", person.getRow(0).getCell(12).getStringCellValue());
+                assertTrue(person.getRow(1).getCell(11).getStringCellValue().contains("1"));
+                assertEquals("53121", person.getRow(1).getCell(12).getStringCellValue());
+                assertEquals("Bonn", person.getRow(1).getCell(13).getStringCellValue());
+                assertEquals("DE", person.getRow(1).getCell(15).getStringCellValue());
                 var diagnoses = book.getSheet("Diagnose");
                 assertEquals("Code", diagnoses.getRow(0).getCell(3).getStringCellValue());
                 assertEquals("Codesystem", diagnoses.getRow(0).getCell(4).getStringCellValue());

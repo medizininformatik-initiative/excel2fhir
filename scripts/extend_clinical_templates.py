@@ -134,6 +134,8 @@ def extend(source, target):
             for col, text in zip(('N', 'O', 'P', 'R'), (*address.groups(), 'DE')):
                 put('Person', col + cell[1:], text)
         op('removeColumns', 'Person', 3, 1)
+    if any(value == 'Krankenkasse' for key, value in sheets['Person'].items() if key.endswith('1')):
+        op('removeColumns', 'Person', 5, 1)
     apply_workbook_edits(Path(source),ops,Path(target))
 
 

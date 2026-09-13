@@ -70,7 +70,7 @@ def prepare(bundle):
     rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), born,
                            {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']]])
     address = demographics['address']
-    rows['Person'][0] += [''] * 7 + [', '.join(address.get('line',[])), address.get('postalCode',''),
+    rows['Person'][0] += [''] * 6 + [', '.join(address.get('line',[])), address.get('postalCode',''),
                                     address.get('city',''), address.get('state',''), address.get('country',''),
                                     patient.get('deceasedDateTime','')]
     fields(patient, {'name','birthDate','gender','address','deceasedDateTime'})

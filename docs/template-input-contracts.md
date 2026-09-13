@@ -4,15 +4,21 @@ Geprüft wurden die Überschriften, Ausfüllhilfen und Auswahllisten beider ausg
 
 ## Person: Anschrift bereinigt
 
-Die frühere Freitextspalte `Anschrift` ist entfernt. Anschriften werden ausschließlich in `Straße`, `Postleitzahl`, `Ort`, `Bundesland` und `Land` erfasst. Vorhandene Beispieladressen wurden in die strukturierten Felder übertragen. Alle anderen Person-Spalten rechts von der früheren Spalte D rücken um eine Spalte nach links; die übrigen Blätter bleiben unverändert. Die Ausfüllhilfe steht jetzt in S.
+Die frühere Freitextspalte `Anschrift` ist entfernt. Anschriften werden ausschließlich in `Straße`, `Postleitzahl`, `Ort`, `Bundesland` und `Land` erfasst. Vorhandene Beispieladressen wurden in die strukturierten Felder übertragen. Alle anderen Person-Spalten rechts von der früheren Spalte D rücken um eine Spalte nach links; die übrigen Blätter bleiben unverändert. Nach der anschließenden Entfernung von Krankenkasse steht die Ausfüllhilfe in R.
 
 Der Konverter übernimmt vorhandene Adressbestandteile auch ohne Land. Ein leeres Land bedeutet unbekannt, nicht automatisch DE. Eine vollständig leere Adresse bekommt Data Absent Reason unknown. Bei Land DE werden ausgeschriebene Bundesländer im FHIR in ISO-Codes umgewandelt. Unbekannte Länder oder Adressbestandteile werden nicht erfunden. Alte Mappen mit `Anschrift` passen nicht mehr zum aktuellen Schema und müssen auf die neuen Spalten migriert werden.
+
+## Person: Krankenkassenfeld entfernt
+
+Das frühere Feld `Krankenkasse` ist entfernt. Es erzeugte fälschlich einen Eintrag
+in `Patient.generalPractitioner`. Es gibt dafür keinen Ersatz als Hausarztangabe
+und noch keine neue Versicherungsressource. Einwilligungsspalten und strukturierte
+Anschrift bleiben erhalten; sie rücken um eine Spalte nach links.
 
 ## Bestätigte weitere Befunde – noch nicht umgebaut
 
 | Priorität | Blatt / Felder | Tatsächliche Wirkung | Empfohlene Bereinigung |
 |---|---|---|---|
-| Hoch | Person: Krankenkasse | `PatientConverter.parseHealthProvider()` schreibt den Text nach `Patient.generalPractitioner.display`. Eine Krankenkasse ist kein behandelnder Leistungserbringer. | Zweck klären: Versicherungsangabe korrekt modellieren oder Feld entfernen. Nicht einfach zu Hausarzt umbenennen und bestehende Kassenwerte damit umdeuten. |
 | Hoch | Medikation: Medikamentencode/Codesystem gegenüber PZN Code/ATC Code; Wirkstoffcode gegenüber ASK | Sobald Medikamentencode vorhanden ist, werden PZN/ATC und der ASK-Zweig nicht verwendet. Die Felder sind gleichzeitig sichtbar, haben aber eine versteckte Vorrangregel. | Präparatecodierungen und Wirkstoffcodierung ausdrücklich trennen und eine eindeutige Eingabelogik festlegen. PZN, ATC und Wirkstoff sind fachlich nicht austauschbar. |
 | Hoch | Medikation: Therapiestart, Therapieende | Die Methode `convertPeriod()` liest diese Spalten, wird aber nirgends aufgerufen. Tatsächlich zählen Zeitstempel und bei MedicationAdministration das zusätzliche Ende. | Unwirksame Felder entfernen oder bewusst anschließen; vorher festlegen, welcher Zeitpunkt Verordnung, Gabe oder dokumentierten Therapiezeitraum meint. |
 | Hoch | Medikation: Medikationsplanart | Enum/Feld vorhanden, keine aktive Verwendung im Konverter. | Entfernen, sofern kein konkretes Zielfeld benötigt wird. |
@@ -30,7 +36,7 @@ Der Konverter übernimmt vorhandene Adressbestandteile auch ohne Land. Ein leere
 - Messwerte: Einheit ist der Lesetext, Einheitencode der maschinenlesbare UCUM-Code. Ebenso sind Untersuchungscode und Wertcode unterschiedliche Konzepte.
 - Fall: Einrichtung, Abteilung und Versorgungsstelle sind beabsichtigte Kontaktebenen. Die Identifikatoren und Elternbezüge sind keine doppelten Fallnummern.
 
-Die nächsten Änderungen sollten zuerst die fachlich falsche Krankenkassenabbildung und die versteckten bzw. wirkungslosen Medikationsfelder behandeln. Die Anschriftbereinigung entfernt diese anderen Felder ausdrücklich noch nicht.
+Als Nächstes werden die versteckten bzw. wirkungslosen Medikationsfelder und die übrigen bestätigten Vorlagenkonflikte bereinigt. Die Krankenkassenabbildung ist bereits entfernt.
 
 ## Prüfung der Anschriftbereinigung
 

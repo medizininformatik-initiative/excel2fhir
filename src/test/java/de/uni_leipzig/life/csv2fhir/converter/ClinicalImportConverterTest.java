@@ -139,6 +139,14 @@ public class ClinicalImportConverterTest {
                 Converter.DATA_ABSENT_REASON_UNKNOWN.getUrl());
     }
 
+    @Test public void insurerIsNeverEmittedAsGeneralPractitioner() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        Patient patient = (Patient)new PatientConverter(row(Map.of("Krankenkasse", "AOK",
+                "Geburtsdatum", "2000-01-01"), PatientConverter.Person_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertFalse(patient.hasGeneralPractitioner());
+    }
+
     @Test public void structuredAddressSurvivesMissingCountryAndEmptyAddressUsesDar() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Straße", "Musterstraße 7", "Postleitzahl", "01234",

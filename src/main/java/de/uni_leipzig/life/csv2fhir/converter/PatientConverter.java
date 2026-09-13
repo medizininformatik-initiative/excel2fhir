@@ -4,7 +4,6 @@ import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geburtsdatum;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geschlecht;
-import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Krankenkasse;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Nachname;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Vorname;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
@@ -25,7 +24,6 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 
@@ -50,8 +48,7 @@ public class PatientConverter extends Converter {
         Vorname,
         Nachname,
         Geburtsdatum,
-        Geschlecht,
-        Krankenkasse
+        Geschlecht
     }
 
     // ISO 3166-2:DE, as bound by the German address profile. Keep human-readable Excel values.
@@ -94,7 +91,6 @@ public class PatientConverter extends Converter {
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
-        patient.addGeneralPractitioner(parseHealthProvider());
         // String resourceAsJson =
         // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient);
         // // for debug
@@ -216,16 +212,4 @@ public class PatientConverter extends Converter {
         return address;
     }
 
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Reference parseHealthProvider() throws Exception {
-        String practitioner = get(Krankenkasse);
-        if (!Strings.isNullOrEmpty(practitioner)) {
-            return new Reference().setDisplay(practitioner);
-        }
-        info(Krankenkasse + " empty for Record");
-        return null;
-    }
 }
