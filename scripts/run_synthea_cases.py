@@ -6,6 +6,7 @@ The output directory must not exist. Source files stay unchanged.
 """
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -45,7 +46,7 @@ def environment():
     versions['python'] = sys.version
     files = [TEMPLATE, JAR, *sorted((ROOT / 'scripts').glob('*.py')),
              ROOT / 'scripts/WorkbookUno.java', *sorted((ROOT / 'scripts/mappings').glob('*'))]
-    return {'versions': versions, 'sha256': {
+    return {'versions': versions, 'converterTimezone': 'Europe/Berlin', 'sha256': {
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
 
@@ -73,6 +74,9 @@ def inspect_conversion(directory, exit_code):
 
 
 def run(source_dir, output_dir):
+    # The workbook contains local contact times; Python, Office and Java must agree.
+    os.environ['TZ'] = 'Europe/Berlin'
+    time.tzset()
     source_dir = Path(source_dir).resolve()
     if not source_dir.is_dir():
         raise ValueError('Quellverzeichnis fehlt: ' + str(source_dir))
@@ -100,7 +104,7 @@ def run(source_dir, output_dir):
             book = case / 'Fall.xlsx'
             write_workbook(rows, book)
             with (case / 'conversion.log').open('w') as log:
-                conversion = subprocess.run(['java', '-Xmx8g', '-jar', str(JAR), '-v',
+                conversion = subprocess.run(['java', '-Xmx8g', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
                     '-f', str(book), '-o', str(case / 'fhir'), '-t', str(case / 'csv')],
                     stdout=log, stderr=subprocess.STDOUT)
             fhir, statuses = inspect_conversion(case / 'fhir', conversion.returncode)

@@ -24,7 +24,10 @@ Das Ausgabeverzeichnis darf noch nicht existieren. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
 einem anderen Arbeitsverzeichnis. Der Workflow verwendet acht GB als maximale
 Java-Heapgröße für die vollständige Validierung; große Lebensverläufe können
-mehrere Minuten benötigen. LibreOffice benötigt zusätzlich Speicher.
+mehrere Minuten benötigen. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
+die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
+Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
+mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
 
 ## Container
 
