@@ -51,4 +51,13 @@ class ClinicalImportTest(unittest.TestCase):
         source['entry'][-1]['resource']['subject']['reference']='urn:uuid:another-patient'
         with self.assertRaises(ValueError):prepare(source)
 
+    def test_boolean_laboratory_value_is_reported_without_partial_rows(self):
+        source = bundle()
+        self.add(source, {'resourceType':'Observation', 'id':'bool-lab', 'status':'final',
+            'category':[{'coding':[{'system':'http://terminology.hl7.org/CodeSystem/observation-category', 'code':'laboratory'}]}],
+            'code':{'coding':[{'system':'http://loinc.org', 'code':'1234-5'}]}, 'valueBoolean':True})
+        rows, report = prepare(source)
+        self.assertEqual(rows['Laborbefund'], [])
+        self.assertTrue(any('Ja/Nein' in str(loss) for loss in report['losses']))
+
 if __name__=='__main__':unittest.main()

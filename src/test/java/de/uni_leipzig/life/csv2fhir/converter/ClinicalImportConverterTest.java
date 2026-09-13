@@ -34,7 +34,7 @@ public class ClinicalImportConverterTest {
     @Test public void procedurePreservesOriginalCodingPeriodAndStatus() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var converter = new ProcedureConverter(row(Map.of("Prozedurencode", "00123", "Codesystem", DiagnosisValues.SNOMED,
-                "Dokumentationszeitpunkt", "2026-01-02T10:00:00Z", "Ende", "2026-01-02T10:30:00Z", "Status", "in-progress"),
+                "Durchführungsbeginn", "2026-01-02T10:00:00Z", "Ende", "2026-01-02T10:30:00Z", "Status", "in-progress"),
                 ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options);
         Procedure p = (Procedure)converter.convertInternal().get(0);
         assertEquals("00123", p.getCode().getCodingFirstRep().getCode());
@@ -45,18 +45,18 @@ public class ClinicalImportConverterTest {
     @Test public void componentsAttachToParentAndVitalSignsAreNotLaboratory() throws Exception {
         ConverterOptions options = new ConverterOptions(""); ConverterResult result = new ConverterResult(options);
         var columns = ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values();
-        var parent = new ObservationVitalSignsConverter(row(Map.of("LOINC", "85354-9", "Untersuchung ID", "bp",
+        var parent = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "85354-9", "Untersuchung ID", "bp",
                 "Werttyp", "Komponenten", "Zeitstempel", "2026-01-02"), columns), null, result, null, options);
         Observation o = (Observation)parent.convertInternal().get(0);
         result.add(TableIdentifier.Klinische_Dokumentation, o);
-        var component = new ObservationVitalSignsConverter(row(Map.of("LOINC", "8480-6", "Komponente von", "bp",
+        var component = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "8480-6", "Komponente von", "bp",
                 "Werttyp", "Zahl", "Wert", "120", "Einheit", "mmHg", "Einheitencode", "mm[Hg]"), columns), null, result, null, options);
         assertTrue(component.convertInternal().isEmpty());
         assertEquals(1, o.getComponent().size());
         assertEquals("120", o.getComponentFirstRep().getValueQuantity().getValue().toPlainString());
         assertEquals("vital-signs", o.getCategoryFirstRep().getCodingFirstRep().getCode());
         assertFalse(o.hasMeta()); assertTrue(o.getId().length() <= 64);
-        var orphan = new ObservationVitalSignsConverter(row(Map.of("LOINC", "8480-6", "Komponente von", "missing"), columns), null, result, null, options);
+        var orphan = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "8480-6", "Komponente von", "missing"), columns), null, result, null, options);
         assertThrows(IllegalArgumentException.class, () -> orphan.convertInternal());
     }
     @Test public void medicationKeepsDistinctProductsAndDoesNotTurnDoseFrequencyIntoDose() throws Exception {
@@ -216,5 +216,16 @@ public class ClinicalImportConverterTest {
         var changed = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
                 new ConverterResult(options), null, options).convertInternal();
         assertNotEquals(medication.getId(), changed.get(0).getId());
+    }
+    @Test public void laboratoryRejectsBooleanButClinicalDocumentationKeepsIt() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("LOINC", "1234-5", "Messwert", "true", "Werttyp", "Ja/Nein"));
+        assertThrows(IllegalArgumentException.class, () -> new ObservationLaboratoryConverter(row(values,
+                ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal());
+        values.put("Untersuchungscode", "1234-5"); values.put("Wert", "true");
+        var resources = new ObservationVitalSignsConverter(row(values, ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        assertTrue(((Observation)resources.get(0)).getValueBooleanType().booleanValue());
     }
 }

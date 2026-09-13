@@ -123,6 +123,8 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 for item, parent in [(r, '')] + [(v, r['id']) for v in r.get('component', [])]:
                     c, sy, text = coding(item['code'])
                     value, unit, kind, vc, vs, ucum = observation_value(item)
+                    if sheet == 'Laborbefund' and kind == 'Ja/Nein':
+                        raise UnsupportedValue('Ja/Nein ist im KDS-Laborprofil nicht zulässig; codierte Antwort erforderlich')
                     base = [pid, nr, c, text] if sheet == 'Laborbefund' else [pid, nr, text, c]
                     data.append(base + [value, unit, r.get('effectiveDateTime', '')] +
                                 [kind, vc, vs, category, r.get('status', ''), r['id'] if not parent else '',

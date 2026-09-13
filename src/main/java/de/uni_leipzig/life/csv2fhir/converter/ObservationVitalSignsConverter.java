@@ -4,7 +4,7 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_O
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Untersuchungscode;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
@@ -38,7 +38,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
      */
     public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Bezeichner,
-        LOINC,
+        Untersuchungscode,
         Wert,
         Einheit,
         Zeitstempel

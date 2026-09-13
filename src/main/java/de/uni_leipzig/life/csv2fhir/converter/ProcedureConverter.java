@@ -5,7 +5,7 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_RE
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Prozedur;
-import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Dokumentationszeitpunkt;
+import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Durchführungsbeginn;
 import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Prozedurencode;
 import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedure_Columns.Prozedurentext;
 import static java.util.Collections.singletonList;
@@ -40,7 +40,7 @@ public class ProcedureConverter extends Converter {
     public static enum Procedure_Columns implements TableColumnIdentifier {
         Prozedurentext,
         Prozedurencode,
-        Dokumentationszeitpunkt,
+        Durchführungsbeginn,
     }
 
     /**  */
@@ -71,7 +71,7 @@ public class ProcedureConverter extends Converter {
         // procedure.addExtension(new Extension()
         // .setUrl("https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/procedure-recordedDate")
         // .setValue(convertRecordedDate()));
-        var start = ClinicalValues.date(get(Dokumentationszeitpunkt));
+        var start = ClinicalValues.date(get(Durchführungsbeginn));
         var end = ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Ende));
         procedure.setPerformed(end == null ? start : new org.hl7.fhir.r4.model.Period().setStartElement(start).setEndElement(end));
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);

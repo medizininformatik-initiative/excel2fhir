@@ -89,7 +89,7 @@ public class ObservationLaboratoryConverter extends Converter {
 
     protected List<Resource> convertObservation(boolean clinical) throws Exception {
         var table = clinical ? de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation : Laborbefund;
-        Enum<?> codeColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.LOINC : LOINC;
+        Enum<?> codeColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Untersuchungscode : LOINC;
         Enum<?> textColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner : Parameter;
         Enum<?> valueColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert : Messwert;
         Enum<?> unitColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit : Einheit;
@@ -129,6 +129,7 @@ public class ObservationLaboratoryConverter extends Converter {
             value = ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Wertcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Wertcodesystem), raw);
         } else if (kind.equals("Ja/Nein")) {
+            if ("laboratory".equals(category)) throw new IllegalArgumentException("KDS-Laborbefunde erlauben keinen Ja/Nein-Wert; eine fachlich passende codierte Antwort verwenden");
             if (!"true".equals(raw) && !"false".equals(raw)) throw new IllegalArgumentException("Boolean must be true or false");
             value = new org.hl7.fhir.r4.model.BooleanType(Boolean.parseBoolean(raw));
         } else if (!kind.equals("Komponenten") && !kind.equals("Fehlend")) {

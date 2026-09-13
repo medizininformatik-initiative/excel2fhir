@@ -68,3 +68,6 @@ historische Erweiterungsskript ist nach dem Medikationsumbau entfernt.
 Medikationsstatus ist zusätzlich nach Medikationstyp getrennt: Verordnung in
 AG30:AG37, Verabreichung in BH30:BH36, Medikationsaussage in BI30:BI37.
 Die Statusauswahl in Spalte L verwendet den Medikationstyp derselben Zeile.
+
+Laborbefunde haben eine eigene Werttypenliste BG30:BG34 mit Zahl, Text, Code,
+Komponenten und Fehlend. Ja/Nein bleibt nur für klinische Dokumentation verfügbar.

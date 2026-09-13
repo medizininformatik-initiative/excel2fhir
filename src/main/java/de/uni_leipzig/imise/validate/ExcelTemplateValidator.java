@@ -217,7 +217,7 @@ public class ExcelTemplateValidator {
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
                 List.of("Dokumentationszeitpunkt", "Beginn", "Ende"), List.of(new DateRangeColumns("Beginn", "Ende")));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
-                List.of("Dokumentationszeitpunkt"), List.of());
+                List.of("Durchführungsbeginn"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Laborbefund",
                 List.of("Zeitstempel (Abnahme)"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Klinische Dokumentation",
@@ -274,6 +274,10 @@ public class ExcelTemplateValidator {
                 })) {
                     add(result, ERROR, sheetName, rowIndex + 1, "Medikation", error);
                 }
+            }
+            if (("Laborbefund".equals(sheetName) || "laboratory".equals(get(row, columns, "Kategorie")))
+                    && "Ja/Nein".equals(get(row, columns, "Werttyp"))) {
+                add(result, ERROR, sheetName, rowIndex + 1, "Werttyp", "Ja/Nein ist im KDS-Laborprofil nicht zulässig");
             }
             String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
             if (columns.containsKey(idColumn)) {
@@ -547,9 +551,9 @@ public class ExcelTemplateValidator {
                 "Zusatzcode", "Zusatzcodesystem", "Dokumentationszeitpunkt", "Beginn", "Ende",
                 "Klinischer Status", "Verifikationsstatus", "Typ", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
-                "Dokumentationszeitpunkt", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Erklärung/Ausfüllhilfe"));
+                "Durchführungsbeginn", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Erklärung/Ausfüllhilfe"));
         headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Medikationstyp", "Präparatbezeichnung", "Präparatcode", "Präparatcodesystem", "ATC-Code", "ATC-Version", "Darreichungsform", "Wirkstoffcode", "Wirkstoffcodesystem", "Status", "Absicht", "Dokumentationszeitpunkt", "Beginn", "Ende", "Einzeldosis", "Dosiereinheit", "Dosen pro Tag", "Dosierungstext", "Erklärung/Ausfüllhilfe"));
-        headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "LOINC", "Wert",
+        headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Untersuchungscode", "Wert",
                 "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Codesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",
                 "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));

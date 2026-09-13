@@ -59,11 +59,11 @@ Ausgaben ändern; alle zugehörigen Referenzen werden gemeinsam erzeugt.
 Alte Arbeitsmappen müssen auf das neue Schema angepasst werden. Das einmalige
 historische Erweiterungsskript ist entfernt; Ausgangspunkt ist die aktuelle Vorlage.
 
-## Noch offene Vorlagenkonflikte
+## Weitere bereinigte Vorlagenkonflikte
 
-- Labor: Ja/Nein aus der Werttypenauswahl entfernen und als Eingabefehler erkennen.
-- Prozedur: Dokumentationszeitpunkt heißt tatsächlich Durchführungsbeginn.
-- Klinische Dokumentation: die allgemeine Codespalte nicht mehr LOINC nennen.
+- Labor: eigene Werttypenauswahl ohne Ja/Nein. Solche Eingaben werden vorab und im Konverter abgewiesen. Entsprechende Synthea-Quellen werden ausdrücklich im Verlustbericht ausgewiesen; es werden keine Ersatzcodes erfunden.
+- Prozedur: Durchführungsbeginn benennt das tatsächliche FHIR-Zielfeld performed[x].
+- Klinische Dokumentation: Untersuchungscode bezeichnet sowohl LOINC- als auch SNOMED-Codes.
 - Labor behält die einheitliche Codesystemspalte mit festem Auswahlwert LOINC.
 
 ## Bewusste Alternativen, keine pauschal zu löschenden Doppelungen

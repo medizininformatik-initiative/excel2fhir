@@ -34,12 +34,13 @@ LISTS = {
     'BB': ['Impfstatus', 'completed', 'entered-in-error', 'not-done'],
     'BC': ['Befundstatus', 'registered', 'partial', 'preliminary', 'final', 'amended',
            'corrected', 'appended', 'cancelled', 'entered-in-error', 'unknown'],
+    'BG': ['Labor-Werttypen', 'Zahl', 'Text', 'Code', 'Komponenten', 'Fehlend'],
     'BD': ['Behandlungsplan: Absicht', 'proposal', 'plan', 'order', 'option'],
 }
 
 # Header-based addressing works for both templates and filled cases.
 SELECTIONS = {
-    'Laborbefund': {'Codesystem': 'AS', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
+    'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
     'Klinische Dokumentation': {'Codesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
     'Prozedur': {'Codesystem': 'AB', 'Zusatzcodesystem': 'AB'},
     'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW'},
