@@ -34,6 +34,10 @@ public class Excel2Fhir {
     /**  */
     private final FHIRValidator validator;
 
+    private boolean importProblems;
+
+    public boolean hasImportProblems() { return importProblems; }
+
     public boolean hasValidationProblems() {
         return validator != null && validator.hasValidationProblems();
     }
@@ -169,6 +173,8 @@ public class Excel2Fhir {
             allFilesStatistics.add(converterStatistics);
         } catch (Exception e) {
             throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
+        } finally {
+            importProblems |= converter.hasImportProblems();
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);

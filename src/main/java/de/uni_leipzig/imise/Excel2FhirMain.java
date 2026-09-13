@@ -142,7 +142,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                 excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory,
                         patientsPerBundle, outputFileTypes);
             }
-            if (excel2Fhir.hasValidationProblems()) return 1;
+            if (excel2Fhir.hasValidationProblems() || excel2Fhir.hasImportProblems()) return 1;
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return 1;

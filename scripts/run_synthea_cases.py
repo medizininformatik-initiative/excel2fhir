@@ -27,7 +27,7 @@ def run(source_dir, output_dir):
             with (case/'conversion.log').open('w')as log:
                 subprocess.run(['java','-Xmx4g','-jar','target/excel2fhir.jar','-f',str(book),'-o',str(case/'fhir'),'-t',str(case/'csv')],
                                check=True,stdout=log,stderr=subprocess.STDOUT)
-            fhir=list((case/'fhir').glob('*.json'))
+            fhir=[p for p in (case/'fhir').glob('*.json') if not p.name.endswith(('.import.json', '.validation.json'))]
             if len(fhir)!=1:raise ValueError('Expected exactly one output bundle')
             result=check(bundle,json.loads(fhir[0].read_text()),report)
             assert read_sheets(book)['Codes']==codes,'Codes sheet changed during import'
