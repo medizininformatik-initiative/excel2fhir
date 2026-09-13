@@ -18,3 +18,14 @@ Counters explicitly distinguish error/warning messages from validation calls. A 
 Reports include `referencesWithoutTargetInBundle`. Matching covers relative Type/id references and UUID URNs, against resource ids and entry fullUrls. Relative references can legitimately resolve outside a transaction; therefore this inventory is not automatically classified as an error. For generated self-contained examples, require this map to be empty. Absolute and contained references need their own resolution context; this check does not claim to validate them.
 
 The bundled profiles do not provide a complete SNOMED or LOINC terminology server. Some missing catalogs are reported only as warnings by HAPI. Current known gaps include the international SNOMED edition 2025-07-01, historical versions referenced by the ICD-10-GM ValueSet, and an IPS laboratory ValueSet canonical referenced by the KDS laboratory profile. Do not turn these gaps into broad unknown-code exceptions. German text quality, approximate source-to-target mappings and clinical event chronology require separate review.
+
+## Corrected conversion contracts
+
+The workbook layout and human-readable input columns are unchanged:
+
+- German state names in `Person/Bundesland` become ISO 3166-2:DE codes in FHIR. Already coded values pass through; non-German addresses are not mapped to German states.
+- A laboratory `Werttyp=Text` becomes `valueCodeableConcept.text`. Missing `coding.system` and `coding.code` explicitly carry the standard Data Absent Reason extension (`unknown`). No organism or other clinical code is invented. Non-laboratory text observations retain `valueString`.
+- The shared DAR extension factory uses the StructureDefinition URL. Actual DAR Coding values still use the CodeSystem URL.
+- A medication dosage with both dose and daily frequency, and no free text, remains structured. If a dosage contains free text or only part of the structured information, all provided text/dose/frequency facts are retained in `Dosage.text`. Unknown dose units are named explicitly. This satisfies DosageDE's separation of text and complete structured dosage without inventing a schedule. MedicationAdministration has a different dosage type and retains its existing representation.
+
+Review the textual medication output and the missing-code laboratory fallback as test-data representations. These changes do not claim microbiology-specific modeling or reconstruct discarded source dosage details.

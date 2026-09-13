@@ -67,6 +67,14 @@ def check_patient(source, target, report):
     for key, value in expected['name'].items():
         assert target['name'][0].get(key) == value, 'Localized patient name changed'
     for key, value in expected['address'].items():
+        if key == 'state':
+            # FHIR uses the ISO code; the workbook and identity report retain the name.
+            states = dict(zip(('Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen','Hamburg',
+                'Hessen','Mecklenburg-Vorpommern','Niedersachsen','Nordrhein-Westfalen','Rheinland-Pfalz',
+                'Saarland','Sachsen','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'),
+                ('DE-BW','DE-BY','DE-BE','DE-BB','DE-HB','DE-HH','DE-HE','DE-MV','DE-NI','DE-NW',
+                 'DE-RP','DE-SL','DE-SN','DE-ST','DE-SH','DE-TH')))
+            value = states.get(value, value)
         assert target['address'][0].get(key) == value, 'Localized patient address changed'
     for key in ('birthDate','gender','deceasedDateTime','deceasedBoolean'):
         assert target.get(key) == source.get(key), 'Patient clinical fact changed: '+key

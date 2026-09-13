@@ -34,7 +34,15 @@ def check_clinical(source, target, report):
     def value(r, source=False):
         if 'valueQuantity'in r:
             q=r['valueQuantity'];return ('number',str(Decimal(str(q['value'])).normalize()),q.get('code'))
-        if 'valueCodeableConcept'in r:return ('code',code(r['valueCodeableConcept']))
+        if 'valueCodeableConcept'in r:
+            cc = r['valueCodeableConcept']
+            if code(cc) == (None, None) and 'text' in cc:
+                coding = cc['coding'][0]
+                for primitive in ('_system', '_code'):
+                    assert coding[primitive]['extension'] == [{'url':
+                        'http://hl7.org/fhir/StructureDefinition/data-absent-reason', 'valueCode':'unknown'}]
+                return ('text', cc['text'])
+            return ('code',code(cc))
         if 'valueString'in r:return ('text',translations.observation_text(r['valueString'], *code(r['code'])) if source else r['valueString'])
         if 'valueBoolean'in r:return ('boolean',r['valueBoolean'])
         return ('absent',code(r.get('dataAbsentReason',{})))

@@ -833,7 +833,8 @@ public abstract class Converter {
      * @return
      */
     private static Extension createDataAbsentReason(DataAbsentReason dataAbsentReason) {
-        return Factory.newExtension(dataAbsentReason.getSystem(), new CodeType(dataAbsentReason.toCode()), true);
+        return Factory.newExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                new CodeType(dataAbsentReason.toCode()), true);
     }
 
     /**

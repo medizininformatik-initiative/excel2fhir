@@ -59,7 +59,7 @@ class DemographicsTest(unittest.TestCase):
     def test_patient_contract_rejects_changed_address_birth_and_report(self):
         source = bundle()['entry'][0]['resource']
         replacement = identity(source)
-        target = dict(source, name=[replacement['name']], address=[replacement['address']])
+        target = dict(source, name=[replacement['name']], address=[dict(replacement['address'], state='DE-NW')])
         report = {'demographics':replacement}
         check_patient(source, target, report)
         for key in ('birthDate','gender'):

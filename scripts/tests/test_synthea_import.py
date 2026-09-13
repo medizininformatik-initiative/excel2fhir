@@ -62,7 +62,7 @@ class ImportTest(unittest.TestCase):
         target = copy.deepcopy(source)
         target['entry'] = target['entry'][:3]
         target['entry'][0]['resource']['name'] = [report['demographics']['name']]
-        target['entry'][0]['resource']['address'] = [report['demographics']['address']]
+        target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
         encounter['class']['code'] = 'AMB'

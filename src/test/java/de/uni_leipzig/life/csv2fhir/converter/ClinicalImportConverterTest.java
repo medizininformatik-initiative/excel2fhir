@@ -75,4 +75,52 @@ public class ClinicalImportConverterTest {
         var second = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null, result, null, options).convertInternal();
         assertNotEquals(medication.getId(), second.get(0).getId());
     }
+    @Test public void textLabResultUsesExplicitMissingCodingAndPreservesText() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        Observation observation = (Observation)new ObservationLaboratoryConverter(
+                row(Map.of("LOINC", "630-4", "Messwert", "Escherichia coli nachgewiesen", "Werttyp", "Text"),
+                        ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal().get(0);
+        CodeableConcept value = observation.getValueCodeableConcept();
+        assertEquals("Escherichia coli nachgewiesen", value.getText());
+        Coding coding = value.getCodingFirstRep();
+        assertFalse(coding.getCodeElement().hasValue());
+        assertEquals("unknown", coding.getCodeElement().getExtensionByUrl(
+                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
+        assertEquals("unknown", coding.getSystemElement().getExtensionByUrl(
+                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
+    }
+
+    @Test public void partialAndMixedDosagesPreserveFactsWithoutInventedTiming() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikamentencode", "123", "Codesystem", "RxNorm",
+                "Medikationstyp", "MedicationRequest", "Zeitstempel", "2026-01-02", "Einzeldosis", "2"));
+        var columns = MedicationConverter.Medication_Columns.values();
+        MedicationRequest request = (MedicationRequest)new MedicationConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(1);
+        Dosage dosage = request.getDosageInstructionFirstRep();
+        assertEquals("Einzeldosis: 2 (Einheit unbekannt)", dosage.getText());
+        assertFalse(dosage.hasTiming());
+        assertFalse(dosage.hasDoseAndRate());
+        values.put("Dosierungstext", "Nach dem Essen");
+        values.put("Anzahl Dosen pro Tag", "3");
+        values.put("Einheit", "mg");
+        request = (MedicationRequest)new MedicationConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(1);
+        dosage = request.getDosageInstructionFirstRep();
+        assertEquals("Nach dem Essen; Einzeldosis: 2 mg; Dosen pro Tag: 3", dosage.getText());
+        assertFalse(dosage.hasTiming());
+        assertFalse(dosage.hasDoseAndRate());
+    }
+
+    @Test public void germanAddressNameBecomesIsoCodeWithoutChangingWorkbookConvention() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        Patient patient = (Patient)new PatientConverter(row(Map.of("Land", "DE", "Bundesland", "Hamburg",
+                "Geburtsdatum", "2000-01-01"), PatientConverter.Person_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("DE-HH", patient.getAddressFirstRep().getState());
+        assertEquals("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                Converter.DATA_ABSENT_REASON_UNKNOWN.getUrl());
+    }
+
 }

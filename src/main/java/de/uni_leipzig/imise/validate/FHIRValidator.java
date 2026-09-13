@@ -440,7 +440,9 @@ public class FHIRValidator {
         String text = message.getMessage();
         return text != null && (text.contains("CodeSystem could not be found:")
                 || text.contains("Unable to expand value set") || text.contains("Unable to expand ValueSet")
-                || text.contains("ValueSet could not be found") || text.contains("Unable to resolve value set"));
+                || text.contains("ValueSet could not be found") || text.contains("Unable to resolve value set")
+                || (text.startsWith("ValueSet ") && (text.endsWith("vom Validator nicht gefunden")
+                        || text.endsWith("not found by validator"))));
     }
 
     /** Persist every raw message, regardless of console log level, beside the output. */

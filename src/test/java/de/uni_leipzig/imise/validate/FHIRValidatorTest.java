@@ -46,6 +46,9 @@ public class FHIRValidatorTest {
         FHIRValidator validator = validator(ResultSeverityEnum.ERROR,
                 "Unable to expand ValueSet because CodeSystem could not be found: http://snomed.info/sct|version");
         assertEquals(ValidationResultType.NOT_CHECKED, validator.validate("{}", true));
+        FHIRValidator missingValueSet = validator(ResultSeverityEnum.WARNING,
+                "ValueSet http://example.org/lab vom Validator nicht gefunden");
+        assertEquals(ValidationResultType.NOT_CHECKED, missingValueSet.validate("{}", true));
         assertTrue(validator.hasValidationProblems());
     }
 

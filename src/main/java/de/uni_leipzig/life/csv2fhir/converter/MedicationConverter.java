@@ -558,11 +558,25 @@ public class MedicationConverter extends Converter {
         Dosage d = new Dosage();
         if (ClinicalValues.get(this, ClinicalValues.Column.Medikamentencode) != null) {
             String text = ClinicalValues.get(this, ClinicalValues.Column.Dosierungstext);
-            if (text != null) d.setText(text);
             String dose = get(Einzeldosis);
-            if (dose != null && !dose.isBlank()) d.addDoseAndRate().setDose(getUcumQuantity(parseDecimal(dose), get(Einheit), null));
             String frequency = get(Anzahl_Dosen_pro_Tag);
-            if (frequency != null && !frequency.isBlank()) d.setTiming(convertDosageTiming());
+            boolean hasDose = dose != null && !dose.isBlank();
+            boolean hasFrequency = frequency != null && !frequency.isBlank();
+            // DosageDE requires either complete structured information or free text.
+            // Preserve all supplied facts without inventing a missing schedule.
+            if (text != null || hasDose != hasFrequency) {
+                List<String> facts = new ArrayList<>();
+                if (text != null) facts.add(text);
+                if (hasDose) {
+                    String unit = get(Einheit);
+                    facts.add("Einzeldosis: " + dose + (unit == null || unit.isBlank() ? " (Einheit unbekannt)" : " " + unit));
+                }
+                if (hasFrequency) facts.add("Dosen pro Tag: " + frequency);
+                d.setText(String.join("; ", facts));
+            } else if (hasDose) {
+                d.addDoseAndRate().setDose(getUcumQuantity(parseDecimal(dose), get(Einheit), null));
+                d.setTiming(convertDosageTiming());
+            }
             return d;
         }
         d.setTiming(convertDosageTiming());

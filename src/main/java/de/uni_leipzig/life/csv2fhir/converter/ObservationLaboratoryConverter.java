@@ -94,6 +94,8 @@ public class ObservationLaboratoryConverter extends Converter {
         Enum<?> valueColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert : Messwert;
         Enum<?> unitColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit : Einheit;
         Enum<?> dateColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel : Zeitstempel_Abnahme;
+        String category = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
+        if (category == null) category = clinical ? "vital-signs" : "laboratory";
         String sourceId = ClinicalValues.get(this, ClinicalValues.Column.Untersuchung_ID);
         String id = sourceId == null ? (getEncounterReference() == null ? getPatientId() : getEncounterId())
                 + (clinical ? ResourceIdSuffix.OBSERVATION_VITALSIGNS : ResourceIdSuffix.OBSERVATION_LABORATORY)
@@ -113,7 +115,16 @@ public class ObservationLaboratoryConverter extends Converter {
                             .setSystem("http://unitsofmeasure.org").setCode(unitCode);
             }
         } else if (kind.equals("Text")) {
-            if (raw != null && !raw.isBlank()) value = new org.hl7.fhir.r4.model.StringType(raw);
+            if (raw != null && !raw.isBlank()) {
+                if ("laboratory".equals(category)) {
+                    Coding missing = new Coding();
+                    missing.getSystemElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
+                    missing.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
+                    value = new CodeableConcept().addCoding(missing).setText(raw);
+                } else {
+                    value = new org.hl7.fhir.r4.model.StringType(raw);
+                }
+            }
         } else if (kind.equals("Code")) {
             value = ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Wertcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Wertcodesystem), raw);
@@ -141,8 +152,6 @@ public class ObservationLaboratoryConverter extends Converter {
         observation.setId(id);
         observation.setSubject(getPatientReference());
         observation.setEncounter(getEncounterReference());
-        String category = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
-        if (category == null) category = clinical ? "vital-signs" : "laboratory";
         observation.setCategory(Collections.singletonList(new CodeableConcept(new Coding(
                 "http://terminology.hl7.org/CodeSystem/observation-category", category, null))));
         if (category.equals("laboratory")) {

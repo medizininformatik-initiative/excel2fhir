@@ -55,6 +55,17 @@ public class PatientConverter extends Converter {
         Krankenkasse
     }
 
+    // ISO 3166-2:DE, as bound by the German address profile. Keep human-readable Excel values.
+    private static final java.util.Map<String, String> GERMAN_STATES = java.util.Map.ofEntries(
+            java.util.Map.entry("Baden-Württemberg", "DE-BW"), java.util.Map.entry("Bayern", "DE-BY"),
+            java.util.Map.entry("Berlin", "DE-BE"), java.util.Map.entry("Brandenburg", "DE-BB"),
+            java.util.Map.entry("Bremen", "DE-HB"), java.util.Map.entry("Hamburg", "DE-HH"),
+            java.util.Map.entry("Hessen", "DE-HE"), java.util.Map.entry("Mecklenburg-Vorpommern", "DE-MV"),
+            java.util.Map.entry("Niedersachsen", "DE-NI"), java.util.Map.entry("Nordrhein-Westfalen", "DE-NW"),
+            java.util.Map.entry("Rheinland-Pfalz", "DE-RP"), java.util.Map.entry("Saarland", "DE-SL"),
+            java.util.Map.entry("Sachsen", "DE-SN"), java.util.Map.entry("Sachsen-Anhalt", "DE-ST"),
+            java.util.Map.entry("Schleswig-Holstein", "DE-SH"), java.util.Map.entry("Thüringen", "DE-TH"));
+
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
     // @see
@@ -90,7 +101,8 @@ public class PatientConverter extends Converter {
             if (street != null) address.addLine(street);
             address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
             address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
-            address.setState(ClinicalValues.get(this, ClinicalValues.Column.Bundesland));
+            String state = ClinicalValues.get(this, ClinicalValues.Column.Bundesland);
+            address.setState("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state);
             patient.addAddress(address);
         }
         patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
