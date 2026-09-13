@@ -68,7 +68,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                                                                                                   // log4j2.xml file!
 
     @Option(names = { "-v",
-            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
+            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Validates complete bundles, preserves all resources, writes validation reports and exits nonzero on errors or incomplete checks.")
     static boolean validateBundles = false;
 
     @Option(names = { "-vll",
@@ -142,6 +142,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                 excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory,
                         patientsPerBundle, outputFileTypes);
             }
+            if (excel2Fhir.hasValidationProblems()) return 1;
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return 1;

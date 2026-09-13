@@ -34,6 +34,10 @@ public class Excel2Fhir {
     /**  */
     private final FHIRValidator validator;
 
+    public boolean hasValidationProblems() {
+        return validator != null && validator.hasValidationProblems();
+    }
+
     /** Counters for all created resources */
     private final ConverterResultStatistics allFilesStatistics = new ConverterResultStatistics();
 
@@ -164,7 +168,7 @@ public class Excel2Fhir {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
             allFilesStatistics.add(converterStatistics);
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);

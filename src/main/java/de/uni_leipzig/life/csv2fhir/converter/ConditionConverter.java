@@ -77,9 +77,6 @@ public class ConditionConverter extends Converter {
         if (result.getConverterOptions().is(SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER)) {
             condition.setEncounter(getEncounterReference());
         }
-        if (!isValid(condition)) {
-            return Collections.emptyList();
-        }
         if (result.getConverterOptions().is(SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION) && !isBlank(encounterId)) {
             EncounterConverter.addDiagnosisToEncounter(result, encounterId, condition, get(Typ));
         }

@@ -220,15 +220,6 @@ public abstract class Converter {
     }
 
     /**
-     * @param resource
-     * @return <code>true</code> if the validation is not to be performed or the
-     *         validation does not find an error.
-     */
-    protected final boolean isValid(Resource resource) {
-        return validator == null || !validator.validate(resource).isError();
-    }
-
-    /**
      * @param msg
      * @throws Exception
      */

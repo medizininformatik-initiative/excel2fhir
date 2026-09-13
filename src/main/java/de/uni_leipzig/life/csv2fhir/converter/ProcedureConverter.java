@@ -91,10 +91,6 @@ public class ProcedureConverter extends Converter {
             procedure.setEncounter(getEncounterReference());
         }
 
-        if (!isValid(procedure)) { // check validity before adding the refence from encounter to this
-            return Collections.emptyList();
-        }
-
         if (converterOptions.is(SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION)) { // default is true
             // now add an the encounter a reference to this procedure as diagnosis (Yes
             // thats the logic of KDS!?)

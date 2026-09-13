@@ -184,9 +184,6 @@ public class MedicationConverter extends Converter {
         Medication medication = result.get(Medikation, Medication.class, medicationId);
         if (medication == null) {
             medication = parseMedication();
-            if (!isValid(medication)) {
-                return resources;
-            }
             resources.add(medication);
         }
         if (matches(MedicationRequest, Medikationstyp)) {

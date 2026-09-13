@@ -346,7 +346,11 @@ public class Csv2Fhir {
                                                                                              // it
         boolean written = false;
         if (bundle != null && !bundle.getEntry().isEmpty()) {
-            if (validator == null || !validator.validateBundle(bundle).isError()) {
+            if (validator != null) {
+                validator.validateAndWriteReport(bundle, new File(outputDirectory,
+                        outputFileNameBase + fileNameExtension + ".validation.json"));
+            }
+            {
                 for (OutputFileType baseFileType : baseFileTypes) {
                     File baseFile = writeBaseOutputFile(bundle, fileNameExtension, baseFileType);
                     for (int i = compressedFileTypesCopy.size() - 1; i >= 0; i--) {
