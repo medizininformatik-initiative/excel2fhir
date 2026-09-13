@@ -42,7 +42,7 @@ SELECTIONS = {
     'Laborbefund': {'Codesystem': 'AS', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
     'Klinische Dokumentation': {'Codesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
     'Prozedur': {'Codesystem': 'AB', 'Zusatzcodesystem': 'AB'},
-    'Medikation': {'Codesystem': 'AV', 'Wirkstoffcodesystem': 'AW'},
+    'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW'},
     'Allergie': {'Codesystem': 'AX'},
     'Impfung': {'Codesystem': 'AY', 'Status': 'BB'},
     'Befundbericht': {'Codesystem': 'AZ', 'Status': 'BC'},

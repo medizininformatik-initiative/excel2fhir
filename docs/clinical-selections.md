@@ -11,7 +11,7 @@ Die Auswahl betrifft die konkrete Spalte, nicht pauschal das ganze Tabellenblatt
 | Klinische Dokumentation: Codesystem der Untersuchung | LOINC, SNOMED CT | AT30:AT31 |
 | Beide Messwertblätter: Wertcodesystem | LOINC, SNOMED CT | AU30:AU31 |
 | Prozedur: Codesystem und Zusatzcodesystem | SNOMED CT, OPS 2009–2026 | AB30:AB48 |
-| Medikation: Medikamentencodesystem | RxNorm, SNOMED CT, CVX, PZN | AV30:AV33 |
+| Medikation: Präparatcodesystem | RxNorm, SNOMED CT, CVX, PZN | AV30:AV33 |
 | Medikation: Wirkstoffcodesystem | ASK, SNOMED CT, RxNorm | AW30:AW32 |
 | Allergie: Codesystem | SNOMED CT, RxNorm | AX30:AX31 |
 | Impfung: Codesystem | CVX, SNOMED CT, RxNorm | AY30:AY32 |
@@ -62,6 +62,9 @@ Das Ziel darf noch nicht existieren. Daten und Eingabeblatt-Layout bleiben erhal
 automatische Zeilenhöhen werden beim Speichern auf ihrer bisherigen Höhe fixiert,
 damit LibreOffice sie nicht anhand lokal ersetzter Schriften neu berechnet.
 Neue Auswahlbereiche übernehmen die vorhandene Formatierung und erhalten genug
-Breite für die Codesystembezeichnungen. Die gemeinsame Definition wird auch von
-`scripts/extend_clinical_templates.py` verwendet, sodass neu erweiterte Vorlagen
-nicht erneut die frühere Gesamtliste erhalten.
+Breite für die Codesystembezeichnungen. Ausgangspunkt für neue Fälle ist die aktuelle Projektvorlage. Das einmalige
+historische Erweiterungsskript ist nach dem Medikationsumbau entfernt.
+
+Medikationsstatus ist zusätzlich nach Medikationstyp getrennt: Verordnung in
+AG30:AG37, Verabreichung in BH30:BH36, Medikationsaussage in BI30:BI37.
+Die Statusauswahl in Spalte L verwendet den Medikationstyp derselben Zeile.

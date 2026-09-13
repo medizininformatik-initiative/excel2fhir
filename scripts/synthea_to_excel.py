@@ -206,7 +206,7 @@ def column_number(name):
 
 
 def write_workbook(rows, output):
-    if any(row[17] == 'PZN' for row in rows.get('Medikation', [])):
+    if any(row[5] == 'PZN' for row in rows.get('Medikation', [])):
         require_external_path(output)
     template = ROOT/'FHIR_Testdatengenerator_Vorlage.xlsx'
     sheets = read_sheets(template)

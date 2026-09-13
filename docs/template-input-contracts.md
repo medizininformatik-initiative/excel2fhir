@@ -15,18 +15,56 @@ in `Patient.generalPractitioner`. Es gibt dafür keinen Ersatz als Hausarztangab
 und noch keine neue Versicherungsressource. Einwilligungsspalten und strukturierte
 Anschrift bleiben erhalten; sie rücken um eine Spalte nach links.
 
-## Bestätigte weitere Befunde – noch nicht umgebaut
+## Medikation: eindeutiger Eingabevertrag
 
-| Priorität | Blatt / Felder | Tatsächliche Wirkung | Empfohlene Bereinigung |
-|---|---|---|---|
-| Hoch | Medikation: Medikamentencode/Codesystem gegenüber PZN Code/ATC Code; Wirkstoffcode gegenüber ASK | Sobald Medikamentencode vorhanden ist, werden PZN/ATC und der ASK-Zweig nicht verwendet. Die Felder sind gleichzeitig sichtbar, haben aber eine versteckte Vorrangregel. | Präparatecodierungen und Wirkstoffcodierung ausdrücklich trennen und eine eindeutige Eingabelogik festlegen. PZN, ATC und Wirkstoff sind fachlich nicht austauschbar. |
-| Hoch | Medikation: Therapiestart, Therapieende | Die Methode `convertPeriod()` liest diese Spalten, wird aber nirgends aufgerufen. Tatsächlich zählen Zeitstempel und bei MedicationAdministration das zusätzliche Ende. | Unwirksame Felder entfernen oder bewusst anschließen; vorher festlegen, welcher Zeitpunkt Verordnung, Gabe oder dokumentierten Therapiezeitraum meint. |
-| Hoch | Medikation: Medikationsplanart | Enum/Feld vorhanden, keine aktive Verwendung im Konverter. | Entfernen, sofern kein konkretes Zielfeld benötigt wird. |
-| Hoch | Laborbefund: Werttyp Ja/Nein | Die gemeinsame Werttypenliste bietet Ja/Nein an; der Konverter erzeugt dann valueBoolean. Das deklarierte KDS-Laborprofil erlaubt dort Quantity, CodeableConcept, Range oder Ratio. | Blattbezogene Werttypen bzw. eine fachlich definierte codierte Abbildung verwenden. Nicht stillschweigend beliebige Codes erfinden. |
-| Mittel | Medikation: Status | Gemeinsame Liste für MedicationRequest, MedicationAdministration und MedicationStatement. Nicht alle Statuswerte gelten für jeden Ressourcentyp; der Konverter verwendet jeweils dessen Enum. | Auswahl nach Medikationstyp einschränken und unpassende Kombinationen früh erklären. |
-| Mittel | Prozedur: Dokumentationszeitpunkt | Wird als `Procedure.performed[x]`, also Durchführungsbeginn, geschrieben. Der Name suggeriert wie bei Condition einen Dokumentationszeitpunkt. | Eindeutig in Durchführungsbeginn umbenennen; einen separaten Dokumentationszeitpunkt nur bei tatsächlichem Bedarf einführen. |
-| Mittel | Laborbefund und Klinische Dokumentation: LOINC plus Codesystem | In Klinische Dokumentation kann unter der Überschrift LOINC auch ein SNOMED-Code stehen. Im Labor ist dagegen nur LOINC auswählbar, sodass Codesystem dort keine echte Auswahl bietet. | Klinische Untersuchungscodes allgemein benennen; für Labor zwischen festem LOINC-System und einer bewusst einheitlichen Eingabekonvention entscheiden. |
-| Mittel | Medikation: Dosierungstext / Ausfüllhilfe | Die Hilfe spricht von zusätzlichen Hinweisen. Tatsächlich werden bei Freitext oder unvollständiger strukturierter Dosierung inzwischen alle importierten Fakten in Dosage.text zusammengeführt, damit DosageDE eingehalten wird. | Hilfe auf das aktuelle Verhalten abstimmen und die kombinierte Textdarstellung menschlich reviewen. |
+Die Medikation enthält jetzt 20 Datenspalten statt 24. Präparatbezeichnung,
+Präparatcode und Präparatcodesystem ersetzen die konkurrierenden Produktfelder.
+ATC-Code mit ausdrücklich eingegebener ATC-Version bleibt zusätzlich erhalten.
+Wirkstoffcode und Wirkstoffcodesystem sind unabhängig davon. Ein unbekannter
+Wirkstoff benötigt ausdrücklich `!dar:unknown` mit einem Codesystem. Die
+Darreichungsform wird als Text übernommen. Aus der Einzeldosis entsteht keine
+Produkt- oder Wirkstoffstärke.
+
+| Medikationstyp | Dokumentationszeitpunkt | Beginn / Ende |
+|---|---|---|
+| Verordnung | authoredOn, optional | leer lassen |
+| Verabreichung | leer lassen | effectiveDateTime oder effectivePeriod |
+| Medikationsaussage | dateAsserted, optional | effectiveDateTime oder effectivePeriod |
+
+Beginn ist bei Verabreichung und Medikationsaussage erforderlich; unbekannte
+Pflichtzeitpunkte werden mit `!dar:unknown` ausdrücklich bezeichnet. Unpassende
+Zeitfelder, ungültige Medikationstypen und nicht passende Statuswerte werden als
+Eingabefehler gemeldet. Absicht gilt nur für Verordnungen. Leerer Status bedeutet
+weiterhin active bei Verordnung/Medikationsaussage und completed bei Verabreichung;
+leere Verordnungsabsicht bedeutet order. Diese Vorgaben stehen in der Ausfüllhilfe.
+
+Die Statusauswahl verweist abhängig vom Medikationstyp auf die sichtbaren Listen
+im Codes-Blatt. Die gemeinsame Java-Eingabeprüfung schützt auch direkt eingelesene
+CSV-Dateien. Einzeldosis, Dosiereinheit und ganzzahlige Dosen pro Tag ergeben ohne
+Freitext eine strukturierte Dosierung. Teilangaben, nicht ganzzahlige Häufigkeiten
+und mit Freitext kombinierte Angaben bleiben vollständig im Dosierungstext.
+Verabreichungen erhalten die Tageshäufigkeit als Text, weil ihr Dosierungstyp kein
+entsprechendes Timing-Feld besitzt.
+
+Die vorhandenen Vorlagen wurden mit LibreOffice/UNO aus ihren Originalen geändert.
+Alte, zuvor ignorierte Therapiestart-/Therapieende-Werte bleiben als ausdrücklich
+benannte alte Therapieeinträge im Dosierungstext erhalten. Die ATC-Version wurde
+aus der vorherigen tatsächlichen FHIR-Ausgabe übernommen (Vorlage 2019, Demo 2025),
+nicht neu aus dem Ereignisdatum abgeleitet. Das ist eine Migration des bisherigen
+Verhaltens, keine fachliche Bestätigung historischer Beispielpräparate.
+
+Medication-IDs berücksichtigen alle Produktangaben einschließlich ATC-Version,
+Darreichungsform und Wirkstoffsystem. Dadurch können sich IDs gegenüber alten
+Ausgaben ändern; alle zugehörigen Referenzen werden gemeinsam erzeugt.
+Alte Arbeitsmappen müssen auf das neue Schema angepasst werden. Das einmalige
+historische Erweiterungsskript ist entfernt; Ausgangspunkt ist die aktuelle Vorlage.
+
+## Noch offene Vorlagenkonflikte
+
+- Labor: Ja/Nein aus der Werttypenauswahl entfernen und als Eingabefehler erkennen.
+- Prozedur: Dokumentationszeitpunkt heißt tatsächlich Durchführungsbeginn.
+- Klinische Dokumentation: die allgemeine Codespalte nicht mehr LOINC nennen.
+- Labor behält die einheitliche Codesystemspalte mit festem Auswahlwert LOINC.
 
 ## Bewusste Alternativen, keine pauschal zu löschenden Doppelungen
 

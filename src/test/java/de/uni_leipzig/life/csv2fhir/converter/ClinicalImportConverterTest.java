@@ -61,8 +61,8 @@ public class ClinicalImportConverterTest {
     }
     @Test public void medicationKeepsDistinctProductsAndDoesNotTurnDoseFrequencyIntoDose() throws Exception {
         ConverterOptions options = new ConverterOptions(""); ConverterResult result = new ConverterResult(options);
-        var values = new HashMap<>(Map.of("Medikamentencode", "123", "Codesystem", "RxNorm", "Medikationstyp", "MedicationRequest",
-                "Zeitstempel", "2026-01-02", "Einzeldosis", "2", "Einheit", "mg", "Anzahl Dosen pro Tag", "3",
+        var values = new HashMap<>(Map.of("Präparatcode", "123", "Präparatcodesystem", "RxNorm", "Medikationstyp", "Verordnung",
+                "Dokumentationszeitpunkt", "2026-01-02", "Einzeldosis", "2", "Dosiereinheit", "mg", "Dosen pro Tag", "3",
                 "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED));
         var converter = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null, result, null, options);
         var first = converter.convertInternal(); Medication medication = (Medication)first.get(0);
@@ -71,15 +71,15 @@ public class ClinicalImportConverterTest {
         assertEquals("2", request.getDosageInstructionFirstRep().getDoseAndRateFirstRep().getDoseQuantity().getValue().toPlainString());
         assertEquals(3, request.getDosageInstructionFirstRep().getTiming().getRepeat().getFrequency());
         assertFalse(medication.getIngredientFirstRep().hasStrength());
-        values.put("Medikamentencode", "456");
+        values.put("Präparatcode", "456");
         var second = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null, result, null, options).convertInternal();
         assertNotEquals(medication.getId(), second.get(0).getId());
     }
     @Test public void localProductPznPreservesLeadingZerosAndDoseSemantics() throws Exception {
         ConverterOptions options = new ConverterOptions("");
-        var values = new HashMap<>(Map.of("Medikamentencode", "00000000", "Codesystem", "PZN",
-                "Medikationstyp", "MedicationRequest", "Zeitstempel", "2026-01-02",
-                "Einzeldosis", "2", "Einheit", "mg", "Anzahl Dosen pro Tag", "3",
+        var values = new HashMap<>(Map.of("Präparatcode", "00000000", "Präparatcodesystem", "PZN",
+                "Medikationstyp", "Verordnung", "Dokumentationszeitpunkt", "2026-01-02",
+                "Einzeldosis", "2", "Dosiereinheit", "mg", "Dosen pro Tag", "3",
                 "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED));
         var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
                 null, new ConverterResult(options), null, options).convertInternal();
@@ -109,8 +109,10 @@ public class ClinicalImportConverterTest {
 
     @Test public void partialAndMixedDosagesPreserveFactsWithoutInventedTiming() throws Exception {
         ConverterOptions options = new ConverterOptions("");
-        var values = new HashMap<>(Map.of("Medikamentencode", "123", "Codesystem", "RxNorm",
-                "Medikationstyp", "MedicationRequest", "Zeitstempel", "2026-01-02", "Einzeldosis", "2"));
+        var values = new HashMap<>(Map.of("Präparatcode", "123", "Präparatcodesystem", "RxNorm",
+                "Medikationstyp", "Verordnung", "Dokumentationszeitpunkt", "2026-01-02", "Einzeldosis", "2"));
+        values.put("Wirkstoffcode", "!dar:unknown");
+        values.put("Wirkstoffcodesystem", DiagnosisValues.SNOMED);
         var columns = MedicationConverter.Medication_Columns.values();
         MedicationRequest request = (MedicationRequest)new MedicationConverter(row(values, columns), null,
                 new ConverterResult(options), null, options).convertInternal().get(1);
@@ -119,8 +121,8 @@ public class ClinicalImportConverterTest {
         assertFalse(dosage.hasTiming());
         assertFalse(dosage.hasDoseAndRate());
         values.put("Dosierungstext", "Nach dem Essen");
-        values.put("Anzahl Dosen pro Tag", "3");
-        values.put("Einheit", "mg");
+        values.put("Dosen pro Tag", "3");
+        values.put("Dosiereinheit", "mg");
         request = (MedicationRequest)new MedicationConverter(row(values, columns), null,
                 new ConverterResult(options), null, options).convertInternal().get(1);
         dosage = request.getDosageInstructionFirstRep();
@@ -167,4 +169,52 @@ public class ClinicalImportConverterTest {
                 "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
     }
 
+    @Test public void medicationTimeMatrixRejectsMisplacedDatesAndUnknownTypes() throws Exception {
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "Präparatcode", "123", "Präparatcodesystem", "RxNorm",
+                "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED));
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
+        values.put("Beginn", "2026-01-01");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        values.put("Medikationstyp", "Verabreichung");
+        values.put("Status", "draft");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        values.put("Status", "completed");
+        values.put("Ende", "2025-12-31");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        values.remove("Ende"); values.put("Beginn", "!dar:unknown");
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
+        ConverterOptions options = new ConverterOptions("");
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        MedicationAdministration administration = (MedicationAdministration)resources.get(1);
+        assertEquals("unknown", administration.getEffectiveDateTimeType().getExtensionFirstRep().getValue().primitiveValue());
+        values.put("Medikationstyp", "Vertippt");
+        assertThrows(IllegalArgumentException.class, () -> new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal());
+    }
+    @Test public void medicationCombinesProductAtcAndIngredientAndDoesNotTruncateFrequency() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<String,String>();
+        values.put("Medikationstyp", "Medikationsaussage"); values.put("Beginn", "2026-01-01");
+        values.put("Ende", "2026-01-10"); values.put("Dokumentationszeitpunkt", "2026-01-11");
+        values.put("Präparatcode", "00000000"); values.put("Präparatcodesystem", "PZN");
+        values.put("ATC-Code", "N06AA09"); values.put("ATC-Version", "2025");
+        values.put("Wirkstoffcode", "!dar:unknown"); values.put("Wirkstoffcodesystem", "ASK");
+        values.put("Einzeldosis", "2"); values.put("Dosiereinheit", "mg"); values.put("Dosen pro Tag", "0.5");
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        Medication medication = (Medication)resources.get(0);
+        assertEquals(2, medication.getCode().getCoding().size());
+        assertEquals("2025", medication.getCode().getCoding().get(1).getVersion());
+        assertFalse(medication.getIngredientFirstRep().hasStrength());
+        MedicationStatement statement = (MedicationStatement)resources.get(1);
+        assertEquals("2026-01-10", statement.getEffectivePeriod().getEndElement().getValueAsString());
+        assertEquals("2026-01-11", statement.getDateAssertedElement().getValueAsString());
+        assertEquals("Einzeldosis: 2 mg; Dosen pro Tag: 0.5", statement.getDosageFirstRep().getText());
+        assertFalse(statement.getDosageFirstRep().hasTiming());
+        values.put("ATC-Version", "2026");
+        var changed = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        assertNotEquals(medication.getId(), changed.get(0).getId());
+    }
 }

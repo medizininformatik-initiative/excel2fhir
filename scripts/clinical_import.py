@@ -13,10 +13,9 @@ SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'L
 OBS_EXTRA = ['Werttyp', 'Wertcode', 'Wertcodesystem', 'Kategorie', 'Status', 'Untersuchung ID',
              'Komponente von', 'Ausgabezeitpunkt', 'Einheitencode', 'Codesystem']
 PROCEDURE_EXTRA = ['Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie']
-MEDICATION_EXTRA = ['Medikamentencode', 'Codesystem', 'Status', 'Absicht', 'Dosierungstext',
-                    'Ende', 'Wirkstoffcode', 'Wirkstoffcodesystem']
-SUPPORTED = {'Observation', 'Procedure', 'MedicationRequest', 'MedicationAdministration', 'Medication'}
+MEDICATION_HEADERS = ['Patient-ID', 'Fall-Nr', 'Medikationstyp', 'Präparatbezeichnung', 'Präparatcode', 'Präparatcodesystem', 'ATC-Code', 'ATC-Version', 'Darreichungsform', 'Wirkstoffcode', 'Wirkstoffcodesystem', 'Status', 'Absicht', 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag', 'Dosierungstext']
 
+SUPPORTED = {'Observation', 'Procedure', 'MedicationRequest', 'MedicationAdministration', 'Medication'}
 
 def mapping_metadata():
     registry = Path(__file__).parent / 'mappings/synthea-source-code-registry.json'
@@ -149,18 +148,21 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 daily = str(repeat['frequency']) if repeat.get('period') == 1 and repeat.get('periodUnit') == 'd' and 'frequency' in repeat else ''
                 period = r.get('effectivePeriod', {})
                 timestamp = r.get('authoredOn', r.get('effectiveDateTime', period.get('start', '')))
-                row = [pid, nr, timestamp, typ, '', label, '', '', '', '', '', '', '',
-                       str(dose.get('value', '')), dose.get('code', dose.get('unit', '')), daily]
-                row += [code, system, r.get('status', ''), r.get('intent', ''), dosage.get('text', ''),
-                        period.get('end', ''), '!dar:unknown', SYSTEMS[SNOMED]]
+                row = [pid, nr, {'MedicationRequest': 'Verordnung', 'MedicationAdministration': 'Verabreichung',
+                                     'MedicationStatement': 'Medikationsaussage'}[typ], label, code, system, '', '', '',
+                       '!dar:unknown', SYSTEMS[SNOMED], r.get('status', ''), r.get('intent', ''),
+                       timestamp if typ == 'MedicationRequest' else r.get('dateAsserted', ''),
+                       '' if typ == 'MedicationRequest' else (timestamp or '!dar:unknown'),
+                       period.get('end', ''), str(dose.get('value', '')), dose.get('code', dose.get('unit', '')), daily,
+                       dosage.get('text', '')]
                 decision = products.select(cc['coding'][0])
                 if decision['target'] is not None:
                     product = decision['target']
-                    row[5], row[10] = product['display'], product['doseForm']
-                    row[16], row[17] = product['code'], 'PZN'
+                    row[3], row[8] = product['display'], product['doseForm']
+                    row[4], row[5] = product['code'], 'PZN'
                     if product.get('ingredient'):
                         ingredient = product['ingredient']
-                        row[22], row[23] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
+                        row[9], row[10] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
                 rows['Medikation'].append(row)
                 mappings.append({'sourceId': r['id'], **decision})
                 handled.update(['medicationCodeableConcept', 'medicationReference', 'authoredOn', 'effectiveDateTime', 'effectivePeriod', 'intent'])

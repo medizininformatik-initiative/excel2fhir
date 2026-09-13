@@ -224,8 +224,8 @@ public class ExcelTemplateValidator {
                 List.of("Zeitstempel"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "DocumentReference", List.of(), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Medikation",
-                List.of("Zeitstempel", "Therapiestart", "Therapieende"),
-                List.of(new DateRangeColumns("Therapiestart", "Therapieende")));
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"),
+                List.of(new DateRangeColumns("Beginn", "Ende")));
     }
 
     private void validateReferenceTable(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
@@ -264,6 +264,16 @@ public class ExcelTemplateValidator {
             }
             if ("Diagnose".equals(sheetName)) {
                 validateDiagnosisSelections(row, columns, result);
+            }
+            if ("Medikation".equals(sheetName)) {
+                for (String error : de.uni_leipzig.life.csv2fhir.converter.MedicationValues.errors(key -> {
+                    Cell cell = getCell(row, columns, key);
+                    if (isExcelDateCell(cell)) return new DateTimeType(cell.getDateCellValue()).getValueAsString();
+                    if (isExcelDateFormulaCell(cell)) return new DateTimeType(evaluateDateFormula(cell)).getValueAsString();
+                    return get(row, columns, key);
+                })) {
+                    add(result, ERROR, sheetName, rowIndex + 1, "Medikation", error);
+                }
             }
             String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
             if (columns.containsKey(idColumn)) {
@@ -538,10 +548,7 @@ public class ExcelTemplateValidator {
                 "Klinischer Status", "Verifikationsstatus", "Typ", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
                 "Dokumentationszeitpunkt", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Erklärung/Ausfüllhilfe"));
-        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Zeitstempel", "Medikationstyp",
-                "Medikationsplanart", "Wirksubstanz aus Präparat/Handelsname", "ATC Code", "PZN Code", "ASK",
-                "FHIR_UserSelected", "Darreichungsform", "Therapiestart", "Therapieende", "Einzeldosis", "Einheit",
-                "Anzahl Dosen pro Tag", "Medikamentencode", "Codesystem", "Status", "Absicht", "Dosierungstext", "Ende", "Wirkstoffcode", "Wirkstoffcodesystem", "Erklärung/Ausfüllhilfe"));
+        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Medikationstyp", "Präparatbezeichnung", "Präparatcode", "Präparatcodesystem", "ATC-Code", "ATC-Version", "Darreichungsform", "Wirkstoffcode", "Wirkstoffcodesystem", "Status", "Absicht", "Dokumentationszeitpunkt", "Beginn", "Ende", "Einzeldosis", "Dosiereinheit", "Dosen pro Tag", "Dosierungstext", "Erklärung/Ausfüllhilfe"));
         headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "LOINC", "Wert",
                 "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Codesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",

@@ -23,10 +23,11 @@ implementiert. Der Adapter ist mit vollständig erfundenen Produktdaten getestet
 - Fehlerhafter Katalog, doppelte Quellzuordnung oder Code außerhalb des vorhandenen
   Synthea-Medikationsinventars: Import mit konkretem Fehler abbrechen.
 
-Beide Wege verwenden dieselben Spalten und denselben FHIR-Konverter. Das
-Codesystem PZN ist im bestehenden Medikamentencode-Feld auswählbar. Die separate
-alte PZN-Spalte wird vom neuen Adapter nicht befüllt. Dadurch bleibt der Pfad
-aktiv, der Einzeldosis und Tageshäufigkeit richtig unterscheidet.
+Beide Wege verwenden dieselben Spalten und denselben FHIR-Konverter.
+PZN wird über Präparatcode und Präparatcodesystem erfasst. ATC-Code und
+ATC-Version sind davon getrennte zusätzliche Angaben. Der lokale Adapter
+füllt Präparatbezeichnung, Präparatcode/-system, Darreichungsform und gegebenenfalls
+Wirkstoffcode/-system; er erzeugt weiterhin keine Produktstärke aus der Dosierung.
 
 ## Datenformat des lokalen Katalogs
 

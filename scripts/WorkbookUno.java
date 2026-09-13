@@ -65,6 +65,11 @@ public class WorkbookUno {
                 } else if (a[0].equals("set")) {
                     q(XText.class, sheet.getCellRangeByName(a[2]).getCellByPosition(0, 0)).setString(
                             new String(Base64.getDecoder().decode(a[3]), StandardCharsets.UTF_8));
+                } else if (a[0].equals("noValidation")) {
+                    XPropertySet cells = q(XPropertySet.class, sheet.getCellRangeByName(a[2]));
+                    Object validation = cells.getPropertyValue("Validation");
+                    q(XPropertySet.class, validation).setPropertyValue("Type", ValidationType.ANY);
+                    cells.setPropertyValue("Validation", validation);
                 } else if (a[0].equals("validation")) {
                     XPropertySet cells = q(XPropertySet.class, sheet.getCellRangeByName(a[2]));
                     Object validation = cells.getPropertyValue("Validation");
@@ -72,7 +77,10 @@ public class WorkbookUno {
                     props.setPropertyValue("Type", ValidationType.LIST);
                     props.setPropertyValue("IgnoreBlankCells", true);
                     props.setPropertyValue("ShowErrorMessage", Boolean.parseBoolean(a[4]));
-                    q(XSheetCondition.class, validation).setFormula1(a[3]);
+                    XSheetCondition condition = q(XSheetCondition.class, validation);
+                    condition.setSourcePosition(q(XCellAddressable.class,
+                            sheet.getCellRangeByName(a[2]).getCellByPosition(0, 0)).getCellAddress());
+                    condition.setFormula1(a[3]);
                     cells.setPropertyValue("Validation", validation);
                 } else if (a[0].equals("text")) {
                     XPropertySet cells = q(XPropertySet.class, sheet.getCellRangeByName(a[2]));

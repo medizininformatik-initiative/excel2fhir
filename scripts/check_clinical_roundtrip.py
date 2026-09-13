@@ -64,7 +64,7 @@ def check_clinical(source, target, report):
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
     product_systems = {**SYSTEMS, PZN: 'PZN'}
     expected_codes=Counter((product_systems.get(r['code']['coding'][0]['system']),r['code']['coding'][0]['code'])for r in medications.values())
-    products={(row[17],row[16])for row in rows['Medikation']}
+    products={(row[5],row[4])for row in rows['Medikation']}
     assert expected_codes==Counter(products), 'Medication definitions lost or merged'
     for r in dst:
         if r['resourceType'] in ('MedicationRequest','MedicationAdministration','MedicationStatement'):

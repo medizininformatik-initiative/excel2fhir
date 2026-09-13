@@ -116,7 +116,7 @@ def localize_rows(rows, address=None):
                 continue  # Local catalogue supplies its own German product label.
             row[label] = tr.text(row[label], sheet, row[system], row[code])
     for args in [('Diagnose',2,3,4), ('Prozedur',2,3,5), ('Laborbefund',3,2,16),
-                 ('Klinische Dokumentation',2,3,16), ('Medikation',5,16,17),
+                 ('Klinische Dokumentation',2,3,16), ('Medikation',3,4,5),
                  ('DocumentReference',9,7,8)]: coded(*args)
     for sheet in ['Allergie','Impfung','Befundbericht','Behandlungsplan','Hilfsmittel']:
         coded(sheet,3,4,5)
@@ -126,7 +126,7 @@ def localize_rows(rows, address=None):
                 row[4] = tr.observation_text(row[4], row[16], row[2] if sheet=='Laborbefund' else row[3], sheet+'.Wert')
             elif row[7] == 'Code':
                 row[4] = tr.text(row[4], sheet+'.Wert', row[9], row[8])
-    for sheet, col in [('Medikation',20),('Allergie',13),('Befundbericht',10),('Behandlungsplan',10)]:
+    for sheet, col in [('Medikation',19),('Allergie',13),('Befundbericht',10),('Behandlungsplan',10)]:
         for row in rows.get(sheet, []):
             if row[col]: row[col] = tr.text(row[col], sheet+'.Freitext')
     for row in rows.get('DocumentReference', []): row[4] = tr.document(row[4], 'DocumentReference.Text')
