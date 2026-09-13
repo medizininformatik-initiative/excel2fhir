@@ -6705,7 +6705,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IA (qualifier value)",
-          "de": "AJCC-Stadium IA (qualifier value)",
+          "de": "AJCC-Stadium IA (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6717,7 +6717,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IB (qualifier value)",
-          "de": "AJCC-Stadium IB (qualifier value)",
+          "de": "AJCC-Stadium IB (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6729,7 +6729,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IIA (qualifier value)",
-          "de": "AJCC-Stadium IIA (qualifier value)",
+          "de": "AJCC-Stadium IIA (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6741,7 +6741,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IIB (qualifier value)",
-          "de": "AJCC-Stadium IIB (qualifier value)",
+          "de": "AJCC-Stadium IIB (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6753,7 +6753,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IIIA (qualifier value)",
-          "de": "AJCC-Stadium IIIA (qualifier value)",
+          "de": "AJCC-Stadium IIIA (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6765,7 +6765,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IIIB (qualifier value)",
-          "de": "AJCC-Stadium IIIB (qualifier value)",
+          "de": "AJCC-Stadium IIIB (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6777,7 +6777,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer stage IIIC (qualifier value)",
-          "de": "AJCC-Stadium IIIC (qualifier value)",
+          "de": "AJCC-Stadium IIIC (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6837,7 +6837,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cT0 (qualifier value)",
-          "de": "AJCC-Kategorie cT0 (qualifier value)",
+          "de": "AJCC-Kategorie cT0 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6849,7 +6849,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cT1 (qualifier value)",
-          "de": "AJCC-Kategorie cT1 (qualifier value)",
+          "de": "AJCC-Kategorie cT1 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6861,7 +6861,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cT2 (qualifier value)",
-          "de": "AJCC-Kategorie cT2 (qualifier value)",
+          "de": "AJCC-Kategorie cT2 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6873,7 +6873,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cT3 (qualifier value)",
-          "de": "AJCC-Kategorie cT3 (qualifier value)",
+          "de": "AJCC-Kategorie cT3 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6885,7 +6885,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cT4 (qualifier value)",
-          "de": "AJCC-Kategorie cT4 (qualifier value)",
+          "de": "AJCC-Kategorie cT4 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6897,7 +6897,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cM0 (qualifier value)",
-          "de": "AJCC-Kategorie cM0 (qualifier value)",
+          "de": "AJCC-Kategorie cM0 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6909,7 +6909,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cM1 (qualifier value)",
-          "de": "AJCC-Kategorie cM1 (qualifier value)",
+          "de": "AJCC-Kategorie cM1 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6921,7 +6921,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cN0 (qualifier value)",
-          "de": "AJCC-Kategorie cN0 (qualifier value)",
+          "de": "AJCC-Kategorie cN0 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6933,7 +6933,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cN1 (qualifier value)",
-          "de": "AJCC-Kategorie cN1 (qualifier value)",
+          "de": "AJCC-Kategorie cN1 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6945,7 +6945,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cN2 (qualifier value)",
-          "de": "AJCC-Kategorie cN2 (qualifier value)",
+          "de": "AJCC-Kategorie cN2 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -6957,7 +6957,7 @@
       "translations": [
         {
           "original": "American Joint Committee on Cancer cN3 (qualifier value)",
-          "de": "AJCC-Kategorie cN3 (qualifier value)",
+          "de": "AJCC-Kategorie cN3 (Qualifikator)",
           "source": "editorial",
           "review": "editorially-corrected"
         }
@@ -29189,7 +29189,7 @@
     },
     {
       "original": "Take at regular intervals. Complete the prescribed course unless otherwise directed (qualifier value)\nDo not take milk, indigestion remedies, or medicines containing iron or zinc at the same time of day as this medicine (qualifier value)",
-      "de": "In regelmäßigen Abständen einnehmen. Verordnete Behandlung vollständig durchführen, sofern nicht anders angeordnet. Nicht gleichzeitig mit Milch, Mitteln gegen Verdauungsbeschwerden oder eisen-/zinkhaltigen Arzneimitteln einnehmen.",
+      "de": "In regelmäßigen Abständen einnehmen. Verordnete Behandlung vollständig durchführen, sofern nicht anders angeordnet.\nNicht gleichzeitig mit Milch, Mitteln gegen Verdauungsbeschwerden oder eisen-/zinkhaltigen Arzneimitteln einnehmen.",
       "source": "editorial",
       "review": "editorially-corrected"
     },

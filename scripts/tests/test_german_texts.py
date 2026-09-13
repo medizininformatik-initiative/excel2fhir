@@ -24,6 +24,7 @@ class GermanTextsTest(unittest.TestCase):
                 self.assertTrue(t['de'].strip())
                 self.assertIn(t['source'], data['sources'])
                 self.assertTrue(t['review'])
+                self.assertNotIn('(qualifier value)', t['de'])
 
     def test_all_medication_strengths_counts_and_brand_names_survive(self):
         for e in catalog()[0]['entries']:
@@ -42,6 +43,9 @@ class GermanTextsTest(unittest.TestCase):
             self.assertEqual(tr.text(source, system='LOINC', code=code), german)
         self.assertEqual(tr.text('Cardiac Arrest', system='SNOMED CT (Version nicht angegeben)', code='410429000'), 'Herzstillstand')
         self.assertEqual(tr.text('Tubal pregnancy', system='SNOMED CT (Version nicht angegeben)', code='79586000'), 'Eileiterschwangerschaft')
+        for t in catalog()[0]['literals']:
+            if '\nDo not take milk' in t['original']:
+                self.assertEqual(t['de'].count('\n'), 1)
 
     def test_unknown_code_and_new_note_content_are_reported(self):
         tr = GermanTexts()
