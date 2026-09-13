@@ -81,7 +81,12 @@ public class MedicationConverter extends Converter {
         r.setId(getMedicationId());
         r.addIdentifier().setValue(getMedicationId());
         CodeableConcept code = ClinicalValues.concept(value("Präparatcode"), value("Präparatcodesystem"), value("Präparatbezeichnung"));
-        if (value("ATC-Code") != null) code.addCoding(new Coding("http://fhir.de/CodeSystem/bfarm/atc", value("ATC-Code"), null).setVersion(value("ATC-Version")));
+        if (value("ATC-Code") != null) {
+            Coding atc = new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setVersion(value("ATC-Version"));
+            Extension absent = DiagnosisValues.absentReason(value("ATC-Code"));
+            if (absent == null) atc.setCode(value("ATC-Code")); else atc.getCodeElement().addExtension(absent);
+            code.addCoding(atc);
+        }
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
         r.addIngredient().setItem(ClinicalValues.concept(value("Wirkstoffcode"), value("Wirkstoffcodesystem"), null));

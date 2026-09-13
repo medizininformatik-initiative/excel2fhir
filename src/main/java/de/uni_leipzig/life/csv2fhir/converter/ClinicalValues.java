@@ -10,7 +10,7 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 /** Shared explicit clinical inputs. Blank is omitted; DAR must be entered explicitly. */
 public final class ClinicalValues {
     public enum Column implements TableColumnIdentifier {
-        Codesystem, Zusatzcode, Zusatzcodesystem, Ende, Status, Kategorie, Medikamentencode,
+        Codesystem, Zusatzcode, Zusatzcodesystem, Ende, Status, Kategorie,
         Absicht, Dosierungstext, Werttyp, Wertcode, Wertcodesystem, Untersuchung_ID,
         Komponente_von, Ausgabezeitpunkt, Einheitencode, Wirkstoffcode, Wirkstoffcodesystem, Straße, Postleitzahl, Ort, Bundesland, Land, Sterbezeitpunkt, Dokumenttext, Dokumentcode, Dokumentcodesystem, Dokumentbezeichner;
         @Override public boolean isMandatory() { return false; }

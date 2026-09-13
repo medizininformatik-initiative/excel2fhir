@@ -72,6 +72,8 @@ public final class MedicationValues {
         }
         String atc = get.apply("ATC-Code"), version = get.apply("ATC-Version");
         if ((atc == null) != (version == null)) errors.add("ATC-Code und ATC-Version gemeinsam ausfüllen");
+        try { DiagnosisValues.absentReason(atc); }
+        catch (RuntimeException e) { errors.add("ATC-Code: ungültiger Data Absent Reason"); }
         if (version != null && !version.matches("[0-9]{4}")) errors.add("ATC-Version als vierstellige Jahresversion angeben");
         if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {

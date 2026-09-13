@@ -216,6 +216,12 @@ public class ClinicalImportConverterTest {
         var changed = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
                 new ConverterResult(options), null, options).convertInternal();
         assertNotEquals(medication.getId(), changed.get(0).getId());
+        values.put("ATC-Code", "!dar:unknown");
+        var missing = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        Coding atc = ((Medication)missing.get(0)).getCode().getCoding().get(1);
+        assertFalse(atc.getCodeElement().hasValue());
+        assertEquals("unknown", atc.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
     }
     @Test public void laboratoryRejectsBooleanButClinicalDocumentationKeepsIt() throws Exception {
         ConverterOptions options = new ConverterOptions("");
