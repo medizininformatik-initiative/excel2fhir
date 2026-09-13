@@ -1,0 +1,136 @@
+{
+  "version": "1",
+  "scope": "Explicit subset of operative Synthea source concepts; unknown procedures do not imply surgery. No OPS mapping.",
+  "procedures": {
+    "11466000": {
+      "displays": [
+        "Cesarean section (procedure)"
+      ],
+      "department": "Frauenheilkunde und Geburtshilfe",
+      "sourceFiles": [
+        "src/main/resources/modules/pregnancy.json"
+      ]
+    },
+    "232717009": {
+      "displays": [
+        "Coronary artery bypass grafting (procedure)"
+      ],
+      "department": "Herzchirurgie",
+      "sourceFiles": [
+        "src/main/resources/keep_modules/must_have_cabg.json",
+        "src/main/resources/keep_modules/must_have_cardiac_surgery.json",
+        "src/main/resources/modules/heart/cabg/operation.json"
+      ]
+    },
+    "414088005": {
+      "displays": [
+        "Emergency coronary artery bypass graft (procedure)"
+      ],
+      "department": "Herzchirurgie",
+      "sourceFiles": [
+        "src/main/resources/modules/heart/cabg/operation.json"
+      ]
+    },
+    "418824004": {
+      "displays": [
+        "Off-pump coronary artery bypass (procedure)"
+      ],
+      "department": "Herzchirurgie",
+      "sourceFiles": [
+        "src/main/resources/keep_modules/must_have_cabg.json",
+        "src/main/resources/keep_modules/must_have_cardiac_surgery.json",
+        "src/main/resources/modules/heart/cabg/operation.json"
+      ]
+    },
+    "63697000": {
+      "displays": [
+        "Cardiopulmonary bypass operation (procedure)"
+      ],
+      "department": "Herzchirurgie",
+      "sourceFiles": [
+        "src/main/resources/modules/heart/avrr/savrr_operation.json",
+        "src/main/resources/modules/heart/cabg/operation.json"
+      ]
+    },
+    "90470006": {
+      "displays": [
+        "Prostatectomy (procedure)"
+      ],
+      "department": "Urologie",
+      "sourceFiles": [
+        "src/main/resources/modules/veteran_prostate_cancer.json"
+      ]
+    },
+    "38102005": {
+      "displays": [
+        "Cholecystectomy (procedure)"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/modules/gallstones.json"
+      ]
+    },
+    "45595009": {
+      "displays": [
+        "Laparoscopic cholecystectomy (procedure)"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/modules/gallstones.json"
+      ]
+    },
+    "609588000": {
+      "displays": [
+        "Prosthetic total arthroplasty of knee joint (procedure)"
+      ],
+      "department": "Orthopädie",
+      "sourceFiles": [
+        "src/main/resources/modules/total_joint_replacement.json"
+      ]
+    },
+    "13995008": {
+      "displays": [
+        "Amputation of arm through shoulder (procedure)",
+        "Amputation of left arm"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/gbd_disability_weights.csv",
+        "src/main/resources/modules/metabolic_syndrome/amputations.json"
+      ]
+    },
+    "180030006": {
+      "displays": [
+        "Amputation of right foot",
+        "Amputation of the foot (procedure)"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/gbd_disability_weights.csv",
+        "src/main/resources/modules/metabolic_syndrome/amputations.json"
+      ]
+    },
+    "46028000": {
+      "displays": [
+        "Amputation of hand (procedure)",
+        "Amputation of right hand"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/gbd_disability_weights.csv",
+        "src/main/resources/modules/metabolic_syndrome/amputations.json"
+      ]
+    },
+    "79733001": {
+      "displays": [
+        "Amputation above-knee (procedure)",
+        "Amputation of right leg"
+      ],
+      "department": "Allgemeine Chirurgie",
+      "sourceFiles": [
+        "src/main/resources/gbd_disability_weights.csv",
+        "src/main/resources/modules/metabolic_syndrome/amputations.json"
+      ]
+    }
+  }
+}

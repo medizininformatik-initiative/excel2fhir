@@ -83,7 +83,11 @@ public class DocumentReferenceConverter extends Converter {
         documentReference.setStatus(DocumentReferenceStatus.CURRENT);
         // Status of the underlying document; always: "final"
         documentReference.setDocStatus(ReferredDocumentStatus.FINAL);
-        documentReference.setDate(new Date());
+        String timestamp = ClinicalValues.get(this, ClinicalValues.Column.Ausgabezeitpunkt);
+        documentReference.setDateElement(timestamp == null ? new org.hl7.fhir.r4.model.InstantType(new Date())
+                : new org.hl7.fhir.r4.model.InstantType(timestamp));
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        if (status != null) documentReference.setStatus(DocumentReferenceStatus.fromCode(status));
 
         // Example:
         // AD0101 Arztberichte
@@ -106,6 +110,12 @@ public class DocumentReferenceConverter extends Converter {
         // TODO: Enable DocumentResource type filling by excel input data
         CodeableConcept type = createCodeableConcept("http://dvmd.de/fhir/CodeSystem/kdl", "AD010104",
                 "Entlassungsbericht extern", null, "2023");
+        String documentCode = ClinicalValues.get(this, ClinicalValues.Column.Dokumentcode);
+        if (documentCode != null) {
+            type = ClinicalValues.concept(documentCode, ClinicalValues.get(this, ClinicalValues.Column.Dokumentcodesystem),
+                    ClinicalValues.get(this, ClinicalValues.Column.Dokumentbezeichner));
+            documentReference.setCategory(java.util.Collections.emptyList());
+        }
         documentReference.setType(type);
 
         // TODO: Enable DocumentResource securityLabel filling by excel input data
@@ -122,7 +132,10 @@ public class DocumentReferenceConverter extends Converter {
         boolean embed = isYesValue(get(Embed));
         String filePath = get(Dateipfad);
         Path path = !isBlank(filePath) ? Paths.get(filePath) : null;
-        Attachment attachment = createAttachment(path, embed);
+        String text = ClinicalValues.get(this, ClinicalValues.Column.Dokumenttext);
+        Attachment attachment = text == null ? createAttachment(path, embed)
+                : new Attachment().setContentType("text/plain; charset=utf-8")
+                    .setData(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
         return singletonList(documentReference);
     }

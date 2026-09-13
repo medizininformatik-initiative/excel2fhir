@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR;
-import static de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.VALID;
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.DEFAULT_ENCOUNTER_ID_NUMBER;
 
 import java.lang.reflect.Constructor;
@@ -15,7 +13,7 @@ import org.hl7.fhir.r4.model.Resource;
 import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
-import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
+import de.uni_leipzig.life.csv2fhir.converter.ClinicalEventConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter;
 import de.uni_leipzig.life.csv2fhir.converter.ConditionConverter.Diagnosis_Columns;
 import de.uni_leipzig.life.csv2fhir.converter.ConsentConverter;
@@ -61,6 +59,12 @@ public enum TableIdentifier {
     Medikation(Medication_Columns.class, MedicationConverter.class),
 
     Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverter.class),
+
+    Allergie(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Allergy.class),
+    Impfung(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Vaccine.class),
+    Befundbericht(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Report.class),
+    Behandlungsplan(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Plan.class),
+    Hilfsmittel(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Equipment.class),
 
     Consent(Consent_Columns.class, ConsentConverter.class) {
         @Override
@@ -200,22 +204,8 @@ public enum TableIdentifier {
             FHIRValidator validator, ConverterOptions options) throws Exception {
         Converter converter = converterConstructor.newInstance(csvRecord, previousPID, result, validator, options);
         List<? extends Resource> resources = converter.convert(); // should never return null!
-        // resources seems to be Immutable (we cannot remove elements) -> copy the
-        // valid elements to a new list
-        List<Resource> validResources = new ArrayList<>();
-        // validate every resource and remove if invalid
-        for (int i = 0; i < resources.size(); i++) {
-            Resource resource = resources.get(i);
-            ValidationResultType validationResult = ERROR;
-            if (resource != null) {
-                validationResult = validator == null ? VALID : validator.validate(resource);
-            }
-            if (validationResult != ERROR) {
-                validResources.add(resource);
-            }
-        }
-        result.addAll(this, validResources);
-        return validResources;
+        result.addAll(this, resources);
+        return resources;
     }
 
     @Override

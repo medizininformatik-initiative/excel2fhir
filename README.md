@@ -79,6 +79,12 @@ mvn package
 java -jar target/excel2fhir.jar -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx
 ```
 
+## Synthea diagnosis import
+
+The focused Synthea R4 importer preserves Patient, Encounter and Condition through
+an editable Excel file. See [the import workflow](docs/synthea-diagnosis-import.md)
+and [the diagnosis schema before and after](docs/diagnosis-workbook.md).
+
 ## Output
 
 By default, output is written next to the input workbook:
@@ -247,3 +253,9 @@ docker/                                       Docker build and compose setup
 ## License
 
 See [LICENSE](LICENSE).
+
+## Synthea-Testdaten
+
+Der [vollständige Synthea-Workflow](docs/synthea-workflow.md) erzeugt aus vorhandenen
+R4-Patientenbundles deutsche Excel-Beispiele und FHIR einschließlich Importbilanz,
+Rückvergleich und Validierung. Er ist lokal und als Container ausführbar.

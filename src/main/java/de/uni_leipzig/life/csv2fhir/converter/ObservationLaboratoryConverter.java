@@ -84,24 +84,90 @@ public class ObservationLaboratoryConverter extends Converter {
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
+        return convertObservation(false);
+    }
+
+    protected List<Resource> convertObservation(boolean clinical) throws Exception {
+        var table = clinical ? de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation : Laborbefund;
+        Enum<?> codeColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Untersuchungscode : LOINC;
+        Enum<?> textColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner : Parameter;
+        Enum<?> valueColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert : Messwert;
+        Enum<?> unitColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit : Einheit;
+        Enum<?> dateColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel : Zeitstempel_Abnahme;
+        String category = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
+        if (category == null) category = clinical ? "vital-signs" : "laboratory";
+        String sourceId = ClinicalValues.get(this, ClinicalValues.Column.Untersuchung_ID);
+        String id = sourceId == null ? (getEncounterReference() == null ? getPatientId() : getEncounterId())
+                + (clinical ? ResourceIdSuffix.OBSERVATION_VITALSIGNS : ResourceIdSuffix.OBSERVATION_LABORATORY)
+                + result.getNextId(table, Observation.class, clinical
+                    ? de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_VITAL_SIGNS
+                    : START_ID_OBSERVATION_LABORATORY) : ClinicalValues.resourceId(getPatientId(), "Observation", sourceId);
+        String system = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
+        CodeableConcept code = ClinicalValues.concept(get(codeColumn), system == null ? "LOINC" : system, get(textColumn));
+        String kind = ClinicalValues.get(this, ClinicalValues.Column.Werttyp);
+        String raw = get(valueColumn);
+        org.hl7.fhir.r4.model.Type value = null;
+        if (kind == null || kind.equals("Zahl")) {
+            if (raw != null && !raw.isBlank()) {
+                String unitCode = ClinicalValues.get(this, ClinicalValues.Column.Einheitencode);
+                value = unitCode == null ? parseObservationValue(valueColumn, unitColumn)
+                        : new Quantity().setValue(parseDecimal(raw)).setUnit(get(unitColumn))
+                            .setSystem("http://unitsofmeasure.org").setCode(unitCode);
+            }
+        } else if (kind.equals("Text")) {
+            if (raw != null && !raw.isBlank()) {
+                if ("laboratory".equals(category)) {
+                    Coding missing = new Coding();
+                    missing.getSystemElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
+                    missing.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
+                    value = new CodeableConcept().addCoding(missing).setText(raw);
+                } else {
+                    value = new org.hl7.fhir.r4.model.StringType(raw);
+                }
+            }
+        } else if (kind.equals("Code")) {
+            value = ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Wertcode),
+                    ClinicalValues.get(this, ClinicalValues.Column.Wertcodesystem), raw);
+        } else if (kind.equals("Ja/Nein")) {
+            if ("laboratory".equals(category)) throw new IllegalArgumentException("KDS-Laborbefunde erlauben keinen Ja/Nein-Wert; eine fachlich passende codierte Antwort verwenden");
+            if (!"true".equals(raw) && !"false".equals(raw)) throw new IllegalArgumentException("Boolean must be true or false");
+            value = new org.hl7.fhir.r4.model.BooleanType(Boolean.parseBoolean(raw));
+        } else if (!kind.equals("Komponenten") && !kind.equals("Fehlend")) {
+            throw new IllegalArgumentException("Unknown value type: " + kind);
+        }
+        CodeableConcept absent = null;
+        if ("Fehlend".equals(kind)) {
+            org.hl7.fhir.r4.model.Extension extension = DiagnosisValues.absentReason(raw);
+            if (extension == null) throw new IllegalArgumentException("Missing explicit data absent reason");
+            absent = new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/data-absent-reason",
+                    extension.getValue().primitiveValue(), null));
+        }
+        String parentId = ClinicalValues.get(this, ClinicalValues.Column.Komponente_von);
+        if (parentId != null) {
+            Observation parent = result.get(table, Observation.class, ClinicalValues.resourceId(getPatientId(), "Observation", parentId));
+            if (parent == null) throw new IllegalArgumentException("Component parent must precede component: " + parentId);
+            parent.addComponent().setCode(code).setValue(value).setDataAbsentReason(absent);
+            return Collections.emptyList();
+        }
         Observation observation = new Observation();
-        int nextId = result.getNextId(Laborbefund, Observation.class, START_ID_OBSERVATION_LABORATORY);
-        Reference encounterReference = getEncounterReference();
-        // If the encounter is defined for this Observation so we can use it for the
-        // id. If not we can only use the PID
-        String id = (encounterReference != null ? getEncounterId() : getPatientId())
-                + ResourceIdSuffix.OBSERVATION_LABORATORY + nextId;
         observation.setId(id);
-        observation.setMeta(new Meta().addProfile(PROFILE));
-        observation.setStatus(FINAL);
-        observation.setSubject(getPatientReference()); // if null then observation is invalid
-        observation.setEncounter(encounterReference);
-        setEffective(observation, this, Zeitstempel_Abnahme);
-        observation.setCode(parseObservationCode());
-        observation.setCode(parseLoincCodeableConcept(LOINC, Parameter));
-        observation.setValue(parseObservationValue(Messwert, Einheit));
+        observation.setSubject(getPatientReference());
+        observation.setEncounter(getEncounterReference());
+        observation.setCategory(Collections.singletonList(new CodeableConcept(new Coding(
+                "http://terminology.hl7.org/CodeSystem/observation-category", category, null))));
+        if (category.equals("laboratory")) {
+            observation.setCategory(getLaborytoryObservationFixedCategory());
+            observation.setMeta(new Meta().addProfile(PROFILE));
+        }
+        String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
+        observation.setStatus(status == null ? FINAL : Observation.ObservationStatus.fromCode(status));
+        observation.setEffective(ClinicalValues.date(get(dateColumn)));
+        String issued = ClinicalValues.get(this, ClinicalValues.Column.Ausgabezeitpunkt);
+        if (issued != null) observation.setIssuedElement(new org.hl7.fhir.r4.model.InstantType(issued));
+        observation.setCode(code);
+        observation.setValue(value);
+        observation.setDataAbsentReason(absent);
         observation.setIdentifier(getIdentifier(id, getDIZId()));
-        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY);
         return Collections.singletonList(observation);
     }
 

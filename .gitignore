@@ -15,3 +15,7 @@
 /outputLocal/
 /outputGlobal/
 /src/main/resources/fhir_2024/
+
+# Python helper caches
+__pycache__/
+*.pyc

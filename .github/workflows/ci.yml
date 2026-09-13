@@ -22,6 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test Synthea import and roundtrip checks
+        run: python3 -m unittest discover -s scripts/tests -v
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -84,9 +87,51 @@ jobs:
         severity: 'CRITICAL,HIGH'
         timeout: '15m0s'
 
+  synthea-workflow:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build complete Synthea workflow image
+      run: docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea:ci .
+    - name: Convert and validate actual Synthea regression fixtures
+      shell: bash
+      run: |
+        mkdir -p "$RUNNER_TEMP/synthea-results"
+        set +e
+        docker run --rm \
+          -v "$PWD/scripts/tests/fixtures/synthea:/input:ro" \
+          -v "$RUNNER_TEMP/synthea-results:/output" \
+          excel2fhir-synthea:ci /input /output/cases
+        result=$?
+        set -e
+        python3 - "$RUNNER_TEMP/synthea-results/cases/summary.json" "$result" <<'PYTHON'
+        import json, sys
+        report = json.load(open(sys.argv[1]))
+        assert not report['failures'], report
+        assert len(report['results']) == 2, report
+        assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
+        assert int(sys.argv[2]) == (0 if report['status'] == 'COMPLETE' else 1), report
+        assert all(r['importStatus'] == 'COMPLETE' for r in report['results']), report
+        PYTHON
+    - name: Scan complete workflow image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: excel2fhir-synthea:ci
+        exit-code: 1
+        ignore-unfixed: true
+        trivyignores: '.trivyignore'
+        severity: 'CRITICAL,HIGH'
+        timeout: '15m0s'
+    - name: Preserve regression reports and generated workbooks
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: synthea-workflow-results
+        path: ${{ runner.temp }}/synthea-results
+
   build-excel2fhir:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-    needs: [test, security-scan]
+    needs: [test, security-scan, synthea-workflow]
     runs-on: ubuntu-latest
 
     steps:

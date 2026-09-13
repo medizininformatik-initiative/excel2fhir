@@ -4,7 +4,7 @@ import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_O
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Klinische_Dokumentation;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit;
-import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.LOINC;
+import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Untersuchungscode;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
@@ -38,7 +38,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
      */
     public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
         Bezeichner,
-        LOINC,
+        Untersuchungscode,
         Wert,
         Einheit,
         Zeitstempel
@@ -67,26 +67,7 @@ public class ObservationVitalSignsConverter extends ObservationLaboratoryConvert
 
     @Override
     protected List<Resource> convertInternal() throws Exception {
-        Observation observation = new Observation();
-        int nextId = result.getNextId(Klinische_Dokumentation, Observation.class, START_ID_OBSERVATION_VITAL_SIGNS);
-        Reference encounterReference = getEncounterReference();
-        String id = (encounterReference == null ? getPatientId() : getEncounterId())
-                + ResourceIdSuffix.OBSERVATION_VITALSIGNS + nextId;
-        observation.setId(id);
-        observation.setMeta(new Meta().addProfile(PROFILE));
-        observation.setStatus(FINAL);
-        observation.setSubject(getPatientReference()); // if null then observation is invalid
-        observation.setEncounter(encounterReference);
-        setEffective(observation, this, Zeitstempel);
-        observation.setCode(parseLoincCodeableConcept(LOINC, Bezeichner));
-        observation.setValue(parseObservationValue(Wert, Einheit));
-        observation.setIdentifier(getIdentifier(id, getDIZId()));
-        observation.setCategory(LABORYTORY_OBSERVATION_FIXED_CATEGORY); // TODO: add the correct category if validator
-                                                                        // can accept it
-        // String resourceAsJson =
-        // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(observation);
-        // // for debug
-        return Collections.singletonList(observation);
+        return convertObservation(true);
     }
 
     /**
