@@ -253,3 +253,9 @@ docker/                                       Docker build and compose setup
 ## License
 
 See [LICENSE](LICENSE).
+
+## Synthea-Testdaten
+
+Der [vollständige Synthea-Workflow](docs/synthea-workflow.md) erzeugt aus vorhandenen
+R4-Patientenbundles deutsche Excel-Beispiele und FHIR einschließlich Importbilanz,
+Rückvergleich und Validierung. Er ist lokal und als Container ausführbar.

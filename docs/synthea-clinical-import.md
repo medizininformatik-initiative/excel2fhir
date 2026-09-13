@@ -110,6 +110,10 @@ Für alle vorhandenen Patienten mit einem neuen Ausgabeverzeichnis:
 python3 scripts/run_synthea_cases.py SYNTHEA_FHIR_VERZEICHNIS NEUES_AUSGABEVERZEICHNIS
 ```
 
+Der Sammellauf führt jetzt auch die FHIR-Validierung aus und sammelt Import-,
+Verlust- und Validierungsberichte. Installation, Container, Status und Exitcodes
+sind im [Gesamtworkflow](synthea-workflow.md) beschrieben.
+
 Der Rückvergleich prüft den unterstützten Umfang, Ressourcenanzahlen,
 Originalcodings und erwartete ICD-Ergänzungen, Messwerte einschließlich
 Komponenten, Prozedurzeiten/-status, Präparatdefinitionen, Dokumenttexte sowie
