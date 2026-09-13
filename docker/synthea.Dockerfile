@@ -6,7 +6,7 @@ COPY FHIR_Testdatengenerator_Vorlage.xlsx FHIR_Testdatengenerator_Interpolar_Dem
 RUN mvn -B test package
 
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     ca-certificates python3 openjdk-17-jdk-headless libreoffice-calc \
     libreoffice-java-common fonts-crosextra-carlito \
     && rm -rf /var/lib/apt/lists/*
