@@ -75,6 +75,22 @@ public class ClinicalImportConverterTest {
         var second = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null, result, null, options).convertInternal();
         assertNotEquals(medication.getId(), second.get(0).getId());
     }
+    @Test public void localProductPznPreservesLeadingZerosAndDoseSemantics() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikamentencode", "00000000", "Codesystem", "PZN",
+                "Medikationstyp", "MedicationRequest", "Zeitstempel", "2026-01-02",
+                "Einzeldosis", "2", "Einheit", "mg", "Anzahl Dosen pro Tag", "3",
+                "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED));
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        Medication medication = (Medication) resources.get(0);
+        MedicationRequest request = (MedicationRequest) resources.get(1);
+        assertEquals("http://fhir.de/CodeSystem/ifa/pzn", medication.getCode().getCodingFirstRep().getSystem());
+        assertEquals("00000000", medication.getCode().getCodingFirstRep().getCode());
+        assertFalse(medication.getIngredientFirstRep().hasStrength());
+        assertEquals("2", request.getDosageInstructionFirstRep().getDoseAndRateFirstRep().getDoseQuantity().getValue().toPlainString());
+        assertEquals(3, request.getDosageInstructionFirstRep().getTiming().getRepeat().getFrequency());
+    }
     @Test public void textLabResultUsesExplicitMissingCodingAndPreservesText() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         Observation observation = (Observation)new ObservationLaboratoryConverter(

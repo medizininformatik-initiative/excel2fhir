@@ -28,6 +28,7 @@ public final class ClinicalValues {
     public static Map<String, Coding> systems() {
         Map<String, Coding> values = new LinkedHashMap<>(DiagnosisValues.systems());
         values.put("LOINC", new Coding().setSystem("http://loinc.org"));
+        values.put("PZN", new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn"));
         values.put("RxNorm", new Coding().setSystem("http://www.nlm.nih.gov/research/umls/rxnorm"));
         values.put("CVX", new Coding().setSystem("http://hl7.org/fhir/sid/cvx"));
         values.put("ASK", new Coding().setSystem("http://fhir.de/CodeSystem/ask"));
