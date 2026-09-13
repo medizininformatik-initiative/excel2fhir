@@ -75,6 +75,10 @@ public final class MedicationValues {
         try { DiagnosisValues.absentReason(atc); }
         catch (RuntimeException e) { errors.add("ATC-Code: ungültiger Data Absent Reason"); }
         if (version != null && !version.matches("[0-9]{4}")) errors.add("ATC-Version als vierstellige Jahresversion angeben");
+        if (ADMINISTRATION.equals(type) && get.apply("Einzeldosis") == null
+                && (get.apply("Dosierungstext") != null || get.apply("Dosen pro Tag") != null)) {
+            errors.add("Verabreichungsdosierung benötigt eine Einzeldosis; unbekannt: !dar:unknown (FHIR mad-1)");
+        }
         if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {
             String number = get.apply(key);

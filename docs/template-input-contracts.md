@@ -44,7 +44,10 @@ CSV-Dateien. Einzeldosis, Dosiereinheit und ganzzahlige Dosen pro Tag ergeben oh
 Freitext eine strukturierte Dosierung. Teilangaben, nicht ganzzahlige Häufigkeiten
 und mit Freitext kombinierte Angaben bleiben vollständig im Dosierungstext.
 Verabreichungen erhalten die Tageshäufigkeit als Text, weil ihr Dosierungstyp kein
-entsprechendes Timing-Feld besitzt.
+entsprechendes Timing-Feld besitzt. Eine vorhandene Einzeldosis bleibt dabei
+strukturiert, auch ohne Einheit (fehlende Einheit als DAR unknown). Reiner
+Dosierungstext ohne Dosis wird wegen FHIR-Regel mad-1 als Eingabefehler erkannt;
+bei unbekannter Dosis ist ausdrücklich !dar:unknown einzutragen.
 
 Die vorhandenen Vorlagen wurden mit LibreOffice/UNO aus ihren Originalen geändert.
 Alte, zuvor ignorierte Therapiestart-/Therapieende-Werte bleiben als ausdrücklich

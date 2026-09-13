@@ -55,7 +55,7 @@ public class MedicationConverter extends Converter {
             r.setStatus(MedicationAdministration.MedicationAdministrationStatus.fromCode(status == null ? "completed" : status));
             r.setEffective(effective());
             var dose = new MedicationAdministration.MedicationAdministrationDosageComponent();
-            if (value("Einzeldosis") != null && value("Dosiereinheit") != null) dose.setDose(quantity());
+            if (value("Einzeldosis") != null) dose.setDose(quantity());
             // Administration has no daily timing element. Keep the supplied facts in text.
             if (value("Dosierungstext") != null || value("Dosen pro Tag") != null ||
                     (value("Einzeldosis") != null && value("Dosiereinheit") == null)) dose.setText(doseText());

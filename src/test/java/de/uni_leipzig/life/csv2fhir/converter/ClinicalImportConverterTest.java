@@ -234,4 +234,17 @@ public class ClinicalImportConverterTest {
                 null, new ConverterResult(options), null, options).convertInternal();
         assertTrue(((Observation)resources.get(0)).getValueBooleanType().booleanValue());
     }
+    @Test public void administrationKeepsDoseWithUnknownUnitToSatisfyMad1() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatcode", "123", "Präparatcodesystem", "RxNorm",
+                "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED,
+                "Beginn", "2026-01-01", "Einzeldosis", "2"));
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        var dose = ((MedicationAdministration)resources.get(1)).getDosage().getDose();
+        assertEquals("2", dose.getValue().toPlainString());
+        assertEquals("unknown", dose.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
+        values.remove("Einzeldosis"); values.put("Dosierungstext", "Gabe ohne Mengenangabe");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+    }
 }
