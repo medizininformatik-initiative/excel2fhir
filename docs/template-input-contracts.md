@@ -19,7 +19,7 @@ Der Konverter übernimmt vorhandene Adressbestandteile auch ohne Land. Ein leere
 | Hoch | Laborbefund: Werttyp Ja/Nein | Die gemeinsame Werttypenliste bietet Ja/Nein an; der Konverter erzeugt dann valueBoolean. Das deklarierte KDS-Laborprofil erlaubt dort Quantity, CodeableConcept, Range oder Ratio. | Blattbezogene Werttypen bzw. eine fachlich definierte codierte Abbildung verwenden. Nicht stillschweigend beliebige Codes erfinden. |
 | Mittel | Medikation: Status | Gemeinsame Liste für MedicationRequest, MedicationAdministration und MedicationStatement. Nicht alle Statuswerte gelten für jeden Ressourcentyp; der Konverter verwendet jeweils dessen Enum. | Auswahl nach Medikationstyp einschränken und unpassende Kombinationen früh erklären. |
 | Mittel | Prozedur: Dokumentationszeitpunkt | Wird als `Procedure.performed[x]`, also Durchführungsbeginn, geschrieben. Der Name suggeriert wie bei Condition einen Dokumentationszeitpunkt. | Eindeutig in Durchführungsbeginn umbenennen; einen separaten Dokumentationszeitpunkt nur bei tatsächlichem Bedarf einführen. |
-| Mittel | Laborbefund und Klinische Dokumentation: LOINC plus Codesystem | Die Spalte LOINC enthält den Untersuchungscode auch dann, wenn das zusätzliche Codesystem ein anderes System bezeichnet. | Allgemeine Spaltenbezeichnung wie Untersuchungscode, verbunden mit einer klaren Codesystemauswahl. |
+| Mittel | Laborbefund und Klinische Dokumentation: LOINC plus Codesystem | In Klinische Dokumentation kann unter der Überschrift LOINC auch ein SNOMED-Code stehen. Im Labor ist dagegen nur LOINC auswählbar, sodass Codesystem dort keine echte Auswahl bietet. | Klinische Untersuchungscodes allgemein benennen; für Labor zwischen festem LOINC-System und einer bewusst einheitlichen Eingabekonvention entscheiden. |
 | Mittel | Medikation: Dosierungstext / Ausfüllhilfe | Die Hilfe spricht von zusätzlichen Hinweisen. Tatsächlich werden bei Freitext oder unvollständiger strukturierter Dosierung inzwischen alle importierten Fakten in Dosage.text zusammengeführt, damit DosageDE eingehalten wird. | Hilfe auf das aktuelle Verhalten abstimmen und die kombinierte Textdarstellung menschlich reviewen. |
 
 ## Bewusste Alternativen, keine pauschal zu löschenden Doppelungen
@@ -31,3 +31,7 @@ Der Konverter übernimmt vorhandene Adressbestandteile auch ohne Land. Ein leere
 - Fall: Einrichtung, Abteilung und Versorgungsstelle sind beabsichtigte Kontaktebenen. Die Identifikatoren und Elternbezüge sind keine doppelten Fallnummern.
 
 Die nächsten Änderungen sollten zuerst die fachlich falsche Krankenkassenabbildung und die versteckten bzw. wirkungslosen Medikationsfelder behandeln. Die Anschriftbereinigung entfernt diese anderen Felder ausdrücklich noch nicht.
+
+## Prüfung der Anschriftbereinigung
+
+47 Java-Tests und 39 Python-Tests bestanden. Drei Synthea-Beispiele wurden mit der bereinigten Vorlage neu erzeugt und vollständig zurückkonvertiert. Die 20.844 FHIR-Ressourcen sind inhaltlich identisch zum zuvor validierten Stand. Deshalb wurden die unveränderten FHIR-Bundles nicht nochmals einer vollständigen Terminologieprüfung unterzogen. Vorlagenstile, Zeilenhöhen, verschobene Spaltenbreiten und Auswahllisten wurden gegen die vorherigen Dateien geprüft; die neuen Adressbereiche beider Mappen wurden visuell kontrolliert.
