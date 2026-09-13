@@ -67,7 +67,7 @@ vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
 
 | Blatt | Vorher | Ergänzung |
 | --- | --- | --- |
-| Person | Freitext-Anschrift, kein Sterbezeitpunkt | Straße, Postleitzahl, Ort, Bundesland, Land, Sterbezeitpunkt |
+| Person | Freitext-Anschrift, kein Sterbezeitpunkt | Ausschließlich Straße, Postleitzahl, Ort, Bundesland, Land; zusätzlich Sterbezeitpunkt. Alte Anschrift-Spalte entfernt. |
 | Prozedur | Implizites OPS, einzelner Zeitpunkt, immer completed | Explizites Codesystem, Zusatzcoding, Ende, Status, Kategorie |
 | Laborbefund / Klinische Dokumentation | Nur numerischer LOINC-Messwert; beide als Labor ausgegeben | Werttyp, codierte Antworten, echte Kategorie, Status, Untersuchung ID, Komponente von, Ausgabezeitpunkt, UCUM-Einheitencode, Codesystem |
 | Medikation | PZN/ATC, feste Statuswerte, Dosis und Häufigkeit vermischt | Original-Präparatcode/-system, Status, Absicht, Dosierungstext, Ende, Wirkstoffcode/-system; Menge und Häufigkeit getrennt |

@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Anschrift;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geburtsdatum;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geschlecht;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Krankenkasse;
@@ -49,7 +47,6 @@ public class PatientConverter extends Converter {
     public static enum Person_Columns implements TableColumnIdentifier {
         Vorname,
         Nachname,
-        Anschrift,
         Geburtsdatum,
         Geschlecht,
         Krankenkasse
@@ -93,18 +90,7 @@ public class PatientConverter extends Converter {
         patient.addName(parseName());
         patient.setGender(parseGender());
         patient.setBirthDateElement(parseDate(Geburtsdatum));
-        String country = ClinicalValues.get(this, ClinicalValues.Column.Land);
-        if (country == null) patient.addAddress(parseAddress());
-        else {
-            Address address = new Address().setCountry(country).setType(AddressType.BOTH);
-            String street = ClinicalValues.get(this, ClinicalValues.Column.Straße);
-            if (street != null) address.addLine(street);
-            address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
-            address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
-            String state = ClinicalValues.get(this, ClinicalValues.Column.Bundesland);
-            address.setState("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state);
-            patient.addAddress(address);
-        }
+        patient.addAddress(parseAddress());
         patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
         patient.addGeneralPractitioner(parseHealthProvider());
         // String resourceAsJson =
@@ -205,35 +191,16 @@ public class PatientConverter extends Converter {
      * @return
      */
     private Address parseAddress() {
-        String address = get(Anschrift);
-        Address addressResource;
-        if (address != null) {
-            addressResource = new Address();
-            String[] addressSplitByComma = address.split(",");
-            if (addressSplitByComma.length == 2) {
-                String[] addressPlzAndCity = addressSplitByComma[1].split(" ");
-                String plz = addressPlzAndCity[1];
-                StringBuilder city = new StringBuilder();
-                for (int i = 2; i < addressPlzAndCity.length; i++) {
-                    city.append(addressPlzAndCity[i]);
-                }
-                List<StringType> l = Collections.singletonList(new StringType(addressSplitByComma[0]));
-                addressResource.setCity(city.toString()).setPostalCode(plz).setLine(l);
-            } else {
-                // "12345 ORT"
-                String[] addressPlzAndCity = address.split(" ");
-                if (addressPlzAndCity.length == 2) {
-                    String plz = addressPlzAndCity[0];
-                    String city = addressPlzAndCity[1];
-                    addressResource.setCity(city).setPostalCode(plz).setText(address);
-                } else {
-                    addressResource.setText(address);
-                }
-            }
-            return addressResource.setType(AddressType.BOTH).setCountry("DE");
-        }
-        warning("On " + Person + ": " + Anschrift + " empty. " + this);
-        return getDataAbsentAddress(); // needed to be KDS compliant
+        Address address = new Address();
+        String street = ClinicalValues.get(this, ClinicalValues.Column.Straße);
+        if (street != null) address.addLine(street);
+        address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
+        address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
+        String country = ClinicalValues.get(this, ClinicalValues.Column.Land);
+        address.setCountry(country);
+        String state = ClinicalValues.get(this, ClinicalValues.Column.Bundesland);
+        address.setState("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state);
+        return address.isEmpty() ? getDataAbsentAddress() : address.setType(AddressType.BOTH);
     }
 
     /**

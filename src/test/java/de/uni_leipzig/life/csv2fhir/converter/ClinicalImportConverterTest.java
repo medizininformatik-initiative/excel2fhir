@@ -123,4 +123,24 @@ public class ClinicalImportConverterTest {
                 Converter.DATA_ABSENT_REASON_UNKNOWN.getUrl());
     }
 
+    @Test public void structuredAddressSurvivesMissingCountryAndEmptyAddressUsesDar() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Straße", "Musterstraße 7", "Postleitzahl", "01234",
+                "Ort", "Beispielort", "Geburtsdatum", "2000-01-01"));
+        var columns = PatientConverter.Person_Columns.values();
+        Patient patient = (Patient)new PatientConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        Address address = patient.getAddressFirstRep();
+        assertEquals("Musterstraße 7", address.getLine().get(0).getValue());
+        assertEquals("01234", address.getPostalCode());
+        assertEquals("Beispielort", address.getCity());
+        assertFalse(address.hasCountry());
+        assertFalse(address.hasExtension());
+        values.keySet().removeAll(List.of("Straße", "Postleitzahl", "Ort"));
+        patient = (Patient)new PatientConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("unknown", patient.getAddressFirstRep().getExtensionByUrl(
+                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
+    }
+
 }

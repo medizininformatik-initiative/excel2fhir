@@ -84,8 +84,8 @@ class DemographicsTest(unittest.TestCase):
         self.assertEqual(source, before)
         self.assertEqual(rows['Person'][0][1:3],
                          [report['demographics']['name']['given'][0], report['demographics']['name']['family']])
-        self.assertEqual(rows['Person'][0][6:13], [''] * 7)
-        self.assertEqual(rows['Person'][0][17], 'DE')
+        self.assertEqual(rows['Person'][0][5:12], [''] * 7)
+        self.assertEqual(rows['Person'][0][16], 'DE')
         self.assertTrue(any(l['path']=='address' for l in report['losses']))
 
 

@@ -524,7 +524,7 @@ public class ExcelTemplateValidator {
 
     private static Map<String, List<String>> createExpectedHeaders() {
         Map<String, List<String>> headers = new LinkedHashMap<>();
-        headers.put("Person", Arrays.asList("Patient-ID", "Vorname", "Nachname", "Anschrift", "Geburtsdatum",
+        headers.put("Person", Arrays.asList("Patient-ID", "Vorname", "Nachname", "Geburtsdatum",
                 "Geschlecht", "Krankenkasse", "Datum Einwilligung", "PDAT Einwilligung",
                 "KKDAT retro Einwilligung", "KKDAT Einwilligung", "BIOMAT Einwilligung",
                 "BIOMAT Zusatz Einwilligung", "Straße", "Postleitzahl", "Ort", "Bundesland", "Land", "Sterbezeitpunkt", "Erklärung/Ausfüllhilfe"));

@@ -3,6 +3,7 @@
 Usage: extend_clinical_templates.py INPUT.xlsx OUTPUT.xlsx
 """
 import base64
+import re
 from pathlib import Path
 import sys
 from clinical_events import SCHEMAS, PERSON_EXTRA, DOCUMENT_EXTRA
@@ -68,7 +69,7 @@ def extend(source, target):
         explanations = {
             'Person': ['Straße, Postleitzahl, Ort, Bundesland und Land übernehmen eine strukturierte Anschrift.',
                        'Land ist der ISO-Ländercode, z.B. US oder DE. US-Adressen werden nicht zu deutschen Adressen umgedeutet.',
-                       'Anschrift bleibt für vorhandene Freitexte nutzbar; strukturierte Felder haben bei gesetztem Land Vorrang.',
+                       'Straße, Postleitzahl und Ort werden auch bei fehlendem Land übernommen.',
                        'Sterbezeitpunkt nur bei bekanntem Tod ausfüllen; leer bedeutet keine Angabe.',
                        'Einwilligungen nur ausfüllen, wenn sie tatsächlich dokumentiert sind.'],
             'DocumentReference': ['Dokumenttext enthält den eingebetteten Klartext; damit bleibt die Excel-Datei eigenständig nutzbar.',
@@ -121,6 +122,18 @@ def extend(source, target):
                'Befund-Ergebnisse verweisen auf Untersuchung ID im Labor- oder Messwertblatt.',
                'Fehlende Zeitpunkte ausdrücklich mit !dar:unknown kennzeichnen; leere Felder bleiben leer.']
         for i,note in enumerate(notes,2):put(sheet,hint+str(i),note)
+    # Historical base templates still have D=Anschrift. Migrate their examples
+    # after inserting the structured columns, then remove the obsolete column.
+    if sheets['Person'].get('D1') == 'Anschrift':
+        for cell, value in sheets['Person'].items():
+            if not re.fullmatch(r'D[0-9]+', cell) or cell == 'D1' or not value:
+                continue
+            address = re.fullmatch(r'(.+),\s*(\d{5})\s+(.+)', value)
+            if address is None:
+                raise ValueError('Address requires explicit migration: ' + value)
+            for col, text in zip(('N', 'O', 'P', 'R'), (*address.groups(), 'DE')):
+                put('Person', col + cell[1:], text)
+        op('removeColumns', 'Person', 3, 1)
     apply_workbook_edits(Path(source),ops,Path(target))
 
 

@@ -54,6 +54,8 @@ public class WorkbookUno {
                     q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4, row)).setDataArray(values);
                 } else if (a[0].equals("insert")) {
                     q(XColumnRowRange.class, sheet).getColumns().insertByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+                } else if (a[0].equals("removeColumns")) {
+                    q(XColumnRowRange.class, sheet).getColumns().removeByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
                 } else if (a[0].equals("copy")) {
                     CellRangeAddress source = q(XCellRangeAddressable.class, sheet.getCellRangeByName(a[2])).getRangeAddress();
                     CellAddress target = q(XCellAddressable.class, sheet.getCellRangeByName(a[3]).getCellByPosition(0, 0)).getCellAddress();

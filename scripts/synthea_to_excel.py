@@ -66,7 +66,7 @@ def prepare(bundle):
     demographics = identity(patient)
     name = demographics['name']
     born = datetime.strptime(patient['birthDate'], '%Y-%m-%d').strftime('%d.%m.%Y 00:00')
-    rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), '', born,
+    rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), born,
                            {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']]])
     address = demographics['address']
     rows['Person'][0] += [''] * 7 + [', '.join(address.get('line',[])), address.get('postalCode',''),
