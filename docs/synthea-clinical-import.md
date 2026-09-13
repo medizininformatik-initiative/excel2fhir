@@ -25,13 +25,16 @@ Ressourcen ist die direkte Übernahme der Originalcodes der funktionierende
 Standard: insbesondere SNOMED-Prozeduren, RxNorm-Präparate, LOINC-Messwerte und
 CVX-Impfstoffe. Kein RxNorm-Code wird als PZN umetikettiert.
 
-`select_german_product()` kapselt die noch fehlende deutsche Produktauswahl.
-Sie liefert Originalcoding, Status `deferred`, kein erfundenes Ziel und eine
-Begründung. `select_ops()` erhält die SNOMED-Prozedur; eine zusätzliche nationale
-OPS-Tabelle ist noch nicht hinterlegt. Diese Schnittstellen sind **keine fertigen
-RxNorm→PZN- oder SNOMED→OPS-Mappings**. Die bestehende Eingabe deutscher Codes
-bleibt möglich. Der klinische Begleitbericht enthält seine Versionskennung,
-die Prüfsumme des Registers und die Entscheidungen je Ressource.
+`select_german_product()` und `ProductCatalog` kapseln die optionale lokale
+Produkttabelle. Ohne passenden lokalen Eintrag bleibt das Originalcoding erhalten
+(`source-preserved`); mit geeigneter Zuordnung wird ein deutsches Produkt gewählt
+(`local-product`). Herkunft und Katalogstand stehen im Begleitbericht.
+[Katalogformat und Trennung öffentlicher/lokaler Daten](medication-product-catalog.md).
+Eine echte RxNorm→PZN-Tabelle wird weiterhin nicht mitgeliefert.
+`select_ops()` erhält die SNOMED-Prozedur; eine zusätzliche nationale OPS-Tabelle
+ist noch nicht hinterlegt. Die bestehende Eingabe deutscher Codes bleibt möglich.
+Das Quellregister ist das archivierte Inventar; dessen `productSelection: deferred`
+bezeichnet den damaligen Stand, während der Laufbericht den aktuellen Anbieter zeigt.
 
 ## Ressourcen und Eigenschaften
 

@@ -5,6 +5,7 @@ selection has a stable result contract and does not block the clinical import.
 import copy
 import hashlib
 from pathlib import Path
+from medication_products import ProductCatalog, select_german_product, INGREDIENT_SYSTEMS
 
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
@@ -24,12 +25,6 @@ def mapping_metadata():
 
 class UnsupportedValue(ValueError):
     pass
-
-
-def select_german_product(coding):
-    """Replace with a reviewed RxNorm -> product table later; never invent a PZN."""
-    return {'status': 'deferred', 'source': copy.deepcopy(coding), 'target': None,
-            'reason': 'Originalpräparat übernommen; deutsche Produktauswahl noch nicht hinterlegt.'}
 
 
 def select_ops(coding):
@@ -72,6 +67,7 @@ def observation_value(r):
 
 
 def prepare_clinical(entries, pid, encounter_numbers):
+    products = ProductCatalog()
     index = {}
     for e in entries:
         r = e.get('resource', {})
@@ -157,8 +153,16 @@ def prepare_clinical(entries, pid, encounter_numbers):
                        str(dose.get('value', '')), dose.get('code', dose.get('unit', '')), daily]
                 row += [code, system, r.get('status', ''), r.get('intent', ''), dosage.get('text', ''),
                         period.get('end', ''), '!dar:unknown', SYSTEMS[SNOMED]]
+                decision = products.select(cc['coding'][0])
+                if decision['target'] is not None:
+                    product = decision['target']
+                    row[5], row[10] = product['display'], product['doseForm']
+                    row[16], row[17] = product['code'], 'PZN'
+                    if product.get('ingredient'):
+                        ingredient = product['ingredient']
+                        row[22], row[23] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
                 rows['Medikation'].append(row)
-                mappings.append({'sourceId': r['id'], **select_german_product(cc['coding'][0])})
+                mappings.append({'sourceId': r['id'], **decision})
                 handled.update(['medicationCodeableConcept', 'medicationReference', 'authoredOn', 'effectiveDateTime', 'effectivePeriod', 'intent'])
                 # Explicitly report partial dosage transfer, including route,
                 # additional dose/rate entries, bounds and non-daily timing.
@@ -177,4 +181,8 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 loss(key, 'Eigenschaft nicht übernommen')
         except (UnsupportedValue, KeyError) as ex:
             loss('$', 'Ressource ausgelassen: ' + str(ex))
-    return rows, {'clinicalMapping':mapping_metadata(), 'clinicalImports': imported, 'clinicalMappings': mappings, 'losses': losses}
+    has_local_products = any(m.get('provider') == 'mmi-local' for m in mappings)
+    return rows, {'productCatalog': products.metadata,
+                  'productDataUsage': {'containsLocalProductData': has_local_products,
+                                       'redistribution': 'not-cleared' if has_local_products else 'no-local-product-data'},
+                  'clinicalMapping':mapping_metadata(), 'clinicalImports': imported, 'clinicalMappings': mappings, 'losses': losses}

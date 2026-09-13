@@ -2,6 +2,7 @@
 from collections import Counter
 from decimal import Decimal
 from clinical_import import prepare_clinical, SYSTEMS
+from medication_products import PZN
 from clinical_events import prepare_events, prepare_documents
 from german_texts import GermanTexts, localize_rows
 from german_demographics import identity
@@ -17,6 +18,8 @@ def check_clinical(source, target, report):
     localize_rows({'DocumentReference':document_rows})
     expected['clinicalImports'].extend(document_report['clinicalImports'])
     assert report.get('documentIdentityChanges') == document_report['documentIdentityChanges'], 'Document identity report changed'
+    assert report.get('productCatalog') == expected['productCatalog'], 'Product catalogue changed; use the generation catalogue'
+    assert report.get('productDataUsage') == expected['productDataUsage'], 'Product data provenance changed'
     assert report.get('clinicalMapping') == expected['clinicalMapping'], 'Clinical mapping version changed'
     assert report.get('clinicalImports', []) == expected['clinicalImports'], 'Clinical import report changed'
     assert report.get('clinicalMappings', []) == expected['clinicalMappings'], 'Clinical mapping report changed'
@@ -59,7 +62,8 @@ def check_clinical(source, target, report):
                             r.get('performedPeriod',{}).get('start'),r.get('performedPeriod',{}).get('end'))
     assert Counter(procedure(src[i['sourceId']])for i in expected['clinicalImports']if i['resourceType']=='Procedure')==Counter(procedure(r)for r in dst if r['resourceType']=='Procedure'), 'Procedure values changed'
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
-    expected_codes=Counter((SYSTEMS.get(r['code']['coding'][0]['system']),r['code']['coding'][0]['code'])for r in medications.values())
+    product_systems = {**SYSTEMS, PZN: 'PZN'}
+    expected_codes=Counter((product_systems.get(r['code']['coding'][0]['system']),r['code']['coding'][0]['code'])for r in medications.values())
     products={(row[17],row[16])for row in rows['Medikation']}
     assert expected_codes==Counter(products), 'Medication definitions lost or merged'
     for r in dst:

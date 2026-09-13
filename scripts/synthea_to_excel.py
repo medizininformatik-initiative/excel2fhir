@@ -20,6 +20,7 @@ from diagnosis_mapping import map_diagnosis, mapping_metadata
 from clinical_import import prepare_clinical, SUPPORTED
 from clinical_events import prepare_events, prepare_documents, SHEETS
 from german_texts import localize_rows
+from medication_products import require_external_output, require_external_path
 from synthea_movements import enrich
 from german_demographics import identity
 
@@ -205,6 +206,8 @@ def column_number(name):
 
 
 def write_workbook(rows, output):
+    if any(row[17] == 'PZN' for row in rows.get('Medikation', [])):
+        require_external_path(output)
     template = ROOT/'FHIR_Testdatengenerator_Vorlage.xlsx'
     sheets = read_sheets(template)
     ops = []
@@ -278,6 +281,8 @@ def main():
     source=Path(sys.argv[1]);output=Path(sys.argv[2]);report=output.with_suffix('.loss.json')
     if output.exists() or report.exists():raise FileExistsError('Output/report already exists')
     data=source.read_bytes();rows,loss=prepare(json.loads(data))
+    require_external_output(loss, output)
+    require_external_output(loss, report)
     loss['sourceSha256']=hashlib.sha256(data).hexdigest()
     write_workbook(rows,output)
     report.write_text(json.dumps(loss,ensure_ascii=False,indent=2)+'\n')
