@@ -11,10 +11,9 @@ Die Auswahl betrifft die konkrete Spalte, nicht pauschal das ganze Tabellenblatt
 | Klinische Dokumentation: Codesystem der Untersuchung | LOINC, SNOMED CT | AT30:AT31 |
 | Beide Messwertblätter: Wertcodesystem | LOINC, SNOMED CT | AU30:AU31 |
 | Prozedur: Codesystem und Zusatzcodesystem | SNOMED CT, OPS 2009–2026 | AB30:AB48 |
-| Medikation: Präparatcodesystem | RxNorm, SNOMED CT, CVX, PZN | AV30:AV33 |
+| Medikation: Präparatcodesystem | PZN, SNOMED CT, RxNorm, CVX | AV30:AV33 |
 | Medikation: Wirkstoffcodesystem | ASK, SNOMED CT, RxNorm | AW30:AW32 |
-| Allergie: Codesystem | SNOMED CT, RxNorm | AX30:AX31 |
-| Impfung: Codesystem | CVX, SNOMED CT, RxNorm | AY30:AY32 |
+| Impfung: Codesystem | ATC 2026, SNOMED CT, RxNorm, CVX | AY30:AY33 |
 | Befundbericht und DocumentReference: Typcodesystem | LOINC, SNOMED CT | AZ30:AZ31 |
 | Behandlungsplan und Hilfsmittel: Codesystem | SNOMED CT | BA30 |
 | Laborbefund: Kategorie | laboratory | AD30 |

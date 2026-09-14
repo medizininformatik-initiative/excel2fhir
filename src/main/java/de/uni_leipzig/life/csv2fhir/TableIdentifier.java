@@ -60,7 +60,6 @@ public enum TableIdentifier {
 
     Klinische_Dokumentation(ObservationVitalSigns_Columns.class, ObservationVitalSignsConverter.class),
 
-    Allergie(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Allergy.class),
     Impfung(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Vaccine.class),
     Befundbericht(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Report.class),
     Behandlungsplan(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Plan.class),

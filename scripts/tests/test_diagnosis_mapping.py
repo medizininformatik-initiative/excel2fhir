@@ -23,7 +23,7 @@ class MappingTest(unittest.TestCase):
         rows, report = prepare(source)
         self.assertEqual(source, before)
         self.assertEqual(rows['Diagnose'][0][3:7], [
-            '10509002', 'SNOMED CT (Version nicht angegeben)', 'J20.9', 'ICD-10-GM 2026'])
+            'J20.9', 'ICD-10-GM 2026', '10509002', 'SNOMED CT (Version nicht angegeben)'])
         self.assertEqual(rows['Diagnose'][0][8], '2020-01')
         self.assertEqual(report['diagnosisMappings'][0]['status'], 'approximate')
         self.assertEqual(len(rows['Diagnose']), 1)
@@ -33,7 +33,7 @@ class MappingTest(unittest.TestCase):
         source['entry'][2]['resource']['code']['coding'].append({
             'system': ICD10GM, 'version': '2025', 'code': 'J20.8'})
         rows, report = prepare(source)
-        self.assertEqual(rows['Diagnose'][0][5:7], ['J20.8', 'ICD-10-GM 2025'])
+        self.assertEqual(rows['Diagnose'][0][3:5], ['J20.8', 'ICD-10-GM 2025'])
         self.assertEqual(report['diagnosisMappings'][0]['status'], 'source-preserved')
 
     def test_no_guess_from_conflicting_display_unknown_code_or_explicit_version(self):
@@ -62,7 +62,7 @@ class MappingTest(unittest.TestCase):
             source['entry'][2]['resource']['code']['coding'][0].update(code=code, display=display)
             before = copy.deepcopy(source)
             rows, report = prepare(source)
-            self.assertEqual(rows['Diagnose'][0][5], expected)
+            self.assertEqual(rows['Diagnose'][0][3], expected)
             self.assertEqual(source, before)
             self.assertEqual(prepare(source), (rows, report))
             self.assertTrue(report['diagnosisMappings'][0]['reason'])
@@ -83,7 +83,7 @@ class MappingTest(unittest.TestCase):
                 before = copy.deepcopy(source)
                 rows, report = prepare(source)
                 self.assertEqual(source, before)
-                self.assertEqual(rows['Diagnose'][0][5], target)
+                self.assertEqual(rows['Diagnose'][0][3], target)
                 changed = report['diagnosisMappings'][0].get('verificationStatusChange')
                 self.assertEqual(bool(changed), status in [None, 'confirmed'])
                 if changed:

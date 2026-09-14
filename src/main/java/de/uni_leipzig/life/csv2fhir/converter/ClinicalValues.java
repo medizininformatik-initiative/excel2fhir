@@ -31,6 +31,7 @@ public final class ClinicalValues {
         values.put("PZN", new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn"));
         values.put("RxNorm", new Coding().setSystem("http://www.nlm.nih.gov/research/umls/rxnorm"));
         values.put("CVX", new Coding().setSystem("http://hl7.org/fhir/sid/cvx"));
+        values.put("ATC 2026", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setVersion("2026"));
         values.put("ASK", new Coding().setSystem("http://fhir.de/CodeSystem/ask"));
         for (int year = 2009; year <= 2026; year++) {
             values.put("OPS " + year, new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/ops").setVersion("" + year));

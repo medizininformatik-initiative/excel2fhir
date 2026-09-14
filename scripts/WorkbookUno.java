@@ -41,6 +41,14 @@ public class WorkbookUno {
             for (String line : Files.readAllLines(Path.of(args[1]), StandardCharsets.UTF_8)) {
                 if (line.isBlank()) continue;
                 String[] a = line.split("\t", -1);
+                if (a[0].equals("removeSheet")) {
+                    book.getSheets().removeByName(a[1]);
+                    continue;
+                }
+                if (a[0].equals("moveSheet")) {
+                    book.getSheets().moveByName(a[1], Short.parseShort(a[2]));
+                    continue;
+                }
                 if (a[0].equals("copySheet")) {
                     book.getSheets().copyByName(a[2], a[1], (short) book.getSheets().getElementNames().length);
                     continue;

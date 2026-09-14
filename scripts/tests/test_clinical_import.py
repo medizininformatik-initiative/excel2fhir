@@ -32,6 +32,35 @@ class ClinicalImportTest(unittest.TestCase):
         self.assertEqual(rows['Klinische Dokumentation'],[])
         self.assertTrue(any(x['path']=='$'for x in report['losses']if x['resourceType']=='Observation'))
 
+    def test_vaccine_classification_preserves_event_and_excludes_cvx(self):
+        source = bundle()
+        self.add(source, {'resourceType': 'Immunization', 'id': 'vaccine',
+            'status': 'completed', 'occurrenceDateTime': '2020-01-02', 'primarySource': True,
+            'vaccineCode': {'coding': [{'system': 'http://hl7.org/fhir/sid/cvx',
+                'code': '10', 'display': 'IPV'}]}})
+        before = copy.deepcopy(source)
+        rows, report = prepare(source)
+        self.assertEqual(source, before)
+        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC 2026', '2020-01-02', 'completed', 'true'])
+        self.assertIn('Poliomyelitis', rows['Impfung'][0][3])
+        self.assertEqual(report['vaccineMappings'][0]['source']['code'], '10')
+        source['entry'][-1]['resource']['vaccineCode']['coding'][0]['code'] = 'unmapped'
+        rows, report = prepare(source)
+        self.assertEqual(len(rows['Impfung']), 1)
+        self.assertEqual(rows['Impfung'][0][4:6], ['', ''])
+        self.assertEqual(report['vaccineMappings'][0]['status'], 'unmapped')
+        self.assertIn('offen', rows['Impfung'][0][3])
+
+    def test_allergy_exclusion_is_explicit_and_does_not_remove_other_events(self):
+        source = bundle()
+        self.add(source, {'resourceType': 'AllergyIntolerance', 'id': 'allergy',
+            'code': {'coding': [{'system': 'http://www.nlm.nih.gov/research/umls/rxnorm', 'code': '1191'}]}})
+        rows, report = prepare(source)
+        self.assertNotIn('Allergie', rows)
+        self.assertFalse(any(i['resourceType'] == 'AllergyIntolerance' for i in report['clinicalImports']))
+        self.assertTrue(any(i['id'] == 'allergy' and 'Bewusst ausgeschlossen' in i['reason'] for i in report['losses']))
+        self.assertEqual(len(rows['Diagnose']), 1)
+
     def test_product_selection_preserves_source_without_local_mapping(self):
         coding={'system':'http://www.nlm.nih.gov/research/umls/rxnorm','code':'123'}
         before=copy.deepcopy(coding);decision=select_german_product(coding)

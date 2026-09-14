@@ -3,20 +3,22 @@ from clinical_import import coding, UnsupportedValue
 import base64
 import hashlib
 from german_demographics import localize_document_identity
+from german_texts import GermanTexts
+from vaccine_mapping import map_vaccine, metadata as vaccine_metadata
 
 COMMON = ['Patient-ID', 'Fall-Nr', 'Eintrag ID', 'Bezeichner', 'Code', 'Codesystem']
 SCHEMAS = {
-    'Allergie': COMMON + ['Zeitpunkt', 'Klinischer Status', 'Verifikationsstatus', 'Typ', 'Kategorie', 'Kritikalität', 'Reaktionscode', 'Reaktion'],
     'Impfung': COMMON + ['Zeitpunkt', 'Status', 'Primärquelle'],
     'Befundbericht': COMMON + ['Zeitpunkt', 'Status', 'Ausgabezeitpunkt', 'Ergebnisse', 'Beschreibung'],
     'Behandlungsplan': COMMON + ['Zeitpunkt', 'Ende', 'Status', 'Absicht', 'Beschreibung', 'Aktivitätscodes'],
     'Hilfsmittel': COMMON + ['Status', 'UDI', 'Hersteller'],
 }
-SHEETS = dict(zip(['AllergyIntolerance','Immunization','DiagnosticReport','CarePlan','Device'], SCHEMAS))
+SHEETS = dict(zip(['Immunization','DiagnosticReport','CarePlan','Device'], SCHEMAS))
 
 
 def prepare_events(entries, pid, encounters, imported_observations):
-    rows = {s: [] for s in SCHEMAS}; imported, losses = [], []
+    rows = {s: [] for s in SCHEMAS}; imported, losses, vaccines = [], [], []
+    texts = GermanTexts()
     index = {}
     for entry in entries:
         r = entry.get('resource', {})
@@ -44,21 +46,15 @@ def prepare_events(entries, pid, encounters, imported_observations):
             for source, target in [('status','Status'),('intent','Absicht'),('manufacturer','Hersteller')]:
                 if target in SCHEMAS[SHEETS[typ]]:
                     values[target] = r.get(source,''); handled.add(source)
-            if typ=='AllergyIntolerance':
-                values['Zeitpunkt']=r.get('recordedDate',''); values['Typ']=r.get('type','')
-                values['Kategorie']=';'.join(r.get('category',[])); values['Kritikalität']=r.get('criticality','')
-                for field,col in [('clinicalStatus','Klinischer Status'),('verificationStatus','Verifikationsstatus')]:
-                    cs=r.get(field,{}).get('coding',[])
-                    if len(cs)>1:raise UnsupportedValue('Mehrere Allergiestatus-Codings')
-                    values[col]=cs[0]['code'] if cs else ''
-                reactions=r.get('reaction',[])
-                if reactions:
-                    rc, rs, rt = coding(reactions[0]['manifestation'][0])
-                    if rs!='SNOMED CT (Version nicht angegeben)': raise UnsupportedValue('Reaktionscode ist nicht SNOMED')
-                    values['Reaktionscode']=rc;values['Reaktion']=rt
-                    loss('reaction','Erste Manifestation übernommen; weitere Reaktionen, Schweregrade und Reaktionsdetails fehlen')
-                handled.update(['recordedDate','type','category','criticality','clinicalStatus','verificationStatus'])
-            elif typ=='Immunization':
+            if typ=='Immunization':
+                decision = map_vaccine(cc['coding'][0])
+                vaccines.append({'sourceId': r['id'], **decision})
+                if cc['coding'][0]['system'] == 'http://hl7.org/fhir/sid/cvx':
+                    values['Bezeichner'] = texts.text(label, 'Impfung', system, code)
+                    target = decision['target']
+                    values['Code'] = target['code'] if target else ''
+                    values['Codesystem'] = 'ATC ' + target['version'] if target else ''
+                    if not target: values['Bezeichner'] += ' (Impfstoffzuordnung offen)'
                 values['Zeitpunkt']=r.get('occurrenceDateTime','')
                 values['Primärquelle']=str(r['primarySource']).lower() if 'primarySource'in r else ''
                 handled.update(['occurrenceDateTime','primarySource'])
@@ -91,7 +87,9 @@ def prepare_events(entries, pid, encounters, imported_observations):
             imported.append({'sourceId':r['id'],'resourceType':typ})
             for key in r.keys()-handled:loss(key,'Eigenschaft nicht oder nur teilweise übernommen')
         except (UnsupportedValue, KeyError) as ex:loss('$','Ressource ausgelassen: '+str(ex))
-    return rows, {'clinicalImports':imported, 'losses':losses}
+    return rows, {'clinicalImports':imported, 'losses':losses,
+                  'vaccineMapping': vaccine_metadata(), 'vaccineMappings': vaccines,
+                  'vaccineTexts': texts.report()}
 
 DOCUMENT_EXTRA = ['Dokumenttext','Status','Ausgabezeitpunkt','Dokumentcode','Dokumentcodesystem','Dokumentbezeichner']
 PERSON_EXTRA = ['Straße','Postleitzahl','Ort','Bundesland','Land','Sterbezeitpunkt']

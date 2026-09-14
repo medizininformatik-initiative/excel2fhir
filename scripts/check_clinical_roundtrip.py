@@ -61,6 +61,18 @@ def check_clinical(source, target, report):
     def procedure(r):return (code(r['code']),r['status'],r.get('performedDateTime'),
                             r.get('performedPeriod',{}).get('start'),r.get('performedPeriod',{}).get('end'))
     assert Counter(procedure(src[i['sourceId']])for i in expected['clinicalImports']if i['resourceType']=='Procedure')==Counter(procedure(r)for r in dst if r['resourceType']=='Procedure'), 'Procedure values changed'
+    assert report.get('vaccineMapping') == event_report['vaccineMapping'], 'Vaccine mapping changed'
+    assert report.get('vaccineMappings') == event_report['vaccineMappings'], 'Vaccine decisions changed'
+    vaccine_rows = events['Impfung']
+    def vaccine_row(row):
+        systems = {'ATC 2026': ('http://fhir.de/CodeSystem/bfarm/atc', '2026')}
+        system, version = systems.get(row[5], (next((k for k,v in SYSTEMS.items() if v == row[5]), None), None))
+        return (row[3], ((system, row[4], version),) if row[4] else (), row[6], row[7], row[8])
+    assert Counter(vaccine_row(row) for row in vaccine_rows) == Counter((
+        r['vaccineCode'].get('text', ''), tuple((c.get('system'), c.get('code'), c.get('version'))
+        for c in r['vaccineCode'].get('coding', [])), r.get('occurrenceDateTime', ''),
+        r.get('status', ''), str(r['primarySource']).lower() if 'primarySource' in r else '')
+        for r in dst if r['resourceType'] == 'Immunization'), 'Vaccine coding, description or event changed'
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
     product_systems = {**SYSTEMS, PZN: 'PZN'}
     localize_rows({'Medikation': rows['Medikation']})

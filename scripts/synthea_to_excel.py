@@ -113,6 +113,9 @@ def prepare(bundle):
         r = e.get('resource', {});typ = r.get('resourceType')
         if typ in ['Patient','Encounter']: continue
         if typ in SUPPORTED or typ in SHEETS or typ == 'DocumentReference': continue
+        if typ == 'AllergyIntolerance':
+            loss(r, '$', 'Bewusst ausgeschlossen: Allergieunterstützung zurückgestellt; spätere IPS-Abbildung offen')
+            continue
         if typ != 'Condition':
             loss(r, '$', 'Noch nicht im klinischen Excel-Import umgesetzt')
             continue
@@ -171,6 +174,7 @@ def prepare(bundle):
         {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'})
     rows.update(event_rows)
     clinical_report['clinicalImports'].extend(event_report['clinicalImports'])
+    clinical_report.update({k: v for k, v in event_report.items() if k not in ('clinicalImports', 'losses')})
     document_rows, document_report = prepare_documents(entries, pid, encounter_numbers)
     rows['DocumentReference'] = document_rows
     clinical_report['clinicalImports'].extend(document_report['clinicalImports'])
@@ -179,6 +183,11 @@ def prepare(bundle):
     losses.extend(event_report['losses'])
     losses.extend(clinical_report.pop('losses'))
     translation_report = localize_rows(rows, demographics['address'])
+    for row, decision in zip(rows['Diagnose'], diagnosis_mappings):
+        if row[6].startswith('ICD-10-GM '):
+            row[3:7] = row[5:7] + row[3:5]
+        if decision.get('target'):
+            row[2] = decision['target']['display']
     return rows, {**clinical_report, 'germanTexts':translation_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,

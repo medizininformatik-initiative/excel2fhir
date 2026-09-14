@@ -20,19 +20,14 @@ python3 scripts/build_synthea_code_registry.py INVENTARVERZEICHNIS SYNTHEA_CHECK
 ```
 
 Die Diagnose-Tabelle v3 beurteilt weiterhin alle 333 produktiven Diagnosecodes:
-320 ICD-10-GM-Zuordnungen und 13 bewusst ohne Ergänzung. Bei anderen klinischen
-Ressourcen ist die direkte Übernahme der Originalcodes der funktionierende
-Standard: insbesondere SNOMED-Prozeduren, RxNorm-Präparate, LOINC-Messwerte und
-CVX-Impfstoffe. Kein RxNorm-Code wird als PZN umetikettiert.
-
-`select_german_product()` und `ProductCatalog` kapseln die optionale lokale
-Produkttabelle. Ohne passenden lokalen Eintrag bleibt das Originalcoding erhalten
-(`source-preserved`); mit geeigneter Zuordnung wird ein deutsches Produkt gewählt
-(`local-product`). Herkunft und Katalogstand stehen im Begleitbericht.
-[Katalogformat und Trennung öffentlicher/lokaler Daten](medication-product-catalog.md).
-Eine echte RxNorm→PZN-Tabelle wird weiterhin nicht mitgeliefert.
-`select_ops()` erhält die SNOMED-Prozedur; eine zusätzliche nationale OPS-Tabelle
-ist noch nicht hinterlegt. Die bestehende Eingabe deutscher Codes bleibt möglich.
+320 ICD-10-GM-Zuordnungen und 13 bewusst ohne Ergänzung. Medikamente erhalten die öffentliche ATC-2026-Klassifikation und, soweit belegt,
+eine echte deutsche PZN samt Präparatname und Form. RxNorm bleibt ausschließlich
+im Quellen-/Mappingbericht. Fehlende Zuordnungen stehen sichtbar im Präparattext;
+Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
+breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
+Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
+[Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
+`select_ops()` erhält derzeit noch die SNOMED-Prozedur; der OPS-Ausbau folgt.
 Das Quellregister ist das archivierte Inventar; dessen `productSelection: deferred`
 bezeichnet den damaligen Stand, während der Laufbericht den aktuellen Anbieter zeigt.
 
@@ -42,13 +37,13 @@ bezeichnet den damaligen Stand, während der Laufbericht den aktuellen Anbieter 
 | --- | --- | --- | --- |
 | Patient | Person | Synthetische deutsche Namen/Anschrift; Geburt, Geschlecht, Sterbezeitpunkt aus Quelle | Wohnhistorie, Kommunikation und weitere demografische Erweiterungen |
 | Encounter | Fall | Klasse, Zeitraum, Patientbezug, explizite Notfallkennzeichnung | Einrichtung/Behandler, Gründe, Entlassungsdisposition |
-| Condition | Diagnose | Originalcode, optionaler ICD-Zusatz, drei Zeitangaben, Status, Kontakt | Weitere Synthea-Metadaten |
+| Condition | Diagnose | ICD-10-GM zuerst, SNOMED ergänzend bzw. begründeter Rückfall, drei Zeitangaben, Status, Kontakt | Weitere Synthea-Metadaten |
 | Procedure | Prozedur | Originalcode, optionaler Zusatzcode, Zeitraum, Status, optionale SNOMED-Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler, zusätzliche OPS-Zuordnung |
 | Observation | Laborbefund / Klinische Dokumentation | Zahl, Text, Code, Boolean, DAR, Komponenten, Kategorie, Status, effective/issued, UCUM-Code, Patient/Kontakt | Weitere Codings und nicht dargestellte Zusatzattribute; unsupported value[x] wird ausdrücklich ausgelassen |
-| MedicationRequest / Administration | Medikation | Originalpräparat, Status, Zeitpunkt/Verabreichungszeitraum, Verordnungsabsicht, Text, erste Dosis, einfache Tagesfrequenz | Weitere Dosen/Raten, Routen, Zeitpläne, Gründe und Behandler |
-| Medication | Aus Medikationszeilen | Getrennte Definition je Präparatcode; referenzierte Ressourcen werden aufgelöst | Deutsche Produktauswahl, konkrete Inhaltsstoffe/Stärken; fehlender Wirkstoff ausdrücklich als DAR |
-| AllergyIntolerance | Allergie | Originalcode, Dokumentationszeit, klinischer und Verifikationsstatus, Typ/Kategorie/Kritikalität, erste Reaktionsmanifestation | Weitere Reaktionen und Schweregrade |
-| Immunization | Impfung | CVX-Code, Zeitpunkt, Status, Primärquellenangabe, Patient/Kontakt | Durchführungsort und weitere Impfdetails |
+| MedicationRequest / Administration | Medikation | Deutsches Präparat bzw. sichtbar offene Zuordnung, Status, Zeitpunkt/Verabreichungszeitraum, Verordnungsabsicht, Text, erste Dosis, einfache Tagesfrequenz | Weitere Dosen/Raten, Routen, Zeitpläne, Gründe und Behandler |
+| Medication | Aus Medikationszeilen | Getrennte Definition je vollständiger Präparatbeschreibung; referenzierte Ressourcen werden aufgelöst | Nicht belegte PZN und konkrete Inhaltsstoffe/Stärken; fehlender Wirkstoff ausdrücklich als DAR |
+| AllergyIntolerance | Bewusst ausgeschlossen | Jede Auslassung im Verlustbericht; Originalquelle bleibt erhalten | IPS-konforme Unterstützung zurückgestellt |
+| Immunization | Impfung | ATC 2026, deutscher Impfstofftext, Zeitpunkt, Status, Primärquellenangabe, Patient/Kontakt | Durchführungsort und weitere Impfdetails |
 | DiagnosticReport | Befundbericht | Erstes Coding, Zeitpunkt, Ausgabezeit, Status, auflösbare Messwertverweise, vorhandene conclusion | Kategorien, Behandler, zusätzliche Codings; eingebettete Notizen stehen in DocumentReference |
 | CarePlan | Behandlungsplan | Klinische SNOMED-Kategorie, Zeitraum, Status, Absicht, Beschreibung, Aktivitätscodes | Aktivitätsdetails/Status (explizit unknown), Ziele, Behandlerteam und Diagnoseverweise |
 | Device | Hilfsmittel | Typ, Status, Patient, erste UDI-Gerätekennung, Hersteller | Weitere UDI-Angaben und Gerätedetails |
@@ -75,7 +70,7 @@ vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
 | Laborbefund / Klinische Dokumentation | Nur numerischer LOINC-Messwert; beide als Labor ausgegeben | Werttyp, codierte Antworten, echte Kategorie, Status, Untersuchung ID, Komponente von, Ausgabezeitpunkt, UCUM-Einheitencode, Codesystem |
 | Medikation | PZN/ATC, feste Statuswerte, Dosis und Häufigkeit vermischt | Original-Präparatcode/-system, Status, Absicht, Dosierungstext, Ende, Wirkstoffcode/-system; Menge und Häufigkeit getrennt |
 | DocumentReference | Nur Dateipfad und Embed | Eingebetteter Klartext, Status, Datum und Dokumenttyp |
-| Neue Blätter | Nicht vorhanden | Allergie, Impfung, Befundbericht, Behandlungsplan, Hilfsmittel |
+| Neue Blätter | Nicht vorhanden | Impfung, Befundbericht, Behandlungsplan, Hilfsmittel |
 
 Komponenten stehen direkt unter ihrer Hauptzeile. `Komponente von` verweist auf
 `Untersuchung ID`; die Hauptzeile muss zuerst stehen. Daraus entsteht eine
@@ -141,7 +136,7 @@ Alle 18 vorhandenen Patientenfälle wurden durch Excel und den Konverter geführ
 und anschließend gegen ihre Quelle geprüft: 2.573 Diagnosen, 3.574 Kontakte,
 35.836 Messwertressourcen, 13.475 Prozeduren, 2.226 Verordnungen,
 328 Verabreichungen, 1.065 Impfungen, 7.619 Befundberichte, 243 Behandlungspläne,
-475 Geräte, 18 Allergien und 3.574 Klartextdokumente. Die Diagnoseergänzung
+475 Geräte, 18 Allergien und 3.574 Klartextdokumente (historischer Stand vor dem Allergie-Rückbau). Die Diagnoseergänzung
 lieferte 1.595 ICD-10-GM-Codings; 148 Notfallkontakte erhielten die vorgesehene
 Kennzeichnung. Komponenten erklären die höhere Anzahl von Excel-Messwertzeilen.
 

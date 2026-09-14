@@ -40,10 +40,12 @@ public class DiagnosisWorkbookTest {
                 }
                 assertEquals("SNOMED CT (Version nicht angegeben)", book.getSheet("Codes").getRow(29).getCell(22).getStringCellValue());
                 assertEquals("ICD-10-GM 2026", book.getSheet("Codes").getRow(47).getCell(22).getStringCellValue());
-                assertEquals("PZN", book.getSheet("Codes").getRow(32).getCell(47).getStringCellValue());
+                assertEquals("PZN", book.getSheet("Codes").getRow(29).getCell(47).getStringCellValue());
                 assertTrue(book.getSheet("Medikation").getDataValidations().stream()
                         .map(DataValidation::getValidationConstraint)
                         .anyMatch(v -> "Codes!$AV$30:$AV$33".equals(v.getFormula1())));
+                assertNull(book.getSheet("Allergie"));
+                assertEquals("ATC 2026", book.getSheet("Codes").getRow(29).getCell(50).getStringCellValue());
                 var encounters = book.getSheet("Fall");
                 assertEquals("Aufnahmegrund (4. Stelle)", encounters.getRow(0).getCell(9).getStringCellValue());
                 assertEquals("Kontakt-ID", encounters.getRow(0).getCell(10).getStringCellValue());

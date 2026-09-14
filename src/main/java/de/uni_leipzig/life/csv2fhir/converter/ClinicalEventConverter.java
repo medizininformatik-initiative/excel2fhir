@@ -9,8 +9,7 @@ import de.uni_leipzig.life.csv2fhir.*;
 /** Explicit human input sheets for clinical events without a previous converter. */
 public abstract class ClinicalEventConverter extends Converter {
     public enum Columns implements TableColumnIdentifier {
-        Eintrag_ID, Bezeichner, Code, Codesystem, Zeitpunkt, Ende, Status, Absicht, Typ, Kategorie,
-        Klinischer_Status, Verifikationsstatus, Kritikalität, Reaktionscode, Reaktion,
+        Eintrag_ID, Bezeichner, Code, Codesystem, Zeitpunkt, Ende, Status, Absicht,
         Primärquelle, Ausgabezeitpunkt, Ergebnisse, Beschreibung, Aktivitätscodes, UDI, Hersteller;
         @Override public String toString() { return name().replace('_', ' '); }
         @Override public boolean isMandatory() { return false; }
@@ -22,9 +21,6 @@ public abstract class ClinicalEventConverter extends Converter {
     }
     private String v(Columns c) { String v = get(c); return v == null || v.isBlank() ? null : v; }
     private CodeableConcept code() { return ClinicalValues.concept(v(Columns.Code), v(Columns.Codesystem), v(Columns.Bezeichner)); }
-    private CodeableConcept status(Columns c, String system) {
-        return v(c) == null ? null : new CodeableConcept(new Coding(system, v(c), null));
-    }
     @Override protected List<Resource> convertInternal() throws Exception {
         String sourceId = v(Columns.Eintrag_ID);
         if (sourceId == null) throw new IllegalArgumentException("Eintrag ID required");
@@ -32,19 +28,6 @@ public abstract class ClinicalEventConverter extends Converter {
         DateTimeType time = ClinicalValues.date(v(Columns.Zeitpunkt));
         Resource resource;
         switch (type) {
-        case "AllergyIntolerance":
-            AllergyIntolerance allergy = new AllergyIntolerance();
-            allergy.setPatient(getPatientReference()); allergy.setEncounter(getEncounterReference());
-            allergy.setCode(code()); allergy.setRecordedDateElement(time);
-            allergy.setClinicalStatus(status(Columns.Klinischer_Status, "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical"));
-            allergy.setVerificationStatus(status(Columns.Verifikationsstatus, "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification"));
-            if (v(Columns.Typ) != null) allergy.setType(AllergyIntolerance.AllergyIntoleranceType.fromCode(v(Columns.Typ)));
-            if (v(Columns.Kategorie) != null) for (String category : v(Columns.Kategorie).split(";"))
-                allergy.addCategory(AllergyIntolerance.AllergyIntoleranceCategory.fromCode(category));
-            if (v(Columns.Kritikalität) != null) allergy.setCriticality(AllergyIntolerance.AllergyIntoleranceCriticality.fromCode(v(Columns.Kritikalität)));
-            if (v(Columns.Reaktionscode) != null) allergy.addReaction().addManifestation(
-                    ClinicalValues.concept(v(Columns.Reaktionscode), DiagnosisValues.SNOMED, v(Columns.Reaktion)));
-            resource = allergy; break;
         case "Immunization":
             Immunization vaccine = new Immunization(); vaccine.setPatient(getPatientReference());
             vaccine.setEncounter(getEncounterReference()); vaccine.setVaccineCode(code()); vaccine.setOccurrence(time);
@@ -84,9 +67,6 @@ public abstract class ClinicalEventConverter extends Converter {
         }
         resource.setId(id);
         return Collections.singletonList(resource);
-    }
-    public static class Allergy extends ClinicalEventConverter {
-        public Allergy(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("AllergyIntolerance",r,p,c,v,o); }
     }
     public static class Vaccine extends ClinicalEventConverter {
         public Vaccine(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("Immunization",r,p,c,v,o); }

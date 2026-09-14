@@ -211,7 +211,7 @@ public class ExcelTemplateValidator {
 
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
-        for (String sheet : List.of("Allergie", "Impfung", "Befundbericht", "Behandlungsplan", "Hilfsmittel")) {
+        for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan", "Hilfsmittel")) {
             validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"), List.of());
         }
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
@@ -557,7 +557,6 @@ public class ExcelTemplateValidator {
                 "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Codesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",
                 "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));
-        headers.put("Allergie", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Klinischer Status", "Verifikationsstatus", "Typ", "Kategorie", "Kritikalität", "Reaktionscode", "Reaktion", "Erklärung/Ausfüllhilfe"));
         headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Erklärung/Ausfüllhilfe"));
         headers.put("Befundbericht", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Ausgabezeitpunkt", "Ergebnisse", "Beschreibung", "Erklärung/Ausfüllhilfe"));
         headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Ende", "Status", "Absicht", "Beschreibung", "Aktivitätscodes", "Erklärung/Ausfüllhilfe"));

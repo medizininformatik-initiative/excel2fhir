@@ -54,7 +54,7 @@ class ImportTest(unittest.TestCase):
             {'system':'http://fhir.de/CodeSystem/bfarm/icd-10-gm','version':'2026','code':'A01'})
         rows,report=prepare(source)
         self.assertEqual(len(rows['Diagnose']),1)
-        self.assertEqual(rows['Diagnose'][0][5:7],['A01','ICD-10-GM 2026'])
+        self.assertEqual(rows['Diagnose'][0][3:5],['A01','ICD-10-GM 2026'])
 
     def test_roundtrip_detects_missing_emergency_reason_and_extra_encounters(self):
         source = bundle()
