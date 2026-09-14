@@ -298,7 +298,8 @@ def apply_workbook_edits(template, ops, output, preview=None):
             else:raise RuntimeError('LibreOffice startup timed out')
             env=dict(os.environ, CSV2FHIR_UNO_PORT=str(port))
             subprocess.run(['java','-cp',str(jars),str(ROOT/'scripts/WorkbookUno.java'),str(candidate),str(commands)] + (preview or []),
-                           check=True,timeout=90,env=env)
+                           # Full lifetime cohorts can contain tens of thousands of rows.
+                           check=True,timeout=600,env=env)
             output.parent.mkdir(parents=True,exist_ok=True)
             if output.exists():raise FileExistsError(output)
             shutil.copy2(candidate,output)
