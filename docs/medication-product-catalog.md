@@ -3,7 +3,7 @@
 ## Öffentlicher Synthea-Standard (ATC 2026)
 
 `scripts/mappings/synthea-medications-de-2026.json` dokumentiert alle 495 RxNorm-Konzepte
-des gepinnten Quellregisters. Davon sind 297 anhand des Quellkonzepts und der amtlichen
+des gepinnten Quellregisters. Davon sind 322 anhand des Quellkonzepts und der amtlichen
 deutschen ATC-Systematik klassifiziert. 13 besitzen zusätzlich eine ausgewählte echte
 PZN. Dies sind redaktionelle Testdatenentscheidungen mit ausstehendem menschlichem
 Review, keine offizielle RxNorm-PZN-Überleitung.
@@ -43,8 +43,8 @@ Mappingweg ersetzt. MMI und Medication Graph sind keine Voraussetzung.
 
 Der Synthea-Import funktioniert ohne MMI-Pharmindex. Er nutzt den öffentlichen Mappingbestand und
 verwendet die vorhandenen deutschen Projektübersetzungen bei fehlender Produktauswahl. Diese Übersetzungen
-können weiterhin Handelsnamen aus der US-Quelle enthalten; sie sind keine
-behaupteten deutschen Handelspräparate. Unbekannte Texte stehen im Textbericht.
+werden vor Ausgabe um in eckigen Klammern angegebene US-Handelsnamen bereinigt;
+sie sind keine behaupteten deutschen Handelspräparate. Unbekannte Texte stehen im Textbericht.
 
 Ein vorhandener lokaler Produktkatalog ergänzt diesen Bestand. Er liegt fest unter
 `~/.local/share/excel2fhir/medication-products.json`, außerhalb des Repos.

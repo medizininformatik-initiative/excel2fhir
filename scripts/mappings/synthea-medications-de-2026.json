@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "synthea-medication-de-2026-v1",
+  "id": "synthea-medications-de-2026-v2",
   "sourceRegistrySha256": "be02eef7dabfd24e7d16276a738e6c16503c7bbd1472722947713f6f61b60cf4",
   "atcSource": {
     "url": "https://terminologien.bfarm.de/CodeSystem-atcgm-2026.html",
@@ -81,10 +81,13 @@
           "Acetaminophen 21.7 MG/ML / Dextromethorphan Hydrobromide 1 MG/ML / doxylamine succinate 0.417 MG/ML Oral Solution"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "R05XA01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Paracetamol-haltiges Erkältungskombinationsmittel; breitere deutsche Klasse ohne Produktäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -147,10 +150,13 @@
           "diphenhydrAMINE Hydrochloride 25 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "R06AA02",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Orale antihistaminerge Verwendung im Synthea-Modul otc_antihistamine; nicht automatisch Schlafmittel oder Antiemetikum.",
       "review": "pending-human-review"
     },
     {
@@ -278,10 +284,13 @@
           "1 ML tacrolimus 5 MG/ML Injection [Prograf]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "L04AD02",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -424,11 +433,17 @@
           "proparacaine hydrochloride 5 MG/ML Ophthalmic Solution"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "S01HA04",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
-      "review": "pending-human-review"
+      "reason": "Proparacain = Proxymetacain; ophthalmologisches Lokalanästhetikum.",
+      "review": "pending-human-review",
+      "supportingSources": [
+        "https://pubchem.ncbi.nlm.nih.gov/compound/Proparacaine"
+      ]
     },
     {
       "source": {
@@ -621,10 +636,13 @@
           "21 DAY ethinyl estradiol 0.000625 MG/HR / etonogestrel 0.005 MG/HR Vaginal System [NuvaRing]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "G02BB01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Intravaginaler Gestagen/Estrogen-Ring, kein subdermales Implantat.",
       "review": "pending-human-review"
     },
     {
@@ -650,10 +668,13 @@
           "Terfenadine 60 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "R06AX12",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Historisches Terfenadin-Konzept: Klassifikation vorhanden, keine heutige deutsche Marktverfügbarkeit oder Anwendungsempfehlung behauptet.",
       "review": "pending-human-review"
     },
     {
@@ -845,10 +866,13 @@
           "24 HR Donepezil hydrochloride 10 MG / Memantine hydrochloride 28 MG Extended Release Oral Capsule"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "N06DA52",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -1034,10 +1058,13 @@
           "sacubitril 97 MG / valsartan 103 MG Oral Tablet [Entresto]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "C09DX04",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -1142,10 +1169,13 @@
           "24 HR tacrolimus 1 MG Extended Release Oral Tablet [Envarsus]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "L04AD02",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -1379,10 +1409,13 @@
           "Cisplatin 50 MG Injection"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "L01XA01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -1704,10 +1737,13 @@
           "NDA020800 0.3 ML Epinephrine 1 MG/ML Auto-Injector"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "C01CA24",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Parenteraler Adrenalin-Autoinjektor; keine inhalative oder ophthalmologische Klassifikation.",
       "review": "pending-human-review"
     },
     {
@@ -2314,10 +2350,13 @@
           "Tamoxifen 10 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "L02BA01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -2438,10 +2477,13 @@
           "50 ML bivalirudin 5 MG/ML Injection"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "B01AE06",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -2658,7 +2700,7 @@
       "status": "unmapped",
       "atc": null,
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Vitamin B12 benennt im Quelltext kein konkretes Cobalamin-Derivat; keinen substanzspezifischen ATC ohne weiteren Beleg unterstellen.",
       "review": "pending-human-review"
     },
     {
@@ -2923,10 +2965,13 @@
           "1 ML Epoetin Alfa 4000 UNT/ML Injection [Epogen]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "B03XA01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -3289,7 +3334,7 @@
       "status": "unmapped",
       "atc": null,
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Historische Mestranol-Kombination; kein passender spezifischer deutscher ATC-2026-Endcode belegt. Nicht durch Ethinylestradiol ersetzen.",
       "review": "pending-human-review"
     },
     {
@@ -3871,10 +3916,13 @@
           "ferrous sulfate 325 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "B03AA07",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -4256,7 +4304,7 @@
       "status": "unmapped",
       "atc": null,
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Kochsalz 0,9 Prozent: Zweck Infusion versus Lösungs-/Verdünnungsmittel nicht ausreichend spezifiziert; deutsche ATC-Abgrenzung offen.",
       "review": "pending-human-review"
     },
     {
@@ -5067,10 +5115,13 @@
           "Paclitaxel 100 MG Injection"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "L01CD01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -5547,10 +5598,13 @@
           "{24 (drospirenone 3 MG / ethinyl estradiol 0.02 MG Oral Tablet) / 4 (inert ingredients 1 MG Oral Tablet) } Pack [Yaz 28 Day]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "G03AA12",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Fixe Drospirenon/Ethinylestradiol-Kombination mit Placebotagen; kein Sequenzialpräparat allein wegen der Placebotabletten.",
       "review": "pending-human-review"
     },
     {
@@ -5561,10 +5615,13 @@
           "{21 (ethinyl estradiol 0.03 MG / levonorgestrel 0.15 MG Oral Tablet) / 7 (inert ingredients 1 MG Oral Tablet) } Pack [Levora 0.15/30 28 Day]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "G03AA07",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Fixe Levonorgestrel/Ethinylestradiol-Kombination mit Placebotagen; keine wechselnde aktive Dosis.",
       "review": "pending-human-review"
     },
     {
@@ -5612,7 +5669,7 @@
       "status": "unmapped",
       "atc": null,
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Langzyklus-Packung mit fixer Kombination und anschließender Estrogen-Monophase; Abgrenzung fixe/sequenzielle ATC-Klasse noch offen.",
       "review": "pending-human-review"
     },
     {
@@ -5643,7 +5700,7 @@
       "status": "unmapped",
       "atc": null,
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Historische Mestranol-Kombination; kein passender spezifischer deutscher ATC-2026-Endcode belegt. Nicht durch Ethinylestradiol ersetzen.",
       "review": "pending-human-review"
     },
     {
@@ -5767,10 +5824,13 @@
           "Ampicillin 100 MG/ML Injectable Solution"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "J01CA01",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -6158,10 +6218,13 @@
           "prasugrel 10 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "B01AC22",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -6742,10 +6805,13 @@
           "Meperidine Hydrochloride 50 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "N02AB02",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -7187,10 +7253,13 @@
           "60 ACTUAT Fluticasone propionate 0.25 MG/ACTUAT / salmeterol 0.05 MG/ACTUAT Dry Powder Inhaler"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "R03AK06",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -7469,10 +7538,13 @@
           "Alendronic acid 10 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "M05BA04",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
@@ -7676,10 +7748,13 @@
           "{5 (dienogest 2 MG / estradiol valerate 2 MG Oral Tablet) / 17 (dienogest 3 MG / estradiol valerate 2 MG Oral Tablet) / 2 (estradiol valerate 1 MG Oral Tablet) / 2 (estradiol valerate 3 MG Oral Tablet) / 2 (inert ingredients 1 MG Oral Tablet) } Pack [Natazia 28 Day]"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "G03AB08",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Mehrphasiges Dienogest/Estradiolvalerat-Präparat; sequenzielle Klassifikation.",
       "review": "pending-human-review"
     },
     {
@@ -7888,10 +7963,13 @@
           "Acetaminophen 300 MG / Codeine Phosphate 15 MG Oral Tablet"
         ]
       },
-      "status": "unmapped",
-      "atc": null,
+      "status": "classified",
+      "atc": {
+        "code": "N02AJ06",
+        "version": "2026"
+      },
       "product": null,
-      "reason": "Keine belastbare deutsche ATC-Zuordnung hinterlegt; Quellbeschreibung und Ereignis bleiben erhalten.",
+      "reason": "Klassifikation anhand des expliziten Wirkstoffs und der systemischen Darreichung; keine Präparateäquivalenz.",
       "review": "pending-human-review"
     },
     {
