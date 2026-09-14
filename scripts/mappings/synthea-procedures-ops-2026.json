@@ -1,5 +1,5 @@
 {
-  "id": "synthea-procedures-ops-2026-v1",
+  "id": "synthea-procedures-ops-2026-v2",
   "sourceRegistrySha256": "be02eef7dabfd24e7d16276a738e6c16503c7bbd1472722947713f6f61b60cf4",
   "targetSource": {
     "url": "https://terminologien.bfarm.de/rendering_data/ValueSet-ops-terminale-kodes-2026.json",
@@ -2987,8 +2987,21 @@
         "Postoperative care for dental procedure (regime/therapy)"
       ],
       "target": null,
-      "status": "not-assessed",
-      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+      "status": "source-preserved-with-international-parent",
+      "reason": "Zahnärztliche postoperative Nachsorge: US-Quellkonzept durch belegten internationalen Oberbegriff postoperative Nachsorge ersetzt; zahnärztliches Detail bleibt im deutschen Text. Kein passender OPS belegt.",
+      "internationalReplacement": {
+        "system": "http://snomed.info/sct",
+        "code": "133899007"
+      },
+      "evidence": {
+        "sourceEdition": "http://snomed.info/sct/731000124108/version/20250901",
+        "targetEdition": "http://snomed.info/sct/900000000000207008/version/20250201",
+        "relation": "broader",
+        "lookupService": "https://tx.fhir.org/r4/CodeSystem/$lookup",
+        "sourceLookupSha256": "2e23b78bdf372e09f36f3cbbec1e23682ee6ed1dd2ae27ceae4bc98f1d0d161d",
+        "targetLookupSha256": "0dcecb28ef9350bdc1ead7deb9d2ab6a26f286450b479d20edb5f08845645add",
+        "review": "pending-human-review"
+      }
     },
     {
       "sourceCode": "46028000",

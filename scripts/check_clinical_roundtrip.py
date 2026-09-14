@@ -62,8 +62,9 @@ def check_clinical(source, target, report):
         codings = list(r['code'].get('coding', []))
         if original:
             from procedure_mapping import select_ops
-            mapped = select_ops(codings[0])['target']
-            if mapped: codings.insert(0, mapped)
+            decision = select_ops(codings[0])
+            if decision.get('internationalReplacement'): codings[0] = decision['internationalReplacement']
+            if decision['target']: codings.insert(0, decision['target'])
         return (tuple((c['system'], c['code'], c.get('version')) for c in codings), r['status'],
                 r.get('performedDateTime'), r.get('performedPeriod', {}).get('start'), r.get('performedPeriod', {}).get('end'))
     assert Counter(procedure(src[i['sourceId']], True) for i in expected['clinicalImports'] if i['resourceType']=='Procedure') == Counter(procedure(r) for r in dst if r['resourceType']=='Procedure'), 'Procedure codes, order or event changed'

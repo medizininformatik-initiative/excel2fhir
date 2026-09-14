@@ -117,6 +117,8 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Prozedurkategorie ist nicht SNOMED')
                 decision = select_ops(r['code']['coding'][0])
                 extra_code, extra_system = '', ''
+                if decision.get('internationalReplacement'):
+                    loss('code.coding', 'US-Quellkonzept durch internationalen Oberbegriff ersetzt; vollständiges Detail im Text und Mappingbericht.')
                 if decision['target']:
                     label = GermanTexts().text(label, 'Prozedur', system, code)
                     extra_code, extra_system = code, system

@@ -183,6 +183,11 @@ def prepare(bundle):
     losses.extend(event_report['losses'])
     losses.extend(clinical_report.pop('losses'))
     translation_report = localize_rows(rows, demographics['address'])
+    procedure_ids = {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType'] == 'Procedure'}
+    procedure_decisions = [d for d in clinical_report['clinicalMappings'] if d['sourceId'] in procedure_ids]
+    for row, decision in zip(rows['Prozedur'], procedure_decisions):
+        if decision.get('internationalReplacement'):
+            row[3] = decision['internationalReplacement']['code']
     for row, decision in zip(rows['Diagnose'], diagnosis_mappings):
         if row[6].startswith('ICD-10-GM '):
             row[3:7] = row[5:7] + row[3:5]

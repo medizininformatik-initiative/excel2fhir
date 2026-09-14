@@ -35,3 +35,10 @@ class ProcedureMappingTest(unittest.TestCase):
             self.assertTrue(decision['reason'])
         self.assertIsNone(select_ops({'system': 'http://snomed.info/sct', 'code': '45595009',
                                      'display': 'Wrong procedure'})['target'])
+
+    def test_us_dental_aftercare_uses_international_parent_without_extra_us_coding(self):
+        decision = select_ops({'system': 'http://snomed.info/sct', 'code': '456191000124101',
+                               'display': 'Postoperative care for dental procedure (regime/therapy)'})
+        self.assertEqual(decision['internationalReplacement']['code'], '133899007')
+        self.assertIsNone(decision['target'])
+        self.assertEqual(decision['evidence']['relation'], 'broader')
