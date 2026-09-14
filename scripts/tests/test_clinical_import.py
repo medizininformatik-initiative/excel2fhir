@@ -24,8 +24,8 @@ class ClinicalImportTest(unittest.TestCase):
         before=copy.deepcopy(source);rows,report=prepare(source)
         self.assertEqual(source,before)
         self.assertEqual(len(rows['Klinische Dokumentation']),2)
-        self.assertEqual(rows['Klinische Dokumentation'][1][4],'0')
-        self.assertEqual(rows['Klinische Dokumentation'][1][13],'bp')
+        self.assertEqual(rows['Klinische Dokumentation'][1][7],'0')
+        self.assertEqual(rows['Klinische Dokumentation'][1][16],'bp')
         self.assertEqual(len(report['clinicalImports']),1)
         source['entry'][-1]['resource']['component'][0]['valueQuantity']['system']='unknown'
         rows,report=prepare(source)
@@ -60,6 +60,19 @@ class ClinicalImportTest(unittest.TestCase):
         self.assertFalse(any(i['resourceType'] == 'AllergyIntolerance' for i in report['clinicalImports']))
         self.assertTrue(any(i['id'] == 'allergy' and 'Bewusst ausgeschlossen' in i['reason'] for i in report['losses']))
         self.assertEqual(len(rows['Diagnose']), 1)
+
+    def test_additional_observation_code_is_in_same_row_and_answer_remains_separate(self):
+        source = bundle()
+        self.add(source, {'resourceType': 'Observation', 'id': 'two-codes', 'status': 'final',
+            'category': [{'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/observation-category', 'code': 'social-history'}]}],
+            'code': {'coding': [{'system': 'http://loinc.org', 'code': '72166-2'},
+                                {'system': 'http://snomed.info/sct', 'code': '365981007'}]},
+            'valueCodeableConcept': {'coding': [{'system': 'http://snomed.info/sct', 'code': '266919005'}]}})
+        rows, report = prepare(source)
+        self.assertEqual(len(rows['Klinische Dokumentation']), 1)
+        row = rows['Klinische Dokumentation'][0]
+        self.assertEqual(row[3:7], ['72166-2', 'LOINC', '365981007', 'SNOMED CT (Version nicht angegeben)'])
+        self.assertEqual(row[11:13], ['266919005', 'SNOMED CT (Version nicht angegeben)'])
 
     def test_product_selection_preserves_source_without_local_mapping(self):
         coding={'system':'http://www.nlm.nih.gov/research/umls/rxnorm','code':'123'}

@@ -69,8 +69,8 @@ class GermanTextsTest(unittest.TestCase):
         self.assertEqual(tr.report()['missing'], [])
 
     def test_only_text_columns_change_and_address_uses_same_identity(self):
-        row = ['p','f','Glucose [Mass/volume] in Blood','2339-0','83.7','mg/dL',
-               '2026-01-01','Zahl','','','laboratory','final','o','','','mg/dL','LOINC']
+        row = ['p','f','Glucose [Mass/volume] in Blood','2339-0','LOINC','','','83.7','mg/dL',
+               '2026-01-01','Zahl','','','laboratory','final','o','','','mg/dL']
         original = list(row)
         report = localize_rows({'Klinische Dokumentation':[row]})
         self.assertNotEqual(row[2], original[2])

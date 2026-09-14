@@ -19,6 +19,23 @@ public class DiagnosisWorkbookTest {
             assertFalse(name + ": " + result.getIssues(), result.hasErrors());
             try (FileInputStream input = new FileInputStream(name);
                     XSSFWorkbook book = new XSSFWorkbook(input)) {
+                assertEquals("Konvertierungsoptionen", book.getSheetName(0));
+                var optionNames = new java.util.HashSet<String>();
+                for (var optionRow : book.getSheet("Konvertierungsoptionen")) {
+                    var cell = optionRow.getCell(0);
+                    if (cell == null || cell.getCellType() != CellType.STRING) continue;
+                    String value = cell.getStringCellValue().replaceFirst("^#\\s*", "").trim();
+                    if (value.matches("[A-Z][A-Z_0-9]*\\s*=.*")) {
+                        String optionName = value.split("=", 2)[0].trim();
+                        assertTrue("Duplicate option: " + optionName, optionNames.add(optionName));
+                        assertEquals("FFF2CC", ((org.apache.poi.xssf.usermodel.XSSFCellStyle) cell.getCellStyle()).getFillForegroundXSSFColor().getARGBHex().substring(2));
+                    }
+                }
+                var supportedOptions = new java.util.HashSet<String>();
+                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.values()) supportedOptions.add(value.name());
+                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.values()) supportedOptions.add(value.name());
+                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.StringOption.values()) supportedOptions.add(value.name());
+                assertEquals(supportedOptions, optionNames);
                 var person = book.getSheet("Person");
                 assertEquals("Geburtsdatum", person.getRow(0).getCell(3).getStringCellValue());
                 assertEquals("Straße", person.getRow(0).getCell(11).getStringCellValue());

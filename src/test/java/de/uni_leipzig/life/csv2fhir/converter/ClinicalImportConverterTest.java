@@ -32,6 +32,23 @@ public class ClinicalImportConverterTest {
                 new ConverterResult(options), null, options).convertInternal().get(0);
         assertNotEquals(unmapped.getId(), other.getId());
     }
+    @Test public void additionalObservationCodingDoesNotBecomeAResultOrAnotherObservation() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Untersuchungscode", "72166-2", "Codesystem", "LOINC",
+                "Zusatzcode", "365981007", "Zusatzcodesystem", DiagnosisValues.SNOMED,
+                "Werttyp", "Code", "Wertcode", "266919005", "Wertcodesystem", DiagnosisValues.SNOMED,
+                "Wert", "Nie geraucht", "Kategorie", "social-history"));
+        var converted = new ObservationVitalSignsConverter(row(values,
+                ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal();
+        assertEquals(1, converted.size());
+        Observation observation = (Observation)converted.get(0);
+        assertEquals(2, observation.getCode().getCoding().size());
+        assertEquals("72166-2", observation.getCode().getCodingFirstRep().getCode());
+        assertEquals("365981007", observation.getCode().getCoding().get(1).getCode());
+        assertEquals(1, observation.getValueCodeableConcept().getCoding().size());
+        assertEquals("266919005", observation.getValueCodeableConcept().getCodingFirstRep().getCode());
+    }
     @Test public void laboratoryHasBothRequiredCategoryCodings() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         Observation observation = (Observation)new ObservationLaboratoryConverter(

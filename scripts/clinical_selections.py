@@ -39,8 +39,8 @@ LISTS = {
 
 # Header-based addressing works for both templates and filled cases.
 SELECTIONS = {
-    'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
-    'Klinische Dokumentation': {'Codesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
+    'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
+    'Klinische Dokumentation': {'Codesystem': 'AT', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
     'Prozedur': {'Codesystem': 'AB', 'Zusatzcodesystem': 'AB'},
     'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW'},
     'Impfung': {'Codesystem': 'AY', 'Status': 'BB'},

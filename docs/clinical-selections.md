@@ -8,7 +8,7 @@ Die Auswahl betrifft die konkrete Spalte, nicht pauschal das ganze Tabellenblatt
 | Eingabe | Auswahl | Bereich im Blatt Codes |
 | --- | --- | --- |
 | Laborbefund: Codesystem der Untersuchung | LOINC | AS30 |
-| Klinische Dokumentation: Codesystem der Untersuchung | LOINC, SNOMED CT | AT30:AT31 |
+| Klinische Dokumentation: Codesystem und Zusatzcodesystem der Untersuchung | LOINC, SNOMED CT | AT30:AT31 |
 | Beide Messwertblätter: Wertcodesystem | LOINC, SNOMED CT | AU30:AU31 |
 | Prozedur: Codesystem und Zusatzcodesystem | SNOMED CT, OPS 2009–2026 | AB30:AB48 |
 | Medikation: Präparatcodesystem | PZN, SNOMED CT, RxNorm, CVX | AV30:AV33 |
@@ -70,3 +70,17 @@ Die Statusauswahl in Spalte L verwendet den Medikationstyp derselben Zeile.
 
 Laborbefunde haben eine eigene Werttypenliste BG30:BG34 mit Zahl, Text, Code,
 Komponenten und Fehlend. Ja/Nein bleibt nur für klinische Dokumentation verfügbar.
+
+Untersuchungscode, Codesystem, Zusatzcode und Zusatzcodesystem stehen in den
+Messwertblättern unmittelbar zusammen. Beide Codierungen beschreiben denselben
+Begriff unter Observation.code (auch bei Komponenten). Ergebniscode/-system
+bleiben unter Observation.valueCodeableConcept getrennt. Labor-Zusatzcodierung
+verwendet die Liste AT30:AT31; das primäre Laborfeld bleibt LOINC.
+
+Konvertierungsoptionen stehen als erstes Blatt vollständig und mit gelben
+Optionszeilen in beiden Vorlagen. Auskommentierte Zeilen verwenden den
+dokumentierten Standard; sie bedeuten nicht automatisch false. Auch generierte
+Fälle behalten die Erläuterungen und alle Optionen. Der Import aktiviert nur
+seine fünf bisherigen Einstellungen an deren vorhandener Stelle. Veraltete
+Optionsnamen aus früheren Vorlagen wurden durch die tatsächlichen Enum-Namen
+ersetzt. Ein Regressionstest gleicht die Liste mit sämtlichen Java-Optionen ab.

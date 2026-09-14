@@ -52,7 +52,7 @@ def check_clinical(source, target, report):
     def obs(r, source=False):
         category=next((c['code'] for cc in r.get('category',[]) for c in cc.get('coding',[])
                        if c.get('system')=='http://terminology.hl7.org/CodeSystem/observation-category'),None)
-        return (code(r['code']),r.get('status'),category,r.get('effectiveDateTime'),r.get('issued'),
+        return (tuple((c.get('system'), c.get('code'), c.get('version')) for c in r['code'].get('coding', [])[:2]),r.get('status'),category,r.get('effectiveDateTime'),r.get('issued'),
                 value(r, source),tuple((code(c['code']),value(c, source))for c in r.get('component',[])))
     wanted_obs=Counter(obs(src[i['sourceId']], True)for i in expected['clinicalImports'] if i['resourceType']=='Observation')
     actual_obs=Counter(obs(r)for r in dst if r['resourceType']=='Observation')

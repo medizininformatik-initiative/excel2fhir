@@ -14,8 +14,15 @@ from procedure_mapping import select_ops, metadata as procedure_metadata
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
            'http://www.nlm.nih.gov/research/umls/rxnorm': 'RxNorm', 'http://hl7.org/fhir/sid/cvx': 'CVX'}
-OBS_EXTRA = ['Werttyp', 'Wertcode', 'Wertcodesystem', 'Kategorie', 'Status', 'Untersuchung ID',
-             'Komponente von', 'Ausgabezeitpunkt', 'Einheitencode', 'Codesystem']
+OBS_HEADERS = {
+    'Laborbefund': ['Patient-ID', 'Fall-Nr', 'LOINC', 'Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Parameter'],
+    'Klinische Dokumentation': ['Patient-ID', 'Fall-Nr', 'Bezeichner', 'Untersuchungscode', 'Codesystem', 'Zusatzcode', 'Zusatzcodesystem'],
+}
+for sheet, headers in OBS_HEADERS.items():
+    headers.extend(['Messwert' if sheet == 'Laborbefund' else 'Wert', 'Einheit',
+                    'Zeitstempel (Abnahme)' if sheet == 'Laborbefund' else 'Zeitstempel',
+                    'Werttyp', 'Wertcode', 'Wertcodesystem', 'Kategorie', 'Status', 'Untersuchung ID',
+                    'Komponente von', 'Ausgabezeitpunkt', 'Einheitencode'])
 PROCEDURE_EXTRA = ['Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie']
 MEDICATION_HEADERS = ['Patient-ID', 'Fall-Nr', 'Medikationstyp', 'Präparatbezeichnung', 'Präparatcode', 'Präparatcodesystem', 'ATC-Code', 'ATC-Version', 'Darreichungsform', 'Wirkstoffcode', 'Wirkstoffcodesystem', 'Status', 'Absicht', 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag', 'Dosierungstext']
 
@@ -131,10 +138,19 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     value, unit, kind, vc, vs, ucum = observation_value(item)
                     if sheet == 'Laborbefund' and kind == 'Ja/Nein':
                         raise UnsupportedValue('Ja/Nein ist im KDS-Laborprofil nicht zulässig; codierte Antwort erforderlich')
-                    base = [pid, nr, c, text] if sheet == 'Laborbefund' else [pid, nr, text, c]
+                    extra_code, extra_system = '', ''
+                    codings = item['code'].get('coding', [])
+                    if len(codings) > 1:
+                        extra_code, extra_system, _ = coding({'coding': [codings[1]]})
+                    if len(codings) > 2:
+                        loss(('component.' if parent else '') + 'code.coding[2:]', 'Weitere Untersuchungscodings nicht in zwei Codepaaren darstellbar')
+                    if len(item.get('valueCodeableConcept', {}).get('coding', [])) > 1:
+                        loss(('component.' if parent else '') + 'valueCodeableConcept.coding[1:]', 'Weitere Ergebniscodings nicht dargestellt')
+                    base = ([pid, nr, c, sy, extra_code, extra_system, text] if sheet == 'Laborbefund'
+                            else [pid, nr, text, c, sy, extra_code, extra_system])
                     data.append(base + [value, unit, r.get('effectiveDateTime', '')] +
                                 [kind, vc, vs, category, r.get('status', ''), r['id'] if not parent else '',
-                                 parent, r.get('issued', '') if not parent else '', ucum, sy])
+                                 parent, r.get('issued', '') if not parent else '', ucum])
                     if parent:
                         for key in item.keys() - {'code', 'valueQuantity', 'valueCodeableConcept', 'valueString', 'valueBoolean', 'dataAbsentReason'}:
                             loss('component.' + key, 'Komponenten-Eigenschaft nicht übernommen')

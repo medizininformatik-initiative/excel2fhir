@@ -101,6 +101,10 @@ public class WorkbookUno {
                     XPropertySet rows = q(XPropertySet.class,
                             q(XColumnRowRange.class, sheet.getCellRangeByName(a[2])).getRows());
                     rows.setPropertyValue("Height", (int) Math.round(Double.parseDouble(a[3]) * 2540 / 72));
+                } else if (a[0].equals("background")) {
+                    q(XPropertySet.class, sheet.getCellRangeByName(a[2])).setPropertyValue("CellBackColor", Integer.parseInt(a[3], 16));
+                } else if (a[0].equals("noWrap")) {
+                    q(XPropertySet.class, sheet.getCellRangeByName(a[2])).setPropertyValue("IsTextWrapped", false);
                 } else if (a[0].equals("width")) {
                     q(XPropertySet.class, q(XColumnRowRange.class, sheet).getColumns().getByIndex(Integer.parseInt(a[2])))
                             .setPropertyValue("Width", Integer.parseInt(a[3]));

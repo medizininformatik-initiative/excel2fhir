@@ -240,14 +240,16 @@ def write_workbook(rows, output):
             op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in row))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
         if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
-    option_sheet='Konvertierungsoptionen'
-    last=max(int(''.join(filter(str.isdigit,k)))for k in sheets[option_sheet])
-    op('clear',option_sheet,f'A1:Z{last}')
-    put(option_sheet,'A1','SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true')
-    put(option_sheet,'A2','SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false')
-    put(option_sheet,'A3','VALIDATE_STRICT = true')
-    put(option_sheet,'A4','SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER = true')
-    put(option_sheet,'A5','SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION = false')
+    from converter_options import SYNTHEA_OVERRIDES
+    # Preserve the complete annotated option sheet; activate only the source
+    # reference choices needed for this generated case.
+    option_sheet = 'Konvertierungsoptionen'
+    for name, value in SYNTHEA_OVERRIDES.items():
+        matches = [cell for cell, text in sheets[option_sheet].items()
+                   if text.lstrip('# ').split('=', 1)[0].strip() == name]
+        if len(matches) != 1:
+            raise ValueError('Missing or duplicate template option: ' + name)
+        put(option_sheet, matches[0], name + ' = ' + value)
     apply_workbook_edits(template, ops, output)
 
 

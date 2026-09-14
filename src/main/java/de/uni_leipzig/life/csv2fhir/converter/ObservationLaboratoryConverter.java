@@ -104,6 +104,11 @@ public class ObservationLaboratoryConverter extends Converter {
                     : START_ID_OBSERVATION_LABORATORY) : ClinicalValues.resourceId(getPatientId(), "Observation", sourceId);
         String system = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
         CodeableConcept code = ClinicalValues.concept(get(codeColumn), system == null ? "LOINC" : system, get(textColumn));
+        Coding additionalCode = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
+                ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
+        if (additionalCode != null && code.getCoding().stream().noneMatch(c -> c.equalsDeep(additionalCode))) {
+            code.addCoding(additionalCode);
+        }
         String kind = ClinicalValues.get(this, ClinicalValues.Column.Werttyp);
         String raw = get(valueColumn);
         org.hl7.fhir.r4.model.Type value = null;
