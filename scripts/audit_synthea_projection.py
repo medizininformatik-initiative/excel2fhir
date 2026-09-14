@@ -156,7 +156,12 @@ def audit(source, workbook, target, report):
         if resource['id'] in omitted_observations: continue
         key = 'Observation-' + str(uuid.UUID(bytes=hashlib.md5((pid+'|Observation|'+resource['id']).encode()).digest(), version=3))
         found = observations[key];checked += 1
-        assert codings(resource['code'])[:2] == codings(found['code'])
+        expected_codes = codings(resource['code'])[:2]
+        if expected_codes and expected_codes[0][0] == SNOMED and expected_codes[0][1] in ('413077008', '413078003'):
+            assert resource['valueQuantity']['code'] == '{logmar}'
+            correct = {'413077008': '6617-5', '413078003': '6616-7'}[expected_codes[0][1]]
+            expected_codes = (('http://loinc.org', correct, None), expected_codes[0])
+        assert expected_codes == codings(found['code'])
         assert resource.get('effectiveDateTime') == found.get('effectiveDateTime')
         assert resource.get('issued') == found.get('issued')
         assert resource.get('status') == found.get('status')

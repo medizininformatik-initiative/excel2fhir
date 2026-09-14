@@ -163,3 +163,29 @@ Review der gefüllten Arbeitsmappen.
   die spätere Auswahl deutscher Präparate und genauer Dosierungsschemata.
 - Bedarf einer zusätzlichen OPS-Tabelle gegenüber direkter SNOMED-Prozedureingabe.
 - Priorität der noch fehlenden Bildgebungs-, Liefer- und Behandlerdetails.
+
+## Nachprüfung der neuen Populationen
+
+Der unabhängige Abgleich `audit_synthea_projection.py` liest Originalquellen,
+Excel und Zielbundle ohne Aufruf der Importfunktionen. Er prüft Ereigniszahlen,
+Medikationsmengen/-frequenzen/-zeitpunkte, numerische und codierte Messwerte,
+Komponenten, deutsche Versionsangaben und die gewünschte Coding-Reihenfolge.
+Explizit ausgeschlossene Allergien werden separat bilanziert. Das ersetzt keine
+medizinische Äquivalenzprüfung der redaktionellen Zuordnungen.
+
+Ein nachgewiesenes US-Konzept für zahnärztliche Nachsorge wird durch seinen
+internationalen SNOMED-Oberbegriff ersetzt. Das zahnärztliche Detail bleibt im
+Text. Andere ursprünglich in US-Namespaces erzeugte Konzepte dürfen zur
+internationalen Edition gehören; die ID allein ist kein Ausschlusskriterium.
+Die gezielte Prüfung verwendet explizite Editionsstände, keinen behaupteten
+vollständigen aktuellen SNOMED-Validierungsnachweis.
+
+Synthea liefert bei LogMAR-Sehschärfe zusätzlich LOINC 98498-9/98499-7 für
+ein nicht logarithmisches Längenverhältnis. Bei exakt erkanntem Quellkonzept
+und LogMAR-Einheit werden stattdessen 6617-5 (links) bzw. 6616-7 (rechts)
+vor SNOMED ausgegeben. Werte bleiben unverändert; es wird keine Messtafel oder
+bestmögliche Korrektur unterstellt. Quellen und verworfene Zusatzcodings stehen
+im Mappingbericht. Diese redaktionelle Entscheidung braucht menschlichen Review.
+LOINC-Codes und Namen: Copyright Regenstrief Institute, Inc.;
+[LOINC-Lizenz](https://loinc.org/license). Bestehender deutscher Quelllesetext
+ist keine als offiziell verifiziert ausgegebene deutsche LOINC-Übersetzung.

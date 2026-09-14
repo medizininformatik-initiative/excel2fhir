@@ -183,6 +183,22 @@ def prepare(bundle):
     losses.extend(event_report['losses'])
     losses.extend(clinical_report.pop('losses'))
     translation_report = localize_rows(rows, demographics['address'])
+    from observation_mapping import decision as observation_decision, metadata as observation_metadata
+    source_observations = {e['resource']['id']: e['resource'] for e in entries if e.get('resource', {}).get('resourceType') == 'Observation'}
+    observation_mappings = []
+    for sheet in ['Laborbefund', 'Klinische Dokumentation']:
+        for row in rows[sheet]:
+            # These source concepts are main observations, not components.
+            if not row[15] or row[16]: continue
+            mapped = observation_decision(source_observations[row[15]])
+            if mapped:
+                if sheet == 'Laborbefund':
+                    row[2:6] = [mapped['targetCodings'][0]['code'], 'LOINC', row[2], row[3]]
+                else:
+                    row[3:7] = [mapped['targetCodings'][0]['code'], 'LOINC', row[3], row[4]]
+                observation_mappings.append(mapped)
+    clinical_report['observationMapping'] = observation_metadata()
+    clinical_report['observationMappings'] = observation_mappings
     procedure_ids = {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType'] == 'Procedure'}
     procedure_decisions = [d for d in clinical_report['clinicalMappings'] if d['sourceId'] in procedure_ids]
     for row, decision in zip(rows['Prozedur'], procedure_decisions):

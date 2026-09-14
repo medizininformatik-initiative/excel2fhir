@@ -49,10 +49,17 @@ def check_clinical(source, target, report):
         if 'valueString'in r:return ('text',translations.observation_text(r['valueString'], *code(r['code'])) if source else r['valueString'])
         if 'valueBoolean'in r:return ('boolean',r['valueBoolean'])
         return ('absent',code(r.get('dataAbsentReason',{})))
+    from observation_mapping import decision as observation_decision, metadata as observation_metadata
+    expected_observation_mappings = [m for r in src.values() if r['resourceType'] == 'Observation'
+                                     for m in [observation_decision(r)] if m]
+    assert report.get('observationMapping') == observation_metadata()
+    assert report.get('observationMappings') == expected_observation_mappings
     def obs(r, source=False):
         category=next((c['code'] for cc in r.get('category',[]) for c in cc.get('coding',[])
                        if c.get('system')=='http://terminology.hl7.org/CodeSystem/observation-category'),None)
-        return (tuple((c.get('system'), c.get('code'), c.get('version')) for c in r['code'].get('coding', [])[:2]),r.get('status'),category,r.get('effectiveDateTime'),r.get('issued'),
+        mapped = observation_decision(r) if source else None
+        codes = mapped['targetCodings'] if mapped else r['code'].get('coding', [])[:2]
+        return (tuple((c.get('system'), c.get('code'), c.get('version')) for c in codes),r.get('status'),category,r.get('effectiveDateTime'),r.get('issued'),
                 value(r, source),tuple((code(c['code']),value(c, source))for c in r.get('component',[])))
     wanted_obs=Counter(obs(src[i['sourceId']], True)for i in expected['clinicalImports'] if i['resourceType']=='Observation')
     actual_obs=Counter(obs(r)for r in dst if r['resourceType']=='Observation')
