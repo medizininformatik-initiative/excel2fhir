@@ -4,8 +4,11 @@ selection has a stable result contract and does not block the clinical import.
 """
 import copy
 import hashlib
+import re
 from pathlib import Path
 from medication_products import ProductCatalog, select_german_product, INGREDIENT_SYSTEMS
+from german_texts import GermanTexts
+from national_medication_mapping import RXNORM, source_dose_form
 
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
@@ -67,6 +70,7 @@ def observation_value(r):
 
 def prepare_clinical(entries, pid, encounter_numbers):
     products = ProductCatalog()
+    product_texts = GermanTexts()
     index = {}
     for e in entries:
         r = e.get('resource', {})
@@ -158,13 +162,28 @@ def prepare_clinical(entries, pid, encounter_numbers):
                        period.get('end', ''), str(dose.get('value', '')), dose.get('code', dose.get('unit', '')), daily,
                        dosage.get('text', '')]
                 decision = products.select(cc['coding'][0])
+                if cc['coding'][0]['system'] == RXNORM:
+                    # Keep the detailed source description, not the US coding or
+                    # US brand, when no proven German pack is available.
+                    row[3] = re.sub(r'\s*\[[^\]]+\]', '', product_texts.text(label, 'Medikation', system, code))
+                    row[4], row[5] = '', ''
+                    row[8] = source_dose_form(cc['coding'][0].get('display', ''))
+                    if decision['target'] is None:
+                        row[3] += ' (PZN-Zuordnung offen)'
+                    if decision.get('atc') is None:
+                        row[3] += ' (ATC-Zuordnung offen)'
+                if decision.get('atc'):
+                    row[6], row[7] = decision['atc']['code'], decision['atc']['version']
                 if decision['target'] is not None:
                     product = decision['target']
                     row[3], row[8] = product['display'], product['doseForm']
                     row[4], row[5] = product['code'], 'PZN'
                     if product.get('ingredient'):
                         ingredient = product['ingredient']
-                        row[9], row[10] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
+                        if ingredient['system'] != RXNORM:
+                            row[9], row[10] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
+                        else:
+                            decision['ingredientOmitted'] = 'RxNorm-Wirkstoff bleibt nur in der Herkunft; nationale Zuordnung offen.'
                 rows['Medikation'].append(row)
                 mappings.append({'sourceId': r['id'], **decision})
                 handled.update(['medicationCodeableConcept', 'medicationReference', 'authoredOn', 'effectiveDateTime', 'effectivePeriod', 'intent'])
@@ -186,7 +205,15 @@ def prepare_clinical(entries, pid, encounter_numbers):
         except (UnsupportedValue, KeyError) as ex:
             loss('$', 'Ressource ausgelassen: ' + str(ex))
     has_local_products = any(m.get('provider') == 'mmi-local' for m in mappings)
-    return rows, {'productCatalog': products.metadata,
+    medication_mappings = [m for m in mappings if m['source'].get('system') == RXNORM]
+    return rows, {'productCatalog': products.metadata, 'productTexts': product_texts.report(),
+                  'medicationMappingSummary': {
+                      'events': len(medication_mappings),
+                      'withAtc': sum(bool(m.get('atc')) for m in medication_mappings),
+                      'withPzn': sum(bool(m.get('target')) for m in medication_mappings),
+                      'atcUnmappedCodes': sorted({m['source']['code'] for m in medication_mappings if not m.get('atc')}),
+                      'pznUnmappedCodes': sorted({m['source']['code'] for m in medication_mappings if not m.get('target')}),
+                      'ingredientMapping': 'Nicht zugeordnet; explizites DAR unknown, sofern kein lokaler Wirkstoff vorliegt'},
                   'productDataUsage': {'containsLocalProductData': has_local_products,
                                        'redistribution': 'not-cleared' if has_local_products else 'no-local-product-data'},
                   'clinicalMapping':mapping_metadata(), 'clinicalImports': imported, 'clinicalMappings': mappings, 'losses': losses}

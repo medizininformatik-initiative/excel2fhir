@@ -112,8 +112,8 @@ def localize_rows(rows, address=None):
     tr = GermanTexts(address)
     def coded(sheet, label, code, system):
         for row in rows.get(sheet, []):
-            if sheet == 'Medikation' and row[system] == 'PZN':
-                continue  # Local catalogue supplies its own German product label.
+            if sheet == 'Medikation' and row[system] in ('PZN', ''):
+                continue  # Product mapping translated before removing source coding.
             row[label] = tr.text(row[label], sheet, row[system], row[code])
     for args in [('Diagnose',2,3,4), ('Prozedur',2,3,5), ('Laborbefund',3,2,16),
                  ('Klinische Dokumentation',2,3,16), ('Medikation',3,4,5),

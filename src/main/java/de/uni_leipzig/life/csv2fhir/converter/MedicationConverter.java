@@ -87,6 +87,11 @@ public class MedicationConverter extends Converter {
             if (absent == null) atc.setCode(value("ATC-Code")); else atc.getCodeElement().addExtension(absent);
             code.addCoding(atc);
         }
+        // Project presentation convention: German product/classification first.
+        // Coding order does not express FHIR equivalence or clinical priority.
+        Map<String, Integer> order = Map.of("http://fhir.de/CodeSystem/ifa/pzn", 0,
+                "http://fhir.de/CodeSystem/bfarm/atc", 1);
+        code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(c.getSystem(), 2)));
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
         r.addIngredient().setItem(ClinicalValues.concept(value("Wirkstoffcode"), value("Wirkstoffcodesystem"), null));

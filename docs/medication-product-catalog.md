@@ -1,7 +1,48 @@
 # Deutsche Medikamentendaten mit und ohne lokalen Produktkatalog
 
-Der Synthea-Import funktioniert ohne MMI-Pharmindex. Er erhält Quellcodes und
-verwendet die vorhandenen deutschen Projektübersetzungen. Diese Übersetzungen
+## Öffentlicher Synthea-Standard (ATC 2026)
+
+`scripts/mappings/synthea-medications-de-2026.json` dokumentiert alle 495 RxNorm-Konzepte
+des gepinnten Quellregisters. Davon sind 297 anhand des Quellkonzepts und der amtlichen
+deutschen ATC-Systematik klassifiziert. 13 besitzen zusätzlich eine ausgewählte echte
+PZN. Dies sind redaktionelle Testdatenentscheidungen mit ausstehendem menschlichem
+Review, keine offizielle RxNorm-PZN-Überleitung.
+
+Der Synthea-Import gibt RxNorm weder als Präparat- noch als Wirkstoffcoding aus.
+Ohne belegte PZN bleiben Beschreibung, explizite Quellform und Medikationsereignis
+erhalten. Die Beschreibung kennzeichnet offene PZN- und gegebenenfalls ATC-Zuordnung.
+ATC allein identifiziert keine Packung. Wirkstoffcodierung bleibt ausdrücklich
+DAR unknown, solange keine eigene belegte Zuordnung vorliegt. Das ist keine erbrachte
+ASK-Abdeckung. Manuelle RxNorm-Eingaben im allgemeinen Konverter bleiben möglich.
+
+ATC wird ausdrücklich mit der deutschen Jahresversion 2026 ausgegeben, auch bei
+historischen Testereignissen. Es erfolgt keine Behauptung historischer Marktverfügbarkeit.
+PZN stammt aus der aktuellen BfArM-Kinderarzneimittelliste vom 04.09.2026
+(IFA-Stand 15.08.2026) oder der Festbetragsübersicht vom 01.09.2026. URL, Hash,
+Quellbezeichnung und bei PDF-Belegen Seite stehen im Mapping. Die Packungswahl
+erhält nominale Stärke und Form; Hilfsstoffe, Geräteäquivalenz und tatsächliche
+Abgabepraxis sind nicht abschließend bewertet. Keine automatischen Dosisumrechnungen.
+
+Der amtliche ATC-Vollkatalog wird nur extern zur Prüfung verwendet und nicht
+weiterverteilt. `audit_medication_mapping.py` prüft Quellvollständigkeit und
+Zielcode-Existenz gegen die originale 2026er-XLSX. Dies ersetzt keine fachliche
+Äquivalenzprüfung. `medicationMappingSummary` bilanziert Ereignisse und offene Codes;
+`clinicalMappings` enthält die Herkunft einschließlich RxNorm.
+
+Besondere Reviewfälle: ASS 81 mg wird in Synthea auch als Analgetikum verwendet;
+die Klassifikation bleibt die des niedrig dosierten antithrombotischen Präparats.
+ASS 325 mg ist im gepinnten Koronarsyndrom-Modul antithrombotisch klassifiziert.
+Levonorgestrel-Implantate werden von Intrauterinsystemen unterschieden.
+
+## Optionaler lokaler Adapter (historischer Aufbau)
+
+Die folgenden Adapterdetails betreffen den optionalen lokalen Katalog. Der frühere
+RxNorm-Rückfall wird im Synthea-Standard durch den oben beschriebenen öffentlichen
+Mappingweg ersetzt. MMI und Medication Graph sind keine Voraussetzung.
+
+
+Der Synthea-Import funktioniert ohne MMI-Pharmindex. Er nutzt den öffentlichen Mappingbestand und
+verwendet die vorhandenen deutschen Projektübersetzungen bei fehlender Produktauswahl. Diese Übersetzungen
 können weiterhin Handelsnamen aus der US-Quelle enthalten; sie sind keine
 behaupteten deutschen Handelspräparate. Unbekannte Texte stehen im Textbericht.
 
@@ -15,10 +56,10 @@ implementiert. Der Adapter ist mit vollständig erfundenen Produktdaten getestet
 
 ## Verhalten
 
-- Kein Katalog oder kein Treffer: Originalcode und deutsche Projektbezeichnung.
+- Kein lokaler Katalog oder kein Treffer: öffentlicher Mappingweg mit transparenten offenen Zuordnungen.
 - Treffer mit dokumentierter unveränderter Dosierung: PZN, deutsche Bezeichnung,
   Darreichungsform und optional ein Wirkstoffcode aus dem lokalen Katalog.
-- Ungeklärte Dosierung beim Wechsel: Originalprodukt erhalten. Keine automatische
+- Ungeklärte Dosierung beim lokalen Wechsel: öffentlicher Mappingweg. Keine automatische
   Umrechnung allein aus ähnlichen Präparatnamen und kein ungeprüfter Zufallstreffer.
 - Fehlerhafter Katalog, doppelte Quellzuordnung oder Code außerhalb des vorhandenen
   Synthea-Medikationsinventars: Import mit konkretem Fehler abbrechen.

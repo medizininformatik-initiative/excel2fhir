@@ -9,6 +9,29 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void medicationOrdersGermanCodingFirstAndPreservesUnmappedProducts() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "Präparatbezeichnung", "Präparat A",
+                "Präparatcode", "123", "Präparatcodesystem", DiagnosisValues.SNOMED,
+                "ATC-Code", "M01AE01", "ATC-Version", "2026",
+                "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED));
+        var columns = MedicationConverter.Medication_Columns.values();
+        Medication medication = (Medication)new MedicationConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("http://fhir.de/CodeSystem/bfarm/atc", medication.getCode().getCodingFirstRep().getSystem());
+        assertEquals("2026", medication.getCode().getCodingFirstRep().getVersion());
+        assertEquals("http://snomed.info/sct", medication.getCode().getCoding().get(1).getSystem());
+        values.remove("Präparatcode"); values.remove("Präparatcodesystem");
+        values.remove("ATC-Code"); values.remove("ATC-Version");
+        Medication unmapped = (Medication)new MedicationConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("Präparat A", unmapped.getCode().getText());
+        assertFalse(unmapped.getCode().hasCoding());
+        values.put("Präparatbezeichnung", "Präparat B");
+        Medication other = (Medication)new MedicationConverter(row(values, columns), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+        assertNotEquals(unmapped.getId(), other.getId());
+    }
     @Test public void laboratoryHasBothRequiredCategoryCodings() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         Observation observation = (Observation)new ObservationLaboratoryConverter(

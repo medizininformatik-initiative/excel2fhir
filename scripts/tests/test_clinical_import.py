@@ -35,7 +35,7 @@ class ClinicalImportTest(unittest.TestCase):
     def test_product_selection_preserves_source_without_local_mapping(self):
         coding={'system':'http://www.nlm.nih.gov/research/umls/rxnorm','code':'123'}
         before=copy.deepcopy(coding);decision=select_german_product(coding)
-        self.assertEqual(coding,before);self.assertEqual(decision['status'],'source-preserved');self.assertIsNone(decision['target'])
+        self.assertEqual(coding,before);self.assertEqual(decision['status'],'unmapped');self.assertIsNone(decision['target'])
 
     def test_report_does_not_keep_dangling_result_references(self):
         source=bundle()

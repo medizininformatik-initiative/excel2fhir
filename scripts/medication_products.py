@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from national_medication_mapping import NationalMedicationMapping
 
 ROOT = Path(__file__).resolve().parents[1]
 PZN = 'http://fhir.de/CodeSystem/ifa/pzn'
@@ -31,8 +32,10 @@ def require_external_path(path):
 class ProductCatalog:
     def __init__(self):
         self.entries = {}
+        self.national = NationalMedicationMapping()
         self.metadata = {'id': 'source-products-v1', 'provider': 'public-source',
-                         'description': 'Quellcodes und projektinterne deutsche Lesetexte; keine MMI-Produktdaten'}
+                         'nationalMapping': self.national.metadata,
+                         'description': 'Öffentliche deutsche ATC- und Produktzuordnungen'}
         path = local_catalog_path()
         if not path.exists():
             return
@@ -78,18 +81,17 @@ class ProductCatalog:
                 raise ValueError('Produktzuordnung benötigt Quelle, Methode und Begründung')
             self.entries[key] = copy.deepcopy(entry)
         self.metadata = {'id': data['id'], 'provider': 'mmi-local',
+                         'nationalMapping': self.national.metadata,
                          'sourceVersion': data['sourceVersion'],
                          'sha256': hashlib.sha256(raw).hexdigest()}
 
     def select(self, coding):
-        result = {'status': 'source-preserved', 'source': copy.deepcopy(coding), 'target': None,
-                  'provider': 'public-source',
-                  'reason': 'Quellcode erhalten; deutsche Bezeichnung aus dem projektinternen Textbestand.'}
+        result = self.national.select(coding)
         entry = self.entries.get((coding.get('system'), coding.get('code')))
         if entry is None or coding.get('version'):
             return result
         if entry['doseCompatibility'] != 'unchanged':
-            result['reason'] = 'Lokale Zuordnung nicht angewendet: Dosierung bei Produktwechsel ungeklärt.'
+            result['reason'] += ' Lokale Zuordnung nicht angewendet: Dosierung bei Produktwechsel ungeklärt.'
             return result
         result.update(status='local-product', provider='mmi-local',
                       target=copy.deepcopy(entry['target']),

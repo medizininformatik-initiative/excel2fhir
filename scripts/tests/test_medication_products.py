@@ -51,9 +51,10 @@ class ProductTest(unittest.TestCase):
                                   'timing': {'repeat': {'frequency': 3, 'period': 1, 'periodUnit': 'd'}}}]}})
         return data
 
-    def test_absent_catalog_preserves_codes_and_uses_existing_german_texts(self):
+    def test_absent_local_catalog_uses_public_atc_and_removes_rxnorm(self):
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4:6], [SOURCE['code'], 'RxNorm'])
+        self.assertEqual(rows['Medikation'][0][4:8], ['', '', 'G03AC06', '2026'])
+        self.assertIn('PZN-Zuordnung offen', rows['Medikation'][0][3])
         self.assertTrue(rows['Medikation'][0][3])
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
         self.assertEqual(report['productCatalog']['provider'], 'public-source')
@@ -85,7 +86,7 @@ class ProductTest(unittest.TestCase):
         self.assertIsNone(ProductCatalog().select({'system': RXNORM, 'code': 'not-in-inventory'})['target'])
         data = fixture(); data['entries'][0]['doseCompatibility'] = 'unresolved'; self.save(data)
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4], SOURCE['code'])
+        self.assertEqual(rows['Medikation'][0][4], '')
         self.assertNotIn('Erfundenes Adapter-Testpräparat', json.dumps(report))
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
 

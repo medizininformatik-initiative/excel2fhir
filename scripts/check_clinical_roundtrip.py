@@ -63,9 +63,17 @@ def check_clinical(source, target, report):
     assert Counter(procedure(src[i['sourceId']])for i in expected['clinicalImports']if i['resourceType']=='Procedure')==Counter(procedure(r)for r in dst if r['resourceType']=='Procedure'), 'Procedure values changed'
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
     product_systems = {**SYSTEMS, PZN: 'PZN'}
-    expected_codes=Counter((product_systems.get(r['code']['coding'][0]['system']),r['code']['coding'][0]['code'])for r in medications.values())
-    products={(row[5],row[4])for row in rows['Medikation']}
-    assert expected_codes==Counter(products), 'Medication definitions lost or merged'
+    localize_rows({'Medikation': rows['Medikation']})
+    def product_row(row):
+        codings = []
+        if row[4]: codings.append((next(k for k,v in product_systems.items() if v == row[5]), row[4], None))
+        if row[6]: codings.append(('http://fhir.de/CodeSystem/bfarm/atc', row[6], row[7]))
+        return row[3], tuple(codings), row[8]
+    expected_products = Counter(set(product_row(row) for row in rows['Medikation']))
+    actual_products = Counter((r['code'].get('text', ''),
+        tuple((c.get('system'),c.get('code'),c.get('version')) for c in r['code'].get('coding', [])),
+        r.get('form', {}).get('text', '')) for r in medications.values())
+    assert actual_products == expected_products, 'Medication definitions, ATC versions or forms lost or merged'
     for r in dst:
         if r['resourceType'] in ('MedicationRequest','MedicationAdministration','MedicationStatement'):
             assert r.get('medicationReference',{}).get('reference','').removeprefix('Medication/') in medications
