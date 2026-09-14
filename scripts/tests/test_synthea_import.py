@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 import sys
 import unittest
 from pathlib import Path
@@ -23,6 +24,14 @@ def bundle():
 
 
 class ImportTest(unittest.TestCase):
+    def test_contact_times_keep_both_instants_at_autumn_clock_change(self):
+        source = bundle()
+        period = {'start': '1992-09-27T00:43:12+00:00', 'end': '1992-09-27T01:43:12+00:00'}
+        source['entry'][1]['resource']['period'] = period
+        rows, _ = prepare(source)
+        for value, expected in zip(rows['Fall'][0][2:4], period.values()):
+            self.assertEqual(datetime.fromisoformat(value), datetime.fromisoformat(expected))
+
     def test_keeps_codes_times_references_and_reports_excluded_resources(self):
         source=bundle();before=copy.deepcopy(source)
         rows,report=prepare(source)

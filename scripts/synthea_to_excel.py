@@ -92,7 +92,8 @@ def prepare(bundle):
         nr = str(len(encounter_numbers) + 1)
         encounter_numbers[r['id']] = nr
         def local_time(value):
-            return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone().strftime('%d.%m.%Y %H:%M:%S') if value else ''
+            # Keep the offset: the autumn clock change has two distinct local 02:xx hours.
+            return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone().isoformat() if value else ''
         period = r.get('period', {})
         rows['Fall'].append([pid,nr,local_time(period.get('start')),local_time(period.get('end')),CLASSES[code],
                              '', '', '', '', 'Notfall' if code == 'EMER' else ''])
@@ -104,7 +105,7 @@ def prepare(bundle):
         for key in r.get('class', {}).keys() - {'system','code'}:loss(r,'class.'+key,'Generator unterstützt Sachverhalt noch nicht')
         for key in period.keys() - {'start','end'}:loss(r,'period.'+key,'Generator unterstützt Sachverhalt noch nicht')
         loss(r, 'id', 'Bewusst neu vergebene Fallnummer; Zuordnung im Bericht')
-        loss(r, 'period', 'Zeitpunkte erhalten; Darstellung in lokaler Zeitzone')
+        loss(r, 'period', 'Zeitpunkte erhalten; lokale ISO-Darstellung einschließlich Zeitzonenoffset')
     rows['Fall'], movement_report = enrich(bundle, rows['Fall'], encounter_numbers)
     source_conditions = 0
     condition_rows = {}
