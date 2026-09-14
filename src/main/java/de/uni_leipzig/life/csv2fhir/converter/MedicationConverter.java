@@ -94,7 +94,9 @@ public class MedicationConverter extends Converter {
         code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(c.getSystem(), 2)));
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
-        r.addIngredient().setItem(ClinicalValues.concept(value("Wirkstoffcode"), value("Wirkstoffcodesystem"), null));
+        for (String ingredient : value("Wirkstoffcode").split(";")) {
+            r.addIngredient().setItem(ClinicalValues.concept(ingredient.trim(), value("Wirkstoffcodesystem"), null));
+        }
         return r;
     }
     private String getMedicationId() {

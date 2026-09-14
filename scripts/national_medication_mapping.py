@@ -50,6 +50,10 @@ class NationalMedicationMapping:
                         or atc['version'] != '2026'):
                 raise ValueError('Ungültige ATC-Zuordnung: ' + str(key))
             product = entry['product']
+            ingredients = entry.get('ingredients', [])
+            if any(i.get('system') != 'http://fdasis.nlm.nih.gov'
+                   or not re.fullmatch(r'[A-Z0-9]{10}', i.get('code', '')) for i in ingredients):
+                raise ValueError('Ungültige öffentliche Wirkstoffzuordnung: ' + str(key))
             if product:
                 pzn = product['code']
                 if (not re.fullmatch(r'[0-9]{8}', pzn)
@@ -71,7 +75,8 @@ class NationalMedicationMapping:
             return result
         result.update(status=entry['status'], atc=copy.deepcopy(entry['atc']),
                       target=copy.deepcopy(entry['product']), reason=entry['reason'],
-                      review=entry['review'])
+                      review=entry['review'], ingredients=copy.deepcopy(entry.get('ingredients', [])),
+                      enrichment=copy.deepcopy(entry.get('enrichment')))
         if result['target']:
             result['status'] = 'public-product'
         return result

@@ -3,17 +3,27 @@
 ## Öffentlicher Synthea-Standard (ATC 2026)
 
 `scripts/mappings/synthea-medications-de-2026.json` dokumentiert alle 495 RxNorm-Konzepte
-des gepinnten Quellregisters. Davon sind 322 anhand des Quellkonzepts und der amtlichen
-deutschen ATC-Systematik klassifiziert. 13 besitzen zusätzlich eine ausgewählte echte
+des gepinnten Quellregisters. Alle 495 besitzen eine deutsche ATC-Zuordnung für 2026 und öffentlich belegte
+UNII-Wirkstoffschlüssel. 13 besitzen zusätzlich eine ausgewählte echte
 PZN. Dies sind redaktionelle Testdatenentscheidungen mit ausstehendem menschlichem
 Review, keine offizielle RxNorm-PZN-Überleitung.
 
 Der Synthea-Import gibt RxNorm weder als Präparat- noch als Wirkstoffcoding aus.
 Ohne belegte PZN bleiben Beschreibung, explizite Quellform und Medikationsereignis
 erhalten. Die Beschreibung kennzeichnet offene PZN- und gegebenenfalls ATC-Zuordnung.
-ATC allein identifiziert keine Packung. Wirkstoffcodierung bleibt ausdrücklich
-DAR unknown, solange keine eigene belegte Zuordnung vorliegt. Das ist keine erbrachte
-ASK-Abdeckung. Manuelle RxNorm-Eingaben im allgemeinen Konverter bleiben möglich.
+ATC allein identifiziert keine Packung. Wirkstoffschlüssel stammen aus den öffentlichen
+NIH-RxNav- und FDA-UNII-Registern. Die Belege sind pro Wirkstoff dokumentiert.
+UNII (`http://fdasis.nlm.nih.gov`) ist im KDS-Medikationsprofil 2026.0.1 vorgesehen;
+es wird keine ASK-Abdeckung behauptet. Kombinationen stehen mit Semikolon getrennt
+in der Wirkstoffspalte und werden als getrennte FHIR-Ingredients ausgegeben.
+Manuelle RxNorm-Eingaben im allgemeinen Konverter bleiben möglich.
+
+Die synthetischen Patientengeschichten dürfen plausibel konkretisiert werden.
+Explizite Ersatzwahlen (etwa Hydrocodon retard zu Hydromorphon retard) enthalten
+Zielwirkstoffe und ein neues Dosierungsschema. Die ursprüngliche Dosierung bleibt
+im Herkunftsbericht erhalten. Eine solche Entscheidung behauptet keine
+pharmazeutische Gleichwertigkeit. Unbekannte Codes außerhalb des gepinnten Bestands
+bleiben sichtbar offen und werden nicht durch ähnliche Namen erraten.
 
 ATC wird ausdrücklich mit der deutschen Jahresversion 2026 ausgegeben, auch bei
 historischen Testereignissen. Es erfolgt keine Behauptung historischer Marktverfügbarkeit.

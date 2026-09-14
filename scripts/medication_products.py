@@ -13,6 +13,7 @@ from national_medication_mapping import NationalMedicationMapping
 ROOT = Path(__file__).resolve().parents[1]
 PZN = 'http://fhir.de/CodeSystem/ifa/pzn'
 INGREDIENT_SYSTEMS = {'http://fhir.de/CodeSystem/ask': 'ASK',
+                      'http://fdasis.nlm.nih.gov': 'UNII',
                       'http://snomed.info/sct': 'SNOMED CT (Version nicht angegeben)',
                       'http://www.nlm.nih.gov/research/umls/rxnorm': 'RxNorm'}
 

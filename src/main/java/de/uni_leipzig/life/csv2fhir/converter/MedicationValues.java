@@ -18,7 +18,7 @@ public final class MedicationValues {
             ADMINISTRATION, List.of("in-progress", "not-done", "on-hold", "completed", "entered-in-error", "stopped", "unknown"),
             STATEMENT, List.of("active", "completed", "entered-in-error", "intended", "stopped", "on-hold", "unknown", "not-taken"));
     public static final Set<String> PRODUCT_SYSTEMS = Set.of("PZN", "RxNorm", "CVX", DiagnosisValues.SNOMED);
-    public static final Set<String> INGREDIENT_SYSTEMS = Set.of("ASK", "RxNorm", DiagnosisValues.SNOMED);
+    public static final Set<String> INGREDIENT_SYSTEMS = Set.of("ASK", "UNII", "RxNorm", DiagnosisValues.SNOMED);
 
     private MedicationValues() { }
 
@@ -66,6 +66,18 @@ public final class MedicationValues {
         } catch (Exception e) { /* Individual date errors are reported above. */ }
         checkCode(get, "Präparatcode", "Präparatcodesystem", PRODUCT_SYSTEMS, errors);
         checkCode(get, "Wirkstoffcode", "Wirkstoffcodesystem", INGREDIENT_SYSTEMS, errors);
+        String ingredients = get.apply("Wirkstoffcode");
+        if (ingredients != null && !ingredients.startsWith("!dar:")) {
+            var seen = new java.util.HashSet<String>();
+            for (String ingredient : ingredients.split(";", -1)) {
+                String code = ingredient.trim();
+                if (code.isEmpty() || code.startsWith("!dar:") || !seen.add(code)) {
+                    errors.add("Wirkstoffcode: nichtleere, unterschiedliche Codes mit Semikolon trennen");
+                } else if ("UNII".equals(get.apply("Wirkstoffcodesystem")) && !code.matches("[A-Z0-9]{10}")) {
+                    errors.add("UNII muss aus zehn Großbuchstaben oder Ziffern bestehen");
+                }
+            }
+        }
         if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode erforderlich; unbekannt: !dar:unknown mit Codesystem");
         if (get.apply("Präparatcode") == null && get.apply("ATC-Code") == null && get.apply("Präparatbezeichnung") == null) {
             errors.add("Präparatcode, ATC-Code oder Präparatbezeichnung erforderlich");

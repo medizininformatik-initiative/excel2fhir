@@ -26,7 +26,7 @@ LISTS = {
     'AT': ['Klinische Untersuchungscodes', 'LOINC', SNOMED],
     'AU': ['Codierte Messwertantworten', 'LOINC', SNOMED],
     'AV': ['Medikamentencodes', 'PZN', SNOMED, 'RxNorm', 'CVX'],
-    'AW': ['Wirkstoffcodes', 'ASK', SNOMED, 'RxNorm'],
+    'AW': ['Wirkstoffcodes', 'ASK', 'UNII', SNOMED, 'RxNorm'],
     'AY': ['Impfstoffcodes', 'ATC 2026', SNOMED, 'RxNorm', 'CVX'],
     'AZ': ['Befund- und Dokumenttypen', 'LOINC', SNOMED],
     'BA': ['Plan- und Hilfsmittelcodes', SNOMED],

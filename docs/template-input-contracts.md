@@ -20,7 +20,10 @@ Anschrift bleiben erhalten; sie rücken um eine Spalte nach links.
 Die Medikation enthält jetzt 20 Datenspalten statt 24. Präparatbezeichnung,
 Präparatcode und Präparatcodesystem ersetzen die konkurrierenden Produktfelder.
 ATC-Code mit ausdrücklich eingegebener ATC-Version bleibt zusätzlich erhalten.
-Wirkstoffcode und Wirkstoffcodesystem sind unabhängig davon. Ein unbekannter
+Wirkstoffcode und Wirkstoffcodesystem sind unabhängig davon. Mehrere Wirkstoffe
+werden mit Semikolon getrennt angegeben; alle verwenden das ausgewählte Codesystem.
+UNII ist neben ASK, SNOMED CT und RxNorm unterstützt. Pro Wirkstoff entsteht ein
+eigenes FHIR-Ingredient; mehrere Wirkstoffe sind keine alternativen Codings. Ein unbekannter
 Wirkstoff benötigt ausdrücklich `!dar:unknown` mit einem Codesystem. Die
 Darreichungsform wird als Text übernommen. Aus der Einzeldosis entsteht keine
 Produkt- oder Wirkstoffstärke.

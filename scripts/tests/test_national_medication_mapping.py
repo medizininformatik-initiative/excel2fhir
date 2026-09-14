@@ -52,5 +52,33 @@ class NationalMedicationTest(unittest.TestCase):
         self.assertEqual(set(mapping.entries), {(e['system'], e['code']) for e in registry['entries']
                                                 if e['system'] == RXNORM})
 
+    def test_every_registered_medication_imports_with_atc_and_real_ingredient_keys(self):
+        mapping = NationalMedicationMapping()
+        source = test_medication_products.ProductTest().medication_bundle()
+        for entry in mapping.entries.values():
+            coding = {k: entry['source'][k] for k in ('system', 'code')}
+            source['entry'][-1]['resource']['medicationCodeableConcept'] = {'coding': [coding]}
+            rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
+            self.assertEqual(len(rows['Medikation']), 1, coding)
+            row = rows['Medikation'][0]
+            self.assertTrue(row[6], coding)
+            self.assertEqual(row[7], '2026')
+            self.assertEqual(row[10], 'UNII')
+            for ingredient in row[9].split('; '):
+                self.assertRegex(ingredient, r'^[A-Z0-9]{10}$')
+            self.assertNotIn('RxNorm', row)
+            self.assertEqual(report['medicationMappingSummary']['withIngredients'], 1)
+
+    def test_synthetic_replacement_replaces_ingredient_and_dose_together(self):
+        source = test_medication_products.ProductTest().medication_bundle()
+        source['entry'][-1]['resource']['medicationCodeableConcept'] = {
+            'coding': [{'system': RXNORM, 'code': '1860491'}]}
+        rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
+        row = rows['Medikation'][0]
+        self.assertIn('Hydromorphon', row[3])
+        self.assertEqual(row[6], 'N02AA03')
+        self.assertEqual(row[16:19], ['2', 'mg', '2'])
+        self.assertTrue(report['clinicalMappings'][0]['sourceDosage'])
+
 
 if __name__ == '__main__': unittest.main()

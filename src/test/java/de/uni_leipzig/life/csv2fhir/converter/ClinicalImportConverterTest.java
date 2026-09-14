@@ -9,6 +9,22 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void combinationIngredientsBecomeSeparateUniiIngredients() throws Exception {
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "Präparatbezeichnung", "Kombination",
+                "Wirkstoffcode", "R16CO5Y76E; WK2XYI10QM", "Wirkstoffcodesystem", "UNII"));
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
+        Medication medication = (Medication)new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals(2, medication.getIngredient().size());
+        assertEquals("http://fdasis.nlm.nih.gov", medication.getIngredient().get(0).getItemCodeableConcept().getCodingFirstRep().getSystem());
+        assertEquals("R16CO5Y76E", medication.getIngredient().get(0).getItemCodeableConcept().getCodingFirstRep().getCode());
+        assertEquals("WK2XYI10QM", medication.getIngredient().get(1).getItemCodeableConcept().getCodingFirstRep().getCode());
+        for (String invalid : List.of("R16CO5Y76E;", "R16CO5Y76E; R16CO5Y76E", "invalid", "R16CO5Y76E; !dar:unknown")) {
+            values.put("Wirkstoffcode", invalid);
+            assertFalse(invalid, MedicationValues.errors(values::get).isEmpty());
+        }
+    }
     @Test public void medicationOrdersGermanCodingFirstAndPreservesUnmappedProducts() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "Präparatbezeichnung", "Präparat A",

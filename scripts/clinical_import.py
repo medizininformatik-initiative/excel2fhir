@@ -194,6 +194,22 @@ def prepare_clinical(entries, pid, encounter_numbers):
                         row[3] += ' (ATC-Zuordnung offen)'
                 if decision.get('atc'):
                     row[6], row[7] = decision['atc']['code'], decision['atc']['version']
+                if decision.get('ingredients'):
+                    ingredients = decision['ingredients']
+                    systems = {i['system'] for i in ingredients}
+                    if len(systems) != 1:
+                        raise ValueError('Wirkstoffliste benötigt ein gemeinsames Codesystem')
+                    row[9] = '; '.join(i['code'] for i in ingredients)
+                    row[10] = INGREDIENT_SYSTEMS[ingredients[0]['system']]
+                if decision.get('enrichment'):
+                    enrichment = decision['enrichment']
+                    row[3] = enrichment['display']
+                    row[8] = enrichment['doseForm']
+                    if enrichment.get('resetDose'):
+                        replacement = enrichment['dose']
+                        decision['sourceDosage'] = copy.deepcopy(dosage)
+                        row[16:20] = [replacement['value'], replacement['unit'],
+                                      replacement['frequency'], replacement['text']]
                 if decision['target'] is not None:
                     product = decision['target']
                     row[3], row[8] = product['display'], product['doseForm']
@@ -233,7 +249,8 @@ def prepare_clinical(entries, pid, encounter_numbers):
                       'withPzn': sum(bool(m.get('target')) for m in medication_mappings),
                       'atcUnmappedCodes': sorted({m['source']['code'] for m in medication_mappings if not m.get('atc')}),
                       'pznUnmappedCodes': sorted({m['source']['code'] for m in medication_mappings if not m.get('target')}),
-                      'ingredientMapping': 'Nicht zugeordnet; explizites DAR unknown, sofern kein lokaler Wirkstoff vorliegt'},
+                      'withIngredients': sum(bool(m.get('ingredients')) for m in medication_mappings),
+                      'ingredientMapping': 'Öffentliche UNII-Zuordnung; Kombinationswirkstoffe einzeln ausgewiesen'},
                   'productDataUsage': {'containsLocalProductData': has_local_products,
                                        'redistribution': 'not-cleared' if has_local_products else 'no-local-product-data'},
                   'clinicalMapping':mapping_metadata(), 'clinicalImports': imported, 'clinicalMappings': mappings, 'losses': losses}
