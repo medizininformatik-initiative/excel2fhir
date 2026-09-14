@@ -129,7 +129,7 @@ class MappingTest(unittest.TestCase):
         condition['encounter']['reference'] = 'Encounter/p-E-1'
         with self.assertRaises(AssertionError):
             check(source, target, report)
-        condition['code']['coding'].append(copy.deepcopy(report['diagnosisMappings'][0]['target']))
+        condition['code']['coding'].insert(0, copy.deepcopy(report['diagnosisMappings'][0]['target']))
         self.assertEqual(check(source, target, report)['additionalIcd10GmCodings'], 1)
         condition['code']['coding'][1]['code'] = 'J20.8'
         report['diagnosisMappings'][0]['target']['code'] = 'J20.8'
@@ -155,7 +155,7 @@ class MappingTest(unittest.TestCase):
                 'system': 'http://fhir.de/CodeSystem/dkgev/AufnahmegrundVierteStelle', 'code': '7'}}]}]
         converted = target['entry'][2]['resource']
         converted['encounter']['reference'] = 'Encounter/p-E-1'
-        converted['code']['coding'].append(copy.deepcopy(report['diagnosisMappings'][0]['target']))
+        converted['code']['coding'].insert(0, copy.deepcopy(report['diagnosisMappings'][0]['target']))
         with self.assertRaises(AssertionError):
             check(source, target, report)
         converted['verificationStatus']['coding'][0]['code'] = 'provisional'

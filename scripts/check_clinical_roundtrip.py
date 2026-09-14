@@ -58,9 +58,15 @@ def check_clinical(source, target, report):
     actual_obs=Counter(obs(r)for r in dst if r['resourceType']=='Observation')
     assert wanted_obs==actual_obs, {'missingObservations':list((wanted_obs-actual_obs).items())[:2],
                                   'unexpectedObservations':list((actual_obs-wanted_obs).items())[:2]}
-    def procedure(r):return (code(r['code']),r['status'],r.get('performedDateTime'),
-                            r.get('performedPeriod',{}).get('start'),r.get('performedPeriod',{}).get('end'))
-    assert Counter(procedure(src[i['sourceId']])for i in expected['clinicalImports']if i['resourceType']=='Procedure')==Counter(procedure(r)for r in dst if r['resourceType']=='Procedure'), 'Procedure values changed'
+    def procedure(r, original=False):
+        codings = list(r['code'].get('coding', []))
+        if original:
+            from procedure_mapping import select_ops
+            mapped = select_ops(codings[0])['target']
+            if mapped: codings.insert(0, mapped)
+        return (tuple((c['system'], c['code'], c.get('version')) for c in codings), r['status'],
+                r.get('performedDateTime'), r.get('performedPeriod', {}).get('start'), r.get('performedPeriod', {}).get('end'))
+    assert Counter(procedure(src[i['sourceId']], True) for i in expected['clinicalImports'] if i['resourceType']=='Procedure') == Counter(procedure(r) for r in dst if r['resourceType']=='Procedure'), 'Procedure codes, order or event changed'
     assert report.get('vaccineMapping') == event_report['vaccineMapping'], 'Vaccine mapping changed'
     assert report.get('vaccineMappings') == event_report['vaccineMappings'], 'Vaccine decisions changed'
     vaccine_rows = events['Impfung']

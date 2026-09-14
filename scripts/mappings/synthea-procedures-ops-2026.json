@@ -1,0 +1,3970 @@
+{
+  "id": "synthea-procedures-ops-2026-v1",
+  "sourceRegistrySha256": "be02eef7dabfd24e7d16276a738e6c16503c7bbd1472722947713f6f61b60cf4",
+  "targetSource": {
+    "url": "https://terminologien.bfarm.de/rendering_data/ValueSet-ops-terminale-kodes-2026.json",
+    "sha256": "023cfd34a8304428659645f76b42d4aa39bf56f88efdb345f251e154f6ed9b15",
+    "version": "2026",
+    "copyright": "BfArM 1994-2025 - Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM)."
+  },
+  "scope": "Synthetische klinische Klassifikation, keine vollständige Abrechnungskodierung; keine zusätzlichen Eingriffe, Mindestmerkmale oder Begleitkodes erfunden.",
+  "review": "pending-human-review",
+  "entries": [
+    {
+      "sourceCode": "1004045004",
+      "sourceDisplays": [
+        "Intravitreal injection of anti-vascular endothelial growth factor (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "103697008",
+      "sourceDisplays": [
+        "Patient referral for dental care (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "103746007",
+      "sourceDisplays": [
+        "Heparin therapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "103750000",
+      "sourceDisplays": [
+        "Sleep apnea assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "10383002",
+      "sourceDisplays": [
+        "Counseling for termination of pregnancy",
+        "Counseling for termination of pregnancy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104091002",
+      "sourceDisplays": [
+        "Hemogram, automated, with red blood cells, white blood cells, hemoglobin, hematocrit, indices, platelet count, and manual white blood cell differential (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104173009",
+      "sourceDisplays": [
+        "Microbial culture of sputum (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104308009",
+      "sourceDisplays": [
+        "Serologic test for Toxoplasma gondii (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104326007",
+      "sourceDisplays": [
+        "Measurement of Varicella-zoster virus antibody (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104375008",
+      "sourceDisplays": [
+        "Hepatitis C antibody, confirmatory test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "104435004",
+      "sourceDisplays": [
+        "Screening for occult blood in feces (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "10563004",
+      "sourceDisplays": [
+        "Sleep disorder function test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "110467000",
+      "sourceDisplays": [
+        "Pre-surgery testing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "112001000119100",
+      "sourceDisplays": [
+        "Positive screening for depression on Patient Health Questionnaire 9 (finding)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "112011000119102",
+      "sourceDisplays": [
+        "Negative screening for depression on Patient Health Questionnaire 9 (finding)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "112790001",
+      "sourceDisplays": [
+        "Nasal sinus endoscopy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "112798008",
+      "sourceDisplays": [
+        "Insertion of endotracheal tube (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "113076002",
+      "sourceDisplays": [
+        "Glucose tolerance test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "113120007",
+      "sourceDisplays": [
+        "Interstitial brachytherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "11466000",
+      "sourceDisplays": [
+        "Cesarean section (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-749.y",
+        "version": "2026",
+        "display": "Andere Sectio caesarea: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Sectio ohne dokumentierten Zugang oder Technik; keine primäre/sekundäre oder klassische Technik unterstellen."
+    },
+    {
+      "sourceCode": "1155885007",
+      "sourceDisplays": [
+        "Repair of aortic valve (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "116861002",
+      "sourceDisplays": [
+        "Transfusion of fresh frozen plasma (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "116863004",
+      "sourceDisplays": [
+        "Transfusion of red blood cells (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "117010004",
+      "sourceDisplays": [
+        "Urine culture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "117015009",
+      "sourceDisplays": [
+        "Throat culture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "118001005",
+      "sourceDisplays": [
+        "Streptococcus pneumoniae group B antigen assay (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "122460008",
+      "sourceDisplays": [
+        "Reexploration procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "122548005",
+      "sourceDisplays": [
+        "Biopsy of breast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "122856003",
+      "sourceDisplays": [
+        "Oral examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "122869004",
+      "sourceDisplays": [
+        "Measurement procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1256042007",
+      "sourceDisplays": [
+        "Restoration of tooth with coverage of all cusps using dental filling material (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1259293006",
+      "sourceDisplays": [
+        "Application of composite dental filling material to dentin of tooth following fracture of tooth (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1259900009",
+      "sourceDisplays": [
+        "Fitting of intraoral appliance (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1260009003",
+      "sourceDisplays": [
+        "Removal of supragingival plaque and calculus from all teeth using dental instrument (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1260010008",
+      "sourceDisplays": [
+        "Removal of subgingival plaque and calculus from all teeth using dental instrument (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1263416007",
+      "sourceDisplays": [
+        "Removal of intrauterine contraceptive device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1269321004",
+      "sourceDisplays": [
+        "Fitting of denture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "12719002",
+      "sourceDisplays": [
+        "Platelet transfusion (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "127783003",
+      "sourceDisplays": [
+        "Spirometry (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1287742003",
+      "sourceDisplays": [
+        "Radiotherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1290953004",
+      "sourceDisplays": [
+        "Plain X-ray of spine and pelvis (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "133899007",
+      "sourceDisplays": [
+        "Postoperative care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "133900002",
+      "sourceDisplays": [
+        "Intraoperative care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "13569004",
+      "sourceDisplays": [
+        "Transfusion of plasma (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "13995008",
+      "sourceDisplays": [
+        "Amputation of arm through shoulder (procedure)",
+        "Amputation of left arm"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-862.1",
+        "version": "2026",
+        "display": "Amputation und Exartikulation obere Extremität: Exartikulation Schulter"
+      },
+      "status": "broader-classification",
+      "reason": "Quellkonzept benennt die Amputation durch das Schultergelenk; Seitenangabe nur aus expliziter Quelle."
+    },
+    {
+      "sourceCode": "14152002",
+      "sourceDisplays": [
+        "Intravenous infusion (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "14736009",
+      "sourceDisplays": [
+        "History and physical examination with evaluation and management of patient (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "14768001",
+      "sourceDisplays": [
+        "Peripheral blood smear interpretation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "15081005",
+      "sourceDisplays": [
+        "Pulmonary rehabilitation (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "15220000",
+      "sourceDisplays": [
+        "Laboratory test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "1571000087109",
+      "sourceDisplays": [
+        "Ultrasonography of bilateral breasts (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "162676008",
+      "sourceDisplays": [
+        "Brief general examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "165197003",
+      "sourceDisplays": [
+        "Diagnostic assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "165355002",
+      "sourceDisplays": [
+        "Patient informed - test result (situation)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "165829005",
+      "sourceDisplays": [
+        "Gonorrhea infection titer test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "166001",
+      "sourceDisplays": [
+        "Behavioral therapy (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "167226008",
+      "sourceDisplays": [
+        "Urine dipstick test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "167252002",
+      "sourceDisplays": [
+        "Urine pregnancy test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "167995008",
+      "sourceDisplays": [
+        "Sputum microscopy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "16830007",
+      "sourceDisplays": [
+        "Visual acuity testing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "169230002",
+      "sourceDisplays": [
+        "Ultrasound scan for fetal viability (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "169553002",
+      "sourceDisplays": [
+        "Implantation of subcutaneous contraceptive (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "169673001",
+      "sourceDisplays": [
+        "Antenatal RhD antibody screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "16983000",
+      "sourceDisplays": [
+        "Death in hospital (event)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "170245002",
+      "sourceDisplays": [
+        "Child examination: school screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171121004",
+      "sourceDisplays": [
+        "Human immunodeficiency virus screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171122006",
+      "sourceDisplays": [
+        "Hepatitis B screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171126009",
+      "sourceDisplays": [
+        "Tuberculosis screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171128005",
+      "sourceDisplays": [
+        "Venereal disease screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171207006",
+      "sourceDisplays": [
+        "Depression screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "171231001",
+      "sourceDisplays": [
+        "Asthma screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "173291009",
+      "sourceDisplays": [
+        "Simple extraction of tooth (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "173521004",
+      "sourceDisplays": [
+        "Transposition of submandibular duct (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "177157003",
+      "sourceDisplays": [
+        "Spontaneous breech delivery (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "177765008",
+      "sourceDisplays": [
+        "Opening of chest (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "17881005",
+      "sourceDisplays": [
+        "Cauterization of choroid plexus (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "179632003",
+      "sourceDisplays": [
+        "Closed reduction of dislocation of temporomandibular joint (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "180030006",
+      "sourceDisplays": [
+        "Amputation of right foot",
+        "Amputation of the foot (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-865.1",
+        "version": "2026",
+        "display": "Amputation und Exartikulation Fuß: Fußamputation, n.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Fußamputation ohne ausreichend genaue Höhe/Technik."
+    },
+    {
+      "sourceCode": "180178009",
+      "sourceDisplays": [
+        "Continuous subcutaneous infusion of insulin (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "180207008",
+      "sourceDisplays": [
+        "Intravenous blood transfusion of packed cells (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "180256009",
+      "sourceDisplays": [
+        "Subcutaneous immunotherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "180325003",
+      "sourceDisplays": [
+        "Direct current cardioversion (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "182777000",
+      "sourceDisplays": [
+        "Monitoring of patient (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "182836005",
+      "sourceDisplays": [
+        "Review of medication (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "18286008",
+      "sourceDisplays": [
+        "Catheter ablation of tissue of heart (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "183418007",
+      "sourceDisplays": [
+        "Social case work (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "183444007",
+      "sourceDisplays": [
+        "Referral for further care (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "183450002",
+      "sourceDisplays": [
+        "Admission to burn unit (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "183519002",
+      "sourceDisplays": [
+        "Referral to cardiology service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "183830008",
+      "sourceDisplays": [
+        "Referral for X-ray (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "183856001",
+      "sourceDisplays": [
+        "Referral to hypertension clinic (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "183976008",
+      "sourceDisplays": [
+        "Operative procedure planned (situation)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "185087000",
+      "sourceDisplays": [
+        "Notifications (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "18946005",
+      "sourceDisplays": [
+        "Epidural anesthesia (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "200619008",
+      "sourceDisplays": [
+        "Comprehensive interview and evaluation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "223470000",
+      "sourceDisplays": [
+        "Discussion about signs and symptoms (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "223484005",
+      "sourceDisplays": [
+        "Discussion about treatment (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "223487003",
+      "sourceDisplays": [
+        "Discussion about options (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "223495004",
+      "sourceDisplays": [
+        "Preparation of patient for procedure (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225158009",
+      "sourceDisplays": [
+        "Auscultation of the fetal heart (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "22523008",
+      "sourceDisplays": [
+        "Vasectomy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225297008",
+      "sourceDisplays": [
+        "Care planning and problem solving actions (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225337009",
+      "sourceDisplays": [
+        "Suicide risk assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225338004",
+      "sourceDisplays": [
+        "Risk assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225362009",
+      "sourceDisplays": [
+        "Dental care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225386006",
+      "sourceDisplays": [
+        "Pre-discharge assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225415001",
+      "sourceDisplays": [
+        "Close observation (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "225953001",
+      "sourceDisplays": [
+        "Evaluating response to treatment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "228557008",
+      "sourceDisplays": [
+        "Cognitive and behavioral therapy (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "229064008",
+      "sourceDisplays": [
+        "Movement therapy (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "229069003",
+      "sourceDisplays": [
+        "Posture training (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "229095001",
+      "sourceDisplays": [
+        "Exercise class (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "23183008",
+      "sourceDisplays": [
+        "Excision of lingual torus (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "232657004",
+      "sourceDisplays": [
+        "Single lung transplant (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "232717009",
+      "sourceDisplays": [
+        "Coronary artery bypass grafting (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-361.y",
+        "version": "2026",
+        "display": "Anlegen eines aortokoronaren Bypasses: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Anzahl und Material der Koronarbypässe nicht dokumentiert."
+    },
+    {
+      "sourceCode": "232816009",
+      "sourceDisplays": [
+        "Aortic valve and adjacent structure operations (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "232965003",
+      "sourceDisplays": [
+        "Implantation of cardiac ventricular assist device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "232967006",
+      "sourceDisplays": [
+        "Implantation of left cardiac ventricular assist device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "233174007",
+      "sourceDisplays": [
+        "Cardiac pacemaker procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "233553003",
+      "sourceDisplays": [
+        "Vascular cannula removal (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "23426006",
+      "sourceDisplays": [
+        "Measurement of respiratory function (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "234262008",
+      "sourceDisplays": [
+        "Excision of axillary lymph node (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "234336002",
+      "sourceDisplays": [
+        "Hemopoietic stem cell transplant (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "234687006",
+      "sourceDisplays": [
+        "Grafting of periodontal bone defect (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "234745004",
+      "sourceDisplays": [
+        "Take oral or dental impression (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "234754001",
+      "sourceDisplays": [
+        "Take impression for orthodontic appliance (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "236931002",
+      "sourceDisplays": [
+        "Methotrexate injection into tubal pregnancy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "236974004",
+      "sourceDisplays": [
+        "Instrumental delivery (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "237001001",
+      "sourceDisplays": [
+        "Augmentation of labor (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "23745001",
+      "sourceDisplays": [
+        "Documentation procedure (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "23933004",
+      "sourceDisplays": [
+        "Excision of lingual frenum (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "241055006",
+      "sourceDisplays": [
+        "Mammogram - symptomatic (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "3-100.0",
+        "version": "2026",
+        "display": "Mammographie: Eine oder mehr Ebenen"
+      },
+      "status": "broader-classification",
+      "reason": "Symptomatische Indikation bleibt im Quellkonzept; keine Zahl der Ebenen unterstellt."
+    },
+    {
+      "sourceCode": "241149003",
+      "sourceDisplays": [
+        "Videofluoroscopy swallow (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "241615005",
+      "sourceDisplays": [
+        "Magnetic resonance imaging of breast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "241645008",
+      "sourceDisplays": [
+        "Magnetic resonance imaging of spine (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "243063003",
+      "sourceDisplays": [
+        "Postoperative procedure education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "243085009",
+      "sourceDisplays": [
+        "Oral health education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "243092004",
+      "sourceDisplays": [
+        "Orthodontic appliance care education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "243150007",
+      "sourceDisplays": [
+        "Assist control ventilation (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "243174005",
+      "sourceDisplays": [
+        "Weaning from mechanically assisted ventilation (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "24623002",
+      "sourceDisplays": [
+        "Screening mammography (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "3-100.0",
+        "version": "2026",
+        "display": "Mammographie: Eine oder mehr Ebenen"
+      },
+      "status": "broader-classification",
+      "reason": "Screeningindikation bleibt im Quellkonzept; keine Zahl der Ebenen unterstellt."
+    },
+    {
+      "sourceCode": "24832002",
+      "sourceDisplays": [
+        "Closed reduction of mandibular fracture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "252160004",
+      "sourceDisplays": [
+        "Standard pregnancy test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "252480006",
+      "sourceDisplays": [
+        "Simple walk test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "252482003",
+      "sourceDisplays": [
+        "Stair-climbing test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "252832004",
+      "sourceDisplays": [
+        "Intraocular pressure test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "252895004",
+      "sourceDisplays": [
+        "Urodynamic studies (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "25656009",
+      "sourceDisplays": [
+        "Physical examination, complete (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "261352009",
+      "sourceDisplays": [
+        "Face mask (physical object)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "261554009",
+      "sourceDisplays": [
+        "Reoperation (qualifier value)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "26212005",
+      "sourceDisplays": [
+        "Replacement of aortic valve (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "265764009",
+      "sourceDisplays": [
+        "Renal dialysis (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "26604007",
+      "sourceDisplays": [
+        "Complete blood count (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "266753000",
+      "sourceDisplays": [
+        "Referral for laboratory tests (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "268400002",
+      "sourceDisplays": [
+        "12 lead electrocardiogram (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "268533009",
+      "sourceDisplays": [
+        "Sterilization education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "268556000",
+      "sourceDisplays": [
+        "Urine screening for glucose (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "269828009",
+      "sourceDisplays": [
+        "Syphilis infectious titer test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "269911007",
+      "sourceDisplays": [
+        "Sputum examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "271280005",
+      "sourceDisplays": [
+        "Removal of endotracheal tube (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "271442007",
+      "sourceDisplays": [
+        "Fetal anatomy study (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "274031008",
+      "sourceDisplays": [
+        "Rectal polypectomy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "274474001",
+      "sourceDisplays": [
+        "Bone immobilization (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "274788003",
+      "sourceDisplays": [
+        "Examination of gingivae (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "274804006",
+      "sourceDisplays": [
+        "Evaluation of uterine fundal height (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "275833003",
+      "sourceDisplays": [
+        "Alpha-fetoprotein test - antenatal (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "28163009",
+      "sourceDisplays": [
+        "Skin test for tuberculosis, Tine test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "281789004",
+      "sourceDisplays": [
+        "Antibiotic therapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "281790008",
+      "sourceDisplays": [
+        "Intravenous antibiotic therapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "284053004",
+      "sourceDisplays": [
+        "Tooth socket procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "287664005",
+      "sourceDisplays": [
+        "Ligation of bilateral fallopian tubes (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "288086009",
+      "sourceDisplays": [
+        "Suture open wound (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "290045001",
+      "sourceDisplays": [
+        "Kitchen practice (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "29240004",
+      "sourceDisplays": [
+        "Autopsy examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "29303009",
+      "sourceDisplays": [
+        "Electrocardiographic procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "30088009",
+      "sourceDisplays": [
+        "Blood culture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "301807007",
+      "sourceDisplays": [
+        "Removal of subcutaneous contraceptive (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "301882004",
+      "sourceDisplays": [
+        "Placement of aortic cross clamp (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "301884003",
+      "sourceDisplays": [
+        "Removal of aortic cross clamp (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "302351005",
+      "sourceDisplays": [
+        "Ligation of salivary duct (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "302497006",
+      "sourceDisplays": [
+        "Hemodialysis (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "302761001",
+      "sourceDisplays": [
+        "Walking exercise test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "303653007",
+      "sourceDisplays": [
+        "Computed tomography of head (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "304531008",
+      "sourceDisplays": [
+        "Treatment side effects education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "304532001",
+      "sourceDisplays": [
+        "Treatment failure risk education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305340004",
+      "sourceDisplays": [
+        "Admission to long stay hospital (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305342007",
+      "sourceDisplays": [
+        "Admission to ward (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305351004",
+      "sourceDisplays": [
+        "Admission to intensive care unit (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305425002",
+      "sourceDisplays": [
+        "Admission to neurosurgical department (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305428000",
+      "sourceDisplays": [
+        "Admission to orthopedic department (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "305433001",
+      "sourceDisplays": [
+        "Admission to trauma surgery department (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "306185001",
+      "sourceDisplays": [
+        "Referral to cardiac surgery service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "306206005",
+      "sourceDisplays": [
+        "Referral to service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "306237005",
+      "sourceDisplays": [
+        "Referral to palliative care service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "306316000",
+      "sourceDisplays": [
+        "Referral to transplant surgeon (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "306706006",
+      "sourceDisplays": [
+        "Discharge to ward (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "308283009",
+      "sourceDisplays": [
+        "Discharge from hospital (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "308481009",
+      "sourceDisplays": [
+        "Referral to orthopedic surgeon (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "310417005",
+      "sourceDisplays": [
+        "Certification procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "310861008",
+      "sourceDisplays": [
+        "Chlamydia antigen test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "311555007",
+      "sourceDisplays": [
+        "Speech and language therapy regime (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "311707005",
+      "sourceDisplays": [
+        "Oral motor exercises (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "311791003",
+      "sourceDisplays": [
+        "Information gathering (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "311834001",
+      "sourceDisplays": [
+        "Fiberoptic endoscopic evaluation of swallowing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "31208007",
+      "sourceDisplays": [
+        "Medical induction of labor (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "312384001",
+      "sourceDisplays": [
+        "Multidisciplinary assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "312421008",
+      "sourceDisplays": [
+        "Radionuclide imaging - action (qualifier value)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "312681000",
+      "sourceDisplays": [
+        "Bone density scan (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "312853008",
+      "sourceDisplays": [
+        "Medical records review (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "313077009",
+      "sourceDisplays": [
+        "Human immunodeficiency virus counseling (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "313191000",
+      "sourceDisplays": [
+        "Injection of epinephrine (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "313398001",
+      "sourceDisplays": [
+        "Hepatitis antibody test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "313660005",
+      "sourceDisplays": [
+        "Absolute CD4 count procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "314098000",
+      "sourceDisplays": [
+        "Rubella screening test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "315124004",
+      "sourceDisplays": [
+        "Human immunodeficiency virus viral load (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "315639002",
+      "sourceDisplays": [
+        "Initial patient assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "31676001",
+      "sourceDisplays": [
+        "Human immunodeficiency virus antigen test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "32413006",
+      "sourceDisplays": [
+        "Transplantation of heart (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "33195004",
+      "sourceDisplays": [
+        "External beam radiation therapy procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "33367005",
+      "sourceDisplays": [
+        "Angiography of coronary artery (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "33633005",
+      "sourceDisplays": [
+        "Prescription of drug (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "34043003",
+      "sourceDisplays": [
+        "Dental consultation and report (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "3457005",
+      "sourceDisplays": [
+        "Patient referral (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "34896006",
+      "sourceDisplays": [
+        "Incision (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "35025007",
+      "sourceDisplays": [
+        "Manual pelvic examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "359672006",
+      "sourceDisplays": [
+        "Median sternotomy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "363215001",
+      "sourceDisplays": [
+        "Musculoskeletal system physical examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "36576007",
+      "sourceDisplays": [
+        "Infusion (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "365853002",
+      "sourceDisplays": [
+        "Imaging finding (finding)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "367336001",
+      "sourceDisplays": [
+        "Chemotherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "367494004",
+      "sourceDisplays": [
+        "Premature birth of newborn (finding)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "370789001",
+      "sourceDisplays": [
+        "Development of individualized plan of care (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "370995009",
+      "sourceDisplays": [
+        "Health risks education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "371361000119107",
+      "sourceDisplays": [
+        "Comprehensive metabolic panel (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "371908008",
+      "sourceDisplays": [
+        "Oxygen administration by mask (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "373786007",
+      "sourceDisplays": [
+        "Reasons for treatment delay (finding)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "37542007",
+      "sourceDisplays": [
+        "Posttreatment stabilization, orthodontic device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "37729005",
+      "sourceDisplays": [
+        "Patient transfer, in-hospital (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "3802001",
+      "sourceDisplays": [
+        "Dental application of desensitizing medicament (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "38102005",
+      "sourceDisplays": [
+        "Cholecystectomy (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-511.y",
+        "version": "2026",
+        "display": "Cholezystektomie: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Cholezystektomie ohne Angaben zu Zugang und Gallengangsrevision."
+    },
+    {
+      "sourceCode": "384682003",
+      "sourceDisplays": [
+        "Multidisciplinary care conference (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "384692006",
+      "sourceDisplays": [
+        "Intracavitary brachytherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "384700001",
+      "sourceDisplays": [
+        "Injection of tetanus antitoxin (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "385488000",
+      "sourceDisplays": [
+        "Surgical procedure on chest wall (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "385763009",
+      "sourceDisplays": [
+        "Hospice care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "385781007",
+      "sourceDisplays": [
+        "Home health aide service (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "385798007",
+      "sourceDisplays": [
+        "Radiation therapy care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "385892002",
+      "sourceDisplays": [
+        "Mental health screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386053000",
+      "sourceDisplays": [
+        "Evaluation procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386216000",
+      "sourceDisplays": [
+        "Human parturition, function (observable entity)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386394001",
+      "sourceDisplays": [
+        "Pregnancy termination care",
+        "Pregnancy termination care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386478007",
+      "sourceDisplays": [
+        "Triage: emergency center (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386510005",
+      "sourceDisplays": [
+        "Amputation care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "386516004",
+      "sourceDisplays": [
+        "Anticipatory guidance (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "387685009",
+      "sourceDisplays": [
+        "Surgical manipulation of shoulder joint (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "389153003",
+      "sourceDisplays": [
+        "Indirect gonioscopy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "390791001",
+      "sourceDisplays": [
+        "Referral for echocardiography (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "392021009",
+      "sourceDisplays": [
+        "Lumpectomy of breast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "392023007",
+      "sourceDisplays": [
+        "Excision of lesion of breast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "392091000",
+      "sourceDisplays": [
+        "Care regimes assessment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "392247006",
+      "sourceDisplays": [
+        "Insertion of catheter into artery (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "394894008",
+      "sourceDisplays": [
+        "Pre-operative chemotherapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "395123002",
+      "sourceDisplays": [
+        "Urine screening test for diabetes (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "395142003",
+      "sourceDisplays": [
+        "Allergy screening test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "396487001",
+      "sourceDisplays": [
+        "Sentinel lymph node biopsy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "397539000",
+      "sourceDisplays": [
+        "Grid retinal photocoagulation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "398171003",
+      "sourceDisplays": [
+        "Hearing examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "399014008",
+      "sourceDisplays": [
+        "Administration of vaccine product containing only Bordetella pertussis and Clostridium tetani and Corynebacterium diphtheriae antigens (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "399208008",
+      "sourceDisplays": [
+        "Plain X-ray of chest (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "399217008",
+      "sourceDisplays": [
+        "Cardioassist by aortic balloon pump (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "404909007",
+      "sourceDisplays": [
+        "Injection of botulinum toxin (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "40617009",
+      "sourceDisplays": [
+        "Artificial ventilation (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "40701008",
+      "sourceDisplays": [
+        "Echocardiography (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "408919008",
+      "sourceDisplays": [
+        "Psychosocial care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "409023009",
+      "sourceDisplays": [
+        "Professional / ancillary services care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410006001",
+      "sourceDisplays": [
+        "Digital examination of rectum (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410011004",
+      "sourceDisplays": [
+        "Administration of anesthesia AND/OR sedation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410299006",
+      "sourceDisplays": [
+        "Lab findings education, guidance, and counseling (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410314003",
+      "sourceDisplays": [
+        "Health promotion education, guidance, and counseling (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410401003",
+      "sourceDisplays": [
+        "Nursing care/supplementary surveillance (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410538000",
+      "sourceDisplays": [
+        "Scheduling (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "410770002",
+      "sourceDisplays": [
+        "Administration of anesthesia for procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "412809002",
+      "sourceDisplays": [
+        "Viral hepatitis screening test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "413107006",
+      "sourceDisplays": [
+        "Hepatitis C screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "413180006",
+      "sourceDisplays": [
+        "Pan retinal photocoagulation for diabetes (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "414088005",
+      "sourceDisplays": [
+        "Emergency coronary artery bypass graft (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-361.y",
+        "version": "2026",
+        "display": "Anlegen eines aortokoronaren Bypasses: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Notfallcharakter bleibt in SNOMED/Text; Anzahl und Material der Bypässe unbekannt."
+    },
+    {
+      "sourceCode": "415070008",
+      "sourceDisplays": [
+        "Percutaneous coronary intervention"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "415300000",
+      "sourceDisplays": [
+        "Review of systems (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "417511005",
+      "sourceDisplays": [
+        "Referral to home health care service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "417656005",
+      "sourceDisplays": [
+        "Osteopathic postural examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "418824004",
+      "sourceDisplays": [
+        "Off-pump coronary artery bypass (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-361.y",
+        "version": "2026",
+        "display": "Anlegen eines aortokoronaren Bypasses: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Off-pump bleibt in SNOMED/Text; nicht automatisch minimalinvasiv, Anzahl/Material unbekannt."
+    },
+    {
+      "sourceCode": "418891003",
+      "sourceDisplays": [
+        "Computed tomography of chest and abdomen (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "423475008",
+      "sourceDisplays": [
+        "Heart failure education (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "428211000124100",
+      "sourceDisplays": [
+        "Assessment of substance use (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "42825003",
+      "sourceDisplays": [
+        "Cannulation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "42839003",
+      "sourceDisplays": [
+        "Repair of myelomeningocele (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "428830000",
+      "sourceDisplays": [
+        "Pretransplant evaluation of kidney recipient (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "429609002",
+      "sourceDisplays": [
+        "Lung volume reduction surgery (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "430193006",
+      "sourceDisplays": [
+        "Medication reconciliation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "43060002",
+      "sourceDisplays": [
+        "Intravenous injection (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "430701006",
+      "sourceDisplays": [
+        "Resuscitation using intravenous fluid (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "43075005",
+      "sourceDisplays": [
+        "Partial resection of colon (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "431182000",
+      "sourceDisplays": [
+        "Placing subject in prone position (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "432231006",
+      "sourceDisplays": [
+        "Fine needle aspiration biopsy of lung (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "433112001",
+      "sourceDisplays": [
+        "Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance with contrast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "433114000",
+      "sourceDisplays": [
+        "Human epidermal growth factor receptor 2 gene detection by immunohistochemistry (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "433236007",
+      "sourceDisplays": [
+        "Transthoracic echocardiography (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "434363004",
+      "sourceDisplays": [
+        "Human epidermal growth factor receptor 2 gene detection by fluorescence in situ hybridization (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "440546007",
+      "sourceDisplays": [
+        "Discussion about pregnancy (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "441550005",
+      "sourceDisplays": [
+        "Urinalysis with reflex to microscopy and culture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "441763001",
+      "sourceDisplays": [
+        "Endoscopic exteriorization of third ventricle (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "443497002",
+      "sourceDisplays": [
+        "Excision of sentinel lymph node (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "443529005",
+      "sourceDisplays": [
+        "Detection of chromosomal aneuploidy in prenatal amniotic fluid specimen using fluorescence in situ hybridization screening technique (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "444260001",
+      "sourceDisplays": [
+        "Screen for 20 common genetic mutations of cystic fibrosis using amplification refractory mutation system polymerase chain reaction assay technique (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "445528004",
+      "sourceDisplays": [
+        "Treatment changed (situation)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "445912000",
+      "sourceDisplays": [
+        "Excision of fallopian tube and surgical removal of ectopic pregnancy",
+        "Excision of fallopian tube and surgical removal of ectopic pregnancy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "445988008",
+      "sourceDisplays": [
+        "Assessment using health assessment questionnaire (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "44608003",
+      "sourceDisplays": [
+        "Blood group typing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "446573003",
+      "sourceDisplays": [
+        "Continuous positive airway pressure titration (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "446987006",
+      "sourceDisplays": [
+        "Determination of susceptibility of Human immunodeficiency virus 1 to panel of antiretroviral drugs using genotypic technique (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "447759004",
+      "sourceDisplays": [
+        "Brachytherapy of breast (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "448337001",
+      "sourceDisplays": [
+        "Telemedicine consultation with patient (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "449214001",
+      "sourceDisplays": [
+        "Transfer to stepdown unit (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "45595009",
+      "sourceDisplays": [
+        "Laparoscopic cholecystectomy (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-511.y",
+        "version": "2026",
+        "display": "Cholezystektomie: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Laparoskopie bekannt, aber Gallengangsrevision und Umfang unbekannt; kein spezifischer Endkode unterstellt. Laparoskopie bleibt in SNOMED und Text."
+    },
+    {
+      "sourceCode": "456191000124101",
+      "sourceDisplays": [
+        "Postoperative care for dental procedure (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "46028000",
+      "sourceDisplays": [
+        "Amputation of hand (procedure)",
+        "Amputation of right hand"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-863.y",
+        "version": "2026",
+        "display": "Amputation und Exartikulation Hand: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Handamputation ohne genaue Höhe; keine Handgelenkexartikulation unterstellen."
+    },
+    {
+      "sourceCode": "46706006",
+      "sourceDisplays": [
+        "Replacement of contraceptive intrauterine device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "47020004",
+      "sourceDisplays": [
+        "Ventriculoperitoneal shunt (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "47227006",
+      "sourceDisplays": [
+        "Excision of submandibular gland (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "473220001",
+      "sourceDisplays": [
+        "Hematologic disorder medication review (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "473231009",
+      "sourceDisplays": [
+        "Renal disorder medication review (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "47758006",
+      "sourceDisplays": [
+        "Hepatitis B surface antigen measurement (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "48387007",
+      "sourceDisplays": [
+        "Incision of trachea (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "51116004",
+      "sourceDisplays": [
+        "Passive immunization (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "52052004",
+      "sourceDisplays": [
+        "Rehabilitation therapy (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "52734007",
+      "sourceDisplays": [
+        "Total replacement of hip (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "52765003",
+      "sourceDisplays": [
+        "Intubation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "54550000",
+      "sourceDisplays": [
+        "Electroencephalogram (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-207.y",
+        "version": "2026",
+        "display": "Elektroenzephalographie [EEG]: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "EEG ohne dokumentierten Ableitungsmodus/Dauer; kein Routine- oder Langzeit-EEG unterstellen."
+    },
+    {
+      "sourceCode": "55468007",
+      "sourceDisplays": [
+        "Ocular slit lamp examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "57617002",
+      "sourceDisplays": [
+        "Urine specimen collection (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "58000006",
+      "sourceDisplays": [
+        "Patient discharge (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "58390007",
+      "sourceDisplays": [
+        "Allogeneic bone marrow transplantation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "58776007",
+      "sourceDisplays": [
+        "Autologous bone marrow transplant (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "5880005",
+      "sourceDisplays": [
+        "Physical examination procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "58828004",
+      "sourceDisplays": [
+        "Application of dressing, sterile (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "60151004",
+      "sourceDisplays": [
+        "Neonatal screening (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "60218003",
+      "sourceDisplays": [
+        "Urinalysis, protein, qualitative (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "60554003",
+      "sourceDisplays": [
+        "Polysomnography (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-790",
+        "version": "2026",
+        "display": "Polysomnographie"
+      },
+      "status": "broader-classification",
+      "reason": "Quellkonzept bezeichnet Polysomnographie; kein Austausch mit bloßer Polygraphie."
+    },
+    {
+      "sourceCode": "609588000",
+      "sourceDisplays": [
+        "Prosthetic total arthroplasty of knee joint (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-822.y",
+        "version": "2026",
+        "display": "Implantation einer Endoprothese am Kniegelenk: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Totalersatz des Knies bekannt; Prothesentyp und Verankerung nicht dokumentiert."
+    },
+    {
+      "sourceCode": "61594008",
+      "sourceDisplays": [
+        "Microbial culture (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "61746007",
+      "sourceDisplays": [
+        "Taking patient vital signs (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "61919008",
+      "sourceDisplays": [
+        "Giving patient an enema (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "63332003",
+      "sourceDisplays": [
+        "History AND physical examination (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "63697000",
+      "sourceDisplays": [
+        "Cardiopulmonary bypass operation (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Herz-Lungen-Maschinen-Einsatz ist kein Koronarbypass; Dauer/Art für den passenden extrakorporalen OPS nicht ausreichend dokumentiert."
+    },
+    {
+      "sourceCode": "64544008",
+      "sourceDisplays": [
+        "Gingivectomy or gingivoplasty, per tooth (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "65200003",
+      "sourceDisplays": [
+        "Insertion of intrauterine contraceptive device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "65546002",
+      "sourceDisplays": [
+        "Extraction of wisdom tooth (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "65575008",
+      "sourceDisplays": [
+        "Biopsy of prostate (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "65677008",
+      "sourceDisplays": [
+        "Pulmonary catheterization with Swan-Ganz catheter (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "65710008",
+      "sourceDisplays": [
+        "Acute respiratory failure (disorder)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "67879005",
+      "sourceDisplays": [
+        "History and physical examination, limited (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "68071007",
+      "sourceDisplays": [
+        "Dental fluoride treatment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "69212005",
+      "sourceDisplays": [
+        "Range of motion testing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "698314001",
+      "sourceDisplays": [
+        "Consultation for treatment (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "698354004",
+      "sourceDisplays": [
+        "Magnetic resonance imaging for measurement of brain volume (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "698560000",
+      "sourceDisplays": [
+        "Referral to sleep apnea clinic (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "699253003",
+      "sourceDisplays": [
+        "Surgical manipulation of joint of knee (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "703423002",
+      "sourceDisplays": [
+        "Combined chemotherapy and radiation therapy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "70536003",
+      "sourceDisplays": [
+        "Transplant of kidney (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-555.y",
+        "version": "2026",
+        "display": "Nierentransplantation: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Nierentransplantation ohne dokumentierte Spenderart."
+    },
+    {
+      "sourceCode": "709010006",
+      "sourceDisplays": [
+        "Liaising with referral source (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "709138001",
+      "sourceDisplays": [
+        "Notification of treatment plan (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "709506004",
+      "sourceDisplays": [
+        "Assessment of readiness for disclosure of health status (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "709640007",
+      "sourceDisplays": [
+        "Doppler ultrasonography of renal vein (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "710824005",
+      "sourceDisplays": [
+        "Assessment of health and social care needs (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "710839006",
+      "sourceDisplays": [
+        "Assessment of cardiac status using monitoring device (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "710841007",
+      "sourceDisplays": [
+        "Assessment of anxiety (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "711018006",
+      "sourceDisplays": [
+        "Assessment of social support (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "711069006",
+      "sourceDisplays": [
+        "Coordination of care plan (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "711446003",
+      "sourceDisplays": [
+        "Transplantation of kidney regime (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "713106006",
+      "sourceDisplays": [
+        "Screening for drug abuse (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "714812005",
+      "sourceDisplays": [
+        "Induced termination of pregnancy",
+        "Induced termination of pregnancy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "71493000",
+      "sourceDisplays": [
+        "Transfusion of packed red blood cells (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "715252007",
+      "sourceDisplays": [
+        "Depression screening using Patient Health Questionnaire Nine Item score (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "71651007",
+      "sourceDisplays": [
+        "Mammography (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "3-100.0",
+        "version": "2026",
+        "display": "Mammographie: Eine oder mehr Ebenen"
+      },
+      "status": "broader-classification",
+      "reason": "Patienten-Mammographie, keine Präparatradiographie; Zahl der Ebenen nicht unterstellt."
+    },
+    {
+      "sourceCode": "717778001",
+      "sourceDisplays": [
+        "Mouth care (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "722161008",
+      "sourceDisplays": [
+        "Diabetic retinal eye exam (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "733863009",
+      "sourceDisplays": [
+        "Assessment of readiness for self-management (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "736169004",
+      "sourceDisplays": [
+        "Post anesthesia care management (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "73761001",
+      "sourceDisplays": [
+        "Colonoscopy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "737617004",
+      "sourceDisplays": [
+        "Referral to prosthetic service (procedure)",
+        "Referral to prosthetic service (procedure) "
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "74857009",
+      "sourceDisplays": [
+        "Hospital admission, short-term, 24 hours (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "76164006",
+      "sourceDisplays": [
+        "Biopsy of colon (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "762993000",
+      "sourceDisplays": [
+        "Assessment using Morse Fall Scale (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "762998009",
+      "sourceDisplays": [
+        "Assessment using New York Heart Association Classification (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "763228001",
+      "sourceDisplays": [
+        "Assessment using Canadian Study of Health and Aging Clinical Frailty Scale (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "763302001",
+      "sourceDisplays": [
+        "Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "76601001",
+      "sourceDisplays": [
+        "Intramuscular injection (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "76746007",
+      "sourceDisplays": [
+        "Cardiovascular stress testing (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "770695002",
+      "sourceDisplays": [
+        "Referral to spinal surgery service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "772071006",
+      "sourceDisplays": [
+        "Referral to dentist (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "773996000",
+      "sourceDisplays": [
+        "Transcatheter aortic valve implantation (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "78429003",
+      "sourceDisplays": [
+        "Referral to physical rehabilitation service (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "79345008",
+      "sourceDisplays": [
+        "Excision of maxillary torus palatinus (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "79733001",
+      "sourceDisplays": [
+        "Amputation above-knee (procedure)",
+        "Amputation of right leg"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-864.3",
+        "version": "2026",
+        "display": "Amputation und Exartikulation untere Extremität: Oberschenkelamputation, n.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Oberhalb des Knies; genaue proximale/mittlere/distale Höhe nicht dokumentiert."
+    },
+    {
+      "sourceCode": "80146002",
+      "sourceDisplays": [
+        "Excision of appendix (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-470.y",
+        "version": "2026",
+        "display": "Appendektomie: N.n.bez."
+      },
+      "status": "broader-classification",
+      "reason": "Appendektomie ohne dokumentierten Zugang."
+    },
+    {
+      "sourceCode": "81733005",
+      "sourceDisplays": [
+        "Dental surgical procedure (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "82078001",
+      "sourceDisplays": [
+        "Collection of blood specimen for laboratory (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "82808001",
+      "sourceDisplays": [
+        "Sleep apnea monitoring with alarm (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "8290005",
+      "sourceDisplays": [
+        "Induced cardioplegia (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "84100007",
+      "sourceDisplays": [
+        "History taking (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Allgemeine Überweisung, Kommunikation oder Dokumentation ohne belegte OPS-Mindestmerkmale; keine spezifische Leistung aus der Bezeichnung ableiten."
+    },
+    {
+      "sourceCode": "84478008",
+      "sourceDisplays": [
+        "Occupational therapy (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "84728005",
+      "sourceDisplays": [
+        "Neurological examination (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "85548006",
+      "sourceDisplays": [
+        "Episiotomy (procedure)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-738.0",
+        "version": "2026",
+        "display": "Episiotomie und Naht: Episiotomie"
+      },
+      "status": "broader-classification",
+      "reason": "Quellkonzept bezeichnet Episiotomie; die zugehörige Naht ist im OPS enthalten."
+    },
+    {
+      "sourceCode": "85765000",
+      "sourceDisplays": [
+        "Fiberoptic bronchoscopy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "866146005",
+      "sourceDisplays": [
+        "Serum metabolic panel (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "866148006",
+      "sourceDisplays": [
+        "Screening for domestic abuse (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "868187001",
+      "sourceDisplays": [
+        "Assessment using Car, Relax, Alone, Forget, Friends, Trouble Screening Test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "86964003",
+      "sourceDisplays": [
+        "Cystic fibrosis sweat test (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "88039007",
+      "sourceDisplays": [
+        "Transplant of lung (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "88848003",
+      "sourceDisplays": [
+        "Psychiatric follow-up (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "9002005",
+      "sourceDisplays": [
+        "Manual testing of muscle function (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "90226004",
+      "sourceDisplays": [
+        "Cytopathology procedure, preparation of smear, genital source (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "90407005",
+      "sourceDisplays": [
+        "Evaluation of psychiatric state of patient (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "90470006",
+      "sourceDisplays": [
+        "Prostatectomy (procedure)"
+      ],
+      "target": null,
+      "status": "source-preserved",
+      "reason": "Prostatektomie unspezifisch: weder Radikalität noch Entfernung der Samenblasen belegt; keine radikale Prostatovesikulektomie erfinden."
+    },
+    {
+      "sourceCode": "91251008",
+      "sourceDisplays": [
+        "Physical therapy procedure (regime/therapy)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "91602002",
+      "sourceDisplays": [
+        "Thoracentesis (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "9564003",
+      "sourceDisplays": [
+        "Complete blood count with white cell differential, automated (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    },
+    {
+      "sourceCode": "9905009",
+      "sourceDisplays": [
+        "Loop colostomy (procedure)"
+      ],
+      "target": null,
+      "status": "not-assessed",
+      "reason": "Noch keine fachlich geprüfte OPS-Zuordnung für dieses Quellkonzept; SNOMED und Ereignis bleiben erhalten."
+    }
+  ]
+}

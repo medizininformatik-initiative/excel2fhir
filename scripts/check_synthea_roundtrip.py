@@ -32,6 +32,8 @@ def check(source, target, report):
             decision = map_diagnosis(r)
             if decision['target'] is not None:
                 expected_codings.append(decision['target'])
+        if not original and any(c['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm' for c in expected_codings):
+            assert expected_codings[0]['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm', 'ICD-10-GM must be first'
         codings = tuple(sorted((c['system'],c.get('version',''),c['code'])for c in expected_codings))
         encounter = r.get('encounter',{}).get('reference','')
         if original and encounter:

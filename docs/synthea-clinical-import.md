@@ -27,7 +27,10 @@ Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
 breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
 Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
 [Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
-`select_ops()` erhält derzeit noch die SNOMED-Prozedur; der OPS-Ausbau folgt.
+`select_ops()` ergänzt für 19 geprüfte Quellkonzepte terminale OPS-2026-Klassen
+als erste Codierung und erhält SNOMED ergänzend. Breitere Klassen erfinden keine
+fehlende Operationstechnik. Alle übrigen Rückfälle haben einen expliziten Status
+und Grund; „not-assessed“ ist keine abgeschlossene fachliche Prüfung.
 Das Quellregister ist das archivierte Inventar; dessen `productSelection: deferred`
 bezeichnet den damaligen Stand, während der Laufbericht den aktuellen Anbieter zeigt.
 

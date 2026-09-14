@@ -112,6 +112,8 @@ def localize_rows(rows, address=None):
     tr = GermanTexts(address)
     def coded(sheet, label, code, system):
         for row in rows.get(sheet, []):
+            if sheet == 'Prozedur' and row[system].startswith('OPS '):
+                continue  # Original detail translated before national classification.
             if sheet == 'Medikation' and row[system] in ('PZN', ''):
                 continue  # Product mapping translated before removing source coding.
             if sheet == 'Impfung' and (row[system].startswith('ATC ') or row[system] == ''):

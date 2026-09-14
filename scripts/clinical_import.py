@@ -9,6 +9,7 @@ from pathlib import Path
 from medication_products import ProductCatalog, select_german_product, INGREDIENT_SYSTEMS
 from german_texts import GermanTexts
 from national_medication_mapping import RXNORM, source_dose_form
+from procedure_mapping import select_ops, metadata as procedure_metadata
 
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
@@ -22,16 +23,11 @@ SUPPORTED = {'Observation', 'Procedure', 'MedicationRequest', 'MedicationAdminis
 
 def mapping_metadata():
     registry = Path(__file__).parent / 'mappings/synthea-source-code-registry.json'
-    return {'id': 'synthea-clinical-v1', 'sourceRegistrySha256': hashlib.sha256(registry.read_bytes()).hexdigest()}
+    return {'id': 'synthea-clinical-v1', 'sourceRegistrySha256': hashlib.sha256(registry.read_bytes()).hexdigest(), 'ops': procedure_metadata()}
 
 
 class UnsupportedValue(ValueError):
     pass
-
-
-def select_ops(coding):
-    return {'status': 'source-preserved', 'source': copy.deepcopy(coding), 'target': None,
-            'reason': 'SNOMED-Prozedur direkt übernommen; zusätzliches OPS-Mapping noch nicht hinterlegt.'}
 
 
 def coding(cc):
@@ -112,8 +108,14 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 if r.get('category'):
                     category, category_system, _ = coding(r['category'])
                     if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Prozedurkategorie ist nicht SNOMED')
-                rows['Prozedur'].append([pid, nr, label, code, start, system, '', '', end, r.get('status', ''), category])
-                mappings.append({'sourceId': r['id'], **select_ops(r['code']['coding'][0])})
+                decision = select_ops(r['code']['coding'][0])
+                extra_code, extra_system = '', ''
+                if decision['target']:
+                    label = GermanTexts().text(label, 'Prozedur', system, code)
+                    extra_code, extra_system = code, system
+                    code, system = decision['target']['code'], 'OPS ' + decision['target']['version']
+                rows['Prozedur'].append([pid, nr, label, code, start, system, extra_code, extra_system, end, r.get('status', ''), category])
+                mappings.append({'sourceId': r['id'], **decision})
                 handled.update(['code', 'performedPeriod', 'performedDateTime', 'category'])
             elif typ == 'Observation':
                 code, system, label = coding(r['code'])
