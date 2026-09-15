@@ -1,7 +1,7 @@
 """Versioned, deliberately approximate diagnosis mapping for synthetic test data.
 
 No network or model calls at import time. Improve the table or replace this
-function while retaining its explicit mapped/unmapped result contract.
+function while retaining its explicit mapped/unmapped/excluded result contract.
 """
 import copy
 import hashlib
@@ -22,7 +22,7 @@ def mapping_metadata():
 
 
 def map_diagnosis(condition):
-    """Return an auditable decision; target is only an additional coding.
+    """Return an auditable coding or explicit synthetic-output exclusion decision.
 
     Existing ICD-10-GM always wins. A changed/unknown display or edition is not
     guessed: the original coding remains independently usable.

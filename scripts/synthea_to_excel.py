@@ -121,7 +121,6 @@ def prepare(bundle):
             loss(r, '$', 'Noch nicht im klinischen Excel-Import umgesetzt')
             continue
         source_conditions += 1
-        condition_rows[r['id']] = len(rows['Diagnose']) + 2
         ref(r, 'subject', 'Patient')
         nr = ''
         if 'encounter' in r: nr = encounter_numbers[ref(r, 'encounter', 'Encounter')['id']]
@@ -141,6 +140,10 @@ def prepare(bundle):
             raise ValueError('More codings than supported by the diagnosis sheet/profile')
         decision = map_diagnosis(r)
         diagnosis_mappings.append(decision)
+        if decision['status'] == 'excluded':
+            loss(r, '$', decision['reason'])
+            continue
+        condition_rows[r['id']] = len(rows['Diagnose']) + 2
         if decision['target'] is not None:
             target = decision['target']
             chosen.append((target['code'], 'ICD-10-GM ' + target['version']))
@@ -205,7 +208,7 @@ def prepare(bundle):
     for row, decision in zip(rows['Prozedur'], procedure_decisions):
         if decision.get('internationalReplacement'):
             row[3] = decision['internationalReplacement']['code']
-    for row, decision in zip(rows['Diagnose'], diagnosis_mappings):
+    for row, decision in zip(rows['Diagnose'], (d for d in diagnosis_mappings if d['status'] != 'excluded')):
         if row[6].startswith('ICD-10-GM '):
             row[3:7] = row[5:7] + row[3:5]
         if decision.get('target'):

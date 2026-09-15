@@ -116,6 +116,10 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     category, category_system, _ = coding(r['category'])
                     if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Prozedurkategorie ist nicht SNOMED')
                 decision = select_ops(r['code']['coding'][0])
+                if decision['status'] == 'excluded':
+                    mappings.append({'sourceId': r['id'], **decision})
+                    loss('$', decision['reason'])
+                    continue
                 extra_code, extra_system = '', ''
                 if decision.get('internationalReplacement'):
                     loss('code.coding', 'Quellkonzept durch dokumentierten internationalen Prozedurbegriff ersetzt; vollständiges Detail im Text und Mappingbericht.')

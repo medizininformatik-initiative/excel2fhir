@@ -1,5 +1,5 @@
 {
-  "id": "synthea-diagnoses-icd10gm-2026-v3",
+  "id": "synthea-diagnoses-icd10gm-2026-v4",
   "sourceSystem": "http://snomed.info/sct",
   "reviewStatus": "provisional-assistant-assessment-for-synthetic-test-data",
   "sourceSyntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
@@ -415,8 +415,8 @@
     {
       "sourceCode": "1187604002",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Militärdienst allein ist keine Erkrankung oder belegte berufliche Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Militärdienst allein ist keine Erkrankung oder belegte berufliche Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Serving in military service (finding)"
       ],
@@ -1073,8 +1073,8 @@
     {
       "sourceCode": "160701002",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Migrationsstatus allein ist keine Erkrankung oder belegte soziale Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Migrationsstatus allein ist keine Erkrankung oder belegte soziale Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Social migrant (finding)"
       ],
@@ -1091,8 +1091,8 @@
       "sourceCode": "160903007",
       "sourceDisplay": "Full-time employment (finding)",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Vollzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Vollzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Full-time employment (finding)"
       ],
@@ -1108,8 +1108,8 @@
       "sourceCode": "160904001",
       "sourceDisplay": "Part-time employment (finding)",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Teilzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Teilzeitbeschäftigung allein ist keine Erkrankung oder berufliche Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Part-time employment (finding)"
       ],
@@ -1854,8 +1854,8 @@
     {
       "sourceCode": "224295006",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Grundschulbildung allein ist keine Erkrankung oder soziale Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Grundschulbildung allein ist keine Erkrankung oder soziale Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Only received primary school education (finding)"
       ],
@@ -1872,8 +1872,8 @@
       "sourceCode": "224299000",
       "sourceDisplay": "Received higher education (finding)",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Bildungsabschluss ist keine Erkrankung oder belegte soziale Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Bildungsabschluss ist keine Erkrankung oder belegte soziale Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Received higher education (finding)"
       ],
@@ -1887,9 +1887,14 @@
     },
     {
       "sourceCode": "225444004",
-      "target": null,
-      "relation": "unmapped",
-      "reason": "Erhöhtes Suizidrisiko belegt weder einen Versuch noch aktuelle Suizidgedanken; kein Krankheitscode erzwungen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+        "version": "2026",
+        "code": "R45.8",
+        "display": "Sonstige Symptome, die die Stimmung betreffen"
+      },
+      "relation": "approximate",
+      "reason": "Synthetische Konkretisierung des erhöhten Suizidrisikos als Suizidalität (R45.8); keine exakte Äquivalenz von Risiko und aktuellem Symptom, kein Suizidversuch angenommen. Der Synthea-Zustand führt zur Notfallbeurteilung und stationären Aufnahme. Das ICD-Exklusivum bei psychischer oder Verhaltensstörung bleibt für menschlichen Review sichtbar: Diese Demonstrationszuordnung ist keine abrechnungsbezogene Kodierempfehlung.",
       "sourceDisplays": [
         "At increased risk for suicide (finding)"
       ],
@@ -1900,6 +1905,9 @@
           "state": "At Risk for suicide",
           "sha256": "a0e04e01fe3d42f91326052887d6843d83e5a992f62ee5fb18ab4bd856e1e72a"
         }
+      ],
+      "evidence": [
+        "https://klassifikationen.bfarm.de/icd-10-gm/kode-suche/htmlgm2026/block-r40-r46.htm"
       ]
     },
     {
@@ -3436,8 +3444,8 @@
       "sourceCode": "314529007",
       "sourceDisplay": "Medication review due (situation)",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Fällige Medikamentenprüfung ist keine Diagnose; kein pauschaler Erkrankungscode.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Fällige Medikamentenprüfung ist keine Diagnose; kein pauschaler Erkrankungscode. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Medication review due (situation)"
       ],
@@ -4989,8 +4997,8 @@
     {
       "sourceCode": "446654005",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Flüchtlingsstatus allein ist keine Erkrankung; kein sozialer Problemcode erzwungen.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Flüchtlingsstatus allein ist keine Erkrankung; kein sozialer Problemcode erzwungen. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Refugee (person)"
       ],
@@ -5204,8 +5212,8 @@
     {
       "sourceCode": "473461003",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Schulabschluss allein ist keine Erkrankung oder soziale Problemlage.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Schulabschluss allein ist keine Erkrankung oder soziale Problemlage. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Educated to high school level (finding)"
       ],
@@ -6756,8 +6764,8 @@
     {
       "sourceCode": "741062008",
       "target": null,
-      "relation": "unmapped",
-      "reason": "Nicht am Erwerbsleben beteiligt belegt weder Arbeitslosigkeit noch Krankheit; offen.",
+      "relation": "excluded",
+      "reason": "Bewusst aus der Synthea-Diagnoseausgabe ausgeschlossen: Nicht am Erwerbsleben beteiligt belegt weder Arbeitslosigkeit noch Krankheit; offen. Organisatorische Aufgabe oder reine Sozialangabe; Originalquelle bleibt erhalten.",
       "sourceDisplays": [
         "Not in labor force (finding)"
       ],

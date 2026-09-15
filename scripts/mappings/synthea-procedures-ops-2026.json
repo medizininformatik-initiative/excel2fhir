@@ -3616,8 +3616,8 @@
         "Comprehensive metabolic panel (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Labor-/Screeningkonzept geprüft: Untersuchung bleibt mit ihrem SNOMED-Code erhalten. Ein Routine-Labortest begründet keinen zusätzlichen operativen Eingriff oder komplexdiagnostischen OPS. Vorhandene Messergebnisse werden unabhängig davon als Observations übernommen.",
+      "status": "excluded",
+      "reason": "Bewusst ausgeschlossen: US-spezifisches Comprehensive Metabolic Panel als zusätzliche Prozedur ohne passende deutsche OPS-Zuordnung. Vorhandene einzelne Laborwerte und Befundberichte werden unabhängig hiervon unverändert übernommen; keine Werte werden aus dieser Prozedur erfunden.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/uti/ed_bundle.json"
@@ -4523,8 +4523,8 @@
         "Assessment of substance use (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "status": "synthetic-procedure-replacement",
+      "reason": "US-spezifische Beurteilung des Substanzkonsums für die Testdaten als Screening auf Substanzmissbrauch konkretisiert. Internationales bereits im Quellinventar belegtes Prozedurkonzept; kein passender eigenständiger OPS angesetzt. Quell-US-Code bleibt nur im Mappingbericht.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Basilia559_Bogan287_4482da75-95f9-40a0-13ac-207cb474d566.json",
@@ -4532,7 +4532,17 @@
         "sample/Jamal145_Fisher429_392b23cb-4e94-461d-b4bd-39963676cbd4.json",
         "sample/Lucius907_Bauch723_8e8f5fe4-525b-a752-5b45-c88939106bc1.json",
         "src/main/resources/modules/encounter/substance_use_screening.json"
-      ]
+      ],
+      "internationalReplacement": {
+        "system": "http://snomed.info/sct",
+        "code": "713106006",
+        "display": "Screening for drug abuse (procedure)"
+      },
+      "evidence": {
+        "relation": "synthetic-contextual-replacement",
+        "source": "synthea-source-code-registry.json",
+        "targetCode": "713106006"
+      }
     },
     {
       "sourceCode": "42825003",
@@ -4604,7 +4614,7 @@
       ],
       "target": null,
       "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "reason": "Durchgeführter Medikationsabgleich: kein passender eigenständiger OPS 2026 gefunden; SNOMED beschreibt die auch in Deutschland übliche Handlung. Keine Aufwertung zur komplexen Diagnostik. Selbst für die weitergehende Medikationsanalyse wurde beim BfArM ein neuer OPS für 2027 vorgeschlagen; der Vorschlag ist kein gültiger OPS.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Basilia559_Bogan287_4482da75-95f9-40a0-13ac-207cb474d566.json",
@@ -4614,7 +4624,11 @@
         "src/main/resources/modules/anemia/anemia_sub.json",
         "src/main/resources/modules/congestive_heart_failure.json",
         "src/main/resources/modules/med_rec.json"
-      ]
+      ],
+      "evidence": {
+        "url": "https://multimedia.gsb.bund.de/BfArM/downloads/klassifikationen/ops/vorschlaege/vorschlaege2027/ops2027-059-medikationsanalysen.pdf",
+        "relation": "no-specific-ops-found"
+      }
     },
     {
       "sourceCode": "43060002",

@@ -19,8 +19,9 @@ Reproduktion mit den vorhandenen externen Inventardateien:
 python3 scripts/build_synthea_code_registry.py INVENTARVERZEICHNIS SYNTHEA_CHECKOUT AUSGABE.json
 ```
 
-Die Diagnose-Tabelle v3 beurteilt weiterhin alle 333 produktiven Diagnosecodes:
-320 ICD-10-GM-Zuordnungen und 13 bewusst ohne Ergänzung. Alle 495 Medikamentenkonzepte des festgelegten Inventars erhalten eine deutsche
+Die Diagnose-Tabelle v4 beurteilt weiterhin alle 333 produktiven Diagnosecodes:
+321 ICD-10-GM-Zuordnungen, 10 dokumentierte Auslassungen reiner Sozialangaben/
+organisatorischer Aufgaben und 2 erhaltene Konzepte ohne ICD-Ergänzung. Alle 495 Medikamentenkonzepte des festgelegten Inventars erhalten eine deutsche
 ATC-2026-Zuordnung, öffentlich belegte UNII-Wirkstoffschlüssel und eine ausgewählte
 echte deutsche PZN samt Präparatname und Form. Die Auswahl konkretisiert die
 synthetische Geschichte und behauptet keine pharmazeutische Gleichwertigkeit. RxNorm bleibt ausschließlich
@@ -31,10 +32,15 @@ Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
 [Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
 Alle 428 Prozedurkonzepte des festgelegten Inventars haben eine ausdrückliche
 Entscheidung: 107 erhalten terminale OPS-2026-Kodes und ergänzendes SNOMED,
-306 behalten begründet SNOMED, 14 nichtprozedurale Quellkonzepte werden als
-passende synthetische Handlungen konkretisiert und ein US-spezifisches Konzept
-verwendet einen internationalen Oberbegriff. Details und Quellen stehen in
+304 behalten begründet SNOMED, 15 Konzepte werden als passende synthetische
+Handlungen konkretisiert und die US-zahnärztliche Nachsorge verwendet einen
+internationalen Oberbegriff. Das US-spezifische Comprehensive Metabolic Panel
+entfällt als zusätzliche Prozedur; separat vorhandene Laborwerte und Befundberichte
+bleiben erhalten. Jede Auslassung steht mit Ressourcen-ID im Verlustbericht. Details und Quellen stehen in
 `scripts/mappings/synthea-procedures-ops-2026.json` und im Mappingbericht.
+Medikationsabgleich bleibt mit SNOMED erhalten: Ein passender eigenständiger
+OPS 2026 wurde nicht gefunden. Auch der weitergehende Medikationsanalyse-OPS
+liegt als [Vorschlag für 2027](https://multimedia.gsb.bund.de/BfArM/downloads/klassifikationen/ops/vorschlaege/vorschlaege2027/ops2027-059-medikationsanalysen.pdf) vor, nicht als gültiger Code.
 Das KDS-Profil erlaubt OPS oder SNOMED; Routineleistungen benötigen daher
 nicht automatisch einen OPS. Die SNOMED-Bindung verlangt Prozedurbegriffe.
 Die Entscheidungen ersetzen keine vollständige Terminologievalidierung oder

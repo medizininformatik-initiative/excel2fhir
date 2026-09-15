@@ -11,6 +11,15 @@ from test_synthea_import import bundle
 
 
 class ProcedureMappingTest(unittest.TestCase):
+    def test_us_extension_procedures_have_explicit_international_or_exclusion_decisions(self):
+        for code, entry in ENTRIES.items():
+            if code[-3:-1] == '10' and code[-10:-3] in ('1000119', '1000124'):
+                self.assertTrue(entry.get('internationalReplacement') or entry['status'] == 'excluded', code)
+        self.assertEqual(select_ops({'system': 'http://snomed.info/sct', 'code': '428211000124100'})[
+            'internationalReplacement']['code'], '713106006')
+        self.assertEqual(select_ops({'system': 'http://snomed.info/sct', 'code': '371361000119107'})[
+            'status'], 'excluded')
+
     def test_laparoscopy_does_not_imply_absence_of_bile_duct_revision(self):
         source = bundle()
         procedure = {'resourceType': 'Procedure', 'id': 'surgery', 'status': 'completed',
@@ -72,9 +81,11 @@ class ProcedureMappingTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(len(rows['Prozedur']), len(expected))
+        self.assertEqual(len(rows['Prozedur']), len(expected) - sum(e['status'] == 'excluded' for e in ENTRIES.values()))
         self.assertEqual(len(report['clinicalMappings']), len(expected))
-        for row, (code, entry) in zip(rows['Prozedur'], ENTRIES.items()):
+        self.assertEqual({l['id'] for l in report['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'},
+                         {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'})
+        for row, (code, entry) in zip(rows['Prozedur'], ((c, e) for c, e in ENTRIES.items() if e['status'] != 'excluded')):
             target = entry['target'] or entry.get('internationalReplacement')
             self.assertEqual(row[3], target['code'] if target else code)
             self.assertEqual(row[4], '2026-09-01T08:00:00+02:00')

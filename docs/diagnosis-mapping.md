@@ -28,6 +28,7 @@ Die Funktion unterscheidet:
 - `approximate`: zusätzliches ICD-10-GM-Coding aus der Tabelle.
 - `unmapped`: beurteilt, aber keine ausreichend begründete Zuordnung;
   der Originalcode bleibt erhalten, der Zusatzcode bleibt leer.
+- `excluded`: bewusst aus der Synthea-Diagnoseausgabe ausgelassen, mit Ressourcen-ID und Grund im Verlustbericht.
 - `not-assessed`: Quellcode, Bezeichnung oder explizite Version sind noch nicht
   durch den beurteilten Bestand abgedeckt; ebenfalls keine Ergänzung.
 - `source-preserved`: ein ICD-10-GM-Coding existiert bereits in der Quelle und
@@ -59,21 +60,23 @@ Statusänderung aus.
 
 ## Abdeckung des produktiven Diagnoseinventars
 
-Mappingversion `synthea-diagnoses-icd10gm-2026-v3` beurteilt alle **333** unterschiedlichen
-primären ConditionOnset-Codes in den produktiven Modulen des gepinnten
-Synthea-Checkouts `d9d07a6eef91ee5144293b42ab64224d84d124f8`. Das sind 409
-Quellvorkommen. **320** Konzepte erhalten eine näherungsweise Zuordnung, **13**
-bleiben bewusst ohne ICD-Ergänzung; **0** dieser Quellkonzepte sind noch
-unbeurteilt. Diese Zahlen messen Abdeckung, keine Trefferquote.
+Mappingversion `synthea-diagnoses-icd10gm-2026-v4` beurteilt alle **333** produktiven
+ConditionOnset-Konzepte des festen Synthea-Stands: **321** erhalten ICD-10-GM,
+**10** werden ausdrücklich aus der Diagnoseausgabe ausgeschlossen, **2** bleiben
+mit SNOMED erhalten. Alle Entscheidungen sind dokumentiert.
 
-Ohne Ergänzung bleiben neun neutrale Angaben zu Militärdienst, Migration,
-Beschäftigung und Bildung sowie erhöhtes Suizidrisiko ohne Handlung, eine fällige
-Medikamentenprüfung, ein Suizidereignis ohne konkrete Schädigungsart und der
-Sterbeort Hospiz. Daraus wird keine zusätzliche Krankheit konstruiert. Konkrete
-Suizidmethoden werden dagegen auf eine passende Schädigung abgebildet; bei
-Versuchen ist deren Eintritt eine dokumentierte Testdatenannahme. Dies bedeutet
-nicht, dass ICD keine Codes für äußere Ursachen kennt: Ein solcher Zusatzcode
-allein wäre hier keine eigenständige ICD-Diagnose.
+Ausgeschlossen werden die fällige Medikationsprüfung sowie neun reine Angaben
+zu Beschäftigung, Bildung, Migration und Militärdienst. Das betrifft ausschließlich
+die Synthea-Erzeugung; manuelle Excel-/CSV-Diagnosen werden nicht gefiltert.
+Die Originalquelle und die Auslassung mit Ressourcen-ID/Grund bleiben im Bericht.
+Eventuelle Erwähnungen in Dokumenttexten oder anderen Ressourcentypen bleiben erhalten.
+
+Erhöhtes Suizidrisiko wird für die synthetische Geschichte als Suizidalität mit
+R45.8 konkretisiert; Risiko und aktuelles Symptom sind nicht exakt gleichbedeutend.
+Das [ICD-Exklusivum bei psychischen oder Verhaltensstörungen](https://klassifikationen.bfarm.de/icd-10-gm/kode-suche/htmlgm2026/block-r40-r46.htm)
+bleibt ein menschlicher Reviewpunkt. Dies ist keine Abrechnungskodierung.
+Ein Suizidereignis ohne Schädigungsart und der Sterbeort Hospiz bleiben ohne
+zusätzlichen ICD-Code erhalten. Keine Krankheit oder Suizidmethode wird ergänzt.
 
 Die frühere Gesamtzählung 334 enthielt den Platzhalter `1234` aus
 `src/main/resources/templates/modules/onset_distribution.json`. Dieser gehört

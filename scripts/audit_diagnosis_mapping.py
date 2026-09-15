@@ -62,13 +62,13 @@ def audit(checkout, catalogue_path, terminal_path, mapping_path=None):
         if (set(entry['sourceDisplays']) != source['displays'] or entry['sources'] != source['sources']
                 or entry['sourceDisplay'] not in source['displays']):
             raise ValueError('Source evidence changed: ' + code)
-        if not entry['reason'] or entry['relation'] not in ('approximate', 'unmapped'):
+        if not entry['reason'] or entry['relation'] not in ('approximate', 'unmapped', 'excluded'):
             raise ValueError('Missing assessment: ' + code)
         target = entry['target']
         if 'targetVerificationStatus' in entry and (
                 entry['targetVerificationStatus'] != 'provisional' or target is None):
             raise ValueError('Invalid target verification status: ' + code)
-        if (target is None) != (entry['relation'] == 'unmapped'):
+        if (target is None) != (entry['relation'] in ('unmapped', 'excluded')):
             raise ValueError('Inconsistent mapping decision: ' + code)
         if target:
             if (target['code'] not in terminals or target['code'] not in catalogue

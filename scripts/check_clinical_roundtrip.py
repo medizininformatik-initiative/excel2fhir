@@ -23,6 +23,8 @@ def check_clinical(source, target, report):
     assert report.get('clinicalMapping') == expected['clinicalMapping'], 'Clinical mapping version changed'
     assert report.get('clinicalImports', []) == expected['clinicalImports'], 'Clinical import report changed'
     assert report.get('clinicalMappings', []) == expected['clinicalMappings'], 'Clinical mapping report changed'
+    assert {l['id'] for l in report['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'} == {
+        l['id'] for l in expected['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'}, 'Procedure exclusion report changed'
     src = {r['resource']['id']:r['resource'] for r in entries if 'id' in r.get('resource',{})}
     dst = [e['resource'] for e in target['entry']]
     wanted = Counter(r['resourceType'] for r in expected['clinicalImports'])

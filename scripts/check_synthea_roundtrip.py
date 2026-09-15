@@ -26,6 +26,9 @@ def check(source, target, report):
     assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
     decisions = [map_diagnosis(r) for r in src if r['resourceType'] == 'Condition']
     assert report['diagnosisMappings'] == decisions, 'Mapping report differs from the versioned decisions'
+    excluded = {d['sourceId'] for d in decisions if d['status'] == 'excluded'}
+    assert excluded == {l['id'] for l in report['losses']
+                        if l['resourceType'] == 'Condition' and l['path'] == '$'}, 'Unreported diagnosis exclusion'
     def signature(r, original):
         expected_codings = list(r['code']['coding'])
         if original:
@@ -42,7 +45,7 @@ def check(source, target, report):
         if original and 'verificationStatusChange' in decision:
             statuses = (statuses[0], (decision['verificationStatusChange']['to'],))
         return (codings, r.get('recordedDate',''), r.get('onsetDateTime',''),r.get('abatementDateTime',''),encounter,statuses)
-    original=Counter(signature(r,True)for r in src if r['resourceType']=='Condition')
+    original=Counter(signature(r,True)for r in src if r['resourceType']=='Condition' and r['id'] not in excluded)
     converted=Counter(signature(r,False)for r in dst if r['resourceType']=='Condition')
     assert original==converted, {'missing':list((original-converted).elements())[:2], 'extra':list((converted-original).elements())[:2]}
     for r in dst:
@@ -75,7 +78,7 @@ def check(source, target, report):
     source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
     assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters+movement_check['contacts'],Condition=sum(original.values()))
     clinical = check_clinical(source, target, report)
-    return {'demographics':demographic_check,'movements':movement_check,'clinical':clinical,'conditions':sum(original.values()),'encounters':len(encounters),
+    return {'demographics':demographic_check,'movements':movement_check,'clinical':clinical,'conditions':sum(original.values()),'excludedConditions':len(excluded),'encounters':len(encounters),
             'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
                 if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),

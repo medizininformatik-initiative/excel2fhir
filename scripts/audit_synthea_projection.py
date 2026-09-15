@@ -67,9 +67,27 @@ def audit(source, workbook, target, report):
     excluded_allergies = {l['id'] for l in report['losses'] if l['resourceType'] == 'AllergyIntolerance'
                          and l['path'] == '$' and 'Bewusst ausgeschlossen' in l['reason']}
     assert excluded_allergies == {r['id'] for r in src if r['resourceType'] == 'AllergyIntolerance'}
+    excluded_clinical = {}
+    for typ, filename in [('Condition', 'synthea-diagnoses-icd10gm-2026.json'),
+                          ('Procedure', 'synthea-procedures-ops-2026.json')]:
+        entries = {e['sourceCode']: e for e in json.loads((MAPS / filename).read_text())['entries']}
+        expected = set()
+        for r in src:
+            if r['resourceType'] != typ: continue
+            cs = r.get('code', {}).get('coding', [])
+            if len(cs) != 1: continue
+            c = cs[0]; entry = entries.get(c.get('code'))
+            if not entry or c.get('system') != SNOMED or c.get('version'): continue
+            label = c.get('display') or r.get('code', {}).get('text', '')
+            accepted = {' '.join(v.split()).casefold() for v in entry['sourceDisplays']}
+            if ' '.join(label.split()).casefold() not in accepted and (typ == 'Condition' or label): continue
+            if entry.get('relation', entry.get('status')) == 'excluded': expected.add(r['id'])
+        reported = {l['id'] for l in report['losses'] if l['resourceType'] == typ and l['path'] == '$'}
+        assert reported == expected, (typ, 'unexpected or unreported exclusions')
+        excluded_clinical[typ] = expected
     for typ, sheet in [('Condition', 'Diagnose'), ('Procedure', 'Prozedur'), ('Immunization', 'Impfung'),
                        ('DiagnosticReport', 'Befundbericht'), ('CarePlan', 'Behandlungsplan'), ('Device', 'Hilfsmittel')]:
-        assert source_counts[typ] == len(sheets[sheet]) == target_counts[typ], (typ, 'unintended event loss')
+        assert source_counts[typ] - len(excluded_clinical.get(typ, set())) == len(sheets[sheet]) == target_counts[typ], (typ, 'unintended event loss')
     assert source_counts['Patient'] == target_counts['Patient'] == len(sheets['Person']) == 1
     all_codes = list(all_codings(dst))
     assert not [c for c in all_codes if c['system'] in (RX, CVX) or '/us/core/' in c['system'] or (c['system'] == SNOMED and c['code'] == '456191000124101')], 'US-specific target coding'
@@ -77,6 +95,9 @@ def audit(source, workbook, target, report):
     for resource in dst:
         cc = resource.get('code', {})
         codes = codings(cc)
+        if resource['resourceType'] == 'Procedure':
+            assert not any(c[0] == SNOMED and c[1][-3:-1] == '10'
+                           and c[1][-10:-3] in ('1000119', '1000124') for c in codes), 'US-specific procedure coding'
         if resource['resourceType'] in ('Condition', 'Procedure'):
             national = 'http://fhir.de/CodeSystem/bfarm/' + ('icd-10-gm' if resource['resourceType'] == 'Condition' else 'ops')
             if any(c[0] == national for c in codes): assert codes[0][0] == national

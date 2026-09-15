@@ -1,4 +1,5 @@
 import copy
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -11,6 +12,26 @@ from test_synthea_import import bundle
 
 
 class MappingTest(unittest.TestCase):
+    def test_every_production_concept_is_imported_or_explicitly_excluded(self):
+        table = json.loads((Path(__file__).resolve().parents[1] /
+                            'mappings/synthea-diagnoses-icd10gm-2026.json').read_text())
+        source = self.source()
+        template = source['entry'][2]
+        source['entry'] = source['entry'][:2]
+        expected_excluded = set()
+        for entry in table['entries']:
+            item = copy.deepcopy(template)
+            item['resource']['id'] = 'condition-' + entry['sourceCode']
+            item['resource']['code'] = {'coding': [{'system': SNOMED, 'code': entry['sourceCode'],
+                                                   'display': entry['sourceDisplay']}]}
+            source['entry'].append(item)
+            if entry['relation'] == 'excluded': expected_excluded.add(item['resource']['id'])
+        rows, report = prepare(source)
+        self.assertEqual(report['sourceConditions'], len(table['entries']))
+        self.assertEqual(len(rows['Diagnose']), len(table['entries']) - len(expected_excluded))
+        self.assertEqual({l['id'] for l in report['losses'] if l['resourceType'] == 'Condition' and l['path'] == '$'}, expected_excluded)
+        self.assertFalse(any(d['status'] == 'not-assessed' for d in report['diagnosisMappings']))
+
     def source(self):
         source = bundle()
         source['entry'][2]['resource']['code']['coding'] = [{
@@ -50,6 +71,38 @@ class MappingTest(unittest.TestCase):
                               ('314529007', 'Medication review due (situation)')]:
             condition = {'code': {'coding': [{'system': SNOMED, 'code': code, 'display': display}]}}
             self.assertIsNone(map_diagnosis(condition)['target'])
+            self.assertEqual(map_diagnosis(condition)['status'], 'excluded')
+
+    def test_excluded_conditions_do_not_shift_following_mappings_or_row_numbers(self):
+        source = self.source()
+        original = source['entry'][2]
+        excluded = copy.deepcopy(original)
+        excluded['resource']['id'] = 'social'
+        excluded['resource']['code']['coding'][0].update(code='160903007', display='Full-time employment (finding)')
+        source['entry'].insert(2, excluded)
+        before = copy.deepcopy(source)
+        rows, report = prepare(source)
+        self.assertEqual(source, before)
+        self.assertEqual(len(rows['Diagnose']), 1)
+        self.assertEqual(rows['Diagnose'][0][3], 'J20.9')
+        self.assertEqual(report['sourceConditions'], 2)
+        self.assertEqual(report['importedConditions'], 1)
+        self.assertEqual(report['conditionRows'], {original['resource']['id']: 2})
+        self.assertEqual([d['status'] for d in report['diagnosisMappings']], ['excluded', 'approximate'])
+        self.assertEqual([l['id'] for l in report['losses'] if l['resourceType'] == 'Condition' and l['path'] == '$'], ['social'])
+        excluded['resource']['code']['coding'][0]['display'] = 'A different clinical finding'
+        self.assertNotEqual(map_diagnosis(excluded['resource'])['status'], 'excluded')
+        excluded['resource']['code']['coding'].append({'system': ICD10GM, 'version': '2026', 'code': 'J20.9'})
+        self.assertEqual(map_diagnosis(excluded['resource'])['status'], 'source-preserved')
+
+    def test_suicide_risk_uses_documented_synthetic_symptom_without_inventing_attempt(self):
+        source = self.source()
+        source['entry'][2]['resource']['code']['coding'][0].update(
+            code='225444004', display='At increased risk for suicide (finding)')
+        rows, report = prepare(source)
+        self.assertEqual(rows['Diagnose'][0][3:7], ['R45.8', 'ICD-10-GM 2026',
+                                                 '225444004', 'SNOMED CT (Version nicht angegeben)'])
+        self.assertIn('keine exakte Äquivalenz', report['diagnosisMappings'][0]['reason'])
 
     def test_missing_details_use_fixed_synthetic_defaults(self):
         cases = [('19169002', 'Miscarriage in first trimester (disorder)', 'O03.9'),
