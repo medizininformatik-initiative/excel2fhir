@@ -13,6 +13,7 @@ import re
 import sys
 import uuid
 from workbook_xml import read_sheets
+from workbook_absent import canonical
 
 MAPS = Path(__file__).parent / 'mappings'
 ATC = 'http://fhir.de/CodeSystem/bfarm/atc'
@@ -59,7 +60,7 @@ def volume_unit(value):
 def audit(source, workbook, target, report):
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
-    sheets = {name: rows(cells) for name, cells in read_sheets(workbook).items()
+    sheets = {name: [canonical(name, row) for row in rows(cells)] for name, cells in read_sheets(workbook).items()
               if name not in ('Codes', 'Konvertierungsoptionen')}
     source_counts, target_counts = Counter(r['resourceType'] for r in src), Counter(r['resourceType'] for r in dst)
     assert 'Allergie' not in sheets and not target_counts['AllergyIntolerance']

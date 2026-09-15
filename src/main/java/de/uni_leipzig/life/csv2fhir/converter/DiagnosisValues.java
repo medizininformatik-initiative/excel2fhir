@@ -20,6 +20,25 @@ public final class DiagnosisValues {
             "Unbestätigt", "unconfirmed", "Vorläufig", "provisional", "Differentialdiagnose", "differential",
             "Bestätigt", "confirmed", "Widerlegt", "refuted", "Irrtümlich erfasst", "entered-in-error");
 
+    public static final Map<String, String> ABSENT_LABELS = loadAbsentLabels();
+
+    private static Map<String, String> loadAbsentLabels() {
+        try (var reader = new java.io.InputStreamReader(java.util.Objects.requireNonNull(
+                DiagnosisValues.class.getResourceAsStream("/workbook-absent-reasons.json")),
+                java.nio.charset.StandardCharsets.UTF_8)) {
+            Map<String, String> labels = new LinkedHashMap<>();
+            com.google.gson.JsonParser.parseReader(reader).getAsJsonObject().entrySet()
+                    .forEach(entry -> labels.put(entry.getValue().getAsString(), entry.getKey()));
+            return Collections.unmodifiableMap(labels);
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+    }
+
+    public static boolean isAbsent(String value) {
+        return value != null && (value.startsWith(DAR_PREFIX) || ABSENT_LABELS.containsKey(value));
+    }
+
     private DiagnosisValues() {
     }
 
@@ -45,10 +64,11 @@ public final class DiagnosisValues {
     }
 
     public static Extension absentReason(String value) {
-        if (value == null || !value.startsWith(DAR_PREFIX)) {
+        if (!isAbsent(value)) {
             return null;
         }
-        String reason = value.substring(DAR_PREFIX.length());
+        String reason = ABSENT_LABELS.getOrDefault(value, value.startsWith(DAR_PREFIX)
+                ? value.substring(DAR_PREFIX.length()) : value);
         DataAbsentReason parsed = DataAbsentReason.fromCode(reason);
         if (parsed == null || parsed == DataAbsentReason.NULL) {
             throw new IllegalArgumentException("Unknown data absent reason: " + reason);

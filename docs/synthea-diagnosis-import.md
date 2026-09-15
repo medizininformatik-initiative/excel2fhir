@@ -70,7 +70,7 @@ anderen Kontakt wird nicht erfunden. Priorität und Aufnahmeanlass werden nicht
 allein aus `EMER` ergänzt. Der Rückvergleich prüft die Notfall-Extension ebenfalls.
 
 Die Ausfüllhilfen bleiben auch in der importierten Kopie erhalten. Die Auswahl
-für Aufnahmegrund und DAR verweist auf Codes!AA30:AA50; Klassen auf Codes!B4:B13.
+für Aufnahmegrund und DAR verweist auf Codes!AA30:AA41; Klassen auf Codes!B4:B13.
 Unbekannte Kontaktklassen führen zum Abbruch.
 
 Namen und Anschriften werden inzwischen durch [deutsche synthetische Personendaten](synthea-german-demographics.md)

@@ -50,8 +50,8 @@ public class DiagnosisWorkbookTest {
                 assertEquals("Typ", diagnoses.getRow(0).getCell(12).getStringCellValue());
                 assertEquals(CellType.STRING, diagnoses.getRow(1).getCell(3).getCellType());
                 assertEquals("@", diagnoses.getRow(1).getCell(3).getCellStyle().getDataFormatString());
-                for (String formula : List.of("Codes!$W$30:$W$48", "Codes!$X$30:$X$50",
-                        "Codes!$Y$30:$Y$50", "Codes!$Z$30:$Z$44", "Codes!$D$4:$D$13")) {
+                for (String formula : List.of("Codes!$W$30:$W$48", "Codes!$X$30:$X$41",
+                        "Codes!$Y$30:$Y$41", "Codes!$Z$30:$Z$37", "Codes!$D$4:$D$13")) {
                     assertTrue(formula, diagnoses.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
@@ -72,7 +72,7 @@ public class DiagnosisWorkbookTest {
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
                 assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
-                        .anyMatch(v -> "Codes!$AA$30:$AA$50".equals(v.getFormula1())));
+                        .anyMatch(v -> "Codes!$AA$30:$AA$41".equals(v.getFormula1())));
                 assertEquals("Notfall", book.getSheet("Codes").getRow(34).getCell(26).getStringCellValue());
             }
         }

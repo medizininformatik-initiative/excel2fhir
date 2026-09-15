@@ -1,0 +1,17 @@
+{
+  "unknown": "Unbekannt",
+  "asked-unknown": "Erfragt, aber unbekannt",
+  "temp-unknown": "Noch nicht bekannt",
+  "not-asked": "Nicht erhoben",
+  "asked-declined": "Auskunft verweigert",
+  "masked": "Aus Datenschutzgründen verborgen",
+  "not-applicable": "Nicht zutreffend",
+  "unsupported": "Vom Quellsystem nicht unterstützt",
+  "as-text": "Nur im Ressourcentext vorhanden",
+  "error": "Fehler bei der Ermittlung",
+  "not-a-number": "Kein Zahlenwert (NaN)",
+  "negative-infinity": "Negative Unendlichkeit",
+  "positive-infinity": "Positive Unendlichkeit",
+  "not-performed": "Untersuchung nicht durchgeführt",
+  "not-permitted": "Wert im Zielprofil nicht zulässig"
+}

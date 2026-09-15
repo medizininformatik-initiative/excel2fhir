@@ -45,7 +45,7 @@ def environment():
         versions[name] = (result.stdout + result.stderr).strip()
     versions['python'] = sys.version
     files = [TEMPLATE, JAR, *sorted((ROOT / 'scripts').glob('*.py')),
-             ROOT / 'scripts/WorkbookUno.java', *sorted((ROOT / 'scripts/mappings').glob('*'))]
+             ROOT / 'scripts/WorkbookUno.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*'))]
     return {'versions': versions, 'converterTimezone': 'Europe/Berlin', 'sha256': {
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 

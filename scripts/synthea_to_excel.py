@@ -258,8 +258,12 @@ def write_workbook(rows, output):
             # Extend the existing input-row formatting, never rebuild the sheet.
             for i in range(1032, len(values) + 2):
                 op('copy', name, f'A2:{column_name(len(values[0]))}2', 'A' + str(i))
+        from workbook_absent import display
+        headers = [sheets[name][column_name(j + 1) + '1'] for j in range(len(values[0]))] if values else []
         for i,row in enumerate(values,2):
-            op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in row))
+            record = dict(zip(headers, row))
+            shown = [display(name, header, value, record) for header, value in zip(headers, row)]
+            op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
         if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
     from converter_options import SYNTHEA_OVERRIDES
@@ -272,6 +276,8 @@ def write_workbook(rows, output):
         if len(matches) != 1:
             raise ValueError('Missing or duplicate template option: ' + name)
         put(option_sheet, matches[0], name + ' = ' + value)
+    from clinical_selections import validation_ops
+    ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
     apply_workbook_edits(template, ops, output)
 
 

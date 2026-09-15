@@ -116,7 +116,7 @@ Vorher folgte auf I „Bett“ direkt die Ausfüllhilfe in J. Jetzt steht in J
 Bestehende Beispieldaten erhalten keine erfundene Aufnahmegrund-Angabe.
 
 Die sechs Werte des CodeSystems `http://fhir.de/CodeSystem/dkgev/AufnahmegrundVierteStelle`
-sowie explizite DAR-Gründe stehen in Codes!AA30:AA50 und sind mit Fall!J2:J1031
+sowie sechs deutsch beschriftete Fehlgründe stehen in Codes!AA30:AA41 und sind mit Fall!J2:J1031
 verknüpft. „Notfall“ erzeugt die Extension `http://fhir.de/StructureDefinition/Aufnahmegrund`
 mit Unterelement `VierteStelle` und Coding `7`. Andere Stellen werden nicht ergänzt.
 Leer lässt die Extension weg; DAR steht am Code des Coding. Die Angabe gehört auf

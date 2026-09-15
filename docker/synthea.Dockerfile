@@ -14,6 +14,7 @@ ENV LANG=C.UTF-8
 WORKDIR /app
 COPY --from=build /build/target/excel2fhir.jar ./target/excel2fhir.jar
 COPY scripts ./scripts
+COPY src/main/resources/workbook-absent-reasons.json ./src/main/resources/workbook-absent-reasons.json
 COPY third-party ./third-party
 COPY LICENSE FHIR_Testdatengenerator_Vorlage.xlsx ./
 ENTRYPOINT ["python3", "/app/scripts/run_synthea_cases.py"]

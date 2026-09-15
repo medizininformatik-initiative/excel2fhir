@@ -50,7 +50,7 @@ public final class MedicationValues {
             errors.add("Verabreichung: Gabezeitpunkt unter Beginn eintragen, Dokumentationszeitpunkt leer lassen");
         }
         if ((ADMINISTRATION.equals(type) || STATEMENT.equals(type)) && get.apply("Beginn") == null) {
-            errors.add("Beginn erforderlich; bei unbekanntem Zeitpunkt ausdrücklich !dar:unknown eintragen");
+            errors.add("Beginn erforderlich; bei unbekanntem Zeitpunkt ausdrücklich Unbekannt auswählen");
         }
         for (String key : List.of("Dokumentationszeitpunkt", "Beginn", "Ende")) {
             try { ClinicalValues.date(get.apply(key)); }
@@ -67,18 +67,18 @@ public final class MedicationValues {
         checkCode(get, "Präparatcode", "Präparatcodesystem", PRODUCT_SYSTEMS, errors);
         checkCode(get, "Wirkstoffcode", "Wirkstoffcodesystem", INGREDIENT_SYSTEMS, errors);
         String ingredients = get.apply("Wirkstoffcode");
-        if (ingredients != null && !ingredients.startsWith("!dar:")) {
+        if (ingredients != null && !DiagnosisValues.isAbsent(ingredients)) {
             var seen = new java.util.HashSet<String>();
             for (String ingredient : ingredients.split(";", -1)) {
                 String code = ingredient.trim();
-                if (code.isEmpty() || code.startsWith("!dar:") || !seen.add(code)) {
+                if (code.isEmpty() || DiagnosisValues.isAbsent(code) || !seen.add(code)) {
                     errors.add("Wirkstoffcode: nichtleere, unterschiedliche Codes mit Semikolon trennen");
                 } else if ("UNII".equals(get.apply("Wirkstoffcodesystem")) && !code.matches("[A-Z0-9]{10}")) {
                     errors.add("UNII muss aus zehn Großbuchstaben oder Ziffern bestehen");
                 }
             }
         }
-        if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode erforderlich; unbekannt: !dar:unknown mit Codesystem");
+        if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode erforderlich; unbekannt: Unbekannt mit Codesystem");
         if (get.apply("Präparatcode") == null && get.apply("ATC-Code") == null && get.apply("Präparatbezeichnung") == null) {
             errors.add("Präparatcode, ATC-Code oder Präparatbezeichnung erforderlich");
         }
@@ -89,7 +89,7 @@ public final class MedicationValues {
         if (version != null && !version.matches("[0-9]{4}")) errors.add("ATC-Version als vierstellige Jahresversion angeben");
         if (ADMINISTRATION.equals(type) && get.apply("Einzeldosis") == null
                 && (get.apply("Dosierungstext") != null || get.apply("Dosen pro Tag") != null)) {
-            errors.add("Verabreichungsdosierung benötigt eine Einzeldosis; unbekannt: !dar:unknown (FHIR mad-1)");
+            errors.add("Verabreichungsdosierung benötigt eine Einzeldosis; unbekannt: Unbekannt (FHIR mad-1)");
         }
         if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {

@@ -9,6 +9,34 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void germanMissingLabelsPreserveFhirMeaningAndLegacyInputs() throws Exception {
+        for (var entry : DiagnosisValues.ABSENT_LABELS.entrySet()) {
+            assertTrue(DiagnosisValues.absentReason(entry.getKey()).equalsDeep(
+                    DiagnosisValues.absentReason("!dar:" + entry.getValue())));
+        }
+        assertNull(AdmissionReasonValues.extension(""));
+        var reason = (Coding) AdmissionReasonValues.extension("Unbekannt").getExtensionFirstRep().getValue();
+        assertNull(reason.getCode());
+        assertEquals("unknown", reason.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
+        assertEquals("7", ((Coding) AdmissionReasonValues.extension("Notfall").getExtensionFirstRep().getValue()).getCode());
+        ConverterOptions options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatbezeichnung", "Testpräparat",
+                "Wirkstoffcode", "Unbekannt", "Wirkstoffcodesystem", "UNII", "Beginn", "Noch nicht bekannt",
+                "Einzeldosis", "Unbekannt", "Dosierungstext", "Dosis noch nicht dokumentiert"));
+        assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        var administration = (MedicationAdministration) resources.get(1);
+        assertEquals("unknown", administration.getDosage().getDose().getValueElement()
+                .getExtensionFirstRep().getValue().primitiveValue());
+        assertEquals("temp-unknown", administration.getEffectiveDateTimeType().getExtensionFirstRep().getValue().primitiveValue());
+        var ingredient = ((Medication) resources.get(0)).getIngredientFirstRep().getItemCodeableConcept().getCodingFirstRep();
+        assertNull(ingredient.getCode());
+        assertEquals("unknown", ingredient.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
+        values.put("Wirkstoffcode", "R16CO5Y76E; Unbekannt");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+    }
+
     @Test public void combinationIngredientsBecomeSeparateUniiIngredients() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "Präparatbezeichnung", "Kombination",
