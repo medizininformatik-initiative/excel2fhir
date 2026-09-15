@@ -5,6 +5,7 @@ Usage: clinical_selections.py INPUT.xlsx OUTPUT.xlsx
 The output must be new; clinical values and input-sheet formatting are preserved.
 """
 import base64
+import json
 from pathlib import Path
 import sys
 from zipfile import ZipFile
@@ -37,12 +38,20 @@ LISTS = {
     'BD': ['Behandlungsplan: Absicht', 'proposal', 'plan', 'order', 'option'],
 }
 
+def ingredient_choices():
+    """Complete selectable ingredient combinations from the pinned offline map."""
+    entries = json.loads((Path(__file__).parent / 'mappings/synthea-medications-de-2026.json').read_text())['entries']
+    return sorted({'; '.join(i['code'] for i in entry['ingredients']) for entry in entries})
+
+
+LISTS['BH'] = ['Wirkstoffcodes (UNII; Kombinationen mit Semikolon)'] + ingredient_choices()
+
 # Header-based addressing works for both templates and filled cases.
 SELECTIONS = {
     'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
     'Klinische Dokumentation': {'Codesystem': 'AT', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
     'Prozedur': {'Codesystem': 'AB', 'Zusatzcodesystem': 'AB'},
-    'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW'},
+    'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW', 'Wirkstoffcode': 'BH'},
     'Impfung': {'Codesystem': 'AY', 'Status': 'BB'},
     'Befundbericht': {'Codesystem': 'AZ', 'Status': 'BC'},
     'DocumentReference': {'Dokumentcodesystem': 'AZ'},
@@ -64,7 +73,11 @@ def selection_ops(sheets):
         if col not in ('AB', 'AD') and col + '29' not in sheets['Codes']:
             op('copy', 'Codes', 'AA29:AA60', col + '29')
             op('width', 'Codes', column_number(col) - 1, 9000)
-        for row in range(29, 61):
+        if col == 'BH':
+            for row in range(61, 29 + len(values)):
+                if col + str(row) not in sheets['Codes']:
+                    op('copy', 'Codes', 'AA30:AA30', col + str(row))
+        for row in range(29, max(61, 29 + len(values))):
             put('Codes', col + str(row), values[row - 29] if row - 29 < len(values) else '')
 
     for sheet, selections in SELECTIONS.items():

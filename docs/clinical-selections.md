@@ -13,6 +13,7 @@ Die Auswahl betrifft die konkrete Spalte, nicht pauschal das ganze Tabellenblatt
 | Prozedur: Codesystem und Zusatzcodesystem | SNOMED CT, OPS 2009–2026 | AB30:AB48 |
 | Medikation: Präparatcodesystem | PZN, SNOMED CT, RxNorm, CVX | AV30:AV33 |
 | Medikation: Wirkstoffcodesystem | ASK, UNII, SNOMED CT, RxNorm | AW30:AW33 |
+| Medikation: Wirkstoffcode | Alle 232 UNII-Einzel- und Kombinationswerte des gepinnten Synthea-Mappings | BH30:BH261 |
 | Impfung: Codesystem | ATC 2026, SNOMED CT, RxNorm, CVX | AY30:AY33 |
 | Befundbericht und DocumentReference: Typcodesystem | LOINC, SNOMED CT | AZ30:AZ31 |
 | Behandlungsplan und Hilfsmittel: Codesystem | SNOMED CT | BA30 |
@@ -28,6 +29,11 @@ Originalcode-Auswahl bietet nur Systeme an, die dieser Konverterpfad unterstütz
 ASK gehört zur Wirkstoffauswahl, nicht zur Originalpräparat-Auswahl. Die gemeinsam
 für mehrere Medikationstypen verwendete Statusspalte bleibt eine gemeinsame Liste;
 die Wahl muss weiterhin zum Medikationstyp passen.
+
+Die Wirkstoffcode-Liste wird aus dem öffentlichen Medikamentenmapping erzeugt.
+Mehrere Wirkstoffe bleiben semikolongetrennt in einer Auswahlzelle. Der Synthea-Import
+füllt den passenden Wert und das System UNII; die Liste ist eine Eingabehilfe und
+keine vollständige Wertemengenbindung für alle manuell erfassten Medikamente.
 
 ## Grundlage und Grenzen
 
