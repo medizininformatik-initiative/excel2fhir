@@ -80,7 +80,9 @@ historische Erweiterungsskript ist entfernt; Ausgangspunkt ist die aktuelle Vorl
 - Messwerte: Einheit ist der Lesetext, Einheitencode der maschinenlesbare UCUM-Code. Ebenso sind Untersuchungscode und Wertcode unterschiedliche Konzepte.
 - Fall: Kontakte entstehen nur anhand der fachlichen Angaben; technische Identifikatoren und Elternbezüge werden automatisch erzeugt. Sekundärkontakte laufen parallel zum primären Aufenthalt.
 
-Als Nächstes werden die versteckten bzw. wirkungslosen Medikationsfelder und die übrigen bestätigten Vorlagenkonflikte bereinigt. Die Krankenkassenabbildung ist bereits entfernt.
+Die Medikationsfelder und die Krankenkassenabbildung sind bereinigt. Die aktuellen
+Kontaktregeln einschließlich ihrer Grenzen stehen unter
+[Kontakt-Eingabeprüfungen](contact-input-checks.md).
 
 ## Prüfung der Anschriftbereinigung
 

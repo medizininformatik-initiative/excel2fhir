@@ -25,6 +25,9 @@ Fallnummer führt den aktuellen Fall fort. Die Klasse muss innerhalb des Falls g
 Eine Fachabteilung auf einer Sekundärzeile beschreibt die ausführende Fachrichtung
 und erzeugt keine primäre Verlegung.
 
+Die konkreten aktuellen Ablehnungen und erlaubten Kombinationen stehen unter
+[Kontakt-Eingabeprüfungen](contact-input-checks.md).
+
 ## Zeiträume
 
 Ein ausdrücklich vorhandenes sekundäres Kontaktende bleibt erhalten. Fehlt es,
