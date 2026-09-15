@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Build complete Synthea workflow image
+    - name: Build existing Synthea importer image
       run: docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea:ci .
     - name: Convert and validate actual Synthea regression fixtures
       shell: bash
@@ -113,10 +113,38 @@ jobs:
         assert int(sys.argv[2]) == (0 if report['status'] == 'COMPLETE' else 1), report
         assert all(r['importStatus'] == 'COMPLETE' for r in report['results']), report
         PYTHON
-    - name: Scan complete workflow image
+    - name: Scan Synthea importer image
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: excel2fhir-synthea:ci
+        exit-code: 1
+        ignore-unfixed: true
+        trivyignores: '.trivyignore'
+        severity: 'CRITICAL,HIGH'
+        timeout: '15m0s'
+    - name: Build generator and run the complete workflow offline
+      shell: bash
+      run: |
+        docker compose -p excel2fhir-ci -f compose.synthea.yml build
+        set +e
+        docker compose -p excel2fhir-ci -f compose.synthea.yml run --rm synthea
+        result=$?
+        set -e
+        python3 - "$result" <<'PYTHON'
+        import json, pathlib, sys
+        runs = list(pathlib.Path('outputSynthea').glob('run-*'))
+        assert len(runs) == 1, runs
+        report = json.loads((runs[0] / 'workflow.json').read_text())
+        summary = json.loads((runs[0] / 'cases/summary.json').read_text())
+        assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
+        assert int(sys.argv[1]) == (0 if report['status'] == 'COMPLETE' else 1), report
+        assert summary['results'] and not summary['failures'], summary
+        assert len(list((runs[0] / 'fhir').glob('*.json'))) == len(summary['results'])
+        PYTHON
+    - name: Scan complete workflow image
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: excel2fhir-ci-synthea:latest
         exit-code: 1
         ignore-unfixed: true
         trivyignores: '.trivyignore'
@@ -127,7 +155,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: synthea-workflow-results
-        path: ${{ runner.temp }}/synthea-results
+        path: |
+          ${{ runner.temp }}/synthea-results
+          outputSynthea/
 
   build-excel2fhir:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}

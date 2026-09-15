@@ -19,3 +19,6 @@
 # Python helper caches
 __pycache__/
 *.pyc
+
+# Complete Synthea workflow results
+/outputSynthea/

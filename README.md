@@ -256,6 +256,13 @@ See [LICENSE](LICENSE).
 
 ## Synthea-Testdaten
 
-Der [vollständige Synthea-Workflow](docs/synthea-workflow.md) erzeugt aus vorhandenen
-R4-Patientenbundles deutsche Excel-Beispiele und FHIR einschließlich Importbilanz,
-Rückvergleich und Validierung. Er ist lokal und als Container ausführbar.
+Mit Docker lässt sich Synthea samt Excel→FHIR-Konvertierung direkt ausprobieren:
+
+```sh
+docker compose -f compose.synthea.yml run --build --rm synthea
+```
+
+Ergebnisse liegen unter `outputSynthea/run-…/fhir/`, befüllte Excel-Dateien unter
+`cases/`. Der [Synthea-Einstieg](docs/synthea-workflow.md) erklärt Einstellungen,
+Prüfberichte und die verbleibenden Grenzen der Terminologievalidierung.
+Kein Pharmindex und keine separat installierte Java-/Python-/Office-Umgebung nötig.

@@ -1,88 +1,59 @@
-# Vollständiger Synthea-Workflow
+# Synthea starten und KDS-FHIR erzeugen
 
-Der Workflow verarbeitet vorhandene Synthea-R4-Patientenbundles zu deutschen
-Excel-Dateien, CSV, FHIR und Prüfberichten. Er erzeugt keine neue Synthea-Population.
-Pro JSON-Datei wird ein Patient erwartet; Dateien ohne Patient werden mit Grund
-in der Zusammenfassung aufgeführt. Die bisher unterstützten Ressourcen und
-Eigenschaften bleiben maßgeblich, siehe [Importumfang](synthea-clinical-import.md).
+Voraussetzung: Docker mit Compose und ausreichend Arbeitsspeicher (für den
+Einstieg mindestens 8 GB für Docker). Java, Python und LibreOffice müssen nicht
+separat installiert werden. Der erste Build benötigt Internet; der fertige
+Komplettlauf läuft ohne Netzwerkzugriff und ohne Pharmindex oder externe Kataloge.
 
-## Lokal
+## Starten
 
-Voraussetzungen: Python 3.10 oder neuer, JDK 17 oder neuer, LibreOffice mit
-Java/UNO-Unterstützung und Maven zum Bauen. Python benötigt für diesen Workflow
-keine zusätzlichen Pakete. Unter Debian/Ubuntu heißen die wesentlichen Pakete
-`python3`, `openjdk-17-jdk-headless`, `libreoffice-calc` und
-`libreoffice-java-common`. Unter macOS wird LibreOffice unter
-`/Applications/LibreOffice.app` erkannt.
+Im frisch ausgecheckten Projektverzeichnis:
 
 ```sh
-mvn test package
-python3 scripts/run_synthea_cases.py /pfad/synthea/fhir /pfad/neue-ausgabe
+docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
-Das Ausgabeverzeichnis darf noch nicht existieren. Die Pfade zur Vorlage und zum
-JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
-einem anderen Arbeitsverzeichnis. Der Workflow verwendet acht GB als maximale
-Java-Heapgröße für die vollständige Validierung; große Lebensverläufe können
-mehrere Minuten benötigen. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
-die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
-Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
-mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
+Der erste Start baut die Werkzeuge einschließlich der festgelegten Synthea-Version.
+Weitere Starts verwenden das bereits gebaute Image. Standardmäßig erzeugt Synthea
+einen erwachsenen Patienten; zusätzlich können verstorbene Patienten entstehen.
+Die vollständige Historie wird über unsere Excel-Vorlage nach FHIR konvertiert.
 
-## Container
+## Ergebnisse finden
 
-Das bestehende `docker/Dockerfile` dient weiter der Excel→FHIR-Konvertierung.
-`docker/synthea.Dockerfile` enthält zusätzlich den Synthea-Import, Python,
-LibreOffice und die freien projektinternen Mappings. Es benötigt keine lokal
-installierte Office- oder Java-Umgebung und keine MMI-Daten.
+Jeder Start legt einen neuen Ordner unter `outputSynthea/run-…/` an:
 
-```sh
-docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
-mkdir -p /absoluter/pfad/ergebnisse
-docker run --rm \
-  -v /absoluter/pfad/synthea/fhir:/input:ro \
-  -v /absoluter/pfad/ergebnisse:/output \
-  excel2fhir-synthea /input /output/lauf-01
-```
+- **`fhir/`**: FHIR-Bundles der vollständig importierten und abgeglichenen Patienten.
+- **`cases/<Patient-ID>/Fall.xlsx`**: befüllte Excel-Datei zum Ansehen oder Bearbeiten.
+- **`cases/<Patient-ID>/fhir/`**: FHIR-, Import- und Validierungsberichte des Patienten.
+- **`cases/summary.json`**: Übersicht, einschließlich fehlgeschlagener Patienten.
+- **`synthea/` und `synthea.log`**: unveränderte Synthea-Ausgabe und Generatorprotokoll.
 
-Docker muss ausreichend Arbeitsspeicher für Java und LibreOffice bereitstellen.
-Die Quelle wird schreibgeschützt eingebunden. Unter Linux können die erzeugten
-Dateien dem Containerbenutzer root gehören; bei Bedarf den Container mit der
-üblichen Docker-Option `--user` unter einer schreibberechtigten UID ausführen.
-Der Container enthält ausschließlich die öffentliche Produktschicht. Ein echter
-lokaler MMI-Katalog ist kein Bestandteil dieses Auslieferungswegs.
+Vorherige Läufe und manuell bearbeitete Excel-Dateien werden nicht überschrieben.
 
-## Ergebnisse und Status
+`NOT_CHECKED` bedeutet: Import und Rückvergleich haben funktioniert, aber Teile
+der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dateien
+sind vorhanden; Exitcode 1 signalisiert diese Einschränkung. Das ist keine
+Bestätigung vollständiger KDS-Konformität. Bei `FAILED` ist der Lauf unvollständig;
+der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patienten.
 
-`environment.json` enthält Werkzeugversionen und SHA-256-Prüfsummen des JARs,
-der Vorlage, der Skripte und Mappingdateien. Jeder Fall enthält zusätzlich die
-Quellprüfsumme, `Fall.xlsx`, `Fall.loss.json`, CSV, FHIR, Import-/Validierungsbericht
-und `conversion.log`. `summary.json` wird nach jedem Fall aktualisiert und enthält
-auch fehlgeschlagene Fälle. Ein Fehler in einer Quelldatei verhindert nicht die
-Bearbeitung der übrigen Dateien.
+## Synthea einstellen
 
-| Gesamtstatus | Exitcode | Bedeutung |
-| --- | --- | --- |
-| `COMPLETE` | 0 | Import und Rückvergleich bestanden; Validierung ohne Fehler oder ungeprüfte Terminologien, Warnungen/gezielte Ausnahmen können vorhanden sein. |
-| `NOT_CHECKED` | 1 | Import und Rückvergleich bestanden, aber FHIR-Prüfungen waren nicht vollständig ausführbar. |
-| `FAILED` | 1 | Mindestens ein Fall oder Rückvergleich scheiterte, oder es gab keine Patientenbundles. |
-| `RUNNING` | noch offen | Lauf läuft oder wurde vor dem Abschluss unterbrochen. |
+In `compose.synthea.yml` stehen die normalen Synthea-Argumente in `command`:
+`-p` ist die Patientenzahl, `-a` der Altersbereich, `-s` und `-cs` sind die Seeds,
+`-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`.
+Zum Ausprobieren muss nichts geändert werden. Für wiederholbare Vergleiche Seeds
+und Daten beibehalten. Die Exportform und die vollständige Historie setzt der
+Workflow passend zum Converter; dafür sind keine Einstellungen nötig.
 
-Ein `NOT_CHECKED` wird ausdrücklich nicht als erfolgreicher Volltest umgedeutet.
-Fehlende lokale Referenzziele sind für diesen geschlossenen Export ein Fehler.
-Die [Importbilanz](import-report.md) und die
-[Validator-Dokumentation](fhir-validation.md) erklären die Detailberichte.
+Die Mappings passen zum mitgelieferten Synthea-Stand. Ein Austausch gegen eine
+andere Version oder zusätzliche Module braucht einen erneuten Mappingreview.
 
-Reproduzierbarkeit bedeutet hier nachvollziehbare Eingaben, deterministische
-Mappings und dokumentierte Werkzeugstände. Ein späterer Docker-Neubau kann neue
-Debian-Paketstände enthalten. Für identische Wiederholungen dasselbe gebaute
-Image aufbewahren und dessen Image-ID zusammen mit den Ergebnissen sichern.
-Die fachliche Plausibilität sowie die menschliche Excel-Oberfläche bleiben eigene
-Reviewaufgaben. Fehlende Terminologien werden nicht durch den Container ersetzt.
+## Excel bearbeiten oder vorhandene Daten verwenden
 
-Die CI führt zwei kleine, referenzerhaltend aus tatsächlichen Synthea-Quellen
-extrahierte Fälle durch dieses Container-Image. Sie prüft Import und Rückvergleich
-und bewahrt Excel-Dateien sowie Berichte als Artefakte auf. Ein bekanntes
-`NOT_CHECKED` darf diese technische Regression bestehen lassen, bleibt aber im
-Bericht und im Prozess-Exitcode sichtbar. Das ist kein bestandener vollständiger
-Terminologietest. Das gesamte Image wird zusätzlich mit Trivy geprüft.
+Das Blatt [Fall](synthea-movements.md) erklärt primäre Aufenthalte und zusätzliche
+OP-/Konsilkontakte. Die [Eingabeprüfung](contact-input-checks.md) sammelt Fehler vor
+der FHIR-Erzeugung. Kontaktbeginn und Prozedurbeginn sind getrennte Eingaben.
+
+Für vorhandene Synthea-Bundles, die erneute Konvertierung einer bearbeiteten
+Excel-Datei und einen Aufbau ohne Docker siehe [manuelle Anleitung](synthea-manual.md).
+Der bisherige Excel→FHIR- und CSV→FHIR-Einstieg bleibt unverändert.
