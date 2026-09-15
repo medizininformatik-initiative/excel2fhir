@@ -14,6 +14,14 @@ import sys
 def build(archive, checkout):
     archive, checkout = Path(archive), Path(checkout)
     manifest = json.loads((archive / 'source-manifest.json').read_text())
+    expected = {item['file'] for item in manifest}
+    # Gradle generates this version label; it contains no clinical concepts.
+    generated = {'src/main/resources/version.txt'}
+    actual = {p.relative_to(checkout).as_posix() for p in (checkout / 'src/main').rglob('*')
+              if p.is_file()} - generated
+    if actual != expected:
+        raise ValueError('Synthea source file set changed; added: ' + str(sorted(actual - expected))
+                         + '; missing: ' + str(sorted(expected - actual)))
     for item in manifest:
         path = checkout / item['file']
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != item['sha256']:
@@ -29,24 +37,14 @@ def build(archive, checkout):
         entry['displays'].add(row['display'])
         entry['usages'].add(row['usage'])
         entry['sourceFiles'].add(row['file'])
-    diagnoses = {e['sourceCode']: e for e in json.loads((Path(__file__).parent /
-                 'mappings/synthea-diagnoses-icd10gm-2026.json').read_text())['entries']}
     entries = []
     for key, entry in sorted(groups.items()):
         for field in ('displays', 'usages', 'sourceFiles'):
             entry[field] = sorted(entry[field])
-        entry['action'] = 'preserve-source'
-        entry['reason'] = 'Originalsystem und Code beibehalten; Umsetzung je Ressource separat ausgewiesen.'
-        if key[0] == 'http://snomed.info/sct' and key[1] in diagnoses:
-            entry['diagnosisMapping'] = diagnoses[key[1]]['relation']
-        if 'state-code:MedicationOrder' in entry['usages']:
-            entry['productSelection'] = 'deferred'
-            entry['reason'] = 'RxNorm/SNOMED beibehalten; deutsches Präparat benötigt eigene Produktauswahl.'
-        if 'state-code:Procedure' in entry['usages']:
-            entry['opsSelection'] = 'deferred'
-            entry['reason'] = 'SNOMED-Prozedur direkt übernehmen; zusätzliche OPS-Zuordnung separat ergänzbar.'
         entries.append(entry)
-    return {'id': 'synthea-source-code-registry-v1', 'scope': 'verified archived source inventory excluding module templates',
+    # Keep source facts independent of mapping decisions. Each mapping references
+    # this inventory; copying decisions back here creates stale, circular state.
+    return {'id': 'synthea-source-code-registry-v2', 'scope': 'verified archived source inventory excluding module templates; mapping decisions live in the separate mapping tables',
             'inventorySha256': hashlib.sha256((archive / 'inventory-combined.json').read_bytes()).hexdigest(),
             'sourceManifestSha256': hashlib.sha256((archive / 'source-manifest.json').read_bytes()).hexdigest(),
             'verifiedSourceFiles': len(manifest), 'conceptCount': len(entries),

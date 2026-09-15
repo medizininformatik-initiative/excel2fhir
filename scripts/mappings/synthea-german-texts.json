@@ -1,7 +1,7 @@
 {
   "id": "synthea-german-texts-v1",
   "syntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
-  "registrySha256": "be02eef7dabfd24e7d16276a738e6c16503c7bbd1472722947713f6f61b60cf4",
+  "registrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
   "description": "Projektinterne deutsche Lesetexte für synthetische Testdaten; keine amtliche Terminologieübersetzung. Codes bleiben unverändert.",
   "sources": {
     "editorial": "Einmalige redaktionelle Übersetzung/Korrektur für dieses Projekt; fachlicher Nutzerreview ausstehend.",
