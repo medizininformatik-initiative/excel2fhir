@@ -214,6 +214,9 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     product = decision['target']
                     row[3], row[8] = product['display'], product['doseForm']
                     row[4], row[5] = product['code'], 'PZN'
+                    if row[16] and not row[17] and product.get('sourceCountUnit'):
+                        row[17] = product['sourceCountUnit']
+                        decision['doseUnitEnrichment'] = row[17]
                     if product.get('ingredient'):
                         ingredient = product['ingredient']
                         if ingredient['system'] != RXNORM:

@@ -101,10 +101,18 @@ def audit(source, workbook, target, report):
         assert row['Medikationstyp'] == ('Verordnung' if typ == 'MedicationRequest' else 'Verabreichung')
         dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosageInstruction') or [{}])[0]
         quantity = dose.get('dose', {}) if typ == 'MedicationAdministration' else next((v['doseQuantity'] for v in dose.get('doseAndRate', []) if 'doseQuantity' in v), {})
-        assert decimal(row.get('Einzeldosis')) == decimal(quantity.get('value'))
-        assert row.get('Dosiereinheit', '') == quantity.get('code', quantity.get('unit', ''))
         repeat = dose.get('timing', {}).get('repeat', {})
         frequency = str(repeat['frequency']) if repeat.get('period') == 1 and repeat.get('periodUnit') == 'd' and 'frequency' in repeat else ''
+        enrichment = entry.get('enrichment') or {}
+        if enrichment.get('resetDose'):
+            replacement = enrichment['dose']
+            quantity = {'value': replacement['value'], 'unit': replacement['unit']}
+            frequency = replacement['frequency']
+            assert row.get('Dosierungstext', '') == replacement['text']
+        if quantity.get('value') not in (None, '') and not quantity.get('code', quantity.get('unit', '')) and product.get('sourceCountUnit'):
+            quantity = {**quantity, 'unit': product['sourceCountUnit']}
+        assert decimal(row.get('Einzeldosis')) == decimal(quantity.get('value'))
+        assert row.get('Dosiereinheit', '') == quantity.get('code', quantity.get('unit', ''))
         assert row.get('Dosen pro Tag', '') == frequency
         moment = resource.get('authoredOn', '') if typ == 'MedicationRequest' else resource.get('effectiveDateTime', resource.get('effectivePeriod', {}).get('start', ''))
         assert row.get('Dokumentationszeitpunkt' if typ == 'MedicationRequest' else 'Beginn', '') == moment

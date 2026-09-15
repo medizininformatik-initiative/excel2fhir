@@ -53,8 +53,8 @@ class ProductTest(unittest.TestCase):
 
     def test_absent_local_catalog_uses_public_atc_and_removes_rxnorm(self):
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4:8], ['', '', 'G03AC06', '2026'])
-        self.assertIn('PZN-Zuordnung offen', rows['Medikation'][0][3])
+        self.assertEqual(rows['Medikation'][0][4:8], ['18160187', 'PZN', 'G03AC06', '2026'])
+        self.assertNotIn('PZN-Zuordnung offen', rows['Medikation'][0][3])
         self.assertTrue(rows['Medikation'][0][3])
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
         self.assertEqual(report['productCatalog']['provider'], 'public-source')
@@ -81,12 +81,12 @@ class ProductTest(unittest.TestCase):
         with self.assertRaises(ValueError): write_workbook(local_rows, ROOT / 'target/local.xlsx')
         require_external_output(report, self.path.parent / 'case.xlsx')
 
-    def test_unknown_product_and_unresolved_dose_fall_back_without_target_data(self):
+    def test_unknown_local_product_and_unresolved_dose_fall_back_to_public_mapping(self):
         self.save()
         self.assertIsNone(ProductCatalog().select({'system': RXNORM, 'code': 'not-in-inventory'})['target'])
         data = fixture(); data['entries'][0]['doseCompatibility'] = 'unresolved'; self.save(data)
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4], '')
+        self.assertEqual(rows['Medikation'][0][4], '18160187')
         self.assertNotIn('Erfundenes Adapter-Testpräparat', json.dumps(report))
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
 

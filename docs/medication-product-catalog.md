@@ -4,8 +4,8 @@
 
 `scripts/mappings/synthea-medications-de-2026.json` dokumentiert alle 495 RxNorm-Konzepte
 des gepinnten Quellregisters. Alle 495 besitzen eine deutsche ATC-Zuordnung für 2026 und öffentlich belegte
-UNII-Wirkstoffschlüssel. 13 besitzen zusätzlich eine ausgewählte echte
-PZN. Dies sind redaktionelle Testdatenentscheidungen mit ausstehendem menschlichem
+UNII-Wirkstoffschlüssel sowie eine ausgewählte echte deutsche PZN.
+Dies sind redaktionelle Testdatenentscheidungen mit ausstehendem menschlichem
 Review, keine offizielle RxNorm-PZN-Überleitung.
 
 Der Synthea-Import gibt RxNorm weder als Präparat- noch als Wirkstoffcoding aus.
@@ -27,11 +27,27 @@ bleiben sichtbar offen und werden nicht durch ähnliche Namen erraten.
 
 ATC wird ausdrücklich mit der deutschen Jahresversion 2026 ausgegeben, auch bei
 historischen Testereignissen. Es erfolgt keine Behauptung historischer Marktverfügbarkeit.
-PZN stammt aus der aktuellen BfArM-Kinderarzneimittelliste vom 04.09.2026
-(IFA-Stand 15.08.2026) oder der Festbetragsübersicht vom 01.09.2026. URL, Hash,
-Quellbezeichnung und bei PDF-Belegen Seite stehen im Mapping. Die Packungswahl
-erhält nominale Stärke und Form; Hilfsstoffe, Geräteäquivalenz und tatsächliche
-Abgabepraxis sind nicht abschließend bewertet. Keine automatischen Dosisumrechnungen.
+Packungsbelege stammen aus öffentlichen BfArM-, TK-/DAK- und Herstellerlisten,
+G-BA-Herstellerdossiers, Gebrauchsinformationen und veröffentlichten Herstellerhinweisen.
+Einzelne historische Packungen sind durch andere öffentliche Dokumente belegt.
+URL, Hash und gegebenenfalls PDF-Seite stehen im Mapping. Die ausgewählten Fakten
+erfordern weder MMI-Pharmindex noch Medication Graph oder eine laufende Terminologieabfrage.
+Eine öffentliche Fundstelle ist keine pauschale Lizenz für deren vollständigen Datenbestand.
+
+Stärke, Form und Therapie dürfen für das synthetische Szenario geändert werden.
+`dosePolicy` unterscheidet erhaltene Quelldosierungen von explizit neu festgelegten
+Schemata. Einheitenlose orale Synthea-Stückzahlen erhalten bei geeigneten Präparaten
+die Einheit Tablette bzw. Kapsel; bereits angegebene physikalische Einheiten bleiben
+erhalten. Der Rückvergleich berücksichtigt die dokumentierten Ergänzungen.
+Packungsinhalt und verabreichte Dosis werden nicht gleichgesetzt. Für gewichts- oder
+indikationsabhängige Infusionen kann das Schema als Text ohne erfundene feste Dosis stehen.
+
+Bei Herceptin SC wird rekombinante Hyaluronidase entsprechend der EU-Fachinformation
+als Hilfsstoff behandelt und nicht als zweiter aktiver Wirkstoff ausgegeben.
+Atropin-Augentropfen werden im Synthea-Modul Zerebralparese sublingual gegen
+Speichelfluss verwendet; das ausdrücklich synthetische Anwendungsschema erhält
+diesen Kontext. Begleitmedikation, altersabhängige Dosierung und Therapieersatzwahlen
+bleiben Bestandteile des menschlichen Reviews der befüllten Excel-Dateien.
 
 Der amtliche ATC-Vollkatalog wird nur extern zur Prüfung verwendet und nicht
 weiterverteilt. `audit_medication_mapping.py` prüft Quellvollständigkeit und

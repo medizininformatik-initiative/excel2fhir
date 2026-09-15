@@ -58,9 +58,21 @@ class NationalMedicationMapping:
                 pzn = product['code']
                 if (not re.fullmatch(r'[0-9]{8}', pzn)
                         or sum(int(n) * i for i, n in enumerate(pzn[:7], 1)) % 11 != int(pzn[-1])
-                        or product['doseCompatibility'] != 'unchanged'
+                        or product['doseCompatibility'] not in ('unchanged', 'synthetic-representative')
                         or product['source'] not in data['productSources']):
                     raise ValueError('Ungültige Produktzuordnung: ' + str(key))
+                if product['doseCompatibility'] == 'synthetic-representative':
+                    enrichment = entry.get('enrichment') or {}
+                    if not (product.get('selectionReason') and product.get('dosePolicy') in
+                            ('preserve-source-regimen', 'explicit-synthetic-regimen')):
+                        raise ValueError('Synthetische Produktwahl benötigt Begründung und Dosierungsentscheidung: ' + str(key))
+                    if product.get('sourceCountUnit') not in (None, '{tbl}', '{caps}'):
+                        raise ValueError('Unzulässige Ergänzung einer Stückdosierung: ' + str(key))
+                    if product['dosePolicy'] == 'explicit-synthetic-regimen' and not enrichment.get('resetDose'):
+                        raise ValueError('Synthetisches Dosierungsschema fehlt: ' + str(key))
+                    if enrichment.get('resetDose') and not all(
+                            k in enrichment.get('dose', {}) for k in ('value', 'unit', 'frequency', 'text')):
+                        raise ValueError('Unvollständiges synthetisches Dosierungsschema: ' + str(key))
             self.entries[key] = entry
         self.metadata = {'id': data['id'], 'sha256': hashlib.sha256(raw).hexdigest(),
                          'atcSource': data['atcSource'], 'productSources': data['productSources']}
