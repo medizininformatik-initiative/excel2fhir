@@ -1,7 +1,8 @@
 # Synthea starten und KDS-FHIR erzeugen
 
 Voraussetzung: Docker mit Compose und ausreichend Arbeitsspeicher (für den
-Einstieg mindestens 8 GB für Docker). Java, Python und LibreOffice müssen nicht
+Einstieg mindestens 8 GB für Docker; große Lebensverläufe benötigen mehr).
+Java, Python und LibreOffice müssen nicht
 separat installiert werden. Der erste Build benötigt Internet; der fertige
 Komplettlauf läuft ohne Netzwerkzugriff und ohne Pharmindex oder externe Kataloge.
 

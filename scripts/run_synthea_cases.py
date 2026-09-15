@@ -109,7 +109,7 @@ def run(source_dir, output_dir):
             book = case / 'Fall.xlsx'
             write_workbook(rows, book)
             with (case / 'conversion.log').open('w') as log:
-                conversion = subprocess.run(['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
+                conversion = subprocess.run(['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
                     '-f', str(book), '-o', str(case / 'fhir'), '-t', str(case / 'csv')],
                     stdout=log, stderr=subprocess.STDOUT)
             fhir, statuses = inspect_conversion(case / 'fhir', conversion.returncode)

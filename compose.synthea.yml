@@ -6,6 +6,7 @@ services:
       target: workflow
     # The built image runs without external data or terminology services.
     network_mode: none
+    hostname: localhost
     volumes:
       - ./outputSynthea:/output
     # Native Synthea settings: population, age range, seeds and simulation dates.

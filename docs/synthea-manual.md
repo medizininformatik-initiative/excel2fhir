@@ -23,9 +23,10 @@ python3 scripts/run_synthea_cases.py /pfad/synthea/fhir /pfad/neue-ausgabe
 
 Das Ausgabeverzeichnis darf noch nicht existieren. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
-einem anderen Arbeitsverzeichnis. Der Workflow verwendet vier GB als maximale
-Java-Heapgröße für die vollständige Validierung; große Lebensverläufe können
-mehrere Minuten benötigen. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
+einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
+als Heap für die vollständige Validierung. Im Container zählt der für Docker
+bereitgestellte Speicher. Große Lebensverläufe können mehr als 8 GB Docker-RAM
+und deutlich längere Laufzeiten erfordern. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
 die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
 Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
 mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
