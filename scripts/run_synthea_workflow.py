@@ -25,11 +25,12 @@ def run(output, arguments):
     output.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     directory = Path(tempfile.mkdtemp(prefix='run-' + stamp + '-', dir=output))
-    command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar), *arguments,
+    command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
+               '--exporter.years_of_history=0', *arguments,
                '--exporter.baseDirectory=' + str(directory / 'synthea'),
                '--exporter.fhir.export=true', '--exporter.fhir_stu3.export=false',
                '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',
-               '--exporter.use_uuid_filenames=true', '--exporter.years_of_history=0',
+               '--exporter.use_uuid_filenames=true',
                '--exporter.hospital.fhir.export=false', '--exporter.practitioner.fhir.export=false']
     report = {'status': 'GENERATING', 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
               'syntheaArguments': command[5:], 'output': str(directory)}

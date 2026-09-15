@@ -62,3 +62,12 @@ class CompleteWorkflowTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Stand passt nicht'):
             workflow.run(self.root/'output', [])
         self.assertFalse((self.root/'output').exists())
+
+    @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
+    def test_explicit_native_history_setting_overrides_default(self, generate):
+        self.status = 'NOT_CHECKED'
+        with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
+            workflow.run(self.root / 'output', ['--exporter.years_of_history=7'])
+        command = generate.call_args.args[0]
+        self.assertLess(command.index('--exporter.years_of_history=0'),
+                        command.index('--exporter.years_of_history=7'))

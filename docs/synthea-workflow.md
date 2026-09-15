@@ -43,8 +43,13 @@ In `compose.synthea.yml` stehen die normalen Synthea-Argumente in `command`:
 `-p` ist die Patientenzahl, `-a` der Altersbereich, `-s` und `-cs` sind die Seeds,
 `-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`.
 Zum Ausprobieren muss nichts geändert werden. Für wiederholbare Vergleiche Seeds
-und Daten beibehalten. Die Exportform und die vollständige Historie setzt der
-Workflow passend zum Converter; dafür sind keine Einstellungen nötig.
+und Daten beibehalten. Die Exportform setzt der Workflow passend zum Converter. Ohne ausdrückliche
+Angabe wird die vollständige Historie exportiert; mit dem normalen Synthea-Argument
+`--exporter.years_of_history=7` lässt sich der Rückblick begrenzen. Ältere, weiterhin
+relevante Diagnosen und Medikationen können samt Bezugskontakten erhalten bleiben.
+
+Für einen Bestand mit vielen stationären Fällen und ambulanten Kontakten siehe
+das [ausführbare Krankenhausbeispiel 2020–2026](../examples/synthea-hospital/README.md).
 
 Die Mappings passen zum mitgelieferten Synthea-Stand. Ein Austausch gegen eine
 andere Version oder zusätzliche Module braucht einen erneuten Mappingreview.
