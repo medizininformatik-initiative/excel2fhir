@@ -13,7 +13,7 @@ import re
 import sys
 import uuid
 from workbook_xml import read_sheets
-from workbook_absent import canonical
+from workbook_absent import canonical, CODES as ABSENT_CODES
 
 MAPS = Path(__file__).parent / 'mappings'
 ATC = 'http://fhir.de/CodeSystem/bfarm/atc'
@@ -55,6 +55,22 @@ def decimal(value):
 def volume_unit(value):
     # UCUM permits both spellings of litre; the Java converter emits capital L.
     return {'ml': 'mL', 'l': 'L'}.get(value, value)
+
+
+def text_dose(text):
+    """Read the converter's explicit fallback dose, including labelled absence."""
+    match = re.search(r'(?:^|; )Einzeldosis: ([^;]+)', text)
+    if not match:
+        return None
+    value = match[1].strip()
+    for label in sorted(ABSENT_CODES, key=len, reverse=True):
+        if value == label or value.startswith(label + ' '):
+            amount, unit = ABSENT_CODES[label], value[len(label):].strip()
+            break
+    else:
+        amount, _, unit = value.partition(' ')
+        amount = decimal(amount)
+    return amount, '' if unit == '(Einheit unbekannt)' else unit
 
 
 def audit(source, workbook, target, report):
@@ -168,10 +184,9 @@ def audit(source, workbook, target, report):
         frequency = str(dose.get('timing', {}).get('repeat', {}).get('frequency', ''))
         text = dose.get('text', '')
         if not amount:
-            match = re.search(r'(?:^|; )Einzeldosis: ([^ ;]+)(?: ([^;]+))?', text)
-            if match:
-                amount, unit = decimal(match[1]), match[2] or ''
-                if unit == '(Einheit unbekannt)': unit = ''
+            fallback = text_dose(text)
+            if fallback:
+                amount, unit = fallback
                 text_doses += 1
         if not frequency:
             match = re.search(r'(?:^|; )Dosen pro Tag: ([^;]+)', text)
