@@ -94,13 +94,13 @@ ersetzt. Ein Regressionstest gleicht die Liste mit sämtlichen Java-Optionen ab.
 Alle Eingabeblätter werden über `clinical_selections.py` anhand ihrer bestehenden
 Spaltenüberschriften verknüpft. Alte Zellprüfungen werden vorher entfernt,
 auch außerhalb der befüllten Zeilen. Überschriften, Ausfüllhilfen, Freitext,
-Patienten-/Kontakt-IDs und Ortsnamen erhalten keine fremden Auswahllisten.
+Patienten-IDs und Ortsnamen erhalten keine fremden Auswahllisten.
 Der Import erneuert die Verknüpfungen bis zur letzten tatsächlich erzeugten Zeile.
 
 | Blatt | Geprüfte Eingaben und Fehlgrund-Verhalten |
 | --- | --- |
 | Person | Geschlecht einschließlich divers in jeder Zeile; Einwilligungen ja/nein. Keine DAR-Auswahl für Identität, Adresse oder Geburtsdatum. |
-| Fall | Klasse, Fachabteilung, Kontaktebene, Kontaktart und Aufnahmegrund; Station, Zimmer und Bett sind freie Ortsnamen. Nur Aufnahmegrund hat Fehlgründe. |
+| Fall | Klasse, Fachabteilung, Kontaktart und Aufnahmegrund; Station, Zimmer und Bett sind freie Ortsnamen. Nur Aufnahmegrund hat Fehlgründe. |
 | Diagnose | Getrennte System-, Status-, Typ-, Code- und Zeitpunktlisten. Keine numerischen Fehlergründe beim Status. |
 | Prozedur | OPS/SNOMED, Prozedurstatus, freie Codes und Zeitpunkte mit expliziten Fehlgründen. |
 | Medikation | Status abhängig vom Medikationstyp derselben Zeile; Wirkstoffliste separat. Fehlgründe bei Codes, Ereigniszeiten und Einzeldosis, nicht bei Häufigkeit oder Status. |

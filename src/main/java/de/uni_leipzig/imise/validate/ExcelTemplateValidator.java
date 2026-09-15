@@ -145,7 +145,6 @@ public class ExcelTemplateValidator {
     private Set<String> validateEncounters(XSSFWorkbook workbook, TemplateValidationResult result,
             Set<String> patientIds) {
         Set<String> encounterIds = new HashSet<>();
-        Map<String, String> contactLevels = new HashMap<>();
         XSSFSheet sheet = workbook.getSheet("Fall");
         if (sheet == null) {
             return encounterIds;
@@ -174,21 +173,11 @@ public class ExcelTemplateValidator {
             validateDateRange(result, "Fall", rowIndex + 1, "Start/Ende", start, end, ERROR);
 
             String encounterNumber = get(row, columns, "Fall-Nr");
-            String contactId = get(row, columns, "Kontakt-ID");
-            String level = get(row, columns, "Kontaktebene");
-            String parent = get(row, columns, "Übergeordneter Kontakt");
-            if (!isBlank(level) || !isBlank(contactId) || !isBlank(parent) || !isBlank(get(row, columns, "Kontaktart"))) {
-                String key = patientId + "|" + encounterNumber + "|";
-                boolean root = "Einrichtungskontakt".equals(level);
-                String expectedParent = "Abteilungskontakt".equals(level) ? "Einrichtungskontakt" : "Abteilungskontakt";
-                if (isBlank(contactId) || isBlank(encounterNumber)
-                        || !Arrays.asList("Einrichtungskontakt", "Abteilungskontakt", "Versorgungsstellenkontakt").contains(level)
-                        || (root && (!contactId.equals(encounterNumber) || !isBlank(parent)))
-                        || (!root && (contactId.equals(encounterNumber) || !expectedParent.equals(contactLevels.get(key + parent))))
-                        || contactLevels.containsKey(key + contactId)) {
-                    add(result, ERROR, "Fall", rowIndex + 1, "Kontakt-ID", "Unique contact, valid level and preceding parent in the same case required");
-                } else contactLevels.put(key + contactId, level);
-            }
+            String kind = get(row, columns, "Kontaktart");
+            if (!isBlank(kind) && !de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.CONTACT_KINDS.containsKey(kind))
+                add(result, ERROR, "Fall", rowIndex + 1, "Kontaktart", "Unbekannte Kontaktart");
+            if (!isBlank(kind) && isBlank(get(row, columns, "Station")) && isBlank(get(row, columns, "Zimmer")) && isBlank(get(row, columns, "Bett")))
+                add(result, ERROR, "Fall", rowIndex + 1, "Kontaktart", "Mindestens Station, Zimmer oder Bett erforderlich");
             String admissionReason = get(row, columns, AdmissionReasonValues.COLUMN);
             if (!isBlank(admissionReason)) {
                 try {
@@ -544,7 +533,7 @@ public class ExcelTemplateValidator {
                 "BIOMAT Zusatz Einwilligung", "Straße", "Postleitzahl", "Ort", "Bundesland", "Land", "Sterbezeitpunkt", "Erklärung/Ausfüllhilfe"));
         headers.put("Fall", Arrays.asList("Patient-ID", "Fall-Nr", "Start", "Ende", "Einrichtungskontaktklasse",
                 "Fachabteilung", "Station", "Zimmer", "Bett", AdmissionReasonValues.COLUMN,
-                "Kontakt-ID", "Kontaktebene", "Kontaktart", "Übergeordneter Kontakt", "Erklärung/Ausfüllhilfe"));
+                "Kontaktart", "Erklärung/Ausfüllhilfe"));
         headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Parameter", "Messwert",
                 "Einheit", "Zeitstempel (Abnahme)", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Erklärung/Ausfüllhilfe"));
         headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",

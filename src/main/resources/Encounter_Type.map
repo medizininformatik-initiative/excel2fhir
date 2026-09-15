@@ -1,11 +1,11 @@
 ###################################################################
 # Maps from the internal encounter class name to the type of encounter.
 #
-# see https://simplifier.net/packages/de.medizininformatikinitiative.kerndatensatz.fall/1.0.1/files/383920
+# see https://medizininformatik-initiative.github.io/kerndatensatz-basis/de/StructureDefinition-mii-pr-fall-kontakt-gesundheitseinrichtung.html
 #
 ###################################################################
 
-CODE_SYSTEM_URL_RESOURCE_KEY = https://www.medizininformatik-initiative.de/fhir/core/modul-fall/CodeSystem/Kontaktebene
+CODE_SYSTEM_URL	 http://fhir.de/CodeSystem/Kontaktebene
 
 EncounterLevel1_TYPE_CODE		einrichtungskontakt
 EncounterLevel1_TYPE_DISPLAY	Einrichtungskontakt

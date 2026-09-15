@@ -85,7 +85,7 @@ SELECTIONS.update({
     'Person': {'Geschlecht': 'A4:A6', **{h: 'L4:L5' for h in
         ('PDAT Einwilligung', 'KKDAT retro Einwilligung', 'KKDAT Einwilligung', 'BIOMAT Einwilligung', 'BIOMAT Zusatz Einwilligung')}},
     'Fall': {'Einrichtungskontaktklasse': 'B4:B13', 'Fachabteilung': 'C4:C42',
-             'Aufnahmegrund (4. Stelle)': 'AA', 'Kontaktebene': 'BE30:BE32', 'Kontaktart': 'BF30:BF34'},
+             'Aufnahmegrund (4. Stelle)': 'AA', 'Kontaktart': 'BF30:BF34'},
     'Diagnose': {'Codesystem': 'W30:W48', 'Zusatzcodesystem': 'W30:W48',
                 'Klinischer Status': 'X', 'Verifikationsstatus': 'Y', 'Typ': 'D4:D13'},
 })

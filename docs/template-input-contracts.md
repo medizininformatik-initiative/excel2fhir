@@ -78,7 +78,7 @@ historische Erweiterungsskript ist entfernt; Ausgangspunkt ist die aktuelle Vorl
 - Diagnose: Code und Zusatzcode ermöglichen mehrere Codierungen desselben Befunds. SNOMED und ICD-10-GM sind nicht allein wegen zweier Codefelder redundant.
 - Diagnose: Dokumentationszeitpunkt, Beginn und Ende entsprechen recordedDate, onset und abatement. Sie beschreiben unterschiedliche Sachverhalte.
 - Messwerte: Einheit ist der Lesetext, Einheitencode der maschinenlesbare UCUM-Code. Ebenso sind Untersuchungscode und Wertcode unterschiedliche Konzepte.
-- Fall: Einrichtung, Abteilung und Versorgungsstelle sind beabsichtigte Kontaktebenen. Die Identifikatoren und Elternbezüge sind keine doppelten Fallnummern.
+- Fall: Kontakte entstehen nur anhand der fachlichen Angaben; technische Identifikatoren und Elternbezüge werden automatisch erzeugt. Sekundärkontakte laufen parallel zum primären Aufenthalt.
 
 Als Nächstes werden die versteckten bzw. wirkungslosen Medikationsfelder und die übrigen bestätigten Vorlagenkonflikte bereinigt. Die Krankenkassenabbildung ist bereits entfernt.
 

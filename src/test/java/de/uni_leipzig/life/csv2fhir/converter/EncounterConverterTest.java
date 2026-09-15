@@ -25,34 +25,90 @@ import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel2
 import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel3;
 
 public class EncounterConverterTest {
-    private static final String CONTACT_HEADER = "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle),Kontakt-ID,Kontaktebene,Kontaktart,Übergeordneter Kontakt\n";
-    private static final String ROOT_CONTACT = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,,,,,,1,Einrichtungskontakt,,\n";
-    private static final String DEPARTMENT_CONTACT = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,,,,,a1,Abteilungskontakt,,1\n";
+    private static final String CONTACT_HEADER = "Patient-ID,Fall-Nr,Start,Ende,Einrichtungskontaktklasse,Fachabteilung,Station,Zimmer,Bett,Aufnahmegrund (4. Stelle),Kontaktart\n";
+    private static final String ROOT_CONTACT = "PID1,1,2026-05-01T08:00:00Z,2026-05-05T12:00:00Z,stationaer,,,,,,\n";
+    private static final String PRIMARY = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,Normalstationär\n";
+    private static final String OP = "PID1,1,2026-05-02T09:00:00Z,,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,Operation\n";
 
-    @Test public void explicitOperationAndReturnPreserveParentPeriodsAndLocationHierarchy() throws Exception {
-        ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + DEPARTMENT_CONTACT
-                + "PID1,1,2026-05-02T09:00:00Z,2026-05-02T11:00:00Z,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,op1,Versorgungsstellenkontakt,Operation,a1\n"
-                + "PID1,1,2026-05-02T11:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,v2,Versorgungsstellenkontakt,Normalstationär,a1\n");
-        assertEquals(1, getEncounters(result, EncounterLevel1.class).size());
-        assertEquals(1, getEncounters(result, EncounterLevel2.class).size());
-        assertEquals(2, getEncounters(result, EncounterLevel3.class).size());
-        Encounter operation = getEncounters(result, EncounterLevel3.class).stream()
-                .filter(e -> e.getType().stream().anyMatch(t -> t.hasCoding("http://fhir.de/CodeSystem/kontaktart-de", "operation")))
-                .findFirst().orElseThrow();
-        assertEquals("2026-05-02T09:00:00Z", operation.getPeriod().getStartElement().getValueAsString());
-        assertEquals("2026-05-01T08:00:00Z", getEncounters(result, EncounterLevel1.class).get(0).getPeriod().getStartElement().getValueAsString());
-        assertEquals("Encounter/" + getEncounters(result, EncounterLevel2.class).get(0).getId(), operation.getPartOf().getReference());
-        assertEquals(Encounter.EncounterLocationStatus.COMPLETED, operation.getLocationFirstRep().getStatus());
-        var room = result.get(Fall, org.hl7.fhir.r4.model.Location.class,
-                operation.getLocation().get(1).getLocation().getReference().substring("Location/".length()));
-        assertEquals(operation.getLocationFirstRep().getLocation().getReference(), room.getPartOf().getReference());
+    @Test public void operationRunsAlongsideBedUntilPrimaryEnd() throws Exception {
+        ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY + OP
+                + "PID1,1,2026-05-03T12:00:00Z,2026-05-05T12:00:00Z,stationaer,Innere Medizin,ITS,Zimmer 2,Bett 2,,Intensivstationär\n");
+        var stays=getEncounters(result,EncounterLevel3.class);
+        assertEquals(3,stays.size());
+        Encounter operation=stays.get(1);
+        for (var type : List.of(EncounterLevel1.class, EncounterLevel2.class, EncounterLevel3.class))
+            for (var contact : getEncounters(result, type))
+                assertEquals("http://fhir.de/CodeSystem/Kontaktebene", contact.getTypeFirstRep().getCodingFirstRep().getSystem());
+        assertEquals("2026-05-03T12:00:00Z",operation.getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-01T08:00:00Z",stays.get(0).getPeriod().getStartElement().getValueAsString());
+        assertEquals("2026-05-03T12:00:00Z",stays.get(0).getPeriod().getEndElement().getValueAsString());
+        assertEquals(stays.get(0).getPartOf().getReference(),operation.getPartOf().getReference());
+        assertEquals(3,stays.get(0).getLocation().size());
+        assertEquals(2,operation.getLocation().size());
+        assertEquals(1,result.contactEndDerivations.size());
     }
 
-    @Test public void explicitContactsRejectMissingParentsDuplicatesAndOutsidePeriods() {
-        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + DEPARTMENT_CONTACT));
-        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + ROOT_CONTACT + ROOT_CONTACT));
-        assertThrows(IllegalArgumentException.class, () -> convertRecords(CONTACT_HEADER + ROOT_CONTACT
-                + DEPARTMENT_CONTACT.replace("2026-05-03T12:00:00Z", "2026-05-04T12:00:00Z")));
+    @Test public void sparseRowsCreateOnlyRequestedLevelsAndLocations() throws Exception {
+        var result=convertRecords(CONTACT_HEADER+ROOT_CONTACT);
+        assertEquals(0,getEncounters(result,EncounterLevel2.class).size());
+        assertEquals(0,getEncounters(result,EncounterLevel3.class).size());
+        for (String locations : List.of("S,,",",Z,",",,B")) {
+            result=convertRecords(CONTACT_HEADER+ROOT_CONTACT
+                    + "PID1,1,2026-05-01T08:00:00Z,2026-05-05T12:00:00Z,stationaer,,"+locations+",,\n");
+            assertEquals(0,getEncounters(result,EncounterLevel2.class).size());
+            Encounter stay=getEncounters(result,EncounterLevel3.class).get(0);
+            assertEquals(1,stay.getLocation().size());
+            assertEquals("Encounter/"+getEncounters(result,EncounterLevel1.class).get(0).getId(),stay.getPartOf().getReference());
+            assertEquals(1,com.google.common.collect.Iterables.size(result.getResources(Fall,org.hl7.fhir.r4.model.Location.class)));
+        }
+        result=convertRecords(CONTACT_HEADER+ROOT_CONTACT
+                + "PID1,1,2026-05-01T08:00:00Z,2026-05-05T12:00:00Z,stationaer,Innere Medizin,,,,,\n");
+        assertEquals(1,getEncounters(result,EncounterLevel2.class).size());
+        assertEquals(0,getEncounters(result,EncounterLevel3.class).size());
+    }
+
+    @Test public void openContactsCloseAtPrimaryChangeButNotAtAnotherSecondary() throws Exception {
+        var result=convertRecords(CONTACT_HEADER+ROOT_CONTACT.replace("2026-05-05T12:00:00Z","")
+                + PRIMARY.replace("2026-05-03T12:00:00Z","")+OP
+                + OP.replace("2026-05-02T09:00:00Z","2026-05-02T14:00:00Z").replace(",Operation",",Konsil")
+                + "PID1,1,2026-05-03T12:00:00Z,,stationaer,Innere Medizin,ITS,Zimmer 2,Bett 2,,Intensivstationär\n");
+        var stays=getEncounters(result,EncounterLevel3.class);
+        for (int i=0;i<3;i++) assertEquals("2026-05-03T12:00:00Z",stays.get(i).getPeriod().getEndElement().getValueAsString());
+        assertFalse(stays.get(3).getPeriod().hasEnd());
+        assertEquals(Encounter.EncounterStatus.INPROGRESS,stays.get(3).getStatus());
+    }
+
+    @Test public void openContactsStayOpenAndExplicitOpEndIsPreserved() throws Exception {
+        var result=convertRecords(CONTACT_HEADER+ROOT_CONTACT.replace("2026-05-05T12:00:00Z","")
+                + PRIMARY.replace("2026-05-03T12:00:00Z","")+OP);
+        for(var stay:getEncounters(result,EncounterLevel3.class)) assertFalse(stay.getPeriod().hasEnd());
+        result=convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("09:00:00Z,,","09:00:00Z,2026-05-02T11:00:00Z,"));
+        assertEquals("2026-05-02T11:00:00Z",getEncounters(result,EncounterLevel3.class).get(1).getPeriod().getEndElement().getValueAsString());
+        assertEquals(0,result.contactEndDerivations.size());
+    }
+
+    @Test public void missingEndsUseFacilityBoundAndClosedContinuationClosesDepartment() throws Exception {
+        var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT
+                + PRIMARY.replace("2026-05-03T12:00:00Z", "") + OP);
+        for (var stay : getEncounters(result, EncounterLevel3.class))
+            assertEquals("2026-05-05T12:00:00Z", stay.getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-05T12:00:00Z", getEncounters(result, EncounterLevel2.class).get(0).getPeriod().getEndElement().getValueAsString());
+        result = convertRecords(CONTACT_HEADER + PRIMARY.replace("2026-05-03T12:00:00Z", "") + OP
+                + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-03T12:00:00Z")
+                         .replace("2026-05-03T12:00:00Z,stationaer", "2026-05-05T12:00:00Z,stationaer"));
+        for (var type : List.of(EncounterLevel1.class, EncounterLevel2.class)) {
+            Encounter parent = getEncounters(result, type).get(0);
+            assertEquals("2026-05-05T12:00:00Z", parent.getPeriod().getEndElement().getValueAsString());
+            assertEquals(Encounter.EncounterStatus.FINISHED, parent.getStatus());
+        }
+    }
+
+    @Test public void invalidOrAmbiguousAssignmentsAreRejected() {
+        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+OP));
+        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+PRIMARY));
+        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("2026-05-02","2026-05-04")));
+        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("09:00:00Z,,","09:00:00Z,2026-05-04T11:00:00Z,")));
+        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("OP,OP-Saal 1",",")));
     }
 
     @Before
@@ -108,9 +164,8 @@ public class EncounterConverterTest {
         for (Encounter wardEncounter : wardEncounters) {
             assertEquals(departmentReference, wardEncounter.getPartOf().getReference());
         }
-        assertEquals(
-                "Location/Innere-INT1-R102",
-                wardEncounters.get(1).getLocation().get(1).getLocation().getReference());
+        assertEquals("R102",result.get(Fall,org.hl7.fhir.r4.model.Location.class,
+                wardEncounters.get(1).getLocation().get(1).getLocation().getReference().substring(9)).getName());
         assertEncounterIdentifierSystem(facilityEncounters);
         assertEncounterIdentifierSystem(departmentEncounters);
         assertEncounterIdentifierSystem(wardEncounters);

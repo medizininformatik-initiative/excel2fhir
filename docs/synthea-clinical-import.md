@@ -131,7 +131,7 @@ Eine vollständige KDS-/Terminologievalidierung bleibt getrennt vom Rückverglei
 insbesondere die benötigte SNOMED-Ausgabe ist lokal weiterhin nicht verfügbar.
 
 Die zusätzliche [Bewegungsanreicherung](synthea-movements.md) ergänzt Kontakte
-mit expliziten Elternbeziehungen; die folgenden Zahlen beschreiben den
+mit automatisch abgeleiteten Elternbeziehungen; die folgenden Zahlen beschreiben den
 ursprünglichen Durchlauf vor dieser Anreicherung.
 
 Die [Deutschland-Anpassung der Personendaten](synthea-german-demographics.md)

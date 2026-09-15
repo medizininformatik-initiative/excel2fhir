@@ -33,6 +33,7 @@ import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
  * @author AXS (29.11.2021)
  */
 public class ConverterResult {
+    public final List<Map<String, String>> contactEndDerivations = new ArrayList<>();
 
     /**
      * The options which contains the idStart values.

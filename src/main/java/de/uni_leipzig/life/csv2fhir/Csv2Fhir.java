@@ -500,6 +500,7 @@ public class Csv2Fhir {
                 }
             }
         }
+        importReport.contactEndDerivations.addAll(result.contactEndDerivations);
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
         return result;
     }

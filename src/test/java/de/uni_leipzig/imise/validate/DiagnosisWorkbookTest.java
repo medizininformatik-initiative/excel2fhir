@@ -65,9 +65,9 @@ public class DiagnosisWorkbookTest {
                 assertEquals("ATC 2026", book.getSheet("Codes").getRow(29).getCell(50).getStringCellValue());
                 var encounters = book.getSheet("Fall");
                 assertEquals("Aufnahmegrund (4. Stelle)", encounters.getRow(0).getCell(9).getStringCellValue());
-                assertEquals("Kontakt-ID", encounters.getRow(0).getCell(10).getStringCellValue());
-                assertEquals("Erklärung/Ausfüllhilfe", encounters.getRow(0).getCell(14).getStringCellValue());
-                for (String formula : List.of("Codes!$BE$30:$BE$32", "Codes!$BF$30:$BF$34")) {
+                assertEquals("Kontaktart", encounters.getRow(0).getCell(10).getStringCellValue());
+                assertEquals("Erklärung/Ausfüllhilfe", encounters.getRow(0).getCell(11).getStringCellValue());
+                for (String formula : List.of("Codes!$BF$30:$BF$34")) {
                     assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }

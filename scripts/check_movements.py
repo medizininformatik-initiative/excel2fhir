@@ -1,18 +1,12 @@
-"""Check generated contacts and location relationships after Excel -> FHIR."""
+"""Check implicit contact hierarchy, parallel OP stays and real location values."""
 from datetime import datetime
-import hashlib
-import uuid
+from collections import Counter
 from synthea_movements import enrich
-
-
-def resource_id(patient,kind,source):
-    return kind+'-'+str(uuid.UUID(bytes=hashlib.md5(f'{patient}|{kind}|{source}'.encode()).digest(),version=3))
 
 
 def check_movements(source,target,report):
     movement=report.get('movements')
     if movement is None:return {'contacts':0}
-    # Recompute from source and fixed rules, independently of the saved report.
     from synthea_to_excel import CLASSES
     pid=report['sourcePatient'];facility=[]
     for e in source['entry']:
@@ -24,39 +18,40 @@ def check_movements(source,target,report):
     resources=[e['resource']for e in target['entry']]
     encounters={r['id']:r for r in resources if r['resourceType']=='Encounter'}
     locations={r['id']:r for r in resources if r['resourceType']=='Location'}
-    used_locations=set()
-    norm=lambda value:datetime.fromisoformat(value.replace('Z','+00:00'))
-    patient=pid.replace('_','-')
+    norm=lambda value:datetime.fromisoformat(value.replace('Z','+00:00')) if value else None
+    def level(r):
+        return next((c['code'] for t in r.get('type',[]) for c in t['coding'] if c.get('system')=='http://fhir.de/CodeSystem/Kontaktebene'), None)
+    kinds={'Normalstationär':'normalstationaer','Intensivstationär':'intensivstationaer','Operation':'operation','Untersuchung und Behandlung':'ub','Konsil':'konsil'}
+    wanted=Counter();department_phases=0;previous_case=None;previous_department=None;primary_end=None
     for row in expected['contacts']:
-        number,key,level,kind,parent=row[1],row[10],row[11],row[12],row[13]
-        root=patient+'-E-'+number
-        identifier=resource_id(patient,'Encounter',root+'|'+key)
-        found=encounters[identifier]
-        expected_parent=root if parent==number else resource_id(patient,'Encounter',root+'|'+parent)
-        assert found['partOf']['reference']=='Encounter/'+expected_parent
-        assert found['subject']['reference']==encounters[root]['subject']['reference']
-        assert found['class']==encounters[root]['class']
-        assert found['status']=='finished'
-        codes={(c['system'],c['code'])for t in found['type']for c in t['coding']}
-        assert ('http://fhir.de/CodeSystem/Kontaktebene',{'Abteilungskontakt':'abteilungskontakt','Versorgungsstellenkontakt':'versorgungsstellenkontakt'}[level])in codes
-        if kind:
-            assert ('http://fhir.de/CodeSystem/kontaktart-de',{'Normalstationär':'normalstationaer','Intensivstationär':'intensivstationaer','Operation':'operation','Untersuchung und Behandlung':'ub'}[kind])in codes
-        assert norm(found['period']['start'])==norm(row[2])
-        assert norm(found['period']['end'])==norm(row[3])
-        bound=encounters[expected_parent]['period']
-        assert norm(bound['start'])<=norm(row[2])<=norm(row[3])<=norm(bound['end'])
-        previous=None
-        actual=found.get('location',[])
-        wanted=[(name,code)for name,code in zip(row[6:9],['wa','ro','bd'])if name]
-        assert len(actual)==len(wanted)
-        for place,(name,code)in zip(actual,wanted):
-            reference=place['location']['reference'];used_locations.add(reference.removeprefix('Location/'))
+        number,kind=row[1],row[10]
+        secondary=kind in ('Operation','Untersuchung und Behandlung','Konsil')
+        if not secondary:
+            if number!=previous_case or row[5]!=previous_department: department_phases+=1
+            previous_case,previous_department=number,row[5]
+            primary_end=row[3]
+        wanted[(number,norm(row[2]),norm(row[3] or primary_end),kinds.get(kind,''),tuple(row[6:9]))]+=1
+    found=Counter();used=set()
+    for encounter in encounters.values():
+        if level(encounter) in (None,'einrichtungskontakt'):continue
+        parent=encounters[encounter['partOf']['reference'].removeprefix('Encounter/')]
+        assert encounter['subject']==parent['subject'] and encounter['class']==parent['class']
+        assert norm(parent['period']['start'])<=norm(encounter['period']['start'])
+        assert norm(encounter['period']['end'])<=norm(parent['period']['end'])
+        if level(encounter)!='versorgungsstellenkontakt':continue
+        root=parent if level(parent)=='einrichtungskontakt' else encounters[parent['partOf']['reference'].removeprefix('Encounter/')]
+        number=next(n for n in report['encounterNumbers'].values() if root['id']==pid.replace('_','-')+'-E-'+n)
+        names={};previous=None
+        for place in encounter.get('location',[]):
+            reference=place['location']['reference'];used.add(reference.removeprefix('Location/'))
             location=locations[reference.removeprefix('Location/')]
-            assert location['name']==name
-            assert location['physicalType']['coding'][0]['code']==code
+            typ=location['physicalType']['coding'][0]['code'];names[typ]=location['name']
             assert location.get('partOf',{}).get('reference')==previous
-            assert place['status']=='completed'
-            assert place['period']==found['period']
+            assert place['period']==encounter['period'] and place['status']=='completed'
             previous=reference
-    assert used_locations==locations.keys(),'Unexpected or missing generated locations'
-    return {'contacts':len(expected['contacts']),'locations':len(locations),'operationContacts':len(expected['operationSources'])}
+        kind=next((c['code'] for t in encounter['type'] for c in t['coding'] if c.get('system')=='http://fhir.de/CodeSystem/kontaktart-de'),'')
+        found[(number,norm(encounter['period']['start']),norm(encounter['period']['end']),kind,tuple(names.get(k,'') for k in ('wa','ro','bd')))]+=1
+    assert found==wanted, {'missing':list((wanted-found).items())[:2],'unexpected':list((found-wanted).items())[:2]}
+    assert sum(level(e)=='abteilungskontakt' for e in encounters.values())==department_phases
+    assert used==locations.keys(),'Unexpected or missing locations'
+    return {'contacts':sum(wanted.values())+department_phases,'locations':len(locations),'operationContacts':len(expected['operationSources'])}

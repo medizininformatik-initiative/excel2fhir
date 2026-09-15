@@ -22,17 +22,14 @@ class MovementTest(unittest.TestCase):
         result,report=enrich(source,rows,numbers)
         self.assertEqual((result,report),enrich(source,rows,numbers))
         self.assertEqual(before,source)
-        seen={};patterns=set()
+        patterns=set()
         for row in result:
-            self.assertNotIn((row[1],row[10]),seen)
-            if row[13]:
-                parent=seen[row[1],row[13]]
-                self.assertLessEqual(dt(parent[2]),dt(row[2]));self.assertLessEqual(dt(row[3]),dt(parent[3]))
-            self.assertLessEqual(dt(row[2]),dt(row[3]));seen[row[1],row[10]]=row
+            self.assertEqual(11,len(row))
+            if row[3]: self.assertLessEqual(dt(row[2]),dt(row[3]))
         for number in numbers:
-            care=[r for r in result if r[1]==number and r[11]=='Versorgungsstellenkontakt']
-            for left,right in zip(care,care[1:]):self.assertEqual(dt(left[3]),dt(right[2]))
-            patterns.add(tuple((r[5],r[6],r[7],r[8],r[12])for r in care))
+            care=[r for r in result if r[1]==number and r[10] in ('Normalstationär','Intensivstationär')]
+            for left,right in zip(care,care[1:]): self.assertEqual(dt(left[3]),dt(right[2]))
+            patterns.add(tuple((r[5],r[6],r[7],r[8],r[10])for r in care))
         self.assertGreater(len(patterns),10)
 
     def test_only_known_operations_create_op_contacts_and_source_times_stay_unchanged(self):
@@ -42,12 +39,30 @@ class MovementTest(unittest.TestCase):
             'performedPeriod':{'start':'2026-01-02T10:00:00Z','end':'2026-01-02T13:00:00Z'}}
         source['entry'].append({'resource':procedure});original=copy.deepcopy(source)
         result,report=enrich(source,rows,numbers)
-        op=[r for r in result if r[12]=='Operation'];self.assertEqual(1,len(op))
+        op=[r for r in result if r[10]=='Operation'];self.assertEqual(1,len(op))
         self.assertLessEqual(dt(op[0][2]),dt(procedure['performedPeriod']['start']))
-        self.assertGreaterEqual(dt(op[0][3]),dt(procedure['performedPeriod']['end']))
+        self.assertEqual('',op[0][3])
+        primary=next(r for r in result if r[10] in ('Normalstationär','Intensivstationär') and dt(r[2])<=dt(op[0][2])<dt(r[3]))
+        self.assertTrue(primary[8])
+        self.assertEqual(primary[3],report['operationSources'][0]['derivedEnd'])
         self.assertEqual(original,source);self.assertEqual(['op'],report['operationSources'][0]['sourceProcedures'])
         procedure['code']['coding'][0]['code']='not-in-mapping'
-        self.assertFalse(any(r[12]=='Operation'for r in enrich(source,rows,numbers)[0]))
+        self.assertFalse(any(r[10]=='Operation'for r in enrich(source,rows,numbers)[0]))
+
+    def test_ambulatory_operation_has_primary_without_secondary_kind(self):
+        source, rows, numbers = self.fixture()
+        source['entry'][0]['resource']['class']['code'] = 'AMB'
+        rows[0][4] = 'ambulant'
+        source['entry'].append({'resource': {'resourceType': 'Procedure', 'id': 'op',
+            'encounter': {'reference': 'urn:uuid:1'},
+            'code': {'coding': [{'system': 'http://snomed.info/sct', 'code': '232717009'}]},
+            'performedDateTime': '2026-01-02T10:00:00Z'}})
+        result, report = enrich(source, rows, numbers)
+        operation_index = next(i for i, r in enumerate(result) if r[10] == 'Operation')
+        primary = result[operation_index - 1]
+        self.assertEqual('', primary[10])
+        self.assertTrue(primary[8])
+        self.assertEqual(primary[3], report['operationSources'][0]['derivedEnd'])
 
     def test_unbounded_cases_are_reported_without_inventing_dates(self):
         source,rows,numbers=self.fixture();del source['entry'][0]['resource']['period']['end']
