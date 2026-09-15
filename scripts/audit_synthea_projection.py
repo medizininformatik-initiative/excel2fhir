@@ -46,7 +46,14 @@ def all_codings(obj):
 
 
 def decimal(value):
+    if isinstance(value, str) and value.startswith('!dar:'):
+        return value
     return str(Decimal(str(value)).normalize()) if value not in (None, '') else ''
+
+
+def volume_unit(value):
+    # UCUM permits both spellings of litre; the Java converter emits capital L.
+    return {'ml': 'mL', 'l': 'L'}.get(value, value)
 
 
 def audit(source, workbook, target, report):
@@ -123,7 +130,7 @@ def audit(source, workbook, target, report):
         if row.get('ATC-Code'): codes.append((ATC, row['ATC-Code'], '2026'))
         expected_events[(typ, tuple(codes), row['Präparatbezeichnung'], row.get('Darreichungsform', ''),
                          resource.get('status', ''), moment, end, decimal(quantity.get('value')),
-                         quantity.get('code', quantity.get('unit', '')), frequency)] += 1
+                         volume_unit(quantity.get('code', quantity.get('unit', ''))), frequency)] += 1
     actual_events = Counter(); text_doses = 0
     for resource in dst:
         typ = resource['resourceType']
@@ -132,6 +139,10 @@ def audit(source, workbook, target, report):
         dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosageInstruction') or [{}])[0]
         quantity = dose.get('dose', {}) if typ == 'MedicationAdministration' else next((v['doseQuantity'] for v in dose.get('doseAndRate', []) if 'doseQuantity' in v), {})
         amount, unit = decimal(quantity.get('value')), quantity.get('code', quantity.get('unit', ''))
+        for extension in quantity.get('_value', {}).get('extension', []):
+            if extension.get('url') == 'http://hl7.org/fhir/StructureDefinition/data-absent-reason':
+                assert not amount, 'Dose has both a numeric value and an absence reason'
+                amount = '!dar:' + extension['valueCode']
         frequency = str(dose.get('timing', {}).get('repeat', {}).get('frequency', ''))
         text = dose.get('text', '')
         if not amount:
@@ -145,7 +156,7 @@ def audit(source, workbook, target, report):
             if match: frequency = match[1]
         moment = resource.get('authoredOn', '') if typ == 'MedicationRequest' else resource.get('effectiveDateTime', resource.get('effectivePeriod', {}).get('start', ''))
         actual_events[(typ, codings(med['code']), med['code'].get('text', ''), med.get('form', {}).get('text', ''),
-                       resource.get('status', ''), moment, resource.get('effectivePeriod', {}).get('end', ''), amount, unit, frequency)] += 1
+                       resource.get('status', ''), moment, resource.get('effectivePeriod', {}).get('end', ''), amount, volume_unit(unit), frequency)] += 1
     assert expected_events == actual_events, {'missingMedicationEvents': list((expected_events-actual_events).items())[:2],
                                              'unexpectedMedicationEvents': list((actual_events-expected_events).items())[:2]}
     # Direct source quantities/answers/components, without reconstructing import rows.

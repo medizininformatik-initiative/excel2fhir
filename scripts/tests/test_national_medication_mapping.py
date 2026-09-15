@@ -102,5 +102,28 @@ class NationalMedicationTest(unittest.TestCase):
         self.assertEqual([i['code'] for i in result['ingredients']], ['P188ANX8CK'])
         self.assertEqual(result['target']['code'], '10414263')
 
+    def test_enriched_administrations_never_have_text_only_dosage(self):
+        mapping = NationalMedicationMapping()
+        for entry in mapping.entries.values():
+            resource = {'resourceType': 'MedicationAdministration', 'id': 'admin',
+                        'subject': {'reference': 'urn:uuid:p'}, 'status': 'completed',
+                        'effectiveDateTime': '2026-01-02T08:00:00Z',
+                        'medicationCodeableConcept': {'coding': [{
+                            'system': RXNORM, 'code': entry['source']['code'],
+                            'display': entry['source']['displays'][0]}]}}
+            entries = test_medication_products.bundle()['entry'][:1] + [{'resource': resource}]
+            rows, _ = prepare_clinical(entries, 'p', {})
+            dose, unit, frequency, text = rows['Medikation'][0][16:20]
+            if text or frequency:
+                self.assertTrue(dose, entry['source']['code'])
+
+    def test_same_pack_has_consistent_product_and_ingredient_facts(self):
+        packs = {}
+        for entry in NationalMedicationMapping().entries.values():
+            product = entry['product']
+            facts = (product['display'], product['doseForm'], entry['atc']['code'],
+                     tuple((i['system'], i['code']) for i in entry['ingredients']))
+            self.assertEqual(packs.setdefault(product['code'], facts), facts, product['code'])
+
 
 if __name__ == '__main__': unittest.main()

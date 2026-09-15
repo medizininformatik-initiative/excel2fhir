@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "synthea-medications-de-2026-v4",
+  "id": "synthea-medications-de-2026-v5",
   "sourceRegistrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
   "atcSource": {
     "url": "https://terminologien.bfarm.de/CodeSystem-atcgm-2026.html",
@@ -2959,13 +2959,13 @@
         "kind": "synthetic-regimen",
         "display": "Duraphat 50 mg/ml",
         "doseForm": "Dentalsuspension",
-        "reason": "Synthetisches Schema an deutsche Stärke, Form und den Behandlungszweck des Quellmoduls angepasst.",
+        "reason": "Synthetisches Schema an deutsche Stärke, Form und den Behandlungszweck des Quellmoduls angepasst. Für die Testdaten 0,25 ml je Applikation gewählt; Hersteller-Gebrauchsinformation nennt 0,25 ml als Obergrenze für das Milchgebiss und höhere Grenzen für Wechsel-/bleibendes Gebiss.",
         "resetDose": true,
         "dose": {
-          "value": "",
-          "unit": "",
+          "value": "0.25",
+          "unit": "ml",
           "frequency": "",
-          "text": "Professionelle dünne Applikation auf die Zahnoberflächen zur Kariesprophylaxe."
+          "text": "Professionelle Applikation von 0,25 ml Duraphat auf die Zahnoberflächen zur Kariesprophylaxe; synthetische Teilflächenbehandlung, keine tägliche Einnahme."
         }
       }
     },
@@ -5039,10 +5039,10 @@
         "kind": "synthetic-regimen",
         "display": "Eptifibatid Accord 0,75 mg/ml, 100 ml",
         "doseForm": "Infusionslösung",
-        "reason": "Parenterale GP-IIb/IIIa-Hemmung im synthetischen Koronarszenario mit Eptifibatid konkretisiert.",
+        "reason": "Parenterale GP-IIb/IIIa-Hemmung im synthetischen Koronarszenario mit Eptifibatid konkretisiert. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Intravenöse Eptifibatid-Infusion; Rate entsprechend Körpergewicht und Nierenfunktion."
@@ -5478,10 +5478,10 @@
         "kind": "synthetic-regimen",
         "display": "Actilyse 50 mg",
         "doseForm": "Pulver und Lösungsmittel zur Herstellung einer Injektions- oder Infusionslösung",
-        "reason": "Deutsche Alteplase-Packung konkretisiert; der Quellcode bezeichnet sowohl Schlaganfall- als auch STEMI-Szenarien.",
+        "reason": "Deutsche Alteplase-Packung konkretisiert; der Quellcode bezeichnet sowohl Schlaganfall- als auch STEMI-Szenarien. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Intravenöse Thrombolyse; Gesamtdosis und Bolus-/Infusionsanteil entsprechend Indikation und Körpergewicht."
@@ -10248,10 +10248,10 @@
         "kind": "synthetic-regimen",
         "display": "Empressin 40 I.E./2 ml",
         "doseForm": "Konzentrat zur Herstellung einer Infusionslösung",
-        "reason": "Deutsche Darreichungsform und ein dazu passendes synthetisches Anwendungsschema gemeinsam konkretisiert.",
+        "reason": "Deutsche Darreichungsform und ein dazu passendes synthetisches Anwendungsschema gemeinsam konkretisiert. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Kontinuierliche intravenöse Infusion nach Verdünnung; Rate nach Kreislaufreaktion titrieren."
@@ -14257,10 +14257,10 @@
         "kind": "synthetic-regimen",
         "display": "Actilyse 50 mg",
         "doseForm": "Pulver und Lösungsmittel zur Herstellung einer Injektions- oder Infusionslösung",
-        "reason": "STEMI-Fibrinolyse im synthetischen Szenario von Tenecteplase auf Alteplase umgestellt.",
+        "reason": "STEMI-Fibrinolyse im synthetischen Szenario von Tenecteplase auf Alteplase umgestellt. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Intravenöse STEMI-Fibrinolyse mit Alteplase nach gewichtsabhängigem Bolus-/Infusionsschema."
@@ -16699,10 +16699,10 @@
         "kind": "synthetic-regimen",
         "display": "Sevorane Quickfill",
         "doseForm": "Flüssigkeit zur Herstellung eines Dampfs zur Inhalation",
-        "reason": "Flüchtiges Inhalationsanästhetikum als Sevofluran konkretisiert; keine Übernahme der Desfluran-Konzentration.",
+        "reason": "Flüchtiges Inhalationsanästhetikum als Sevofluran konkretisiert; keine Übernahme der Desfluran-Konzentration. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Inhalative Narkose mit Sevofluran; Konzentration entsprechend dem synthetischen Anästhesieverlauf titrieren."
@@ -18949,20 +18949,20 @@
       "ingredients": [
         {
           "system": "http://fdasis.nlm.nih.gov",
-          "code": "5W7SIA7YZW",
-          "display": "levonorgestrel",
-          "evidence": {
-            "url": "https://rxnav.nlm.nih.gov/REST/rxcui/6373/allProperties.json?prop=all",
-            "sha256": "af1da7fee94eb0c9f32ba0ff9c33411ca2212de782569d0b7d05c5679b328f25"
-          }
-        },
-        {
-          "system": "http://fdasis.nlm.nih.gov",
           "code": "423D2T571U",
           "display": "ethinyl estradiol",
           "evidence": {
             "url": "https://rxnav.nlm.nih.gov/REST/rxcui/4124/allProperties.json?prop=all",
             "sha256": "06029f1d641506502b41f79cd6b89eb7d936a226b14d9581366f753a2c370268"
+          }
+        },
+        {
+          "system": "http://fdasis.nlm.nih.gov",
+          "code": "5W7SIA7YZW",
+          "display": "levonorgestrel",
+          "evidence": {
+            "url": "https://rxnav.nlm.nih.gov/REST/rxcui/6373/allProperties.json?prop=all",
+            "sha256": "af1da7fee94eb0c9f32ba0ff9c33411ca2212de782569d0b7d05c5679b328f25"
           }
         }
       ],
@@ -19353,10 +19353,10 @@
         "kind": "synthetic-regimen",
         "display": "Actilyse 50 mg",
         "doseForm": "Pulver und Lösungsmittel zur Herstellung einer Injektions- oder Infusionslösung",
-        "reason": "STEMI-Fibrinolyse im synthetischen Szenario von Reteplase auf Alteplase umgestellt; keine Übernahme von Reteplase-Einheiten.",
+        "reason": "STEMI-Fibrinolyse im synthetischen Szenario von Reteplase auf Alteplase umgestellt; keine Übernahme von Reteplase-Einheiten. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Intravenöse STEMI-Fibrinolyse mit Alteplase nach gewichtsabhängigem Bolus-/Infusionsschema."
@@ -22109,10 +22109,10 @@
         "kind": "synthetic-regimen",
         "display": "Dysport 300 Einheiten Pulver z.Herst.e.Inj.-Lsg.",
         "doseForm": "Pulver zur Herstellung einer Injektionslösung",
-        "reason": "Botulinumtoxin-Szenario auf Abobotulinumtoxin A umgestellt. Einheiten verschiedener Botulinumtoxine sind nicht austauschbar.",
+        "reason": "Botulinumtoxin-Szenario auf Abobotulinumtoxin A umgestellt. Einheiten verschiedener Botulinumtoxine sind nicht austauschbar. Die tatsächlich verabreichte Einzeldosis ist nicht bekannt. Vorhandene Darstellung für fehlende Dosiswerte verwendet, damit eine textuelle Verabreichungsanweisung nicht FHIR mad-1 verletzt; keine feste gewichts-/verlaufsabhängige Dosis unterstellt.",
         "resetDose": true,
         "dose": {
-          "value": "",
+          "value": "!dar:unknown",
           "unit": "",
           "frequency": "",
           "text": "Intramuskuläre Injektion durch den behandelnden Spezialisten; muskelbezogene Dosen für Abobotulinumtoxin A festlegen."
