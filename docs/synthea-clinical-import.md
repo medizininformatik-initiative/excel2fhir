@@ -27,12 +27,18 @@ Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
 breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
 Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
 [Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
-`select_ops()` ergänzt für 19 geprüfte Quellkonzepte terminale OPS-2026-Klassen
-als erste Codierung und erhält SNOMED ergänzend. Breitere Klassen erfinden keine
-fehlende Operationstechnik. Alle übrigen Rückfälle haben einen expliziten Status
-und Grund; „not-assessed“ ist keine abgeschlossene fachliche Prüfung.
-Das Quellregister ist das archivierte Inventar; dessen `productSelection: deferred`
-bezeichnet den damaligen Stand, während der Laufbericht den aktuellen Anbieter zeigt.
+Alle 428 Prozedurkonzepte des festgelegten Inventars haben eine ausdrückliche
+Entscheidung: 107 erhalten terminale OPS-2026-Kodes und ergänzendes SNOMED,
+306 behalten begründet SNOMED, 14 nichtprozedurale Quellkonzepte werden als
+passende synthetische Handlungen konkretisiert und ein US-spezifisches Konzept
+verwendet einen internationalen Oberbegriff. Details und Quellen stehen in
+`scripts/mappings/synthea-procedures-ops-2026.json` und im Mappingbericht.
+Das KDS-Profil erlaubt OPS oder SNOMED; Routineleistungen benötigen daher
+nicht automatisch einen OPS. Die SNOMED-Bindung verlangt Prozedurbegriffe.
+Die Entscheidungen ersetzen keine vollständige Terminologievalidierung oder
+menschliche Prüfung der synthetischen Szenarien.
+Das Quellregister enthält ausschließlich Quellfakten. Aktuelle Entscheidungen
+stehen in den jeweiligen Mappingtabellen und werden nicht im Register dupliziert.
 
 ## Ressourcen und Eigenschaften
 
