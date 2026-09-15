@@ -51,12 +51,17 @@ def environment():
 
 
 def inspect_conversion(directory, exit_code):
+    if exit_code < 0 or exit_code >= 128:
+        raise ValueError(f'Konverterprozess abgebrochen (Exitcode {exit_code}); '
+                         'siehe conversion.log. Bei SIGKILL/-9/137 auch das verfügbare '
+                         'Docker-/System-RAM prüfen; unvollständige Ausgabe wird nicht übernommen.')
     bundles = [p for p in directory.glob('*.json')
                if not p.name.endswith(('.import.json', '.validation.json'))]
     imports = list(directory.glob('*.import.json'))
     validations = list(directory.glob('*.validation.json'))
     if len(bundles) != 1 or len(imports) != 1 or len(validations) != 1:
-        raise ValueError('Genau ein FHIR-Bundle, Importbericht und Validierungsbericht erwartet')
+        raise ValueError(f'Genau ein FHIR-Bundle, Importbericht und Validierungsbericht erwartet '
+                         f'(Konverter-Exitcode {exit_code}); siehe conversion.log')
     import_report = json.loads(imports[0].read_text())
     validation = json.loads(validations[0].read_text())
     if import_report['status'] != 'COMPLETE':
@@ -104,7 +109,7 @@ def run(source_dir, output_dir):
             book = case / 'Fall.xlsx'
             write_workbook(rows, book)
             with (case / 'conversion.log').open('w') as log:
-                conversion = subprocess.run(['java', '-Xmx8g', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
+                conversion = subprocess.run(['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
                     '-f', str(book), '-o', str(case / 'fhir'), '-t', str(case / 'csv')],
                     stdout=log, stderr=subprocess.STDOUT)
             fhir, statuses = inspect_conversion(case / 'fhir', conversion.returncode)

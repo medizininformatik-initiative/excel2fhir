@@ -23,7 +23,7 @@ python3 scripts/run_synthea_cases.py /pfad/synthea/fhir /pfad/neue-ausgabe
 
 Das Ausgabeverzeichnis darf noch nicht existieren. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
-einem anderen Arbeitsverzeichnis. Der Workflow verwendet acht GB als maximale
+einem anderen Arbeitsverzeichnis. Der Workflow verwendet vier GB als maximale
 Java-Heapgröße für die vollständige Validierung; große Lebensverläufe können
 mehrere Minuten benötigen. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
 die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
@@ -149,6 +149,7 @@ Nur einen der beiden Einstiegspunkte; die übrigen Schritte laufen automatisch:
 
 Die fachlichen Python-Module werden von diesen Skripten geladen. Sie müssen sie
 nicht einzeln aufrufen. Mappings und synthetische Namenslisten liegen als
-versionierte Projektdateien unter `scripts/`; ihre Quellen und Entscheidungen
-sind dort dokumentiert. `__pycache__/*.pyc` entsteht bei Bedarf automatisch aus
+versionierte Projektdateien unter `scripts/mappings/`; Namen stehen in
+`german-demographics.json` und `german-name-supplement.json`. Quellen und
+Mappingentscheidungen sind in den jeweiligen Dateien dokumentiert. `__pycache__/*.pyc` entsteht bei Bedarf automatisch aus
 den Python-Dateien und wird nicht eingecheckt.

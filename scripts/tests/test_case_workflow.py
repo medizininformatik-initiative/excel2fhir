@@ -24,6 +24,14 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inspect_conversion(directory, 1)
 
+    def test_killed_converter_reports_exit_and_memory_hint_without_trusting_partial_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            (directory / 'Fall.json').write_text('{}')
+            for code in (-9, 137):
+                with self.subTest(code=code), self.assertRaisesRegex(ValueError, 'Docker-/System-RAM'):
+                    inspect_conversion(directory, code)
+
     def test_missing_references_fail_even_with_an_acceptable_validator_status(self):
         with tempfile.TemporaryDirectory() as d:
             directory = Path(d)

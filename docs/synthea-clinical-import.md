@@ -20,8 +20,10 @@ python3 scripts/build_synthea_code_registry.py INVENTARVERZEICHNIS SYNTHEA_CHECK
 ```
 
 Die Diagnose-Tabelle v3 beurteilt weiterhin alle 333 produktiven Diagnosecodes:
-320 ICD-10-GM-Zuordnungen und 13 bewusst ohne Ergänzung. Medikamente erhalten die öffentliche ATC-2026-Klassifikation und, soweit belegt,
-eine echte deutsche PZN samt Präparatname und Form. RxNorm bleibt ausschließlich
+320 ICD-10-GM-Zuordnungen und 13 bewusst ohne Ergänzung. Alle 495 Medikamentenkonzepte des festgelegten Inventars erhalten eine deutsche
+ATC-2026-Zuordnung, öffentlich belegte UNII-Wirkstoffschlüssel und eine ausgewählte
+echte deutsche PZN samt Präparatname und Form. Die Auswahl konkretisiert die
+synthetische Geschichte und behauptet keine pharmazeutische Gleichwertigkeit. RxNorm bleibt ausschließlich
 im Quellen-/Mappingbericht. Fehlende Zuordnungen stehen sichtbar im Präparattext;
 Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
 breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
@@ -50,7 +52,7 @@ stehen in den jeweiligen Mappingtabellen und werden nicht im Register dupliziert
 | Procedure | Prozedur | Originalcode, optionaler Zusatzcode, Zeitraum, Status, optionale SNOMED-Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler, zusätzliche OPS-Zuordnung |
 | Observation | Laborbefund / Klinische Dokumentation | Zahl, Text, Code, Boolean, DAR, Komponenten, Kategorie, Status, effective/issued, UCUM-Code, Patient/Kontakt | Mehr als zwei Untersuchungscodings und nicht dargestellte Zusatzattribute; unsupported value[x] wird ausdrücklich ausgelassen |
 | MedicationRequest / Administration | Medikation | Deutsches Präparat bzw. sichtbar offene Zuordnung, Status, Zeitpunkt/Verabreichungszeitraum, Verordnungsabsicht, Text, erste Dosis, einfache Tagesfrequenz | Weitere Dosen/Raten, Routen, Zeitpläne, Gründe und Behandler |
-| Medication | Aus Medikationszeilen | Getrennte Definition je vollständiger Präparatbeschreibung; referenzierte Ressourcen werden aufgelöst | Nicht belegte PZN und konkrete Inhaltsstoffe/Stärken; fehlender Wirkstoff ausdrücklich als DAR |
+| Medication | Aus Medikationszeilen | Getrennte Definition je vollständiger Präparatbeschreibung; referenzierte Ressourcen werden aufgelöst | Konkrete Packungsstärken sind nicht vollständig strukturiert; unbekannte Konzepte außerhalb des Inventars bleiben sichtbar offen |
 | AllergyIntolerance | Bewusst ausgeschlossen | Jede Auslassung im Verlustbericht; Originalquelle bleibt erhalten | IPS-konforme Unterstützung zurückgestellt |
 | Immunization | Impfung | ATC 2026, deutscher Impfstofftext, Zeitpunkt, Status, Primärquellenangabe, Patient/Kontakt | Durchführungsort und weitere Impfdetails |
 | DiagnosticReport | Befundbericht | Erstes Coding, Zeitpunkt, Ausgabezeit, Status, auflösbare Messwertverweise, vorhandene conclusion | Kategorien, Behandler, zusätzliche Codings; eingebettete Notizen stehen in DocumentReference |
