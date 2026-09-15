@@ -32,6 +32,15 @@ class WorkflowTest(unittest.TestCase):
                 with self.subTest(code=code), self.assertRaisesRegex(ValueError, 'Docker-/System-RAM'):
                     inspect_conversion(directory, code)
 
+    def test_heap_exhaustion_is_explained_instead_of_only_listing_missing_reports(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d) / 'fhir'
+            directory.mkdir()
+            (directory.parent / 'conversion.log').write_text(
+                'Exception in thread main java.lang.OutOfMemoryError: Java heap space')
+            with self.assertRaisesRegex(ValueError, 'Java-Arbeitsspeicher erschöpft'):
+                inspect_conversion(directory, 1)
+
     def test_missing_references_fail_even_with_an_acceptable_validator_status(self):
         with tempfile.TemporaryDirectory() as d:
             directory = Path(d)

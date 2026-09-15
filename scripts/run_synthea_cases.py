@@ -60,6 +60,13 @@ def inspect_conversion(directory, exit_code):
     imports = list(directory.glob('*.import.json'))
     validations = list(directory.glob('*.validation.json'))
     if len(bundles) != 1 or len(imports) != 1 or len(validations) != 1:
+        log = directory.parent / 'conversion.log'
+        if log.is_file():
+            with log.open(encoding='utf-8', errors='replace') as lines:
+                if any('java.lang.OutOfMemoryError' in line for line in lines):
+                    raise ValueError(f'Java-Arbeitsspeicher erschöpft (Exitcode {exit_code}); '
+                                     'für Docker bzw. den lokalen Lauf mehr RAM bereitstellen. '
+                                     'Unvollständige Ausgabe wird nicht übernommen; siehe conversion.log.')
         raise ValueError(f'Genau ein FHIR-Bundle, Importbericht und Validierungsbericht erwartet '
                          f'(Konverter-Exitcode {exit_code}); siehe conversion.log')
     import_report = json.loads(imports[0].read_text())

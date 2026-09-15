@@ -116,7 +116,7 @@ Simulationsdaten bestimmen die reproduzierbaren Quelldaten.
 Nicht erneut aus Synthea erzeugen, sondern die bearbeitete Datei direkt übergeben:
 
 ```sh
-java -jar target/excel2fhir.jar -v \
+java -XX:MaxRAMPercentage=50 -jar target/excel2fhir.jar -v \
   -f /pfad/Fall.xlsx -t /pfad/neue-csv-ausgabe -o /pfad/neue-fhir-ausgabe
 ```
 
@@ -127,7 +127,7 @@ docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
 docker run --rm --network none --entrypoint java \
   -v /absoluter/pfad/zur/excel-datei:/input:ro \
   -v /absoluter/pfad/zu/neuen-ergebnissen:/output \
-  excel2fhir-synthea -jar /app/target/excel2fhir.jar -v \
+  excel2fhir-synthea -XX:MaxRAMPercentage=50 -jar /app/target/excel2fhir.jar -v \
   -f /input/Fall.xlsx -t /output/csv -o /output/fhir
 ```
 
