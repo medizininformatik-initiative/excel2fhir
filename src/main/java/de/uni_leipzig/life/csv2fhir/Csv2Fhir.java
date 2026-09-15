@@ -253,13 +253,33 @@ public class Csv2Fhir {
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
             throws Exception {
         try {
-            return convertPreparedFiles(loadInputs(), patientsPerBundle, outputFileTypes);
+            Collection<String> patients = loadInputs();
+            preflightContacts();
+            if (importReport.hasErrors()) {
+                LOG.error("Eingabeprüfung: {} Befunde; keine FHIR-Ausgabe erzeugt. Siehe Importbericht.", importReport.issues.size());
+                return new ConverterResultStatistics();
+            }
+            return convertPreparedFiles(patients, patientsPerBundle, outputFileTypes);
         } catch (Exception e) {
             importReport.failure(null, null, "ABORTED", ImportReport.describe(e), null);
             throw e;
         } finally {
             String name = getOutputFileName(outputFileNameBase, "", JSON).replaceFirst("\\.json$", ".import.json");
             importReport.write(new File(outputDirectory, name).toPath());
+        }
+    }
+
+    private void preflightContacts() {
+        var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
+        Map<Long, String> patients = recordPatients.getOrDefault(TableIdentifier.Fall, Map.of());
+        for (CSVRecord record : tableIdentifierToParsedRecords.getOrDefault(TableIdentifier.Fall, List.of())) {
+            String patient = patients.get(record.getRecordNumber());
+            if (patient == null) continue; // Empty/malformed/unknown-patient rows have already been accounted for.
+            for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
+                    record.getRecordNumber(), patient, record.toMap()))) {
+                importReport.failure(TableIdentifier.Fall, issue.row(), "CONTACT_INPUT_ERROR",
+                        issue.field() + ": " + issue.message(), null);
+            }
         }
     }
 

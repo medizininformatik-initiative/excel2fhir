@@ -150,6 +150,7 @@ public class ExcelTemplateValidator {
             return encounterIds;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
+        var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
         String previousPatientId = null;
         for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -168,28 +169,18 @@ public class ExcelTemplateValidator {
                 add(result, ERROR, "Fall", rowIndex + 1, "Patient-ID", "Patient-ID does not exist in Person sheet");
             }
 
-            DateTimeType start = validateDateTime(sheet, row, columns, "Start", result, true);
-            DateTimeType end = validateDateTime(sheet, row, columns, "Ende", result, false);
-            validateDateRange(result, "Fall", rowIndex + 1, "Start/Ende", start, end, ERROR);
-
-            String encounterNumber = get(row, columns, "Fall-Nr");
-            String kind = get(row, columns, "Kontaktart");
-            if (!isBlank(kind) && !de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.CONTACT_KINDS.containsKey(kind))
-                add(result, ERROR, "Fall", rowIndex + 1, "Kontaktart", "Unbekannte Kontaktart");
-            if (!isBlank(kind) && isBlank(get(row, columns, "Station")) && isBlank(get(row, columns, "Zimmer")) && isBlank(get(row, columns, "Bett")))
-                add(result, ERROR, "Fall", rowIndex + 1, "Kontaktart", "Mindestens Station, Zimmer oder Bett erforderlich");
-            String admissionReason = get(row, columns, AdmissionReasonValues.COLUMN);
-            if (!isBlank(admissionReason)) {
-                try {
-                    AdmissionReasonValues.extension(admissionReason);
-                    if (isBlank(encounterNumber)) {
-                        throw new IllegalArgumentException("Facility encounter row required");
-                    }
-                } catch (RuntimeException e) {
-                    add(result, ERROR, "Fall", rowIndex + 1, AdmissionReasonValues.COLUMN,
-                            "Supported admission reason and explicit Fall-Nr required");
-                }
+            Map<String, String> contactValues = new HashMap<>();
+            for (String column : columns.keySet()) contactValues.put(column, get(row, columns, column));
+            for (String column : List.of("Start", "Ende")) {
+                Cell cell = getCell(row, columns, column);
+                if (isExcelDateCell(cell)) contactValues.put(column, new DateTimeType(cell.getDateCellValue()).getValueAsString());
+                else if (isExcelDateFormulaCell(cell)) contactValues.put(column, new DateTimeType(evaluateDateFormula(cell)).getValueAsString());
             }
+            for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
+                    rowIndex + 1, patientId, contactValues))) {
+                add(result, ERROR, "Fall", (int) issue.row(), issue.field(), issue.message());
+            }
+            String encounterNumber = get(row, columns, "Fall-Nr");
             if (!isBlank(patientId) && !isBlank(encounterNumber)) {
                 validateRequired(sheet, row, columns, "Einrichtungskontaktklasse", result);
                 encounterIds.add(patientId + "|" + encounterNumber);

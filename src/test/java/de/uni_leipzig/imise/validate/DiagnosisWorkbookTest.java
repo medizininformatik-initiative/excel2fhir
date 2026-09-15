@@ -13,6 +13,29 @@ import org.junit.Test;
 
 public class DiagnosisWorkbookTest {
     @Test
+    public void contactPreflightCollectsIndependentRowsAndOtherSheets() throws Exception {
+        java.nio.file.Path file = java.nio.file.Files.createTempFile("contact-input-errors-", ".xlsx");
+        try {
+            try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                    var book = new XSSFWorkbook(input)) {
+                var fall = book.getSheet("Fall");
+                fall.getRow(1).getCell(2).setCellValue("2026-01-03");
+                fall.getRow(1).getCell(3).setCellValue("2026-01-01");
+                fall.getRow(4).getCell(2).setCellValue("unlesbar");
+                // Another sheet must still be checked, not hidden by Fall errors.
+                book.getSheet("Person").getRow(1).getCell(0).setCellValue("");
+                try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+            }
+            var result = new ExcelTemplateValidator().validate(file.toFile());
+            assertTrue(result.hasErrors());
+            assertTrue(result.getIssues().stream().anyMatch(i -> i.getSheetName().equals("Fall") && i.getRowNumber()==2));
+            assertTrue(result.getIssues().stream().anyMatch(i -> i.getSheetName().equals("Fall") && i.getRowNumber()==5));
+            assertTrue(result.getIssues().stream().anyMatch(i -> i.getSheetName().equals("Person")));
+            assertTrue(result.getIssues().stream().noneMatch(i -> i.getMessage().contains("übergeordneten Aufenthalts") && i.getRowNumber()==3));
+        } finally { java.nio.file.Files.deleteIfExists(file); }
+    }
+
+    @Test
     public void shippedWorkbooksMatchSchemaAndLinkSharedSelections() throws Exception {
         for (String name : List.of("FHIR_Testdatengenerator_Vorlage.xlsx", "FHIR_Testdatengenerator_Interpolar_Demo.xlsx")) {
             TemplateValidationResult result = new ExcelTemplateValidator().validate(new File(name));

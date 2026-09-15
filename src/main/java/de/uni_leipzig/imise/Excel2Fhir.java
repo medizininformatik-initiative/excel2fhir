@@ -32,7 +32,9 @@ public class Excel2Fhir {
     private final ExcelTemplateValidator templateValidator = new ExcelTemplateValidator();
 
     /**  */
-    private final FHIRValidator validator;
+    private FHIRValidator validator;
+    private final boolean validateOutput;
+    private final ValidationResultType minLogLevel;
 
     private boolean importProblems;
 
@@ -61,7 +63,8 @@ public class Excel2Fhir {
      * @param minLogLevel
      */
     public Excel2Fhir(boolean validate, ValidationResultType minLogLevel) {
-        validator = validate ? new FHIRValidator(minLogLevel) : null;
+        this.validateOutput = validate;
+        this.minLogLevel = minLogLevel;
     }
 
     /**
@@ -162,6 +165,7 @@ public class Excel2Fhir {
             int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes)
             throws IOException {
         templateValidator.validateAndThrow(sourceExcelFile);
+        if (validateOutput && validator == null) validator = new FHIRValidator(minLogLevel);
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }

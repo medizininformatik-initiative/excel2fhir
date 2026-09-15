@@ -20,13 +20,30 @@ der anderen Blätter oder sämtliche KDS-Profilregeln abzudecken.
   nicht zusätzlich gesperrt, beispielsweise ambulant mit Normalstationär.
   Diese Annahme beim Import ist keine Bestätigung fachlicher oder Profilkonformität.
 
+## Erst sammeln, dann konvertieren
+
+Die Excel-Vorprüfung prüft die Eingabeblätter und meldet die gefundenen Fehler
+zusammen mit Blatt, Zeile und Feld. Die Kontaktprüfung ist für Excel und direkte
+CSV-Eingabe dieselbe. Sie arbeitet ohne erzeugte FHIR-Ressourcen und ohne
+Terminologieprüfung. Nach einem Fehler bleiben abhängige Zuordnungsprüfungen
+dieses Falls ausgesetzt; unabhängig prüfbare Felder und andere Fälle werden
+weiter geprüft. Der erste Fehler nennt diese Einschränkung ausdrücklich. Nach
+der Korrektur können deshalb zuvor nicht sinnvoll prüfbare Beziehungen weitere
+Befunde ergeben; es wird keine vollständige Prüfung fehlerabhängiger Daten behauptet.
+
+Bei bekannten Eingabefehlern startet keine FHIR-Erzeugung. Der direkte CSV-Weg
+schreibt dennoch seine Importbilanz. Unerwartete Fehler während der Konvertierung
+werden weiterhin gesammelt; die eventuell entstandene Teilausgabe ist INCOMPLETE.
+Es gibt keinen zusätzlichen Konfigurationsschalter. Die bestehenden Excel-
+Prüfoptionen bleiben erhalten; der anschließende CSV-Kontaktcheck greift auch dann.
+
 ## Aktuelle Ablehnungen
 
 | Eingabe | Aktuelles Verhalten und Grund |
 | --- | --- |
 | Fehlender oder nicht lesbarer Beginn; nicht lesbares Ende | Fehler: kein verarbeitbarer Zeitwert. |
 | Ende vor Beginn | Fehler in Excel-Vorprüfung und Kontakt-Converter; die Werte wären grundsätzlich darstellbar. |
-| Ende gleich Beginn | Excel-Vorprüfung meldet Fehler; der direkte Kontakt-Converter erlaubt das für eine einzelne Zeile. Diese Inkonsistenz ist offen. |
+| Ende gleich Beginn | Für einen einzelnen Kontakt erlaubt, jetzt auch in der Excel-Vorprüfung. Die Zuordnung zu übergeordneten Zeiträumen muss weiterhin passen. |
 | Kind beginnt vor dem Elternkontakt oder beginnt an/nach dessen bekanntem Ende; Kind endet nach dem Elternende | Fehler im Kontakt-Converter. Das ist eine zeitliche Konsistenzregel, keine technische Unmöglichkeit der FHIR-Darstellung. |
 | Überlappende oder rückwärts sortierte primäre Aufenthalte | Fehler im Kontakt-Converter. Explizite Überlappungen sind darstellbar; die zeitliche Zuordnung bei automatisch abgeleiteten Enden benötigt eine eindeutige Regel. |
 | Sekundärkontakt ohne zuvor eingetragenen primären Versorgungsstellenkontakt | Fehler: die aktuelle implizite Eingabe verlangt diese Zuordnung. Das ist eine Grenze dieses Eingabemodells. |
@@ -37,10 +54,10 @@ der anderen Blätter oder sämtliche KDS-Profilregeln abzudecken.
 | Erster Kontakt ohne zuordenbare Fallnummer; unbekannter Patient | Fehler: die notwendige Zuordnung fehlt. |
 | Befüllte alte technische Kontaktspalten | Fehler: kein stilles Umdeuten der früheren expliziten Hierarchie. |
 
-Die zeitlichen Konsistenzprüfungen sollen gesondert entschieden werden. Explizite
-widersprüchliche Testdaten sind nicht automatisch Eingabefehler, die einen Import
-verhindern müssen. Eine Lockerung ist hier noch nicht als implementiert beschrieben.
-Es gibt keine neue Plausibilitätsoption und keine neue Sperre für Operation plus Bett.
+Die bestehenden zeitlichen Konsistenzregeln bleiben auf ausdrücklichen Wunsch
+Fehler. Statt widersprüchliche Zeiten zu übernehmen, werden die erkennbaren
+Eingabefehler vor der Erzeugung gesammelt. Keine neue medizinische
+Plausibilitätssperre und keine Warnung für Operation plus Bett wurden ergänzt.
 
 ## Import und FHIR-Validierung unterscheiden
 

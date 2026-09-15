@@ -189,6 +189,23 @@ public class EncounterConverterTest {
                 wardEncounters.get(1).getPartOf().getReference());
     }
 
+    @Test public void preflightAndConverterAgreeOnRepresentativeSequences() throws Exception {
+        for (String csv : List.of(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP,
+                CONTACT_HEADER+ROOT_CONTACT+OP,
+                CONTACT_HEADER+ROOT_CONTACT+PRIMARY+PRIMARY,
+                CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("2026-05-02", "2026-05-04"),
+                CONTACT_HEADER+ROOT_CONTACT+PRIMARY.replace("2026-05-03T12:00:00Z", "")+OP,
+                CONTACT_HEADER+ROOT_CONTACT.replace("2026-05-05T12:00:00Z", "")+PRIMARY.replace("2026-05-03T12:00:00Z", "")+OP)) {
+            var preflight = new ContactInputValidator();
+            boolean rejected = false;
+            for (var record : createRecords(csv))
+                rejected |= !preflight.accept(new ContactInputValidator.Input(record.getRecordNumber(), "PID1", record.toMap())).isEmpty();
+            boolean failed = false;
+            try { convertRecords(csv); } catch (IllegalArgumentException e) { failed = true; }
+            assertEquals(csv, failed, rejected);
+        }
+    }
+
     private static ConverterResult convertRecords(String csv) throws Exception {
         ConverterResult result = new ConverterResult(new ConverterOptions(""));
         String previousPatientId = null;

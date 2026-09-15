@@ -35,31 +35,47 @@ public class ImportReportTest {
         assertTrue(Files.isRegularFile(output.resolve("case.import.json")));
         return converter;
     }
-    @Test public void failuresAreCountedOnceAndValidRowsSurviveWithLiteralPatientMatching() throws Exception {
+    @Test public void unexpectedConversionFailuresAreCollectedAndPartialOutputIsMarked() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p.1"),patient("px1")));
         table(TableIdentifier.Prozedur,List.of(procedure("p.1","2026-01-01"),procedure("","invalid"),
-                procedure("","2026-01-02"),procedure("px1","2026-01-03"),procedure("missing","2026-01-04")));
+                procedure("","2026-01-02"),procedure("px1","2026-01-03")));
         var converter=run(); var report=converter.getImportReport();
         assertTrue(converter.hasImportProblems());
         var stats=report.tables.get("Prozedur");
-        assertEquals(5,stats.rowsRead); assertEquals(3,stats.processedRows); assertEquals(2,stats.failedRows);
+        assertEquals(4,stats.rowsRead); assertEquals(3,stats.processedRows); assertEquals(1,stats.failedRows);
         assertEquals(3,stats.successfulAttempts); assertEquals(1,stats.failedAttempts);
         assertEquals(0,stats.unprocessedRows);
         JsonObject bundle=JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
         long procedures=bundle.getAsJsonArray("entry").asList().stream().filter(e->"Procedure".equals(e.getAsJsonObject().getAsJsonObject("resource").get("resourceType").getAsString())).count();
         assertEquals(3,procedures);
-        assertEquals(Set.of("CONVERSION_ERROR","UNKNOWN_PATIENT"),new HashSet<>(report.issues.stream().map(i->i.category).toList()));
+        assertEquals(Set.of("CONVERSION_ERROR"),new HashSet<>(report.issues.stream().map(i->i.category).toList()));
     }
-    @Test public void missingColumnsRejectOnlyThatTableAndMissingPatientFileCannotSucceed() throws Exception {
+    @Test public void inputErrorsPreventAnyBundleButStillWriteTheFullReport() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p1")));
         Files.writeString(input.resolve("case_Prozedur.csv"),"Patient-ID\np1\n");
         var report=run().getImportReport();
         assertTrue(report.hasErrors()); assertTrue(report.tables.get("Prozedur").rejected);
-        assertEquals(1,report.tables.get("Person").processedRows);
+        assertEquals(0,report.tables.get("Person").processedRows);
+        assertFalse(Files.exists(output.resolve("case.json")));
         assertEquals(1,report.tables.get("Prozedur").unprocessedRows);
         Files.delete(input.resolve("case_Person.csv"));
         assertTrue(run().hasImportProblems());
     }
+    @Test public void contactErrorsAcrossPatientsAreReportedBeforeAnyConversion() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1"), patient("p2")));
+        table(TableIdentifier.Fall, List.of(
+                Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "2026-01-02", "Ende", "2026-01-01", "Einrichtungskontaktklasse", "stationaer"),
+                Map.of("Patient-ID", "p2", "Fall-Nr", "1", "Start", "2026-01-01", "Ende", "2026-01-03", "Einrichtungskontaktklasse", "stationaer"),
+                Map.of("Patient-ID", "p2", "Fall-Nr", "1", "Start", "2026-01-02", "Station", "OP", "Kontaktart", "Operation")));
+        var report = run().getImportReport();
+        assertEquals(2, report.issues.size());
+        assertEquals(Set.of(1L, 3L), new HashSet<>(report.issues.stream().map(i -> i.record).toList()));
+        assertEquals(0, report.tables.get("Person").successfulAttempts);
+        assertEquals(0, report.tables.get("Fall").successfulAttempts);
+        assertFalse(Files.exists(output.resolve("case.json")));
+        assertEquals("INCOMPLETE", report.status);
+    }
+
     @Test public void repeatedOutputsKeepDistinctRowAndAttemptCounts() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p1")));
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\n");
@@ -83,7 +99,8 @@ public class ImportReportTest {
         lines.add(2, "broken,row");
         Files.write(file, lines);
         var report = run().getImportReport();
-        assertEquals(1, report.tables.get("Prozedur").processedRows);
+        assertEquals(0, report.tables.get("Prozedur").processedRows);
+        assertFalse(Files.exists(output.resolve("case.json")));
         assertEquals(2, report.tables.get("Prozedur").failedRows);
         assertEquals(Set.of("MALFORMED_RECORD", "MISSING_PATIENT"),
                 new HashSet<>(report.issues.stream().map(i -> i.category).toList()));
