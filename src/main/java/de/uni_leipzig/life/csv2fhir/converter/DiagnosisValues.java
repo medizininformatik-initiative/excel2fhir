@@ -28,7 +28,12 @@ public final class DiagnosisValues {
                 java.nio.charset.StandardCharsets.UTF_8)) {
             Map<String, String> labels = new LinkedHashMap<>();
             com.google.gson.JsonParser.parseReader(reader).getAsJsonObject().entrySet()
-                    .forEach(entry -> labels.put(entry.getValue().getAsString(), entry.getKey()));
+                    .forEach(entry -> {
+                        String label = entry.getValue().getAsString();
+                        labels.put(label, entry.getKey());
+                        // Compatibility with previously generated German input labels.
+                        labels.put(label.replace(" (Data Absent Reason)", ""), entry.getKey());
+                    });
             return Collections.unmodifiableMap(labels);
         } catch (java.io.IOException e) {
             throw new java.io.UncheckedIOException(e);

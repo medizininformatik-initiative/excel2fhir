@@ -7,13 +7,13 @@ from pathlib import Path
 from zipfile import ZipFile
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from workbook_xml import read_sheets, NS
-from workbook_absent import display, canonical
+from workbook_absent import display, canonical, CODES
 
 ROOT = Path(__file__).resolve().parents[2]
 
 class WorkbookSelectionsTest(unittest.TestCase):
     def test_presentation_does_not_rewrite_narratives_or_boolean_results(self):
-        self.assertEqual('Unbekannt', display('Medikation', 'Einzeldosis', '!dar:unknown', {}))
+        self.assertEqual('Unbekannt (Data Absent Reason)', display('Medikation', 'Einzeldosis', '!dar:unknown', {}))
         self.assertEqual('!dar:unknown', display('Medikation', 'Dosierungstext', '!dar:unknown', {}))
         self.assertEqual('Unbekannt', canonical('Laborbefund', {'Werttyp': 'Text', 'Messwert': 'Unbekannt'})['Messwert'])
         self.assertEqual('!dar:unknown', canonical('Laborbefund', {'Werttyp': 'Fehlend', 'Messwert': 'Unbekannt'})['Messwert'])
@@ -22,6 +22,9 @@ class WorkbookSelectionsTest(unittest.TestCase):
         for filename in ('FHIR_Testdatengenerator_Vorlage.xlsx', 'FHIR_Testdatengenerator_Interpolar_Demo.xlsx'):
             path = ROOT / filename
             cells = read_sheets(path)
+            for value in cells["Codes"].values():
+                if value in CODES:
+                    self.assertTrue(value.endswith(" (Data Absent Reason)"), value)
             with ZipFile(path) as z:
                 rels = {r.attrib['Id']: r.attrib['Target'] for r in ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))}
                 for sheet in ET.fromstring(z.read('xl/workbook.xml')).findall('s:sheets/s:sheet', NS):
@@ -49,5 +52,5 @@ class WorkbookSelectionsTest(unittest.TestCase):
                             self.assertRegex(d.get('sqref'), r'^L2:L[0-9]+$')
                             self.assertGreaterEqual(int(d.get('sqref').split(':L')[1]), 1000)
             self.assertEqual('in-progress',cells['Codes']['BJ30'])
-            self.assertEqual('Unbekannt',cells['Codes']['AA36'])
+            self.assertEqual('Unbekannt (Data Absent Reason)',cells['Codes']['AA36'])
             self.assertNotIn('Positive Unendlichkeit',[cells['Codes'].get('AA'+str(i)) for i in range(30,42)])

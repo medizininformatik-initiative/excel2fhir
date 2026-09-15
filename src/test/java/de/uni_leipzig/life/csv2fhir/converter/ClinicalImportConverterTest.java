@@ -15,14 +15,14 @@ public class ClinicalImportConverterTest {
                     DiagnosisValues.absentReason("!dar:" + entry.getValue())));
         }
         assertNull(AdmissionReasonValues.extension(""));
-        var reason = (Coding) AdmissionReasonValues.extension("Unbekannt").getExtensionFirstRep().getValue();
+        var reason = (Coding) AdmissionReasonValues.extension("Unbekannt (Data Absent Reason)").getExtensionFirstRep().getValue();
         assertNull(reason.getCode());
         assertEquals("unknown", reason.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
         assertEquals("7", ((Coding) AdmissionReasonValues.extension("Notfall").getExtensionFirstRep().getValue()).getCode());
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatbezeichnung", "Testpräparat",
-                "Wirkstoffcode", "Unbekannt", "Wirkstoffcodesystem", "UNII", "Beginn", "Noch nicht bekannt",
-                "Einzeldosis", "Unbekannt", "Dosierungstext", "Dosis noch nicht dokumentiert"));
+                "Wirkstoffcode", "Unbekannt (Data Absent Reason)", "Wirkstoffcodesystem", "UNII", "Beginn", "Noch nicht bekannt (Data Absent Reason)",
+                "Einzeldosis", "Unbekannt (Data Absent Reason)", "Dosierungstext", "Dosis noch nicht dokumentiert"));
         assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
         var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
                 null, new ConverterResult(options), null, options).convertInternal();

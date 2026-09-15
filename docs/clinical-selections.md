@@ -115,7 +115,10 @@ Der Import erneuert die Verknüpfungen bis zur letzten tatsächlich erzeugten Ze
 
 Die deutsch beschrifteten Fehlgründe stehen zentral in
 `src/main/resources/workbook-absent-reasons.json`; Java und Python verwenden dieselbe
-Zuordnung. Die sechs allgemeinen Gründe sind Unbekannt, Erfragt aber unbekannt,
+Zuordnung. Alle Fehlgrund-Auswahlen tragen den Zusatz ` (Data Absent Reason)`,
+z.B. `Unbekannt (Data Absent Reason)`. Frühere Eingaben ohne Zusatz bleiben lesbar;
+neu erzeugte und aktualisierte Dateien verwenden die markierte Darstellung.
+Die sechs allgemeinen Gründe sind Unbekannt, Erfragt aber unbekannt,
 Noch nicht bekannt, Nicht erhoben, Auskunft verweigert und Aus Datenschutzgründen
 verborgen. Codefelder bieten zusätzlich fehlende Quellsystemunterstützung und einen
 im Zielprofil nicht zulässigen Wert an. Messwerte haben eine eigene Auswahl mit
