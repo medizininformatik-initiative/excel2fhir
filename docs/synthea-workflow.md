@@ -15,7 +15,7 @@ docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
 Der erste Start baut die Werkzeuge einschließlich der festgelegten Synthea-Version.
-Weitere Starts verwenden das bereits gebaute Image. Standardmäßig erzeugt Synthea
+Weitere Starts verwenden den Build-Cache; Änderungen am Projekt werden mitgebaut. Standardmäßig erzeugt Synthea
 einen erwachsenen Patienten; zusätzlich können verstorbene Patienten entstehen.
 Die vollständige Historie wird über unsere Excel-Vorlage nach FHIR konvertiert.
 
@@ -31,6 +31,8 @@ Jeder Start legt einen neuen Ordner unter `outputSynthea/run-…/` an:
 - **`synthea/` und `synthea.log`**: unveränderte Synthea-Ausgabe und Generatorprotokoll.
 
 Vorherige Läufe und manuell bearbeitete Excel-Dateien werden nicht überschrieben.
+Die Konsolenausgabe nennt Containerpfade unter `/output`; auf Ihrem Rechner
+entspricht das `outputSynthea`. Es wird nichts auf einen FHIR-Server hochgeladen.
 
 `NOT_CHECKED` bedeutet: Import und Rückvergleich haben funktioniert, aber Teile
 der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dateien
@@ -80,7 +82,30 @@ das [ausführbare Krankenhausbeispiel 2020–2026](../examples/synthea-hospital/
 Die Mappings passen zum mitgelieferten Synthea-Stand. Ein Austausch gegen eine
 andere Version oder zusätzliche Module braucht einen erneuten Mappingreview.
 
-## Excel bearbeiten oder vorhandene Daten verwenden
+## Excel bearbeiten
+
+Eine erzeugte `Fall.xlsx` öffnen, prüfen und bei Bedarf ändern. Die Hinweise
+stehen rechts auf den Eingabeblättern; Auswahlen unterscheiden fehlende Werte
+durch den Zusatz **(Data Absent Reason)** von echten Angaben. Eine leere optionale
+Spalte ist nicht automatisch ein Fehler: Ein OP-Kontakt kann etwa ohne eigenes
+Ende eingetragen werden, eine Prozedur kann SNOMED statt OPS verwenden.
+
+Für die erneute Konvertierung eine Kopie unter
+`outputSynthea/review/Fall.xlsx` speichern. Mit dem bereits gebauten Image:
+
+```sh
+docker compose -f compose.synthea.yml run --rm --entrypoint java synthea \
+  -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin \
+  -jar /app/target/excel2fhir.jar -v \
+  -f /output/review/Fall.xlsx -t /output/review/csv -o /output/review/fhir
+```
+
+Die Ergebnisse liegen unter `outputSynthea/review/fhir/`. Bei Wiederholung werden
+die dortigen Ergebnisse und `review/csv/` ersetzt; die Excel-Datei bleibt erhalten.
+Dieser Schritt verwendet die Optionen im Excel-Blatt. Er startet Synthea nicht
+erneut und vergleicht Ihre Änderungen nicht gegen die ursprüngliche Geschichte.
+
+## Weitere Eingaben
 
 Das Blatt [Fall](synthea-movements.md) erklärt primäre Aufenthalte und zusätzliche
 OP-/Konsilkontakte. Die [Eingabeprüfung](contact-input-checks.md) sammelt Fehler vor
@@ -89,3 +114,20 @@ der FHIR-Erzeugung. Kontaktbeginn und Prozedurbeginn sind getrennte Eingaben.
 Für vorhandene Synthea-Bundles, die erneute Konvertierung einer bearbeiteten
 Excel-Datei und einen Aufbau ohne Docker siehe [manuelle Anleitung](synthea-manual.md).
 Der bisherige Excel→FHIR- und CSV→FHIR-Einstieg bleibt unverändert.
+
+## Wenn ein Lauf nicht fertig wird
+
+- **Docker läuft nicht:** Docker starten und denselben Befehl erneut ausführen.
+- **Exitcode 1 bei `NOT_CHECKED`:** Dateien sind vorhanden; die Grenzen der
+  Terminologieprüfung stehen im Validierungsbericht.
+- **`FAILED`:** `cases/summary.json` bzw. `workflow.json` nennt den betroffenen
+  Schritt. Bei einem Konvertierungsfehler steht das Detail im zugehörigen
+  `conversion.log`, beim Generator in `synthea.log`.
+- **Speichermangel / Exitcode 137:** Docker mehr RAM bereitstellen oder mit
+  kürzerer Historie beginnen. Auch ein einzelner langer Patientenverlauf kann
+  viel Speicher und Validierungszeit brauchen. Ein neuer Start erzeugt einen
+  neuen Laufordner; abgebrochene Läufe werden nicht automatisch fortgesetzt.
+
+Die Sicherheitsbefunde des eingebundenen Synthea-Generators werden separat in
+[Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
+bearbeitet. Der Offline-Lauf ist keine abgeschlossene Sicherheitsfreigabe.

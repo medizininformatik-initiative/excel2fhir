@@ -118,7 +118,7 @@ Simulationsdaten bestimmen die reproduzierbaren Quelldaten.
 Nicht erneut aus Synthea erzeugen, sondern die bearbeitete Datei direkt übergeben:
 
 ```sh
-java -XX:MaxRAMPercentage=50 -jar target/excel2fhir.jar -v \
+java -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar target/excel2fhir.jar -v \
   -f /pfad/Fall.xlsx -t /pfad/neue-csv-ausgabe -o /pfad/neue-fhir-ausgabe
 ```
 
@@ -129,30 +129,17 @@ docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
 docker run --rm --network none --entrypoint java \
   -v /absoluter/pfad/zur/excel-datei:/input:ro \
   -v /absoluter/pfad/zu/neuen-ergebnissen:/output \
-  excel2fhir-synthea -XX:MaxRAMPercentage=50 -jar /app/target/excel2fhir.jar -v \
+  excel2fhir-synthea -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar /app/target/excel2fhir.jar -v \
   -f /input/Fall.xlsx -t /output/csv -o /output/fhir
 ```
 
 Für CSV-Eingaben bleibt die bisherige CLI verfügbar; siehe den
-[allgemeinen Projekteinstieg](../README.md). Ausgabeordner bewusst neu wählen,
+[Excel-/CSV-Einstieg](converter-usage.md). Ausgabeordner bewusst neu wählen,
 da die allgemeinen Konverter vorhandene Ausgabeordner leeren können.
 
 
 ## Welche Skripte muss ich selbst starten?
 
-Nur einen der beiden Einstiegspunkte; die übrigen Schritte laufen automatisch:
-
-| Skript | Aufgabe | Wer startet es? |
-| --- | --- | --- |
-| `run_synthea_workflow.py` | Synthea erzeugen, danach Excel und FHIR erstellen | Compose oder Sie beim lokalen Komplettlauf |
-| `run_synthea_cases.py` | Vorhandene Patientenbundles importieren, konvertieren und abgleichen | Komplettlauf oder Sie für vorhandene Quellen |
-| `synthea_to_excel.py` | Daten und Mappings in eine Kopie der Excel-Vorlage eintragen | Importworkflow |
-| `check_synthea_roundtrip.py` | Quelle mit Excel und erzeugtem FHIR abgleichen | Importworkflow |
-| `audit_synthea_projection.py` | Zusätzlicher unabhängiger Abgleich für die Qualitätssicherung | Projektentwicklung bei den umfassenden Prüfläufen |
-
-Die fachlichen Python-Module werden von diesen Skripten geladen. Sie müssen sie
-nicht einzeln aufrufen. Mappings und synthetische Namenslisten liegen als
-versionierte Projektdateien unter `scripts/mappings/`; Namen stehen in
-`german-demographics.json` und `german-name-supplement.json`. Quellen und
-Mappingentscheidungen sind in den jeweiligen Dateien dokumentiert. `__pycache__/*.pyc` entsteht bei Bedarf automatisch aus
-den Python-Dateien und wird nicht eingecheckt.
+Nur `run_synthea_workflow.py` für den Komplettlauf oder `run_synthea_cases.py`
+für vorhandene Quellen. Die übrigen Schritte laufen automatisch. Aufgaben,
+Mappingdateien und technische Grenzen erklärt die [Architekturübersicht](architecture.md).

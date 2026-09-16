@@ -49,6 +49,24 @@ am 2. Mai ohne Ende; echte Verlegung auf Intensivstation am 3. Mai.
 Der OP-Kontakt endet am 3. Mai. Das Bett auf Station bleibt bis dahin erhalten.
 Ein Ende der Operation als Prozedur wird daraus **nicht** abgeleitet.
 
+So kann dieser Fall im Blatt stehen (Patient-ID in jeder Zeile gleich; leere
+Felder bleiben tatsächlich leer):
+
+| Fall-Nr | Start | Ende | Einrichtungskontaktklasse | Fachabteilung | Station | Zimmer | Bett | Kontaktart |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1001 | 2026-05-01 08:00 | 2026-05-05 12:00 | stationaer | | | | | |
+| 1001 | 2026-05-01 08:00 | | | | Station A | 12 | 2 | Normalstationär |
+| 1001 | 2026-05-02 10:00 | | | | OP | Saal 1 | | Operation |
+| 1001 | 2026-05-03 09:00 | | | | Intensivstation | 1 | 1 | Intensivstationär |
+
+Die erste Zeile legt den Gesamtfall fest. Station A und der zusätzliche OP-Kontakt
+enden mit dem Beginn des Intensivaufenthalts am 3. Mai um 09:00. Der Intensivkontakt
+endet mit dem Gesamtfall. Weil hier keine Fachabteilung angegeben ist, entsteht
+kein Abteilungskontakt. Der Beginn des OP-Kontakts steht ausdrücklich in dessen
+eigener Zeile; eine manuelle Eingabe braucht dafür keine passende Prozedurzeile.
+Die separate Einrichtungszeile ist hilfreich für einen ausdrücklich festgelegten
+Gesamtzeitraum, aber nach der oben beschriebenen CSV-Konvention nicht zwingend.
+
 Unsortierte oder überlappende primäre Aufenthalte, Sekundärkontakte ohne primären
 Aufenthalt und unpassende Zeiträume werden als Eingabefehler gemeldet.
 Die Überlappung zwischen primären und sekundären Kontakten ist dagegen beabsichtigt.
