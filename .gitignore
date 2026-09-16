@@ -21,4 +21,5 @@ __pycache__/
 *.pyc
 
 # Complete Synthea workflow results
-/outputSynthea/
+/outputSynthea/*
+!/outputSynthea/converter-options.config

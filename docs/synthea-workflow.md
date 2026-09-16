@@ -40,10 +40,11 @@ der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patient
 
 ## Konvertierungsoptionen einstellen
 
-Beim ersten Start entsteht **`outputSynthea/converter-options.config`** mit
-kommentierten Workflow-Defaults. Zum Ändern die gewünschten Werte in dieser
-Textdatei bearbeiten und den normalen Startbefehl erneut ausführen. Es ist kein
-zusätzlicher Parameter nötig. Eine vorhandene Datei wird nicht überschrieben.
+**`outputSynthea/converter-options.config`** liegt bereits nach dem Checkout mit
+kommentierten Workflow-Defaults bereit. Bei Bedarf vor dem ersten Start die
+gewünschten Werte in dieser Textdatei bearbeiten und den normalen Startbefehl
+ausführen. Es ist kein zusätzlicher Parameter nötig. Eine vorhandene Datei wird
+nicht überschrieben; fehlt sie, wird sie beim Start automatisch erzeugt.
 Fehlende oder auskommentierte Angaben verwenden weiterhin die Workflow-Defaults.
 
 Beispiel für eine eigene Patienten-ID-Kennung:

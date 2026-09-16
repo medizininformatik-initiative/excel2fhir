@@ -61,8 +61,8 @@ def config_text():
     for name, default, description in OPTIONS:
         value = SYNTHEA_OVERRIDES.get(name, default)
         result.extend('# ' + line for line in description)
-        result.extend(['# Workflow-Default: ' + (value or '(leer)'), name + ' = ' + value, ''])
-    return '\n'.join(result) + '\n'
+        result.extend(['# Workflow-Default: ' + (value or '(leer)'), name + ' =' + (' ' + value if value else ''), ''])
+    return '\n'.join(result).rstrip() + '\n'
 
 
 def ensure_config(directory):
