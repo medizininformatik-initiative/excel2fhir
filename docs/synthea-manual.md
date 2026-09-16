@@ -21,7 +21,9 @@ mvn test package
 python3 scripts/run_synthea_cases.py /pfad/synthea/fhir /pfad/neue-ausgabe
 ```
 
-Das Ausgabeverzeichnis darf noch nicht existieren. Die Pfade zur Vorlage und zum
+Das Ausgabeverzeichnis muss neu sein oder darf nur `converter-options.config`
+enthalten. Fehlt diese Datei, wird sie mit kommentierten Workflow-Defaults angelegt.
+Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
 einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
 als Heap für die vollständige Validierung. Im Container zählt der für Docker

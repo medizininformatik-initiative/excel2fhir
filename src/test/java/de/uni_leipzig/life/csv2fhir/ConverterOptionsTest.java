@@ -47,4 +47,12 @@ public class ConverterOptionsTest {
         var loop = ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_LOOP_OFFSET=2147483647");
         assertThrows(ArithmeticException.class, () -> loop.getFullPID("p1", 2));
     }
+    @Test public void explicitOptionsOverrideWorkflowDefaultsWithoutHidingDuplicates() {
+        var defaults = java.util.Map.of("SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER", "true", "PID_PREFIX", "workflow-");
+        var options = ConverterOptions.fromText("SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER=false\n", defaults);
+        assertTrue(options.getErrors().isEmpty());
+        assertFalse(options.is(SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER));
+        assertEquals("workflow-p1", options.getFullPID("p1"));
+        assertFalse(ConverterOptions.fromText("PID_PREFIX=a\nPID_PREFIX=b", defaults).getErrors().isEmpty());
+    }
 }

@@ -27,6 +27,7 @@ Jeder Start legt einen neuen Ordner unter `outputSynthea/run-…/` an:
 - **`cases/<Patient-ID>/Fall.xlsx`**: befüllte Excel-Datei zum Ansehen oder Bearbeiten.
 - **`cases/<Patient-ID>/fhir/`**: FHIR-, Import- und Validierungsberichte des Patienten.
 - **`cases/summary.json`**: Übersicht, einschließlich fehlgeschlagener Patienten.
+- **`converter-options.config`**: unveränderte Kopie der für diesen Lauf verwendeten Optionen.
 - **`synthea/` und `synthea.log`**: unveränderte Synthea-Ausgabe und Generatorprotokoll.
 
 Vorherige Läufe und manuell bearbeitete Excel-Dateien werden nicht überschrieben.
@@ -36,6 +37,30 @@ der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dat
 sind vorhanden; Exitcode 1 signalisiert diese Einschränkung. Das ist keine
 Bestätigung vollständiger KDS-Konformität. Bei `FAILED` ist der Lauf unvollständig;
 der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patienten.
+
+## Konvertierungsoptionen einstellen
+
+Beim ersten Start entsteht **`outputSynthea/converter-options.config`** mit
+kommentierten Workflow-Defaults. Zum Ändern die gewünschten Werte in dieser
+Textdatei bearbeiten und den normalen Startbefehl erneut ausführen. Es ist kein
+zusätzlicher Parameter nötig. Eine vorhandene Datei wird nicht überschrieben.
+Fehlende oder auskommentierte Angaben verwenden weiterhin die Workflow-Defaults.
+
+Beispiel für eine eigene Patienten-ID-Kennung:
+
+```properties
+PID_PREFIX = demo-
+```
+
+Der Workflow prüft die Optionen vor dem Synthea-Start. Jeder Lauf speichert eine
+Kopie seiner Optionsdatei; die tatsächlich wirksamen Werte stehen zusätzlich im
+Blatt **Konvertierungsoptionen** jeder erzeugten Excel-Datei. Dort lassen sie sich
+für eine spätere manuelle Konvertierung ändern. Eine nachträgliche Änderung der
+zentralen Textdatei verändert keine bereits erzeugten Dateien.
+
+Bei der Konvertierung vorhandener Synthea-Bundles mit `run_synthea_cases.py` gilt
+dieselbe Konvention direkt im angegebenen Ausgabeordner. Dieser darf vorher nur
+`converter-options.config` enthalten; fehlt sie, wird sie dort angelegt.
 
 ## Synthea einstellen
 

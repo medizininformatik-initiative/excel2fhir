@@ -2,7 +2,8 @@
 """Synthea R4 -> German Excel -> FHIR, with import and validation reports.
 Usage: run_synthea_cases.py SYNTHEA_FHIR_DIRECTORY OUTPUT_DIRECTORY
 Requires Java/JDK 17+, LibreOffice and a freshly built target/excel2fhir.jar.
-The output directory must not exist. Source files stay unchanged.
+The output directory may contain converter-options.config, but no previous results.
+Source files stay unchanged.
 """
 import hashlib
 import json
@@ -12,7 +13,8 @@ import shutil
 import subprocess
 import sys
 import time
-from check_synthea_roundtrip import check
+from check_synthea_roundtrip import check_configured
+from converter_options import CONFIG_NAME, ensure_config, resolve_config
 from synthea_to_excel import prepare, write_workbook
 from workbook_xml import read_sheets
 
@@ -45,7 +47,7 @@ def environment():
         versions[name] = (result.stdout + result.stderr).strip()
     versions['python'] = sys.version
     files = [TEMPLATE, JAR, *sorted((ROOT / 'scripts').glob('*.py')),
-             ROOT / 'scripts/WorkbookUno.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*'))]
+             ROOT / 'scripts/WorkbookUno.java', ROOT / 'scripts/WorkflowOptions.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*'))]
     return {'versions': versions, 'converterTimezone': 'Europe/Berlin', 'sha256': {
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
@@ -85,7 +87,7 @@ def inspect_conversion(directory, exit_code):
                         'converterExitCode': exit_code}
 
 
-def run(source_dir, output_dir):
+def run(source_dir, output_dir, *, config=None):
     # The workbook contains local contact times; Python, Office and Java must agree.
     os.environ['TZ'] = 'Europe/Berlin'
     time.tzset()
@@ -94,7 +96,21 @@ def run(source_dir, output_dir):
         raise ValueError('Quellverzeichnis fehlt: ' + str(source_dir))
     metadata = environment()
     out = Path(output_dir).resolve()
-    out.mkdir(parents=True, exist_ok=False)
+    if out.exists() and any(p.name != CONFIG_NAME for p in out.iterdir()):
+        raise FileExistsError('Ausgabeordner enthält bereits Ergebnisse: ' + str(out))
+    out.mkdir(parents=True, exist_ok=True)
+    config = ensure_config(out) if config is None else Path(config)
+    source_patients = []
+    for path in sorted(source_dir.glob('*.json')):
+        try:
+            candidate = json.loads(path.read_text(encoding='utf-8'))
+            source_patients.extend(e['resource']['id'] for e in candidate.get('entry', [])
+                                   if e.get('resource', {}).get('resourceType') == 'Patient')
+        except (ValueError, KeyError, TypeError, AttributeError):
+            pass  # The per-file conversion below records malformed inputs individually.
+    resolved = resolve_config(config, source_patients)
+    metadata['converterOptions'] = resolved['values']
+    metadata['converterOptionsSha256'] = sha256(config)
     write_json(out / 'environment.json', metadata)
     codes = read_sheets(TEMPLATE)['Codes']
     summary = {'schemaVersion': 1, 'status': 'RUNNING', 'results': [], 'failures': [], 'skipped': []}
@@ -114,13 +130,14 @@ def run(source_dir, output_dir):
             write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
             write_json(case / 'Fall.loss.json', report)
             book = case / 'Fall.xlsx'
-            write_workbook(rows, book)
+            write_workbook(rows, book, options=resolved['values'])
             with (case / 'conversion.log').open('w') as log:
                 conversion = subprocess.run(['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
                     '-f', str(book), '-o', str(case / 'fhir'), '-t', str(case / 'csv')],
                     stdout=log, stderr=subprocess.STDOUT)
             fhir, statuses = inspect_conversion(case / 'fhir', conversion.returncode)
-            result = check(bundle, json.loads(fhir.read_text()), report)
+            result = check_configured(bundle, json.loads(fhir.read_text()), report, resolved['values'],
+                                      resolved['patients'][report['sourcePatient']])
             if read_sheets(book)['Codes'] != codes:
                 raise ValueError('Codes-Blatt wurde beim Import verändert')
             result.update(statuses, source=str(source), workbook=str(book),

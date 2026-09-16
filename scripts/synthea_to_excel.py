@@ -239,7 +239,7 @@ def column_number(name):
     return value
 
 
-def write_workbook(rows, output):
+def write_workbook(rows, output, options=None):
     if any(row[5] == 'PZN' for row in rows.get('Medikation', [])):
         require_external_path(output)
     template = ROOT/'FHIR_Testdatengenerator_Vorlage.xlsx'
@@ -269,16 +269,15 @@ def write_workbook(rows, output):
             op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
         if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
-    from converter_options import SYNTHEA_OVERRIDES
-    # Preserve the complete annotated option sheet; activate only the source
-    # reference choices needed for this generated case.
+    from converter_options import workflow_defaults, property_line
+    # Record all effective values, including explicit overrides of Synthea defaults.
     option_sheet = 'Konvertierungsoptionen'
-    for name, value in SYNTHEA_OVERRIDES.items():
+    for name, value in (workflow_defaults() if options is None else options).items():
         matches = [cell for cell, text in sheets[option_sheet].items()
                    if text.lstrip('# ').split('=', 1)[0].strip() == name]
         if len(matches) != 1:
             raise ValueError('Missing or duplicate template option: ' + name)
-        put(option_sheet, matches[0], name + ' = ' + value)
+        put(option_sheet, matches[0], property_line(name, value))
     from clinical_selections import validation_ops
     ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
     apply_workbook_edits(template, ops, output)

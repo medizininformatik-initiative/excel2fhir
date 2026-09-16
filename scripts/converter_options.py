@@ -43,3 +43,62 @@ def lines(overrides=None):
         result.append(('' if name in overrides else '# ') + name + ' = ' + overrides.get(name, default))
         result.append('')
     return result
+
+
+CONFIG_NAME = 'converter-options.config'
+
+
+def workflow_defaults():
+    return {name: SYNTHEA_OVERRIDES.get(name, default) for name, default, _ in OPTIONS}
+
+
+def config_text():
+    result = ['# Konvertierungsoptionen für Synthea → Excel → FHIR',
+              '# Vorhandene Dateien werden nicht überschrieben.',
+              '# Aktive Angaben überschreiben die Workflow-Defaults.',
+              '# Fehlende oder auskommentierte Angaben verwenden den Workflow-Default.',
+              '# true = ja; false = nein.', '']
+    for name, default, description in OPTIONS:
+        value = SYNTHEA_OVERRIDES.get(name, default)
+        result.extend('# ' + line for line in description)
+        result.extend(['# Workflow-Default: ' + (value or '(leer)'), name + ' = ' + value, ''])
+    return '\n'.join(result) + '\n'
+
+
+def ensure_config(directory):
+    from pathlib import Path
+    path = Path(directory) / CONFIG_NAME
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open('x', encoding='utf-8') as file:
+            file.write(config_text())
+    except FileExistsError:
+        pass
+    return path
+
+
+def resolve_config(path, patients=None):
+    import json
+    from pathlib import Path
+    import subprocess
+    root = Path(__file__).resolve().parents[1]
+    request = {'text': Path(path).read_text(encoding='utf-8'), 'defaults': workflow_defaults()}
+    if patients is not None:
+        request['patients'] = patients
+    result = subprocess.run(['java', '-cp', str(root / 'target/excel2fhir.jar'),
+                             str(root / 'scripts/WorkflowOptions.java')],
+                            input=json.dumps(request), capture_output=True, text=True)
+    if result.returncode:
+        raise RuntimeError('Konvertierungsoptionen konnten nicht geprüft werden. '
+                           'Converter neu bauen. ' + result.stderr.strip())
+    resolved = json.loads(result.stdout)
+    if resolved['errors']:
+        raise ValueError('Ungültige Konvertierungsoptionen:\n' + '\n'.join(resolved['errors']))
+    return resolved
+
+
+def property_line(name, value):
+    # Preserve literal Properties values when the Excel options sheet is exported.
+    value = str(value).replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+    value = value.replace(' ', '\\u0020').replace(',', '\\u002c').replace(chr(34), '\\u0022')
+    return name + ' =' + (' ' + value if value else '')

@@ -20,7 +20,7 @@ def check(source, target, report):
     source_ids.update({r['resourceType']+'/'+r['id']:r['id']for r in src})
     target_ids = {r['resourceType']+'/'+r['id'] for r in dst}
     target_ids.update(e.get('fullUrl')for e in target['entry']if e.get('fullUrl'))
-    pid = report['sourcePatient'].replace('_','-')
+    pid = report.get('outputPatient', report['sourcePatient'].replace('_','-'))
     demographic_check = check_patient(next(r for r in src if r['resourceType']=='Patient'),
         next(r for r in dst if r['resourceType']=='Patient'), report)
     assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
@@ -39,6 +39,8 @@ def check(source, target, report):
             assert expected_codings[0]['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm', 'ICD-10-GM must be first'
         codings = tuple(sorted((c['system'],c.get('version',''),c['code'])for c in expected_codings))
         encounter = r.get('encounter',{}).get('reference','')
+        if original and report.get('converterOptions', {}).get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'true') == 'false':
+            encounter = ''
         if original and encounter:
             encounter = 'Encounter/'+pid+'-E-'+report['encounterNumbers'][source_ids[encounter]]
         statuses = tuple(tuple(c['code']for c in r.get(field,{}).get('coding',[]))for field in ['clinicalStatus','verificationStatus'])
@@ -86,6 +88,38 @@ def check(source, target, report):
             'mappingDecisions':dict(Counter(d['status'] for d in decisions)),
             'emergencyMappings':len(report.get('encounterMappings',[])),
             'terminologyValidation':'not performed'}
+
+def check_configured(source, target, report, options, patient_ids):
+    """Check each requested patient copy without assuming the default ID scheme."""
+    actual = [e['resource']['id'] for e in target['entry'] if e['resource']['resourceType'] == 'Patient']
+    assert Counter(actual) == Counter(patient_ids), 'Configured patient copies differ'
+    shared = {'Medication', 'Location'}
+    groups = {pid: [] for pid in patient_ids}
+    for entry in target['entry']:
+        resource = entry['resource']
+        if resource['resourceType'] in shared:
+            for group in groups.values(): group.append(entry)
+            continue
+        if resource['resourceType'] == 'Patient':
+            pid = resource['id']
+        else:
+            reference = resource.get('subject', resource.get('patient', {})).get('reference', '')
+            assert reference.startswith('Patient/'), 'Resource has no patient attribution: ' + resource['resourceType']
+            pid = reference.removeprefix('Patient/')
+        assert pid in groups, 'Unexpected patient attribution: ' + pid
+        groups[pid].append(entry)
+    copies = [check(source, {'entry': groups[pid]}, dict(report, outputPatient=pid, converterOptions=options))
+              for pid in patient_ids]
+    if len(copies) == 1:
+        result = copies[0]
+    else:
+        result = {'copies': copies, 'conditions': sum(c['conditions'] for c in copies),
+                  'encounters': sum(c['encounters'] for c in copies)}
+    result['outputPatients'] = patient_ids
+    if options.get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER') == 'false':
+        result['sourceDiagnosisValuesAndReferences'] = 'values checked; encounter references omitted by explicit converter option'
+    return result
+
 
 if __name__=='__main__':
     if len(sys.argv)!=4:raise SystemExit(__doc__)

@@ -51,6 +51,7 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inspect_conversion(directory, 0)
 
+    @patch('run_synthea_cases.resolve_config', return_value={'values': {}, 'patients': {}})
     @patch('run_synthea_cases.environment', return_value={})
     @patch('run_synthea_cases.read_sheets', return_value={'Codes': []})
     def test_invalid_files_do_not_hide_later_results_and_empty_inputs_fail(self, *mocks):

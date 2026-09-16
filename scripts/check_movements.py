@@ -40,7 +40,7 @@ def check_movements(source,target,report):
         assert norm(encounter['period']['end'])<=norm(parent['period']['end'])
         if level(encounter)!='versorgungsstellenkontakt':continue
         root=parent if level(parent)=='einrichtungskontakt' else encounters[parent['partOf']['reference'].removeprefix('Encounter/')]
-        number=next(n for n in report['encounterNumbers'].values() if root['id']==pid.replace('_','-')+'-E-'+n)
+        number=next(n for n in report['encounterNumbers'].values() if root['id']==report.get('outputPatient', pid.replace('_','-'))+'-E-'+n)
         names={};previous=None
         for place in encounter.get('location',[]):
             reference=place['location']['reference'];used.add(reference.removeprefix('Location/'))

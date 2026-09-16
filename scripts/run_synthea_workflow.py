@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from converter_options import CONFIG_NAME, ensure_config, resolve_config
 from run_synthea_cases import ROOT, run as convert_cases, sha256, write_json
 
 
@@ -23,8 +24,12 @@ def run(output, arguments):
         raise ValueError('Synthea-Stand passt nicht zu den mitgelieferten Mappings.')
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
+    config = ensure_config(output)
+    resolved = resolve_config(config)
     stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     directory = Path(tempfile.mkdtemp(prefix='run-' + stamp + '-', dir=output))
+    shutil.copy2(config, directory / CONFIG_NAME)
+    resolved = resolve_config(directory / CONFIG_NAME)
     command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
                '--exporter.years_of_history=0', *arguments,
                '--exporter.baseDirectory=' + str(directory / 'synthea'),
@@ -33,7 +38,8 @@ def run(output, arguments):
                '--exporter.use_uuid_filenames=true',
                '--exporter.hospital.fhir.export=false', '--exporter.practitioner.fhir.export=false']
     report = {'status': 'GENERATING', 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
-              'syntheaArguments': command[5:], 'output': str(directory)}
+              'syntheaArguments': command[5:], 'output': str(directory),
+              'converterOptions': resolved['values'], 'converterOptionsSha256': sha256(directory / CONFIG_NAME)}
     report_path = directory / 'workflow.json'
     write_json(report_path, report)
     print('Ausgabe: ' + str(directory), flush=True)
@@ -46,10 +52,11 @@ def run(output, arguments):
         report['status'] = 'CONVERTING'
         write_json(report_path, report)
         print('Patienten werden über Excel nach FHIR konvertiert und geprüft.', flush=True)
-        code = convert_cases(directory / 'synthea/fhir', directory / 'cases')
+        code = convert_cases(directory / 'synthea/fhir', directory / 'cases', config=directory / CONFIG_NAME)
         summary = json.loads((directory / 'cases/summary.json').read_text())
         report['status'] = summary['status']
-        report['completedPatients'] = len(summary['results'])
+        report['completedSourcePatients'] = len(summary['results'])
+        report['completedPatients'] = sum(len(r.get('outputPatients', [None])) for r in summary['results'])
         report['failedPatients'] = len(summary['failures'])
         # Only outputs with complete import and successful source comparison are
         # published in the convenient FHIR folder. Full evidence stays in cases/.

@@ -74,7 +74,13 @@ public class ConverterOptions {
     }
 
     public static ConverterOptions fromText(String text) {
+        return fromText(text, Map.of());
+    }
+
+    /** Layer explicit values over the caller's defaults without treating overrides as duplicates. */
+    public static ConverterOptions fromText(String text, Map<String, String> defaults) {
         ConverterOptions result = new ConverterOptions("");
+        result.options.putAll(defaults);
         result.readValues(text);
         return result;
     }
