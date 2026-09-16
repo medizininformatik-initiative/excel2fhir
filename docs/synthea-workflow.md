@@ -131,3 +131,7 @@ Eigene Excel- und CSV-Dateien können Sie [direkt konvertieren](converter-usage.
 Die Sicherheitsbefunde des eingebundenen Synthea-Generators werden separat in
 [Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
 bearbeitet. Der Offline-Lauf ist keine abgeschlossene Sicherheitsfreigabe.
+
+Unter Linux gehören die Ergebnisse dem Eigentümer des eingebundenen
+Ausgabeordners. Der Container übernimmt dessen Benutzer- und Gruppen-ID
+automatisch, sodass Berichte lesbar und Excel-Dateien bearbeitbar bleiben.

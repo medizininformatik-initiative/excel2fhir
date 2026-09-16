@@ -34,6 +34,6 @@ FROM runtime AS workflow
 COPY --from=synthea-build /synthea/build/libs/synthea-with-dependencies.jar ./target/synthea.jar
 COPY --from=synthea-build /synthea-version.txt ./target/synthea-revision.txt
 COPY --from=synthea-build /synthea/LICENSE /synthea/NOTICE ./third-party/synthea/
-ENTRYPOINT ["python3", "/app/scripts/run_synthea_workflow.py"]
+ENTRYPOINT ["python3", "/app/scripts/run_synthea_container.py"]
 
 FROM runtime AS importer

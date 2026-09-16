@@ -126,6 +126,8 @@ jobs:
       shell: bash
       run: |
         docker compose -p excel2fhir-ci -f compose.synthea.yml build
+        docker run --rm --network none --entrypoint python3 excel2fhir-ci-synthea:latest \
+          -m unittest discover -s /app/scripts/tests -p test_container_output.py -v
         set +e
         docker compose -p excel2fhir-ci -f compose.synthea.yml run --rm synthea
         result=$?
