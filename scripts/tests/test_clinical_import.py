@@ -61,6 +61,19 @@ class ClinicalImportTest(unittest.TestCase):
         self.assertTrue(any(i['id'] == 'allergy' and 'Bewusst ausgeschlossen' in i['reason'] for i in report['losses']))
         self.assertEqual(len(rows['Diagnose']), 1)
 
+    def test_devices_are_reported_as_excluded_without_changing_source(self):
+        source = bundle()
+        self.add(source, {'resourceType': 'Device', 'id': 'device',
+            'type': {'coding': [{'system': 'http://snomed.info/sct', 'code': '228869008'}]}})
+        before = copy.deepcopy(source)
+        rows, report = prepare(source)
+        self.assertEqual(source, before)
+        self.assertNotIn('Hilfsmittel', rows)
+        self.assertFalse(any(i['resourceType'] == 'Device' for i in report['clinicalImports']))
+        self.assertTrue(any(i['id'] == 'device' and i['path'] == '$'
+                            and 'Bewusst ausgeschlossen' in i['reason'] for i in report['losses']))
+        self.assertEqual(len(rows['Diagnose']), 1)
+
     def test_additional_observation_code_is_in_same_row_and_answer_remains_separate(self):
         source = bundle()
         self.add(source, {'resourceType': 'Observation', 'id': 'two-codes', 'status': 'final',

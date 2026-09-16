@@ -184,7 +184,7 @@ public class ExcelTemplateValidator {
 
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
-        for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan", "Hilfsmittel")) {
+        for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan")) {
             validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"), List.of());
         }
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
@@ -533,7 +533,6 @@ public class ExcelTemplateValidator {
         headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Erklärung/Ausfüllhilfe"));
         headers.put("Befundbericht", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Ausgabezeitpunkt", "Ergebnisse", "Beschreibung", "Erklärung/Ausfüllhilfe"));
         headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Ende", "Status", "Absicht", "Beschreibung", "Aktivitätscodes", "Erklärung/Ausfüllhilfe"));
-        headers.put("Hilfsmittel", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Status", "UDI", "Hersteller", "Erklärung/Ausfüllhilfe"));
         return headers;
     }
 

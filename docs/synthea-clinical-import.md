@@ -63,7 +63,7 @@ stehen in den jeweiligen Mappingtabellen und werden nicht im Register dupliziert
 | Immunization | Impfung | ATC 2026, deutscher Impfstofftext, Zeitpunkt, Status, Primärquellenangabe, Patient/Kontakt | Durchführungsort und weitere Impfdetails |
 | DiagnosticReport | Befundbericht | Erstes Coding, Zeitpunkt, Ausgabezeit, Status, auflösbare Messwertverweise, vorhandene conclusion | Kategorien, Behandler, zusätzliche Codings; eingebettete Notizen stehen in DocumentReference |
 | CarePlan | Behandlungsplan | Klinische SNOMED-Kategorie, Zeitraum, Status, Absicht, Beschreibung, Aktivitätscodes | Aktivitätsdetails/Status (explizit unknown), Ziele, Behandlerteam und Diagnoseverweise |
-| Device | Hilfsmittel | Typ, Status, Patient, erste UDI-Gerätekennung, Hersteller | Weitere UDI-Angaben und Gerätedetails |
+| Device | Ausgeschlossen | Auslassung mit Ressourcen-ID im Verlustbericht | Geräte und Hilfsmittel |
 | DocumentReference | DocumentReference | Erster Dokumenttyp, Status, Datum, erster Kontakt und eingebetteter UTF-8-Klartext | Weitere Dokumentmetadaten und andere Anhangsformate; Excel-Grenze 32.767 Zeichen |
 | ImagingStudy / SupplyDelivery / CareTeam | Noch kein Import | Im Quelleninventar und Verlustbericht ausgewiesen | Bildgebungsserien/-instanzen, Lieferereignisse und Organisations-/Behandlerbeziehungen |
 | Claim / ExplanationOfBenefit / Provenance | Kein klinisches Blatt | Originaldatei bleibt erhalten; Auslassung im Bericht | US-Abrechnung und ursprüngliche Exportprovenienz werden nicht als klinische Daten umgedeutet |
@@ -87,7 +87,7 @@ vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
 | Laborbefund / Klinische Dokumentation | Nur numerischer LOINC-Messwert; beide als Labor ausgegeben | Werttyp, codierte Antworten, echte Kategorie, Status, Untersuchung ID, Komponente von, Ausgabezeitpunkt, UCUM-Einheitencode, Codesystem |
 | Medikation | PZN/ATC, feste Statuswerte, Dosis und Häufigkeit vermischt | Original-Präparatcode/-system, Status, Absicht, Dosierungstext, Ende, Wirkstoffcode/-system; Menge und Häufigkeit getrennt |
 | DocumentReference | Nur Dateipfad und Embed | Eingebetteter Klartext, Status, Datum und Dokumenttyp |
-| Neue Blätter | Nicht vorhanden | Impfung, Befundbericht, Behandlungsplan, Hilfsmittel |
+| Neue Blätter | Nicht vorhanden | Impfung, Befundbericht, Behandlungsplan |
 
 Komponenten stehen direkt unter ihrer Hauptzeile. `Komponente von` verweist auf
 `Untersuchung ID`; die Hauptzeile muss zuerst stehen. Daraus entsteht eine

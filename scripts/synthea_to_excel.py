@@ -117,6 +117,9 @@ def prepare(bundle):
         if typ == 'AllergyIntolerance':
             loss(r, '$', 'Bewusst ausgeschlossen: Allergieunterstützung zurückgestellt; spätere IPS-Abbildung offen')
             continue
+        if typ == 'Device':
+            loss(r, '$', 'Bewusst ausgeschlossen: Geräte und Hilfsmittel werden nicht importiert')
+            continue
         if typ != 'Condition':
             loss(r, '$', 'Noch nicht im klinischen Excel-Import umgesetzt')
             continue

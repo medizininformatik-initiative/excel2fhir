@@ -122,7 +122,7 @@ def localize_rows(rows, address=None):
     for args in [('Diagnose',2,3,4), ('Prozedur',2,3,5), ('Laborbefund',6,2,3),
                  ('Klinische Dokumentation',2,3,4), ('Medikation',3,4,5),
                  ('DocumentReference',9,7,8)]: coded(*args)
-    for sheet in ['Impfung','Befundbericht','Behandlungsplan','Hilfsmittel']:
+    for sheet in ['Impfung','Befundbericht','Behandlungsplan']:
         coded(sheet,3,4,5)
     for sheet in ['Laborbefund','Klinische Dokumentation']:
         for row in rows.get(sheet, []):

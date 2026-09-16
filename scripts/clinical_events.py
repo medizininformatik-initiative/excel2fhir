@@ -11,9 +11,8 @@ SCHEMAS = {
     'Impfung': COMMON + ['Zeitpunkt', 'Status', 'Primärquelle'],
     'Befundbericht': COMMON + ['Zeitpunkt', 'Status', 'Ausgabezeitpunkt', 'Ergebnisse', 'Beschreibung'],
     'Behandlungsplan': COMMON + ['Zeitpunkt', 'Ende', 'Status', 'Absicht', 'Beschreibung', 'Aktivitätscodes'],
-    'Hilfsmittel': COMMON + ['Status', 'UDI', 'Hersteller'],
 }
-SHEETS = dict(zip(['Immunization','DiagnosticReport','CarePlan','Device'], SCHEMAS))
+SHEETS = dict(zip(['Immunization','DiagnosticReport','CarePlan'], SCHEMAS))
 
 
 def prepare_events(entries, pid, encounters, imported_observations):
@@ -37,13 +36,13 @@ def prepare_events(entries, pid, encounters, imported_observations):
         values = dict(zip(COMMON[:3], [pid,nr,r['id']]))
         handled = {'resourceType','id','subject','patient','encounter'}
         try:
-            cc = (r.get('vaccineCode') if typ=='Immunization' else r.get('type') if typ=='Device'
+            cc = (r.get('vaccineCode') if typ=='Immunization'
                   else next((c for c in r.get('category',[]) if any(v.get('system')=='http://snomed.info/sct' for v in c.get('coding',[]))), {}) if typ=='CarePlan' else r.get('code'))
             code, system, label = coding(cc or {})
             if len((cc or {}).get('coding',[]))>1:loss('code.coding[1:]','Erstes Coding übernommen; weitere Codings nicht dargestellt')
             values.update({'Code':code,'Codesystem':system,'Bezeichner':label})
-            handled.add('vaccineCode' if typ=='Immunization' else 'type' if typ=='Device' else 'category' if typ=='CarePlan' else 'code')
-            for source, target in [('status','Status'),('intent','Absicht'),('manufacturer','Hersteller')]:
+            handled.add('vaccineCode' if typ=='Immunization' else 'category' if typ=='CarePlan' else 'code')
+            for source, target in [('status','Status'),('intent','Absicht')]:
                 if target in SCHEMAS[SHEETS[typ]]:
                     values[target] = r.get(source,''); handled.add(source)
             if typ=='Immunization':
@@ -80,9 +79,6 @@ def prepare_events(entries, pid, encounters, imported_observations):
                 values['Aktivitätscodes']=';'.join(activities)
                 if activities:loss('activity','Aktivitätscodes übernommen; Detailstatus als unknown erzeugt, weitere Details fehlen')
                 handled.update(['period','description'])
-            elif typ=='Device':
-                udis=r.get('udiCarrier',[]);values['UDI']=udis[0].get('deviceIdentifier','') if udis else ''
-                if udis:loss('udiCarrier','Erste Gerätekennung übernommen; weitere UDI-Angaben fehlen')
             rows[SHEETS[typ]].append([values.get(c,'') for c in SCHEMAS[SHEETS[typ]]])
             imported.append({'sourceId':r['id'],'resourceType':typ})
             for key in r.keys()-handled:loss(key,'Eigenschaft nicht oder nur teilweise übernommen')

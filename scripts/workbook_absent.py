@@ -23,7 +23,6 @@ FIELDS = {
     'Impfung': {'Code', 'Zeitpunkt'},
     'Befundbericht': {'Code', 'Zeitpunkt'},
     'Behandlungsplan': {'Code', 'Zeitpunkt', 'Ende'},
-    'Hilfsmittel': {'Code'},
     'DocumentReference': {'Dokumentcode'},
 }
 

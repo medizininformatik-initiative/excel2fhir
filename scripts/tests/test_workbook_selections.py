@@ -22,6 +22,9 @@ class WorkbookSelectionsTest(unittest.TestCase):
         for filename in ('FHIR_Testdatengenerator_Vorlage.xlsx', 'FHIR_Testdatengenerator_Interpolar_Demo.xlsx'):
             path = ROOT / filename
             cells = read_sheets(path)
+            self.assertEqual(list(cells)[-1], "Codes")
+            self.assertNotIn("Hilfsmittel", cells)
+            self.assertIn("Auswahllisten", cells["Codes"]["A1"])
             for value in cells["Codes"].values():
                 if value in CODES:
                     self.assertTrue(value.endswith(" (Data Absent Reason)"), value)

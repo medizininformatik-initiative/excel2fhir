@@ -2,7 +2,8 @@
 
 Die [Vorlage](../FHIR_Testdatengenerator_Vorlage.xlsx) und die
 [Demo](../FHIR_Testdatengenerator_Interpolar_Demo.xlsx) enthalten die vorgesehenen
-Spalten, Auswahllisten und Ausfüllhilfen. Blattnamen und Spaltenüberschriften
+Spalten, Auswahllisten und Ausfüllhilfen. Das letzte Blatt **Codes** enthält die
+Werte für die Auswahllisten der Eingabeblätter. Blattnamen und Spaltenüberschriften
 beibehalten. Eine Arbeitsmappe darf mehrere Patienten enthalten. Die
 **Patient-ID** verbindet die Blätter; **Fall-Nr** ordnet klinische Angaben einem
 Kontakt zu. [Aufenthalte und zusätzliche Kontakte eingeben](synthea-movements.md).

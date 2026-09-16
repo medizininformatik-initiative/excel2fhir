@@ -16,7 +16,7 @@ Die Auswahl betrifft die konkrete Spalte, nicht pauschal das ganze Tabellenblatt
 | Medikation: Wirkstoffcode | Alle 232 UNII-Einzel- und Kombinationswerte des gepinnten Synthea-Mappings | BH30:BH267 (232 Codes plus sechs Fehlgründe) |
 | Impfung: Codesystem | ATC 2026, SNOMED CT, RxNorm, CVX | AY30:AY33 |
 | Befundbericht und DocumentReference: Typcodesystem | LOINC, SNOMED CT | AZ30:AZ31 |
-| Behandlungsplan und Hilfsmittel: Codesystem | SNOMED CT | BA30 |
+| Behandlungsplan: Codesystem | SNOMED CT | BA30 |
 | Laborbefund: Kategorie | laboratory | AD30 |
 | Klinische Dokumentation: Kategorie | vital-signs, survey, social-history, exam, imaging, procedure, therapy, activity | AR30:AR37 |
 | Impfung: Status | completed, entered-in-error, not-done | BB30:BB32 |
@@ -110,7 +110,6 @@ Der Import erneuert die Verknüpfungen bis zur letzten tatsächlich erzeugten Ze
 | Impfung | Impfstatus, Primärquelle true/false, Codesystem; Fehlgründe bei Code und Impfzeitpunkt. |
 | Befundbericht | Eigener Berichtstatus, Codesystem; Fehlgründe bei Code und Untersuchungszeitpunkt, nicht beim Ausgabezeitpunkt. |
 | Behandlungsplan | Planstatus und Planabsicht, Codesystem; Fehlgründe bei Code und Gültigkeitszeitraum. |
-| Hilfsmittel | Gerätestatus und Codesystem; Fehlgrund nur beim Code. |
 | Konvertierungsoptionen | Vorhandene Optionen und deren dokumentierte Vorgaben unverändert. |
 
 Die deutsch beschrifteten Fehlgründe stehen zentral in

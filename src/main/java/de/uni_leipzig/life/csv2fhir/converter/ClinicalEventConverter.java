@@ -10,7 +10,7 @@ import de.uni_leipzig.life.csv2fhir.*;
 public abstract class ClinicalEventConverter extends Converter {
     public enum Columns implements TableColumnIdentifier {
         Eintrag_ID, Bezeichner, Code, Codesystem, Zeitpunkt, Ende, Status, Absicht,
-        Primärquelle, Ausgabezeitpunkt, Ergebnisse, Beschreibung, Aktivitätscodes, UDI, Hersteller;
+        Primärquelle, Ausgabezeitpunkt, Ergebnisse, Beschreibung, Aktivitätscodes;
         @Override public String toString() { return name().replace('_', ' '); }
         @Override public boolean isMandatory() { return false; }
     }
@@ -57,12 +57,6 @@ public abstract class ClinicalEventConverter extends Converter {
                 plan.addActivity().getDetail().setCode(ClinicalValues.concept(activity, DiagnosisValues.SNOMED, null))
                     .setStatus(CarePlan.CarePlanActivityStatus.UNKNOWN);
             resource = plan; break;
-        case "Device":
-            Device device = new Device(); device.setPatient(getPatientReference()); device.setType(code());
-            if (v(Columns.Status) != null) device.setStatus(Device.FHIRDeviceStatus.fromCode(v(Columns.Status)));
-            if (v(Columns.UDI) != null) device.addUdiCarrier().setDeviceIdentifier(v(Columns.UDI));
-            if (v(Columns.Hersteller) != null) device.setManufacturer(v(Columns.Hersteller));
-            resource = device; break;
         default: throw new IllegalArgumentException(type);
         }
         resource.setId(id);
@@ -76,8 +70,5 @@ public abstract class ClinicalEventConverter extends Converter {
     }
     public static class Plan extends ClinicalEventConverter {
         public Plan(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("CarePlan",r,p,c,v,o); }
-    }
-    public static class Equipment extends ClinicalEventConverter {
-        public Equipment(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("Device",r,p,c,v,o); }
     }
 }

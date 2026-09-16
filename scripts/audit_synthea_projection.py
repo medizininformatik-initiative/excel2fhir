@@ -83,6 +83,10 @@ def audit(source, workbook, target, report):
     excluded_allergies = {l['id'] for l in report['losses'] if l['resourceType'] == 'AllergyIntolerance'
                          and l['path'] == '$' and 'Bewusst ausgeschlossen' in l['reason']}
     assert excluded_allergies == {r['id'] for r in src if r['resourceType'] == 'AllergyIntolerance'}
+    assert 'Hilfsmittel' not in sheets and not target_counts['Device']
+    excluded_devices = {l['id'] for l in report['losses'] if l['resourceType'] == 'Device'
+                        and l['path'] == '$' and 'Bewusst ausgeschlossen' in l['reason']}
+    assert excluded_devices == {r['id'] for r in src if r['resourceType'] == 'Device'}
     excluded_clinical = {}
     for typ, filename in [('Condition', 'synthea-diagnoses-icd10gm-2026.json'),
                           ('Procedure', 'synthea-procedures-ops-2026.json')]:
@@ -102,7 +106,7 @@ def audit(source, workbook, target, report):
         assert reported == expected, (typ, 'unexpected or unreported exclusions')
         excluded_clinical[typ] = expected
     for typ, sheet in [('Condition', 'Diagnose'), ('Procedure', 'Prozedur'), ('Immunization', 'Impfung'),
-                       ('DiagnosticReport', 'Befundbericht'), ('CarePlan', 'Behandlungsplan'), ('Device', 'Hilfsmittel')]:
+                       ('DiagnosticReport', 'Befundbericht'), ('CarePlan', 'Behandlungsplan')]:
         assert source_counts[typ] - len(excluded_clinical.get(typ, set())) == len(sheets[sheet]) == target_counts[typ], (typ, 'unintended event loss')
     assert source_counts['Patient'] == target_counts['Patient'] == len(sheets['Person']) == 1
     all_codes = list(all_codings(dst))

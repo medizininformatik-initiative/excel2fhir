@@ -32,7 +32,7 @@ LISTS = {
     'AW': ['Wirkstoffcodes', 'ASK', 'UNII', SNOMED, 'RxNorm'],
     'AY': ['Impfstoffcodes', 'ATC 2026', SNOMED, 'RxNorm', 'CVX'],
     'AZ': ['Befund- und Dokumenttypen', 'LOINC', SNOMED],
-    'BA': ['Plan- und Hilfsmittelcodes', SNOMED],
+    'BA': ['Behandlungsplancodes', SNOMED],
     'BB': ['Impfstatus', 'completed', 'entered-in-error', 'not-done'],
     'BC': ['Befundstatus', 'registered', 'partial', 'preliminary', 'final', 'amended',
            'corrected', 'appended', 'cancelled', 'entered-in-error', 'unknown'],
@@ -58,7 +58,6 @@ SELECTIONS = {
     'Befundbericht': {'Codesystem': 'AZ', 'Status': 'BC'},
     'DocumentReference': {'Dokumentcodesystem': 'AZ'},
     'Behandlungsplan': {'Codesystem': 'BA', 'Absicht': 'BD'},
-    'Hilfsmittel': {'Codesystem': 'BA'},
 }
 
 
@@ -97,7 +96,6 @@ for sheet, fields in {
     'DocumentReference': {'Embed': 'L4:L5', 'Status': 'AQ30:AQ32'},
     'Impfung': {'Primärquelle': 'AN30:AN31'},
     'Behandlungsplan': {'Status': 'AP30:AP36'},
-    'Hilfsmittel': {'Status': 'AO30:AO33'},
 }.items():
     SELECTIONS[sheet].update(fields)
 
