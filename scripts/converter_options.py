@@ -32,14 +32,14 @@ SYNTHEA_OVERRIDES = {
 def lines(overrides=None):
     overrides = overrides or {'VALIDATE_STRICT': 'true'}
     result = ['# Konvertierungsoptionen', '# Gelbe Zeilen enthalten die eigentlichen Einstellungen.',
-              '# # am Zeilenanfang: auskommentiert, der Konverterstandard gilt.',
+              '# # am Zeilenanfang: auskommentiert, der Default gilt.',
               '# Auskommentiert bedeutet nicht automatisch false oder ausgeschaltet.',
               '# Zum Ändern # vor der gewünschten Option entfernen und den Wert setzen.',
               '# true = ja; false = nein. Nur Spalte A wird als Konfiguration gelesen.',
               '# Referenzen in beide Richtungen können Zyklen bilden; zielsystemabhängig prüfen.', '']
     for name, default, description in OPTIONS:
         result.extend('# '+line for line in description)
-        result.append('# Konverterstandard: '+(default if default else '(leer)'))
+        result.append('# Default: '+(default if default else '(leer)'))
         result.append(('' if name in overrides else '# ') + name + ' = ' + overrides.get(name, default))
         result.append('')
     return result
