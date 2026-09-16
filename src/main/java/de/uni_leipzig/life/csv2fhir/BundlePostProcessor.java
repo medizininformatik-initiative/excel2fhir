@@ -2,7 +2,6 @@ package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getResource;
 import static de.uni_leipzig.life.csv2fhir.Converter.DATA_ABSENT_REASON_UNKNOWN;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER;
 
 import java.util.List;
@@ -54,20 +53,19 @@ public class BundlePostProcessor {
      */
     public static void convert(Bundle bundle, ConverterOptions converterOptions) {
         BundlePostProcessor postProcessor = new BundlePostProcessor(bundle, converterOptions);
-        postProcessor.addMissingDiagnosesAndClassToLevel2Encounters();
+        postProcessor.addMissingDiagnosesToSubEncounters();
     }
 
     /**
      *
      */
-    private void addMissingDiagnosesAndClassToLevel2Encounters() {
+    private void addMissingDiagnosesToSubEncounters() {
         for (BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof Encounter) {
                 if (!(resource instanceof EncounterLevel1)) {
                     Encounter encounter = (Encounter) resource;
                     addMissingDiagnosesFromSuperEncounter(encounter);
-                    addMissingClassCodingFromSuperencounter(encounter);
                 }
             }
         }
@@ -129,32 +127,6 @@ public class BundlePostProcessor {
                 encounter.setDiagnosis(diagnoses);
             }
         }
-    }
-
-    /**
-     * Add encounter class coding from super encounter or add data absent reason if
-     * not exists.
-     *
-     * @param encounter
-     */
-    private void addMissingClassCodingFromSuperencounter(Encounter encounter) {
-        if (converterOptions.is(ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER)) {
-            Coding class_ = encounter.getClass_();
-            if (class_.isEmpty()) {
-                // copy encounter class from super encounter to sub encounter
-                Encounter superEncounter = getSuperEncounter(encounter);
-                class_ = superEncounter.getClass_();
-                encounter.setClass_(class_);
-            }
-        }
-        // the Encounter still has no class coding -> add "unknown" Data Absent Reason
-        Coding class_ = encounter.getClass_();
-        if (class_.isEmpty()) {
-            Coding coding = new Coding();
-            coding.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            encounter.setClass_(coding);
-        }
-
     }
 
     /**

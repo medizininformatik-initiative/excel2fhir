@@ -37,8 +37,10 @@ public class EncounterConverterTest {
         assertEquals(3,stays.size());
         Encounter operation=stays.get(1);
         for (var type : List.of(EncounterLevel1.class, EncounterLevel2.class, EncounterLevel3.class))
-            for (var contact : getEncounters(result, type))
+            for (var contact : getEncounters(result, type)) {
+                assertEquals("IMP", contact.getClass_().getCode());
                 assertEquals("http://fhir.de/CodeSystem/Kontaktebene", contact.getTypeFirstRep().getCodingFirstRep().getSystem());
+            }
         assertEquals("2026-05-03T12:00:00Z",operation.getPeriod().getEndElement().getValueAsString());
         assertEquals("2026-05-01T08:00:00Z",stays.get(0).getPeriod().getStartElement().getValueAsString());
         assertEquals("2026-05-03T12:00:00Z",stays.get(0).getPeriod().getEndElement().getValueAsString());

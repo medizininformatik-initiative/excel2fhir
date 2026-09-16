@@ -187,15 +187,6 @@ public class ConverterOptions {
          */
         ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER,
         /**
-         * If <code>true</code>, then Sub Encounters will have the same class coding
-         * like the Super Encounter attached instead of a Data Absent Reason.</br>
-         * If <code>false</code>, the non-existing class codings are supplemented by an
-         * "unknown" Data Absent Reason.</br>
-         * Every Encounter needs at least one class coding to be valid.
-         */
-        ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER,
-
-        /**
          * If true, the Excel input template is validated strictly before the
          * conversion starts. Strict validation aborts the conversion on inconsistent
          * input data instead of generating fallback resources.

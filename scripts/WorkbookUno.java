@@ -62,6 +62,8 @@ public class WorkbookUno {
                     q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4, row)).setDataArray(values);
                 } else if (a[0].equals("insert")) {
                     q(XColumnRowRange.class, sheet).getColumns().insertByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
+                } else if (a[0].equals("removeRows")) {
+                    q(XColumnRowRange.class, sheet).getRows().removeByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
                 } else if (a[0].equals("removeColumns")) {
                     q(XColumnRowRange.class, sheet).getColumns().removeByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
                 } else if (a[0].equals("copy")) {

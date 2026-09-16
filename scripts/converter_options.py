@@ -5,7 +5,6 @@ OPTIONS = [
  ('SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER', 'false', ['Prozedur verweist auf den Kontakt (Procedure.encounter).']),
  ('SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION', 'true', ['Kontakt verweist auf Prozeduren in Encounter.diagnosis.']),
  ('ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER', 'false', ['Fehlende Diagnose des Unterkontakts aus dem übergeordneten Kontakt ergänzen.', 'Bei false wird fehlendes Wissen als Data Absent Reason gekennzeichnet.']),
- ('ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER', 'false', ['Fehlende Kontaktklasse aus dem übergeordneten Kontakt ergänzen.', 'Bei false wird fehlendes Wissen als Data Absent Reason gekennzeichnet.']),
  ('VALIDATE_STRICT', 'true', ['Excel-Eingaben vor der Konvertierung streng prüfen und bei Fehlern abbrechen.', 'Dies ersetzt nicht die anschließende FHIR-Validierung.']),
 ]
 for key,label in [('CONSENT','Consent'),('CONDITION','Diagnosen'),('ENCOUNTER_LEVEL_2','Abteilungskontakte'),
