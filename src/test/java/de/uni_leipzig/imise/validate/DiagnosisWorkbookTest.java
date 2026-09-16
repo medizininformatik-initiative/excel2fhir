@@ -67,6 +67,30 @@ public class DiagnosisWorkbookTest {
     }
 
     @Test
+    public void exportedOptionSheetRemainsPropertiesTextIncludingCommentsAndEmptyValues() throws Exception {
+        var directory = java.nio.file.Files.createTempDirectory("options-export-");
+        var source = directory.resolve("input.xlsx");
+        var csv = directory.resolve("csv"); java.nio.file.Files.createDirectory(csv);
+        try (var book = new XSSFWorkbook()) {
+            var sheet = book.createSheet("Konvertierungsoptionen");
+            String[] lines = {"# first, comment", "# second, comment", "PID_PREFIX=demo-", "PID_SUFFIX=", "VALIDATE_STRICT=false"};
+            for (int i = 0; i < lines.length; i++) sheet.createRow(i).createCell(0).setCellValue(lines[i]);
+            sheet.getRow(0).createCell(1).setCellValue("Ignored column");
+            sheet.getRow(1).createCell(1).setCellValue("VALIDATE_STRICT=true");
+            try (var output = java.nio.file.Files.newOutputStream(source)) { book.write(output); }
+        }
+        de.uni_leipzig.imise.utils.Excel2Csv.splitExcel(source.toFile(), null, csv.toFile());
+        var config = csv.resolve("input_Konvertierungsoptionen.csv");
+        var options = new de.uni_leipzig.life.csv2fhir.ConverterOptions(config.toString());
+        assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
+        assertFalse(options.is(de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.VALIDATE_STRICT));
+        assertEquals("demo-p1", options.getFullPID("p1"));
+        try (var files = java.nio.file.Files.walk(directory)) {
+            for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) java.nio.file.Files.delete(path);
+        }
+    }
+
+    @Test
     public void shippedWorkbooksMatchSchemaAndLinkSharedSelections() throws Exception {
         for (String name : List.of("FHIR_Testdatengenerator_Vorlage.xlsx", "FHIR_Testdatengenerator_Interpolar_Demo.xlsx")) {
             TemplateValidationResult result = new ExcelTemplateValidator().validate(new File(name));
