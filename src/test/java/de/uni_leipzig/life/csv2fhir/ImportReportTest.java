@@ -78,7 +78,7 @@ public class ImportReportTest {
 
     @Test public void repeatedOutputsKeepDistinctRowAndAttemptCounts() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p1")));
-        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\n");
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET = 10\n");
         var report=run().getImportReport(); assertFalse(report.hasErrors());
         assertEquals(1,report.tables.get("Person").processedRows);
         assertEquals(2,report.tables.get("Person").successfulAttempts);
@@ -104,5 +104,74 @@ public class ImportReportTest {
         assertEquals(2, report.tables.get("Prozedur").failedRows);
         assertEquals(Set.of("MALFORMED_RECORD", "MISSING_PATIENT"),
                 new HashSet<>(report.issues.stream().map(i -> i.category).toList()));
+    }
+    @Test public void invalidOptionsAreCollectedBeforeAnyOutput() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),
+                "VALIDATE_STRICT=treu\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\nSTART_ID_CONDITION=not-a-number\n");
+        var report = run().getImportReport();
+        assertEquals(3, report.issues.size());
+        assertTrue(report.issues.stream().allMatch(i -> i.category.equals("OPTION_ERROR")));
+        assertFalse(Files.exists(output.resolve("case.json")));
+        assertEquals(0, report.tables.get("Person").successfulAttempts);
+    }
+
+    @Test public void repeatedIdsAndOverflowsCannotProduceSuccessfulBundles() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1"), patient("p2147483647")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
+        var report = run().getImportReport();
+        assertEquals(2, report.issues.size());
+        assertTrue(report.issues.stream().allMatch(i -> i.category.equals("PATIENT_ID_COLLISION")));
+        assertEquals("INCOMPLETE", report.status);
+        assertFalse(Files.exists(output.resolve("case.json")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=1\n");
+        report = run().getImportReport();
+        assertEquals("PATIENT_ID_ERROR", report.issues.get(0).category);
+        assertFalse(Files.exists(output.resolve("case.json")));
+    }
+
+    @Test public void collidingSourceIdsAndOffsetsAreRejectedButValidCopiesWork() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1"), patient("p2")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),
+                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=1\n");
+        assertEquals("PATIENT_ID_COLLISION", run().getImportReport().issues.get(0).category);
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),
+                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=10\nPID_PREFIX=test-\nPID_SUFFIX=-x\n");
+        assertFalse(run().hasImportProblems());
+        var bundle = JsonParser.parseString(Files.readString(output.resolve("case_test--x.json"))).getAsJsonObject();
+        var ids = bundle.getAsJsonArray("entry").asList().stream()
+                .map(e -> e.getAsJsonObject().getAsJsonObject("resource").get("id").getAsString()).toList();
+        assertEquals(Set.of("test-p1-x", "test-p2-x", "test-p11-x", "test-p12-x"), new HashSet<>(ids));
+        assertEquals(4, ids.size());
+    }
+
+    @Test public void normalizedPatientIdCollisionsAreRejected() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p_1"), patient("p-1")));
+        assertEquals("PATIENT_ID_COLLISION", run().getImportReport().issues.get(0).category);
+        assertFalse(Files.exists(output.resolve("case.json")));
+    }
+    @Test public void inheritedDiagnosesAreSerializedAsResolvableReferences() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1")));
+        table(TableIdentifier.Fall, List.of(Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "2026-01-01",
+                "Ende", "2026-01-03", "Einrichtungskontaktklasse", "stationaer",
+                "Fachabteilung", "Allgemeine Chirurgie", "Station", "S1")));
+        table(TableIdentifier.Diagnose, List.of(Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Code", "I10.90",
+                "Codesystem", "ICD-10-GM 2026", "Typ", "Hauptdiagnose")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER=true\n");
+        assertFalse(run().hasImportProblems());
+        var bundle = JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
+        var encounters = bundle.getAsJsonArray("entry").asList().stream().map(e -> e.getAsJsonObject().getAsJsonObject("resource"))
+                .filter(r -> r.get("resourceType").getAsString().equals("Encounter")).toList();
+        assertEquals(3, encounters.size());
+        for (var encounter : encounters) assertEquals("Condition/p1-E-1-C-1", encounter.getAsJsonArray("diagnosis")
+                .get(0).getAsJsonObject().getAsJsonObject("condition").get("reference").getAsString());
+    }
+
+    @Test public void overflowingOutputCountIsRejectedBeforeIteration() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1")));
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=2147483647\n");
+        var report = run().getImportReport();
+        assertEquals("OPTION_ERROR", report.issues.get(0).category);
+        assertFalse(Files.exists(output.resolve("case.json")));
     }
 }

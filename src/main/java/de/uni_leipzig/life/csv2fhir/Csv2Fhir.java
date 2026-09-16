@@ -255,6 +255,7 @@ public class Csv2Fhir {
         try {
             Collection<String> patients = loadInputs();
             preflightContacts();
+            preflightOptions();
             if (importReport.hasErrors()) {
                 LOG.error("Eingabeprüfung: {} Befunde; keine FHIR-Ausgabe erzeugt. Siehe Importbericht.", importReport.issues.size());
                 return new ConverterResultStatistics();
@@ -266,6 +267,37 @@ public class Csv2Fhir {
         } finally {
             String name = getOutputFileName(outputFileNameBase, "", JSON).replaceFirst("\\.json$", ".import.json");
             importReport.write(new File(outputDirectory, name).toPath());
+        }
+    }
+
+    private void preflightOptions() {
+        Collection<String> patients = new LinkedHashSet<>(recordPatients.getOrDefault(Person, Map.of()).values());
+        for (ConverterOptions options : allConverterOptions) {
+            for (String error : options.getErrors())
+                importReport.failure(null, null, "OPTION_ERROR", error, options);
+            if (!options.getErrors().isEmpty()) continue;
+            int repetitions = options.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT);
+            try {
+                Math.multiplyExact(patients.size(), Math.addExact(repetitions, 1));
+            } catch (ArithmeticException e) {
+                importReport.failure(null, null, "OPTION_ERROR", "Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich", options);
+                continue;
+            }
+            Set<String> generated = new HashSet<>();
+            // Check each output ID before writing any bundle, including collisions
+            // caused by different source IDs, offsets or underscore normalization.
+            for (int iteration = 0; iteration <= repetitions; iteration++) {
+                for (String patient : patients) {
+                    try {
+                        String id = options.getFullPID(patient, iteration);
+                        if (!generated.add(id)) importReport.failure(null, null, "PATIENT_ID_COLLISION",
+                                "Doppelte erzeugte Patient-ID: " + id + " (Durchlauf " + iteration + ")", options);
+                    } catch (IllegalArgumentException | ArithmeticException e) {
+                        importReport.failure(null, null, "PATIENT_ID_ERROR",
+                                patient + " (Durchlauf " + iteration + "): " + ImportReport.describe(e), options);
+                    }
+                }
+            }
         }
     }
 

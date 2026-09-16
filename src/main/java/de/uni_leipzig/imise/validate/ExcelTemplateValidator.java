@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues;
 import de.uni_leipzig.life.csv2fhir.converter.AdmissionReasonValues;
 
@@ -56,7 +56,9 @@ public class ExcelTemplateValidator {
         try (FileInputStream inputStream = new FileInputStream(excelFile);
                 XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            boolean validateStrict = readBooleanOption(workbook, VALIDATE_STRICT);
+            ConverterOptions options = readOptions(workbook);
+            for (String error : options.getErrors()) add(result, ERROR, "Konvertierungsoptionen", 0, "A", error);
+            boolean validateStrict = options.is(VALIDATE_STRICT);
             validateHeaders(workbook, result);
             if (!validateStrict) {
                 LOG.info("Excel template strict validation is disabled by {}", VALIDATE_STRICT);
@@ -71,25 +73,16 @@ public class ExcelTemplateValidator {
         return result;
     }
 
-    private boolean readBooleanOption(XSSFWorkbook workbook, BooleanOption option) {
-        String optionName = option.toString();
+    private ConverterOptions readOptions(XSSFWorkbook workbook) {
+        StringBuilder text = new StringBuilder();
         XSSFSheet sheet = workbook.getSheet("Konvertierungsoptionen");
-        if (sheet == null) {
-            return option.getDefault();
-        }
-        for (Row row : sheet) {
-            for (Cell cell : row) {
-                String line = formatCell(cell).trim();
-                if (line.startsWith("#") || !line.contains("=")) {
-                    continue;
-                }
-                String[] keyValue = line.split("=", 2);
-                if (optionName.equals(keyValue[0].trim())) {
-                    return BooleanOption.isTrue(keyValue[1]);
-                }
+        if (sheet != null) {
+            for (Row row : sheet) {
+                Cell cell = row.getCell(0);
+                text.append(cell == null ? "" : formatCell(cell)).append('\n');
             }
         }
-        return option.getDefault();
+        return ConverterOptions.fromText(text.toString());
     }
 
     public void validateAndThrow(File excelFile) throws IOException {

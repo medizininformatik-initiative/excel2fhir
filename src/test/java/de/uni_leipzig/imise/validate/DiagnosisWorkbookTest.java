@@ -36,6 +36,37 @@ public class DiagnosisWorkbookTest {
     }
 
     @Test
+    public void optionsUseOnlyColumnAAndReportInvalidAndConflictingValues() throws Exception {
+        for (String mode : List.of("columnB", "invalid", "duplicate", "false")) {
+            var file = java.nio.file.Files.createTempFile("option-input-", ".xlsx");
+            try {
+                try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                        var book = new XSSFWorkbook(input)) {
+                    book.getSheet("Person").getRow(1).getCell(0).setCellValue("");
+                    var sheet = book.getSheet("Konvertierungsoptionen");
+                    for (var row : sheet) {
+                        var cell = row.getCell(0);
+                        if (cell != null && cell.toString().startsWith("VALIDATE_STRICT")) cell.setCellValue("# Default");
+                    }
+                    sheet.createRow(150).createCell(mode.equals("columnB") ? 1 : 0)
+                            .setCellValue("VALIDATE_STRICT=" + (mode.equals("invalid") ? "treu" : "false"));
+                    if (mode.equals("duplicate")) sheet.createRow(151).createCell(0).setCellValue("VALIDATE_STRICT=true");
+                    if (mode.equals("invalid")) sheet.createRow(151).createCell(0).setCellValue("START_ID_CONDITION=abc");
+                    try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+                }
+                var result = new ExcelTemplateValidator().validate(file.toFile());
+                if (mode.equals("false")) assertFalse(result.getIssues().toString(), result.hasErrors());
+                else assertTrue(mode, result.hasErrors());
+                if (mode.equals("columnB")) assertTrue(result.getIssues().stream().anyMatch(i -> i.getSheetName().equals("Person")));
+                if (mode.equals("invalid")) assertEquals(2, result.getIssues().stream()
+                        .filter(i -> i.getSheetName().equals("Konvertierungsoptionen")).count());
+                if (mode.equals("duplicate")) assertTrue(result.getIssues().stream()
+                        .anyMatch(i -> i.getMessage().contains("widersprüchliche")));
+            } finally { java.nio.file.Files.deleteIfExists(file); }
+        }
+    }
+
+    @Test
     public void shippedWorkbooksMatchSchemaAndLinkSharedSelections() throws Exception {
         for (String name : List.of("FHIR_Testdatengenerator_Vorlage.xlsx", "FHIR_Testdatengenerator_Interpolar_Demo.xlsx")) {
             TemplateValidationResult result = new ExcelTemplateValidator().validate(new File(name));
