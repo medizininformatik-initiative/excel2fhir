@@ -2,7 +2,6 @@
 
 Im Blatt **Fall** reichen Fallnummer, Zeitraum, Fachabteilung und Ortsangaben.
 Kontakt-IDs, Kontaktebenen und Elternverknüpfungen erzeugt der Converter selbst.
-Es gibt genau eine Zeitstempelregel und keine zusätzlichen Optionen.
 
 ## Eingabe
 
@@ -40,8 +39,8 @@ keinen vorherigen Kontakt. Abgeleitete Enden stehen im Importbericht unter
 
 Eine reine Einrichtungszeile ohne Abteilung/Ort gibt den Zeitraum des gesamten
 Falls vor. Untergeordnete Kontakte dürfen ihn nicht überschreiten.
-Die ursprüngliche CSV-Konvention bleibt möglich: Enthält schon die erste Fallzeile
-Abteilung/Ort, beschreibt sie zugleich den ersten Aufenthalt; folgende primäre
+Enthält die erste Fallzeile Abteilung/Ort, beschreibt sie zugleich den ersten
+Aufenthalt; folgende primäre
 Aufenthalte erweitern dann den Einrichtungszeitraum. Sekundärkontakte tun das nie.
 
 Beispiel: Station A, Zimmer 12, Bett 2 vom 1.–3. Mai; zusätzlicher OP-Kontakt

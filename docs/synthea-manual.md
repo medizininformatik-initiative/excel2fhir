@@ -4,8 +4,8 @@ Der Import vorhandener Synthea-R4-Patientenbundles erzeugt deutsche
 Excel-Dateien, CSV, FHIR und Prüfberichte. Die Erzeugung einer neuen Population
 mit Synthea ist weiter unten beschrieben.
 Pro JSON-Datei wird ein Patient erwartet; Dateien ohne Patient werden mit Grund
-in der Zusammenfassung aufgeführt. Die bisher unterstützten Ressourcen und
-Eigenschaften bleiben maßgeblich, siehe [Importumfang](synthea-clinical-import.md).
+in der Zusammenfassung aufgeführt. Die unterstützten Ressourcen und Eigenschaften
+beschreibt der [Importumfang](synthea-clinical-import.md).
 
 ## Lokal
 
@@ -35,8 +35,8 @@ mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
 
 ## Container
 
-Das bestehende `docker/Dockerfile` dient weiter der Excel→FHIR-Konvertierung.
-`docker/synthea.Dockerfile` enthält zusätzlich den Synthea-Import, Python,
+`docker/Dockerfile` baut das Image für die Excel-/CSV-Konvertierung.
+`docker/synthea.Dockerfile` enthält den Synthea-Import, Python,
 LibreOffice und die freien projektinternen Mappings. Es benötigt keine lokal
 installierte Office- oder Java-Umgebung und keine MMI-Daten.
 
@@ -122,7 +122,7 @@ java -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar target/excel2fhi
   -f /pfad/Fall.xlsx -t /pfad/neue-csv-ausgabe -o /pfad/neue-fhir-ausgabe
 ```
 
-Ohne lokale Java-Installation kann das bestehende Importer-Image verwendet werden:
+Mit dem Importer-Image können Sie Excel-Dateien ohne lokale Java-Installation konvertieren:
 
 ```sh
 docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
@@ -133,8 +133,8 @@ docker run --rm --network none --entrypoint java \
   -f /input/Fall.xlsx -t /output/csv -o /output/fhir
 ```
 
-Für CSV-Eingaben bleibt die bisherige CLI verfügbar; siehe den
-[Excel-/CSV-Einstieg](converter-usage.md). Ausgabeordner bewusst neu wählen,
+CSV-Dateien konvertieren Sie über den
+[CSV-Einstieg](converter-usage.md#vorhandene-csv-verwenden). Ausgabeordner bewusst neu wählen,
 da die allgemeinen Konverter vorhandene Ausgabeordner leeren können.
 
 

@@ -81,7 +81,7 @@ funktionierendes Beispiel liefert der Excel-Export in `outputLocal/`. Die
 Optionsdatei `…_Konvertierungsoptionen.csv` enthält Properties-Text aus Spalte A,
 keine gewöhnliche CSV-Tabelle. Sie gehört zu den Eingabedateien.
 
-Der bisherige Einstieg liegt im selben JAR:
+CSV-Dateien konvertieren Sie mit folgendem Aufruf:
 
 ```sh
 java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main \

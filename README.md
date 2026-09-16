@@ -1,8 +1,8 @@
 # excel2fhir
 
 Mit `excel2fhir` erzeugen Sie synthetische FHIR-R4-Testdaten für den deutschen
-MII-Kerndatensatz (KDS). Starten Sie mit Synthea oder mit einer eigenen Excel-Datei.
-Der bestehende CSV→FHIR-Weg bleibt ebenfalls verfügbar.
+MII-Kerndatensatz (KDS). Sie können Patienten mit Synthea erzeugen, die
+Excel-Vorlage ausfüllen oder CSV-Dateien konvertieren.
 
 | Ausgangspunkt | Anleitung |
 | --- | --- |
@@ -11,7 +11,7 @@ Der bestehende CSV→FHIR-Weg bleibt ebenfalls verfügbar.
 | Excel-Vorlage ausfüllen oder vorhandene Excel-/CSV-Daten konvertieren | [Excel und CSV verwenden](docs/converter-usage.md) |
 | Vorhandene Synthea-Bundles importieren oder ohne Docker arbeiten | [Manueller Ablauf](docs/synthea-manual.md) |
 
-## Synthea ausprobieren
+## KDS-FHIR aus Synthea erzeugen
 
 Voraussetzung: Docker mit Compose, mindestens 8 GB für Docker und Internet für
 den ersten Build. Große Patientenverläufe benötigen mehr Speicher. Nach dem
@@ -50,9 +50,10 @@ nicht pauschal zugesichert. [Importumfang und Grenzen](docs/synthea-clinical-imp
 Im eingebundenen Synthea-Generator bestehen bekannte Sicherheitsbefunde in
 Abhängigkeiten. Ihre Bereinigung wird in [Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
 bearbeitet; der vollständige Workflow hat noch keine abgeschlossene Sicherheitsfreigabe.
-Das bisherige Converter-Image enthält diesen Generator nicht.
+Das Image für die Excel-/CSV-Konvertierung enthält nur den Converter und seine
+Abhängigkeiten.
 
-## Excel ohne Synthea ausprobieren
+## KDS-FHIR aus Excel oder CSV erzeugen
 
 Das Repository enthält die [Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) und
 eine [ausgefüllte Demo](FHIR_Testdatengenerator_Interpolar_Demo.xlsx). Eine Datei

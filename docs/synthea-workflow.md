@@ -45,9 +45,9 @@ der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patient
 **`outputSynthea/converter-options.config`** liegt bereits nach dem Checkout mit
 kommentierten Workflow-Defaults bereit. Bei Bedarf vor dem ersten Start die
 gewünschten Werte in dieser Textdatei bearbeiten und den normalen Startbefehl
-ausführen. Es ist kein zusätzlicher Parameter nötig. Eine vorhandene Datei wird
+ausführen. Der Workflow liest die Datei automatisch. Eine vorhandene Datei wird
 nicht überschrieben; fehlt sie, wird sie beim Start automatisch erzeugt.
-Fehlende oder auskommentierte Angaben verwenden weiterhin die Workflow-Defaults.
+Für fehlende oder auskommentierte Angaben gelten die Workflow-Defaults.
 
 Beispiel für eine eigene Patienten-ID-Kennung:
 
@@ -70,7 +70,7 @@ dieselbe Konvention direkt im angegebenen Ausgabeordner. Dieser darf vorher nur
 In `compose.synthea.yml` stehen die normalen Synthea-Argumente in `command`:
 `-p` ist die Patientenzahl, `-a` der Altersbereich, `-s` und `-cs` sind die Seeds,
 `-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`.
-Zum Ausprobieren muss nichts geändert werden. Für wiederholbare Vergleiche Seeds
+Der Workflow startet mit den voreingestellten Werten. Für wiederholbare Vergleiche Seeds
 und Daten beibehalten. Die Exportform setzt der Workflow passend zum Converter. Ohne ausdrückliche
 Angabe wird die vollständige Historie exportiert; mit dem normalen Synthea-Argument
 `--exporter.years_of_history=7` lässt sich der Rückblick begrenzen. Ältere, weiterhin
@@ -113,7 +113,7 @@ der FHIR-Erzeugung. Kontaktbeginn und Prozedurbeginn sind getrennte Eingaben.
 
 Für vorhandene Synthea-Bundles, die erneute Konvertierung einer bearbeiteten
 Excel-Datei und einen Aufbau ohne Docker siehe [manuelle Anleitung](synthea-manual.md).
-Der bisherige Excel→FHIR- und CSV→FHIR-Einstieg bleibt unverändert.
+Eigene Excel- und CSV-Dateien können Sie [direkt konvertieren](converter-usage.md).
 
 ## Wenn ein Lauf nicht fertig wird
 

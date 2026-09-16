@@ -1,8 +1,8 @@
 # Diagnoseabbildung aus Synthea
 
 Für den vollständigen Ablauf siehe [Synthea → Excel → FHIR](synthea-workflow.md).
-Diese Seite beschreibt die Diagnoseabbildung; der Import umfasst inzwischen
-auch die weiteren in [Importumfang](synthea-clinical-import.md) genannten Bereiche.
+Diese Seite beschreibt die Diagnoseabbildung. Alle unterstützten Bereiche sind
+im [Importumfang](synthea-clinical-import.md) aufgeführt.
 
 ## Codes und Zeiten
 
@@ -38,8 +38,7 @@ berücksichtigt. Rohdaten und Mapping-Prüfsummen bleiben für den Review erhalt
 Mit `-v` validiert der Java-Converter die vollständigen Zielbundles und erhält
 auch Ressourcen mit Fehlern. Nicht ausführbare Terminologieprüfungen führen zu
 `NOT_CHECKED` und Exitcode 1. Fehlende SNOMED-Ausgaben beweisen weder gültige noch
-ungültige Codes. Das frühere Verhalten, abgelehnte Ressourcen aus der Ausgabe zu
-entfernen, gilt nicht mehr. [Details zur FHIR-Validierung](fhir-validation.md).
+ungültige Codes. [Details zur FHIR-Validierung](fhir-validation.md).
 
 `recordedDate` ist im eingebundenen Diagnoseprofil verpflichtend; Onset und
 Abatement sind optional. Data Absent Reasons und zeitliche Konsistenz müssen zur
