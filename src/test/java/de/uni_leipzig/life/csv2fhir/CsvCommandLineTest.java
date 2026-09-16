@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.hl7.fhir.r4.model.Bundle;
+
+import de.uni_leipzig.imise.validate.FHIRValidator;
 
 import picocli.CommandLine;
 
@@ -62,9 +66,15 @@ public class CsvCommandLineTest {
     }
 
     @Test public void validationFailureReturnsNonzeroAndKeepsBundle() throws Exception {
-        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_PREFIX=invalid!\n");
-        assertEquals(1, run("--validate-bundles"));
-        assertTrue(Files.readString(output.resolve("case_invalid!.json")).contains("invalid!p1"));
-        assertTrue(Files.readString(output.resolve("case_invalid!.validation.json")).contains("ERROR"));
+        // Test CLI status propagation without loading a second full profile set.
+        // FHIRValidatorTest separately checks validation and raw report contents.
+        FHIRValidator validator = mock(FHIRValidator.class);
+        when(validator.hasValidationProblems()).thenReturn(true);
+        Main command = new Main() {
+            @Override FHIRValidator createValidator() { return validator; }
+        };
+        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", "case", "-v"));
+        assertTrue(Files.readString(output.resolve("case.json")).contains("p1"));
+        verify(validator).validateAndWriteReport(any(Bundle.class), eq(output.resolve("case_.validation.json").toFile()));
     }
 }

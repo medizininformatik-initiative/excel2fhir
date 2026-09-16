@@ -57,10 +57,14 @@ public class Main implements Callable<Integer> {
         if (!inputDirectory.isDirectory()) {
             throw new Exception("provided input Directory is NOT a directory!");
         }
-        FHIRValidator validator = validateBundles ? new FHIRValidator(minLogLevel) : null;
+        FHIRValidator validator = validateBundles ? createValidator() : null;
         outputFile += outputFile.endsWith("_") ? "" : "_";
         Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile, validator);
         converter.convertFiles(Integer.MAX_VALUE, JSON);
         return converter.hasImportProblems() || (validator != null && validator.hasValidationProblems()) ? 1 : 0;
+    }
+
+    FHIRValidator createValidator() {
+        return new FHIRValidator(minLogLevel);
     }
 }
