@@ -105,7 +105,9 @@ def audit(source, workbook, target, report):
         reported = {l['id'] for l in report['losses'] if l['resourceType'] == typ and l['path'] == '$'}
         assert reported == expected, (typ, 'unexpected or unreported exclusions')
         excluded_clinical[typ] = expected
-    for typ, sheet in [('Condition', 'Diagnose'), ('Procedure', 'Prozedur'), ('Immunization', 'Impfung'),
+    from audit_procedures import audit_procedures
+    procedure_audit = audit_procedures(source, target, sheets['Prozedur'], report)
+    for typ, sheet in [('Condition', 'Diagnose'), ('Immunization', 'Impfung'),
                        ('DiagnosticReport', 'Befundbericht'), ('CarePlan', 'Behandlungsplan')]:
         assert source_counts[typ] - len(excluded_clinical.get(typ, set())) == len(sheets[sheet]) == target_counts[typ], (typ, 'unintended event loss')
     assert source_counts['Patient'] == target_counts['Patient'] == len(sheets['Person']) == 1
@@ -231,6 +233,7 @@ def audit(source, workbook, target, report):
             assert codings(before['code'])[:2] == codings(after['code']); observation_value(before, after)
     assert checked == len(observations)
     return {'status': 'PASSED', 'sourceCounts': dict(source_counts), 'targetCounts': dict(target_counts),
+            'procedures': procedure_audit,
             'medicationEventsCompared': len(source_meds), 'medicationDosesPreservedAsText': text_doses,
             'observationsCompared': checked, 'explicitlyOmittedObservations': len(omitted_observations),
             'explicitlyExcludedAllergies': len(excluded_allergies), 'rxnormCvxOrUsCoreTargetCodings': 0,

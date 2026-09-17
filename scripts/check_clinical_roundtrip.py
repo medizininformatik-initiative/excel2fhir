@@ -67,16 +67,22 @@ def check_clinical(source, target, report):
     actual_obs=Counter(obs(r)for r in dst if r['resourceType']=='Observation')
     assert wanted_obs==actual_obs, {'missingObservations':list((wanted_obs-actual_obs).items())[:2],
                                   'unexpectedObservations':list((actual_obs-wanted_obs).items())[:2]}
-    def procedure(r, original=False):
-        codings = list(r['code'].get('coding', []))
-        if original:
-            from procedure_mapping import select_ops
-            decision = select_ops(codings[0])
-            if decision.get('internationalReplacement'): codings[0] = decision['internationalReplacement']
-            if decision['target']: codings.insert(0, decision['target'])
-        return (tuple((c['system'], c['code'], c.get('version')) for c in codings), r['status'],
-                r.get('performedDateTime'), r.get('performedPeriod', {}).get('start'), r.get('performedPeriod', {}).get('end'))
-    assert Counter(procedure(src[i['sourceId']], True) for i in expected['clinicalImports'] if i['resourceType']=='Procedure') == Counter(procedure(r) for r in dst if r['resourceType']=='Procedure'), 'Procedure codes, order or event changed'
+    def procedure(r):
+        return (tuple((c['system'], c['code'], c.get('version')) for c in r['code'].get('coding', [])),
+                r['code'].get('text', ''), r['status'],
+                r.get('performedDateTime', r.get('performedPeriod', {}).get('start', '')),
+                r.get('performedPeriod', {}).get('end', ''))
+    wanted_procedures = Counter()
+    for mapping in expected['clinicalMappings']:
+        for projected in mapping.get('outputs', []):
+            codes = projected['codings']
+            label = projected['label']
+            if not codes[0]['system'].endswith('/ops'):
+                original = src[mapping['sourceId']]['code']['coding'][0]
+                label = translations.text(label, 'Prozedur', SYSTEMS[original['system']], original['code'])
+            wanted_procedures[(tuple((c['system'], c['code'], c.get('version')) for c in codes),
+                               label, projected['status'], projected['start'], projected['end'])] += 1
+    assert wanted_procedures == Counter(procedure(r) for r in dst if r['resourceType'] == 'Procedure'), 'Procedure codes, descriptions, count or event changed'
     assert report.get('vaccineMapping') == event_report['vaccineMapping'], 'Vaccine mapping changed'
     assert report.get('vaccineMappings') == event_report['vaccineMappings'], 'Vaccine decisions changed'
     vaccine_rows = events['Impfung']

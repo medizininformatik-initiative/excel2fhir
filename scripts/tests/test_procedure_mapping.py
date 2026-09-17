@@ -35,11 +35,11 @@ class ProcedureMappingTest(unittest.TestCase):
         self.assertEqual((row[3], row[5], row[6]), ('5-511.y', 'OPS 2026', '45595009'))
         self.assertEqual(row[4], procedure['performedPeriod']['start'])
         self.assertEqual(row[8], procedure['performedPeriod']['end'])
-        self.assertIn('Laparoskop', row[2])
+        self.assertEqual('Cholezystektomie: N.n.bez.', row[2])
         self.assertIn('Gallengangsrevision', report['clinicalMappings'][0]['reason'])
 
     def test_operating_steps_and_ambulatory_therapy_do_not_gain_wrong_ops(self):
-        for code in ['63697000', '52765003', '166001', '228557008']:
+        for code in ['52765003', '166001', '228557008']:
             decision = select_ops({'system': 'http://snomed.info/sct', 'code': code})
             self.assertIsNone(decision['target'])
             self.assertEqual(decision['status'], 'source-preserved')
@@ -64,7 +64,7 @@ class ProcedureMappingTest(unittest.TestCase):
         registry = json.loads(PATH.with_name('synthea-source-code-registry.json').read_text())
         expected = {e['code'] for e in registry['entries']
                     if e['system'] == 'http://snomed.info/sct' and 'state-code:Procedure' in e['usages']}
-        self.assertEqual(set(ENTRIES), expected)
+        self.assertEqual(set(ENTRIES), expected | {'418023006'})
         self.assertEqual(len(DATA['entries']), len(ENTRIES))
         source = bundle()
         source['entry'] = source['entry'][:3]
@@ -81,17 +81,17 @@ class ProcedureMappingTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(len(rows['Prozedur']), len(expected) - sum(e['status'] == 'excluded' for e in ENTRIES.values()))
-        self.assertEqual(len(report['clinicalMappings']), len(expected))
+        outputs = [o for m in report['clinicalMappings'] for o in m.get('outputs', [])]
+        self.assertEqual(len(rows['Prozedur']), len(outputs))
+        self.assertEqual(len(report['clinicalMappings']), len(ENTRIES))
         self.assertEqual({l['id'] for l in report['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'},
                          {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'})
-        for row, (code, entry) in zip(rows['Prozedur'], ((c, e) for c, e in ENTRIES.items() if e['status'] != 'excluded')):
-            target = entry['target'] or entry.get('internationalReplacement')
-            self.assertEqual(row[3], target['code'] if target else code)
+        for row, projected in zip(rows['Prozedur'], outputs):
+            self.assertEqual(row[3], projected['codings'][0]['code'])
             self.assertEqual(row[4], '2026-09-01T08:00:00+02:00')
             self.assertEqual(row[8:10], ['2026-09-01T08:01:00+02:00', 'completed'])
-            if entry['target']:
-                self.assertEqual((row[5], row[6]), ('OPS 2026', code))
+            if row[5] == 'OPS 2026':
+                self.assertEqual(row[2], projected['codings'][0]['display'])
 
     def test_us_dental_aftercare_uses_international_parent_without_extra_us_coding(self):
         decision = select_ops({'system': 'http://snomed.info/sct', 'code': '456191000124101',

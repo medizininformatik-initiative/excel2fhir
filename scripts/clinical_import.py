@@ -9,7 +9,8 @@ from pathlib import Path
 from medication_products import ProductCatalog, select_german_product, INGREDIENT_SYSTEMS
 from german_texts import GermanTexts
 from national_medication_mapping import RXNORM, source_dose_form
-from procedure_mapping import select_ops, metadata as procedure_metadata
+from procedure_mapping import metadata as procedure_metadata
+from procedure_projection import project as project_procedures
 
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
@@ -80,6 +81,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
         if r.get('id'):
             index[r['resourceType'] + '/' + r['id']] = r
             if e.get('fullUrl'): index[e['fullUrl']] = r
+    procedures = project_procedures(entries)
     rows = {'Prozedur': [], 'Laborbefund': [], 'Klinische Dokumentation': [], 'Medikation': []}
     losses, mappings, imported = [], [], []
     def ref(r, field, expected):
@@ -108,26 +110,29 @@ def prepare_clinical(entries, pid, encounter_numbers):
         handled = {'resourceType', 'id', 'subject', 'encounter', 'context', 'status'}
         try:
             if typ == 'Procedure':
-                code, system, label = coding(r['code'])
-                period = r.get('performedPeriod', {})
-                start = period.get('start', r.get('performedDateTime', '')); end = period.get('end', '')
+                coding(r['code'])  # Validate the supported source coding structure.
                 category = ''
                 if r.get('category'):
                     category, category_system, _ = coding(r['category'])
                     if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Prozedurkategorie ist nicht SNOMED')
-                decision = select_ops(r['code']['coding'][0])
+                decision = procedures[r['id']]
                 if decision['status'] == 'excluded':
                     mappings.append({'sourceId': r['id'], **decision})
                     loss('$', decision['reason'])
                     continue
-                extra_code, extra_system = '', ''
                 if decision.get('internationalReplacement'):
                     loss('code.coding', 'Quellkonzept durch dokumentierten internationalen Prozedurbegriff ersetzt; vollständiges Detail im Text und Mappingbericht.')
-                if decision['target']:
-                    label = GermanTexts().text(label, 'Prozedur', system, code)
-                    extra_code, extra_system = code, system
-                    code, system = decision['target']['code'], 'OPS ' + decision['target']['version']
-                rows['Prozedur'].append([pid, nr, label, code, start, system, extra_code, extra_system, end, r.get('status', ''), category])
+                for number, projected in enumerate(decision['outputs']):
+                    main, *extras = projected['codings']
+                    main_system = 'OPS ' + main['version'] if main['system'].endswith('/ops') else SYSTEMS[main['system']]
+                    extra_code = extras[0]['code'] if extras else ''
+                    extra_system = SYSTEMS[extras[0]['system']] if extras else ''
+                    rows['Prozedur'].append([pid, nr, projected['label'], main['code'], projected['start'],
+                        main_system, extra_code, extra_system, projected['end'], projected['status'], category])
+                    if decision.get('internationalReplacement') and main['system'] == SNOMED:
+                        rows['Prozedur'][-1][3] = decision['source']['code']
+                    projected['row'] = len(rows['Prozedur']) + 1
+                    imported.append({'sourceId': r['id'], 'resourceType': typ, 'outputIndex': number})
                 mappings.append({'sourceId': r['id'], **decision})
                 handled.update(['code', 'performedPeriod', 'performedDateTime', 'category'])
             elif typ == 'Observation':
@@ -234,7 +239,8 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 # additional dose/rate entries, bounds and non-daily timing.
                 if dosage: loss('dosage' if typ == 'MedicationAdministration' else 'dosageInstruction',
                                 'Teilweise übernommen: Text, erste Dosis und einfache Tagesfrequenz; weitere Dosierungsdetails fehlen')
-            imported.append({'sourceId': r['id'], 'resourceType': typ})
+            if typ != 'Procedure':
+                imported.append({'sourceId': r['id'], 'resourceType': typ})
             def extra_codings(value, path=''):
                 if isinstance(value, dict):
                     if len(value.get('coding', [])) > 1:

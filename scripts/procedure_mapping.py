@@ -18,6 +18,9 @@ def select_ops(coding):
             or (coding.get('display') and coding['display'] not in entry['sourceDisplays'])):
         return result
     result.update({key: copy.deepcopy(entry[key]) for key in ['target', 'status', 'reason']})
+    for key in ('targets', 'strategy', 'minimumAge', 'evidenceUrl'):
+        if key in entry:
+            result[key] = copy.deepcopy(entry[key])
     if entry.get('internationalReplacement'):
         result['internationalReplacement'] = copy.deepcopy(entry['internationalReplacement'])
         result['evidence'] = copy.deepcopy(entry['evidence'])

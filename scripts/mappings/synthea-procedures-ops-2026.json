@@ -1,5 +1,5 @@
 {
-  "id": "synthea-procedures-ops-2026-v3",
+  "id": "synthea-procedures-ops-2026-v4",
   "sourceRegistrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
   "targetSource": {
     "url": "https://terminologien.bfarm.de/rendering_data/ValueSet-ops-terminale-kodes-2026.json",
@@ -7,7 +7,7 @@
     "version": "2026",
     "copyright": "BfArM 1994-2025 - Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM)."
   },
-  "scope": "Alle 428 Prozedurkonzepte des festgelegten Synthea-Quellinventars redaktionell behandelt. Plausible deutsche Details dürfen synthetisch konkretisiert werden; begründete SNOMED-Erhaltung zählt als Entscheidung, nicht als OPS-Zuordnung. Nichtprozedurale Quellkonzepte erhalten dokumentierte synthetische Handlungen. Keine vollständige Abrechnungskodierung; menschlicher und vollständiger Terminologiereview ausstehend.",
+  "scope": "Alle 428 registrierten Procedure-State-Konzepte und das in realen Extrakten vorkommende CT-Modulfeldkonzept 418023006. Explizite synthetische Konkretisierungen, Aufteilungen und Chemotherapieblöcke; offizielle OPS-Einzelbeschreibungen. Kein vollständiger Abrechnungsdatensatz; menschlicher Review ausstehend.",
   "review": "pending-human-review",
   "entries": [
     {
@@ -302,13 +302,19 @@
       "sourceDisplays": [
         "Glucose tolerance test (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Labor-/Screeningkonzept geprüft: Untersuchung bleibt mit ihrem SNOMED-Code erhalten. Ein Routine-Labortest begründet keinen zusätzlichen operativen Eingriff oder komplexdiagnostischen OPS. Vorhandene Messergebnisse werden unabhängig davon als Observations übernommen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-760",
+        "version": "2026",
+        "display": "Belastungstest mit Substanzen zum Nachweis einer Stoffwechselstörung"
+      },
+      "status": "synthetic-specific",
+      "reason": "Oraler Glukosebelastungstest mit kontinuierlicher ärztlicher Überwachung in Notfallbereitschaft als synthetische Rahmenbedingung. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/cystic_fibrosis.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "113120007",
@@ -505,31 +511,43 @@
       "sourceDisplays": [
         "Restoration of tooth with coverage of all cusps using dental filling material (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Zahnärztliche Füllung, Prothetik, Abformung oder Prophylaxe geprüft: SNOMED bleibt erhalten. Keine Umdeutung in eine chirurgische Zahn-/Kieferoperation; insbesondere Zahnsteinentfernung ist nicht automatisch eine parodontalchirurgische Kürettage.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-232.10",
+        "version": "2026",
+        "display": "Zahnsanierung durch Füllung: Compositeadhäsive Füllungstechnik: Ein Zahn"
+      },
+      "status": "synthetic-specific",
+      "reason": "Ein Zahn wird mit compositeadhäsiver Füllung versorgt; Material und Umfang sind synthetisch konkretisiert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Basilia559_Bogan287_4482da75-95f9-40a0-13ac-207cb474d566.json",
         "sample/Jamal145_Fisher429_392b23cb-4e94-461d-b4bd-39963676cbd4.json",
         "src/main/resources/modules/dental_and_oral_examination.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "1259293006",
       "sourceDisplays": [
         "Application of composite dental filling material to dentin of tooth following fracture of tooth (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Zahnärztliche Füllung, Prothetik, Abformung oder Prophylaxe geprüft: SNOMED bleibt erhalten. Keine Umdeutung in eine chirurgische Zahn-/Kieferoperation; insbesondere Zahnsteinentfernung ist nicht automatisch eine parodontalchirurgische Kürettage.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-232.10",
+        "version": "2026",
+        "display": "Zahnsanierung durch Füllung: Compositeadhäsive Füllungstechnik: Ein Zahn"
+      },
+      "status": "synthetic-specific",
+      "reason": "Compositeadhäsive Füllung eines frakturierten Zahnes. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Basilia559_Bogan287_4482da75-95f9-40a0-13ac-207cb474d566.json",
         "sample/Elvis145_Funk324_8ba98b80-488f-b825-37bc-1a9c31ce6f42.json",
         "sample/Jamal145_Fisher429_392b23cb-4e94-461d-b4bd-39963676cbd4.json",
         "src/main/resources/modules/dental_and_oral_examination.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "1259900009",
@@ -601,13 +619,19 @@
       "sourceDisplays": [
         "Fitting of denture (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Zahnärztliche Füllung, Prothetik, Abformung oder Prophylaxe geprüft: SNOMED bleibt erhalten. Keine Umdeutung in eine chirurgische Zahn-/Kieferoperation; insbesondere Zahnsteinentfernung ist nicht automatisch eine parodontalchirurgische Kürettage.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "5-233.2",
+        "version": "2026",
+        "display": "Prothetischer Zahnersatz: Herausnehmbarer Zahnersatz"
+      },
+      "status": "synthetic-specific",
+      "reason": "Anpassung eines herausnehmbaren Zahnersatzes. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/dentures.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "12719002",
@@ -633,13 +657,19 @@
       "sourceDisplays": [
         "Spirometry (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Einfache Spirometrie bleibt SNOMED. OPS für Spiroergometrie, Bodyplethysmographie oder komplexe Atemmechanik wären zusätzliche Untersuchungen, keine bloße deutsche Codierung dieser Leistung.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-710",
+        "version": "2026",
+        "display": "Ganzkörperplethysmographie"
+      },
+      "status": "synthetic-specific",
+      "reason": "Die Spirometrie wird für den synthetischen Fall zu einer Ganzkörperplethysmographie einschließlich Spirometrie erweitert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/copd.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "1287742003",
@@ -1874,9 +1904,14 @@
       "sourceDisplays": [
         "Measurement of respiratory function (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-710",
+        "version": "2026",
+        "display": "Ganzkörperplethysmographie"
+      },
+      "status": "synthetic-specific",
+      "reason": "Die unspezifische Atemfunktionsmessung wird als Ganzkörperplethysmographie konkretisiert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Elvis145_Funk324_8ba98b80-488f-b825-37bc-1a9c31ce6f42.json",
@@ -1886,7 +1921,8 @@
         "src/main/resources/modules/cystic_fibrosis.json",
         "src/main/resources/modules/heart/avrr/preoperative.json",
         "src/main/resources/modules/heart/cabg/preoperative.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "234262008",
@@ -2237,13 +2273,19 @@
       "sourceDisplays": [
         "Simple walk test (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-715",
+        "version": "2026",
+        "display": "Sechs-Minuten-Gehtest nach Guyatt"
+      },
+      "status": "synthetic-specific",
+      "reason": "Der einfache Gehtest wird als standardisierter Sechs-Minuten-Gehtest nach Guyatt konkretisiert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/heart/avrr/preoperative.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "252482003",
@@ -2826,13 +2868,19 @@
       "sourceDisplays": [
         "Walking exercise test (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-715",
+        "version": "2026",
+        "display": "Sechs-Minuten-Gehtest nach Guyatt"
+      },
+      "status": "synthetic-specific",
+      "reason": "Der Gehbelastungstest wird als standardisierter Sechs-Minuten-Gehtest nach Guyatt konkretisiert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/heart/cabg/postop.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "303653007",
@@ -3306,13 +3354,19 @@
       "sourceDisplays": [
         "Human immunodeficiency virus viral load (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Labor-/Screeningkonzept geprüft: Untersuchung bleibt mit ihrem SNOMED-Code erhalten. Ein Routine-Labortest begründet keinen zusätzlichen operativen Eingriff oder komplexdiagnostischen OPS. Vorhandene Messergebnisse werden unabhängig davon als Observations übernommen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-930.3",
+        "version": "2026",
+        "display": "Infektiologisches Monitoring: Bestimmung der HI-Viruslast zur Verlaufsbeurteilung"
+      },
+      "status": "synthetic-specific",
+      "reason": "Bestimmung der HI-Viruslast zur Verlaufskontrolle. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/hiv/hiv_viral_load.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "315639002",
@@ -3544,14 +3598,16 @@
         "Chemotherapy (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Chemotherapie bleibt SNOMED. OPS unterscheidet konkrete Protokolle, Substanzzahlen und Behandlungstage. Die Quellmodule enthalten unterschiedliche Kombinationen; eine einheitliche Ein-Substanz-Therapie würde vorhandenen Medikamenten widersprechen.",
+      "status": "contextual-chemotherapy",
+      "reason": "Chemotherapie nach dokumentierten parenteralen Wirkstoffen und Behandlungstagen je Kontakt und Block zusammengefasst; mindestens zwei vollständige Pausentage trennen Blöcke. Fehlende Regimendetails werden als synthetische Annahmen ausgewiesen. Originalereignisse bleiben im Quellbundle und Bericht erhalten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/acute_myeloid_leukemia.json",
         "src/main/resources/modules/breast_cancer.json",
         "src/main/resources/modules/breast_cancer/chemotherapy_breast.json"
-      ]
+      ],
+      "strategy": "chemotherapy-block",
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm"
     },
     {
       "sourceCode": "367494004",
@@ -4045,12 +4101,14 @@
         "Pre-operative chemotherapy (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Chemotherapie bleibt SNOMED. OPS unterscheidet konkrete Protokolle, Substanzzahlen und Behandlungstage. Die Quellmodule enthalten unterschiedliche Kombinationen; eine einheitliche Ein-Substanz-Therapie würde vorhandenen Medikamenten widersprechen.",
+      "status": "contextual-chemotherapy",
+      "reason": "Chemotherapie nach dokumentierten parenteralen Wirkstoffen und Behandlungstagen je Kontakt und Block zusammengefasst; mindestens zwei vollständige Pausentage trennen Blöcke. Fehlende Regimendetails werden als synthetische Annahmen ausgewiesen. Originalereignisse bleiben im Quellbundle und Bericht erhalten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/bone_marrow_transplant.json"
-      ]
+      ],
+      "strategy": "chemotherapy-block",
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm"
     },
     {
       "sourceCode": "395123002",
@@ -4123,13 +4181,19 @@
       "sourceDisplays": [
         "Hearing examination (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-242",
+        "version": "2026",
+        "display": "Audiometrie"
+      },
+      "status": "synthetic-specific",
+      "reason": "Hörprüfung als Audiometrie konkretisiert. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/lung_cancer.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "399014008",
@@ -4471,6 +4535,40 @@
       ]
     },
     {
+      "sourceCode": "418023006",
+      "sourceDisplays": [
+        "Computed tomography of chest, abdomen and pelvis (procedure)"
+      ],
+      "target": null,
+      "status": "synthetic-split",
+      "reason": "Kombinierte CT-Untersuchung in die genannten Körperregionen aufgeteilt; nativ ohne Kontrastmittel als synthetische Annahme. Gemeinsames Quellzeitfenster, kein SNOMED-Zusatzcode für die Einzelmaßnahmen.",
+      "review": "pending-human-review",
+      "sourceFiles": [
+        "src/main/resources/modules/heart/avrr/preoperative.json"
+      ],
+      "targets": [
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "3-202",
+          "version": "2026",
+          "display": "Native Computertomographie des Thorax"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "3-207",
+          "version": "2026",
+          "display": "Native Computertomographie des Abdomens"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "3-206",
+          "version": "2026",
+          "display": "Native Computertomographie des Beckens"
+        }
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-3-20...3-26.htm"
+    },
+    {
       "sourceCode": "418824004",
       "sourceDisplays": [
         "Off-pump coronary artery bypass (procedure)"
@@ -4495,13 +4593,28 @@
         "Computed tomography of chest and abdomen (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Kombinierte CT von Thorax und Abdomen bleibt SNOMED. OPS 3-202/3-222 und 3-207/3-225 trennen die Regionen; ein einzelner Zielcode würde einen Teil der kombinierten Untersuchung weglassen.",
+      "status": "synthetic-split",
+      "reason": "Kombinierte CT-Untersuchung in die genannten Körperregionen aufgeteilt; nativ ohne Kontrastmittel als synthetische Annahme. Gemeinsames Quellzeitfenster, kein SNOMED-Zusatzcode für die Einzelmaßnahmen.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/lung_cancer.json",
         "src/main/resources/modules/veteran_lung_cancer.json"
-      ]
+      ],
+      "targets": [
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "3-202",
+          "version": "2026",
+          "display": "Native Computertomographie des Thorax"
+        },
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "3-207",
+          "version": "2026",
+          "display": "Native Computertomographie des Abdomens"
+        }
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-3-20...3-26.htm"
     },
     {
       "sourceCode": "423475008",
@@ -4679,14 +4792,20 @@
       "sourceDisplays": [
         "Placing subject in prone position (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Bauchlagerung bleibt SNOMED. Keine aufwendige Lagerungsbehandlung mit bestimmter Dauer oder Spezialbett allein aus der Positionsänderung abgeleitet.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "8-390.x",
+        "version": "2026",
+        "display": "Lagerungsbehandlung: Sonstige"
+      },
+      "status": "synthetic-specific",
+      "reason": "Therapeutische Bauchlagerung als sonstige Lagerungsbehandlung konkretisiert; weder Spezialbett noch neurophysiologische Methode unterstellt. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/congestive_heart_failure.json",
         "src/main/resources/modules/covid19/admission.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "432231006",
@@ -4959,13 +5078,19 @@
       "sourceDisplays": [
         "Determination of susceptibility of Human immunodeficiency virus 1 to panel of antiretroviral drugs using genotypic technique (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Labor-/Screeningkonzept geprüft: Untersuchung bleibt mit ihrem SNOMED-Code erhalten. Ein Routine-Labortest begründet keinen zusätzlichen operativen Eingriff oder komplexdiagnostischen OPS. Vorhandene Messergebnisse werden unabhängig davon als Observations übernommen.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-930.4",
+        "version": "2026",
+        "display": "Infektiologisches Monitoring: Genotypische oder phänotypische Resistenzbestimmung von Viren (HI-Viren oder Hepatitis-B-Virus) gegen antiretrovirale Substanzen"
+      },
+      "status": "synthetic-specific",
+      "reason": "Genotypische Resistenzbestimmung von HIV gegen antiretrovirale Substanzen. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/hiv/hiv_baseline.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "447759004",
@@ -5488,13 +5613,19 @@
       "sourceDisplays": [
         "Cardiopulmonary bypass operation (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Herz-Lungen-Maschinen-Einsatz ist kein Koronarbypass; Dauer/Art für den passenden extrakorporalen OPS nicht ausreichend dokumentiert.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "8-851.00",
+        "version": "2026",
+        "display": "Operativer äußerer Kreislauf (bei Anwendung der Herz-Lungen-Maschine): Mit Normothermie (mehr als 35 °C): Ohne intraaortale Ballonokklusion"
+      },
+      "status": "synthetic-specific",
+      "reason": "Herz-Lungen-Maschine im operativen Kontext; synthetisch Normothermie über 35 °C ohne intraaortale Ballonokklusion angenommen. Kein Koronarbypass aus diesem Code abgeleitet. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "sourceFiles": [
         "src/main/resources/modules/heart/avrr/savrr_operation.json",
         "src/main/resources/modules/heart/cabg/operation.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm"
     },
     {
       "sourceCode": "64544008",
@@ -5738,13 +5869,23 @@
         "Combined chemotherapy and radiation therapy (procedure)"
       ],
       "target": null,
-      "status": "source-preserved",
-      "reason": "Kombinierte Radiochemotherapie bleibt SNOMED. Ein einzelner OPS bildet beide Behandlungsanteile nicht ab; weder Chemotherapie noch Bestrahlung wird durch Auswahl nur eines Anteils unterschlagen.",
+      "status": "contextual-chemotherapy",
+      "reason": "Chemotherapie nach dokumentierten parenteralen Wirkstoffen und Behandlungstagen je Kontakt und Block zusammengefasst; mindestens zwei vollständige Pausentage trennen Blöcke. Fehlende Regimendetails werden als synthetische Annahmen ausgewiesen. Originalereignisse bleiben im Quellbundle und Bericht erhalten. Je Quellereignis zusätzlich eine Fraktion intensitätsmodulierter Radiotherapie mit bildgestützter Einstellung (synthetisch konkretisiert). Kein kombinierter SNOMED-Zusatzcode bei den Teilmaßnahmen.",
       "review": "pending-human-review",
       "sourceFiles": [
         "src/main/resources/modules/colorectal_cancer.json",
         "src/main/resources/modules/lung_cancer.json",
         "src/main/resources/modules/veteran_lung_cancer.json"
+      ],
+      "strategy": "chemotherapy-block",
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm",
+      "targets": [
+        {
+          "system": "http://fhir.de/CodeSystem/bfarm/ops",
+          "code": "8-522.91",
+          "version": "2026",
+          "display": "Hochvoltstrahlentherapie: Linearbeschleuniger, intensitätsmodulierte Radiotherapie: Mit bildgestützter Einstellung"
+        }
       ]
     },
     {
@@ -5822,9 +5963,14 @@
       "sourceDisplays": [
         "Assessment of health and social care needs (procedure)"
       ],
-      "target": null,
-      "status": "source-preserved",
-      "reason": "Klinische Routineuntersuchung, Assessment oder Verlaufskontrolle geprüft: SNOMED erhält den konkreten Untersuchungsinhalt. Kein komplexdiagnostischer OPS allein zur Befüllung der Spalte; dafür erforderliche Testbatterien, Dauer oder Einrichtung werden nicht pauschal ergänzt.",
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/ops",
+        "code": "1-770",
+        "version": "2026",
+        "display": "Multidimensionales geriatrisches Screening und Minimalassessment"
+      },
+      "status": "synthetic-specific",
+      "reason": "Ab 65 Jahren wird die Bedarfsabklärung synthetisch als geriatrisches Minimalassessment mit standardisierter Prüfung von Mobilität, Selbsthilfefähigkeit und Kognition ergänzt. Unter 65 Jahren bleibt SNOMED erhalten. OPS-Bezeichnung aus BfArM 2026. Annahmen gelten nur für synthetische Testdaten.",
       "review": "pending-human-review",
       "sourceFiles": [
         "sample/Basilia559_Bogan287_4482da75-95f9-40a0-13ac-207cb474d566.json",
@@ -5832,7 +5978,9 @@
         "sample/Jamal145_Fisher429_392b23cb-4e94-461d-b4bd-39963676cbd4.json",
         "sample/Lucius907_Bauch723_8e8f5fe4-525b-a752-5b45-c88939106bc1.json",
         "src/main/resources/modules/encounter/sdoh_hrsn.json"
-      ]
+      ],
+      "evidenceUrl": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/index.htm",
+      "minimumAge": 65
     },
     {
       "sourceCode": "710839006",
@@ -6684,5 +6832,211 @@
       "url": "https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-5-87...5-88.htm",
       "purpose": "Brusterhaltende lokale Exzision"
     }
-  ]
+  ],
+  "chemotherapyTargets": {
+    "8-542.11": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-542.11",
+      "version": "2026",
+      "display": "Nicht komplexe Chemotherapie: 1 Tag: 1 Substanz"
+    },
+    "8-542.12": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-542.12",
+      "version": "2026",
+      "display": "Nicht komplexe Chemotherapie: 1 Tag: 2 Substanzen"
+    },
+    "8-543.13": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.13",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 1 Tag: 3 Substanzen"
+    },
+    "8-543.14": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.14",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 1 Tag: 4 Substanzen"
+    },
+    "8-543.15": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.15",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 1 Tag: 5 Substanzen"
+    },
+    "8-543.16": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.16",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 1 Tag: 6 Substanzen"
+    },
+    "8-543.17": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.17",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 1 Tag: 7 oder mehr Substanzen"
+    },
+    "8-543.21": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.21",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 1 Substanz"
+    },
+    "8-543.22": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.22",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 2 Substanzen"
+    },
+    "8-543.23": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.23",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 3 Substanzen"
+    },
+    "8-543.24": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.24",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 4 Substanzen"
+    },
+    "8-543.25": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.25",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 5 Substanzen"
+    },
+    "8-543.26": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.26",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 6 Substanzen"
+    },
+    "8-543.27": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.27",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 2 Tage: 7 oder mehr Substanzen"
+    },
+    "8-543.31": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.31",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 1 Substanz"
+    },
+    "8-543.32": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.32",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 2 Substanzen"
+    },
+    "8-543.33": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.33",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 3 Substanzen"
+    },
+    "8-543.34": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.34",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 4 Substanzen"
+    },
+    "8-543.35": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.35",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 5 Substanzen"
+    },
+    "8-543.36": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.36",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 6 Substanzen"
+    },
+    "8-543.37": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.37",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 3 Tage: 7 oder mehr Substanzen"
+    },
+    "8-543.41": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.41",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 1 Substanz"
+    },
+    "8-543.42": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.42",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 2 Substanzen"
+    },
+    "8-543.43": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.43",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 3 Substanzen"
+    },
+    "8-543.44": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.44",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 4 Substanzen"
+    },
+    "8-543.45": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.45",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 5 Substanzen"
+    },
+    "8-543.46": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.46",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 6 Substanzen"
+    },
+    "8-543.47": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.47",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 4 Tage: 7 oder mehr Substanzen"
+    },
+    "8-543.51": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.51",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 5 Tage: 1 Substanz"
+    },
+    "8-543.61": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.61",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 6 Tage: 1 Substanz"
+    },
+    "8-543.71": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.71",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 7 Tage: 1 Substanz"
+    },
+    "8-543.81": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.81",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 8 Tage: 1 Substanz"
+    },
+    "8-543.91": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-543.91",
+      "version": "2026",
+      "display": "Mittelgradig komplexe und intensive Blockchemotherapie: 9 oder mehr Tage: 1 Substanz"
+    },
+    "8-544": {
+      "system": "http://fhir.de/CodeSystem/bfarm/ops",
+      "code": "8-544",
+      "version": "2026",
+      "display": "Hochgradig komplexe und intensive Blockchemotherapie"
+    }
+  }
 }

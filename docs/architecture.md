@@ -33,9 +33,12 @@ aller Mappings würde dieselben fachlichen Regeln an mehreren Stellen verteilen.
 | Bestandteil | Aufgabe / Aufrufer |
 | --- | --- |
 | `compose.synthea.yml` | Baut und startet den vollständigen Workflow; Nutzer ändern hier native Synthea-Argumente. |
+| `scripts/run_synthea_container.py` | Startet den vollständigen Containerworkflow unter UID/GID des gemounteten Ausgabeordners; private Laufordner bleiben für deren Eigentümer bearbeitbar. |
 | `scripts/run_synthea_workflow.py` | Prüft den Generatorstand und die Optionen, erzeugt einen Laufordner, startet Synthea und den Import. |
 | `scripts/run_synthea_cases.py` | Verarbeitet vorhandene Quellbundles einzeln; erstellt Excel, ruft Java auf, prüft Berichte und vergleicht die Ergebnisse. |
 | `scripts/synthea_to_excel.py` | Bereitet die Zeilen vor und füllt eine Kopie der Vorlage. Lädt die klinischen Mappingmodule. |
+| `scripts/procedure_projection.py` | Erzeugt Prozedurzeilen aus Einzelzuordnungen, regionalen Aufteilungen und Chemotherapieblöcken; dokumentiert Quell-IDs, Zeiten und Annahmen. |
+| `scripts/audit_procedures.py` | Prüft diese Projektion unabhängig anhand der Quellbundles, Mappingdaten, Excel-Zeilen und FHIR-Ressourcen. |
 | `scripts/WorkbookUno.java` | Technischer LibreOffice-Zugriff; wird durch den Python-Helfer gestartet. |
 | `scripts/WorkflowOptions.java` | Verwendet den vorhandenen Java-Optionsparser und die ID-Regeln für die Workflow-Vorprüfung. Keine separate Properties-/ID-Implementierung in Python. |
 | `Excel2FhirMain` / `life.csv2fhir.Main` | Bestehende Excel- und CSV-Einstiegspunkte im selben Converter-JAR. |

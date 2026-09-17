@@ -30,14 +30,47 @@ Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
 breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
 Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
 [Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
-Alle 428 Prozedurkonzepte des festgelegten Inventars haben eine ausdrückliche
-Entscheidung: 107 erhalten terminale OPS-2026-Kodes und ergänzendes SNOMED,
-304 behalten begründet SNOMED, 15 Konzepte werden als passende synthetische
-Handlungen konkretisiert und die US-zahnärztliche Nachsorge verwendet einen
-internationalen Oberbegriff. Das US-spezifische Comprehensive Metabolic Panel
-entfällt als zusätzliche Prozedur; separat vorhandene Laborwerte und Befundberichte
-bleiben erhalten. Jede Auslassung steht mit Ressourcen-ID im Verlustbericht. Details und Quellen stehen in
-`scripts/mappings/synthea-procedures-ops-2026.json` und im Mappingbericht.
+Die Prozedurtabelle behandelt 429 Quellkonzepte: alle 428 Procedure-State-Konzepte
+und die zusätzlich in generierten Fällen vorkommende kombinierte CT von Thorax,
+Abdomen und Becken. 121 Konzepte besitzen ein einzelnes OPS-Ziel. Weitere
+Zuordnungen entstehen durch regionale Aufteilungen und Chemotherapieblöcke.
+OPS-Zeilen verwenden die offizielle Beschreibung des jeweiligen terminalen
+OPS-2026-Codes. Die synthetischen Annahmen stehen im Mappingbericht.
+
+Kombinierte CT-Untersuchungen werden in getrennte Zeilen je Körperregion
+aufgeteilt. Radiochemotherapie erzeugt einzelne Bestrahlungsfraktionen und einen
+Chemotherapieeintrag je Kontakt und Therapieblock. Dafür werden Behandlungstage
+und unterschiedliche parenterale Zytostatika aus zugehörigen Verabreichungen
+ermittelt. Wiederholte Gaben derselben Substanz erhöhen die Substanzzahl nicht.
+Mindestens zwei volle Pausentage beginnen einen neuen Block. Ohne zuordenbare
+Gaben wird eine intravenöse Substanz ausdrücklich synthetisch angenommen.
+Bei längeren Blöcken mit 5-FU, ARA-C, Azacitidin oder Decitabin bleiben die
+Quellereignisse erhalten, wenn die für die OPS-Abgrenzung benötigten Dosis- und
+Infusionsangaben fehlen.
+Einzelne Bestrahlungen und regionale CT-Zeilen behalten das gemeinsame
+Quellzeitfenster. Der Chemotherapieblock umfasst das erste bis letzte Ereignis.
+Diese Aufteilungen enthalten keinen SNOMED-Zusatzcode. Originalcodes und alle
+zugehörigen Quell-IDs bleiben im Bericht und im unveränderten Quellbundle erhalten.
+
+Naheliegende Konkretisierungen ergänzen unter anderem Füllungsmaterial beim Zahn,
+Ganzkörperplethysmographie, Sechs-Minuten-Gehtest und den normothermen Einsatz
+der Herz-Lungen-Maschine. Die Bedarfsabklärung wird ab einem belegten Alter von
+65 Jahren als geriatrisches Minimalassessment in drei Bereichen konkretisiert.
+Kurze psychologische Screenings werden nicht pauschal zur mindestens
+60-minütigen Diagnostik umbenannt. Überweisungen, Routineuntersuchungen und
+Maßnahmen ohne belastbare OPS-Zuordnung bleiben als SNOMED erhalten.
+
+15 nichtprozedurale Quellkonzepte werden als passende synthetische Handlungen
+konkretisiert. Die US-zahnärztliche Nachsorge verwendet einen internationalen
+Oberbegriff. Das US-spezifische Comprehensive Metabolic Panel entfällt als
+zusätzliche Prozedur; vorhandene Laborwerte und Befundberichte bleiben erhalten.
+Jede Auslassung steht mit Ressourcen-ID im Verlustbericht. Details und Quellen
+stehen in `scripts/mappings/synthea-procedures-ops-2026.json`. Der Laufbericht
+verknüpft jede erzeugte Prozedur mit ihren Quell-IDs und ihrer Excel-Zeile.
+[OPS-2026-Regeln zu Chemotherapie und Bestrahlung](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm)
+und [Funktionstests](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-1-70...1-79.htm)
+liegen diesen Konkretisierungen zugrunde.
+
 Medikationsabgleich bleibt mit SNOMED erhalten: Ein passender eigenständiger
 OPS 2026 wurde nicht gefunden. Auch der weitergehende Medikationsanalyse-OPS
 liegt als [Vorschlag für 2027](https://multimedia.gsb.bund.de/BfArM/downloads/klassifikationen/ops/vorschlaege/vorschlaege2027/ops2027-059-medikationsanalysen.pdf) vor, nicht als gültiger Code.
@@ -55,7 +88,7 @@ stehen in den jeweiligen Mappingtabellen und werden nicht im Register dupliziert
 | Patient | Person | Synthetische deutsche Namen/Anschrift; Geburt, Geschlecht, Sterbezeitpunkt aus Quelle | Wohnhistorie, Kommunikation und weitere demografische Erweiterungen |
 | Encounter | Fall | Klasse, Zeitraum, Patientbezug, explizite Notfallkennzeichnung | Einrichtung/Behandler, Gründe, Entlassungsdisposition |
 | Condition | Diagnose | ICD-10-GM zuerst, SNOMED ergänzend bzw. begründeter Rückfall, drei Zeitangaben, Status, Kontakt | Weitere Synthea-Metadaten |
-| Procedure | Prozedur | Originalcode, optionaler Zusatzcode, Zeitraum, Status, optionale SNOMED-Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler, zusätzliche OPS-Zuordnung |
+| Procedure | Prozedur | OPS mit Einzelbeschreibung bzw. SNOMED, Zusatzcode bei Einzelzuordnung, regionale Aufteilungen und Therapieblöcke, Zeitraum, Status, Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler; synthetische Annahmen im Bericht |
 | Observation | Laborbefund / Klinische Dokumentation | Zahl, Text, Code, Boolean, DAR, Komponenten, Kategorie, Status, effective/issued, UCUM-Code, Patient/Kontakt | Mehr als zwei Untersuchungscodings und nicht dargestellte Zusatzattribute; unsupported value[x] wird ausdrücklich ausgelassen |
 | MedicationRequest / Administration | Medikation | Deutsches Präparat bzw. sichtbar offene Zuordnung, Status, Zeitpunkt/Verabreichungszeitraum, Verordnungsabsicht, Text, erste Dosis, einfache Tagesfrequenz | Weitere Dosen/Raten, Routen, Zeitpläne, Gründe und Behandler |
 | Medication | Aus Medikationszeilen | Getrennte Definition je vollständiger Präparatbeschreibung; referenzierte Ressourcen werden aufgelöst | Konkrete Packungsstärken sind nicht vollständig strukturiert; unbekannte Konzepte außerhalb des Inventars bleiben sichtbar offen |
@@ -175,7 +208,7 @@ Review der gefüllten Arbeitsmappen.
 - Neue Statuslisten: FHIR-Bezeichnungen oder zusätzliche deutsche Beschriftungen.
 - Medikationsdarstellung: zusätzliche Originalcode-Spalten neben PZN/ATC sowie
   die spätere Auswahl deutscher Präparate und genauer Dosierungsschemata.
-- Bedarf einer zusätzlichen OPS-Tabelle gegenüber direkter SNOMED-Prozedureingabe.
+- Fachliche Prüfung der OPS-Konkretisierungen, Aufteilungen und Therapieblöcke.
 - Priorität der noch fehlenden Bildgebungs-, Liefer- und Behandlerdetails.
 
 ## Nachprüfung der neuen Populationen
@@ -184,6 +217,8 @@ Der unabhängige Abgleich `audit_synthea_projection.py` liest Originalquellen,
 Excel und Zielbundle ohne Aufruf der Importfunktionen. Er prüft Ereigniszahlen,
 Medikationsmengen/-frequenzen/-zeitpunkte, numerische und codierte Messwerte,
 Komponenten, deutsche Versionsangaben und die gewünschte Coding-Reihenfolge.
+Für Prozeduren prüft er zusätzlich regionale Aufteilungen, Therapieblöcke,
+Wirkstoffzählung, Zeitfenster, Einzelbeschreibungen und die zugehörigen Excel-Zeilen.
 Explizit ausgeschlossene Allergien werden separat bilanziert. Das ersetzt keine
 medizinische Äquivalenzprüfung der redaktionellen Zuordnungen.
 
