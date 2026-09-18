@@ -160,7 +160,7 @@ public class BundleFunctions {
         for (BundleEntryComponent entry : bundleEntries) {
             Resource entryResource = entry.getResource();
             Class<? extends Resource> entryResourceClass = entryResource.getClass();
-            if (entryResourceClass.isAssignableFrom(resourceClass)) {
+            if (resourceClass.isAssignableFrom(entryResourceClass)) {
                 String resourceID = entryResource.getId();
                 if (baseId.equals(resourceID)) {
                     return (T) entryResource;

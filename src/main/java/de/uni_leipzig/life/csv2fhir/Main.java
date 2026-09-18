@@ -29,14 +29,14 @@ public class Main implements Callable<Integer> {
      */
     @CommandLine.Option(names = {
             "-o", "--output-file"
-    }, required = true, paramLabel = "OUTPUT-FILE", description = "supply the output File here")
+    }, required = true, paramLabel = "FILE-PREFIX", description = "Common CSV file prefix (for example Fall for Fall_Person.csv). Results are written into the input directory.")
     String outputFile;
 
     /**
      *
      */
     @Option(names = { "-v",
-            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
+            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Validates complete bundles, preserves all resources, writes validation reports and exits nonzero on errors or incomplete checks.")
     static boolean validateBundles = false;
 
     @Option(names = { "-vll",
@@ -57,10 +57,14 @@ public class Main implements Callable<Integer> {
         if (!inputDirectory.isDirectory()) {
             throw new Exception("provided input Directory is NOT a directory!");
         }
-        FHIRValidator validator = validateBundles ? new FHIRValidator(minLogLevel) : null;
+        FHIRValidator validator = validateBundles ? createValidator() : null;
         outputFile += outputFile.endsWith("_") ? "" : "_";
         Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile, validator);
         converter.convertFiles(Integer.MAX_VALUE, JSON);
-        return 0;
+        return converter.hasImportProblems() || (validator != null && validator.hasValidationProblems()) ? 1 : 0;
+    }
+
+    FHIRValidator createValidator() {
+        return new FHIRValidator(minLogLevel);
     }
 }

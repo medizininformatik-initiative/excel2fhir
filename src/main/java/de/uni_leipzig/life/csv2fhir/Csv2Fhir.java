@@ -77,6 +77,79 @@ public class Csv2Fhir {
     /** Cache for the parsed records */
     private final Map<TableIdentifier, List<CSVRecord>> tableIdentifierToParsedRecords = new HashMap<>();
 
+    private final ImportReport importReport = new ImportReport();
+    private final Map<TableIdentifier, Map<Long, String>> recordPatients = new HashMap<>();
+
+    public boolean hasImportProblems() { return importReport.hasErrors(); }
+    public ImportReport getImportReport() { return importReport; }
+
+    private Collection<String> loadInputs() throws IOException {
+        // Read each table once, even when patients or output options are repeated.
+        for (TableIdentifier table : TableIdentifier.values()) {
+            if (!table.isConvertableTableSheet()) continue;
+            File file = getCsvInputFile(outputFileNameBase, table.toString());
+            if (!file.isFile()) {
+                if (table == Person) importReport.failure(null, null, "MISSING_PATIENT_FILE", "Person.csv fehlt", null);
+                continue;
+            }
+            ImportReport.Table summary = importReport.table(table, file.getName());
+            try (Reader in = new FileReader(file); CSVParser parser = csvFormat.parse(in)) {
+                List<CSVRecord> records = parser.getRecords();
+                summary.rowsRead = records.size();
+                Set<String> headers = new HashSet<>();
+                boolean duplicate = parser.getHeaderNames().stream()
+                        .filter(h -> !isNullOrEmpty(h)).anyMatch(h -> !headers.add(h));
+                if (duplicate) {
+                    importReport.failure(table, null, "DUPLICATE_COLUMNS", "Spaltenname mehrfach vorhanden", null);
+                    continue;
+                }
+                Set<String> required = new LinkedHashSet<>(table.getMandatoryColumnNames());
+                required.add(table.getPIDColumnIdentifier().toString());
+                if (isColumnMissing(parser.getHeaderMap(), required)) {
+                    importReport.failure(table, null, "MISSING_COLUMNS", "Pflichtspalten fehlen: " +
+                            required.stream().filter(c -> !parser.getHeaderMap().containsKey(c)).collect(Collectors.joining(", ")), null);
+                    continue;
+                }
+                tableIdentifierToParsedRecords.put(table, records);
+                Map<Long, String> patients = new HashMap<>();
+                recordPatients.put(table, patients);
+                String previous = null;
+                for (CSVRecord record : records) {
+                    if (record.size() != parser.getHeaderNames().size()) {
+                        importReport.failure(table, record.getRecordNumber(), "MALFORMED_RECORD", "Feldanzahl stimmt nicht mit der Kopfzeile überein", null);
+                        // A malformed explicit ID must not silently redirect following continuation rows.
+                        previous = null;
+                        continue;
+                    }
+                    String pid = record.get(table.getPIDColumnIdentifier().toString());
+                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
+                    if (!isNullOrEmpty(pid)) previous = pid;
+                    if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Keine Patient-ID und keine vorherige Patient-ID", null);
+                    else patients.put(record.getRecordNumber(), previous);
+                }
+            } catch (Exception e) {
+                tableIdentifierToParsedRecords.remove(table); recordPatients.remove(table);
+                importReport.failure(table, null, "READ_ERROR", ImportReport.describe(e), null);
+            }
+        }
+        Set<String> knownPatients = recordPatients.getOrDefault(Person, Map.of()).values().stream()
+                .map(pid -> pid.toUpperCase(java.util.Locale.ROOT)).collect(Collectors.toSet());
+        List<String> pids = new ArrayList<>(knownPatients);
+        Alphabetical.sort(pids);
+        if (pids.isEmpty()) importReport.failure(null, null, "NO_PATIENTS", "Keine verarbeitbaren Patient-IDs", null);
+        for (var entry : recordPatients.entrySet()) {
+            var iterator = entry.getValue().entrySet().iterator();
+            while (iterator.hasNext()) {
+                var row = iterator.next();
+                if (!knownPatients.contains(row.getValue().toUpperCase(java.util.Locale.ROOT))) {
+                    importReport.failure(entry.getKey(), row.getKey(), "UNKNOWN_PATIENT", "Patient-ID fehlt im Person-Blatt", null);
+                    iterator.remove();
+                }
+            }
+        }
+        return pids;
+    }
+
     /*
      * Resource classes which are not dependant of a patient (which have no subject
      * reference)
@@ -107,7 +180,7 @@ public class Csv2Fhir {
         csvFormat = CSVFormat.DEFAULT.builder()
                 .setNullString("")
                 .setIgnoreSurroundingSpaces(true)
-                .setTrim(true)
+                .setTrim(false)
                 .setAllowMissingColumnNames(true)
                 .setHeader()
                 .setSkipHeaderRecord(true).build();
@@ -172,46 +245,6 @@ public class Csv2Fhir {
     }
 
     /**
-     * @param csvFileBaseName
-     * @param columnName
-     * @param distinct
-     * @param alphabetical
-     * @return
-     * @throws IOException
-     */
-    private Collection<String> getValues(TableIdentifier csvFileBaseName, Object columnName, boolean distinct,
-            boolean alphabetical)
-            throws IOException {
-        String columnNameString = String.valueOf(columnName);
-        Collection<String> values = distinct ? new HashSet<>() : new ArrayList<>();
-
-        File file = getCsvInputFile(outputFileNameBase, csvFileBaseName.toString());
-        if (!file.exists() || file.isDirectory()) {
-            LOG.error("Missing required patient input file for {}. Tried base names: {}",
-                    csvFileBaseName,
-                    getOutputFileNameBaseVariants(outputFileNameBase));
-            return null;
-        }
-        try (Reader reader = new FileReader(file);
-                CSVParser records = csvFormat.parse(reader)) {
-            for (CSVRecord record : records) {
-                String pid = record.get(columnNameString);
-                if (pid != null) {
-                    values.add(pid.toUpperCase());
-                    LOG.info("found pid=" + pid);
-                }
-            }
-            if (alphabetical) {
-                if (distinct) {
-                    values = new ArrayList<>(values);
-                }
-                Alphabetical.sort((List<String>) values);
-            }
-            return values;
-        }
-    }
-
-    /**
      * @param patientsPerBundle
      * @param outputFileTypes
      * @return the counters of all created resources
@@ -219,11 +252,71 @@ public class Csv2Fhir {
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
             throws Exception {
-        Collection<String> pids = getValues(Person, Person.getPIDColumnIdentifier(), true, true);
-        if (pids == null || pids.isEmpty()) {
-            LOG.error("No patient IDs found. Tried input bases: {}", getOutputFileNameBaseVariants(outputFileNameBase));
-            return fileSetStatistics;
+        try {
+            Collection<String> patients = loadInputs();
+            preflightContacts();
+            preflightOptions();
+            if (importReport.hasErrors()) {
+                LOG.error("Eingabeprüfung: {} Befunde; keine FHIR-Ausgabe erzeugt. Siehe Importbericht.", importReport.issues.size());
+                return new ConverterResultStatistics();
+            }
+            return convertPreparedFiles(patients, patientsPerBundle, outputFileTypes);
+        } catch (Exception e) {
+            importReport.failure(null, null, "ABORTED", ImportReport.describe(e), null);
+            throw e;
+        } finally {
+            String name = getOutputFileName(outputFileNameBase, "", JSON).replaceFirst("\\.json$", ".import.json");
+            importReport.write(new File(outputDirectory, name).toPath());
         }
+    }
+
+    private void preflightOptions() {
+        Collection<String> patients = new LinkedHashSet<>(recordPatients.getOrDefault(Person, Map.of()).values());
+        for (ConverterOptions options : allConverterOptions) {
+            for (String error : options.getErrors())
+                importReport.failure(null, null, "OPTION_ERROR", error, options);
+            if (!options.getErrors().isEmpty()) continue;
+            int repetitions = options.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT);
+            try {
+                Math.multiplyExact(patients.size(), Math.addExact(repetitions, 1));
+            } catch (ArithmeticException e) {
+                importReport.failure(null, null, "OPTION_ERROR", "Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich", options);
+                continue;
+            }
+            Set<String> generated = new HashSet<>();
+            // Check each output ID before writing any bundle, including collisions
+            // caused by different source IDs, offsets or underscore normalization.
+            for (int iteration = 0; iteration <= repetitions; iteration++) {
+                for (String patient : patients) {
+                    try {
+                        String id = options.getFullPID(patient, iteration);
+                        if (!generated.add(id)) importReport.failure(null, null, "PATIENT_ID_COLLISION",
+                                "Doppelte erzeugte Patient-ID: " + id + " (Durchlauf " + iteration + ")", options);
+                    } catch (IllegalArgumentException | ArithmeticException e) {
+                        importReport.failure(null, null, "PATIENT_ID_ERROR",
+                                patient + " (Durchlauf " + iteration + "): " + ImportReport.describe(e), options);
+                    }
+                }
+            }
+        }
+    }
+
+    private void preflightContacts() {
+        var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
+        Map<Long, String> patients = recordPatients.getOrDefault(TableIdentifier.Fall, Map.of());
+        for (CSVRecord record : tableIdentifierToParsedRecords.getOrDefault(TableIdentifier.Fall, List.of())) {
+            String patient = patients.get(record.getRecordNumber());
+            if (patient == null) continue; // Empty/malformed/unknown-patient rows have already been accounted for.
+            for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
+                    record.getRecordNumber(), patient, record.toMap()))) {
+                importReport.failure(TableIdentifier.Fall, issue.row(), "CONTACT_INPUT_ERROR",
+                        issue.field() + ": " + issue.message(), null);
+            }
+        }
+    }
+
+    private ConverterResultStatistics convertPreparedFiles(Collection<String> pids, int patientsPerBundle,
+            OutputFileType... outputFileTypes) throws Exception {
 
         for (ConverterOptions converterOptions : allConverterOptions) {
 
@@ -346,7 +439,11 @@ public class Csv2Fhir {
                                                                                              // it
         boolean written = false;
         if (bundle != null && !bundle.getEntry().isEmpty()) {
-            if (validator == null || !validator.validateBundle(bundle).isError()) {
+            if (validator != null) {
+                validator.validateAndWriteReport(bundle, new File(outputDirectory,
+                        outputFileNameBase + fileNameExtension + ".validation.json"));
+            }
+            {
                 for (OutputFileType baseFileType : baseFileTypes) {
                     File baseFile = writeBaseOutputFile(bundle, fileNameExtension, baseFileType);
                     for (int i = compressedFileTypesCopy.size() - 1; i >= 0; i--) {
@@ -434,62 +531,28 @@ public class Csv2Fhir {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult(options);
-        boolean filter = !Strings.isNullOrEmpty(filterID);
         for (TableIdentifier table : TableIdentifier.values()) {
-            if (table.isConvertableTableSheet()) {
-                List<CSVRecord> parsedRecords = tableIdentifierToParsedRecords.get(table);
-                if (parsedRecords == null) {
-                    File file = getCsvInputFile(outputFileNameBase, table.toString());
-                    String fileName = file.getName();
-                    if (!file.exists() || file.isDirectory()) {
-                        continue;
+            List<CSVRecord> records = tableIdentifierToParsedRecords.get(table);
+            if (records == null) continue;
+            Map<Long, String> patients = recordPatients.get(table);
+            for (CSVRecord record : records) {
+                String pid = patients.get(record.getRecordNumber());
+                if (pid == null || !pid.equalsIgnoreCase(filterID)) continue;
+                try {
+                    List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
+                    for (Resource resource : resources) {
+                        addEntry(bundle, resource);
+                        addEntry(ndjsonBundle, resource);
                     }
-                    try (Reader in = new FileReader(file)) {
-                        CSVParser csvParser = csvFormat.parse(in);
-                        LOG.info("Start parsing File:" + fileName);
-                        Map<String, Integer> headerMap = csvParser.getHeaderMap();
-                        Collection<String> neededColumnNames = table.getMandatoryColumnNames();
-                        if (isColumnMissing(headerMap, neededColumnNames)) {
-                            csvParser.close();
-                            LOG.error("Error - File: " + fileName + " not convertable!");
-                            continue;
-                        }
-                        parsedRecords = csvParser.getRecords();
-                        tableIdentifierToParsedRecords.put(table, parsedRecords);
-                        csvParser.close();
-                    }
-                }
-                String previousPID = null;
-                for (int i = 0; i < parsedRecords.size(); i++) {
-                    CSVRecord record = parsedRecords.get(i);
-                    try {
-                        if (filter) {
-                            String pidColumnName = table.getPIDColumnIdentifier().toString();
-                            String pid = record.get(pidColumnName);
-                            if (isNullOrEmpty(pid)) {
-                                if (isRecordEmpty(record, table.getMandatoryColumnNames())) {
-                                    continue;
-                                }
-                                pid = previousPID;
-                            } else {
-                                previousPID = pid;
-                            }
-                            if (!pid.toUpperCase().matches(filterID)) {
-                                continue;
-                            }
-                        }
-                        List<? extends Resource> list = table.convert(record, previousPID, result, validator, options);
-                        for (Resource resource : list) {
-                            addEntry(bundle, resource);
-                            addEntry(ndjsonBundle, resource);
-                        }
-                    } catch (Exception e) {
-                        LOG.error("Error (" + e.getMessage() + ") while converting file " + table + " in record "
-                                + record);
-                    }
+                    importReport.success(table, record.getRecordNumber(), resources.size());
+                } catch (Exception e) {
+                    importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
+                    LOG.error("Konvertierungsfehler in {} Datensatz {}: {}", table, record.getRecordNumber(),
+                            importReport.issues.get(importReport.issues.size() - 1).reason);
                 }
             }
         }
+        importReport.contactEndDerivations.addAll(result.contactEndDerivations);
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
         return result;
     }

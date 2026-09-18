@@ -1,0 +1,300 @@
+{
+  "id": "synthea-vaccines-atc-2026-v1",
+  "sourceRegistrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
+  "sources": [
+    "https://www2.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx",
+    "https://terminologien.bfarm.de/CodeSystem-atcgm-2026.html"
+  ],
+  "review": "pending-human-review",
+  "entries": [
+    {
+      "sourceCode": "03",
+      "sourceDisplays": [
+        "MMR"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BD52",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "08",
+      "sourceDisplays": [
+        "Hep B, adolescent or pediatric"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BC01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "10",
+      "sourceDisplays": [
+        "IPV"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BF03",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "113",
+      "sourceDisplays": [
+        "Td (adult), 5 Lf tetanus toxoid, preservative free, adsorbed"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AM51",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "114",
+      "sourceDisplays": [
+        "meningococcal MCV4P",
+        "meningococcal polysaccharide (groups A, C, Y and W-135) diphtheria toxoid conjugate vaccine (MCV4P)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AH08",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "115",
+      "sourceDisplays": [
+        "Tdap",
+        "tetanus toxoid, reduced diphtheria toxoid, and acellular pertussis vaccine, adsorbed"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AJ52",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "119",
+      "sourceDisplays": [
+        "rotavirus, monovalent"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BH01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "121",
+      "sourceDisplays": [
+        "zoster vaccine, live"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BK02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "133",
+      "sourceDisplays": [
+        "Pneumococcal conjugate PCV 13",
+        "pneumococcal conjugate vaccine, 13 valent"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AL02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "140",
+      "sourceDisplays": [
+        "Influenza, split virus, trivalent, PF"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BB02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "187",
+      "sourceDisplays": [
+        "zoster vaccine recombinant"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BK03",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "20",
+      "sourceDisplays": [
+        "DTaP"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AJ52",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "207",
+      "sourceDisplays": [
+        "COVID-19, mRNA, LNP-S, PF, 100 mcg/0.5mL dose or 50 mcg/0.25mL dose"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BN01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "208",
+      "sourceDisplays": [
+        "COVID-19, mRNA, LNP-S, PF, 30 mcg/0.3 mL dose"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BN01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "21",
+      "sourceDisplays": [
+        "varicella"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BK01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "212",
+      "sourceDisplays": [
+        "COVID-19 vaccine, vector-nr, rS-Ad26, PF, 0.5 mL"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BN02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "33",
+      "sourceDisplays": [
+        "pneumococcal polysaccharide vaccine, 23 valent"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AL01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "43",
+      "sourceDisplays": [
+        "Hep B, adult"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BC01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "49",
+      "sourceDisplays": [
+        "Hib (PRP-OMP)"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07AG01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "52",
+      "sourceDisplays": [
+        "Hep A, adult"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BC02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "62",
+      "sourceDisplays": [
+        "HPV, quadrivalent"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BM01",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    },
+    {
+      "sourceCode": "83",
+      "sourceDisplays": [
+        "Hep A, ped/adol, 2 dose"
+      ],
+      "target": {
+        "system": "http://fhir.de/CodeSystem/bfarm/atc",
+        "code": "J07BC02",
+        "version": "2026"
+      },
+      "relation": "broader-classification",
+      "reason": "ATC klassifiziert den Impfstoff; Altersgruppe, Valenz und Dosisdetails des Quellkonzepts bleiben im deutschen Lesetext. Keine PZN- oder vollständige Produktäquivalenz."
+    }
+  ]
+}

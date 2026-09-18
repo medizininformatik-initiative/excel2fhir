@@ -53,6 +53,7 @@ public class FHIRValidator {
      */
     public enum ValidationResultType {
         ERROR,
+        NOT_CHECKED,
         IGNORED,
         WARNING,
         VALID;
@@ -70,6 +71,7 @@ public class FHIRValidator {
         int errors = 0;
         /** count of all ignored errors or warnings in the bundle */
         int ignored = 0;
+        int notChecked = 0;
         /** count of valid resources in the bundle */
         int valid = 0;
         /** count of all resources in the bundle */
@@ -99,15 +101,30 @@ public class FHIRValidator {
         /** the bundle the result is created from */
         public Bundle bundle;
         /** the file of the bundle */
-        private File bundleFile;
+        public File bundleFile;
+        public ValidationResultType status = ValidationResultType.VALID;
+        public String failure;
         /** all resources with warnings in the bundle */
         public List<BundleEntryComponent> warningResources = new ArrayList<>();
         /** all resources with errors in the bundle */
         public List<BundleEntryComponent> errorResources = new ArrayList<>();
         /** all resources with ignored errors or warnings in the bundle */
         public List<BundleEntryComponent> ignoredResources = new ArrayList<>();
+        public List<BundleEntryComponent> notCheckedResources = new ArrayList<>();
         /** all valid resources in the bundle */
         public List<BundleEntryComponent> validResources = new ArrayList<>();
+    }
+
+    private List<SingleValidationMessage> lastMessages = new ArrayList<>();
+
+    public boolean hasValidationProblems() {
+        return fullResultCounter.errors > 0 || fullResultCounter.notChecked > 0;
+    }
+
+    // Package-visible injection point for deterministic policy tests.
+    FHIRValidator(FhirValidator validator, ValidationResultType minLogLevel) {
+        this.validator = validator;
+        this.minLogLevel = minLogLevel;
     }
 
     /** Counter for a Bundle result */
@@ -128,40 +145,8 @@ public class FHIRValidator {
      * of this error message parts then the error will be ignored.
      */
     private static final String[] VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS = {
-
-            // The validator the error messages change from time to time. Newer messages
-            // uses ' instead of ".
-            "Validation failed für 'http://loinc.org#",
-            "Validation failed für 'http://fhir.de/CodeSystem/ifa/pzn#",
-            "Validation failed für 'http://snomed.info/sct#",
-            "Validation failed für 'http://unitsofmeasure.org#",
-            "Validation failed für 'http://fhir.de/CodeSystem/ask#",
-
-            "Unknown code 'http://loinc.org#",
-            "Unknown code 'http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
-            "Unknown code 'http://fhir.de/CodeSystem/bfarm/atc#",
-            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/icd-10-gm|",
-
-            "Could not validate code http://fhir.de/CodeSystem/bfarm/ops#",
-            "Could not validate code http://fhir.de/CodeSystem/bfarm/atc#",
-
-            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/ops|",
-            "CodeSystem could not be found: http://fhir.de/CodeSystem/bfarm/atc|",
-            "Could not validate code http://fhir.de/CodeSystem/bfarm/icd-10-gm#",
-            "Medication.code.coding[0]:Unable to expand value set",
-
-            // Following error message is generated for Observations -> the followng ignore
-            // string is
-            // the very last part of this message:
-            // Keiner der angegebenen Codes ist im Valueset 'IdentifierType'
-            // (http://hl7.org/fhir/ValueSet/identifier-type|4.0.1), und ein Code sollte
-            // aus diesem Valueset stammen, es sei denn, er enthält keinen geeigneten Code)
-            // (Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI)
-            "Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI",
-            "Profil Reference 'http://fhir.de/ConsentManagement/StructureDefinition/Consent'", // konnte nicht aufgelöst
-                                                                                               // werden, wurde also
-                                                                                               // nicht überprüft"
-
+            // Retained legacy warning exception; never suppress an ERROR or FATAL.
+            "Codes = http://terminology.hl7.org/CodeSystem/v2-0203#OBI"
     };
 
     /**
@@ -218,12 +203,14 @@ public class FHIRValidator {
             File[] inputFiles;
             if (inputFileOrDirectory.isDirectory()) {
                 inputFiles = inputFileOrDirectory.listFiles();
+                if (inputFiles == null) throw new IllegalArgumentException("Cannot list " + inputFileOrDirectory);
                 validateOnlyOneFile = inputFiles.length < 2;
             } else {
                 inputFiles = new File[] { inputFileOrDirectory };
             }
 
             for (File inputFile : inputFiles) {
+                bundleResultCounter = new ResultCounter();
                 String inputFileName = inputFile.getName();
                 Bundle bundle = null;
                 try {
@@ -233,6 +220,9 @@ public class FHIRValidator {
                     bundle = readBundle(inputFile);
                 } catch (Exception e) {
                     LOG.error("Could not read bundle " + inputFileName);
+                    fullResultCounter.errors++;
+                    Result failed = new Result(); failed.bundleFile = inputFile; failed.status = ValidationResultType.ERROR;
+                    failed.failure = e.toString(); results.add(failed);
                     continue;
                 }
                 try {
@@ -243,13 +233,16 @@ public class FHIRValidator {
                         singleResourcesValidationResult.bundleFile = inputFile;
                         results.add(singleResourcesValidationResult);
                     } else {
-                        validateBundle(bundle);
+                        Result result = new Result(); result.bundle = bundle; result.bundleFile = inputFile;
+                        result.status = validateBundle(bundle); results.add(result);
                     }
                     LOG.info("Finished Validate Bundle in " + bundleValidationStopwatch.stop());
                     logResult(inputFileName);
                 } catch (Exception e) {
-                    LOG.error("Could not validate bundle " + inputFileName);
-                    continue;
+                    LOG.error("Could not validate bundle " + inputFileName, e);
+                    fullResultCounter.errors++;
+                    Result failed = new Result(); failed.bundleFile = inputFile; failed.status = ValidationResultType.ERROR;
+                    failed.failure = e.toString(); results.add(failed);
                 }
                 bundleResultCounter = new ResultCounter();
             }
@@ -286,6 +279,7 @@ public class FHIRValidator {
      */
     public ValidationResultType validate(Resource resource) {
         if (resource == null) {
+            fullResultCounter.errors++;
             return ValidationResultType.ERROR;
         }
         String resourceAsJson = OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(resource);
@@ -299,6 +293,7 @@ public class FHIRValidator {
      */
     public ValidationResultType validate(String resourceAsJson, boolean strict) {
         if (Strings.isBlank(resourceAsJson)) {
+            fullResultCounter.errors++;
             return ValidationResultType.ERROR;
         }
         ValidationResultType resultType = ValidationResultType.VALID;
@@ -306,6 +301,7 @@ public class FHIRValidator {
         // ValidationResult validationResult = validator.validateWithResult(resource);
         ValidationResult validationResult = validator.validateWithResult(resourceAsJson);
         List<SingleValidationMessage> validationMessages = validationResult.getMessages();
+        lastMessages = new ArrayList<>(validationMessages);
         for (SingleValidationMessage validationMessage : validationMessages) {
             ResultSeverityEnum severity = validationMessage.getSeverity();
             String locationString = validationMessage.getLocationString();
@@ -315,8 +311,15 @@ public class FHIRValidator {
             String logMessage = severity + " " + locationString + " Line " + locationLine + " Col " + locationCol
                     + " : " + message;
 
-            if (!isIgnorableError(validationMessage, strict)) {
-                if (severity == ResultSeverityEnum.ERROR) {
+            if (isNotChecked(validationMessage)) {
+                bundleResultCounter.notChecked++;
+                fullResultCounter.notChecked++;
+                if (resultType.ordinal() > ValidationResultType.NOT_CHECKED.ordinal()) {
+                    resultType = ValidationResultType.NOT_CHECKED;
+                }
+                if (minLogLevel != null) LOG.warn("NOT_CHECKED " + logMessage);
+            } else if (!isIgnorableError(validationMessage, strict)) {
+                if (severity == ResultSeverityEnum.ERROR || severity == ResultSeverityEnum.FATAL) {
                     if (log(ValidationResultType.ERROR)) {
                         LOG.error(logMessage);
                     }
@@ -336,8 +339,7 @@ public class FHIRValidator {
                     if (log(ValidationResultType.VALID)) {
                         LOG.info(logMessage);
                     }
-                    bundleResultCounter.valid++;
-                    fullResultCounter.valid++;
+
                 }
             } else {
                 if (log(ValidationResultType.IGNORED)) {
@@ -349,8 +351,12 @@ public class FHIRValidator {
                     resultType = ValidationResultType.IGNORED;
                 }
             }
-            bundleResultCounter.resources++;
-            fullResultCounter.resources++;
+        }
+        bundleResultCounter.resources++;
+        fullResultCounter.resources++;
+        if (resultType == ValidationResultType.VALID) {
+            bundleResultCounter.valid++;
+            fullResultCounter.valid++;
         }
         return resultType;
     }
@@ -413,6 +419,7 @@ public class FHIRValidator {
      *         {@link #VALIDATION_IGNORE_ERROR_MESSAGE_PARTS}
      */
     private static boolean isIgnorableError(SingleValidationMessage validationMessage, boolean strict) {
+        if (validationMessage.getSeverity() != ResultSeverityEnum.WARNING) return false;
         for (String ignoreMessagePart : VALIDATION_BUNDLE_IGNORE_ERROR_MESSAGE_PARTS) {
             if (containsMessagePart(validationMessage, ignoreMessagePart)) {
                 return true;
@@ -428,6 +435,67 @@ public class FHIRValidator {
         return false;
     }
 
+    static boolean isNotChecked(SingleValidationMessage message) {
+        if (message.getSeverity() == ResultSeverityEnum.FATAL) return false;
+        String text = message.getMessage();
+        return text != null && (text.contains("CodeSystem could not be found:")
+                || text.contains("Unable to expand value set") || text.contains("Unable to expand ValueSet")
+                || text.contains("ValueSet could not be found") || text.contains("Unable to resolve value set")
+                || (text.startsWith("ValueSet ") && (text.endsWith("vom Validator nicht gefunden")
+                        || text.endsWith("not found by validator"))));
+    }
+
+    /** Persist every raw message, regardless of console log level, beside the output. */
+    public void validateAndWriteReport(Bundle bundle, File reportFile) throws IOException {
+        java.util.Map<String, Object> report = new java.util.LinkedHashMap<>();
+        ValidationResultType status;
+        lastMessages = new ArrayList<>();
+        try {
+            status = validate(bundle);
+        } catch (RuntimeException e) {
+            status = ValidationResultType.ERROR;
+            fullResultCounter.errors++;
+            report.put("validatorFailure", e.toString());
+            LOG.error("Validation failed; preserving bundle for diagnosis", e);
+        }
+        report.put("status", status);
+        report.put("resources", bundle.getEntry().size());
+        report.put("rawSuccessful", lastMessages.stream().noneMatch(m -> m.getSeverity() == ResultSeverityEnum.ERROR
+                || m.getSeverity() == ResultSeverityEnum.FATAL) && !report.containsKey("validatorFailure"));
+        List<Object> messages = new ArrayList<>();
+        for (SingleValidationMessage message : lastMessages) {
+            java.util.Map<String, Object> item = new java.util.LinkedHashMap<>();
+            item.put("severity", message.getSeverity());
+            item.put("location", message.getLocationString());
+            item.put("message", message.getMessage());
+            item.put("classification", isNotChecked(message) ? "NOT_CHECKED"
+                    : isIgnorableError(message, true) ? "IGNORED" : "RETAINED");
+            messages.add(item);
+        }
+        report.put("messages", messages);
+        // Relative references can legitimately target resources outside a transaction.
+        // Report them explicitly instead of claiming that HAPI checked a closed graph.
+        java.util.Set<String> targets = new java.util.HashSet<>();
+        for (BundleEntryComponent entry : bundle.getEntry()) {
+            if (entry.hasFullUrl()) targets.add(entry.getFullUrl());
+            if (entry.hasResource()) targets.add(entry.getResource().fhirType() + "/"
+                    + entry.getResource().getIdElement().getIdPart());
+        }
+        java.util.Map<String, Integer> unresolved = new java.util.TreeMap<>();
+        for (org.hl7.fhir.r4.model.Reference reference : FhirContext.forR4().newTerser()
+                .getAllPopulatedChildElementsOfType(bundle, org.hl7.fhir.r4.model.Reference.class)) {
+            String value = reference.getReference();
+            if (value != null && (value.matches("[A-Z][A-Za-z]+/[^/]+") || value.startsWith("urn:uuid:"))
+                    && !targets.contains(value)) unresolved.merge(value, 1, Integer::sum);
+        }
+        report.put("referencesWithoutTargetInBundle", unresolved);
+        report.put("referenceScope", "Relative references may resolve outside this bundle; review missing targets.");
+        try (java.io.Writer writer = java.nio.file.Files.newBufferedWriter(reportFile.toPath())) {
+            new com.google.gson.GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create().toJson(report, writer);
+        }
+        LOG.info("Validation status {} ({} resources); report {}", status, bundle.getEntry().size(), reportFile);
+    }
+
     /**
      * @param file
      * @return
@@ -439,7 +507,7 @@ public class FHIRValidator {
         FhirContext ctx = FhirContext.forR4();
         try (FileInputStream resourceStream = new FileInputStream(file)) {
             IBaseResource r = ctx.newJsonParser().parseResource(resourceStream);
-            assert r instanceof Bundle;
+            if (!(r instanceof Bundle)) throw new DataFormatException("Expected a Bundle in " + file);
             return (Bundle) r;
         }
     }
@@ -465,8 +533,11 @@ public class FHIRValidator {
         List<BundleEntryComponent> entries = bundle.getEntry(); // is an ArrayList -> values can be changed
         for (BundleEntryComponent e : entries) {
             ValidationResultType validateResultType = validate(e.getResource());
+            if (result.status.ordinal() > validateResultType.ordinal()) result.status = validateResultType;
             if (validateResultType == ValidationResultType.ERROR) {
                 result.errorResources.add(e);
+            } else if (validateResultType == ValidationResultType.NOT_CHECKED) {
+                result.notCheckedResources.add(e);
             } else if (validateResultType == ValidationResultType.WARNING) {
                 result.warningResources.add(e);
             } else if (validateResultType == ValidationResultType.IGNORED) {
@@ -488,8 +559,9 @@ public class FHIRValidator {
         LOG.info("Errors  : " + result.toString(result.errors));
         LOG.info("Warnings: " + result.toString(result.warnings));
         LOG.info("Ignored : " + result.toString(result.ignored));
-        LOG.info("Valid   : " + result.toString(result.valid));
-        LOG.info("All     : " + result.toString(result.resources));
+        LOG.info("Not checked messages: " + result.notChecked);
+        LOG.info("Valid validation calls: " + result.toString(result.valid));
+        LOG.info("Validation calls: " + result.toString(result.resources));
     }
 
     /**
@@ -501,6 +573,6 @@ public class FHIRValidator {
         FHIRValidator fhirValidator = new FHIRValidator();
         fhirValidator.validate(args, false);
         LOG.info("Finished Validation Process in " + stopwatch.stop());
-        System.exit(0);
+        System.exit(fhirValidator.hasValidationProblems() || args.length == 0 ? 1 : 0);
     }
 }

@@ -1,249 +1,86 @@
 # excel2fhir
 
-`excel2fhir` converts structured Excel workbooks into synthetic FHIR R4 test data
-bundles. It is intended for creating coherent, referenced test data in the context of
-the German Medical Informatics Initiative (MII) Kerndatensatz.
+Mit `excel2fhir` erzeugen Sie synthetische FHIR-R4-Testdaten für den deutschen
+MII-Kerndatensatz (KDS). Sie können Patienten mit Synthea erzeugen, die
+Excel-Vorlage ausfüllen oder CSV-Dateien konvertieren.
 
-The input is an Excel workbook with predefined sheets for patients, encounters,
-diagnoses, procedures, observations, medication, clinical documentation and conversion
-options. The generator splits the workbook into intermediate CSV files and then creates
-FHIR resources and bundles.
+| Ausgangspunkt | Anleitung |
+| --- | --- |
+| Neue Patienten mit Synthea erzeugen | [Synthea → Excel → FHIR](docs/synthea-workflow.md) |
+| Viele stationäre Fälle im Zeitraum 2020–2026 | [Krankenhausbeispiel](examples/synthea-hospital/README.md) |
+| Excel-Vorlage ausfüllen oder vorhandene Excel-/CSV-Daten konvertieren | [Excel und CSV verwenden](docs/converter-usage.md) |
+| Vorhandene Synthea-Bundles importieren oder ohne Docker arbeiten | [Manueller Ablauf](docs/synthea-manual.md) |
 
-## Current Scope
+## KDS-FHIR aus Synthea erzeugen
 
-The converter currently supports the following logical data areas:
+Voraussetzung: Docker mit Compose, mindestens 8 GB für Docker und Internet für
+den ersten Build. Große Patientenverläufe benötigen mehr Speicher. Nach dem
+Checkout im Projektverzeichnis starten:
 
-- Patient data (`Person`)
-- Encounter data (`Fall`)
-- Diagnoses / conditions (`Diagnose`)
-- Procedures (`Prozedur`)
-- Laboratory observations (`Laborbefund`)
-- Vital signs / clinical documentation (`Klinische Dokumentation`)
-- Medication data (`Medikation`)
-- Document references (`DocumentReference`)
-- Consent data (`Consent`, currently represented on the patient sheet)
-- Conversion options (`Konvertierungsoptionen`)
-
-The generated resources aim to be suitable for MII KDS-oriented test data scenarios.
-Profile conformance depends on the current converter implementation, bundled validation
-resources and the profile versions used by downstream systems.
-
-## Excel Templates
-
-The repository contains two workbooks:
-
-- `FHIR_Testdatengenerator_Vorlage.xlsx` - the default input template.
-- `FHIR_Testdatengenerator_Interpolar_Demo.xlsx` - a small demo workbook with coherent
-  example data.
-
-The sheet names and many comments in the workbook are German because the template is
-aligned with the German MII Kerndatensatz context.
-
-When running the application without input arguments, `FHIR_Testdatengenerator_Vorlage.xlsx`
-from the application directory is used as the default input file.
-
-## Requirements
-
-- Java 17
-- Maven 3.x
-
-## Quick Start
-
-Build and run the default template:
-
-```bash
-mvn -q compile exec:java \
-  -Dexec.mainClass=de.uni_leipzig.imise.Excel2FhirMain
+```sh
+docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
-Run the demo workbook explicitly:
+Java, Python und LibreOffice sind im Image enthalten. Der fertige Lauf arbeitet
+ohne Netzwerk und benötigt keine externen Medikamentenkataloge.
 
-```bash
-mvn -q compile exec:java \
-  -Dexec.mainClass=de.uni_leipzig.imise.Excel2FhirMain \
-  -Dexec.args="-f FHIR_Testdatengenerator_Interpolar_Demo.xlsx"
-```
+- **FHIR-Dateien:** `outputSynthea/run-…/fhir/`
+- **Excel-Dateien:** `outputSynthea/run-…/cases/<Patient-ID>/Fall.xlsx`
+- **Einstellungen:** Synthea-Argumente in `compose.synthea.yml`, Converter-Optionen
+  in `outputSynthea/converter-options.config`. Beide Dateien sind bereits vorhanden.
 
-Run with FHIR resource validation enabled:
+Jeder Lauf bekommt einen eigenen Ordner. Die Excel-Dateien können Sie ansehen,
+bearbeiten und anschließend [erneut konvertieren](docs/synthea-workflow.md#excel-bearbeiten).
+Standardmäßig entsteht die Lebensgeschichte eines erwachsenen Patienten;
+Synthea kann zusätzlich verstorbene Patienten ausgeben.
 
-```bash
-mvn -q compile exec:java \
-  -Dexec.mainClass=de.uni_leipzig.imise.Excel2FhirMain \
-  -Dexec.args="-v -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx"
-```
+## Ergebnisse beurteilen
 
-Create the executable JAR:
+Der Workflow prüft den Import, vergleicht die übernommenen Inhalte mit Synthea
+und validiert das erzeugte FHIR. **`NOT_CHECKED`** bedeutet, dass Teile der
+Terminologieprüfung nicht ausführbar waren. Die Dateien liegen trotzdem vor;
+der Prozess liefert dafür Exitcode 1. **`FAILED`** bezeichnet einen unvollständigen
+Lauf. Einzelheiten stehen in `workflow.json` und `cases/summary.json`.
 
-```bash
-mvn package
-java -jar target/excel2fhir.jar -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx
-```
+Die Daten enthalten ausdrücklich synthetische deutsche Ergänzungen und
+näherungsweise Codezuordnungen. Nicht jede Synthea-Eigenschaft wird übernommen;
+Auslassungen werden berichtet. Vollständige KDS-/Terminologiekonformität wird
+nicht pauschal zugesichert. [Importumfang und Grenzen](docs/synthea-clinical-import.md).
 
-## Output
+Im eingebundenen Synthea-Generator bestehen bekannte Sicherheitsbefunde in
+Abhängigkeiten. Ihre Bereinigung wird in [Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
+bearbeitet; der vollständige Workflow hat noch keine abgeschlossene Sicherheitsfreigabe.
+Das Image für die Excel-/CSV-Konvertierung enthält nur den Converter und seine
+Abhängigkeiten.
 
-By default, output is written next to the input workbook:
+## KDS-FHIR aus Excel oder CSV erzeugen
 
-- `outputLocal/` contains intermediate CSV files extracted from the Excel workbook.
-- `outputGlobal/` contains the generated FHIR bundle files.
+Das Repository enthält die [Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) und
+eine [ausgefüllte Demo](FHIR_Testdatengenerator_Interpolar_Demo.xlsx). Eine Datei
+kann mehrere Patienten enthalten. Mit Docker:
 
-The default result format is JSON. Additional output formats can be selected with
-`-r` / `--result-file-format`:
-
-- `JSON`
-- `XML`
-- `NDJSON`
-- `JSONGZIP`
-- `JSONBZ2`
-
-Example:
-
-```bash
-java -jar target/excel2fhir.jar \
-  -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
-  -r JSON,NDJSON
-```
-
-## Command Line Options
-
-```text
--f,   --input-file INPUT-File
-      Input Excel file. If specified, the input directory is ignored.
-
--i,   --input-directory INPUT-DIRECTORY
-      Directory containing Excel files to convert.
-
--o,   --output-directory OUTPUT-DIRECTORY
-      Directory for generated FHIR result files.
-
--t,   --temp-directory TEMP-DIRECTORY
-      Directory for intermediate CSV files.
-
--r,   --result-file-format RESULT-FILE-FORMAT
-      Comma-separated output formats: JSON, XML, NDJSON, JSONGZIP or JSONBZ2.
-
--p,   --patients-count PATIENTS-COUNT
-      Maximum number of patients per output bundle.
-
--v,   --validate-bundles / --no-validate-bundles
-      Validate generated FHIR resources and include only valid resources.
-
--vll, --validation-log-level VALIDATION-LOG-LEVEL
-      Minimum validation log level. Supported values include ERROR, WARNING, IGNORED and VALID.
-```
-
-You can also use the built-in help:
-
-```bash
-java -jar target/excel2fhir.jar --help
-```
-
-## Validation
-
-There are two validation layers:
-
-1. Excel template validation checks the structure and consistency of the workbook before
-   conversion.
-2. FHIR resource validation can be enabled with `-v` / `--validate-bundles`.
-
-Strict Excel template validation is enabled by default. It can be configured via
-converter options if a test-data scenario intentionally needs more permissive behavior.
-
-When FHIR validation is enabled, invalid resources are not added to the generated bundle.
-Validation warnings may still be expected depending on the test-data use case and the
-profile versions used.
-
-## Converter Options
-
-Conversion behavior can be configured through the `Konvertierungsoptionen` sheet in the
-workbook. Default values are documented in:
-
-```text
-src/main/resources/Converter_Options.config
-```
-
-Examples include:
-
-- start counters for generated resource identifiers
-- whether circular references between encounters and diagnoses/procedures should be generated
-- whether missing encounter data should be filled from parent encounters
-- whether strict Excel template validation should be active
-
-## Docker
-
-Docker can be used without a local Java or Maven installation. The compose setup mounts
-the repository root read-only as `/app/input` and writes generated files to the host
-directories `outputGlobal/` and `outputLocal/`.
-
-Run the bundled default template:
-
-```bash
-docker compose -f docker/docker-compose.yml run --rm excel2fhir
-```
-
-Run the demo workbook from the repository:
-
-```bash
-docker compose -f docker/docker-compose.yml run --rm excel2fhir \
+```sh
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
   -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx
 ```
 
-Run a self-edited workbook stored in the repository directory. Replace
-`my-workbook.xlsx` with the actual file name:
+FHIR liegt unter `outputGlobal/`, Zwischen-CSV unter `outputLocal/`.
+Diese Ordner sind für Konverterausgaben reserviert und können beim nächsten
+Aufruf geleert werden. [Eigene Dateien, Optionen und CSV-Einstieg](docs/converter-usage.md).
 
-```bash
-docker compose -f docker/docker-compose.yml run --rm excel2fhir \
-  -f /app/input/my-workbook.xlsx
+## Entwicklung und fachliche Details
+
+Für die Java-Entwicklung: JDK 17 und Maven 3.x. Der lokale Synthea-Import benötigt
+zusätzlich Python und LibreOffice; die [manuelle Anleitung](docs/synthea-manual.md)
+erklärt den Aufbau.
+
+```sh
+mvn test package
+python3 -m unittest discover -s scripts/tests -v
 ```
 
-Write one JSON bundle per patient:
-
-```bash
-docker compose -f docker/docker-compose.yml run --rm excel2fhir \
-  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
-  -p 1
-```
-
-Additional CLI options can be passed after the service name. If no output or temp
-directory is provided, the Docker entrypoint defaults to `/app/outputGlobal` and
-`/app/outputLocal`, which are mounted to `outputGlobal/` and `outputLocal/` on the host.
-
-Example with FHIR validation and NDJSON output:
-
-```bash
-docker compose -f docker/docker-compose.yml run --rm excel2fhir \
-  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx \
-  -v \
-  -r JSON,NDJSON
-```
-
-## Development
-
-Run the test suite:
-
-```bash
-mvn test
-```
-
-Build the project:
-
-```bash
-mvn package
-```
-
-The GitHub Actions workflow runs Maven tests, CodeQL analysis, Docker image build and
-Trivy vulnerability scanning.
-
-## Repository Layout
-
-```text
-FHIR_Testdatengenerator_Vorlage.xlsx          Default Excel template
-FHIR_Testdatengenerator_Interpolar_Demo.xlsx  Demo workbook
-src/main/java/                                Converter implementation
-src/main/resources/                           Mapping and converter option defaults
-docker/                                       Docker build and compose setup
-.github/workflows/                            CI workflow
-```
-
-## License
-
-See [LICENSE](LICENSE).
+- [Architektur, Skripte und Mappingdateien](docs/architecture.md)
+- [Aufenthalte und OP-/Konsilkontakte](docs/synthea-movements.md)
+- [Kontakt-Eingabeprüfungen](docs/contact-input-checks.md)
+- [Importbilanz](docs/import-report.md) und [FHIR-Validierung](docs/fhir-validation.md)
+- [Lizenz](LICENSE)

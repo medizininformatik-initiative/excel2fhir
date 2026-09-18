@@ -104,6 +104,17 @@ public class Excel2Csv {
                 try (OutputStream os = new FileOutputStream(new File(csvFile));
                         PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
                     LOG.info("Creating " + csvFile);
+                    // This sheet contains Properties text, not a CSV table. CSV quoting
+                    // would turn comments containing commas into active property keys.
+                    if (sheetName.equals("Konvertierungsoptionen")) {
+                        var formatter = new org.apache.poi.ss.usermodel.DataFormatter(java.util.Locale.GERMANY);
+                        var evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+                        for (Row row : dataSheet) {
+                            Cell cell = row.getCell(0);
+                            csv.println(cell == null ? "" : formatter.formatCellValue(cell, evaluator));
+                        }
+                        continue;
+                    }
                     // Annahme: Header ist in der ersten Zeile
                     // Annahme: Es gibt nur soviele Spalten wie Header
                     int maxCol = 0;
@@ -164,18 +175,12 @@ public class Excel2Csv {
                                 LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
                                 cellValue = "";
                             }
-                            // clean value inclusive bon-breaking whitespace occured in ICD
-                            cellValue = cellValue.replaceAll("[\u00A0\u2007\u202F\\s]+", " ").trim();
-                            // "No Value" used in UKE
-                            if ("#NV".equals(cellValue)) {
-                                cellValue = "";
-                            }
-                            // We must escape all quotes in the values to prevent errors
-                            // on reading the CSV-file with Java. There is no standard
-                            // for escaping quotes in CSV so we use our own escape sequence.
-                            cellValue = cellValue.replace("\"", QUOTE_ESCAPE);
-                            if (cellValue.contains(DELIM)) {
-                                cellValue = QUOTE + cellValue + QUOTE;
+                            // Preserve literal cell contents. CSV represents embedded quotes by
+                            // doubling them and protects delimiters, newlines and edge whitespace.
+                            if (cellValue.contains(DELIM) || cellValue.contains("\"")
+                                    || cellValue.contains("\n") || cellValue.contains("\r")
+                                    || !cellValue.equals(cellValue.strip())) {
+                                cellValue = QUOTE + cellValue.replace("\"", "\"\"") + QUOTE;
                             }
                             rowValues.add(cellValue);
                         }

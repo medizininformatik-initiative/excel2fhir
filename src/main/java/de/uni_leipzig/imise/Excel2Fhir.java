@@ -32,7 +32,17 @@ public class Excel2Fhir {
     private final ExcelTemplateValidator templateValidator = new ExcelTemplateValidator();
 
     /**  */
-    private final FHIRValidator validator;
+    private FHIRValidator validator;
+    private final boolean validateOutput;
+    private final ValidationResultType minLogLevel;
+
+    private boolean importProblems;
+
+    public boolean hasImportProblems() { return importProblems; }
+
+    public boolean hasValidationProblems() {
+        return validator != null && validator.hasValidationProblems();
+    }
 
     /** Counters for all created resources */
     private final ConverterResultStatistics allFilesStatistics = new ConverterResultStatistics();
@@ -53,7 +63,8 @@ public class Excel2Fhir {
      * @param minLogLevel
      */
     public Excel2Fhir(boolean validate, ValidationResultType minLogLevel) {
-        validator = validate ? new FHIRValidator(minLogLevel) : null;
+        this.validateOutput = validate;
+        this.minLogLevel = minLogLevel;
     }
 
     /**
@@ -154,6 +165,7 @@ public class Excel2Fhir {
             int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes)
             throws IOException {
         templateValidator.validateAndThrow(sourceExcelFile);
+        if (validateOutput && validator == null) validator = new FHIRValidator(minLogLevel);
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
@@ -164,7 +176,9 @@ public class Excel2Fhir {
             ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
             allFilesStatistics.add(converterStatistics);
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
+        } finally {
+            importProblems |= converter.hasImportProblems();
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);

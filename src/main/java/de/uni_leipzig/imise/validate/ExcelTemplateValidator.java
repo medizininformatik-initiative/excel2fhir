@@ -29,11 +29,14 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.r4.model.Coding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption;
+import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues;
+import de.uni_leipzig.life.csv2fhir.converter.AdmissionReasonValues;
 
 /**
  * Validates the current Excel input template contract before converting it.
@@ -53,7 +56,9 @@ public class ExcelTemplateValidator {
         try (FileInputStream inputStream = new FileInputStream(excelFile);
                 XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            boolean validateStrict = readBooleanOption(workbook, VALIDATE_STRICT);
+            ConverterOptions options = readOptions(workbook);
+            for (String error : options.getErrors()) add(result, ERROR, "Konvertierungsoptionen", 0, "A", error);
+            boolean validateStrict = options.is(VALIDATE_STRICT);
             validateHeaders(workbook, result);
             if (!validateStrict) {
                 LOG.info("Excel template strict validation is disabled by {}", VALIDATE_STRICT);
@@ -68,25 +73,16 @@ public class ExcelTemplateValidator {
         return result;
     }
 
-    private boolean readBooleanOption(XSSFWorkbook workbook, BooleanOption option) {
-        String optionName = option.toString();
+    private ConverterOptions readOptions(XSSFWorkbook workbook) {
+        StringBuilder text = new StringBuilder();
         XSSFSheet sheet = workbook.getSheet("Konvertierungsoptionen");
-        if (sheet == null) {
-            return option.getDefault();
-        }
-        for (Row row : sheet) {
-            for (Cell cell : row) {
-                String line = formatCell(cell).trim();
-                if (line.startsWith("#") || !line.contains("=")) {
-                    continue;
-                }
-                String[] keyValue = line.split("=", 2);
-                if (optionName.equals(keyValue[0].trim())) {
-                    return BooleanOption.isTrue(keyValue[1]);
-                }
+        if (sheet != null) {
+            for (Row row : sheet) {
+                Cell cell = row.getCell(0);
+                text.append(cell == null ? "" : formatCell(cell)).append('\n');
             }
         }
-        return option.getDefault();
+        return ConverterOptions.fromText(text.toString());
     }
 
     public void validateAndThrow(File excelFile) throws IOException {
@@ -147,6 +143,7 @@ public class ExcelTemplateValidator {
             return encounterIds;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
+        var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
         String previousPatientId = null;
         for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
@@ -165,10 +162,17 @@ public class ExcelTemplateValidator {
                 add(result, ERROR, "Fall", rowIndex + 1, "Patient-ID", "Patient-ID does not exist in Person sheet");
             }
 
-            DateTimeType start = validateDateTime(sheet, row, columns, "Start", result, true);
-            DateTimeType end = validateDateTime(sheet, row, columns, "Ende", result, false);
-            validateDateRange(result, "Fall", rowIndex + 1, "Start/Ende", start, end, ERROR);
-
+            Map<String, String> contactValues = new HashMap<>();
+            for (String column : columns.keySet()) contactValues.put(column, get(row, columns, column));
+            for (String column : List.of("Start", "Ende")) {
+                Cell cell = getCell(row, columns, column);
+                if (isExcelDateCell(cell)) contactValues.put(column, new DateTimeType(cell.getDateCellValue()).getValueAsString());
+                else if (isExcelDateFormulaCell(cell)) contactValues.put(column, new DateTimeType(evaluateDateFormula(cell)).getValueAsString());
+            }
+            for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
+                    rowIndex + 1, patientId, contactValues))) {
+                add(result, ERROR, "Fall", (int) issue.row(), issue.field(), issue.message());
+            }
             String encounterNumber = get(row, columns, "Fall-Nr");
             if (!isBlank(patientId) && !isBlank(encounterNumber)) {
                 validateRequired(sheet, row, columns, "Einrichtungskontaktklasse", result);
@@ -180,18 +184,21 @@ public class ExcelTemplateValidator {
 
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
+        for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan")) {
+            validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"), List.of());
+        }
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
-                List.of("Dokumentationszeitpunkt"), List.of());
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"), List.of(new DateRangeColumns("Beginn", "Ende")));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
-                List.of("Dokumentationszeitpunkt"), List.of());
+                List.of("Durchführungsbeginn"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Laborbefund",
                 List.of("Zeitstempel (Abnahme)"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Klinische Dokumentation",
                 List.of("Zeitstempel"), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "DocumentReference", List.of(), List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Medikation",
-                List.of("Zeitstempel", "Therapiestart", "Therapieende"),
-                List.of(new DateRangeColumns("Therapiestart", "Therapieende")));
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"),
+                List.of(new DateRangeColumns("Beginn", "Ende")));
     }
 
     private void validateReferenceTable(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
@@ -203,6 +210,7 @@ public class ExcelTemplateValidator {
         }
         Map<String, Integer> columns = columnIndexes(sheet);
         String previousPatientId = null;
+        Set<String> entryIds = new HashSet<>();
         for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
             Row row = sheet.getRow(rowIndex);
             if (isEmptyDataRow(row, columns)) {
@@ -227,6 +235,37 @@ public class ExcelTemplateValidator {
                             "Fall-Nr does not exist for this Patient-ID in Fall sheet");
                 }
             }
+            if ("Diagnose".equals(sheetName)) {
+                validateDiagnosisSelections(row, columns, result);
+            }
+            if ("Medikation".equals(sheetName)) {
+                for (String error : de.uni_leipzig.life.csv2fhir.converter.MedicationValues.errors(key -> {
+                    Cell cell = getCell(row, columns, key);
+                    if (isExcelDateCell(cell)) return new DateTimeType(cell.getDateCellValue()).getValueAsString();
+                    if (isExcelDateFormulaCell(cell)) return new DateTimeType(evaluateDateFormula(cell)).getValueAsString();
+                    return get(row, columns, key);
+                })) {
+                    add(result, ERROR, sheetName, rowIndex + 1, "Medikation", error);
+                }
+            }
+            if (("Laborbefund".equals(sheetName) || "laboratory".equals(get(row, columns, "Kategorie")))
+                    && "Ja/Nein".equals(get(row, columns, "Werttyp"))) {
+                add(result, ERROR, sheetName, rowIndex + 1, "Werttyp", "Ja/Nein ist im KDS-Laborprofil nicht zulässig");
+            }
+            String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
+            if (columns.containsKey(idColumn)) {
+                String entryId = get(row, columns, idColumn);
+                String parentId = get(row, columns, "Komponente von");
+                if ("Eintrag ID".equals(idColumn) && isBlank(entryId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, idColumn, "Entry ID is required");
+                }
+                if (!isBlank(parentId) && !entryIds.contains(patientId + "|" + parentId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, "Komponente von", "Component parent must precede the component for the same patient");
+                }
+                if (!isBlank(entryId) && !entryIds.add(patientId + "|" + entryId)) {
+                    add(result, ERROR, sheetName, rowIndex + 1, idColumn, "Duplicate entry ID for this patient");
+                }
+            }
             Map<String, DateTimeType> parsedDateTimes = new HashMap<>();
             for (String columnName : dateTimeColumns) {
                 parsedDateTimes.put(columnName, validateDateTime(sheet, row, columns, columnName, result, false));
@@ -238,6 +277,48 @@ public class ExcelTemplateValidator {
                         null);
             }
         }
+    }
+
+    void validateDiagnosisSelections(Row row, Map<String, Integer> columns, TemplateValidationResult result) {
+        Map<String, Coding> systems =
+                DiagnosisValues.systems();
+        String firstSystem = null;
+        for (String[] pair : List.of(new String[] {"Code", "Codesystem"},
+                new String[] {"Zusatzcode", "Zusatzcodesystem"})) {
+            String code = get(row, columns, pair[0]);
+            if (isBlank(code)) {
+                continue;
+            }
+            String selection = get(row, columns, pair[1]);
+            var coding = systems.get(selection);
+            if (coding == null) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Explicit supported codesystem required");
+            } else if (coding.getSystem().equals(firstSystem)) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Duplicate coding system exceeds profile slice");
+            } else {
+                firstSystem = coding.getSystem();
+            }
+            try {
+                DiagnosisValues.absentReason(code);
+            } catch (Exception e) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[0], "Unknown explicit data absent reason");
+            }
+        }
+        Map<String, Map<String, String>> statuses = Map.of(
+                "Klinischer Status", DiagnosisValues.CLINICAL,
+                "Verifikationsstatus", DiagnosisValues.VERIFICATION);
+        statuses.forEach((column, values) -> {
+            String value = get(row, columns, column);
+            if (!isBlank(value) && !values.containsKey(value)) {
+                try {
+                    if (DiagnosisValues.absentReason(value) == null) {
+                        throw new IllegalArgumentException();
+                    }
+                } catch (Exception e) {
+                    add(result, ERROR, "Diagnose", row.getRowNum() + 1, column, "Unsupported status or data absent reason");
+                }
+            }
+        });
     }
 
     private DateTimeType validateDateTime(XSSFSheet sheet, Row row, Map<String, Integer> columns, String columnName,
@@ -257,6 +338,12 @@ public class ExcelTemplateValidator {
             return new DateTimeType(evaluateDateFormula(cell));
         }
         try {
+            if (DiagnosisValues.absentReason(value) != null) {
+                return null;
+            }
+            if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
+                return new DateTimeType(value);
+            }
             return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
         } catch (Exception e) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
@@ -424,26 +511,28 @@ public class ExcelTemplateValidator {
 
     private static Map<String, List<String>> createExpectedHeaders() {
         Map<String, List<String>> headers = new LinkedHashMap<>();
-        headers.put("Person", Arrays.asList("Patient-ID", "Vorname", "Nachname", "Anschrift", "Geburtsdatum",
-                "Geschlecht", "Krankenkasse", "Datum Einwilligung", "PDAT Einwilligung",
+        headers.put("Person", Arrays.asList("Patient-ID", "Vorname", "Nachname", "Geburtsdatum",
+                "Geschlecht", "Datum Einwilligung", "PDAT Einwilligung",
                 "KKDAT retro Einwilligung", "KKDAT Einwilligung", "BIOMAT Einwilligung",
-                "BIOMAT Zusatz Einwilligung", "Erklärung/Ausfüllhilfe"));
+                "BIOMAT Zusatz Einwilligung", "Straße", "Postleitzahl", "Ort", "Bundesland", "Land", "Sterbezeitpunkt", "Erklärung/Ausfüllhilfe"));
         headers.put("Fall", Arrays.asList("Patient-ID", "Fall-Nr", "Start", "Ende", "Einrichtungskontaktklasse",
-                "Fachabteilung", "Station", "Zimmer", "Bett", "Erklärung/Ausfüllhilfe"));
-        headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Parameter", "Messwert",
-                "Einheit", "Zeitstempel (Abnahme)", "Erklärung/Ausfüllhilfe"));
-        headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "ICD",
-                "Dokumentationszeitpunkt", "Typ", "Erklärung/Ausfüllhilfe"));
+                "Fachabteilung", "Station", "Zimmer", "Bett", AdmissionReasonValues.COLUMN,
+                "Kontaktart", "Erklärung/Ausfüllhilfe"));
+        headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Parameter", "Messwert",
+                "Einheit", "Zeitstempel (Abnahme)", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Erklärung/Ausfüllhilfe"));
+        headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",
+                "Zusatzcode", "Zusatzcodesystem", "Dokumentationszeitpunkt", "Beginn", "Ende",
+                "Klinischer Status", "Verifikationsstatus", "Typ", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
-                "Dokumentationszeitpunkt", "Erklärung/Ausfüllhilfe"));
-        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Zeitstempel", "Medikationstyp",
-                "Medikationsplanart", "Wirksubstanz aus Präparat/Handelsname", "ATC Code", "PZN Code", "ASK",
-                "FHIR_UserSelected", "Darreichungsform", "Therapiestart", "Therapieende", "Einzeldosis", "Einheit",
-                "Anzahl Dosen pro Tag", "Erklärung/Ausfüllhilfe"));
-        headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "LOINC", "Wert",
-                "Einheit", "Zeitstempel", "Erklärung/Ausfüllhilfe"));
+                "Durchführungsbeginn", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Erklärung/Ausfüllhilfe"));
+        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Medikationstyp", "Präparatbezeichnung", "Präparatcode", "Präparatcodesystem", "ATC-Code", "ATC-Version", "Darreichungsform", "Wirkstoffcode", "Wirkstoffcodesystem", "Status", "Absicht", "Dokumentationszeitpunkt", "Beginn", "Ende", "Einzeldosis", "Dosiereinheit", "Dosen pro Tag", "Dosierungstext", "Erklärung/Ausfüllhilfe"));
+        headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Untersuchungscode", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Wert",
+                "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",
-                "Erklärung/Ausfüllhilfe"));
+                "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));
+        headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Erklärung/Ausfüllhilfe"));
+        headers.put("Befundbericht", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Ausgabezeitpunkt", "Ergebnisse", "Beschreibung", "Erklärung/Ausfüllhilfe"));
+        headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Ende", "Status", "Absicht", "Beschreibung", "Aktivitätscodes", "Erklärung/Ausfüllhilfe"));
         return headers;
     }
 
