@@ -227,7 +227,7 @@ public class EncounterConverter extends Converter {
         } else if (!facilityBound) {
             // Original CSV continuation convention: the first row can also contain
             // the first ward stay; later primary rows extend the facility period.
-            updateParentPeriodAndStatus(previousEncounterLevel1, p, p.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS);
+            updateParentPeriodAndStatus(previousEncounterLevel1, p);
         }
         if (department != null && !department.equals(previousDepartmentName)) {
             if (previousEncounterLevel2 != null) {
@@ -241,7 +241,7 @@ public class EncounterConverter extends Converter {
             previousDepartmentName = department;
             resources.add(previousEncounterLevel2);
         } else if (previousEncounterLevel2 != null && hasPlaces) {
-            updateParentPeriodAndStatus(previousEncounterLevel2, p, p.hasEnd() ? EncounterStatus.FINISHED : EncounterStatus.INPROGRESS);
+            updateParentPeriodAndStatus(previousEncounterLevel2, p);
         }
         if (hasPlaces) {
             String id = previousEncounterLevel1.getId() + ResourceIdSuffix.ENCOUNTER_LEVEL_3
@@ -250,7 +250,7 @@ public class EncounterConverter extends Converter {
                     previousEncounterLevel2 != null ? previousEncounterLevel2 : previousEncounterLevel1, p, kind);
             primaryEndDerived = !p.hasEnd();
             if (primaryEndDerived) derivedEnd(primaryContact, previousEncounterLevel1);
-            updateParentPeriodAndStatus(previousEncounterLevel2, primaryContact.getPeriod(), primaryContact.getStatus());
+            updateParentPeriodAndStatus(previousEncounterLevel2, primaryContact.getPeriod());
             resources.add(primaryContact);
             locations(primaryContact, department, resources);
         } else if (department != null) primaryContact = null;
@@ -371,7 +371,7 @@ public class EncounterConverter extends Converter {
         locationIDToLocation.clear();
     }
 
-    private static void updateParentPeriodAndStatus(Encounter parentEncounter, Period period, EncounterStatus status) {
+    private static void updateParentPeriodAndStatus(Encounter parentEncounter, Period period) {
         if (parentEncounter == null) {
             return;
         }
