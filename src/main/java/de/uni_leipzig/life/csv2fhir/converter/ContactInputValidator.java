@@ -83,7 +83,7 @@ public final class ContactInputValidator {
             if (secondary || number == null)
                 issue(issues, input, "Fall-Nr/Kontaktart", "Einrichtungskontakt muss vor seinen Aufenthalten stehen");
         }
-        if (!issues.isEmpty()) return invalidate(state, issues);
+        if (start == null || !issues.isEmpty()) return invalidate(state, issues);
         // After a broken row do not guess its hierarchy or produce cascading errors.
         // Independently checkable fields above are still checked on every following row.
         if (state.invalid) return issues;
