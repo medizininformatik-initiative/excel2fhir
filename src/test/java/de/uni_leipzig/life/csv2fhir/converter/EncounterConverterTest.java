@@ -227,7 +227,7 @@ public class EncounterConverterTest {
                 .setNullString("")
                 .setHeader()
                 .setSkipHeaderRecord(true)
-                .build();
+                .get();
         CSVParser parser = csvFormat.parse(new StringReader(csv));
         return parser.getRecords();
     }

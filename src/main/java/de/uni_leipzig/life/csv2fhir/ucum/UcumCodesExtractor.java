@@ -165,7 +165,7 @@ public class UcumCodesExtractor {
             .setTrim(true)
             .setAllowMissingColumnNames(true)
             .setHeader()
-            .setSkipHeaderRecord(true).build();
+            .setSkipHeaderRecord(true).get();
 
     /**
      * @param ucumCodeToDisplayMapper

@@ -183,7 +183,7 @@ public class Csv2Fhir {
                 .setTrim(false)
                 .setAllowMissingColumnNames(true)
                 .setHeader()
-                .setSkipHeaderRecord(true).build();
+                .setSkipHeaderRecord(true).get();
         this.validator = validator;
         allConverterOptions = loadConverterOptions(inputDirectory, outputFileNameBase);
     }

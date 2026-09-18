@@ -133,12 +133,12 @@ public class FileLogger {
         AppenderRef appenderRef = AppenderRef.createAppenderRef("File", null, null);
         AppenderRef[] refs = new AppenderRef[] { appenderRef };
         LoggerConfig loggerConfig = LoggerConfig.newBuilder()
-                .withAdditivity(false)
-                .withLevel(level)
-                .withLoggerName("de")
-                .withIncludeLocation("true")
-                .withRefs(refs)
-                .withConfig(logContextConfig)
+                .setAdditivity(false)
+                .setLevel(level)
+                .setLoggerName("de")
+                .setIncludeLocation("true")
+                .setRefs(refs)
+                .setConfig(logContextConfig)
                 .build();
         loggerConfig.addAppender(fileAppender, null, null);
         logContextConfig.addLogger("de", loggerConfig);
@@ -155,9 +155,9 @@ public class FileLogger {
             String pattern) {
         PatternLayout logLayout = getLayout(logContextConfig, pattern);
         Appender fileAppender = FileAppender.newBuilder()
-                .withFileName(relativeOrAbsolutePathToFile)
-                .withAppend(false)
-                .withLocking(false)
+                .setFileName(relativeOrAbsolutePathToFile)
+                .setAppend(false)
+                .setLocking(false)
                 .setName("File")
                 .setImmediateFlush(false)
                 .setIgnoreExceptions(false)
@@ -165,7 +165,7 @@ public class FileLogger {
                 .setBufferSize(4000)
                 .setLayout(logLayout)
                 .setConfiguration(logContextConfig)
-                .withAdvertise(false)
+                .setAdvertise(false)
                 .build();
         fileAppender.start();
         return fileAppender;
@@ -195,15 +195,15 @@ public class FileLogger {
         // @PluginAttribute("header") final String headerPattern,
         // @PluginAttribute("footer") final String footerPattern) {
         return PatternLayout.newBuilder()
-                .withPattern(pattern)
-                .withPatternSelector(null)
-                .withConfiguration(logContextConfig)
-                .withRegexReplacement(null)
-                .withCharset(null)
-                .withAlwaysWriteExceptions(true)
-                .withNoConsoleNoAnsi(false)
-                .withHeader(null)
-                .withFooter(null)
+                .setPattern(pattern)
+                .setPatternSelector(null)
+                .setConfiguration(logContextConfig)
+                .setRegexReplacement(null)
+                .setCharset(null)
+                .setAlwaysWriteExceptions(true)
+                .setNoConsoleNoAnsi(false)
+                .setHeader(null)
+                .setFooter(null)
                 .build();
     }
 
