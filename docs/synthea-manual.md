@@ -95,10 +95,16 @@ mit Trivy geprüft.
 
 ## Auch Synthea lokal bauen und starten
 
+Der Generator wird derzeit aus dem [Fork astruebi/synthea](https://github.com/astruebi/synthea)
+gebaut. Der feste Commit in `scripts/synthea-version.txt` enthält die
+Sicherheitsupdates aus [Upstream-PR #1712](https://github.com/synthetichealth/synthea/pull/1712).
+Nach dessen Übernahme können Repository und Commit gemeinsam auf den geprüften
+Upstream-Stand umgestellt werden; bis dahin bleibt der Fork fest gepinnt.
+
 Im Projektverzeichnis nach `mvn test package`:
 
 ```sh
-git clone git@github.com:synthetichealth/synthea.git ../synthea-kds
+git clone git@github.com:astruebi/synthea.git ../synthea-kds
 git -C ../synthea-kds checkout --detach "$(cat scripts/synthea-version.txt)"
 (cd ../synthea-kds && ./gradlew --no-daemon shadowJar)
 cp ../synthea-kds/build/libs/synthea-with-dependencies.jar target/synthea.jar

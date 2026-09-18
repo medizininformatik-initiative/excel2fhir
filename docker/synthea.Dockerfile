@@ -1,7 +1,7 @@
 FROM maven:3.8.5-openjdk-17 AS synthea-build
 COPY scripts/synthea-version.txt /synthea-version.txt
 WORKDIR /synthea
-RUN git init && git remote add origin https://github.com/synthetichealth/synthea.git \
+RUN git init && git remote add origin https://github.com/astruebi/synthea.git \
     && git fetch --depth 1 origin "$(cat /synthea-version.txt)" \
     && git checkout --detach FETCH_HEAD \
     && test "$(git rev-parse HEAD)" = "$(cat /synthea-version.txt)" \
