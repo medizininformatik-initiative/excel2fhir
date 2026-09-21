@@ -71,7 +71,7 @@ public class CsvCommandLineTest {
 
     @Test
     public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
-        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "VALIDATE_STRICT=treu\n");
+        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=treu\n");
         assertEquals(1, run("--no-validate-bundles"));
         assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
         assertFalse(Files.exists(output.resolve("fhir/case.json")));

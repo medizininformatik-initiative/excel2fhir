@@ -108,7 +108,7 @@ public class ImportReportTest {
     @Test public void invalidOptionsAreCollectedBeforeAnyOutput() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1")));
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"),
-                "VALIDATE_STRICT=treu\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\nSTART_ID_CONDITION=not-a-number\n");
+                "CHECK_INPUT_CONSISTENCY=treu\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\nSTART_ID_CONDITION=not-a-number\n");
         var report = run().getImportReport();
         assertEquals(3, report.issues.size());
         assertTrue(report.issues.stream().allMatch(i -> i.category.equals("OPTION_ERROR")));

@@ -5,7 +5,7 @@ OPTIONS = [
  ('SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER', 'false', ['Prozedur verweist auf den Kontakt (Procedure.encounter).']),
  ('SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION', 'true', ['Kontakt verweist auf Prozeduren in Encounter.diagnosis.']),
  ('ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER', 'false', ['Fehlende Diagnose des Unterkontakts aus dem übergeordneten Kontakt ergänzen.', 'Bei false erfolgt keine automatische Diagnoseübernahme.']),
- ('VALIDATE_STRICT', 'true', ['Excel-Eingaben vor der Konvertierung streng prüfen und bei Fehlern abbrechen.', 'Dies ersetzt nicht die anschließende FHIR-Validierung.']),
+ ('CHECK_INPUT_CONSISTENCY', 'true', ['Excel-Eingaben vor der Konvertierung auf Konsistenz prüfen und bei Fehlern abbrechen.', 'Tabellenstruktur und Optionen werden immer geprüft; FHIR-Validierung wird separat gesteuert.']),
 ]
 for key,label in [('CONSENT','Consent'),('CONDITION','Diagnosen'),('ENCOUNTER_LEVEL_2','Abteilungskontakte'),
                   ('ENCOUNTER_LEVEL_3','Versorgungsstellenkontakte'),('MEDICATION_REQUEST','Verordnungen'),
@@ -25,12 +25,12 @@ SYNTHEA_OVERRIDES = {
     'SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION': 'false',
     'SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER': 'true',
     'SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION': 'false',
-    'VALIDATE_STRICT': 'true',
+    'CHECK_INPUT_CONSISTENCY': 'true',
 }
 
 
 def lines(overrides=None):
-    overrides = overrides or {'VALIDATE_STRICT': 'true'}
+    overrides = overrides or {'CHECK_INPUT_CONSISTENCY': 'true'}
     result = ['# Konvertierungsoptionen', '# Gelbe Zeilen enthalten die eigentlichen Einstellungen.',
               '# # am Zeilenanfang: auskommentiert, der Default gilt.',
               '# Auskommentiert bedeutet nicht automatisch false oder ausgeschaltet.',

@@ -2,7 +2,7 @@ package de.uni_leipzig.imise.validate;
 
 import static de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity.ERROR;
 import static de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity.WARNING;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.VALIDATE_STRICT;
+import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -58,10 +58,10 @@ public class ExcelTemplateValidator {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
             ConverterOptions options = readOptions(workbook);
             for (String error : options.getErrors()) add(result, ERROR, "Konvertierungsoptionen", 0, "A", error);
-            boolean validateStrict = options.is(VALIDATE_STRICT);
+            boolean checkInputConsistency = options.is(CHECK_INPUT_CONSISTENCY);
             validateHeaders(workbook, result);
-            if (!validateStrict) {
-                LOG.info("Excel template strict validation is disabled by {}", VALIDATE_STRICT);
+            if (!checkInputConsistency) {
+                LOG.info("Excel input consistency checks are disabled by {}", CHECK_INPUT_CONSISTENCY);
                 log(result);
                 return result;
             }
@@ -381,7 +381,7 @@ public class ExcelTemplateValidator {
             TemplateValidationResult result) {
         if (isBlank(get(row, columns, columnName))) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
-                    columnName + " is required in strict validation mode");
+                    columnName + " is required when input consistency checks are enabled");
         }
     }
 

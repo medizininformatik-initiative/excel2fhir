@@ -258,11 +258,12 @@ public class ConverterOptions {
          */
         ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER,
         /**
-         * If true, the Excel input template is validated strictly before the
-         * conversion starts. Strict validation aborts the conversion on inconsistent
-         * input data instead of generating fallback resources.
+         * If true, Excel input data is checked for consistency before conversion.
+         * Inconsistent input data aborts the conversion. Template structure and
+         * converter options are checked even if false. This does not control FHIR
+         * bundle validation. The default is true.
          */
-        VALIDATE_STRICT;
+        CHECK_INPUT_CONSISTENCY;
 
         /**
          * Set of String values which can be interpreted as booleans with value
@@ -275,7 +276,7 @@ public class ConverterOptions {
         private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(
                 SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION,
                 SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION,
-                VALIDATE_STRICT);
+                CHECK_INPUT_CONSISTENCY);
 
         /**
          * @return Default-Wert dieser Property

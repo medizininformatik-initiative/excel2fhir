@@ -76,7 +76,7 @@ class CompleteWorkflowTest(unittest.TestCase):
     def test_invalid_options_stop_before_synthea_or_run_directory(self, generate):
         out = self.root / 'output'
         out.mkdir()
-        (out / CONFIG_NAME).write_text('VALIDATE_STRICT=treu\n')
+        (out / CONFIG_NAME).write_text('CHECK_INPUT_CONSISTENCY=treu\n')
         with patch.object(workflow, 'resolve_config', side_effect=ValueError('bad options')):
             with self.assertRaisesRegex(ValueError, 'bad options'):
                 workflow.run(out, [])

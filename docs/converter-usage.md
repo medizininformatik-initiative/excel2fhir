@@ -97,8 +97,14 @@ wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
 
 Die fachlichen Optionen stehen im Excel-Blatt **Konvertierungsoptionen** bzw.
 in der zugehörigen CSV-Datei. Beim direkten Excel-/CSV-Aufruf wird keine
-Synthea-Optionsdatei zusätzlich eingelesen. `VALIDATE_STRICT=false` deaktiviert
-nicht die FHIR-Prüfung oder sämtliche Eingabeprüfungen.
+Synthea-Optionsdatei zusätzlich eingelesen. `CHECK_INPUT_CONSISTENCY=true`
+(Standard) prüft Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit
+`false` entfallen diese zusätzlichen Prüfungen; Tabellenstruktur und
+Konvertierungsoptionen werden weiterhin geprüft. Die FHIR-Prüfung wird separat
+über `--validate-bundles` / `-v` gesteuert.
+
+Die Option hieß zuvor `VALIDATE_STRICT`. In eigenen Vorlagen und Optionsdateien
+muss der Schlüssel durch `CHECK_INPUT_CONSISTENCY` ersetzt werden.
 
 Ein unvollständiger Import bleibt unter `details/pending/`; der direkte
 Excel-/CSV-Lauf veröffentlicht dann keine finalen Dateien. FHIR-Prüffehler
