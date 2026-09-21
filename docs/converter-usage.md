@@ -44,7 +44,7 @@ outputGlobal/run-20260918-203000Z-excel-to-fhir/
 
 `Z` bezeichnet UTC; 20:30 UTC entspricht im deutschen Sommer 22:30 Uhr.
 Bei gleichzeitigen Starts erhält ein weiterer Lauf eine zusätzliche Nummer.
-Frühere Ergebnisse und Eingaben werden nicht gelöscht.
+Ergebnisse vorheriger Läufe bleiben erhalten.
 
 JSON und NDJSON entstehen standardmäßig zusammen. JSON gruppiert die Patienten
 eines Datensatzes in einem Bundle; `-p 1` erzeugt einzelne Patienten-Bundles.
@@ -87,8 +87,8 @@ docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java e
 Die CSV-Eingaben dafür unter `input/` ablegen.
 
 Auch hier sind `input/` und `outputGlobal/` die Defaults. Der Laufname endet auf
-`csv-to-fhir`. `-o` bezeichnet jetzt ebenfalls die Ausgabe-Wurzel.
-Die gemeinsame Präfixangabe entfällt: `Fall_Person.csv` erkennt den Datensatz
+`csv-to-fhir`. `-o` bezeichnet die Ausgabe-Wurzel.
+Der Converter erkennt Präfixe automatisch: `Fall_Person.csv` gehört zum Datensatz
 `Fall_`; weitere Tabellen wie `Fall_Fall.csv` werden zugeordnet. Mehrere
 Datensätze in einem Ordner werden gemeinsam verarbeitet. Mehrdeutige Varianten
 wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
@@ -96,15 +96,10 @@ wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
 ## Optionen und Fehler
 
 Die fachlichen Optionen stehen im Excel-Blatt **Konvertierungsoptionen** bzw.
-in der zugehörigen CSV-Datei. Beim direkten Excel-/CSV-Aufruf wird keine
-Synthea-Optionsdatei zusätzlich eingelesen. `CHECK_INPUT_CONSISTENCY=true`
-(Standard) prüft Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit
-`false` entfallen diese zusätzlichen Prüfungen; Tabellenstruktur und
-Konvertierungsoptionen werden weiterhin geprüft. Die FHIR-Prüfung wird separat
-über `--validate-bundles` / `-v` gesteuert.
-
-Die Option hieß zuvor `VALIDATE_STRICT`. In eigenen Vorlagen und Optionsdateien
-muss der Schlüssel durch `CHECK_INPUT_CONSISTENCY` ersetzt werden.
+in der zugehörigen CSV-Datei. `CHECK_INPUT_CONSISTENCY=true` (Standard) prüft
+Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit `false` beschränkt
+sich diese Vorprüfung auf Tabellenstruktur und Konvertierungsoptionen.
+Die FHIR-Prüfung wird über `--validate-bundles` / `-v` gesteuert.
 
 Ein unvollständiger Import bleibt unter `details/pending/`; der direkte
 Excel-/CSV-Lauf veröffentlicht dann keine finalen Dateien. FHIR-Prüffehler
@@ -112,7 +107,7 @@ lassen die vollständig importierten Daten erhalten, führen aber zu `FAILED`
 und Exitcode 1. `NOT_CHECKED` bedeutet, dass Teile der Terminologieprüfung nicht
 ausführbar waren, ebenfalls mit Exitcode 1. Eine explizit abgewählte Prüfung
 wird als `NOT_VALIDATED` ausgewiesen; ein vollständiger Import liefert dann 0.
-Eine vorhandene Datei allein ist keine Erfolgsmeldung: `status.txt` beachten.
+Den Gesamtstatus des Laufs zeigt `status.txt`.
 
 Details: [Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md),
 [FHIR-Validierung](fhir-validation.md).

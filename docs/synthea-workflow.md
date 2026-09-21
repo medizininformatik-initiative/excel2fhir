@@ -103,17 +103,7 @@ docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
 
 Den Beispielpfad durch den tatsächlichen Dateinamen ersetzen. Es entsteht ein
 neuer `outputGlobal/run-…-excel-to-fhir/` mit JSON und NDJSON. Die Arbeitsmappe
-bleibt erhalten. Dieser Schritt verwendet ihr Optionsblatt und startet weder
-Synthea noch einen Rückvergleich gegen die ursprüngliche Geschichte.
-
-## Bestehende Einstellungen übernehmen
-
-Beim Wechsel vom bisherigen Ausgabeordner `outputSynthea/` wird dessen
-Optionsdatei nicht automatisch überschrieben oder verschoben. Eigene Werte
-vor dem ersten neuen Lauf nach `outputGlobal/converter-options.config` kopieren
-oder mit einer dort bereits vorhandenen Datei abgleichen. Alternativ beim
-lokalen Skript weiterhin `-o outputSynthea` wählen. Die neue Struktur entsteht
-dann unter dieser Wurzel, neben den bisherigen Läufen.
+bleibt erhalten. Für die Konvertierung gelten die Einstellungen ihres Optionsblatts.
 
 ## Weitere Eingaben
 
