@@ -1,41 +1,15 @@
-# Synthea-Workflow manuell ausführen
+# Vorhandene Synthea-Daten importieren und lokal arbeiten
 
 Der Import vorhandener Synthea-R4-Patientenbundles erzeugt deutsche
 Excel-Dateien, CSV, FHIR und Prüfberichte. Die Erzeugung einer neuen Population
-mit Synthea ist weiter unten beschrieben.
+mit Synthea gelingt am einfachsten über den [Docker-Komplettlauf](synthea-workflow.md).
+Docker ist auch für den Import der empfohlene Einstieg; die lokale Installation
+ist weiter unten als Alternative beschrieben. Alle Befehle werden im Projektverzeichnis ausgeführt.
 Pro JSON-Datei wird ein Patient erwartet; Dateien ohne Patient werden mit Grund
 in der Zusammenfassung aufgeführt. Die unterstützten Ressourcen und Eigenschaften
 beschreibt der [Importumfang](synthea-clinical-import.md).
 
-## Lokal
-
-Voraussetzungen: Python 3.10 oder neuer, JDK 17 oder neuer, LibreOffice mit
-Java/UNO-Unterstützung und Maven zum Bauen. Python benötigt für diesen Workflow
-keine zusätzlichen Pakete. Unter Debian/Ubuntu heißen die wesentlichen Pakete
-`python3`, `openjdk-17-jdk-headless`, `libreoffice-calc` und
-`libreoffice-java-common`. Unter macOS wird LibreOffice unter
-`/Applications/LibreOffice.app` erkannt.
-
-```sh
-mvn test package
-python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir
-```
-
-Ohne Eingabeparameter wird `input/` gelesen; mit `-f` kann eine einzelne
-Quelldatei gewählt werden. Jeder Aufruf legt einen neuen Laufordner unter
-`outputGlobal/` an. `-o /pfad/ergebnisse` ändert diese Wurzel. Dort wird auch
-`converter-options.config` angelegt, sofern die Datei noch nicht existiert.
-Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
-JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
-einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
-als Heap für die vollständige Validierung. Im Container zählt der für Docker
-bereitgestellte Speicher. Große Lebensverläufe können mehr als 8 GB Docker-RAM
-und deutlich längere Laufzeiten erfordern. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
-die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
-Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
-mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
-
-## Container
+## Mit Docker starten (empfohlen)
 
 `docker/Dockerfile` baut das Image für die Excel-/CSV-Konvertierung.
 `docker/synthea.Dockerfile` enthält den Synthea-Import, Python,
@@ -51,7 +25,8 @@ docker run --rm \
   excel2fhir-synthea -i /input -o /output
 ```
 
-Docker muss ausreichend Arbeitsspeicher für Java und LibreOffice bereitstellen.
+Für den Einstieg mindestens 8 GB Docker-Arbeitsspeicher bereitstellen; große
+Patientenverläufe benötigen mehr. Die Beispielpfade durch eigene absolute Pfade ersetzen.
 Die Quelle wird schreibgeschützt eingebunden. Unter Linux können die erzeugten
 Dateien dem Containerbenutzer root gehören; bei Bedarf den Container mit der
 üblichen Docker-Option `--user` unter einer schreibberechtigten UID ausführen.
@@ -97,6 +72,60 @@ Terminologietest. Zusätzlich erzeugt die CI mit dem Compose-Einstieg eine neue 
 führt sie ohne Netzwerkzugriff durch den gesamten Ablauf. Beide Images werden
 mit Trivy geprüft.
 
+## Bearbeitete Excel-Datei erneut konvertieren
+
+Die bearbeitete Datei direkt mit dem Converter ausführen. Liegt sie beispielsweise
+unter `input/MeinFall.xlsx`, genügt:
+
+```sh
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
+  -f input/MeinFall.xlsx
+```
+
+Die Eingabedatei bleibt erhalten. Ergebnisse entstehen in einem neuen
+`outputGlobal/run-…-excel-to-fhir/`. Synthea wird dabei nicht erneut gestartet.
+Weitere Pfade und Optionen stehen unter [Excel und CSV konvertieren](converter-usage.md).
+
+Alternativ mit einem bereits lokal gebauten JAR:
+
+```sh
+java -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar target/excel2fhir.jar \
+  -f input/MeinFall.xlsx
+```
+
+CSV-Dateien konvertieren Sie über den
+[CSV-Einstieg](converter-usage.md#csv-verwenden). Auch dort entsteht bei jedem
+Start ein neuer Laufordner; vorherige Ergebnisse bleiben erhalten.
+
+
+## Alternative ohne Docker
+
+Voraussetzungen: Python 3.10 oder neuer, JDK 17 oder neuer, LibreOffice mit
+Java/UNO-Unterstützung und Maven zum Bauen. Python benötigt für diesen Workflow
+keine zusätzlichen Pakete. Unter Debian/Ubuntu heißen die wesentlichen Pakete
+`python3`, `openjdk-17-jdk-headless`, `libreoffice-calc` und
+`libreoffice-java-common`. Unter macOS wird LibreOffice unter
+`/Applications/LibreOffice.app` erkannt.
+
+```sh
+mvn test package
+python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir
+```
+
+Ohne Eingabeparameter wird `input/` gelesen; mit `-f` kann eine einzelne
+Quelldatei gewählt werden. Jeder Aufruf legt einen neuen Laufordner unter
+`outputGlobal/` an. `-o /pfad/ergebnisse` ändert diese Wurzel. Dort wird auch
+`converter-options.config` angelegt, sofern die Datei noch nicht existiert.
+Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
+JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
+einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
+als Heap für die vollständige Validierung. Im Container zählt der für Docker
+bereitgestellte Speicher. Große Lebensverläufe können mehr als 8 GB Docker-RAM
+und deutlich längere Laufzeiten erfordern. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
+die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
+Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
+mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.
+
 ## Auch Synthea lokal bauen und starten
 
 Der Generator wird derzeit aus dem [Fork astruebi/synthea](https://github.com/astruebi/synthea)
@@ -122,30 +151,6 @@ fertige Docker-Image enthält bereits den gepinnten Generator und dessen
 Lizenzhinweise. Neue Synthea-Versionen nicht ohne Mappingreview unterschieben.
 Die Zeitstempel in den Ausgabeordnernamen unterscheiden Läufe; Seeds und
 Simulationsdaten bestimmen die reproduzierbaren Quelldaten.
-
-## Bearbeitete Excel-Datei erneut konvertieren
-
-Nicht erneut aus Synthea erzeugen, sondern die bearbeitete Datei direkt übergeben:
-
-```sh
-java -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar target/excel2fhir.jar -v \
-  -f /pfad/Fall.xlsx
-```
-
-Mit dem Importer-Image können Sie Excel-Dateien ohne lokale Java-Installation konvertieren:
-
-```sh
-docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
-docker run --rm --network none --entrypoint java \
-  -v /absoluter/pfad/zur/excel-datei:/input:ro \
-  -v /absoluter/pfad/zu/neuen-ergebnissen:/output \
-  excel2fhir-synthea -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar /app/target/excel2fhir.jar -v \
-  -f /input/Fall.xlsx -o /output
-```
-
-CSV-Dateien konvertieren Sie über den
-[CSV-Einstieg](converter-usage.md#csv-verwenden). Auch dort entsteht bei jedem
-Start ein neuer Laufordner; vorherige Ergebnisse bleiben erhalten.
 
 ## Welche Skripte muss ich selbst starten?
 

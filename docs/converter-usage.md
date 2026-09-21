@@ -6,7 +6,7 @@ Spalten und Auswahllisten. Blattnamen und Spaltenüberschriften beibehalten.
 Die Patient-ID verbindet die Blätter; Fall-Nr ordnet Angaben einem Kontakt zu.
 Eine Arbeitsmappe darf mehrere Patienten enthalten.
 
-## Starten
+## Mit Docker starten (empfohlen)
 
 Alle Befehle werden im Projektverzeichnis ausgeführt. Für die standardmäßige
 FHIR-Prüfung mindestens 8 GB Docker-Arbeitsspeicher bereitstellen; große
@@ -21,13 +21,6 @@ docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
 Der Projektordner ist im Container unter `/workspace` eingebunden und das
 Arbeitsverzeichnis. Relative Pfade sind deshalb dieselben wie beim lokalen Aufruf.
 Die Eingaben sind schreibgeschützt; `outputGlobal/` ist beschreibbar.
-
-Lokal mit JDK 17 und Maven 3.x:
-
-```sh
-mvn test package
-java -jar target/excel2fhir.jar -f MeineDaten.xlsx
-```
 
 Für einen ganzen Ordner `-i /pfad/excel` verwenden. Ohne `-f` oder `-i` wird
 `input/` im aktuellen Arbeitsverzeichnis gelesen. Fehlen passende Dateien,
@@ -87,8 +80,11 @@ liefert `details/csv/` eines Excel-Laufs. Die Datei `…_Konvertierungsoptionen.
 enthält Properties-Text aus dem Optionsblatt, keine normale CSV-Tabelle.
 
 ```sh
-java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i /pfad/csv
+docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java excel2fhir \
+  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i input
 ```
+
+Die CSV-Eingaben dafür unter `input/` ablegen.
 
 Auch hier sind `input/` und `outputGlobal/` die Defaults. Der Laufname endet auf
 `csv-to-fhir`. `-o` bezeichnet jetzt ebenfalls die Ausgabe-Wurzel.
@@ -96,13 +92,6 @@ Die gemeinsame Präfixangabe entfällt: `Fall_Person.csv` erkennt den Datensatz
 `Fall_`; weitere Tabellen wie `Fall_Fall.csv` werden zugeordnet. Mehrere
 Datensätze in einem Ordner werden gemeinsam verarbeitet. Mehrdeutige Varianten
 wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
-
-Mit dem bereits gebauten Compose-Image:
-
-```sh
-docker compose -f docker/docker-compose.yml run --rm --entrypoint java excel2fhir \
-  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i input
-```
 
 ## Optionen und Fehler
 
@@ -121,3 +110,18 @@ Eine vorhandene Datei allein ist keine Erfolgsmeldung: `status.txt` beachten.
 
 Details: [Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md),
 [FHIR-Validierung](fhir-validation.md).
+
+## Alternative ohne Docker
+
+Lokal mit JDK 17 und Maven 3.x:
+
+```sh
+mvn test package
+java -jar target/excel2fhir.jar -f MeineDaten.xlsx
+```
+
+CSV-Dateien mit dem lokal gebauten JAR konvertieren:
+
+```sh
+java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i /pfad/csv
+```

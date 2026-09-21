@@ -9,9 +9,9 @@ Excel-Vorlage ausfüllen oder CSV-Dateien konvertieren.
 | Neue Patienten mit Synthea erzeugen | [Synthea → Excel → FHIR](docs/synthea-workflow.md) |
 | Viele stationäre Fälle im Zeitraum 2020–2026 | [Krankenhausbeispiel](examples/synthea-hospital/README.md) |
 | Excel-Vorlage ausfüllen oder vorhandene Excel-/CSV-Daten konvertieren | [Excel und CSV verwenden](docs/converter-usage.md) |
-| Vorhandene Synthea-Bundles importieren oder ohne Docker arbeiten | [Manueller Ablauf](docs/synthea-manual.md) |
+| Vorhandene Synthea-Bundles importieren oder ohne Docker arbeiten | [Import und lokale Alternative](docs/synthea-manual.md) |
 
-## KDS-FHIR aus Synthea erzeugen
+## Mit Docker KDS-FHIR aus Synthea erzeugen
 
 Voraussetzung: Docker mit Compose, mindestens 8 GB für Docker und Internet für
 den ersten Build. Große Patientenverläufe benötigen mehr Speicher. Nach dem
