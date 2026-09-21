@@ -45,6 +45,9 @@ public class Excel2FhirMain implements Callable<Integer> {
             "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Optional CSV root; creates a fresh run subdirectory. Default: details/csv inside the output run.")
     File tempDirectory;
 
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    List<File> converterOptions = new java.util.ArrayList<>();
+
     @Option(names = { "-r",
             "--result-file-format" }, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Output formats (comma separated). Default: JSON,NDJSON. Also XML,JSONGZIP,JSONBZ2,ZIPJSON.")
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
@@ -107,7 +110,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                 logFileContentLayout);
         try {
             List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
-            Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel);
+            Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
             if (inputFile != null) {
                 converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);

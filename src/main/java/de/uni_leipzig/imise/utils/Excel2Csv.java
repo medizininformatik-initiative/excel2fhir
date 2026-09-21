@@ -106,7 +106,7 @@ public class Excel2Csv {
                     LOG.info("Creating " + csvFile);
                     // This sheet contains Properties text, not a CSV table. CSV quoting
                     // would turn comments containing commas into active property keys.
-                    if (sheetName.equals("Konvertierungsoptionen")) {
+                    if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) {
                         var formatter = new org.apache.poi.ss.usermodel.DataFormatter(java.util.Locale.GERMANY);
                         var evaluator = workbook.getCreationHelper().createFormulaEvaluator();
                         for (Row row : dataSheet) {

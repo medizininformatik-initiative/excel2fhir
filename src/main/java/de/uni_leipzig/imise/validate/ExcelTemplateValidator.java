@@ -53,11 +53,24 @@ public class ExcelTemplateValidator {
 
     public TemplateValidationResult validate(File excelFile) throws IOException {
         TemplateValidationResult result = new TemplateValidationResult();
+        for (var set : de.uni_leipzig.life.csv2fhir.ConverterOptionSet.workbook(excelFile)) {
+            var checked = validate(excelFile, set.options(), set.name());
+            if (checked.hasErrors()) return checked;
+            result = checked;
+        }
+        return result;
+    }
+
+    public TemplateValidationResult validate(File excelFile, ConverterOptions options) throws IOException {
+        return validate(excelFile, options, "Konvertierungsoptionen");
+    }
+
+    public TemplateValidationResult validate(File excelFile, ConverterOptions options, String optionSetName) throws IOException {
+        TemplateValidationResult result = new TemplateValidationResult();
         try (FileInputStream inputStream = new FileInputStream(excelFile);
                 XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
-            ConverterOptions options = readOptions(workbook);
-            for (String error : options.getErrors()) add(result, ERROR, "Konvertierungsoptionen", 0, "A", error);
+            for (String error : options.getErrors()) add(result, ERROR, optionSetName, 0, "A", error);
             boolean checkInputConsistency = options.is(CHECK_INPUT_CONSISTENCY);
             validateHeaders(workbook, result);
             if (!checkInputConsistency) {
@@ -71,18 +84,6 @@ public class ExcelTemplateValidator {
         }
         log(result);
         return result;
-    }
-
-    private ConverterOptions readOptions(XSSFWorkbook workbook) {
-        StringBuilder text = new StringBuilder();
-        XSSFSheet sheet = workbook.getSheet("Konvertierungsoptionen");
-        if (sheet != null) {
-            for (Row row : sheet) {
-                Cell cell = row.getCell(0);
-                text.append(cell == null ? "" : formatCell(cell)).append('\n');
-            }
-        }
-        return ConverterOptions.fromText(text.toString());
     }
 
     public void validateAndThrow(File excelFile) throws IOException {

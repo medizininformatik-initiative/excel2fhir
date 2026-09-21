@@ -3,7 +3,6 @@ package de.uni_leipzig.life.csv2fhir;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_COUNT;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Konvertierungsoptionen;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.BufferedWriter;
@@ -70,6 +69,8 @@ public class Csv2Fhir {
 
     /** The options to convert the current csv file set. */
     private final List<ConverterOptions> allConverterOptions;
+    private final List<ConverterOptionSet> optionSets;
+    private boolean variantImportProblems;
 
     /** Counters for all resources created from one set of CSV files */
     private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
@@ -80,7 +81,7 @@ public class Csv2Fhir {
     private final ImportReport importReport = new ImportReport();
     private final Map<TableIdentifier, Map<Long, String>> recordPatients = new HashMap<>();
 
-    public boolean hasImportProblems() { return importReport.hasErrors(); }
+    public boolean hasImportProblems() { return variantImportProblems || importReport.hasErrors(); }
     public ImportReport getImportReport() { return importReport; }
 
     private Collection<String> loadInputs() throws IOException {
@@ -174,6 +175,11 @@ public class Csv2Fhir {
      */
     public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
             @Nullable FHIRValidator validator) {
+        this(inputDirectory, outputDirectory, outputFileNameBase, validator, null);
+    }
+
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
+            @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -185,39 +191,13 @@ public class Csv2Fhir {
                 .setHeader()
                 .setSkipHeaderRecord(true).get();
         this.validator = validator;
-        allConverterOptions = loadConverterOptions(inputDirectory, outputFileNameBase);
-    }
-
-    /**
-     * @return
-     */
-    private static final List<ConverterOptions> loadConverterOptions(File inputDirectory, String outputFileNameBase) {
-        List<ConverterOptions> allConverterOptions = new ArrayList<>();
-        // If there is no Konvertierungsoptionen.csv file in the outputLocal directory
-        // (that was extracted
-        // from the Excel file) then only the default options are loaded from the
-        // resources. If the file
-        // exists then it is loaded after the defaults are loaded.
-        File[] inputFiles = inputDirectory.listFiles();
-        if (inputFiles != null) {
-            List<String> inputBaseNameVariants = getOutputFileNameBaseVariants(outputFileNameBase);
-            for (File file : inputFiles) {
-                String fileName = file.getName();
-                for (String inputBaseNameVariant : inputBaseNameVariants) {
-                    String converterOptionsFileNamePattern = inputBaseNameVariant
-                            + Konvertierungsoptionen.getTableNamePattern() + "\\.csv";
-                    if (fileName.matches(converterOptionsFileNamePattern)) {
-                        ConverterOptions converterOptions = new ConverterOptions(file.getAbsolutePath());
-                        allConverterOptions.add(converterOptions);
-                        break;
-                    }
-                }
-            }
+        try {
+            optionSets = selectedOptions == null ? ConverterOptionSet.csv(inputDirectory, outputFileNameBase) : List.of();
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
         }
-        if (allConverterOptions.isEmpty()) {
-            allConverterOptions.add(new ConverterOptions(""));
-        }
-        return allConverterOptions;
+        allConverterOptions = selectedOptions == null ? optionSets.stream().map(ConverterOptionSet::options).toList()
+                : List.of(selectedOptions);
     }
 
     private static List<String> getOutputFileNameBaseVariants(String outputFileNameBase) {
@@ -252,6 +232,17 @@ public class Csv2Fhir {
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
             throws Exception {
+        if (optionSets.size() > 1) {
+            for (var set : optionSets) {
+                var destination = outputDirectory.toPath().resolve(set.directoryName());
+                java.nio.file.Files.createDirectories(destination);
+                set.snapshot(outputDirectory.toPath().resolve("options").resolve(set.directoryName()));
+                Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), outputFileNameBase, validator, set.options());
+                fileSetStatistics.add(converter.convertFiles(patientsPerBundle, outputFileTypes));
+                variantImportProblems |= converter.hasImportProblems();
+            }
+            return fileSetStatistics;
+        }
         try {
             Collection<String> patients = loadInputs();
             preflightContacts();

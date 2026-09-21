@@ -31,11 +31,13 @@ Jeder Start erzeugt einen neuen Ordner, beispielsweise:
 
 ```text
 outputGlobal/run-20260918-203000Z-excel-to-fhir/
-  fhir/                 JSON-Bundles und patients.ndjson
+  fhir/
+    Konvertierungsoptionen/  JSON-Bundles und patients.ndjson
   status.txt            Kurzer Gesamtstatus
   details/
     csv/                Aus Excel extrahierte Eingaben
-    reports/            Import- und Validierungsberichte
+    reports/            Import- und Validierungsberichte je Variante
+    options/            Wirksame Konvertierungsoptionen je Variante
     logs/               Konverterprotokoll
     pending/            Bei Fehlern: unvollständige Ausgaben zur Diagnose
 ```
@@ -47,10 +49,10 @@ Ergebnisse vorheriger Läufe bleiben erhalten.
 JSON und NDJSON entstehen standardmäßig zusammen. JSON gruppiert die Patienten
 eines Datensatzes in einem Bundle; `-p 1` erzeugt einzelne Patienten-Bundles.
 `patients.ndjson` enthält unabhängig davon **ein vollständiges Patienten-Bundle
-pro Zeile**, über alle Eingaben gesammelt. Es ist kein nach Ressourcentypen
+pro Zeile** für den jeweiligen Datensatz und Optionssatz. Es ist kein nach Ressourcentypen
 aufgeteilter FHIR-Bulk-Export. Die beiden Formate enthalten dieselben Patientendaten. Bei mehreren Eingaben
 werden die JSON-Dateien je Eingabe in Unterordnern abgelegt, damit gleiche
-Dateinamen sich nicht überschreiben. NDJSON bleibt eine gemeinsame Datei.
+Dateinamen sich nicht überschreiben. Jeder dieser Ordner enthält seine eigene NDJSON-Datei.
 
 ## Parameter
 
@@ -63,6 +65,7 @@ Dateinamen sich nicht überschreiben. NDJSON bleibt eine gemeinsame Datei.
 | `-p ANZAHL` | Maximale Patientenanzahl je JSON-Bundle; standardmäßig alle eines Datensatzes. |
 | `-r FORMATE` | Standard `JSON,NDJSON`; explizit auch `XML`, `JSONGZIP`, `JSONBZ2`, `ZIPJSON`. |
 | `-v` / `--validate-bundles` | Optionale FHIR-Profil- und Terminologieprüfung aktivieren; standardmäßig deaktiviert. |
+| `--converter-options DATEI` | Externe Optionsdatei verwenden; für mehrere Varianten wiederholen. |
 | `-vll STUFE` | Ausführlichkeit des Validierungslogs. |
 | `--help` | Hilfe zum jeweiligen Einstieg. |
 
@@ -93,8 +96,44 @@ wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
 
 ## Optionen und Fehler
 
-Die fachlichen Optionen stehen im Excel-Blatt **Konvertierungsoptionen** bzw.
-in der zugehörigen CSV-Datei. `CHECK_INPUT_CONSISTENCY=true` (Standard) prüft
+Die Datenblätter beschreiben den Fall. Die Converter Options bestimmen seine
+FHIR-Darstellung. Jedes Blatt, dessen Name **Konvertierungsoptionen** enthält,
+bildet einen eigenen Optionssatz. Beispielsweise erzeugen
+`Konvertierungsoptionen_A` und `Konvertierungsoptionen_B` zwei Varianten
+derselben Fälle. Bei CSV stehen die Optionssätze in den zugehörigen Dateien,
+etwa `Fall_Konvertierungsoptionen_A.csv`.
+
+Externe Optionsdateien lassen sich für verschiedene Falldateien wiederverwenden:
+
+```sh
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
+  -f input/MeinFall.xlsx \
+  --converter-options optionen/DIZ-A.config \
+  --converter-options optionen/DIZ-B.config
+```
+
+Mit `--converter-options` bestimmen ausschließlich die angegebenen Dateien die
+Optionssätze dieses Aufrufs. Jede Datei enthält Properties-Text, beispielsweise:
+
+```properties
+SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true
+SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false
+```
+
+Für ausgelassene Werte gelten die gemeinsamen Converter-Defaults. Die Auswahl
+funktioniert ebenso beim CSV-Einstieg. Ein Aufruf ohne Optionsblatt oder externe
+Datei verwendet den Optionssatz `default`.
+
+Jede Variante erhält unter `fhir/` einen eigenen Ordner. Dessen Name entspricht
+dem Blattnamen oder dem Namen der externen Datei ohne Endung. Leerzeichen und
+Sonderzeichen werden durch `_` ersetzt; die Namen innerhalb eines Datensatzes
+müssen eindeutig sein. So können Varianten dieselben Patienten-IDs verwenden.
+Bei mehreren Eingabedatensätzen werden zusätzliche Datensatzordner angelegt.
+`details/options/` enthält für jede Variante sämtliche wirksamen Optionswerte,
+einschließlich der Defaults. Die zugehörigen Import- und Validierungsberichte
+stehen unter `details/reports/`.
+
+`CHECK_INPUT_CONSISTENCY=true` (Standard) prüft
 Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit `false` beschränkt
 sich diese Vorprüfung auf Tabellenstruktur und Konvertierungsoptionen.
 Die optionale FHIR-Prüfung aktivieren Sie mit `--validate-bundles` / `-v`, zum Beispiel:

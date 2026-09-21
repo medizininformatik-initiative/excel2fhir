@@ -60,7 +60,7 @@ def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate
         raise ValueError(f'Konverterprozess abgebrochen (Exitcode {exit_code}); '
                          'siehe conversion.log. Bei SIGKILL/-9/137 auch das verfügbare '
                          'Docker-/System-RAM prüfen; unvollständige Ausgabe wird nicht übernommen.')
-    bundles = [p for p in directory.glob('*.json')
+    bundles = [p for p in directory.rglob('*.json')
                if not p.name.endswith(('.import.json', '.validation.json'))]
     imports = list(reports.rglob('*.import.json'))
     validations = list(reports.rglob('*.validation.json'))
@@ -168,7 +168,7 @@ def run(source_dir, output_dir, *, config=None, directory=None, validate=False):
             result.update(statuses, source=str(source), workbook=str(book),
                           rows={n: len(v) for n, v in rows.items()},
                           elapsedSeconds=round(time.monotonic() - started, 2))
-            ndjson = converted / 'fhir/patients.ndjson'
+            ndjson = fhir.parent / 'patients.ndjson'
             if not ndjson.is_file():
                 raise ValueError('NDJSON-Ausgabe fehlt')
             shutil.move(str(fhir), out / 'fhir' / (source.stem + '.json'))

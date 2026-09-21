@@ -31,6 +31,9 @@ public class Main implements Callable<Integer> {
     @Option(names = { "-o", "--output-directory" }, description = "Output root for fresh runs. Default: outputGlobal.")
     File outputDirectory;
 
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    List<File> converterOptions = new java.util.ArrayList<>();
+
     @Option(names = { "-r",
             "--result-file-format" }, split = ",", description = "Output formats. Default: JSON,NDJSON.")
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
@@ -81,11 +84,17 @@ public class Main implements Callable<Integer> {
             FHIRValidator validator = validateBundles ? createValidator() : null;
             boolean importProblems = false;
             for (String prefix : prefixes) {
-                var destination = prefixes.size() == 1 ? run.staging : run.staging.resolve(prefix + "Person");
-                Files.createDirectories(destination);
-                Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator);
-                converter.convertFiles(patientsPerBundle, outputFileTypes);
-                importProblems |= converter.hasImportProblems();
+                var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
+                        : ConverterOptionSet.external(converterOptions);
+                for (var set : sets) {
+                    var destination = run.staging.resolve(set.directoryName());
+                    if (prefixes.size() > 1) destination = destination.resolve(prefix + "Person");
+                    Files.createDirectories(destination);
+                    set.snapshot(run.directory.resolve("details/options").resolve(run.staging.relativize(destination)));
+                    Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
+                    converter.convertFiles(patientsPerBundle, outputFileTypes);
+                    importProblems |= converter.hasImportProblems();
+                }
             }
             boolean validationProblems = validator != null && validator.hasValidationProblems();
             return run.finish(importProblems, validationProblems, validateBundles);

@@ -80,13 +80,14 @@ public final class WorkflowRun {
             Path fhir = Files.createDirectory(directory.resolve("fhir"));
             List<Path> outputs = files.stream().filter(Files::exists).toList();
             List<Path> ndjson = outputs.stream().filter(p -> p.toString().endsWith(".ndjson")).toList();
-            if (!ndjson.isEmpty()) {
-                try (var destination = Files.newOutputStream(fhir.resolve("patients.ndjson"))) {
-                    for (Path file : ndjson)
-                        Files.copy(file, destination);
+            var groups = ndjson.stream().collect(java.util.stream.Collectors.groupingBy(Path::getParent));
+            for (var group : groups.entrySet()) {
+                Path target = fhir.resolve(staging.relativize(group.getKey())).resolve("patients.ndjson");
+                Files.createDirectories(target.getParent());
+                try (var destination = Files.newOutputStream(target)) {
+                    for (Path file : group.getValue()) Files.copy(file, destination);
                 }
-                for (Path file : ndjson)
-                    Files.delete(file);
+                for (Path file : group.getValue()) Files.delete(file);
             }
             for (Path file : outputs) {
                 if (!Files.exists(file))

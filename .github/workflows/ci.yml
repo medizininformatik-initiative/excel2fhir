@@ -116,7 +116,7 @@ jobs:
         bundles = [json.loads(p.read_text()) for p in sorted((directory / 'fhir').glob('*.json'))]
         lines = [json.loads(line) for line in (directory / 'fhir/patients.ndjson').read_text().splitlines()]
         assert bundles == lines, 'JSON and NDJSON differ'
-        assert not list((directory / 'details').glob('cases/*/run-*/fhir/*.json')), 'Duplicate final bundles'
+        assert not list((directory / 'details').glob('cases/*/run-*/fhir/**/*.json')), 'Duplicate final bundles'
         PYTHON
     - name: Scan Synthea importer image
       uses: aquasecurity/trivy-action@master

@@ -6,6 +6,11 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
+import de.uni_leipzig.imise.validate.TemplateValidationException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -37,6 +42,8 @@ public class Excel2Fhir {
     private final ValidationResultType minLogLevel;
 
     private boolean importProblems;
+    private final List<File> optionFiles;
+    private final Path optionsDirectory;
 
     public boolean hasImportProblems() { return importProblems; }
 
@@ -63,6 +70,12 @@ public class Excel2Fhir {
      * @param minLogLevel
      */
     public Excel2Fhir(boolean validate, ValidationResultType minLogLevel) {
+        this(validate, minLogLevel, List.of(), null);
+    }
+
+    public Excel2Fhir(boolean validate, ValidationResultType minLogLevel, List<File> optionFiles, Path optionsDirectory) {
+        this.optionFiles = List.copyOf(optionFiles);
+        this.optionsDirectory = optionsDirectory;
         this.validateOutput = validate;
         this.minLogLevel = minLogLevel;
     }
@@ -168,21 +181,32 @@ public class Excel2Fhir {
             File resultDir,
             int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes)
             throws IOException {
-        templateValidator.validateAndThrow(sourceExcelFile);
+        var sets = optionFiles.isEmpty() ? ConverterOptionSet.workbook(sourceExcelFile)
+                : ConverterOptionSet.external(optionFiles);
+        for (var set : sets) {
+            var checked = templateValidator.validate(sourceExcelFile, set.options(), set.name());
+            if (checked.hasErrors()) throw new TemplateValidationException(checked);
+        }
         if (validateOutput && validator == null) validator = new FHIRValidator(minLogLevel);
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }
         String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "-";
         Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
-        Csv2Fhir converter = new Csv2Fhir(tempDir, resultDir, fileBaseName, validator);
-        try {
-            ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
-            allFilesStatistics.add(converterStatistics);
-        } catch (Exception e) {
-            throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
-        } finally {
-            importProblems |= converter.hasImportProblems();
+        for (var set : sets) {
+            Path destination = resultDir.toPath().resolve(set.directoryName());
+            Files.createDirectories(destination);
+            Path snapshots = optionsDirectory == null ? resultDir.toPath().resolve("options") : optionsDirectory;
+            set.snapshot(snapshots.resolve(sourceExcelFile.getName()).resolve(set.directoryName()));
+            Csv2Fhir converter = new Csv2Fhir(tempDir, destination.toFile(), fileBaseName, validator, set.options());
+            try {
+                ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
+                allFilesStatistics.add(converterStatistics);
+            } catch (Exception e) {
+                throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
+            } finally {
+                importProblems |= converter.hasImportProblems();
+            }
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {
             LOG.error("Invalid UCUM codes in all files at this point " + UcumMapper.invalidUcumCodes);
