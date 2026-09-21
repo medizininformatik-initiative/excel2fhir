@@ -501,7 +501,7 @@ public class Csv2Fhir {
         String normalizedExtension = Strings.nullToEmpty(fileNameExtension);
         String fileNameBase = Strings.isNullOrEmpty(normalizedExtension) ? removeTrailingSeparator(outputFileNameBase)
                 : outputFileNameBase + normalizedExtension;
-        return fileNameBase.replaceAll("__", "_") + outputFileType.getFileExtension();
+        return (fileNameBase.isEmpty() ? "patients" : fileNameBase.replaceAll("__", "_")) + outputFileType.getFileExtension();
     }
 
     private static String removeTrailingSeparator(String fileNameBase) {

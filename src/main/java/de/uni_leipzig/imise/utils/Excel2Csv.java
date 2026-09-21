@@ -87,7 +87,7 @@ public class Excel2Csv {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
-        String csvDirBasename = FilenameUtils.removeExtension(targetCsvDir.getPath());
+        String csvDirBasename = targetCsvDir.getPath();
         try (FileInputStream sourceInputStream = new FileInputStream(sourceExcelFile);
                 Workbook workbook = new XSSFWorkbook(sourceInputStream)) {
             for (Sheet dataSheet : workbook) {
