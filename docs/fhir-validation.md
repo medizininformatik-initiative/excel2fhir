@@ -1,8 +1,8 @@
 # FHIR validation
 
-`-v` validates completed bundles after conversion and post-processing. It retains every converted resource, including resources with validation errors. A `<bundle-name>.validation.json` report beside each output records all raw messages independently of `-vll`, their severity/location and the application classification. Treat the report and process exit status as part of the output: an existing FHIR file does not imply validation success.
+The CLI validates completed bundles by default (`-v`) after conversion and post-processing. It retains every converted resource, including resources with validation errors. A `<bundle-name>.validation.json` report under the run’s `details/reports/` directory records all raw messages independently of `-vll`, their severity/location and the application classification. Treat the report and process exit status as part of the output: an existing FHIR file does not imply validation success.
 
-The conversion CLI exits with status 1 if a validation error, validator failure or a recognized terminology-check gap occurred. It completes the remaining conversions before returning this validation status. Conversion/I/O exceptions also fail the command. Without `-v`, no profile validation is performed.
+The conversion CLI exits with status 1 if a validation error, validator failure or a recognized terminology-check gap occurred. It completes the remaining conversions before returning this validation status. Conversion/I/O exceptions also fail the command. With `--no-validate-bundles`, no profile validation is performed; the run is labelled `NOT_VALIDATED`.
 
 Classification:
 

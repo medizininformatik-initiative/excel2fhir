@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    working_dir: /workspace
     volumes:
-      - "../:/app/input:ro"
-      - "../outputGlobal:/app/outputGlobal"
-      - "../outputLocal:/app/outputLocal"
+      - "../:/workspace:ro"
+      - "../outputGlobal:/workspace/outputGlobal"

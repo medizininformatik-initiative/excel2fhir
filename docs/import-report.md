@@ -2,7 +2,7 @@
 
 Jede begonnene CSV→FHIR-Konvertierung schreibt im Ausgabeverzeichnis eine
 `*.import.json`. `COMPLETE` bedeutet, dass die erfassten Eingaben ohne erkannte
-Importfehler verarbeitet wurden. `INCOMPLETE` führt auch ohne `-v` zum CLI-Exitcode
+Importfehler verarbeitet wurden. `INCOMPLETE` führt auch mit `--no-validate-bundles` zum CLI-Exitcode
 1. Bei bekannten Eingabefehlern wird vor der FHIR-Erzeugung abgebrochen; der Bericht
 enthält trotzdem alle gesammelten Befunde. Bei unerwarteten Konvertierungsfehlern
 bleiben bereits erzeugte Ergebnisse für die Fehlersuche erhalten; sie dürfen
@@ -53,7 +53,7 @@ Die drei Berichte beantworten unterschiedliche Fragen:
 | --- | --- |
 | `*.loss.json` | Welche Synthea-Inhalte wurden projiziert, ersetzt oder ausgelassen? |
 | `*.import.json` | Wurden die Excel-/CSV-Eingaben vollständig verarbeitet? |
-| `*.validation.json` (mit `-v`) | Welche FHIR-Prüfungen bestanden, scheiterten oder waren `NOT_CHECKED`? |
+| `*.validation.json` (standardmäßig aktiv) | Welche FHIR-Prüfungen bestanden, scheiterten oder waren `NOT_CHECKED`? |
 
 Die gemeinsame [Kontakt-Vorprüfung](contact-input-checks.md) meldet im CSV-Bericht
 `CONTACT_INPUT_ERROR` mit Feld, Datensatznummer und Ursache. Sie läuft vor allen
@@ -63,4 +63,4 @@ noch nicht konvertiert wurden. Mehrere Befunde derselben Zeile zählen weiterhin
 als eine fehlerhafte Zeile.
 
 Ein vollständiger Import ist keine bestandene FHIR-Validierung. Fehlende
-Terminologien bleiben `NOT_CHECKED` und führen mit `-v` weiterhin zu Exitcode 1.
+Terminologien bleiben `NOT_CHECKED` und führen bei aktiver FHIR-Prüfung weiterhin zu Exitcode 1.

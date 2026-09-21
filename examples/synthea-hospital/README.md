@@ -22,7 +22,7 @@ docker compose -f compose.synthea.yml run --build --rm --entrypoint java synthea
   -Xmx4g -Duser.timezone=Europe/Berlin -jar /app/target/synthea.jar \
   -p 60 -a 60-85 -s 20260917 -cs 20260916 -r 20270101 -e 20270101 \
   -k must_have_cardiac_surgery.json \
-  --exporter.baseDirectory=/output/hospital-pool \
+  --exporter.baseDirectory=outputGlobal/hospital-pool \
   --exporter.years_of_history=7 \
   --exporter.fhir.export=true --exporter.fhir_stu3.export=false \
   --exporter.fhir_dstu2.export=false --exporter.fhir.bulk_data=false \
@@ -45,7 +45,7 @@ Der Filter ist keine vollständige Entfernung aller älteren Zeitangaben.
 docker compose -f compose.synthea.yml run --rm \
   -v "$PWD/examples/synthea-hospital:/recipes:ro" \
   --entrypoint python3 synthea /recipes/select_cases.py \
-  /output/hospital-pool/fhir /output/hospital-selection
+  outputGlobal/hospital-pool/fhir outputGlobal/hospital-selection
 ```
 
 Das Rezept wählt sechs Patienten mit mindestens zwei stationären Aufenthalten,
@@ -64,12 +64,12 @@ ist in `select_cases.py` direkt lesbar festgelegt.
 ```sh
 docker compose -f compose.synthea.yml run --rm --entrypoint python3 synthea \
   /app/scripts/run_synthea_cases.py \
-  /output/hospital-selection/fhir /output/hospital-results
+  -i outputGlobal/hospital-selection/fhir -o outputGlobal/hospital-results
 ```
 
-Danach liegen unter `outputSynthea/hospital-results/<Patient-ID>/` jeweils
-`Fall.xlsx`, CSV, FHIR und die Prüfberichte. `summary.json` fasst alle Patienten
-zusammen. Bei `NOT_CHECKED` sind Import und Rückvergleich erfolgreich, während
+Danach liegen unter `outputGlobal/hospital-results/run-…-synthea-import/`
+die Arbeitsmappen in `excel/`, JSON und NDJSON in `fhir/` und die Zwischenstände
+unter `details/`. `details/reports/summary.json` fasst alle Patienten zusammen. Bei `NOT_CHECKED` sind Import und Rückvergleich erfolgreich, während
 Terminologieprüfungen unvollständig bleiben; der aktuelle Prozess liefert dafür
 Exitcode 1. Bei `FAILED` die konkreten Fehler prüfen.
 

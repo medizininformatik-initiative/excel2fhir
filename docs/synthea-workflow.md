@@ -21,18 +21,20 @@ Die vollständige Historie wird über unsere Excel-Vorlage nach FHIR konvertiert
 
 ## Ergebnisse finden
 
-Jeder Start legt einen neuen Ordner unter `outputSynthea/run-…/` an:
+Jeder Start legt einen neuen Ordner unter `outputGlobal/run-…-synthea/` an:
 
-- **`fhir/`**: FHIR-Bundles der vollständig importierten und abgeglichenen Patienten.
-- **`cases/<Patient-ID>/Fall.xlsx`**: befüllte Excel-Datei zum Ansehen oder Bearbeiten.
-- **`cases/<Patient-ID>/fhir/`**: FHIR-, Import- und Validierungsberichte des Patienten.
-- **`cases/summary.json`**: Übersicht, einschließlich fehlgeschlagener Patienten.
-- **`converter-options.config`**: unveränderte Kopie der für diesen Lauf verwendeten Optionen.
-- **`synthea/` und `synthea.log`**: unveränderte Synthea-Ausgabe und Generatorprotokoll.
+- **`fhir/`**: finale JSON-Bundles und `patients.ndjson` mit einem Patienten-Bundle pro Zeile.
+- **`excel/Fall-<Patient-ID>.xlsx`**: Arbeitsmappen zum Ansehen oder Bearbeiten.
+- **`status.txt`**: kurzer Status mit den wichtigsten Pfaden.
+- **`details/reports/`**: Zusammenfassung und Werkzeugstände.
+- **`details/cases/`**: Einzelberichte, CSV und Konverterprotokolle.
+- **`details/converter-options.config`**: unveränderte Optionskopie dieses Laufs.
+- **`details/sources/` und `details/logs/`**: originale Synthea-Ausgabe und Generatorprotokoll.
 
-Vorherige Läufe und manuell bearbeitete Excel-Dateien werden nicht überschrieben.
-Die Konsolenausgabe nennt Containerpfade unter `/output`; auf Ihrem Rechner
-entspricht das `outputSynthea`. Es wird nichts auf einen FHIR-Server hochgeladen.
+Das Datum und die Uhrzeit im Laufnamen sind UTC (`Z`). Gleichzeitige Starts
+bekommen zusätzliche Nummern. Vorherige Läufe bleiben erhalten. Der Projektordner
+liegt im Container unter `/workspace`; relative Pfade stimmen mit dem lokalen
+Aufruf überein. Es wird nichts auf einen FHIR-Server hochgeladen.
 
 `NOT_CHECKED` bedeutet: Import und Rückvergleich haben funktioniert, aber Teile
 der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dateien
@@ -42,8 +44,8 @@ der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patient
 
 ## Konvertierungsoptionen einstellen
 
-**`outputSynthea/converter-options.config`** liegt bereits nach dem Checkout mit
-kommentierten Workflow-Defaults bereit. Bei Bedarf vor dem ersten Start die
+**`outputGlobal/converter-options.config`** wird beim ersten Start mit
+kommentierten Workflow-Defaults angelegt. Bei Bedarf vor dem ersten Start die
 gewünschten Werte in dieser Textdatei bearbeiten und den normalen Startbefehl
 ausführen. Der Workflow liest die Datei automatisch. Eine vorhandene Datei wird
 nicht überschrieben; fehlt sie, wird sie beim Start automatisch erzeugt.
@@ -62,14 +64,16 @@ für eine spätere manuelle Konvertierung ändern. Eine nachträgliche Änderung
 zentralen Textdatei verändert keine bereits erzeugten Dateien.
 
 Bei der Konvertierung vorhandener Synthea-Bundles mit `run_synthea_cases.py` gilt
-dieselbe Konvention direkt im angegebenen Ausgabeordner. Dieser darf vorher nur
-`converter-options.config` enthalten; fehlt sie, wird sie dort angelegt.
+dieselbe Konvention in der Ausgabe-Wurzel. Jeder Start erzeugt einen eigenen
+Laufordner mit der Endung `synthea-import`.
 
 ## Synthea einstellen
 
 In `compose.synthea.yml` stehen die normalen Synthea-Argumente in `command`:
 `-p` ist die Patientenzahl, `-a` der Altersbereich, `-s` und `-cs` sind die Seeds,
-`-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`.
+`-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`. Die nativen Argumente
+stehen nach `--`, damit sie von den Workflow-Optionen getrennt sind. `-o` vor
+`--` ist die Ausgabe-Wurzel, standardmäßig `outputGlobal/`.
 Der Workflow startet mit den voreingestellten Werten. Für wiederholbare Vergleiche Seeds
 und Daten beibehalten. Die Exportform setzt der Workflow passend zum Converter. Ohne ausdrückliche
 Angabe wird die vollständige Historie exportiert; mit dem normalen Synthea-Argument
@@ -84,26 +88,32 @@ andere Version oder zusätzliche Module braucht einen erneuten Mappingreview.
 
 ## Excel bearbeiten
 
-Eine erzeugte `Fall.xlsx` öffnen, prüfen und bei Bedarf ändern. Die Hinweise
+Eine erzeugte `Fall-<Patient-ID>.xlsx` öffnen, prüfen und bei Bedarf ändern. Die Hinweise
 stehen rechts auf den Eingabeblättern; Auswahlen unterscheiden fehlende Werte
 durch den Zusatz **(Data Absent Reason)** von echten Angaben. Eine leere optionale
 Spalte ist nicht automatisch ein Fehler: Ein OP-Kontakt kann etwa ohne eigenes
 Ende eingetragen werden, eine Prozedur kann SNOMED statt OPS verwenden.
 
-Für die erneute Konvertierung eine Kopie unter
-`outputSynthea/review/Fall.xlsx` speichern. Mit dem bereits gebauten Image:
+Die bearbeitete Datei anschließend direkt konvertieren, beispielsweise:
 
 ```sh
-docker compose -f compose.synthea.yml run --rm --entrypoint java synthea \
-  -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin \
-  -jar /app/target/excel2fhir.jar -v \
-  -f /output/review/Fall.xlsx -t /output/review/csv -o /output/review/fhir
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
+  -f outputGlobal/run-20260918-203000Z-synthea/excel/Fall-PATIENT.xlsx
 ```
 
-Die Ergebnisse liegen unter `outputSynthea/review/fhir/`. Bei Wiederholung werden
-die dortigen Ergebnisse und `review/csv/` ersetzt; die Excel-Datei bleibt erhalten.
-Dieser Schritt verwendet die Optionen im Excel-Blatt. Er startet Synthea nicht
-erneut und vergleicht Ihre Änderungen nicht gegen die ursprüngliche Geschichte.
+Den Beispielpfad durch den tatsächlichen Dateinamen ersetzen. Es entsteht ein
+neuer `outputGlobal/run-…-excel-to-fhir/` mit JSON und NDJSON. Die Arbeitsmappe
+bleibt erhalten. Dieser Schritt verwendet ihr Optionsblatt und startet weder
+Synthea noch einen Rückvergleich gegen die ursprüngliche Geschichte.
+
+## Bestehende Einstellungen übernehmen
+
+Beim Wechsel vom bisherigen Ausgabeordner `outputSynthea/` wird dessen
+Optionsdatei nicht automatisch überschrieben oder verschoben. Eigene Werte
+vor dem ersten neuen Lauf nach `outputGlobal/converter-options.config` kopieren
+oder mit einer dort bereits vorhandenen Datei abgleichen. Alternativ beim
+lokalen Skript weiterhin `-o outputSynthea` wählen. Die neue Struktur entsteht
+dann unter dieser Wurzel, neben den bisherigen Läufen.
 
 ## Weitere Eingaben
 
@@ -120,7 +130,7 @@ Eigene Excel- und CSV-Dateien können Sie [direkt konvertieren](converter-usage.
 - **Docker läuft nicht:** Docker starten und denselben Befehl erneut ausführen.
 - **Exitcode 1 bei `NOT_CHECKED`:** Dateien sind vorhanden; die Grenzen der
   Terminologieprüfung stehen im Validierungsbericht.
-- **`FAILED`:** `cases/summary.json` bzw. `workflow.json` nennt den betroffenen
+- **`FAILED`:** `details/reports/summary.json` bzw. `details/reports/workflow.json` nennt den betroffenen
   Schritt. Bei einem Konvertierungsfehler steht das Detail im zugehörigen
   `conversion.log`, beim Generator in `synthea.log`.
 - **Speichermangel / Exitcode 137:** Docker mehr RAM bereitstellen oder mit

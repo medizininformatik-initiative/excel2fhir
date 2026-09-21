@@ -95,7 +95,7 @@ Prüfung:
 ```sh
 python3 -m unittest discover -s scripts/tests -v
 mvn test
-python3 scripts/run_synthea_cases.py SYNTHEA_FHIR_DIRECTORY OUTPUT_DIRECTORY
+python3 scripts/run_synthea_cases.py -i SYNTHEA_FHIR_DIRECTORY -o OUTPUT_DIRECTORY
 ```
 
 Die Tests prüfen Registerabdeckung, Herkunftsangaben, sämtliche Zahlen und

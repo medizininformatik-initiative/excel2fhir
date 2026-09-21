@@ -22,10 +22,11 @@ class ContainerOutputTest(unittest.TestCase):
 import os, pathlib, sys, tempfile
 sys.path.insert(0, sys.argv[1])
 from run_synthea_container import use_output_owner
+from workflow_layout import create_run
 use_output_owner(sys.argv[2])
 assert (os.getuid(), os.getgid()) == (12345, 23456)
 assert os.getgroups() == []
-run = pathlib.Path(tempfile.mkdtemp(dir=sys.argv[2], prefix='run-'))
+run = create_run(sys.argv[2], 'synthea')
 (run / 'workflow.json').write_text('{}')
 (run / 'Fall.xlsx').write_bytes(b'workbook')
 ''', scripts, str(output)], check=True)
@@ -40,6 +41,6 @@ os.setuid(12345)
 run = pathlib.Path(sys.argv[1])
 assert (run / 'workflow.json').read_text() == '{}'
 (run / 'Fall.xlsx').write_bytes(b'edited')
-for path in run.iterdir(): path.unlink()
-run.rmdir()
+import shutil
+shutil.rmtree(run)
 ''', str(run)], check=True)

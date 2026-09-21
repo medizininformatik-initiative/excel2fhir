@@ -62,7 +62,7 @@ Workflow ausgeführt. Python kompiliert importierte Module bei Bedarf nach
   Es dupliziert keine Mappingentscheidungen. Abdeckung des festgelegten Inventars
   bedeutet eine ausdrückliche Entscheidung, nicht zwingend einen deutschen Code
   oder vollständigen Import aller Synthea-Ressourcentypen.
-- `outputSynthea/converter-options.config` ist die mitgelieferte, bearbeitbare
+- `outputGlobal/converter-options.config` ist die automatisch angelegte, bearbeitbare
   Workflow-Konfiguration. Ohne Datei werden dieselben Defaults erzeugt. Jeder
   Lauf bewahrt einen Snapshot und die wirksamen Werte auf.
 - Die wirksamen Optionen stehen anschließend im Excel-Blatt. Änderungen dort
@@ -75,7 +75,7 @@ Die Originalquellen bleiben erhalten. `Fall.loss.json` dokumentiert Projektionen
 und Auslassungen, `*.import.json` den tatsächlichen Import, `*.validation.json`
 die FHIR-Prüfung. Der komplette Workflow kopiert nur vollständig importierte und
 gegen die Quelle abgeglichene Ergebnisse in seinen zentralen Ordner `fhir/`.
-Teilresultate bleiben für die Fehlersuche unter `cases/` sichtbar.
+Teilresultate bleiben für die Fehlersuche unter `details/cases/` sichtbar.
 
 `environment.json` und `workflow.json` halten Versionen, Eingaben und Prüfsummen
 fest. Seeds und Simulationsdatum erlauben reproduzierbare Synthea-Läufe; derselbe

@@ -121,8 +121,12 @@ public class Excel2Fhir {
             throws IOException {
         FilenameFilter filter = (dir, name) -> !name.startsWith("~") && name.toLowerCase().endsWith(".xlsx");
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
-        for (File sourceExcelFile : sourceExcelDir.listFiles(filter)) {
-            convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, false,
+        File[] sources = sourceExcelDir.listFiles(filter);
+        java.util.Arrays.sort(sources);
+        for (File sourceExcelFile : sources) {
+            File csv = sources.length == 1 ? tempDir : new File(tempDir, sourceExcelFile.getName());
+            File result = sources.length == 1 ? resultDir : new File(resultDir, sourceExcelFile.getName());
+            convertExcelFile(sourceExcelFile, sheetNamePatterns, csv, result, patientsPerBundle, sources.length > 1,
                     outputFileTypes);
         }
     }

@@ -18,11 +18,13 @@ keine zusätzlichen Pakete. Unter Debian/Ubuntu heißen die wesentlichen Pakete
 
 ```sh
 mvn test package
-python3 scripts/run_synthea_cases.py /pfad/synthea/fhir /pfad/neue-ausgabe
+python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir
 ```
 
-Das Ausgabeverzeichnis muss neu sein oder darf nur `converter-options.config`
-enthalten. Fehlt diese Datei, wird sie mit kommentierten Workflow-Defaults angelegt.
+Ohne Eingabeparameter wird `input/` gelesen; mit `-f` kann eine einzelne
+Quelldatei gewählt werden. Jeder Aufruf legt einen neuen Laufordner unter
+`outputGlobal/` an. `-o /pfad/ergebnisse` ändert diese Wurzel. Dort wird auch
+`converter-options.config` angelegt, sofern die Datei noch nicht existiert.
 Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
 einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
@@ -46,7 +48,7 @@ mkdir -p /absoluter/pfad/ergebnisse
 docker run --rm \
   -v /absoluter/pfad/synthea/fhir:/input:ro \
   -v /absoluter/pfad/ergebnisse:/output \
-  excel2fhir-synthea /input /output/lauf-01
+  excel2fhir-synthea -i /input -o /output
 ```
 
 Docker muss ausreichend Arbeitsspeicher für Java und LibreOffice bereitstellen.
@@ -58,10 +60,12 @@ lokaler MMI-Katalog ist kein Bestandteil dieses Auslieferungswegs.
 
 ## Ergebnisse und Status
 
-`environment.json` enthält Werkzeugversionen und SHA-256-Prüfsummen des JARs,
+`details/reports/environment.json` enthält Werkzeugversionen und SHA-256-Prüfsummen des JARs,
 der Vorlage, der Skripte und Mappingdateien. Jeder Fall enthält zusätzlich die
-Quellprüfsumme, `Fall.xlsx`, `Fall.loss.json`, CSV, FHIR, Import-/Validierungsbericht
-und `conversion.log`. `summary.json` wird nach jedem Fall aktualisiert und enthält
+Quellprüfsumme, Verlustbericht, CSV, Import-/Validierungsberichte
+und `conversion.log` unter `details/cases/`. Bearbeitbare Arbeitsmappen liegen
+unter `excel/`, finale JSON-Bundles und `patients.ndjson` ausschließlich unter
+`fhir/`. `details/reports/summary.json` wird nach jedem Fall aktualisiert und enthält
 auch fehlgeschlagene Fälle. Ein Fehler in einer Quelldatei verhindert nicht die
 Bearbeitung der übrigen Dateien.
 
@@ -109,7 +113,7 @@ git -C ../synthea-kds checkout --detach "$(cat scripts/synthea-version.txt)"
 (cd ../synthea-kds && ./gradlew --no-daemon shadowJar)
 cp ../synthea-kds/build/libs/synthea-with-dependencies.jar target/synthea.jar
 git -C ../synthea-kds rev-parse HEAD > target/synthea-revision.txt
-python3 scripts/run_synthea_workflow.py outputSynthea \
+python3 scripts/run_synthea_workflow.py -- \
   -p 1 -a 30-80 -s 20260912 -cs 20260912 -r 20260912 -e 20260912
 ```
 
@@ -125,7 +129,7 @@ Nicht erneut aus Synthea erzeugen, sondern die bearbeitete Datei direkt übergeb
 
 ```sh
 java -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar target/excel2fhir.jar -v \
-  -f /pfad/Fall.xlsx -t /pfad/neue-csv-ausgabe -o /pfad/neue-fhir-ausgabe
+  -f /pfad/Fall.xlsx
 ```
 
 Mit dem Importer-Image können Sie Excel-Dateien ohne lokale Java-Installation konvertieren:
@@ -136,13 +140,12 @@ docker run --rm --network none --entrypoint java \
   -v /absoluter/pfad/zur/excel-datei:/input:ro \
   -v /absoluter/pfad/zu/neuen-ergebnissen:/output \
   excel2fhir-synthea -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin -jar /app/target/excel2fhir.jar -v \
-  -f /input/Fall.xlsx -t /output/csv -o /output/fhir
+  -f /input/Fall.xlsx -o /output
 ```
 
 CSV-Dateien konvertieren Sie über den
-[CSV-Einstieg](converter-usage.md#vorhandene-csv-verwenden). Ausgabeordner bewusst neu wählen,
-da die allgemeinen Konverter vorhandene Ausgabeordner leeren können.
-
+[CSV-Einstieg](converter-usage.md#csv-verwenden). Auch dort entsteht bei jedem
+Start ein neuer Laufordner; vorherige Ergebnisse bleiben erhalten.
 
 ## Welche Skripte muss ich selbst starten?
 

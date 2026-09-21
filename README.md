@@ -24,10 +24,10 @@ docker compose -f compose.synthea.yml run --build --rm synthea
 Java, Python und LibreOffice sind im Image enthalten. Der fertige Lauf arbeitet
 ohne Netzwerk und benötigt keine externen Medikamentenkataloge.
 
-- **FHIR-Dateien:** `outputSynthea/run-…/fhir/`
-- **Excel-Dateien:** `outputSynthea/run-…/cases/<Patient-ID>/Fall.xlsx`
+- **FHIR-Dateien:** `outputGlobal/run-…-synthea/fhir/`
+- **Excel-Dateien:** `outputGlobal/run-…-synthea/excel/Fall-<Patient-ID>.xlsx`
 - **Einstellungen:** Synthea-Argumente in `compose.synthea.yml`, Converter-Optionen
-  in `outputSynthea/converter-options.config`. Beide Dateien sind bereits vorhanden.
+  in `outputGlobal/converter-options.config` (wird beim ersten Start angelegt).
 
 Jeder Lauf bekommt einen eigenen Ordner. Die Excel-Dateien können Sie ansehen,
 bearbeiten und anschließend [erneut konvertieren](docs/synthea-workflow.md#excel-bearbeiten).
@@ -40,7 +40,7 @@ Der Workflow prüft den Import, vergleicht die übernommenen Inhalte mit Synthea
 und validiert das erzeugte FHIR. **`NOT_CHECKED`** bedeutet, dass Teile der
 Terminologieprüfung nicht ausführbar waren. Die Dateien liegen trotzdem vor;
 der Prozess liefert dafür Exitcode 1. **`FAILED`** bezeichnet einen unvollständigen
-Lauf. Einzelheiten stehen in `workflow.json` und `cases/summary.json`.
+Lauf. Der kurze Status steht in `status.txt`; Einzelheiten unter `details/reports/`.
 
 Die Daten enthalten ausdrücklich synthetische deutsche Ergänzungen und
 näherungsweise Codezuordnungen. Nicht jede Synthea-Eigenschaft wird übernommen;
@@ -61,12 +61,12 @@ kann mehrere Patienten enthalten. Mit Docker:
 
 ```sh
 docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx
+  -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx
 ```
 
-FHIR liegt unter `outputGlobal/`, Zwischen-CSV unter `outputLocal/`.
-Diese Ordner sind für Konverterausgaben reserviert und können beim nächsten
-Aufruf geleert werden. [Eigene Dateien, Optionen und CSV-Einstieg](docs/converter-usage.md).
+FHIR liegt unter `outputGlobal/run-…-excel-to-fhir/fhir/`, Zwischen-CSV unter
+`details/csv/` desselben Laufs. JSON und NDJSON werden gemeinsam erzeugt.
+Jeder Start legt einen neuen Lauf an; ohne Eingabeparameter wird `input/` gelesen. [Eigene Dateien, Optionen und CSV-Einstieg](docs/converter-usage.md).
 
 ## Entwicklung und fachliche Details
 

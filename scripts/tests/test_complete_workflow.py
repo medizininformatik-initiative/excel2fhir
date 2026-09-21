@@ -26,17 +26,12 @@ class CompleteWorkflowTest(unittest.TestCase):
         options_patch.start()
         self.addCleanup(options_patch.stop)
 
-    def conversion(self, source, output, *, config=None):
+    def conversion(self, source, output, *, config=None, directory=None):
         self.assertTrue(config.is_file())
-        good = output / 'good'
-        bad = output / 'bad'
-        for case in (good, bad):
-            (case / 'fhir').mkdir(parents=True)
-            (case / 'fhir/Fall.json').write_text('{"resourceType":"Bundle"}')
-            (case / 'fhir/Fall.import.json').write_text('{}')
-            (case / 'fhir/Fall.validation.json').write_text('{}')
-        (output / 'summary.json').write_text(json.dumps({'status': self.status,
-            'results': [{'workbook': str(good / 'Fall.xlsx')}], 'failures': [{'source': 'bad'}] if self.status=='FAILED' else []}))
+        (directory / 'fhir/good.json').write_text('{"resourceType":"Bundle"}')
+        (directory / 'details/reports/summary.json').write_text(json.dumps({'status': self.status,
+            'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx')}],
+            'failures': [{'source': 'bad'}] if self.status == 'FAILED' else []}))
         return 1
 
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
@@ -46,7 +41,7 @@ class CompleteWorkflowTest(unittest.TestCase):
             self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
         directory = next((self.root / 'output').glob('run-*'))
         self.assertEqual(['good.json'], [p.name for p in (directory/'fhir').iterdir()])
-        self.assertEqual('FAILED', json.loads((directory/'workflow.json').read_text())['status'])
+        self.assertEqual('FAILED', json.loads((directory/'details/reports/workflow.json').read_text())['status'])
         self.status = 'NOT_CHECKED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
             self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
@@ -60,7 +55,7 @@ class CompleteWorkflowTest(unittest.TestCase):
             workflow.run(self.root / 'output', [])
         convert.assert_not_called()
         directory = next((self.root/'output').glob('run-*'))
-        self.assertEqual('FAILED', json.loads((directory/'workflow.json').read_text())['status'])
+        self.assertEqual('FAILED', json.loads((directory/'details/reports/workflow.json').read_text())['status'])
 
     def test_wrong_source_version_does_not_generate_or_create_output(self):
         (self.root/'target/synthea-revision.txt').write_text('new modules')

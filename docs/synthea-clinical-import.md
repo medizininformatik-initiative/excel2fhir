@@ -152,7 +152,7 @@ python3 scripts/check_synthea_roundtrip.py PATIENT.json FHIR_BUNDLE.json FALL.lo
 Für alle vorhandenen Patienten mit einem neuen Ausgabeverzeichnis:
 
 ```sh
-python3 scripts/run_synthea_cases.py SYNTHEA_FHIR_VERZEICHNIS NEUES_AUSGABEVERZEICHNIS
+python3 scripts/run_synthea_cases.py -i SYNTHEA_FHIR_VERZEICHNIS -o AUSGABEWURZEL
 ```
 
 Der Sammellauf führt jetzt auch die FHIR-Validierung aus und sammelt Import-,

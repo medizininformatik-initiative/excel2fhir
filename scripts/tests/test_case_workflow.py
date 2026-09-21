@@ -60,11 +60,11 @@ class WorkflowTest(unittest.TestCase):
             source.mkdir()
             output = Path(d) / 'empty'
             self.assertEqual(1, run(source, output))
-            self.assertEqual('FAILED', json.loads((output / 'summary.json').read_text())['status'])
+            self.assertEqual('FAILED', json.loads(next(output.glob('run-*/details/reports/summary.json')).read_text())['status'])
             (source / 'a.json').write_text('invalid')
             (source / 'b.json').write_text('{"resourceType":"Bundle","entry":[]}')
             output = Path(d) / 'invalid'
             self.assertEqual(1, run(source, output))
-            summary = json.loads((output / 'summary.json').read_text())
+            summary = json.loads(next(output.glob('run-*/details/reports/summary.json')).read_text())
             self.assertEqual(1, len(summary['failures']))
             self.assertEqual(1, len(summary['skipped']))

@@ -10,7 +10,6 @@ import java.util.LinkedHashSet;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,16 +21,17 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import picocli.CommandLine;
 
 public class CsvCommandLineTest {
-    @Rule public TemporaryFolder temp = new TemporaryFolder();
+    @Rule
+    public TemporaryFolder temp = new TemporaryFolder();
     private Path input, output;
 
-    @Before public void setup() throws Exception {
-        Main.validateBundles = false;
-        Main.minLogLevel = null;
+    @Before
+    public void setup() throws Exception {
         input = temp.newFolder("input").toPath();
-        output = input;
+        output = temp.newFolder("output").toPath();
         var values = new LinkedHashMap<String, String>();
-        for (String name : new LinkedHashSet<>(TableIdentifier.Person.getMandatoryColumnNames())) values.put(name, "");
+        for (String name : new LinkedHashSet<>(TableIdentifier.Person.getMandatoryColumnNames()))
+            values.put(name, "");
         values.put("Patient-ID", "p1");
         values.put("Vorname", "Test");
         values.put("Nachname", "Person");
@@ -44,37 +44,98 @@ public class CsvCommandLineTest {
         }
     }
 
-    @After public void resetOptions() {
-        Main.validateBundles = false;
-        Main.minLogLevel = null;
+    private int run(String validation) throws Exception {
+        java.util.Set<Path> before;
+        try (var runs = Files.list(output)) {
+            before = runs.collect(java.util.stream.Collectors.toSet());
+        }
+        int code = new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString(), validation);
+        try (var runs = Files.list(output)) {
+            output = runs.filter(p -> !before.contains(p)).findFirst().orElseThrow();
+        }
+        return code;
     }
 
-    private int run(String validation) {
-        return new CommandLine(new Main()).execute("-i", input.toString(), "-o", "case", validation);
-    }
-
-    @Test public void successfulImportReturnsZeroWithoutValidation() throws Exception {
+    @Test
+    public void successfulImportReturnsZeroWithoutValidation() throws Exception {
         assertEquals(0, run("--no-validate-bundles"));
-        assertTrue(Files.exists(output.resolve("case.json")));
+        assertTrue(Files.exists(output.resolve("fhir/case.json")));
+        assertTrue(Files.readString(output.resolve("fhir/patients.ndjson")).contains("p1"));
+        Path previous = output;
+        output = output.getParent();
+        assertEquals(0, run("--no-validate-bundles"));
+        assertNotEquals(previous, output);
+        assertTrue(Files.exists(previous.resolve("fhir/case.json")));
+        assertTrue(Files.exists(input.resolve("case_Person.csv")));
     }
 
-    @Test public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
+    @Test
+    public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "VALIDATE_STRICT=treu\n");
         assertEquals(1, run("--no-validate-bundles"));
-        assertTrue(Files.readString(output.resolve("case.import.json")).contains("INCOMPLETE"));
-        assertFalse(Files.exists(output.resolve("case.json")));
+        assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
+        assertFalse(Files.exists(output.resolve("fhir/case.json")));
     }
 
-    @Test public void validationFailureReturnsNonzeroAndKeepsBundle() throws Exception {
+    @Test
+    public void validationFailureReturnsNonzeroAndKeepsBundle() throws Exception {
         // Test CLI status propagation without loading a second full profile set.
         // FHIRValidatorTest separately checks validation and raw report contents.
         FHIRValidator validator = mock(FHIRValidator.class);
         when(validator.hasValidationProblems()).thenReturn(true);
         Main command = new Main() {
-            @Override FHIRValidator createValidator() { return validator; }
+            @Override
+            FHIRValidator createValidator() {
+                return validator;
+            }
         };
-        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", "case", "-v"));
-        assertTrue(Files.readString(output.resolve("case.json")).contains("p1"));
-        verify(validator).validateAndWriteReport(any(Bundle.class), eq(output.resolve("case_.validation.json").toFile()));
+        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(), "-v"));
+        try (var runs = Files.list(output)) {
+            output = runs.findFirst().orElseThrow();
+        }
+        assertTrue(Files.readString(output.resolve("fhir/case.json")).contains("p1"));
+        verify(validator).validateAndWriteReport(any(Bundle.class),
+                eq(output.resolve("details/pending/case_.validation.json").toFile()));
     }
+
+    @Test
+    public void multipleCsvSetsProduceOneNdjsonWithTheSamePatientResources() throws Exception {
+        Files.writeString(input.resolve("other_Person.csv"),
+                Files.readString(input.resolve("case_Person.csv")).replace("p1", "p2"));
+        assertEquals(0, run("--no-validate-bundles"));
+        var parser = OutputFileType.JSON.getParser();
+        var lines = Files.readAllLines(output.resolve("fhir/patients.ndjson"));
+        assertEquals(2, lines.size());
+        var ids = new java.util.HashSet<String>();
+        for (String line : lines) {
+            Bundle bundle = parser.parseResource(Bundle.class, line);
+            ids.add(bundle.getEntryFirstRep().getResource().getIdElement().getIdPart());
+        }
+        assertEquals(java.util.Set.of("p1", "p2"), ids);
+        try (var files = Files.walk(output.resolve("fhir"))) {
+            assertEquals(2, files.filter(p -> p.toString().endsWith(".json")).count());
+        }
+    }
+
+    @Test
+    public void ambiguousCsvSetsFailBeforeCreatingARun() throws Exception {
+        Files.copy(input.resolve("case_Person.csv"), input.resolve("case-Person.csv"));
+        assertNotEquals(0, new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString()));
+        try (var runs = Files.list(output)) {
+            assertEquals(0, runs.count());
+        }
+    }
+
+    @Test
+    public void validationFlagsHaveExplicitMeaning() {
+        Main command = new Main();
+        var cli = new CommandLine(command);
+        cli.parseArgs();
+        assertTrue(command.validateBundles);
+        cli.parseArgs("-v");
+        assertTrue(command.validateBundles);
+        cli.parseArgs("--no-validate-bundles");
+        assertFalse(command.validateBundles);
+    }
+
 }

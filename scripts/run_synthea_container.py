@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+from workflow_layout import generator_arguments
 
 
 def use_output_owner(output):
@@ -19,8 +20,7 @@ def use_output_owner(output):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        raise SystemExit('Usage: run_synthea_container.py OUTPUT_DIRECTORY [native Synthea arguments...]')
-    use_output_owner(sys.argv[1])
+    output, _ = generator_arguments()
+    use_output_owner(output)
     os.execv(sys.executable, [sys.executable, str(Path(__file__).with_name('run_synthea_workflow.py')),
                             *sys.argv[1:]])

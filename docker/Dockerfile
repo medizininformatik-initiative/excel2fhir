@@ -7,6 +7,8 @@ RUN mvn clean install
 
 FROM amazoncorretto:17.0.20-alpine
 
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50"
+
 COPY --from=maven_tool_chain /tmp/target/excel2fhir.jar /app/excel2fhir.jar
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
 COPY docker/docker-entrypoint.sh /app/
@@ -14,8 +16,8 @@ COPY docker/docker-entrypoint.sh /app/
 WORKDIR /app
 RUN apk upgrade --no-cache \
     && apk add --no-cache su-exec \
-    && mkdir -p /app/outputGlobal /app/outputLocal \
-    && chown -R 1001:0 /app/outputGlobal /app/outputLocal \
+    && mkdir -p /app/outputGlobal \
+    && chown -R 1001:0 /app/outputGlobal \
     && chmod +x /app/docker-entrypoint.sh
 
 ENTRYPOINT ["sh", "/app/docker-entrypoint.sh"]

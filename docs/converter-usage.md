@@ -1,109 +1,123 @@
-# Eigene Excel- und CSV-Dateien konvertieren
+# Excel und CSV konvertieren
 
 Die [Vorlage](../FHIR_Testdatengenerator_Vorlage.xlsx) und die
 [Demo](../FHIR_Testdatengenerator_Interpolar_Demo.xlsx) enthalten die vorgesehenen
-Spalten, Auswahllisten und Ausfüllhilfen. Das letzte Blatt **Codes** enthält die
-Werte für die Auswahllisten der Eingabeblätter. Blattnamen und Spaltenüberschriften
-beibehalten. Eine Arbeitsmappe darf mehrere Patienten enthalten. Die
-**Patient-ID** verbindet die Blätter; **Fall-Nr** ordnet klinische Angaben einem
-Kontakt zu. [Aufenthalte und zusätzliche Kontakte eingeben](synthea-movements.md).
+Spalten und Auswahllisten. Blattnamen und Spaltenüberschriften beibehalten.
+Die Patient-ID verbindet die Blätter; Fall-Nr ordnet Angaben einem Kontakt zu.
+Eine Arbeitsmappe darf mehrere Patienten enthalten.
 
-## Mit Docker
+## Starten
 
-Die eigene Arbeitsmappe im Projektverzeichnis ablegen, hier `MeineDaten.xlsx`:
+Alle Befehle werden im Projektverzeichnis ausgeführt. Für die standardmäßige
+FHIR-Prüfung mindestens 8 GB Docker-Arbeitsspeicher bereitstellen; große
+Datensätze benötigen mehr. Das Image erlaubt Java die Hälfte davon als Heap. Ohne Eingabeparameter
+liest der Converter Excel-Dateien aus `input/`. Alternativ eine Datei auswählen:
 
 ```sh
 docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f /app/input/MeineDaten.xlsx
+  -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx
 ```
 
-Der Projektordner ist im Container schreibgeschützt unter `/app/input` sichtbar.
-Die Ausgabe steht auf dem Host unter `outputGlobal/`, die Zwischen-CSV unter
-`outputLocal/`. Ohne `-f` verwendet der Converter die Standardvorlage.
+Der Projektordner ist im Container unter `/workspace` eingebunden und das
+Arbeitsverzeichnis. Relative Pfade sind deshalb dieselben wie beim lokalen Aufruf.
+Die Eingaben sind schreibgeschützt; `outputGlobal/` ist beschreibbar.
 
-**Die allgemeinen Converter können ihre Ausgabe- und Zwischenordner leeren.**
-Dort keine Eingabedateien oder andere aufzubewahrende Dateien ablegen. Vor einem
-weiteren Lauf Ergebnisse sichern oder eigene Ausgabeordner wählen:
-
-```sh
-docker compose -f docker/docker-compose.yml run --rm excel2fhir \
-  -f /app/input/MeineDaten.xlsx \
-  -o /app/outputGlobal/lauf-02 -t /app/outputLocal/lauf-02
-```
-
-Für ein JSON-Bundle je Patient zusätzlich `-p 1` angeben. `-v` schaltet die
-FHIR-Validierung ein; `-r JSON,NDJSON` erzeugt beide Ausgabeformate.
-
-## Mit Java
-
-Voraussetzung: JDK 17 und Maven 3.x zum Bauen. Die Excel-Konvertierung selbst
-benötigt weder Python noch LibreOffice.
+Lokal mit JDK 17 und Maven 3.x:
 
 ```sh
 mvn test package
-java -jar target/excel2fhir.jar \
-  -f MeineDaten.xlsx -o /pfad/neue-fhir-ausgabe -t /pfad/neue-csv-ausgabe
+java -jar target/excel2fhir.jar -f MeineDaten.xlsx
 ```
 
-| Option | Zweck |
+Für einen ganzen Ordner `-i /pfad/excel` verwenden. Ohne `-f` oder `-i` wird
+`input/` im aktuellen Arbeitsverzeichnis gelesen. Fehlen passende Dateien,
+endet der Aufruf mit einer Fehlermeldung. Die Vorlage wird nur mit einem
+expliziten `-f FHIR_Testdatengenerator_Vorlage.xlsx` verwendet.
+
+## Ergebnisse
+
+Jeder Start erzeugt einen neuen Ordner, beispielsweise:
+
+```text
+outputGlobal/run-20260918-203000Z-excel-to-fhir/
+  fhir/                 JSON-Bundles und patients.ndjson
+  status.txt            Kurzer Gesamtstatus
+  details/
+    csv/                Aus Excel extrahierte Eingaben
+    reports/            Import- und Validierungsberichte
+    logs/               Konverterprotokoll
+    pending/            Bei Fehlern: unvollständige Ausgaben zur Diagnose
+```
+
+`Z` bezeichnet UTC; 20:30 UTC entspricht im deutschen Sommer 22:30 Uhr.
+Bei gleichzeitigen Starts erhält ein weiterer Lauf eine zusätzliche Nummer.
+Frühere Ergebnisse und Eingaben werden nicht gelöscht.
+
+JSON und NDJSON entstehen standardmäßig zusammen. JSON gruppiert die Patienten
+eines Datensatzes in einem Bundle; `-p 1` erzeugt einzelne Patienten-Bundles.
+`patients.ndjson` enthält unabhängig davon **ein vollständiges Patienten-Bundle
+pro Zeile**, über alle Eingaben gesammelt. Es ist kein nach Ressourcentypen
+aufgeteilter FHIR-Bulk-Export. Die beiden Formate enthalten dieselben Patientendaten. Bei mehreren Eingaben
+werden die JSON-Dateien je Eingabe in Unterordnern abgelegt, damit gleiche
+Dateinamen sich nicht überschreiben. NDJSON bleibt eine gemeinsame Datei.
+
+## Parameter
+
+| Option | Bedeutung |
 | --- | --- |
-| `-f DATEI` | Eine Excel-Datei konvertieren; hat Vorrang vor `-i`. |
-| `-i ORDNER` | Excel-Dateien eines Verzeichnisses konvertieren. |
-| `-o ORDNER` | FHIR-Ausgabeordner. |
-| `-t ORDNER` | Zwischen-CSV aus Excel. |
-| `-p ANZAHL` | Maximale Patientenzahl je Bundle; ohne Angabe alle. |
-| `-r FORMATE` | `JSON` (Default), `XML`, `NDJSON`, `JSONGZIP`, `JSONBZ2`; mehrere mit Komma. |
-| `-v` | FHIR prüfen und Validierungsberichte schreiben. |
-| `-vll STUFE` | Ausführlichkeit des Validierungslogs; der vollständige Bericht bleibt erhalten. |
-| `--help` | Alle CLI-Optionen anzeigen. |
+| `-f DATEI` | Eine Excel-Datei; nicht zusammen mit `-i`. |
+| `-i ORDNER` | Eingabeordner, standardmäßig `input/`. |
+| `-o ORDNER` | Wurzel für neue Laufordner, standardmäßig `outputGlobal/`. |
+| `-t ORDNER` | Optionaler separater CSV-Wurzelordner für Excel; darin entsteht ebenfalls ein neuer Laufordner. Normalerweise unnötig. |
+| `-p ANZAHL` | Maximale Patientenanzahl je JSON-Bundle; standardmäßig alle eines Datensatzes. |
+| `-r FORMATE` | Standard `JSON,NDJSON`; explizit auch `XML`, `JSONGZIP`, `JSONBZ2`, `ZIPJSON`. |
+| `-v` / `--no-validate-bundles` | FHIR-Prüfung explizit einschalten / ausschalten; standardmäßig eingeschaltet. |
+| `-vll STUFE` | Ausführlichkeit des Validierungslogs. |
+| `--help` | Hilfe zum jeweiligen Einstieg. |
 
-Ohne explizite Ausgabeordner entstehen beim Aufruf mit einer Datei `outputGlobal/`
-und `outputLocal/` neben der Arbeitsmappe.
+Die lokalen Defaults beziehen sich auf das **aktuelle Arbeitsverzeichnis**,
+nicht den Speicherort der Eingabe oder des JARs. Ein eigenes Ausgabeziel lässt
+sich mit `-o /pfad/ergebnisse` wählen. Im Container muss es zusätzlich beschreibbar
+eingebunden sein; für die üblichen Starts genügt die Compose-Konvention.
 
-## Konvertierungsoptionen
+## CSV verwenden
 
-Die fachlichen Optionen stehen im Blatt **Konvertierungsoptionen**. Nur Spalte A
-wird gelesen. `#` am Zeilenanfang kommentiert eine Angabe aus; dann gilt der
-beschriebene Default. `false` schaltet eine boolesche Option ausdrücklich aus.
-
-Die Optionen steuern insbesondere Referenzrichtungen, ID-Zähler, Präfix/Suffix,
-Patientenkopien und die strenge Excel-Prüfung. `VALIDATE_STRICT=false` schaltet
-weder sämtliche CSV-Eingabeprüfungen noch die separat mit `-v` aktivierte
-FHIR-Validierung aus. Ungültige Optionswerte werden vor der Erzeugung gemeldet.
-
-Die Datei `outputSynthea/converter-options.config` gilt für die automatische
-Erzeugung aus Synthea. Beim direkten Konvertieren einer Excel-Datei zählt deren
-Optionsblatt; die zentrale Textdatei wird dafür nicht zusätzlich eingelesen.
-
-## Vorhandene CSV verwenden
-
-CSV-Dateien müssen den Tabellen und Spalten der Vorlage entsprechen. Ein
-funktionierendes Beispiel liefert der Excel-Export in `outputLocal/`. Die
-Optionsdatei `…_Konvertierungsoptionen.csv` enthält Properties-Text aus Spalte A,
-keine gewöhnliche CSV-Tabelle. Sie gehört zu den Eingabedateien.
-
-CSV-Dateien konvertieren Sie mit folgendem Aufruf:
+CSV-Dateien müssen den Tabellen und Spalten der Vorlage entsprechen. Beispiele
+liefert `details/csv/` eines Excel-Laufs. Die Datei `…_Konvertierungsoptionen.csv`
+enthält Properties-Text aus dem Optionsblatt, keine normale CSV-Tabelle.
 
 ```sh
-java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main \
-  -i /pfad/csv-eingaben -o Fall
+java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i /pfad/csv
 ```
 
-Bei diesem **CSV-Aufruf ist `-o` der gemeinsame Dateipräfix**, kein Pfad.
-`-o Fall` liest beispielsweise `Fall_Person.csv` und `Fall_Fall.csv`;
-die FHIR-Dateien und Berichte entstehen im selben Verzeichnis. Vorhandene
-gleichnamige Ergebnisse werden überschrieben. Für einen neuen Lauf eine Kopie
-der CSV-Eingaben in einem neuen Ordner verwenden. `-v` kann ebenfalls ergänzt
-werden. Die CSV-Eingabe benötigt weder Excel noch LibreOffice.
+Auch hier sind `input/` und `outputGlobal/` die Defaults. Der Laufname endet auf
+`csv-to-fhir`. `-o` bezeichnet jetzt ebenfalls die Ausgabe-Wurzel.
+Die gemeinsame Präfixangabe entfällt: `Fall_Person.csv` erkennt den Datensatz
+`Fall_`; weitere Tabellen wie `Fall_Fall.csv` werden zugeordnet. Mehrere
+Datensätze in einem Ordner werden gemeinsam verarbeitet. Mehrdeutige Varianten
+wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
 
-## Berichte und Fehler
+Mit dem bereits gebauten Compose-Image:
 
-Jede CSV→FHIR-Konvertierung schreibt eine `*.import.json`. Mit `-v` kommt eine
-`*.validation.json` hinzu. Ein unvollständiger Import, Validierungsfehler oder
-nicht ausführbare Terminologieprüfungen führen zu Exitcode 1.
+```sh
+docker compose -f docker/docker-compose.yml run --rm --entrypoint java excel2fhir \
+  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i input
+```
 
-Die FHIR-Validierung **erhält alle konvertierten Ressourcen**, auch bei Fehlern.
-Eine vorhandene Bundle-Datei allein ist deshalb keine Erfolgsmeldung. Bekannte
-Eingabefehler werden vor der FHIR-Erzeugung gesammelt. Die Details erklären
-[Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md) und
+## Optionen und Fehler
+
+Die fachlichen Optionen stehen im Excel-Blatt **Konvertierungsoptionen** bzw.
+in der zugehörigen CSV-Datei. Beim direkten Excel-/CSV-Aufruf wird keine
+Synthea-Optionsdatei zusätzlich eingelesen. `VALIDATE_STRICT=false` deaktiviert
+nicht die FHIR-Prüfung oder sämtliche Eingabeprüfungen.
+
+Ein unvollständiger Import bleibt unter `details/pending/`; der direkte
+Excel-/CSV-Lauf veröffentlicht dann keine finalen Dateien. FHIR-Prüffehler
+lassen die vollständig importierten Daten erhalten, führen aber zu `FAILED`
+und Exitcode 1. `NOT_CHECKED` bedeutet, dass Teile der Terminologieprüfung nicht
+ausführbar waren, ebenfalls mit Exitcode 1. Eine explizit abgewählte Prüfung
+wird als `NOT_VALIDATED` ausgewiesen; ein vollständiger Import liefert dann 0.
+Eine vorhandene Datei allein ist keine Erfolgsmeldung: `status.txt` beachten.
+
+Details: [Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md),
 [FHIR-Validierung](fhir-validation.md).

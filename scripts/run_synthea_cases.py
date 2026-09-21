@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Synthea R4 -> German Excel -> FHIR, with import and validation reports.
-Usage: run_synthea_cases.py SYNTHEA_FHIR_DIRECTORY OUTPUT_DIRECTORY
+Usage: run_synthea_cases.py [-i INPUT_DIRECTORY | -f INPUT_FILE] [-o OUTPUT_ROOT]
 Requires Java/JDK 17+, LibreOffice and a freshly built target/excel2fhir.jar.
-The output directory may contain converter-options.config, but no previous results.
+Each invocation creates a fresh run below outputGlobal (or -o).
 Source files stay unchanged.
 """
+import argparse
 import hashlib
 import json
 import os
@@ -17,6 +18,7 @@ from check_synthea_roundtrip import check_configured
 from converter_options import CONFIG_NAME, ensure_config, resolve_config
 from synthea_to_excel import prepare, write_workbook
 from workbook_xml import read_sheets
+from workflow_layout import create_run, write_status
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / 'FHIR_Testdatengenerator_Vorlage.xlsx'
@@ -52,34 +54,39 @@ def environment():
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
 
-def inspect_conversion(directory, exit_code):
+def inspect_conversion(directory, exit_code, reports=None, log=None):
+    reports = directory if reports is None else reports
     if exit_code < 0 or exit_code >= 128:
         raise ValueError(f'Konverterprozess abgebrochen (Exitcode {exit_code}); '
                          'siehe conversion.log. Bei SIGKILL/-9/137 auch das verfügbare '
                          'Docker-/System-RAM prüfen; unvollständige Ausgabe wird nicht übernommen.')
     bundles = [p for p in directory.glob('*.json')
                if not p.name.endswith(('.import.json', '.validation.json'))]
-    imports = list(directory.glob('*.import.json'))
-    validations = list(directory.glob('*.validation.json'))
-    if len(bundles) != 1 or len(imports) != 1 or len(validations) != 1:
-        log = directory.parent / 'conversion.log'
+    imports = list(reports.rglob('*.import.json'))
+    validations = list(reports.rglob('*.validation.json'))
+    if len(bundles) != 1 or len(imports) != 1 or not validations:
+        log = directory.parent / 'conversion.log' if log is None else log
         if log.is_file():
             with log.open(encoding='utf-8', errors='replace') as lines:
                 if any('java.lang.OutOfMemoryError' in line for line in lines):
                     raise ValueError(f'Java-Arbeitsspeicher erschöpft (Exitcode {exit_code}); '
                                      'für Docker bzw. den lokalen Lauf mehr RAM bereitstellen. '
                                      'Unvollständige Ausgabe wird nicht übernommen; siehe conversion.log.')
-        raise ValueError(f'Genau ein FHIR-Bundle, Importbericht und Validierungsbericht erwartet '
+        raise ValueError(f'Genau ein FHIR-Bundle und Importbericht sowie mindestens ein Validierungsbericht erwartet '
                          f'(Konverter-Exitcode {exit_code}); siehe conversion.log')
     import_report = json.loads(imports[0].read_text())
-    validation = json.loads(validations[0].read_text())
     if import_report['status'] != 'COMPLETE':
         raise ValueError('Import unvollständig; siehe ' + str(imports[0]))
-    if validation.get('referencesWithoutTargetInBundle'):
-        raise ValueError('Nicht auflösbare lokale FHIR-Referenzen im erzeugten Bundle')
-    status = validation['status']
-    if status not in {'VALID', 'WARNING', 'IGNORED', 'NOT_CHECKED'}:
-        raise ValueError('FHIR-Validierung fehlgeschlagen; siehe ' + str(validations[0]))
+    statuses = []
+    for path in validations:
+        validation = json.loads(path.read_text())
+        if validation.get('referencesWithoutTargetInBundle'):
+            raise ValueError('Nicht auflösbare lokale FHIR-Referenzen im erzeugten Bundle')
+        status = validation['status']
+        if status not in {'VALID', 'WARNING', 'IGNORED', 'NOT_CHECKED'}:
+            raise ValueError('FHIR-Validierung fehlgeschlagen; siehe ' + str(path))
+        statuses.append(status)
+    status = 'NOT_CHECKED' if 'NOT_CHECKED' in statuses else 'WARNING' if 'WARNING' in statuses else statuses[0]
     expected_exit = 1 if status == 'NOT_CHECKED' else 0
     if exit_code != expected_exit:
         raise ValueError(f'Unerwarteter Konverter-Exitcode {exit_code} bei Status {status}')
@@ -87,21 +94,20 @@ def inspect_conversion(directory, exit_code):
                         'converterExitCode': exit_code}
 
 
-def run(source_dir, output_dir, *, config=None):
+def run(source_dir, output_dir, *, config=None, directory=None):
     # The workbook contains local contact times; Python, Office and Java must agree.
     os.environ['TZ'] = 'Europe/Berlin'
     time.tzset()
     source_dir = Path(source_dir).resolve()
-    if not source_dir.is_dir():
+    if not source_dir.exists():
         raise ValueError('Quellverzeichnis fehlt: ' + str(source_dir))
     metadata = environment()
-    out = Path(output_dir).resolve()
-    if out.exists() and any(p.name != CONFIG_NAME for p in out.iterdir()):
-        raise FileExistsError('Ausgabeordner enthält bereits Ergebnisse: ' + str(out))
-    out.mkdir(parents=True, exist_ok=True)
-    config = ensure_config(out) if config is None else Path(config)
+    output = Path(output_dir).resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    config = ensure_config(output) if config is None else Path(config)
+    sources = [source_dir] if source_dir.is_file() else sorted(source_dir.glob('*.json'))
     source_patients = []
-    for path in sorted(source_dir.glob('*.json')):
+    for path in sources:
         try:
             candidate = json.loads(path.read_text(encoding='utf-8'))
             source_patients.extend(e['resource']['id'] for e in candidate.get('entry', [])
@@ -109,14 +115,19 @@ def run(source_dir, output_dir, *, config=None):
         except (ValueError, KeyError, TypeError, AttributeError):
             pass  # The per-file conversion below records malformed inputs individually.
     resolved = resolve_config(config, source_patients)
+    out = create_run(output, 'synthea-import') if directory is None else Path(directory)
+    snapshot = out / 'details' / CONFIG_NAME
+    if config != snapshot:
+        shutil.copy2(config, snapshot)
+    config = snapshot
     metadata['converterOptions'] = resolved['values']
     metadata['converterOptionsSha256'] = sha256(config)
-    write_json(out / 'environment.json', metadata)
+    write_json(out / 'details/reports/environment.json', metadata)
     codes = read_sheets(TEMPLATE)['Codes']
     summary = {'schemaVersion': 1, 'status': 'RUNNING', 'results': [], 'failures': [], 'skipped': []}
-    summary_file = out / 'summary.json'
+    summary_file = out / 'details/reports/summary.json'
     write_json(summary_file, summary)
-    for source in sorted(source_dir.glob('*.json')):
+    for source in sources:
         started = time.monotonic()
         try:
             bundle = json.loads(source.read_text(encoding='utf-8'))
@@ -124,18 +135,26 @@ def run(source_dir, output_dir, *, config=None):
                        for e in bundle.get('entry', [])):
                 summary['skipped'].append({'source': str(source), 'reason': 'Kein Patient im Bundle'})
                 continue
-            case = out / source.stem
+            case = out / 'details/cases' / source.stem
             case.mkdir()
+            saved_source = out / 'details/sources' / source.name
+            if not source.is_relative_to(out / 'details/sources'):
+                shutil.copy2(source, saved_source)
             rows, report = prepare(bundle)
             write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
             write_json(case / 'Fall.loss.json', report)
-            book = case / 'Fall.xlsx'
+            book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=resolved['values'])
             with (case / 'conversion.log').open('w') as log:
                 conversion = subprocess.run(['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
-                    '-f', str(book), '-o', str(case / 'fhir'), '-t', str(case / 'csv')],
+                    '-f', str(book), '-o', str(case)],
                     stdout=log, stderr=subprocess.STDOUT)
-            fhir, statuses = inspect_conversion(case / 'fhir', conversion.returncode)
+            runs = list(case.glob('run-*-excel-to-fhir*'))
+            if len(runs) != 1:
+                raise ValueError('Konverterlauf fehlt; siehe ' + str(case / 'conversion.log'))
+            converted = runs[0]
+            fhir, statuses = inspect_conversion(converted / 'fhir', conversion.returncode,
+                                                converted / 'details/reports', case / 'conversion.log')
             result = check_configured(bundle, json.loads(fhir.read_text()), report, resolved['values'],
                                       resolved['patients'][report['sourcePatient']])
             if read_sheets(book)['Codes'] != codes:
@@ -143,6 +162,13 @@ def run(source_dir, output_dir, *, config=None):
             result.update(statuses, source=str(source), workbook=str(book),
                           rows={n: len(v) for n, v in rows.items()},
                           elapsedSeconds=round(time.monotonic() - started, 2))
+            ndjson = converted / 'fhir/patients.ndjson'
+            if not ndjson.is_file():
+                raise ValueError('NDJSON-Ausgabe fehlt')
+            shutil.move(str(fhir), out / 'fhir' / (source.stem + '.json'))
+            with (out / 'fhir/patients.ndjson').open('ab') as destination, ndjson.open('rb') as lines:
+                shutil.copyfileobj(lines, destination)
+            ndjson.unlink()
             summary['results'].append(result)
             print(statuses['validationStatus'], source.name, flush=True)
         except Exception as ex:
@@ -155,10 +181,15 @@ def run(source_dir, output_dir, *, config=None):
     summary['status'] = ('FAILED' if summary['failures'] else 'NOT_CHECKED'
         if any(r['validationStatus'] == 'NOT_CHECKED' for r in summary['results']) else 'COMPLETE')
     write_json(summary_file, summary)
+    write_status(out, summary['status'])
     return 0 if summary['status'] == 'COMPLETE' else 1
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        raise SystemExit(__doc__)
-    raise SystemExit(run(*sys.argv[1:]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument('-i', '--input-directory', default='input')
+    inputs.add_argument('-f', '--input-file')
+    parser.add_argument('-o', '--output-directory', default='outputGlobal')
+    args = parser.parse_args()
+    raise SystemExit(run(args.input_file or args.input_directory, args.output_directory))
