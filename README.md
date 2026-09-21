@@ -8,9 +8,27 @@ FHIR-Darstellung. Derselbe Fall lässt sich damit in mehreren DIZ-Varianten erze
 Technischer Kern ist die CSV-zu-FHIR-Konvertierung. Der Excel-Einstieg liest
 die Arbeitsmappe als CSV ein und verwendet diesen gemeinsamen Konverter.
 
+## Projekt herunterladen
+
+Voraussetzungen: Git mit eingerichtetem SSH-Zugriff auf GitHub, Docker mit
+Compose und Excel oder LibreOffice zum Bearbeiten der Vorlage. Docker vor
+dem ersten Lauf starten.
+
+Das Projekt vom Entwicklungsbranch `develop` herunterladen und ins
+Projektverzeichnis wechseln:
+
+```sh
+git clone --branch develop \
+  git@github.com:medizininformatik-initiative/excel2fhir.git
+cd excel2fhir
+```
+
+Alle folgenden Befehle werden in diesem Verzeichnis ausgeführt.
+
 ## Excel ausfüllen und FHIR erzeugen
 
-1. Die [Excel-Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) kopieren und ausfüllen.
+1. Die [Excel-Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) als
+   `input/MeinFall.xlsx` kopieren und diese Kopie in Excel oder LibreOffice ausfüllen.
    Die [Demo](FHIR_Testdatengenerator_Interpolar_Demo.xlsx) zeigt ausgefüllte Fälle.
 2. Die gewünschten Converter Options im Optionsblatt eintragen oder eine externe
    Optionsdatei auswählen.
