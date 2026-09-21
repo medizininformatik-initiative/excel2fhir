@@ -69,7 +69,10 @@ docker compose -f compose.synthea.yml run --rm --entrypoint python3 synthea \
 
 Danach liegen unter `outputGlobal/hospital-results/run-…-synthea-import/`
 die Arbeitsmappen in `excel/`, JSON und NDJSON in `fhir/` und die Zwischenstände
-unter `details/`. `details/reports/summary.json` fasst alle Patienten zusammen. Bei `NOT_CHECKED` sind Import und Rückvergleich erfolgreich, während
+unter `details/`. `details/reports/summary.json` fasst alle Patienten zusammen.
+Ein erfolgreicher Standardlauf erhält `NOT_VALIDATED` und Exitcode 0.
+Die optionale FHIR-Prüfung wird mit `-v` beim Import aktiviert.
+Bei `NOT_CHECKED` sind Import und Rückvergleich erfolgreich, während
 Terminologieprüfungen unvollständig bleiben; der aktuelle Prozess liefert dafür
 Exitcode 1. Bei `FAILED` die konkreten Fehler prüfen.
 

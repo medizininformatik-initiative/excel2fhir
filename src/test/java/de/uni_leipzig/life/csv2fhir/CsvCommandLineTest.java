@@ -44,12 +44,14 @@ public class CsvCommandLineTest {
         }
     }
 
-    private int run(String validation) throws Exception {
+    private int run(String... validation) throws Exception {
         java.util.Set<Path> before;
         try (var runs = Files.list(output)) {
             before = runs.collect(java.util.stream.Collectors.toSet());
         }
-        int code = new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString(), validation);
+        var args = new java.util.ArrayList<>(java.util.List.of("-i", input.toString(), "-o", output.toString()));
+        args.addAll(java.util.List.of(validation));
+        int code = new CommandLine(new Main()).execute(args.toArray(String[]::new));
         try (var runs = Files.list(output)) {
             output = runs.filter(p -> !before.contains(p)).findFirst().orElseThrow();
         }
@@ -58,12 +60,13 @@ public class CsvCommandLineTest {
 
     @Test
     public void successfulImportReturnsZeroWithoutValidation() throws Exception {
-        assertEquals(0, run("--no-validate-bundles"));
+        assertEquals(0, run());
         assertTrue(Files.exists(output.resolve("fhir/case.json")));
+        assertTrue(Files.readString(output.resolve("status.txt")).contains("NOT_VALIDATED"));
         assertTrue(Files.readString(output.resolve("fhir/patients.ndjson")).contains("p1"));
         Path previous = output;
         output = output.getParent();
-        assertEquals(0, run("--no-validate-bundles"));
+        assertEquals(0, run());
         assertNotEquals(previous, output);
         assertTrue(Files.exists(previous.resolve("fhir/case.json")));
         assertTrue(Files.exists(input.resolve("case_Person.csv")));
@@ -72,7 +75,7 @@ public class CsvCommandLineTest {
     @Test
     public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=treu\n");
-        assertEquals(1, run("--no-validate-bundles"));
+        assertEquals(1, run());
         assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
         assertFalse(Files.exists(output.resolve("fhir/case.json")));
     }
@@ -102,7 +105,7 @@ public class CsvCommandLineTest {
     public void multipleCsvSetsProduceOneNdjsonWithTheSamePatientResources() throws Exception {
         Files.writeString(input.resolve("other_Person.csv"),
                 Files.readString(input.resolve("case_Person.csv")).replace("p1", "p2"));
-        assertEquals(0, run("--no-validate-bundles"));
+        assertEquals(0, run());
         var parser = OutputFileType.JSON.getParser();
         var lines = Files.readAllLines(output.resolve("fhir/patients.ndjson"));
         assertEquals(2, lines.size());
@@ -131,11 +134,22 @@ public class CsvCommandLineTest {
         Main command = new Main();
         var cli = new CommandLine(command);
         cli.parseArgs();
-        assertTrue(command.validateBundles);
+        assertFalse(command.validateBundles);
         cli.parseArgs("-v");
         assertTrue(command.validateBundles);
         cli.parseArgs("--no-validate-bundles");
         assertFalse(command.validateBundles);
+    }
+
+    @Test
+    public void excelValidationIsExplicitlySelected() {
+        var cli = new CommandLine(new de.uni_leipzig.imise.Excel2FhirMain());
+        cli.parseArgs();
+        assertEquals(false, cli.getCommandSpec().findOption("-v").getValue());
+        cli.parseArgs("-v");
+        assertEquals(true, cli.getCommandSpec().findOption("-v").getValue());
+        cli.parseArgs("--no-validate-bundles");
+        assertEquals(false, cli.getCommandSpec().findOption("-v").getValue());
     }
 
 }

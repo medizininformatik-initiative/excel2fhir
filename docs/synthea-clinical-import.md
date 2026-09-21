@@ -155,8 +155,8 @@ Für alle vorhandenen Patienten mit einem neuen Ausgabeverzeichnis:
 python3 scripts/run_synthea_cases.py -i SYNTHEA_FHIR_VERZEICHNIS -o AUSGABEWURZEL
 ```
 
-Der Sammellauf führt jetzt auch die FHIR-Validierung aus und sammelt Import-,
-Verlust- und Validierungsberichte. Installation, Container, Status und Exitcodes
+Der Sammellauf sammelt Import- und Verlustberichte. Mit `-v` führt er zusätzlich
+die FHIR-Validierung aus und speichert deren Berichte. Installation, Container, Status und Exitcodes
 sind im [Gesamtworkflow](synthea-workflow.md) beschrieben.
 
 Der Rückvergleich prüft den unterstützten Umfang, Ressourcenanzahlen,

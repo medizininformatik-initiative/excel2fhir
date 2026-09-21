@@ -26,13 +26,13 @@ class CompleteWorkflowTest(unittest.TestCase):
         options_patch.start()
         self.addCleanup(options_patch.stop)
 
-    def conversion(self, source, output, *, config=None, directory=None):
+    def conversion(self, source, output, *, config=None, directory=None, validate=False):
         self.assertTrue(config.is_file())
         (directory / 'fhir/good.json').write_text('{"resourceType":"Bundle"}')
         (directory / 'details/reports/summary.json').write_text(json.dumps({'status': self.status,
             'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx')}],
             'failures': [{'source': 'bad'}] if self.status == 'FAILED' else []}))
-        return 1
+        return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED'} else 1
 
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
     def test_partial_or_unchecked_outputs_are_never_reported_as_complete(self, generate):
@@ -95,3 +95,19 @@ class CompleteWorkflowTest(unittest.TestCase):
         snapshot = convert.call_args.kwargs['config']
         self.assertEqual(original, snapshot.read_text())
         self.assertEqual(original, (out / CONFIG_NAME).read_text())
+
+    @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
+    def test_validation_selection_reaches_converter_and_reports(self, generate):
+        for enabled in (False, True):
+            with self.subTest(validate=enabled):
+                self.status = 'COMPLETE' if enabled else 'NOT_VALIDATED'
+                out = self.root / str(enabled)
+                with patch.object(workflow, 'convert_cases', side_effect=self.conversion) as convert:
+                    code = workflow.run(out, [], validate=True) if enabled else workflow.run(out, [])
+                self.assertEqual(0, code)
+                self.assertEqual(enabled, convert.call_args.kwargs['validate'])
+                directory = next(out.glob('run-*'))
+                report = json.loads((directory / 'details/reports/workflow.json').read_text())
+                self.assertEqual(enabled, report['validationEnabled'])
+                self.assertEqual(self.status, report['status'])
+                self.assertTrue((directory / 'status.txt').read_text().startswith(self.status))

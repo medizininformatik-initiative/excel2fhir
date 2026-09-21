@@ -20,7 +20,7 @@ def use_output_owner(output):
 
 
 if __name__ == '__main__':
-    output, _ = generator_arguments()
+    output, _, _ = generator_arguments()
     use_output_owner(output)
     os.execv(sys.executable, [sys.executable, str(Path(__file__).with_name('run_synthea_workflow.py')),
                             *sys.argv[1:]])

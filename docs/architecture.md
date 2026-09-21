@@ -73,7 +73,7 @@ Workflow ausgeführt. Python kompiliert importierte Module bei Bedarf nach
 
 Die Originalquellen bleiben erhalten. `Fall.loss.json` dokumentiert Projektionen
 und Auslassungen, `*.import.json` den tatsächlichen Import, `*.validation.json`
-die FHIR-Prüfung. Der komplette Workflow kopiert nur vollständig importierte und
+die mit `-v` aktivierte FHIR-Prüfung. Der komplette Workflow kopiert nur vollständig importierte und
 gegen die Quelle abgeglichene Ergebnisse in seinen zentralen Ordner `fhir/`.
 Teilresultate bleiben für die Fehlersuche unter `details/cases/` sichtbar.
 

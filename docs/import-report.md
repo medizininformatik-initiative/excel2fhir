@@ -53,7 +53,7 @@ Die drei Berichte beantworten unterschiedliche Fragen:
 | --- | --- |
 | `*.loss.json` | Welche Synthea-Inhalte wurden projiziert, ersetzt oder ausgelassen? |
 | `*.import.json` | Wurden die Excel-/CSV-Eingaben vollständig verarbeitet? |
-| `*.validation.json` (standardmäßig aktiv) | Welche FHIR-Prüfungen bestanden, scheiterten oder waren `NOT_CHECKED`? |
+| `*.validation.json` (mit `-v`) | Welche FHIR-Prüfungen bestanden, scheiterten oder waren `NOT_CHECKED`? |
 
 Die gemeinsame [Kontakt-Vorprüfung](contact-input-checks.md) meldet im CSV-Bericht
 `CONTACT_INPUT_ERROR` mit Feld, Datensatznummer und Ursache. Sie läuft vor allen

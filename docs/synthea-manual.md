@@ -37,7 +37,7 @@ lokaler MMI-Katalog ist kein Bestandteil dieses Auslieferungswegs.
 
 `details/reports/environment.json` enthält Werkzeugversionen und SHA-256-Prüfsummen des JARs,
 der Vorlage, der Skripte und Mappingdateien. Jeder Fall enthält zusätzlich die
-Quellprüfsumme, Verlustbericht, CSV, Import-/Validierungsberichte
+Quellprüfsumme, Verlustbericht, CSV, Importberichte und bei aktivierter FHIR-Prüfung Validierungsberichte
 und `conversion.log` unter `details/cases/`. Bearbeitbare Arbeitsmappen liegen
 unter `excel/`, finale JSON-Bundles und `patients.ndjson` ausschließlich unter
 `fhir/`. `details/reports/summary.json` wird nach jedem Fall aktualisiert und enthält
@@ -46,13 +46,24 @@ Bearbeitung der übrigen Dateien.
 
 | Gesamtstatus | Exitcode | Bedeutung |
 | --- | --- | --- |
-| `COMPLETE` | 0 | Import und Rückvergleich bestanden; Validierung ohne Fehler oder ungeprüfte Terminologien, Warnungen/gezielte Ausnahmen können vorhanden sein. |
+| `NOT_VALIDATED` | 0 | Standardlauf: Import und Rückvergleich bestanden; FHIR-Validierung deaktiviert. |
+| `COMPLETE` | 0 | Import, Rückvergleich und angeforderte FHIR-Validierung bestanden; Warnungen/gezielte Ausnahmen können vorhanden sein. |
 | `NOT_CHECKED` | 1 | Import und Rückvergleich bestanden, aber FHIR-Prüfungen waren nicht vollständig ausführbar. |
 | `FAILED` | 1 | Mindestens ein Fall oder Rückvergleich scheiterte, oder es gab keine Patientenbundles. |
 | `RUNNING` | noch offen | Lauf läuft oder wurde vor dem Abschluss unterbrochen. |
 
-Ein `NOT_CHECKED` wird ausdrücklich nicht als erfolgreicher Volltest umgedeutet.
-Fehlende lokale Referenzziele sind für diesen geschlossenen Export ein Fehler.
+Die FHIR-Profil- und Terminologieprüfung aktivieren Sie beim Import mit `-v`:
+
+```sh
+docker run --rm \
+  -v /absoluter/pfad/synthea/fhir:/input:ro \
+  -v /absoluter/pfad/ergebnisse:/output \
+  excel2fhir-synthea -i /input -o /output -v
+```
+
+Lokal lautet der Aufruf `python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir -v`.
+Die Validierungsauswahl gilt für den jeweiligen Aufruf. Die Konvertierungsoptionen
+bestimmen die erzeugten Daten.
 Die [Importbilanz](import-report.md) und die
 [Validator-Dokumentation](fhir-validation.md) erklären die Detailberichte.
 
@@ -65,11 +76,11 @@ Reviewaufgaben. Fehlende Terminologien werden nicht durch den Container ersetzt.
 
 Die CI führt zwei kleine, referenzerhaltend aus tatsächlichen Synthea-Quellen
 extrahierte Fälle durch dieses Container-Image. Sie prüft Import und Rückvergleich
-und bewahrt Excel-Dateien sowie Berichte als Artefakte auf. Ein bekanntes
-`NOT_CHECKED` darf diese technische Regression bestehen lassen, bleibt aber im
-Bericht und im Prozess-Exitcode sichtbar. Das ist kein bestandener vollständiger
-Terminologietest. Zusätzlich erzeugt die CI mit dem Compose-Einstieg eine neue Population und
-führt sie ohne Netzwerkzugriff durch den gesamten Ablauf. Beide Images werden
+mit ausdrücklich aktivierter FHIR-Validierung und bewahrt Excel-Dateien sowie
+Berichte als Artefakte auf. `NOT_CHECKED` bleibt dabei im Bericht und im
+Prozess-Exitcode sichtbar. Zusätzlich erzeugt die CI mit dem Compose-Einstieg
+im Standardmodus eine neue Population, prüft `NOT_VALIDATED` und Exitcode 0
+und führt sie offline durch den gesamten Ablauf. Beide Images werden
 mit Trivy geprüft.
 
 ## Bearbeitete Excel-Datei erneut konvertieren
@@ -119,7 +130,7 @@ Quelldatei gewählt werden. Jeder Aufruf legt einen neuen Laufordner unter
 Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
 JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
 einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
-als Heap für die vollständige Validierung. Im Container zählt der für Docker
+als Heap für Konvertierung und optionale FHIR-Validierung. Im Container zählt der für Docker
 bereitgestellte Speicher. Große Lebensverläufe können mehr als 8 GB Docker-RAM
 und deutlich längere Laufzeiten erfordern. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
 die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die

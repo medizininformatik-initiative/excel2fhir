@@ -8,10 +8,8 @@ Eine Arbeitsmappe darf mehrere Patienten enthalten.
 
 ## Mit Docker starten (empfohlen)
 
-Alle Befehle werden im Projektverzeichnis ausgeführt. Für die standardmäßige
-FHIR-Prüfung mindestens 8 GB Docker-Arbeitsspeicher bereitstellen; große
-Datensätze benötigen mehr. Das Image erlaubt Java die Hälfte davon als Heap. Ohne Eingabeparameter
-liest der Converter Excel-Dateien aus `input/`. Alternativ eine Datei auswählen:
+Alle Befehle werden im Projektverzeichnis ausgeführt. Der Converter liest
+standardmäßig Excel-Dateien aus `input/`. Alternativ eine Datei auswählen:
 
 ```sh
 docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
@@ -64,7 +62,7 @@ Dateinamen sich nicht überschreiben. NDJSON bleibt eine gemeinsame Datei.
 | `-t ORDNER` | Optionaler separater CSV-Wurzelordner für Excel; darin entsteht ebenfalls ein neuer Laufordner. Normalerweise unnötig. |
 | `-p ANZAHL` | Maximale Patientenanzahl je JSON-Bundle; standardmäßig alle eines Datensatzes. |
 | `-r FORMATE` | Standard `JSON,NDJSON`; explizit auch `XML`, `JSONGZIP`, `JSONBZ2`, `ZIPJSON`. |
-| `-v` / `--no-validate-bundles` | FHIR-Prüfung explizit einschalten / ausschalten; standardmäßig eingeschaltet. |
+| `-v` / `--validate-bundles` | Optionale FHIR-Profil- und Terminologieprüfung aktivieren; standardmäßig deaktiviert. |
 | `-vll STUFE` | Ausführlichkeit des Validierungslogs. |
 | `--help` | Hilfe zum jeweiligen Einstieg. |
 
@@ -99,14 +97,23 @@ Die fachlichen Optionen stehen im Excel-Blatt **Konvertierungsoptionen** bzw.
 in der zugehörigen CSV-Datei. `CHECK_INPUT_CONSISTENCY=true` (Standard) prüft
 Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit `false` beschränkt
 sich diese Vorprüfung auf Tabellenstruktur und Konvertierungsoptionen.
-Die FHIR-Prüfung wird über `--validate-bundles` / `-v` gesteuert.
+Die optionale FHIR-Prüfung aktivieren Sie mit `--validate-bundles` / `-v`, zum Beispiel:
+
+```sh
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
+  -f input/MeinFall.xlsx -v
+```
+
+Für die FHIR-Prüfung mindestens 8 GB Docker-Arbeitsspeicher bereitstellen;
+große Datensätze benötigen mehr. Java kann die Hälfte des verfügbaren Speichers
+als Heap nutzen.
 
 Ein unvollständiger Import bleibt unter `details/pending/`; der direkte
 Excel-/CSV-Lauf veröffentlicht dann keine finalen Dateien. FHIR-Prüffehler
 lassen die vollständig importierten Daten erhalten, führen aber zu `FAILED`
 und Exitcode 1. `NOT_CHECKED` bedeutet, dass Teile der Terminologieprüfung nicht
-ausführbar waren, ebenfalls mit Exitcode 1. Eine explizit abgewählte Prüfung
-wird als `NOT_VALIDATED` ausgewiesen; ein vollständiger Import liefert dann 0.
+ausführbar waren, ebenfalls mit Exitcode 1. Bei der standardmäßigen Konvertierung ist die FHIR-Prüfung deaktiviert:
+Der Status lautet `NOT_VALIDATED`, ein vollständiger Import liefert Exitcode 0.
 Den Gesamtstatus des Laufs zeigt `status.txt`.
 
 Details: [Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md),

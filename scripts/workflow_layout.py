@@ -27,6 +27,7 @@ def create_run(output, operation):
 def write_status(directory, status):
     explanation = {'NOT_CHECKED': 'Import und Rückvergleich bestanden; Terminologieprüfung teilweise nicht ausführbar.',
                    'FAILED': 'Lauf unvollständig. fhir/ enthält nur erfolgreich abgeglichene Patienten.',
+                   'NOT_VALIDATED': 'Import und Rückvergleich abgeschlossen; FHIR-Validierung deaktiviert.',
                    'COMPLETE': 'Import, Rückvergleich und FHIR-Prüfung abgeschlossen.'}.get(status, 'Lauf wird ausgeführt.')
     (directory / 'status.txt').write_text(status + '\n' + explanation
         + '\nFHIR: fhir/ (JSON und patients.ndjson)\nExcel: excel/\nDetails: details/\n', encoding='utf-8')
@@ -35,7 +36,8 @@ def write_status(directory, status):
 def generator_arguments(arguments=None):
     parser = argparse.ArgumentParser(description='Synthea erzeugen und über Excel nach FHIR konvertieren. Native Synthea-Argumente nach -- angeben.')
     parser.add_argument('-o', '--output-directory', default='outputGlobal')
+    parser.add_argument('-v', '--validate-bundles', action='store_true', help='FHIR-Bundles validieren')
     parser.add_argument('synthea_arguments', nargs=argparse.REMAINDER)
     args = parser.parse_args(arguments)
     native = args.synthea_arguments
-    return args.output_directory, native[1:] if native[:1] == ['--'] else native
+    return args.output_directory, native[1:] if native[:1] == ['--'] else native, args.validate_bundles

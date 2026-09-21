@@ -101,7 +101,7 @@ jobs:
         docker run --rm \
           -v "$PWD/scripts/tests/fixtures/synthea:/input:ro" \
           -v "$RUNNER_TEMP/synthea-results:/output" \
-          excel2fhir-synthea:ci -i /input -o /output
+          excel2fhir-synthea:ci -v -i /input -o /output
         result=$?
         set -e
         python3 - "$RUNNER_TEMP/synthea-results" "$result" <<'PYTHON'
@@ -143,8 +143,11 @@ jobs:
         assert len(runs) == 1, runs
         report = json.loads((runs[0] / 'details/reports/workflow.json').read_text())
         summary = json.loads((runs[0] / 'details/reports/summary.json').read_text())
-        assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
-        assert int(sys.argv[1]) == (0 if report['status'] == 'COMPLETE' else 1), report
+        assert report['status'] == 'NOT_VALIDATED', report
+        assert report['validationEnabled'] is False, report
+        assert int(sys.argv[1]) == 0, report
+        assert all(r['validationStatus'] == 'NOT_VALIDATED' for r in summary['results']), summary
+        assert not list(runs[0].rglob('*.validation.json')), 'Unexpected validation reports'
         assert summary['results'] and not summary['failures'], summary
         bundles = [json.loads(p.read_text()) for p in sorted((runs[0] / 'fhir').glob('*.json'))]
         lines = [json.loads(line) for line in (runs[0] / 'fhir/patients.ndjson').read_text().splitlines()]

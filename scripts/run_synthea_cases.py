@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Synthea R4 -> German Excel -> FHIR, with import and validation reports.
-Usage: run_synthea_cases.py [-i INPUT_DIRECTORY | -f INPUT_FILE] [-o OUTPUT_ROOT]
+Usage: run_synthea_cases.py [-i INPUT_DIRECTORY | -f INPUT_FILE] [-o OUTPUT_ROOT] [-v]
 Requires Java/JDK 17+, LibreOffice and a freshly built target/excel2fhir.jar.
 Each invocation creates a fresh run below outputGlobal (or -o).
 Source files stay unchanged.
@@ -54,7 +54,7 @@ def environment():
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
 
-def inspect_conversion(directory, exit_code, reports=None, log=None):
+def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate=False):
     reports = directory if reports is None else reports
     if exit_code < 0 or exit_code >= 128:
         raise ValueError(f'Konverterprozess abgebrochen (Exitcode {exit_code}); '
@@ -64,7 +64,7 @@ def inspect_conversion(directory, exit_code, reports=None, log=None):
                if not p.name.endswith(('.import.json', '.validation.json'))]
     imports = list(reports.rglob('*.import.json'))
     validations = list(reports.rglob('*.validation.json'))
-    if len(bundles) != 1 or len(imports) != 1 or not validations:
+    if len(bundles) != 1 or len(imports) != 1 or (validate and not validations):
         log = directory.parent / 'conversion.log' if log is None else log
         if log.is_file():
             with log.open(encoding='utf-8', errors='replace') as lines:
@@ -72,11 +72,16 @@ def inspect_conversion(directory, exit_code, reports=None, log=None):
                     raise ValueError(f'Java-Arbeitsspeicher erschöpft (Exitcode {exit_code}); '
                                      'für Docker bzw. den lokalen Lauf mehr RAM bereitstellen. '
                                      'Unvollständige Ausgabe wird nicht übernommen; siehe conversion.log.')
-        raise ValueError(f'Genau ein FHIR-Bundle und Importbericht sowie mindestens ein Validierungsbericht erwartet '
+        raise ValueError(f'FHIR-Bundle, Importbericht oder angeforderter Validierungsbericht fehlt '
                          f'(Konverter-Exitcode {exit_code}); siehe conversion.log')
     import_report = json.loads(imports[0].read_text())
     if import_report['status'] != 'COMPLETE':
         raise ValueError('Import unvollständig; siehe ' + str(imports[0]))
+    if not validate:
+        if exit_code != 0:
+            raise ValueError(f'Unerwarteter Konverter-Exitcode {exit_code}')
+        return bundles[0], {'importStatus': 'COMPLETE', 'validationStatus': 'NOT_VALIDATED',
+                            'converterExitCode': exit_code}
     statuses = []
     for path in validations:
         validation = json.loads(path.read_text())
@@ -94,7 +99,7 @@ def inspect_conversion(directory, exit_code, reports=None, log=None):
                         'converterExitCode': exit_code}
 
 
-def run(source_dir, output_dir, *, config=None, directory=None):
+def run(source_dir, output_dir, *, config=None, directory=None, validate=False):
     # The workbook contains local contact times; Python, Office and Java must agree.
     os.environ['TZ'] = 'Europe/Berlin'
     time.tzset()
@@ -120,6 +125,7 @@ def run(source_dir, output_dir, *, config=None, directory=None):
     if config != snapshot:
         shutil.copy2(config, snapshot)
     config = snapshot
+    metadata['validationEnabled'] = validate
     metadata['converterOptions'] = resolved['values']
     metadata['converterOptionsSha256'] = sha256(config)
     write_json(out / 'details/reports/environment.json', metadata)
@@ -146,7 +152,7 @@ def run(source_dir, output_dir, *, config=None, directory=None):
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=resolved['values'])
             with (case / 'conversion.log').open('w') as log:
-                conversion = subprocess.run(['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), '-v',
+                conversion = subprocess.run(['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR), *(['-v'] if validate else []),
                     '-f', str(book), '-o', str(case)],
                     stdout=log, stderr=subprocess.STDOUT)
             runs = list(case.glob('run-*-excel-to-fhir*'))
@@ -154,7 +160,7 @@ def run(source_dir, output_dir, *, config=None, directory=None):
                 raise ValueError('Konverterlauf fehlt; siehe ' + str(case / 'conversion.log'))
             converted = runs[0]
             fhir, statuses = inspect_conversion(converted / 'fhir', conversion.returncode,
-                                                converted / 'details/reports', case / 'conversion.log')
+                                                converted / 'details/reports', case / 'conversion.log', validate=validate)
             result = check_configured(bundle, json.loads(fhir.read_text()), report, resolved['values'],
                                       resolved['patients'][report['sourcePatient']])
             if read_sheets(book)['Codes'] != codes:
@@ -179,10 +185,10 @@ def run(source_dir, output_dir, *, config=None, directory=None):
     if not summary['results'] and not summary['failures']:
         summary['failures'].append({'error': 'Keine Synthea-Patientenbundles gefunden'})
     summary['status'] = ('FAILED' if summary['failures'] else 'NOT_CHECKED'
-        if any(r['validationStatus'] == 'NOT_CHECKED' for r in summary['results']) else 'COMPLETE')
+        if any(r['validationStatus'] == 'NOT_CHECKED' for r in summary['results']) else 'COMPLETE' if validate else 'NOT_VALIDATED')
     write_json(summary_file, summary)
     write_status(out, summary['status'])
-    return 0 if summary['status'] == 'COMPLETE' else 1
+    return 0 if summary['status'] in {'COMPLETE', 'NOT_VALIDATED'} else 1
 
 
 if __name__ == '__main__':
@@ -191,5 +197,6 @@ if __name__ == '__main__':
     inputs.add_argument('-i', '--input-directory', default='input')
     inputs.add_argument('-f', '--input-file')
     parser.add_argument('-o', '--output-directory', default='outputGlobal')
+    parser.add_argument('-v', '--validate-bundles', action='store_true', help='FHIR-Bundles validieren')
     args = parser.parse_args()
-    raise SystemExit(run(args.input_file or args.input_directory, args.output_directory))
+    raise SystemExit(run(args.input_file or args.input_directory, args.output_directory, validate=args.validate_bundles))

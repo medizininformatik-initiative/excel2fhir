@@ -36,11 +36,26 @@ bekommen zusätzliche Nummern. Vorherige Läufe bleiben erhalten. Der Projektord
 liegt im Container unter `/workspace`; relative Pfade stimmen mit dem lokalen
 Aufruf überein. Es wird nichts auf einen FHIR-Server hochgeladen.
 
-`NOT_CHECKED` bedeutet: Import und Rückvergleich haben funktioniert, aber Teile
-der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dateien
-sind vorhanden; Exitcode 1 signalisiert diese Einschränkung. Das ist keine
-Bestätigung vollständiger KDS-Konformität. Bei `FAILED` ist der Lauf unvollständig;
-der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patienten.
+Ein erfolgreicher Standardlauf erhält `NOT_VALIDATED` und Exitcode 0. Import
+und Rückvergleich sind abgeschlossen, die optionale FHIR-Prüfung ist deaktiviert.
+Bei `FAILED` ist der Lauf unvollständig; der zentrale FHIR-Ordner enthält dann
+nur die erfolgreich abgeglichenen Patienten.
+
+## FHIR-Validierung
+
+Mit `-v` vor `--` aktivieren Sie die FHIR-Profil- und Terminologieprüfung:
+
+```sh
+docker compose -f compose.synthea.yml run --build --rm synthea -v -- \
+  -p 1 -a 30-80 -s 20260912 -cs 20260912 -r 20260912 -e 20260912
+```
+
+Für die wiederholte Verwendung kann `"-v"` in `compose.synthea.yml` vor `"--"`
+in die `command`-Liste aufgenommen werden. Die Prüfung benötigt zusätzlichen
+Arbeitsspeicher und Laufzeit. `COMPLETE` bedeutet, dass Import, Rückvergleich
+und die angeforderte Prüfung abgeschlossen sind. `NOT_CHECKED` bezeichnet
+Lücken der Terminologieprüfung und führt zu Exitcode 1. Details stehen in den
+Validierungsberichten unter `details/cases/`.
 
 ## Konvertierungsoptionen einstellen
 

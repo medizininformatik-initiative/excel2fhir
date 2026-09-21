@@ -1,8 +1,8 @@
 # FHIR validation
 
-The CLI validates completed bundles by default (`-v`) after conversion and post-processing. It retains every converted resource, including resources with validation errors. A `<bundle-name>.validation.json` report under the run’s `details/reports/` directory records all raw messages independently of `-vll`, their severity/location and the application classification. Treat the report and process exit status as part of the output: an existing FHIR file does not imply validation success.
+FHIR profile and terminology validation is optional and disabled by default. Enable it with `-v` / `--validate-bundles` to validate completed bundles after conversion and post-processing. The same option applies to the Synthea import and generation commands; place it before `--` in the generation command. It retains every converted resource, including resources with validation errors. A `<bundle-name>.validation.json` report under the run’s `details/reports/` directory records all raw messages independently of `-vll`, their severity/location and the application classification. Treat the report and process exit status as part of the output: an existing FHIR file does not imply validation success.
 
-The conversion CLI exits with status 1 if a validation error, validator failure or a recognized terminology-check gap occurred. It completes the remaining conversions before returning this validation status. Conversion/I/O exceptions also fail the command. With `--no-validate-bundles`, no profile validation is performed; the run is labelled `NOT_VALIDATED`.
+The conversion CLI exits with status 1 if a validation error, validator failure or a recognized terminology-check gap occurred. It completes the remaining conversions before returning this validation status. Conversion/I/O exceptions also fail the command. A successful default conversion is labelled `NOT_VALIDATED` and exits with status 0. Synthea import and roundtrip checks run in both modes.
 
 Classification:
 
@@ -11,7 +11,7 @@ Classification:
 - `IGNORED`: the retained historical OBI identifier warning exception. Unknown-code errors and generic validation failures are no longer suppressed by terminology URL.
 - `WARNING` / `VALID`: the remaining HAPI result. Absence of errors does not prove complete terminology coverage or clinical plausibility.
 
-The legacy `strict` argument concerns the additional single-resource exception list only (currently empty); it never meant “disable all exceptions”. Conversion now validates final bundles, not incomplete resources before their relationships have been established.
+The `strict` argument on the single-resource API controls its additional exception list (currently empty). CLI validation operates on final bundles with their completed relationships.
 
 Counters explicitly distinguish error/warning messages from validation calls. A whole-bundle validation is one call; its report separately gives the entry count. A resource with no messages counts as one valid call. The file-validation API returns a result for every processed file, including read/validation failures. Its standalone CLI also returns nonzero for errors or recognized incomplete checks.
 

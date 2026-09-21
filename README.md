@@ -36,11 +36,14 @@ Synthea kann zusätzlich verstorbene Patienten ausgeben.
 
 ## Ergebnisse beurteilen
 
-Der Workflow prüft den Import, vergleicht die übernommenen Inhalte mit Synthea
-und validiert das erzeugte FHIR. **`NOT_CHECKED`** bedeutet, dass Teile der
-Terminologieprüfung nicht ausführbar waren. Die Dateien liegen trotzdem vor;
-der Prozess liefert dafür Exitcode 1. **`FAILED`** bezeichnet einen unvollständigen
-Lauf. Der kurze Status steht in `status.txt`; Einzelheiten unter `details/reports/`.
+Der Workflow prüft den Import und vergleicht die übernommenen Inhalte mit Synthea.
+Ein erfolgreicher Standardlauf erhält **`NOT_VALIDATED`** und Exitcode 0:
+Die FHIR-Profil- und Terminologieprüfung ist optional und wird mit `-v` aktiviert
+([Aufruf mit Validierung](docs/synthea-workflow.md#fhir-validierung)). So lassen sich
+auch bewusst unvollständige oder profilwidrige FHIR-Testdaten erzeugen.
+**`NOT_CHECKED`** bezeichnet Lücken einer angeforderten Terminologieprüfung
+(Exitcode 1), **`FAILED`** einen fehlgeschlagenen Lauf. Der kurze Status steht in
+`status.txt`; Einzelheiten unter `details/reports/`.
 
 Die Daten enthalten ausdrücklich synthetische deutsche Ergänzungen und
 näherungsweise Codezuordnungen. Nicht jede Synthea-Eigenschaft wird übernommen;

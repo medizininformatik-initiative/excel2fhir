@@ -42,8 +42,8 @@ public class Main implements Callable<Integer> {
      *
      */
     @Option(names = { "-v",
-            "--validate-bundles" }, negatable = true, defaultValue = "true", fallbackValue = "true", paramLabel = "VALIDATE-BUNDLES", description = "Validates complete bundles, preserves all resources, writes validation reports and exits nonzero on errors or incomplete checks.")
-    boolean validateBundles = true;
+            "--validate-bundles" }, negatable = true, defaultValue = "false", fallbackValue = "true", paramLabel = "VALIDATE-BUNDLES", description = "Enables FHIR bundle validation (default: disabled), writes reports and exits nonzero on errors or incomplete checks.")
+    boolean validateBundles = false;
 
     @Option(names = { "-vll",
             "--validation-log-level" }, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")

@@ -15,14 +15,14 @@ class WorkflowTest(unittest.TestCase):
             (directory / 'Fall.json').write_text('{}')
             (directory / 'Fall.import.json').write_text('{"status":"COMPLETE"}')
             (directory / 'Fall.validation.json').write_text('{"status":"NOT_CHECKED"}')
-            bundle, statuses = inspect_conversion(directory, 1)
+            bundle, statuses = inspect_conversion(directory, 1, validate=True)
             self.assertEqual('Fall.json', bundle.name)
             self.assertEqual('NOT_CHECKED', statuses['validationStatus'])
             with self.assertRaises(ValueError):
-                inspect_conversion(directory, 0)
+                inspect_conversion(directory, 0, validate=True)
             (directory / 'Fall.import.json').write_text('{"status":"INCOMPLETE"}')
             with self.assertRaises(ValueError):
-                inspect_conversion(directory, 1)
+                inspect_conversion(directory, 1, validate=True)
 
     def test_killed_converter_reports_exit_and_memory_hint_without_trusting_partial_files(self):
         with tempfile.TemporaryDirectory() as d:
@@ -39,7 +39,7 @@ class WorkflowTest(unittest.TestCase):
             (directory.parent / 'conversion.log').write_text(
                 'Exception in thread main java.lang.OutOfMemoryError: Java heap space')
             with self.assertRaisesRegex(ValueError, 'Java-Arbeitsspeicher erschöpft'):
-                inspect_conversion(directory, 1)
+                inspect_conversion(directory, 1, validate=True)
 
     def test_missing_references_fail_even_with_an_acceptable_validator_status(self):
         with tempfile.TemporaryDirectory() as d:
@@ -49,7 +49,7 @@ class WorkflowTest(unittest.TestCase):
             (directory / 'Fall.validation.json').write_text(json.dumps({
                 'status': 'VALID', 'referencesWithoutTargetInBundle': {'Patient/missing': 1}}))
             with self.assertRaises(ValueError):
-                inspect_conversion(directory, 0)
+                inspect_conversion(directory, 0, validate=True)
 
     @patch('run_synthea_cases.resolve_config', return_value={'values': {}, 'patients': {}})
     @patch('run_synthea_cases.environment', return_value={})
@@ -68,3 +68,25 @@ class WorkflowTest(unittest.TestCase):
             summary = json.loads(next(output.glob('run-*/details/reports/summary.json')).read_text())
             self.assertEqual(1, len(summary['failures']))
             self.assertEqual(1, len(summary['skipped']))
+
+    def test_default_conversion_accepts_complete_import_and_marks_validation_disabled(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            (directory / 'Fall.json').write_text('{}')
+            report = directory / 'Fall.import.json'
+            report.write_text('{"status":"COMPLETE"}')
+            _, statuses = inspect_conversion(directory, 0)
+            self.assertEqual('NOT_VALIDATED', statuses['validationStatus'])
+            with self.assertRaises(ValueError):
+                inspect_conversion(directory, 1)
+            with self.assertRaises(ValueError):
+                inspect_conversion(directory, 0, validate=True)
+            report.write_text('{"status":"INCOMPLETE"}')
+            with self.assertRaises(ValueError):
+                inspect_conversion(directory, 0)
+
+    def test_generator_validation_flag_is_separate_from_native_arguments(self):
+        from workflow_layout import generator_arguments
+        self.assertEqual(('outputGlobal', ['-p', '1'], False), generator_arguments(['--', '-p', '1']))
+        self.assertEqual(('custom', ['-p', '1'], True),
+                         generator_arguments(['-o', 'custom', '-v', '--', '-p', '1']))

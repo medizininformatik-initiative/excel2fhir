@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Generate with the pinned Synthea, then use the existing Excel/FHIR pipeline.
-Usage: run_synthea_workflow.py [-o OUTPUT_ROOT] -- [native Synthea arguments...]
+Usage: run_synthea_workflow.py [-o OUTPUT_ROOT] [-v] -- [native Synthea arguments...]
 Build/copy target/synthea.jar and target/synthea-revision.txt for a local run.
 """
 import json
@@ -13,7 +13,7 @@ from converter_options import CONFIG_NAME, ensure_config, resolve_config
 from run_synthea_cases import ROOT, run as convert_cases, sha256, write_json
 
 
-def run(output, arguments):
+def run(output, arguments, *, validate=False):
     jar = ROOT / 'target/synthea.jar'
     revision_file = ROOT / 'target/synthea-revision.txt'
     expected = (ROOT / 'scripts/synthea-version.txt').read_text().strip()
@@ -35,7 +35,7 @@ def run(output, arguments):
                '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',
                '--exporter.use_uuid_filenames=true',
                '--exporter.hospital.fhir.export=false', '--exporter.practitioner.fhir.export=false']
-    report = {'status': 'GENERATING', 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
+    report = {'status': 'GENERATING', 'validationEnabled': validate, 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
               'syntheaArguments': command[5:], 'output': str(directory),
               'converterOptions': resolved['values'], 'converterOptionsSha256': sha256(directory / 'details' / CONFIG_NAME)}
     report_path = directory / 'details/reports/workflow.json'
@@ -48,9 +48,9 @@ def run(output, arguments):
             raise RuntimeError('Synthea fehlgeschlagen; siehe details/logs/synthea.log (Exitcode ' + str(generated.returncode) + ').')
         report['status'] = 'CONVERTING'
         write_json(report_path, report)
-        print('Patienten werden über Excel nach FHIR konvertiert und geprüft.', flush=True)
+        print('Patienten werden über Excel nach FHIR konvertiert und mit den Quelldaten abgeglichen.', flush=True)
         code = convert_cases(directory / 'details/sources/synthea/fhir', output,
-                             config=directory / 'details' / CONFIG_NAME, directory=directory)
+                             config=directory / 'details' / CONFIG_NAME, directory=directory, validate=validate)
         summary = json.loads((directory / 'details/reports/summary.json').read_text())
         report['status'] = summary['status']
         report['completedSourcePatients'] = len(summary['results'])
@@ -72,5 +72,5 @@ def run(output, arguments):
 
 
 if __name__ == '__main__':
-    output, native = generator_arguments()
-    raise SystemExit(run(output, native))
+    output, native, validate = generator_arguments()
+    raise SystemExit(run(output, native, validate=validate))
