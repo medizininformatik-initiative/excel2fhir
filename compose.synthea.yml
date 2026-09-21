@@ -11,6 +11,7 @@ services:
     volumes:
       - ./:/workspace:ro
       - ./outputGlobal:/workspace/outputGlobal
+    # Converter arguments precede --; native Synthea arguments follow it.
     # Native Synthea settings: population, age range, seeds and simulation dates.
     # Start with one patient. Synthea may additionally export deceased patients.
     command: ["--", "-p", "1", "-a", "30-80", "-s", "20260912", "-cs", "20260912", "-r", "20260912", "-e", "20260912"]

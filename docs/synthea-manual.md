@@ -39,8 +39,8 @@ lokaler MMI-Katalog ist kein Bestandteil dieses Auslieferungswegs.
 der Vorlage, der Skripte und Mappingdateien. Jeder Fall enthält zusätzlich die
 Quellprüfsumme, Verlustbericht, CSV, Importberichte und bei aktivierter FHIR-Prüfung Validierungsberichte
 und `conversion.log` unter `details/cases/`. Bearbeitbare Arbeitsmappen liegen
-unter `excel/`, finale JSON-Bundles und `patients.ndjson` ausschließlich unter
-`fhir/`. `details/reports/summary.json` wird nach jedem Fall aktualisiert und enthält
+unter `excel/`, die gewählten FHIR-Formate unter
+`fhir/`, nach Eingabedateien und Varianten geordnet. `details/reports/summary.json` wird nach jedem Fall aktualisiert und enthält
 auch fehlgeschlagene Fälle. Ein Fehler in einer Quelldatei verhindert nicht die
 Bearbeitung der übrigen Dateien.
 
@@ -94,7 +94,7 @@ docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
 ```
 
 Die Eingabedatei bleibt erhalten. Ergebnisse entstehen in einem neuen
-`outputGlobal/run-…-excel-to-fhir/`. Synthea wird dabei nicht erneut gestartet.
+`outputGlobal/run-…-excel-to-fhir/`.
 Weitere Pfade und Optionen stehen unter [Excel und CSV konvertieren](converter-usage.md).
 
 Alternativ mit einem bereits lokal gebauten JAR:
@@ -123,16 +123,25 @@ mvn test package
 python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir
 ```
 
-Ohne Eingabeparameter wird `input/` gelesen; mit `-f` kann eine einzelne
-Quelldatei gewählt werden. Jeder Aufruf legt einen neuen Laufordner unter
-`outputGlobal/` an. `-o /pfad/ergebnisse` ändert diese Wurzel. Dort wird auch
-`converter-options.config` angelegt, sofern die Datei noch nicht existiert.
-Vorhandene Angaben werden geprüft und in die erzeugten Excel-Dateien übernommen. Die Pfade zur Vorlage und zum
-JAR werden relativ zum Skript bestimmt, deshalb funktioniert der Aufruf auch aus
-einem anderen Arbeitsverzeichnis. Der Workflow erlaubt Java bis zur Hälfte des verfügbaren Arbeitsspeichers
-als Heap für Konvertierung und optionale FHIR-Validierung. Im Container zählt der für Docker
-bereitgestellte Speicher. Große Lebensverläufe können mehr als 8 GB Docker-RAM
-und deutlich längere Laufzeiten erfordern. LibreOffice benötigt zusätzlich Speicher. Für die Ausgabe von Zeitpunkten benutzt
+Standardmäßig wird `input/` gelesen; `-f` wählt eine einzelne Quelldatei.
+Jeder Aufruf legt einen Laufordner unter `outputGlobal/` an.
+`-o /pfad/ergebnisse` wählt die Ausgabe-Wurzel.
+Die [gemeinsamen Konverterparameter](converter-usage.md#parameter) gelten ebenso:
+`--converter-options DATEI` wählt externe Optionssätze, `-r` die Formate,
+`-p` die Patientenanzahl pro Bundle und `-v` die FHIR-Validierung.
+
+```sh
+python3 scripts/run_synthea_cases.py -i /pfad/synthea/fhir \
+  --converter-options optionen/DIZ-A.config -r NDJSON -p 1
+```
+
+Die erzeugten Excel-Dateien enthalten die gemeinsamen Converter-Defaults.
+Die Optionsdateien bestimmen die Varianten des Aufrufs. Jeder Konverterlauf
+speichert seine wirksamen Optionen unter `details/options/`; beim Synthea-Import
+liegen diese Konverterläufe unter `details/cases/`.
+Java kann bis zur Hälfte des verfügbaren Speichers als Heap nutzen.
+Große Lebensverläufe und die optionale FHIR-Validierung benötigen mehr Speicher.
+Für die Ausgabe von Zeitpunkten benutzt
 die gesamte Pipeline (Python, LibreOffice und Java) einheitlich `Europe/Berlin`. Damit hängt die
 Darstellung der Kontaktzeiten nicht von der Zeitzone des Hosts ab; Zeitpunkte
 mit explizitem Offset bezeichnen weiterhin denselben Zeitpunkt.

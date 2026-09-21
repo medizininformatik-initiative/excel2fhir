@@ -20,13 +20,6 @@ OPTIONS += [
  ('PID_LAST_NUMBER_INCREASE_LOOP_OFFSET', '0', ['Versatz der letzten ID-Zahl je zusätzlichem Durchlauf.', 'Versatz so wählen, dass keine doppelten Patienten-IDs entstehen.']),
  ('PID_LAST_NUMBER_INCREASE_LOOP_COUNT', '0', ['Zusätzliche Durchläufe zur Vervielfachung des Datensatzes.', '0 bedeutet keine zusätzlichen Durchläufe; passende ID-Versätze festlegen.']),
 ]
-SYNTHEA_OVERRIDES = {
-    'SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER': 'true',
-    'SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION': 'false',
-    'SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER': 'true',
-    'SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION': 'false',
-    'CHECK_INPUT_CONSISTENCY': 'true',
-}
 
 
 def lines(overrides=None):
@@ -45,44 +38,18 @@ def lines(overrides=None):
     return result
 
 
-CONFIG_NAME = 'converter-options.config'
-
-
 def workflow_defaults():
-    return {name: SYNTHEA_OVERRIDES.get(name, default) for name, default, _ in OPTIONS}
+    return {name: default for name, default, _ in OPTIONS}
 
 
-def config_text():
-    result = ['# Konvertierungsoptionen für Synthea → Excel → FHIR',
-              '# Vorhandene Dateien werden nicht überschrieben.',
-              '# Aktive Angaben überschreiben die Workflow-Defaults.',
-              '# Fehlende oder auskommentierte Angaben verwenden den Workflow-Default.',
-              '# true = ja; false = nein.', '']
-    for name, default, description in OPTIONS:
-        value = SYNTHEA_OVERRIDES.get(name, default)
-        result.extend('# ' + line for line in description)
-        result.extend(['# Workflow-Default: ' + (value or '(leer)'), name + ' =' + (' ' + value if value else ''), ''])
-    return '\n'.join(result).rstrip() + '\n'
-
-
-def ensure_config(directory):
-    from pathlib import Path
-    path = Path(directory) / CONFIG_NAME
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with path.open('x', encoding='utf-8') as file:
-            file.write(config_text())
-    except FileExistsError:
-        pass
-    return path
-
-
-def resolve_config(path, patients=None):
+def resolve_config(path=None, patients=None):
     import json
     from pathlib import Path
     import subprocess
     root = Path(__file__).resolve().parents[1]
-    request = {'text': Path(path).read_text(encoding='utf-8'), 'defaults': workflow_defaults()}
+    request = {'text': Path(path).read_text(encoding='utf-8') if path is not None else '', 'defaults': {}}
+    if path is not None:
+        request['name'] = Path(path).stem
     if patients is not None:
         request['patients'] = patients
     result = subprocess.run(['java', '-cp', str(root / 'target/excel2fhir.jar'),
@@ -102,3 +69,16 @@ def property_line(name, value):
     value = str(value).replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
     value = value.replace(' ', '\\u0020').replace(',', '\\u002c').replace(chr(34), '\\u0022')
     return name + ' =' + (' ' + value if value else '')
+
+
+def selected_configs(files=(), patients=None):
+    result = []
+    names = set()
+    for path in files or [None]:
+        resolved = resolve_config(path, patients)
+        name = resolved.get('name', 'Konvertierungsoptionen')
+        if name.lower() in names:
+            raise ValueError('Optionssätze haben denselben Ausgabenamen: ' + name)
+        names.add(name.lower())
+        result.append({'name': name, 'path': str(path) if path is not None else None, **resolved})
+    return result

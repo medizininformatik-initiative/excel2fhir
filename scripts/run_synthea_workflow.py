@@ -9,11 +9,11 @@ import shutil
 import subprocess
 import sys
 from workflow_layout import create_run, write_status, generator_arguments
-from converter_options import CONFIG_NAME, ensure_config, resolve_config
+from converter_options import selected_configs
 from run_synthea_cases import ROOT, run as convert_cases, sha256, write_json
 
 
-def run(output, arguments, *, validate=False):
+def run(output, arguments, *, validate=False, option_files=(), **settings):
     jar = ROOT / 'target/synthea.jar'
     revision_file = ROOT / 'target/synthea-revision.txt'
     expected = (ROOT / 'scripts/synthea-version.txt').read_text().strip()
@@ -23,11 +23,14 @@ def run(output, arguments, *, validate=False):
         raise ValueError('Synthea-Stand passt nicht zu den mitgelieferten Mappings.')
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
-    config = ensure_config(output)
-    resolved = resolve_config(config)
+    selected_configs(option_files)
     directory = create_run(output, 'synthea')
-    shutil.copy2(config, directory / 'details' / CONFIG_NAME)
-    resolved = resolve_config(directory / 'details' / CONFIG_NAME)
+    snapshots = []
+    for index, config in enumerate(option_files):
+        target = directory / 'details/options-input' / str(index) / Path(config).name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(config, target)
+        snapshots.append(target)
     command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
                '--exporter.years_of_history=0', *arguments,
                '--exporter.baseDirectory=' + str(directory / 'details/sources/synthea'),
@@ -37,7 +40,7 @@ def run(output, arguments, *, validate=False):
                '--exporter.hospital.fhir.export=false', '--exporter.practitioner.fhir.export=false']
     report = {'status': 'GENERATING', 'validationEnabled': validate, 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
               'syntheaArguments': command[5:], 'output': str(directory),
-              'converterOptions': resolved['values'], 'converterOptionsSha256': sha256(directory / 'details' / CONFIG_NAME)}
+              'converterOptions': [dict(path=str(p), sha256=sha256(p)) for p in snapshots], 'conversionSettings': settings}
     report_path = directory / 'details/reports/workflow.json'
     write_json(report_path, report)
     try:
@@ -50,7 +53,7 @@ def run(output, arguments, *, validate=False):
         write_json(report_path, report)
         print('Patienten werden über Excel nach FHIR konvertiert und mit den Quelldaten abgeglichen.', flush=True)
         code = convert_cases(directory / 'details/sources/synthea/fhir', output,
-                             config=directory / 'details' / CONFIG_NAME, directory=directory, validate=validate)
+                             option_files=snapshots, directory=directory, validate=validate, **settings)
         summary = json.loads((directory / 'details/reports/summary.json').read_text())
         report['status'] = summary['status']
         report['completedSourcePatients'] = len(summary['results'])
@@ -61,7 +64,7 @@ def run(output, arguments, *, validate=False):
         if summary['status'] == 'NOT_CHECKED':
             print('Import und Rückvergleich bestanden. FHIR-Validierung teilweise NICHT PRÜFBAR; siehe Berichte. Exitcode 1 bleibt erhalten.', flush=True)
         elif summary['status'] == 'FAILED':
-            print('Lauf UNVOLLSTÄNDIG: siehe details/reports/summary.json. fhir/ enthält nur erfolgreich abgeglichene Patienten.', flush=True)
+            print('Lauf UNVOLLSTÄNDIG: siehe details/reports/summary.json. Erzeugte FHIR-Dateien und Fehlerberichte stehen zur Prüfung bereit.', flush=True)
         return code
     except Exception as error:
         report.update(status='FAILED', error=str(error))
@@ -72,5 +75,5 @@ def run(output, arguments, *, validate=False):
 
 
 if __name__ == '__main__':
-    output, native, validate = generator_arguments()
-    raise SystemExit(run(output, native, validate=validate))
+    output, native, settings = generator_arguments()
+    raise SystemExit(run(output, native, **settings))

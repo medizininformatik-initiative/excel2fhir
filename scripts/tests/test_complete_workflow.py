@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import run_synthea_workflow as workflow
-from converter_options import CONFIG_NAME, workflow_defaults
+CONFIG_NAME = 'converter-options.config'
 
 
 class CompleteWorkflowTest(unittest.TestCase):
@@ -22,12 +22,12 @@ class CompleteWorkflowTest(unittest.TestCase):
         root_patch = patch.object(workflow, 'ROOT', self.root)
         root_patch.start()
         self.addCleanup(root_patch.stop)
-        options_patch = patch.object(workflow, 'resolve_config', return_value={'values': workflow_defaults()})
+        options_patch = patch.object(workflow, 'selected_configs', return_value=[])
         options_patch.start()
         self.addCleanup(options_patch.stop)
 
-    def conversion(self, source, output, *, config=None, directory=None, validate=False):
-        self.assertTrue(config.is_file())
+    def conversion(self, source, output, *, option_files=(), directory=None, validate=False, **settings):
+        self.assertTrue(all(p.is_file() for p in option_files))
         (directory / 'fhir/good.json').write_text('{"resourceType":"Bundle"}')
         (directory / 'details/reports/summary.json').write_text(json.dumps({'status': self.status,
             'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx')}],
@@ -77,9 +77,9 @@ class CompleteWorkflowTest(unittest.TestCase):
         out = self.root / 'output'
         out.mkdir()
         (out / CONFIG_NAME).write_text('CHECK_INPUT_CONSISTENCY=treu\n')
-        with patch.object(workflow, 'resolve_config', side_effect=ValueError('bad options')):
+        with patch.object(workflow, 'selected_configs', side_effect=ValueError('bad options')):
             with self.assertRaisesRegex(ValueError, 'bad options'):
-                workflow.run(out, [])
+                workflow.run(out, [], option_files=[out / CONFIG_NAME])
         generate.assert_not_called()
         self.assertEqual([CONFIG_NAME], [p.name for p in out.iterdir()])
 
@@ -91,8 +91,8 @@ class CompleteWorkflowTest(unittest.TestCase):
         (out / CONFIG_NAME).write_text(original)
         self.status = 'NOT_CHECKED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion) as convert:
-            workflow.run(out, [])
-        snapshot = convert.call_args.kwargs['config']
+            workflow.run(out, [], option_files=[out / CONFIG_NAME])
+        snapshot = convert.call_args.kwargs['option_files'][0]
         self.assertEqual(original, snapshot.read_text())
         self.assertEqual(original, (out / CONFIG_NAME).read_text())
 
@@ -103,7 +103,7 @@ class CompleteWorkflowTest(unittest.TestCase):
                 self.status = 'COMPLETE' if enabled else 'NOT_VALIDATED'
                 out = self.root / str(enabled)
                 with patch.object(workflow, 'convert_cases', side_effect=self.conversion) as convert:
-                    code = workflow.run(out, [], validate=True) if enabled else workflow.run(out, [])
+                    code = workflow.run(out, [], validate=enabled)
                 self.assertEqual(0, code)
                 self.assertEqual(enabled, convert.call_args.kwargs['validate'])
                 directory = next(out.glob('run-*'))
@@ -111,3 +111,14 @@ class CompleteWorkflowTest(unittest.TestCase):
                 self.assertEqual(enabled, report['validationEnabled'])
                 self.assertEqual(self.status, report['status'])
                 self.assertTrue((directory / 'status.txt').read_text().startswith(self.status))
+
+    @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
+    def test_converter_parameters_are_forwarded_separately_from_synthea(self, generate):
+        self.status = 'NOT_VALIDATED'
+        with patch.object(workflow, 'convert_cases', side_effect=self.conversion) as convert:
+            workflow.run(self.root / 'formats', ['-p', '7'], formats=['XML'], patients_per_bundle=2,
+                         validation_log_level='WARNING', log_layout='MESSANGE_ONLY')
+        self.assertEqual(['XML'], convert.call_args.kwargs['formats'])
+        self.assertEqual(2, convert.call_args.kwargs['patients_per_bundle'])
+        command = generate.call_args.args[0]
+        self.assertEqual('7', command[command.index('-p') + 1])

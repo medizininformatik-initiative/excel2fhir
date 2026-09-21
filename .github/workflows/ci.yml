@@ -113,8 +113,8 @@ jobs:
         assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
         assert int(sys.argv[2]) == (0 if report['status'] == 'COMPLETE' else 1), report
         assert all(r['importStatus'] == 'COMPLETE' for r in report['results']), report
-        bundles = [json.loads(p.read_text()) for p in sorted((directory / 'fhir').glob('*.json'))]
-        lines = [json.loads(line) for line in (directory / 'fhir/patients.ndjson').read_text().splitlines()]
+        bundles = [json.loads(p.read_text()) for p in sorted((directory / 'fhir').rglob('*.json'))]
+        lines = [json.loads(line) for p in sorted((directory / 'fhir').rglob('*.ndjson')) for line in p.read_text().splitlines()]
         assert bundles == lines, 'JSON and NDJSON differ'
         assert not list((directory / 'details').glob('cases/*/run-*/fhir/**/*.json')), 'Duplicate final bundles'
         PYTHON
@@ -149,8 +149,8 @@ jobs:
         assert all(r['validationStatus'] == 'NOT_VALIDATED' for r in summary['results']), summary
         assert not list(runs[0].rglob('*.validation.json')), 'Unexpected validation reports'
         assert summary['results'] and not summary['failures'], summary
-        bundles = [json.loads(p.read_text()) for p in sorted((runs[0] / 'fhir').glob('*.json'))]
-        lines = [json.loads(line) for line in (runs[0] / 'fhir/patients.ndjson').read_text().splitlines()]
+        bundles = [json.loads(p.read_text()) for p in sorted((runs[0] / 'fhir').rglob('*.json'))]
+        lines = [json.loads(line) for p in sorted((runs[0] / 'fhir').rglob('*.ndjson')) for line in p.read_text().splitlines()]
         assert len(bundles) == len(summary['results'])
         assert bundles == lines, 'JSON and NDJSON differ'
         PYTHON

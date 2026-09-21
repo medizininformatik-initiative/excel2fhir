@@ -2,6 +2,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import com.google.gson.*;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
 
 /** Use the converter's own parser and ID rules in the Python workflow. */
 public class WorkflowOptions {
@@ -38,6 +39,8 @@ public class WorkflowOptions {
                 errors.add("Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich");
             }
         }
-        System.out.println(new Gson().toJson(Map.of("values", values, "patients", patients, "errors", errors)));
+        String name = input.has("name") ? new ConverterOptionSet(input.get("name").getAsString(), "").directoryName()
+                : "Konvertierungsoptionen";
+        System.out.println(new Gson().toJson(Map.of("values", values, "patients", patients, "errors", errors, "name", name)));
     }
 }

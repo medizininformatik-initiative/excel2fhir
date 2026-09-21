@@ -51,7 +51,7 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 inspect_conversion(directory, 0, validate=True)
 
-    @patch('run_synthea_cases.resolve_config', return_value={'values': {}, 'patients': {}})
+    @patch('run_synthea_cases.selected_configs', return_value=[{'name': 'Konvertierungsoptionen', 'values': {}, 'patients': {}}])
     @patch('run_synthea_cases.environment', return_value={})
     @patch('run_synthea_cases.read_sheets', return_value={'Codes': []})
     def test_invalid_files_do_not_hide_later_results_and_empty_inputs_fail(self, *mocks):
@@ -87,6 +87,33 @@ class WorkflowTest(unittest.TestCase):
 
     def test_generator_validation_flag_is_separate_from_native_arguments(self):
         from workflow_layout import generator_arguments
-        self.assertEqual(('outputGlobal', ['-p', '1'], False), generator_arguments(['--', '-p', '1']))
-        self.assertEqual(('custom', ['-p', '1'], True),
-                         generator_arguments(['-o', 'custom', '-v', '--', '-p', '1']))
+        output, native, settings = generator_arguments(['--', '-p', '1'])
+        self.assertEqual('outputGlobal', output)
+        self.assertEqual(['-p', '1'], native)
+        self.assertFalse(settings['validate'])
+        output, native, settings = generator_arguments(['-o', 'custom', '-v', '-p', '2', '-r', 'XML',
+            '--converter-options', 'a.config', '--converter-options', 'b.config', '--', '-p', '7'])
+        self.assertEqual('custom', output)
+        self.assertEqual(['-p', '7'], native)
+        self.assertTrue(settings['validate'])
+        self.assertEqual(['XML'], settings['formats'])
+        self.assertEqual(2, settings['patients_per_bundle'])
+        self.assertEqual(['a.config', 'b.config'], settings['option_files'])
+
+    def test_each_variant_needs_a_complete_import_report_with_xml_output(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            for name in ('DIZ-A', 'DIZ-B'):
+                variant = directory / name
+                variant.mkdir()
+                (variant / 'case.xml').write_text('<Bundle/>')
+                (variant / 'case.import.json').write_text('{"status":"COMPLETE"}')
+            _, status = inspect_conversion(directory, 0, expected_imports=2)
+            self.assertEqual('COMPLETE', status['importStatus'])
+            report = directory / 'DIZ-B/case.import.json'
+            report.write_text('{"status":"INCOMPLETE"}')
+            with self.assertRaisesRegex(ValueError, 'Import unvollständig'):
+                inspect_conversion(directory, 0, expected_imports=2)
+            report.unlink()
+            with self.assertRaisesRegex(ValueError, 'fehlt'):
+                inspect_conversion(directory, 0, expected_imports=2)

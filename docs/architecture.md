@@ -3,101 +3,109 @@
 Die Bedienwege stehen im [Projekteinstieg](../README.md). Diese Seite erklärt die
 Aufgabenteilung und die Prüfungen für die Projektentwicklung.
 
-## Ein gemeinsamer Converter
+## CSV-Converter und Excel-Eingabe
+
+Der Java-Converter erzeugt FHIR R4 aus CSV-Tabellen. Excel2FHIR stellt darüber
+bearbeitbare Arbeitsmappen bereit: Die Datenblätter beschreiben Patienten und
+Fälle, Apache POI überführt sie in CSV, anschließend erzeugt der Converter die
+FHIR-Ressourcen. Das Befüllen der Excel-Vorlage ist der normale Einstieg.
 
 ```mermaid
 flowchart LR
-  S[Synthea R4] --> P[Deutsche Projektion und Mapping]
-  P --> E[Bearbeitbare Excel-Datei]
-  M[Manuelle Excel-Eingabe] --> E
-  E --> C[CSV]
+  M[Manuelle Eingabe] --> E[Excel-Datenblätter]
+  E --> C[CSV-Tabellen]
   D[Direkte CSV-Eingabe] --> C
   C --> J[Java-Converter]
-  J --> F[FHIR R4 und Berichte]
+  O[Converter Options je Variante] --> J
+  J --> F[FHIR R4]
+  F --> V[Optionale FHIR-Validierung]
+  S[Optional: Synthea] --> P[Deutsche Projektion]
+  P --> E
 ```
 
-Die Python-Schicht projiziert Synthea auf die menschlich bearbeitbare Vorlage.
-Sie schreibt weder fertige klinische FHIR-Zielressourcen noch einen zweiten
-FHIR-Converter. Die FHIR-Erzeugung und Profilvalidierung bleiben im bestehenden
-Java-Converter. Excel und CSV sind ausdrücklich unterstützte Eingabewege;
-die Zwischenstufen ermöglichen einen Review und eine manuelle Weiterverarbeitung.
+Converter Options bestimmen den KDS-Dialekt, etwa Referenzrichtungen und
+Patienten-IDs. Die Aufrufparameter bestimmen Ausgabeformate, Bundle-Aufteilung
+und FHIR-Validierung. Diese Aufgabenteilung gilt für alle Eingabewege.
 
-Die Excel→CSV-Stufe verwendet Apache POI und benötigt keine Office-Installation.
-Beim Befüllen der vorhandenen Excel-Vorlage verwendet die Synthea-Schicht dagegen
-LibreOffice/UNO, um die bestehende Arbeitsmappe und ihre Formatierung zu erhalten.
-Eine zweite Java-Konvertierung für Synthea oder eine Parallelimplementierung
-aller Mappings würde dieselben fachlichen Regeln an mehreren Stellen verteilen.
+## Optionsvarianten und Ergebnisse
 
-## Einstiegspunkte und Zuständigkeiten
+`ConverterOptionSet` liest die Optionssätze für Excel und CSV. Jedes Excel-Blatt,
+dessen Name `Konvertierungsoptionen` enthält, beschreibt eine eigenständige
+Variante desselben Falls. Wiederholtes `--converter-options DATEI` wählt die
+externen Optionssätze für den Aufruf. Fehlende Werte ergänzt `ConverterOptions`
+aus den gemeinsamen Defaults. Namen und Werte werden vor der Konvertierung geprüft.
 
-| Bestandteil | Aufgabe / Aufrufer |
+Jeder Aufruf erzeugt einen eigenen Laufordner. Unter `fhir/` erhält jede Variante
+einen Ordner; mehrere Eingaben werden zusätzlich getrennt. `details/options/`
+enthält die wirksamen Optionen, `details/reports/` die Importberichte und die
+mit `-v` angeforderten Validierungsberichte. Der Converter schreibt die mit `-r`
+ausgewählten Formate und teilt Patienten mit `-p` auf Bundles auf.
+
+| Bestandteil | Aufgabe |
 | --- | --- |
-| `compose.synthea.yml` | Baut und startet den vollständigen Workflow; Nutzer ändern hier native Synthea-Argumente. |
-| `scripts/run_synthea_container.py` | Startet den vollständigen Containerworkflow unter UID/GID des gemounteten Ausgabeordners; private Laufordner bleiben für deren Eigentümer bearbeitbar. |
-| `scripts/run_synthea_workflow.py` | Prüft den Generatorstand und die Optionen, erzeugt einen Laufordner, startet Synthea und den Import. |
-| `scripts/run_synthea_cases.py` | Verarbeitet vorhandene Quellbundles einzeln; erstellt Excel, ruft Java auf, prüft Berichte und vergleicht die Ergebnisse. |
-| `scripts/synthea_to_excel.py` | Bereitet die Zeilen vor und füllt eine Kopie der Vorlage. Lädt die klinischen Mappingmodule. |
-| `scripts/procedure_projection.py` | Erzeugt Prozedurzeilen aus Einzelzuordnungen, regionalen Aufteilungen und Chemotherapieblöcken; dokumentiert Quell-IDs, Zeiten und Annahmen. |
-| `scripts/audit_procedures.py` | Prüft diese Projektion unabhängig anhand der Quellbundles, Mappingdaten, Excel-Zeilen und FHIR-Ressourcen. |
-| `scripts/WorkbookUno.java` | Technischer LibreOffice-Zugriff; wird durch den Python-Helfer gestartet. |
-| `scripts/WorkflowOptions.java` | Verwendet den vorhandenen Java-Optionsparser und die ID-Regeln für die Workflow-Vorprüfung. Keine separate Properties-/ID-Implementierung in Python. |
-| `Excel2FhirMain` / `life.csv2fhir.Main` | Bestehende Excel- und CSV-Einstiegspunkte im selben Converter-JAR. |
-| `scripts/check_synthea_roundtrip.py` | Automatischer Abgleich mit der Quelle einschließlich Mappingentscheidungen, Patienten-ID-Optionen und Kopien. |
-| `scripts/audit_synthea_projection.py` | Zusätzlicher unabhängiger Prüfer für Default-Läufe; ruft die Import-/Mappingfunktionen nicht auf. Eigene ID-Optionen und Patientenkopien werden von diesem zusätzlichen Prüfer noch nicht unterstützt. |
+| `Excel2FhirMain` | Liest Arbeitsmappen und Optionsvarianten, exportiert CSV und startet den Converter. |
+| `life.csv2fhir.Main` | Konvertiert vorhandene CSV-Datensätze mit den gewählten Optionsvarianten. |
+| `ConverterOptionSet` / `ConverterOptions` | Wählt Optionssätze, prüft Werte und ergänzt Defaults. |
+| `Converter` | Erzeugt FHIR-Ressourcen und deren Referenzen aus den Falldaten. |
+| `WorkflowRun` | Verwaltet Laufordner, Ausgaben und Berichte. |
 
-Build-/Migrationshelfer unter `scripts/` werden nicht automatisch im normalen
-Workflow ausgeführt. Python kompiliert importierte Module bei Bedarf nach
-`__pycache__/*.pyc`; dieser Cache ist entbehrlich und nicht versioniert.
+## Synthea als Quelle für Excel
 
-## Konfiguration und Datenbestand
+Die optionale Python-Schicht projiziert Synthea-R4-Bundles auf die Excel-Vorlage.
+Sie füllt mit LibreOffice/UNO eine Kopie der vorhandenen Arbeitsmappe und erhält
+deren Formatierung. Die erzeugten Optionsblätter enthalten die gemeinsamen
+Converter-Defaults. Für den jeweiligen Aufruf gewählte externe Optionsdateien
+werden an Excel2FHIR weitergegeben; ebenso Formatwahl, Bundle-Aufteilung und
+Validierung. So kann dieselbe Arbeitsmappe anschließend direkt weiterbearbeitet
+und mit den gewünschten Varianten konvertiert werden.
 
-- `scripts/synthea-version.txt` pinnt den Quellcommit. Ein Versionswechsel erfordert
-  einen erneuten Inventar-/Mappingabgleich.
-- `scripts/mappings/*.json` enthalten die versionierten deutschen Zuordnungen,
-  Begründungen und Quellen. `sourceFiles` nennt die Fundstellen im Synthea-Quellcode;
-  die genannten Dateien müssen zur Laufzeit nicht lokal vorhanden sein.
-- `german-demographics.json` und `german-name-supplement.json` enthalten synthetische
-  Namens-/Adressbausteine. Sie werden mit ausgeliefert.
-- `synthea-source-code-registry.json` beschreibt Quellkonzepte und ihre Verwendung.
-  Es dupliziert keine Mappingentscheidungen. Abdeckung des festgelegten Inventars
-  bedeutet eine ausdrückliche Entscheidung, nicht zwingend einen deutschen Code
-  oder vollständigen Import aller Synthea-Ressourcentypen.
-- `outputGlobal/converter-options.config` ist die automatisch angelegte, bearbeitbare
-  Workflow-Konfiguration. Ohne Datei werden dieselben Defaults erzeugt. Jeder
-  Lauf bewahrt einen Snapshot und die wirksamen Werte auf.
-- Die wirksamen Optionen stehen anschließend im Excel-Blatt. Änderungen dort
-  gelten bei erneuter direkter Konvertierung dieser Datei. Java bleibt für die
-  Bedeutung und Prüfung der Optionen maßgeblich.
+| Bestandteil | Aufgabe |
+| --- | --- |
+| `compose.synthea.yml` | Startet die Erzeugung und anschließende Konvertierung; gemeinsame Parameter stehen vor `--`, Synthea-Parameter dahinter. |
+| `scripts/run_synthea_container.py` | Führt den Workflow unter UID/GID des Ausgabeordners aus. |
+| `scripts/run_synthea_workflow.py` | Prüft Generatorstand und Optionen, startet Synthea und den Import. |
+| `scripts/run_synthea_cases.py` | Erstellt Excel-Dateien, ruft Excel2FHIR auf und vergleicht jede Optionsvariante mit der Quelle. |
+| `scripts/synthea_to_excel.py` | Bereitet Datenzeilen anhand der klinischen Mappings vor und befüllt die Vorlage. |
+| `scripts/WorkbookUno.java` | Technischer LibreOffice-Zugriff. |
+| `scripts/WorkflowOptions.java` | Nutzt den Java-Optionsparser für Defaults, Variantennamen und die Vorprüfung der Patienten-IDs. |
+| `scripts/fhir_output.py` / `scripts/ReadXmlBundles.java` | Lesen die gewählten Ausgabeformate für den Rückvergleich. |
+| `scripts/check_synthea_roundtrip.py` | Prüft Datenübernahme, Referenzrichtungen, Patienten-ID-Optionen und Kopien. |
+| `scripts/procedure_projection.py` / `scripts/audit_procedures.py` | Projizieren Prozeduren und prüfen sie anhand der Quellen, Excel-Zeilen und FHIR-Ressourcen. |
+| `scripts/audit_synthea_projection.py` | Zusätzlicher unabhängiger Prüfer für Läufe mit Standard-IDs und je einem Patienten. |
 
-## Ergebnisse und Prüfgrenzen
+### Mappingdaten und Nachvollziehbarkeit
 
-Die Originalquellen bleiben erhalten. `Fall.loss.json` dokumentiert Projektionen
-und Auslassungen, `*.import.json` den tatsächlichen Import, `*.validation.json`
-die mit `-v` aktivierte FHIR-Prüfung. Der komplette Workflow kopiert nur vollständig importierte und
-gegen die Quelle abgeglichene Ergebnisse in seinen zentralen Ordner `fhir/`.
-Teilresultate bleiben für die Fehlersuche unter `details/cases/` sichtbar.
+`scripts/synthea-version.txt` pinnt den Generatorcommit. Ein Versionswechsel
+erfordert einen Inventar- und Mappingabgleich. `scripts/mappings/*.json` enthalten
+die versionierten deutschen Zuordnungen, Begründungen und Quellen.
+`sourceFiles` nennt die Fundstellen im Synthea-Quellcode.
+`german-demographics.json` und `german-name-supplement.json` liefern synthetische
+Namens- und Adressbausteine. `synthea-source-code-registry.json` beschreibt die
+Quellkonzepte und ihre Verwendung.
 
-`environment.json` und `workflow.json` halten Versionen, Eingaben und Prüfsummen
-fest. Seeds und Simulationsdatum erlauben reproduzierbare Synthea-Läufe; derselbe
-Seed ist keine Anforderung an neue, garantiert andere Patienten-IDs. Wer getrennte
-Bestände benötigt, verwendet passende Seeds bzw. bewusst unterschiedliche
-Patienten-ID-Präfixe. Es gibt keine zentrale serverübergreifende ID-Vergabestelle.
+Die Originalquellen bleiben im Laufordner erhalten. `Fall.loss.json` dokumentiert
+Projektionen und Auslassungen, `*.import.json` den tatsächlichen Import.
+Die gewählten FHIR-Ausgaben stehen unter `fhir/` zur Prüfung bereit;
+`summary.json` enthält den Status der Konvertierung und des Rückvergleichs.
+Details je Quelldatei einschließlich der wirksamen Optionssätze liegen unter
+`details/cases/`. `environment.json` und `workflow.json` halten Versionen,
+Eingaben und Prüfsummen fest.
 
-Der automatische Rückvergleich und der unabhängige Audit prüfen technische
-Datenübernahme. Medizinische Gleichwertigkeit synthetischer Ergänzungen und
-vollständige Terminologiezugehörigkeit brauchen zusätzliche Prüfung. Die
-mitgelieferten Profile ersetzen keinen vollständigen Terminologieserver.
+Seeds und Simulationsdatum erlauben reproduzierbare Synthea-Läufe. Getrennte
+Datenbestände erhalten passende Seeds und Patienten-ID-Präfixe. Der automatische
+Rückvergleich und der unabhängige Audit prüfen die technische Datenübernahme.
+Die medizinische Plausibilität synthetischer Ergänzungen und vollständige
+Terminologiezugehörigkeit brauchen zusätzliche Prüfung.
 
-## Container und CI
+## Build, Container und CI
 
-`docker/Dockerfile` enthält den bisherigen Java-Converter.
-`docker/synthea.Dockerfile` nutzt gemeinsame Stufen für den Importer und den
-vollständigen Workflow. Nur das Target `workflow` enthält zusätzlich Synthea.
-Compose bündelt die Werkzeuge; eine zusätzliche lokale Python-/Office-Toolchain
-ist für diesen Weg nicht erforderlich.
+Maven baut und prüft den Java-Converter. Python-Tests laufen mit
+`python3 -m unittest discover -s scripts/tests -v`.
+`docker/Dockerfile` enthält den Excel-/CSV-Converter.
+`docker/synthea.Dockerfile` ergänzt Python und LibreOffice für den Import;
+das Target `workflow` enthält außerdem den gepinnten Synthea-Generator.
 
-Die CI-Konfiguration prüft Java/Python, CodeQL, beide Synthea-Wege und Images mit
-Trivy. Die bekannten Sicherheitsbefunde des Generators sind in
+Die CI prüft Java/Python, CodeQL, beide Synthea-Wege und Images mit Trivy.
+Die Sicherheitsbefunde des Generators sind in
 [Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
-separat erfasst. Die vollständige Imageprüfung darf dadurch nicht stillschweigend
-entfallen. Der Releasejob hängt aktuell auch vom Workflow-Check ab.
+erfasst. Der Releasejob hängt auch vom Workflow-Check ab.
