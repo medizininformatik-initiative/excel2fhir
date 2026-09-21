@@ -1,113 +1,37 @@
 # excel2fhir
 
-Mit `excel2fhir` erzeugen Sie FHIR-R4-Testdaten für den deutschen
-MII-Kerndatensatz (KDS). Sie beschreiben Patienten und Fälle in einer
-Excel-Vorlage und wählen über die **Converter Options** die gewünschte
-FHIR-Darstellung. Derselbe Fall lässt sich damit in mehreren DIZ-Varianten erzeugen.
+Generate FHIR R4 test data for the German MII Core Data Set (KDS) from Excel
+workbooks or CSV files.
 
-Technischer Kern ist die CSV-zu-FHIR-Konvertierung. Der Excel-Einstieg liest
-die Arbeitsmappe als CSV ein und verwendet diesen gemeinsamen Konverter.
-
-## Projekt herunterladen
-
-Voraussetzungen: Git mit eingerichtetem SSH-Zugriff auf GitHub, Docker mit
-Compose und Excel oder LibreOffice zum Bearbeiten der Vorlage. Docker vor
-dem ersten Lauf starten.
-
-Das Projekt vom Entwicklungsbranch `develop` herunterladen und ins
-Projektverzeichnis wechseln:
+## Usage
 
 ```sh
-git clone --branch develop \
-  git@github.com:medizininformatik-initiative/excel2fhir.git
-cd excel2fhir
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
 ```
 
-Alle folgenden Befehle werden in diesem Verzeichnis ausgeführt.
+`input/` contains a ready-to-run [example workbook](input/FHIR_Testdatengenerator_Vorlage.xlsx).
+Edit or replace it with your own cases, keeping the sheet names and column headings.
+The converter processes all workbooks in that directory.
 
-## Excel ausfüllen und FHIR erzeugen
+Each run writes JSON and NDJSON to `outputGlobal/run-…/fhir/`.
+`status.txt` shows the result; `details/` contains reports, effective options and
+intermediate files. Add `-v` to enable FHIR profile and terminology validation.
 
-1. Die [Excel-Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) als
-   `input/MeinFall.xlsx` kopieren und diese Kopie in Excel oder LibreOffice ausfüllen.
-   Die [Demo](FHIR_Testdatengenerator_Interpolar_Demo.xlsx) zeigt ausgefüllte Fälle.
-2. Die gewünschten Converter Options im Optionsblatt eintragen oder eine externe
-   Optionsdatei auswählen.
-3. Im Projektverzeichnis mit Docker und Compose starten:
+Converter Options control the KDS variant. Use the workbook's options sheet or
+select external options files. See [converter usage](docs/converter-usage.md)
+for input selection, options and output formats.
 
-```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f input/MeinFall.xlsx
-```
+## Other inputs
 
-Der erste Build benötigt Internet. Java und der Converter sind im Image enthalten.
-Standardmäßig liest der Converter Excel-Dateien aus `input/`. Jeder Aufruf
-legt einen eigenen Lauf unter `outputGlobal/run-…-excel-to-fhir/` an.
+- [CSV files](docs/converter-usage.md#csv-input)
+- [Patient histories generated with Synthea](docs/synthea-workflow.md)
+- [Existing Synthea bundles](docs/synthea-manual.md)
 
-- **FHIR:** `fhir/`, nach Optionsvarianten und gegebenenfalls Eingabedateien geordnet.
-- **Wirksame Optionen:** `details/options/`.
-- **Berichte:** `details/reports/`.
-- **Gesamtstatus:** `status.txt`.
-
-Standardmäßig entstehen JSON und NDJSON. Mit `-r JSON`, `-r NDJSON` oder
-beispielsweise `-r XML` wählen Sie das Ausgabeformat. `-p 1` erzeugt
-JSON-Bundles mit jeweils einem Patienten.
-
-[Vorlage, Optionen, Formate und vollständige Bedienung](docs/converter-usage.md)
-
-## Einen Fall für mehrere DIZ konvertieren
-
-Jedes Optionsblatt bildet eine Variante. Externe Optionsdateien können Sie
-für viele Falldateien wiederverwenden:
-
-```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f input/MeinFall.xlsx \
-  --converter-options optionen/DIZ-A.config \
-  --converter-options optionen/DIZ-B.config
-```
-
-Die ausgewählten Dateien bestimmen die Varianten dieses Aufrufs. Jede Variante
-bekommt eigene Ausgaben und eine Kopie ihrer wirksamen Optionen. Ausgelassene
-Werte verwenden die gemeinsamen Converter-Defaults.
-
-## Eingaben prüfen und FHIR validieren
-
-`CHECK_INPUT_CONSISTENCY` steuert die Konsistenzprüfung der Excel-Eingaben.
-Die FHIR-Profil- und Terminologieprüfung aktivieren Sie zusätzlich mit `-v`.
-Ein erfolgreicher Standardlauf erhält `NOT_VALIDATED` und Exitcode 0.
-Bei angeforderter FHIR-Prüfung beschreibt `COMPLETE` den erfolgreichen Abschluss,
-`NOT_CHECKED` eine unvollständig ausführbare Prüfung und `FAILED` einen Fehler.
-Einzelheiten stehen in `status.txt` und den Berichten.
-
-[Eingabeprüfungen](docs/contact-input-checks.md) ·
-[Importbilanz](docs/import-report.md) · [FHIR-Validierung](docs/fhir-validation.md)
-
-## CSV direkt verwenden
-
-CSV-Dateien entsprechen den Tabellen und Spalten der Excel-Vorlage. Für die
-Konvertierung gelten dieselben Converter Options, Formate und Validierungsregeln.
-
-[CSV-Aufruf und Dateizuordnung](docs/converter-usage.md#csv-verwenden)
-
-## Excel automatisch mit Synthea befüllen
-
-Synthea ist eine zusätzliche Quelle für die Inhalte der Excel-Datenblätter.
-Der Import überträgt die Patientengeschichte in die Vorlage; anschließend
-verarbeitet der gemeinsame Excel-Konverter die Dateien mit den gewählten Optionen.
-Die erzeugten Arbeitsmappen können Sie bearbeiten und erneut konvertieren.
-
-- [Patienten erzeugen und Excel befüllen](docs/synthea-workflow.md)
-- [Vorhandene Synthea-Bundles importieren](docs/synthea-manual.md)
-- [Krankenhausbeispiel](examples/synthea-hospital/README.md)
-- [Übernommene Inhalte und synthetische Ergänzungen](docs/synthea-clinical-import.md)
-
-## Entwicklung
-
-Für die Java-Entwicklung: JDK 17 und Maven 3.x.
+## Development
 
 ```sh
 mvn test package
 python3 -m unittest discover -s scripts/tests -v
 ```
 
-[Architektur](docs/architecture.md) · [Lokale Ausführung](docs/converter-usage.md#alternative-ohne-docker) · [Lizenz](LICENSE)
+[Architecture](docs/architecture.md) · [Local execution](docs/converter-usage.md#local-execution) · [License](LICENSE)

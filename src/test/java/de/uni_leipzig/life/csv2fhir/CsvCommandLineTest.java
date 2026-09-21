@@ -206,8 +206,8 @@ public class CsvCommandLineTest {
         for (String name : java.util.List.of("Konvertierungsoptionen_A", "Konvertierungsoptionen_B")) {
             var directory = output.resolve("fhir/" + name);
             assertEquals(2, Files.readAllLines(directory.resolve("patients.ndjson")).size());
-            assertTrue(Files.exists(directory.resolve("case_p1.json")));
-            assertTrue(Files.exists(directory.resolve("case_p2.json")));
+            assertTrue(Files.exists(directory.resolve("case_P1.json")));
+            assertTrue(Files.exists(directory.resolve("case_P2.json")));
         }
     }
 

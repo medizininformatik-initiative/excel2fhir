@@ -1,21 +1,17 @@
-# Krankenhausbeispiel für 2020–2026
+# Hospital example for 2020–2026
 
-Dieses Beispiel erzeugt zehn Patienten mit vielen stationären Aufenthalten und
-behält ihre ambulanten Kontakte. Es ist eine bewusst ausgewählte Demonstration,
-keine statistisch repräsentative Stichprobe und kein Abbild eines einzelnen realen
-Krankenhauses. Die stationären Kontakte stammen aus Synthea, nicht aus nachträglicher
-Umklassifizierung ambulanter Kontakte.
+This recipe selects ten synthetic patients with a range of inpatient histories
+and retains their outpatient contacts. It is a curated demonstration. The
+selection uses Synthea's original facility-contact classes.
 
-Voraussetzung: Docker/Compose. Alle Befehle im Projektverzeichnis ausführen.
-Die Zielordner `hospital-pool`, `hospital-selection` und `hospital-results` dürfen
-noch nicht bestehen, damit keine Patienten aus früheren Läufen dazugemischt werden.
-Für einen weiteren Lauf andere Ordnernamen verwenden.
+Use fresh destination directories for each attempt so the selection contains
+one source population.
 
-## 1. Kandidaten erzeugen
+## 1. Generate candidates
 
-Synthea soll 60 ältere Patienten mit Herzoperationen erzeugen. Verstorbene können
-zusätzlich ausgegeben werden. Das `-k`-Modul verlangt einen Eingriff irgendwann
-im Leben; erst der nächste Schritt prüft die stationären Fälle im Zielzeitraum.
+Generate a pool of 60 older patients with cardiac surgery. The keep-module requires
+surgery at some point in their lifetime; the selection step checks hospital stays
+within the target period.
 
 ```sh
 docker compose -f compose.synthea.yml run --build --rm --entrypoint java synthea \
@@ -24,42 +20,32 @@ docker compose -f compose.synthea.yml run --build --rm --entrypoint java synthea
   -k must_have_cardiac_surgery.json \
   --exporter.baseDirectory=outputGlobal/hospital-pool \
   --exporter.years_of_history=7 \
-  --exporter.fhir.export=true --exporter.fhir_stu3.export=false \
-  --exporter.fhir_dstu2.export=false --exporter.fhir.bulk_data=false \
-  --exporter.use_uuid_filenames=true \
   --exporter.hospital.fhir.export=false --exporter.practitioner.fhir.export=false
 ```
 
-Die Simulation reicht hier bewusst bis Anfang 2027, um 2026 abzudecken; die
-Daten nach dem heutigen Datum sind genauso erfunden wie der übrige Verlauf.
-Syntheas Historienfilter rechnet mit **365 Tagen je Jahr**, nicht mit Kalenderjahren.
-Sieben Jahre bis 01.01.2027 ergeben daher ungefähr **03.01.2020–01.01.2027**;
-dies ist kein tagexakter Export vom 01.01.2020 bis 31.12.2026.
-Fortbestehende Diagnosen, Medikationen und Behandlungspläne sowie ihre ursprünglichen
-Bezugskontakte können älter sein. Geburtsdaten bleiben selbstverständlich erhalten.
-Der Filter ist keine vollständige Entfernung aller älteren Zeitangaben.
+This direct generator call sets the export format and destination needed by the
+recipe. The simulation ends at the start of 2027 to include 2026. Synthea counts
+365 days per history year, so the seven-year window starts around 3 January 2020.
+Ongoing conditions, medication, care plans and their originating contacts may
+carry earlier dates. Deceased patients may be exported in addition to the requested
+living population.
 
-## 2. Zehn Fälle auswählen
+## 2. Select ten cases
 
 ```sh
-docker compose -f compose.synthea.yml run --rm \
-  -v "$PWD/examples/synthea-hospital:/recipes:ro" \
-  --entrypoint python3 synthea /recipes/select_cases.py \
+docker compose -f compose.synthea.yml run --rm --entrypoint python3 synthea \
+  examples/synthea-hospital/select_cases.py \
   outputGlobal/hospital-pool/fhir outputGlobal/hospital-selection
 ```
 
-Das Rezept wählt sechs Patienten mit mindestens zwei stationären Aufenthalten,
-zwei mit einem und zwei ohne stationären Aufenthalt **im Zeitraum 2020–2026**.
-Es zählt originale `IMP`-Einrichtungskontakte; ergänzte Abteilungs- oder Bettkontakte
-zählen nicht als weitere stationäre Fälle. Innerhalb der Gruppen wird reproduzierbar
-sortiert. Alle Quelldateien werden unverändert kopiert, einschließlich ambulanter
-Kontakte, virtueller Kontakte und gegebenenfalls häuslicher Versorgung.
-`hospital-selection/selection.json` enthält Auswahl, Fallzahlen und Quellprüfsummen.
-Reichen die Kandidaten nicht aus, einen größeren Pool oder einen anderen Seed erzeugen.
-Patientenzahl und Altersbereich stehen im ersten Befehl; die kleine Beispielauswahl
-ist in `select_cases.py` direkt lesbar festgelegt.
+The selection comprises six patients with at least two inpatient stays, two with
+one and two with none during 2020–2026. It counts original `IMP` facility contacts
+and uses deterministic ordering within groups. Source bundles are copied intact.
+`hospital-selection/selection.json` records the chosen patients, counts and hashes.
+If the pool is too small, generate another pool with a larger population or a
+different seed.
 
-## 3. Excel und FHIR erzeugen
+## 3. Generate Excel and FHIR
 
 ```sh
 docker compose -f compose.synthea.yml run --rm --entrypoint python3 synthea \
@@ -67,20 +53,10 @@ docker compose -f compose.synthea.yml run --rm --entrypoint python3 synthea \
   -i outputGlobal/hospital-selection/fhir -o outputGlobal/hospital-results
 ```
 
-Danach liegen unter `outputGlobal/hospital-results/run-…-synthea-import/`
-die Arbeitsmappen in `excel/`, JSON und NDJSON in `fhir/` und die Zwischenstände
-unter `details/`. `details/reports/summary.json` fasst alle Patienten zusammen.
-Ein erfolgreicher Standardlauf erhält `NOT_VALIDATED` und Exitcode 0.
-Die optionale FHIR-Prüfung wird mit `-v` beim Import aktiviert.
-Bei `NOT_CHECKED` sind Import und Rückvergleich erfolgreich, während
-Terminologieprüfungen unvollständig bleiben; der aktuelle Prozess liefert dafür
-Exitcode 1. Bei `FAILED` die konkreten Fehler prüfen.
+Results follow the [Synthea output layout](../../docs/synthea-workflow.md#output)
+under `outputGlobal/hospital-results/run-…-synthea-import/`, with one workbook per
+source patient. The [common converter options](../../docs/converter-usage.md#common-options)
+select KDS variants, formats and optional validation.
 
-Es gibt weiterhin eine Excel-Datei pro Synthea-Patient. Der ursprüngliche
-Excel-/CSV-Konverter kann weiterhin mehrere Patienten in einer Eingabe verarbeiten.
-Die ambulanten Endzeitpunkte werden hier unverändert aus Synthea übernommen;
-andere Krankenhaus-Abschlussregeln sind noch nicht umgesetzt.
-
-Für andere Szenarien Syntheas Alter, Seeds und passende Keep-Module verwenden.
-Nur `-p` zu erhöhen garantiert keinen höheren stationären Anteil. Zusätzliche
-Synthea-Module erfordern einen erneuten Mapping-Abgleich.
+For a different scenario, adjust population size, age range, seeds and keep-module.
+Additional clinical modules require checking mapping coverage for their source concepts.

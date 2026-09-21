@@ -10,7 +10,7 @@ FROM amazoncorretto:17.0.20-alpine
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50"
 
 COPY --from=maven_tool_chain /tmp/target/excel2fhir.jar /app/excel2fhir.jar
-COPY FHIR_Testdatengenerator_Vorlage.xlsx /app/
+COPY input/FHIR_Testdatengenerator_Vorlage.xlsx /app/input/
 COPY docker/docker-entrypoint.sh /app/
 
 WORKDIR /app

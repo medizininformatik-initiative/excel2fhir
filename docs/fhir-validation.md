@@ -1,31 +1,48 @@
 # FHIR validation
 
-FHIR profile and terminology validation is optional and disabled by default. Enable it with `-v` / `--validate-bundles` to validate completed bundles after conversion and post-processing. The same option applies to the Synthea import and generation commands; place it before `--` in the generation command. It retains every converted resource, including resources with validation errors. A `<bundle-name>.validation.json` report under the run’s `details/reports/` directory records all raw messages independently of `-vll`, their severity/location and the application classification. Treat the report and process exit status as part of the output: an existing FHIR file does not imply validation success.
+Add `-v` to validate completed bundles against the bundled FHIR profiles and
+terminologies. This option applies to Excel, CSV and Synthea workflows. In a
+Synthea generation command, place it before `--`.
 
-The conversion CLI exits with status 1 if a validation error, validator failure or a recognized terminology-check gap occurred. It completes the remaining conversions before returning this validation status. Conversion/I/O exceptions also fail the command. A successful default conversion is labelled `NOT_VALIDATED` and exits with status 0. Synthea import and roundtrip checks run in both modes.
+Validation is disabled by default. A successful default conversion has status
+`NOT_VALIDATED` and exit code 0. With validation enabled, errors, validator failures
+and recognized terminology gaps produce exit code 1. Converted resources remain
+available for inspection.
 
-Classification:
+## Reports
 
-- `ERROR`: retained ERROR or FATAL; FATAL is never ignored.
-- `NOT_CHECKED`: an explicitly unavailable CodeSystem or unexpandable/unresolved ValueSet. This does not assert that the code is wrong or correct. It prevents a successful validation exit status, while keeping the original message.
-- `IGNORED`: the retained historical OBI identifier warning exception. Unknown-code errors and generic validation failures are no longer suppressed by terminology URL.
-- `WARNING` / `VALID`: the remaining HAPI result. Absence of errors does not prove complete terminology coverage or clinical plausibility.
+`<bundle-name>.validation.json` records every validator message, its severity,
+location and classification. Direct converter runs store reports under
+`details/reports/`; Synthea retains them in the per-source converter runs under
+`details/cases/`.
 
-The `strict` argument on the single-resource API controls its additional exception list (currently empty). CLI validation operates on final bundles with their completed relationships.
+| Classification | Meaning |
+| --- | --- |
+| `ERROR` | A retained error or fatal message. |
+| `NOT_CHECKED` | An explicitly unavailable CodeSystem or unresolved/unexpandable ValueSet. |
+| `IGNORED` | The specific OBI identifier-warning exception. |
+| `WARNING` / `VALID` | The remaining HAPI validation result. |
 
-Counters explicitly distinguish error/warning messages from validation calls. A whole-bundle validation is one call; its report separately gives the entry count. A resource with no messages counts as one valid call. The file-validation API returns a result for every processed file, including read/validation failures. Its standalone CLI also returns nonzero for errors or recognized incomplete checks.
+Message counters and validation-call counters are separate. Whole-bundle validation
+counts as one call, with the resource count recorded separately. The file-validation
+API reports a result for each processed file, including read or validation errors.
 
-Reports include `referencesWithoutTargetInBundle`. Matching covers relative Type/id references and UUID URNs, against resource ids and entry fullUrls. Relative references can legitimately resolve outside a transaction; therefore this inventory is not automatically classified as an error. For generated self-contained examples, require this map to be empty. Absolute and contained references need their own resolution context; this check does not claim to validate them.
+`referencesWithoutTargetInBundle` lists unresolved relative `Type/id` and UUID-URN
+references by matching resource IDs and entry fullUrls. This inventory supports
+review of self-contained output; relative references may also target an external
+server. Absolute and contained references require their own resolution context.
 
-The bundled profiles do not provide a complete SNOMED or LOINC terminology server. Some missing catalogs are reported only as warnings by HAPI. Current known gaps include the international SNOMED edition 2025-07-01, historical versions referenced by the ICD-10-GM ValueSet, and an IPS laboratory ValueSet canonical referenced by the KDS laboratory profile. Do not turn these gaps into broad unknown-code exceptions. German text quality, approximate source-to-target mappings and clinical event chronology require separate review.
+## Terminology coverage
 
-## Corrected conversion contracts
+The [bundled package set](fhir-packages.md) supplies profiles and selected
+terminologies. Complete SNOMED and LOINC checks require the matching terminology
+editions or a terminology service. Known gaps include the international SNOMED
+edition 2025-07-01, historical ICD-10-GM versions and an IPS laboratory ValueSet.
+Some catalog gaps are reported as warnings by HAPI; inspect the detailed messages.
 
-The workbook layout and human-readable input columns are unchanged:
+Allow at least 8 GB of Docker memory for validation; large inputs may need more.
+The converter's container permits Java to use half the available memory as heap.
+See [validator performance](validator-performance.md) for large-bundle behavior.
 
-- German state names in `Person/Bundesland` become ISO 3166-2:DE codes in FHIR. Already coded values pass through; non-German addresses are not mapped to German states.
-- A laboratory `Werttyp=Text` becomes `valueCodeableConcept.text`. Missing `coding.system` and `coding.code` explicitly carry the standard Data Absent Reason extension (`unknown`). No organism or other clinical code is invented. Non-laboratory text observations retain `valueString`.
-- The shared DAR extension factory uses the StructureDefinition URL. Actual DAR Coding values still use the CodeSystem URL.
-- A medication dosage with both dose and daily frequency, and no free text, remains structured. If a dosage contains free text or only part of the structured information, all provided text/dose/frequency facts are retained in `Dosage.text`. Unknown dose units are named explicitly. This satisfies DosageDE's separation of text and complete structured dosage without inventing a schedule. MedicationAdministration has a different dosage type and retains its existing representation.
-
-Review the textual medication output and the missing-code laboratory fallback as test-data representations. These changes do not claim microbiology-specific modeling or reconstruct discarded source dosage details.
+Clinical plausibility and the quality of synthetic mappings are assessed through
+review of the workbook and its source reports.

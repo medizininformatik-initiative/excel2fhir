@@ -1,240 +1,103 @@
-# Klinische Synthea-Fälle über Excel
+# Supported Synthea input
 
-Der Import nutzt die vorhandenen Synthea-R4-Dateien und füllt Kopien der
-bestehenden Excel-Vorlage. Die Datei bleibt die bearbeitbare Schnittstelle;
-Excel→FHIR benötigt anschließend weder Synthea noch einen Terminologieserver.
+The importer fills editable Excel workbooks from Synthea R4 bundles, using
+versioned German mappings and documented synthetic assumptions. The shared
+Excel/CSV converter generates the selected KDS variants from those workbooks.
+See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-manual.md).
 
-## Bestand und Mapping
+## Resource coverage
 
-`scripts/mappings/synthea-source-code-registry.json` enthält 2.342 unterschiedliche
-System-/Code-Paare des vorhandenen Gesamtinventars nach Ausschluss der
-Modulvorlagen. Beim Aufbau wurden die Prüfsummen von 620 Synthea-Quelldateien
-abgeglichen. Das Register umfasst auch Hilfstabellen, Exporterwerte und
-Prädikate. Es ist keine Behauptung, dass alle Einträge primäre klinische Codes
-sind oder im R4-Export erscheinen.
-
-Reproduktion mit den vorhandenen externen Inventardateien:
-
-```sh
-python3 scripts/build_synthea_code_registry.py INVENTARVERZEICHNIS SYNTHEA_CHECKOUT AUSGABE.json
-```
-
-Die Diagnose-Tabelle v4 beurteilt weiterhin alle 333 produktiven Diagnosecodes:
-321 ICD-10-GM-Zuordnungen, 10 dokumentierte Auslassungen reiner Sozialangaben/
-organisatorischer Aufgaben und 2 erhaltene Konzepte ohne ICD-Ergänzung. Alle 495 Medikamentenkonzepte des festgelegten Inventars erhalten eine deutsche
-ATC-2026-Zuordnung, öffentlich belegte UNII-Wirkstoffschlüssel und eine ausgewählte
-echte deutsche PZN samt Präparatname und Form. Die Auswahl konkretisiert die
-synthetische Geschichte und behauptet keine pharmazeutische Gleichwertigkeit. RxNorm bleibt ausschließlich
-im Quellen-/Mappingbericht. Fehlende Zuordnungen stehen sichtbar im Präparattext;
-Medikationsereignisse werden deshalb nicht ausgelassen. Impfstoffe erhalten eine
-breitere ATC-2026-Klassifikation statt CVX, ohne behauptete Produktäquivalenz.
-Die detaillierte Impfstoffbeschreibung und das Ereignis bleiben erhalten.
-[Katalogformat, Quellen und Grenzen](medication-product-catalog.md).
-Die Prozedurtabelle behandelt 429 Quellkonzepte: alle 428 Procedure-State-Konzepte
-und die zusätzlich in generierten Fällen vorkommende kombinierte CT von Thorax,
-Abdomen und Becken. 121 Konzepte besitzen ein einzelnes OPS-Ziel. Weitere
-Zuordnungen entstehen durch regionale Aufteilungen und Chemotherapieblöcke.
-OPS-Zeilen verwenden die offizielle Beschreibung des jeweiligen terminalen
-OPS-2026-Codes. Die synthetischen Annahmen stehen im Mappingbericht.
-
-Kombinierte CT-Untersuchungen werden in getrennte Zeilen je Körperregion
-aufgeteilt. Radiochemotherapie erzeugt einzelne Bestrahlungsfraktionen und einen
-Chemotherapieeintrag je Kontakt und Therapieblock. Dafür werden Behandlungstage
-und unterschiedliche parenterale Zytostatika aus zugehörigen Verabreichungen
-ermittelt. Wiederholte Gaben derselben Substanz erhöhen die Substanzzahl nicht.
-Mindestens zwei volle Pausentage beginnen einen neuen Block. Ohne zuordenbare
-Gaben wird eine intravenöse Substanz ausdrücklich synthetisch angenommen.
-Bei längeren Blöcken mit 5-FU, ARA-C, Azacitidin oder Decitabin bleiben die
-Quellereignisse erhalten, wenn die für die OPS-Abgrenzung benötigten Dosis- und
-Infusionsangaben fehlen.
-Einzelne Bestrahlungen und regionale CT-Zeilen behalten das gemeinsame
-Quellzeitfenster. Der Chemotherapieblock umfasst das erste bis letzte Ereignis.
-Diese Aufteilungen enthalten keinen SNOMED-Zusatzcode. Originalcodes und alle
-zugehörigen Quell-IDs bleiben im Bericht und im unveränderten Quellbundle erhalten.
-
-Naheliegende Konkretisierungen ergänzen unter anderem Füllungsmaterial beim Zahn,
-Ganzkörperplethysmographie, Sechs-Minuten-Gehtest und den normothermen Einsatz
-der Herz-Lungen-Maschine. Die Bedarfsabklärung wird ab einem belegten Alter von
-65 Jahren als geriatrisches Minimalassessment in drei Bereichen konkretisiert.
-Kurze psychologische Screenings werden nicht pauschal zur mindestens
-60-minütigen Diagnostik umbenannt. Überweisungen, Routineuntersuchungen und
-Maßnahmen ohne belastbare OPS-Zuordnung bleiben als SNOMED erhalten.
-
-15 nichtprozedurale Quellkonzepte werden als passende synthetische Handlungen
-konkretisiert. Die US-zahnärztliche Nachsorge verwendet einen internationalen
-Oberbegriff. Das US-spezifische Comprehensive Metabolic Panel entfällt als
-zusätzliche Prozedur; vorhandene Laborwerte und Befundberichte bleiben erhalten.
-Jede Auslassung steht mit Ressourcen-ID im Verlustbericht. Details und Quellen
-stehen in `scripts/mappings/synthea-procedures-ops-2026.json`. Der Laufbericht
-verknüpft jede erzeugte Prozedur mit ihren Quell-IDs und ihrer Excel-Zeile.
-[OPS-2026-Regeln zu Chemotherapie und Bestrahlung](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm)
-und [Funktionstests](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-1-70...1-79.htm)
-liegen diesen Konkretisierungen zugrunde.
-
-Medikationsabgleich bleibt mit SNOMED erhalten: Ein passender eigenständiger
-OPS 2026 wurde nicht gefunden. Auch der weitergehende Medikationsanalyse-OPS
-liegt als [Vorschlag für 2027](https://multimedia.gsb.bund.de/BfArM/downloads/klassifikationen/ops/vorschlaege/vorschlaege2027/ops2027-059-medikationsanalysen.pdf) vor, nicht als gültiger Code.
-Das KDS-Profil erlaubt OPS oder SNOMED; Routineleistungen benötigen daher
-nicht automatisch einen OPS. Die SNOMED-Bindung verlangt Prozedurbegriffe.
-Die Entscheidungen ersetzen keine vollständige Terminologievalidierung oder
-menschliche Prüfung der synthetischen Szenarien.
-Das Quellregister enthält ausschließlich Quellfakten. Aktuelle Entscheidungen
-stehen in den jeweiligen Mappingtabellen und werden nicht im Register dupliziert.
-
-## Ressourcen und Eigenschaften
-
-| Ressource | Excel | Übernommener Umfang | Wesentliche verbleibende Details |
-| --- | --- | --- | --- |
-| Patient | Person | Synthetische deutsche Namen/Anschrift; Geburt, Geschlecht, Sterbezeitpunkt aus Quelle | Wohnhistorie, Kommunikation und weitere demografische Erweiterungen |
-| Encounter | Fall | Klasse, Zeitraum, Patientbezug, explizite Notfallkennzeichnung | Einrichtung/Behandler, Gründe, Entlassungsdisposition |
-| Condition | Diagnose | ICD-10-GM zuerst, SNOMED ergänzend bzw. begründeter Rückfall, drei Zeitangaben, Status, Kontakt | Weitere Synthea-Metadaten |
-| Procedure | Prozedur | OPS mit Einzelbeschreibung bzw. SNOMED, Zusatzcode bei Einzelzuordnung, regionale Aufteilungen und Therapieblöcke, Zeitraum, Status, Kategorie, Patient/Kontakt | Gründe, Körperstelle, Behandler; synthetische Annahmen im Bericht |
-| Observation | Laborbefund / Klinische Dokumentation | Zahl, Text, Code, Boolean, DAR, Komponenten, Kategorie, Status, effective/issued, UCUM-Code, Patient/Kontakt | Mehr als zwei Untersuchungscodings und nicht dargestellte Zusatzattribute; unsupported value[x] wird ausdrücklich ausgelassen |
-| MedicationRequest / Administration | Medikation | Deutsches Präparat bzw. sichtbar offene Zuordnung, Status, Zeitpunkt/Verabreichungszeitraum, Verordnungsabsicht, Text, erste Dosis, einfache Tagesfrequenz | Weitere Dosen/Raten, Routen, Zeitpläne, Gründe und Behandler |
-| Medication | Aus Medikationszeilen | Getrennte Definition je vollständiger Präparatbeschreibung; referenzierte Ressourcen werden aufgelöst | Konkrete Packungsstärken sind nicht vollständig strukturiert; unbekannte Konzepte außerhalb des Inventars bleiben sichtbar offen |
-| AllergyIntolerance | Bewusst ausgeschlossen | Jede Auslassung im Verlustbericht; Originalquelle bleibt erhalten | IPS-konforme Unterstützung zurückgestellt |
-| Immunization | Impfung | ATC 2026, deutscher Impfstofftext, Zeitpunkt, Status, Primärquellenangabe, Patient/Kontakt | Durchführungsort und weitere Impfdetails |
-| DiagnosticReport | Befundbericht | Erstes Coding, Zeitpunkt, Ausgabezeit, Status, auflösbare Messwertverweise, vorhandene conclusion | Kategorien, Behandler, zusätzliche Codings; eingebettete Notizen stehen in DocumentReference |
-| CarePlan | Behandlungsplan | Klinische SNOMED-Kategorie, Zeitraum, Status, Absicht, Beschreibung, Aktivitätscodes | Aktivitätsdetails/Status (explizit unknown), Ziele, Behandlerteam und Diagnoseverweise |
-| Device | Ausgeschlossen | Auslassung mit Ressourcen-ID im Verlustbericht | Geräte und Hilfsmittel |
-| DocumentReference | DocumentReference | Erster Dokumenttyp, Status, Datum, erster Kontakt und eingebetteter UTF-8-Klartext | Weitere Dokumentmetadaten und andere Anhangsformate; Excel-Grenze 32.767 Zeichen |
-| ImagingStudy / SupplyDelivery / CareTeam | Noch kein Import | Im Quelleninventar und Verlustbericht ausgewiesen | Bildgebungsserien/-instanzen, Lieferereignisse und Organisations-/Behandlerbeziehungen |
-| Claim / ExplanationOfBenefit / Provenance | Kein klinisches Blatt | Originaldatei bleibt erhalten; Auslassung im Bericht | US-Abrechnung und ursprüngliche Exportprovenienz werden nicht als klinische Daten umgedeutet |
-
-Organisationen, Orte und Behandler, die nur als externe Suchreferenzen auftreten,
-werden nicht durch erfundene deutsche Einrichtungen ersetzt. Es gibt keinen
-versteckten Roh-FHIR-Tab als Ersatz für eine bearbeitbare klinische Eingabe.
-
-## Excel vorher und nachher
-
-Bestehende Zellen und Formatierungen werden mit LibreOffice/UNO weiterverwendet.
-Neue Spalten stehen vor der bisherigen Ausfüllhilfe. Vorhandene Beispieldaten
-wurden erhalten. Auswahllisten stehen im Blatt **Codes**, Bereiche AB bis BF;
-vorhandene Diagnose- und Notfalllisten bleiben unverändert. Die Auswahl ist
-[je Eingabespalte abgegrenzt](clinical-selections.md).
-
-| Blatt | Vorher | Ergänzung |
+| Source resource | Workbook sheet | Imported content |
 | --- | --- | --- |
-| Person | Freitext-Anschrift, kein Sterbezeitpunkt | Ausschließlich Straße, Postleitzahl, Ort, Bundesland, Land; zusätzlich Sterbezeitpunkt. Alte Anschrift-Spalte entfernt. |
-| Prozedur | Implizites OPS, einzelner Zeitpunkt, immer completed | Explizites Codesystem, Zusatzcoding, Ende, Status, Kategorie |
-| Laborbefund / Klinische Dokumentation | Nur numerischer LOINC-Messwert; beide als Labor ausgegeben | Werttyp, codierte Antworten, echte Kategorie, Status, Untersuchung ID, Komponente von, Ausgabezeitpunkt, UCUM-Einheitencode, Codesystem |
-| Medikation | PZN/ATC, feste Statuswerte, Dosis und Häufigkeit vermischt | Original-Präparatcode/-system, Status, Absicht, Dosierungstext, Ende, Wirkstoffcode/-system; Menge und Häufigkeit getrennt |
-| DocumentReference | Nur Dateipfad und Embed | Eingebetteter Klartext, Status, Datum und Dokumenttyp |
-| Neue Blätter | Nicht vorhanden | Impfung, Befundbericht, Behandlungsplan |
+| Patient | `Person` | Synthetic German name/address, source birth date, sex and death time. |
+| Encounter | `Fall` | Class, period, patient association and emergency admission reason, plus synthetic movements. |
+| Condition | `Diagnose` | Source and mapped coding, documentation/onset/abatement times, status and case association. |
+| Procedure | `Prozedur` | Assessed OPS/SNOMED coding, period, status, category and patient/case association. |
+| Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and UCUM units. |
+| MedicationRequest / MedicationAdministration | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
+| Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
+| Immunization | `Impfung` | ATC 2026 classification, vaccine text, time, status, primary-source flag and patient/case association. |
+| DiagnosticReport | `Befundbericht` | First coding, times, status, resolvable result references and conclusion. |
+| CarePlan | `Behandlungsplan` | Clinical SNOMED category, period, status, intent, description and activity codes. |
+| DocumentReference | `DocumentReference` | First document type, status, date, first contact and embedded UTF-8 text, up to Excel's 32,767-character cell limit. |
 
-Komponenten stehen direkt unter ihrer Hauptzeile. `Komponente von` verweist auf
-`Untersuchung ID`; die Hauptzeile muss zuerst stehen. Daraus entsteht eine
-Observation mit Komponenten, keine zusätzliche Observation pro Teilmessung.
-Befundberichte verwenden dieselben IDs für Ergebnisverweise. IDs werden beim
-FHIR-Export patientenbezogen und mit zulässiger Länge erzeugt.
+`Fall.loss.json` records omitted resources and unsupported details with source IDs.
+This includes AllergyIntolerance, Device, ImagingStudy, SupplyDelivery, CareTeam,
+Claim, ExplanationOfBenefit and source Provenance. Original source bundles remain
+available alongside the workbooks.
 
-Leere neue optionale Felder werden ausgelassen. `!dar:<reason>` ist eine
-explizite Angabe. Für fehlende Messwerte wird zusätzlich Werttyp `Fehlend`
-gewählt. Statuswerte werden über die zentralen Listen ausgewählt; in den neuen
-klinischen Blättern stehen derzeit die FHIR-Statusbezeichnungen.
+## Mapping inventory
 
-Größere Fälle erweitern den vorbereiteten Bereich durch Kopieren vorhandener
-Zeilenformate. Zellwerte werden als Text gespeichert, damit Codes, IDs und
-FHIR-Zeitangaben unverändert bleiben. Die CSV-Zwischenstufe erhält inzwischen
-auch Zeilenumbrüche, Anführungszeichen und äußere Leerzeichen durch standardkonformes
-CSV-Quoting. Sie normalisiert Dokumenttexte nicht auf eine einzige Zeile.
+`scripts/mappings/synthea-source-code-registry.json` inventories source code/system
+pairs and provenance for the pinned generator. Mapping decisions live in the
+resource-specific tables:
 
-## Ausführen und prüfen
+- [Diagnoses](diagnosis-mapping.md): assessed ICD-10-GM 2026 assignments, retained
+  source concepts, exclusions and provisional statuses.
+- [Medication](medication-product-catalog.md): German ATC, PZN and UNII assignments
+  with dose policies and source evidence.
+- `synthea-procedures-ops-2026.json`: OPS assignments, regional splits and therapy blocks.
+- [German names and addresses](synthea-german-demographics.md) and
+  [clinical text](synthea-german-texts.md).
 
-```sh
-mvn test package
-python3 -m unittest discover -s scripts/tests
-python3 scripts/synthea_to_excel.py PATIENT.json FALL.xlsx
-java -jar target/excel2fhir.jar -f FALL.xlsx -o FHIR_VERZEICHNIS -t CSV_VERZEICHNIS
-python3 scripts/check_synthea_roundtrip.py PATIENT.json FHIR_BUNDLE.json FALL.loss.json
-```
+The source registry can be rebuilt from the corresponding external inventory and
+source checkout using `build_synthea_code_registry.py`. A generator revision
+change requires reassessing inventory coverage.
 
-Für alle vorhandenen Patienten mit einem neuen Ausgabeverzeichnis:
+## Procedure projection
 
-```sh
-python3 scripts/run_synthea_cases.py -i SYNTHEA_FHIR_VERZEICHNIS -o AUSGABEWURZEL
-```
+The procedure table covers 429 source concepts: 428 Procedure-State concepts and
+a combined thorax/abdomen/pelvis CT found in generated output. Single-code OPS
+assignments use terminal OPS 2026 descriptions. Source SNOMED concepts are retained
+where appropriate; the report records every synthetic assumption and output row.
 
-Der Sammellauf sammelt Import- und Verlustberichte. Mit `-v` führt er zusätzlich
-die FHIR-Validierung aus und speichert deren Berichte. Installation, Container, Status und Exitcodes
-sind im [Gesamtworkflow](synthea-workflow.md) beschrieben.
+Combined CT examinations create one row per body region. Radiochemotherapy creates
+radiation fractions and one chemotherapy entry per encounter and treatment block.
+Blocks use treatment days and distinct parenteral cytotoxic ingredients from linked
+administrations; at least two full intervening rest days start a new block.
+When administrations are unavailable, the mapping records an assumed intravenous
+substance. Longer blocks involving 5-FU, ARA-C, azacitidine or decitabine retain
+source events when dose/infusion details needed for OPS classification are absent.
 
-Der Rückvergleich prüft den unterstützten Umfang, Ressourcenanzahlen,
-Originalcodings und erwartete ICD-Ergänzungen, Messwerte einschließlich
-Komponenten, Prozedurzeiten/-status, Präparatdefinitionen, Dokumenttexte sowie
-auflösbare Referenzen. Eine erfolgreiche Prüfung bedeutet keine vollständige
-Übernahme aller Eigenschaften. Teilübernahmen und ausgelassene Ressourcen
-stehen im jeweiligen `Fall.loss.json`.
+Regional CT rows and radiation fractions retain their source time window. A
+chemotherapy block spans its first through last event. Split rows retain source
+codes and IDs in the report, with their own target coding in Excel.
 
-Die neuen Ereignisressourcen beanspruchen zunächst FHIR-R4-Basisunterstützung.
-Labor, Prozeduren und Medikation verwenden die vorhandenen KDS-Profile.
-Eine vollständige KDS-/Terminologievalidierung bleibt getrennt vom Rückvergleich;
-insbesondere die benötigte SNOMED-Ausgabe ist lokal weiterhin nicht verfügbar.
+Other documented assumptions cover dental material, pulmonary function tests,
+the six-minute walk test and cardiopulmonary bypass. A needs assessment can become
+a geriatric assessment when source age supports that rule. Referrals and routine
+services with insufficient OPS evidence retain SNOMED coding. The metabolic-panel
+procedure is recorded as omitted while its laboratory results and reports are retained.
 
-Die zusätzliche [Bewegungsanreicherung](synthea-movements.md) ergänzt Kontakte
-mit automatisch abgeleiteten Elternbeziehungen; die folgenden Zahlen beschreiben den
-ursprünglichen Durchlauf vor dieser Anreicherung.
+The table records sources for these decisions, including the
+[OPS chemotherapy/radiotherapy rules](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm).
+Clinical review assesses the appropriateness of each synthetic interpretation.
 
-Die [Deutschland-Anpassung der Personendaten](synthea-german-demographics.md)
-ersetzt Namen und Anschriften sowie eindeutige generierte Namen in Dokumenten.
-Der Rückvergleich prüft diese bewussten Änderungen anhand des versionierten
-Vorrats. Die übrigen Dokumenttexte sind weiterhin in der Quellsprache.
+## Observations and documents
 
-## Geprüfter Bestand vom 12. September 2026
+Observation components follow the main row and reference its `Untersuchung ID`.
+Diagnostic reports use the same IDs. The converter creates patient-specific FHIR
+IDs and links the results. See [workbook input fields](template-input-contracts.md).
 
-Alle 18 vorhandenen Patientenfälle wurden durch Excel und den Konverter geführt
-und anschließend gegen ihre Quelle geprüft: 2.573 Diagnosen, 3.574 Kontakte,
-35.836 Messwertressourcen, 13.475 Prozeduren, 2.226 Verordnungen,
-328 Verabreichungen, 1.065 Impfungen, 7.619 Befundberichte, 243 Behandlungspläne,
-475 Geräte, 18 Allergien und 3.574 Klartextdokumente (historischer Stand vor dem Allergie-Rückbau). Die Diagnoseergänzung
-lieferte 1.595 ICD-10-GM-Codings; 148 Notfallkontakte erhielten die vorgesehene
-Kennzeichnung. Komponenten erklären die höhere Anzahl von Excel-Messwertzeilen.
+For recognized LogMAR visual-acuity observations, the mapping uses LOINC 6617-5
+(left) or 6616-7 (right) ahead of SNOMED and preserves the numeric value. The report
+records the source and replaced additional codings. LOINC codes and names are
+copyright Regenstrief Institute, Inc.; see the [LOINC license](https://loinc.org/license).
 
-Ein großer Fall überschritt zunächst die Zeitgrenze des zellweisen UNO-Schreibers.
-Nach Umstellung auf zeilenweises Schreiben bestand auch dieser Fall den erneuten
-Rückvergleich. Alle 18 Ergebnisse wurden danach nochmals geprüft. Zusätzlich
-bestanden 36 Java-Tests und 22 Python-Tests. Die Prüfungen ersetzen keine
-vollständige Profil- und Terminologievalidierung.
+The importer stores codes, IDs and FHIR times in text cells. CSV quoting preserves
+line breaks, quotes and surrounding whitespace in document text. German identity
+and text projection are documented in their dedicated guides.
 
-Die Sichtprüfung zeigt noch breite Blätter und teilweise abgeschnittene lange
-IDs, Bezeichnungen und Zeitangaben. Die vorhandene Formatierung wurde bewusst
-weiterverwendet; eine bessere Darstellung dieser Inhalte gehört zum menschlichen
-Review der gefüllten Arbeitsmappen.
+## Verification
 
-## Bewusst vorgesehene menschliche Prüfung
+The automatic source comparison checks supported resource counts, coding, expected
+mapping additions, values, components, periods, products, document text and local
+references. It uses the effective Converter Options for each KDS variant.
 
-- Gefüllte Fälle: Verständlichkeit der Spalten, Blattaufteilung, horizontales
-  Scrollen, lesbare Darstellung von Codes, IDs, Zeitangaben und Dokumenttexten.
-- Neue Statuslisten: FHIR-Bezeichnungen oder zusätzliche deutsche Beschriftungen.
-- Medikationsdarstellung: zusätzliche Originalcode-Spalten neben PZN/ATC sowie
-  die spätere Auswahl deutscher Präparate und genauer Dosierungsschemata.
-- Fachliche Prüfung der OPS-Konkretisierungen, Aufteilungen und Therapieblöcke.
-- Priorität der noch fehlenden Bildgebungs-, Liefer- und Behandlerdetails.
+`audit_synthea_projection.py` independently reads source bundles, Excel and target
+FHIR for standard-ID, single-patient output. `audit_procedures.py` checks regional
+splits, therapy blocks, ingredient counts, periods and source-to-row links.
 
-## Nachprüfung der neuen Populationen
-
-Der unabhängige Abgleich `audit_synthea_projection.py` liest Originalquellen,
-Excel und Zielbundle ohne Aufruf der Importfunktionen. Er prüft Ereigniszahlen,
-Medikationsmengen/-frequenzen/-zeitpunkte, numerische und codierte Messwerte,
-Komponenten, deutsche Versionsangaben und die gewünschte Coding-Reihenfolge.
-Für Prozeduren prüft er zusätzlich regionale Aufteilungen, Therapieblöcke,
-Wirkstoffzählung, Zeitfenster, Einzelbeschreibungen und die zugehörigen Excel-Zeilen.
-Explizit ausgeschlossene Allergien werden separat bilanziert. Das ersetzt keine
-medizinische Äquivalenzprüfung der redaktionellen Zuordnungen.
-
-Ein nachgewiesenes US-Konzept für zahnärztliche Nachsorge wird durch seinen
-internationalen SNOMED-Oberbegriff ersetzt. Das zahnärztliche Detail bleibt im
-Text. Andere ursprünglich in US-Namespaces erzeugte Konzepte dürfen zur
-internationalen Edition gehören; die ID allein ist kein Ausschlusskriterium.
-Die gezielte Prüfung verwendet explizite Editionsstände, keinen behaupteten
-vollständigen aktuellen SNOMED-Validierungsnachweis.
-
-Synthea liefert bei LogMAR-Sehschärfe zusätzlich LOINC 98498-9/98499-7 für
-ein nicht logarithmisches Längenverhältnis. Bei exakt erkanntem Quellkonzept
-und LogMAR-Einheit werden stattdessen 6617-5 (links) bzw. 6616-7 (rechts)
-vor SNOMED ausgegeben. Werte bleiben unverändert; es wird keine Messtafel oder
-bestmögliche Korrektur unterstellt. Quellen und verworfene Zusatzcodings stehen
-im Mappingbericht. Diese redaktionelle Entscheidung braucht menschlichen Review.
-LOINC-Codes und Namen: Copyright Regenstrief Institute, Inc.;
-[LOINC-Lizenz](https://loinc.org/license). Bestehender deutscher Quelllesetext
-ist keine als offiziell verifiziert ausgegebene deutsche LOINC-Übersetzung.
+FHIR profile and terminology validation is enabled separately with `-v`.
+Review mapping assumptions, dosage choices and text quality in the generated
+workbook and projection report as part of accepting a synthetic scenario.

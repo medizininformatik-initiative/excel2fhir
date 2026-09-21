@@ -1,118 +1,103 @@
-# Excel mit Synthea befüllen
+# Fill Excel with Synthea
 
-Synthea erzeugt Patientengeschichten. Der Import überträgt sie in die
-Excel-Vorlage und startet den gemeinsamen Excel-zu-FHIR-Konverter. Dessen
-[Optionen, Ausgabeformate und Prüfungen](converter-usage.md) gelten auch hier.
-Die Arbeitsmappen stehen anschließend zur manuellen Bearbeitung bereit.
+Synthea generates patient histories. The importer fills the Excel template and
+runs the shared Excel-to-FHIR converter. The resulting workbooks can be edited
+and converted again with the desired KDS variants.
 
-## Starten
-
-Voraussetzung: Docker mit Compose. Für den Generator mindestens 8 GB
-Docker-Arbeitsspeicher bereitstellen; große Lebensverläufe benötigen mehr.
-Der erste Build benötigt Internet. Java, Python und LibreOffice sind im Image enthalten.
-
-Im Projektverzeichnis:
+## Run with Docker
 
 ```sh
 docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
-Die Vorgaben in `compose.synthea.yml` erzeugen die vollständige Geschichte eines
-erwachsenen Patienten. Synthea kann zusätzlich verstorbene Patienten ausgeben.
-Der fertige Container arbeitet offline.
+With this command, the supplied Compose settings request one living patient aged
+30–80 in Massachusetts, with their full simulated history through 12 September
+2026. Patient and clinician seeds are both `20260912`. Synthea may also export
+patients who died during generation. Histories can include encounters, diagnoses,
+medications, procedures, observations and immunizations; the simulated life
+course determines which occur.
 
-## Konverter und Datenerzeugung einstellen
+## Configure Synthea generation
 
-**Vor `--` stehen die Konverterparameter, danach die Synthea-Parameter.**
+Place Synthea arguments after `--`:
+
+| Argument | Controls |
+| --- | --- |
+| `-p COUNT` | Requested population size. |
+| `-a MIN-MAX` | Patient age range. |
+| `-g F` or `-g M` | Patient sex. |
+| `-s SEED` | Random seed for patient generation. |
+| `STATE [CITY]` | US location used for the population. |
+| `--exporter.years_of_history=YEARS` | Exported history length; `0` includes the full history. |
+
+A seed is the starting value for Synthea's random choices. The same patient seed
+(`-s`), clinician seed (`-cs`), Synthea version, settings and simulation dates
+reproduce the same patients and histories. When a seed is omitted, Synthea uses
+the current system time, so runs normally produce different patients. The Compose
+defaults above supply fixed seeds for a repeatable example.
+
+For example, generate five patients aged 30–80:
+
+```sh
+docker compose -f compose.synthea.yml run --build --rm synthea -- -p 5 -a 30-80
+```
+
+Generate two female patients aged 60–70, exporting the last five years:
 
 ```sh
 docker compose -f compose.synthea.yml run --build --rm synthea \
-  --converter-options optionen/DIZ-A.config \
-  --converter-options optionen/DIZ-B.config \
-  -r XML -p 1 -- \
-  -p 5 -a 30-80 -s 20260912 -cs 20260912 -r 20260912 -e 20260912
+  -- -p 2 -g F -a 60-70 --exporter.years_of_history=5
 ```
 
-Dieser Aufruf erzeugt mit Synthea fünf Patienten und konvertiert die ausgefüllten
-Excel-Dateien für zwei DIZ in XML. Vor `--` bedeutet `-p 1` ein Patient pro Bundle;
-nach `--` bedeutet `-p 5` fünf von Synthea zu erzeugende Patienten.
+Explicit arguments replace the Compose command, including its seeds and dates.
+Synthea supplies defaults for omitted arguments; the workflow exports full
+histories unless a history length is specified. To reproduce the supplied sample,
+use the seeds and dates in [compose.synthea.yml](../compose.synthea.yml).
 
-Die gemeinsamen Konverterparameter sind:
+See Synthea's [command-line reference](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running#running-synthea)
+and [configuration reference](https://github.com/synthetichealth/synthea/wiki/Common-Configuration)
+for further settings.
 
-| Parameter | Bedeutung |
+## Choose a KDS variant
+
+Place [converter options](converter-usage.md#common-options) before `--`, for
+example `--converter-options options/KDS-A.config`, `-r XML` or `-v`.
+Repeat `--converter-options` for additional KDS variants. Generated workbooks
+contain the shared converter defaults; external files select the variants for
+the current invocation. Before `--`, `-p` sets patients per bundle; after `--`,
+it sets the Synthea population size.
+
+## Output
+
+Each invocation creates `outputGlobal/run-…-synthea/`:
+
+| Path | Content |
 | --- | --- |
-| `--converter-options DATEI` | Externer Optionssatz; für mehrere Varianten wiederholen. |
-| `-r FORMATE` | Ausgabeformate, etwa `JSON`, `NDJSON`, `XML` oder `JSON,NDJSON`. |
-| `-p ANZAHL` | Maximale Patientenanzahl pro Bundle bei der Konvertierung. |
-| `-v` | FHIR-Profil- und Terminologieprüfung aktivieren. |
-| `-vll STUFE` / `-l LAYOUT` | Validierungslog und Konverterprotokoll einstellen. |
-| `-o ORDNER` | Ausgabe-Wurzel; Standard `outputGlobal/`. |
-| `-t ORDNER` | Separater Wurzelordner für Zwischen-CSV. |
+| `excel/` | One editable workbook per source patient. |
+| `fhir/` | Selected formats, grouped by input and KDS variant. |
+| `details/options-input/` | Copies of selected external options files. |
+| `details/cases/` | Per-source converter runs, effective options, import and requested validation reports. |
+| `details/reports/` | Overall results, source comparisons and tool versions. |
+| `details/sources/` / `details/logs/` | Original Synthea output and logs. |
+| `status.txt` | Overall result. |
 
-Die erzeugte Arbeitsmappe enthält die gemeinsamen Converter-Defaults.
-Externe Optionsdateien bestimmen die Varianten für den Aufruf. Dieselben
-Dateien können Sie auch bei einer manuellen Excel- oder CSV-Konvertierung verwenden.
+`NOT_VALIDATED` with exit code 0 means import and source comparison succeeded
+with FHIR validation disabled. With `-v`, `COMPLETE` indicates success and
+`NOT_CHECKED` indicates unavailable terminology checks, with exit code 1.
+`FAILED` identifies a failed step; inspect the reports and retained output.
 
-Native Synthea-Parameter sind beispielsweise `-a` für den Altersbereich,
-`-s` und `-cs` für Seeds sowie `-r` und `-e` für Simulationsdaten im Format
-`JJJJMMTT`. `--exporter.years_of_history=7` begrenzt die exportierte Historie.
-Für wiederholbare Fälle dieselben Seeds und Simulationsdaten verwenden.
+Under Linux, the complete workflow uses the mounted output directory owner's
+UID/GID so the generated files remain editable by that user.
 
-## Ergebnisse
+## Edit a generated workbook
 
-Jeder Aufruf erzeugt einen Lauf unter `outputGlobal/run-…-synthea/`:
+Open the workbook, edit its data sheets, then pass its path to Excel2FHIR using
+`-f`. Apply the desired options sheets or external files as described in
+[converter usage](converter-usage.md).
 
-- `excel/Fall-<Patient-ID>.xlsx`: die ausgefüllten Arbeitsmappen.
-- `fhir/`: die gewählten Formate, nach Optionsvarianten und Eingabedateien geordnet.
-- `details/options-input/`: Kopien ausdrücklich gewählter Optionsdateien.
-- `details/cases/`: Konverterläufe mit wirksamen Optionen, Importberichten und Rückvergleich.
-- `details/reports/`: Gesamtbericht und Werkzeugstände.
-- `details/sources/` und `details/logs/`: Synthea-Quelldaten und Protokolle.
-- `status.txt`: Gesamtstatus und Ausgabepfade.
+## Further reading
 
-`NOT_VALIDATED` mit Exitcode 0 bedeutet: Import und Rückvergleich abgeschlossen,
-FHIR-Validierung deaktiviert. Mit aktivierter Prüfung bedeutet `COMPLETE`
-erfolgreicher Abschluss; `NOT_CHECKED` kennzeichnet Terminologielücken und
-liefert Exitcode 1. `FAILED` kennzeichnet einen fehlgeschlagenen Schritt.
-Die Berichte benennen Quelle, Variante und Ursache; erzeugte Dateien bleiben zur Prüfung erhalten.
-
-## FHIR-Validierung
-
-Die Prüfung aktivieren Sie mit `-v` vor `--`:
-
-```sh
-docker compose -f compose.synthea.yml run --build --rm synthea -v -- \
-  -p 1 -a 30-80 -s 20260912 -cs 20260912 -r 20260912 -e 20260912
-```
-
-Profile und Terminologien benötigen zusätzlichen Arbeitsspeicher und Laufzeit.
-[Details zu Berichten und Prüfgrenzen](fhir-validation.md).
-
-## Excel bearbeiten
-
-Eine erzeugte Arbeitsmappe öffnen, die Datenblätter bearbeiten und anschließend
-mit dem Excel-Einstieg konvertieren:
-
-```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f outputGlobal/run-BEISPIEL-synthea/excel/Fall-PATIENT.xlsx \
-  --converter-options optionen/DIZ-A.config
-```
-
-Das Optionsblatt der Arbeitsmappe oder die ausdrücklich gewählten externen
-Optionsdateien bestimmen die FHIR-Darstellung.
-
-## Weitere Informationen
-
-- [Vorhandene Synthea-Bundles und lokaler Aufbau](synthea-manual.md)
-- [Krankenhausbeispiel 2020–2026](../examples/synthea-hospital/README.md)
-- [Importumfang, Mappings und Ergänzungen](synthea-clinical-import.md)
-- [Kontaktzeiten](synthea-movements.md)
-
-Unter Linux verwendet der Komplettlauf den Eigentümer des eingebundenen
-Ausgabeordners. Die Ergebnisse bleiben für diesen Benutzer bearbeitbar.
-Bei Speichermangel Docker mehr RAM zuweisen oder die Historie begrenzen.
-
-Die Abhängigkeiten des eingebundenen Synthea-Generators haben bekannte
-Sicherheitsbefunde; deren Bereinigung ist in
-[Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55) erfasst.
+- [Import existing bundles and local execution](synthea-manual.md)
+- [Supported data and mappings](synthea-clinical-import.md)
+- [Hospital example](../examples/synthea-hospital/README.md)
+- [FHIR validation](fhir-validation.md)

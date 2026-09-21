@@ -13,7 +13,7 @@
 !/.settings/org.eclipse.jdt.core.prefs
 !/.settings/org.eclipse.jdt.ui.prefs
 /input/*
-!/input/.gitkeep
+!/input/FHIR_Testdatengenerator_Vorlage.xlsx
 /outputLocal/
 /outputGlobal/*
 !/outputGlobal/.gitkeep

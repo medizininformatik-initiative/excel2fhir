@@ -1,104 +1,67 @@
-# Aufenthalte und zusätzliche Kontakte
+# Stays and secondary contacts
 
-Im Blatt **Fall** reichen Fallnummer, Zeitraum, Fachabteilung und Ortsangaben.
-Kontakt-IDs, Kontaktebenen und Elternverknüpfungen erzeugt der Converter selbst.
+The `Fall` sheet uses case number, period, department and location to describe
+contacts. The converter generates IDs, contact levels and parent references.
+These rules apply to manual workbooks and generated input.
 
-## Eingabe
+## Entering contacts
 
-- Erste Fallzeile: Patient-ID, Fall-Nr, Start, optional Ende und Einrichtungskontaktklasse.
-- Fachabteilung angegeben: Abteilungskontakt. Wiederholungen derselben Abteilung
-  und Ortswechsel ohne neue Fachabteilungsangabe führen den vorhandenen Abteilungskontakt fort.
-  Ohne vorherige oder angegebene Fachabteilung wird kein Abteilungskontakt erfunden.
-- Mindestens Station, Zimmer oder Bett angegeben: Versorgungsstellenkontakt.
-  Nur ausgefüllte Orte werden erzeugt. Ohne Abteilung verweist der Kontakt direkt
-  auf den Einrichtungskontakt. Ein einzelnes Bett braucht keine erfundene Station.
-- Kontaktart leer, Normalstationär oder Intensivstationär: primärer Aufenthalt.
-- Kontaktart Operation, Untersuchung und Behandlung oder Konsil: zusätzlicher
-  sekundärer Versorgungsstellenkontakt, der den primären Stationskontakt nicht verändert.
-  Auch hier ist mindestens eine Ortsangabe nötig.
+- Start a case with `Patient-ID`, `Fall-Nr`, `Start`, optional `Ende` and
+  `Einrichtungskontaktklasse` (facility-contact class).
+- `Fachabteilung` creates a department contact. Repeating the same department or
+  entering a location change continues that department.
+- A ward, room or bed creates a care-location contact. With a department it links
+  to that department; otherwise it links directly to the facility contact.
+- Empty contact type, `Normalstationär` or `Intensivstationär` describes a primary stay.
+- `Operation`, `Untersuchung und Behandlung` or `Konsil` describes an additional
+  secondary contact associated with the primary stay.
 
-Primäre Aufenthalte stehen zeitlich geordnet. Die zugehörigen Sekundärkontakte
-stehen jeweils unmittelbar nach ihrer primären Zeile und vor der nächsten
-primären Verlegung. Fallnummer und Klasse dürfen wiederholt werden; eine leere
-Fallnummer führt den aktuellen Fall fort. Die Klasse muss innerhalb des Falls gleich bleiben.
-Eine Fachabteilung auf einer Sekundärzeile beschreibt die ausführende Fachrichtung
-und erzeugt keine primäre Verlegung.
+Order primary stays chronologically. Place their secondary contacts immediately
+after them and before the next primary stay. An empty case number continues the
+current case; the facility-contact class stays consistent throughout that case.
+A department on a secondary row describes the performing specialty.
 
-Die konkreten aktuellen Ablehnungen und erlaubten Kombinationen stehen unter
-[Kontakt-Eingabeprüfungen](contact-input-checks.md).
+## Periods
 
-## Zeiträume
+An explicit secondary end is preserved. Otherwise it uses the primary stay's end.
+A primary stay with an empty end ends at the next primary stay or the known
+facility end, whichever comes first. With neither boundary available, the stay
+and its dependent secondary contacts remain open.
 
-Ein ausdrücklich vorhandenes sekundäres Kontaktende bleibt erhalten. Fehlt es,
-wird das Ende des zugehörigen primären Aufenthalts verwendet. Ein primärer
-Aufenthalt ohne Ende endet spätestens am bekannten Ende des Einrichtungskontakts
-oder am Beginn des nächsten primären Aufenthalts. Sind beide unbekannt, bleibt
-er offen, ebenso seine Sekundärkontakte. Ein weiterer Sekundärkontakt schließt
-keinen vorherigen Kontakt. Abgeleitete Enden stehen im Importbericht unter
-`contactEndDerivations`, einschließlich Referenz und Ursprungszeile.
+A facility-only row defines the overall case period. If the first case row also
+contains a department or location, it describes the first stay, and later primary
+stays extend the facility period. Derived ends are recorded in
+`contactEndDerivations`, with the reference and source row.
 
-Eine reine Einrichtungszeile ohne Abteilung/Ort gibt den Zeitraum des gesamten
-Falls vor. Untergeordnete Kontakte dürfen ihn nicht überschreiten.
-Enthält die erste Fallzeile Abteilung/Ort, beschreibt sie zugleich den ersten
-Aufenthalt; folgende primäre
-Aufenthalte erweitern dann den Einrichtungszeitraum. Sekundärkontakte tun das nie.
+Example using one patient ID throughout:
 
-Beispiel: Station A, Zimmer 12, Bett 2 vom 1.–3. Mai; zusätzlicher OP-Kontakt
-am 2. Mai ohne Ende; echte Verlegung auf Intensivstation am 3. Mai.
-Der OP-Kontakt endet am 3. Mai. Das Bett auf Station bleibt bis dahin erhalten.
-Ein Ende der Operation als Prozedur wird daraus **nicht** abgeleitet.
+| Fall-Nr | Start | Ende | Einrichtungskontaktklasse | Station | Zimmer | Bett | Kontaktart |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1001 | 2026-05-01 08:00 | 2026-05-05 12:00 | stationaer | | | | |
+| 1001 | 2026-05-01 08:00 | | | Ward A | 12 | 2 | Normalstationär |
+| 1001 | 2026-05-02 10:00 | | | Operating room | 1 | | Operation |
+| 1001 | 2026-05-03 09:00 | | | Intensive care | 1 | 1 | Intensivstationär |
 
-So kann dieser Fall im Blatt stehen (Patient-ID in jeder Zeile gleich; leere
-Felder bleiben tatsächlich leer):
+Ward A and the operating-room contact end when intensive care starts on 3 May
+at 09:00. Intensive care ends with the facility contact on 5 May. All three
+location contacts link directly to the facility because the department is empty.
+Procedure times are entered separately in `Prozedur`.
 
-| Fall-Nr | Start | Ende | Einrichtungskontaktklasse | Fachabteilung | Station | Zimmer | Bett | Kontaktart |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1001 | 2026-05-01 08:00 | 2026-05-05 12:00 | stationaer | | | | | |
-| 1001 | 2026-05-01 08:00 | | | | Station A | 12 | 2 | Normalstationär |
-| 1001 | 2026-05-02 10:00 | | | | OP | Saal 1 | | Operation |
-| 1001 | 2026-05-03 09:00 | | | | Intensivstation | 1 | 1 | Intensivstationär |
+[Contact input checks](contact-input-checks.md) describe period and ordering errors.
 
-Die erste Zeile legt den Gesamtfall fest. Station A und der zusätzliche OP-Kontakt
-enden mit dem Beginn des Intensivaufenthalts am 3. Mai um 09:00. Der Intensivkontakt
-endet mit dem Gesamtfall. Weil hier keine Fachabteilung angegeben ist, entsteht
-kein Abteilungskontakt. Der Beginn des OP-Kontakts steht ausdrücklich in dessen
-eigener Zeile; eine manuelle Eingabe braucht dafür keine passende Prozedurzeile.
-Die separate Einrichtungszeile ist hilfreich für einen ausdrücklich festgelegten
-Gesamtzeitraum, aber nach der oben beschriebenen CSV-Konvention nicht zwingend.
+## Synthea enrichment
 
-Unsortierte oder überlappende primäre Aufenthalte, Sekundärkontakte ohne primären
-Aufenthalt und unpassende Zeiträume werden als Eingabefehler gemeldet.
-Die Überlappung zwischen primären und sekundären Kontakten ist dagegen beabsichtigt.
+`scripts/synthea_movements.py` generates reproducible primary movements within
+completed source encounters. The report records the seed, rule version and
+synthetic assumptions for department, room, bed and intensive-care changes.
+Open encounters retain their source representation.
 
-## Synthea-Anreicherung
+The operative subset in `synthea-operative-procedures.json` adds operating-room
+rows. Procedure start supplies the synthetic contact start. The empty contact end
+is resolved by the shared rules above; procedure times retain their source values.
+The report links source procedures and expected contact ends.
 
-`scripts/synthea_movements.py` erzeugt reproduzierbare primäre Bewegungen innerhalb
-abgeschlossener Quellkontakte. Seed, Regelversion und Annahmen stehen im Bericht.
-Abteilungs-/Zimmer-/Bettwechsel und mögliche Intensivphasen sind synthetische
-Testdatenannahmen, keine statistisch kalibrierten Krankenhausverläufe.
-Offene Quellfälle bleiben unverändert und werden als nicht angereichert gemeldet.
-
-Die vorhandene operative SNOMED-Teilmenge aus `synthea-operative-procedures.json`
-löst zusätzliche OP-Zeilen aus. Der Prozedurbeginn dient als synthetischer
-Kontaktbeginn; ein OP-Kontaktende ist nicht bekannt und bleibt in Excel leer.
-Vor-/Nachbereitungszeiten und automatische Rückverlegungen wegen einer OP entfallen.
-Vorhandene Prozedurzeiten bleiben vollständig unverändert. Der Bericht enthält
-Quellprozeduren und das aus dem primären Aufenthalt erwartete Kontaktende.
-Ambulante operative Kontakte bleiben ambulant; das macht den begleitenden
-primären Ortskontakt nicht zu einem sekundären Untersuchungs-/Behandlungskontakt.
-
-## Grundlage und Umstellung
-
-Das eingebundene KDS-Basisprofil 2026.0.1 erlaubt unter `Encounter.partOf` eine
-optionale Encounter-Referenz; eine fehlende Zwischenebene muss nicht erfunden werden.
-Kontaktart und Kontaktebene verwenden `http://fhir.de/CodeSystem/kontaktart-de`
-und `http://fhir.de/CodeSystem/Kontaktebene`.
-[Fall-Leitfaden](https://medizininformatik-initiative.github.io/kerndatensatz-basis/de/StructureDefinition-mii-pr-fall-kontakt-gesundheitseinrichtung.html).
-
-Die drei technischen Kontaktspalten wurden aus beiden Vorlagen entfernt.
-Alte CSV-/Excel-Fälle ohne diese Angaben bleiben lesbar. Bereits erzeugte Fälle
-mit befüllten technischen Kontaktspalten müssen neu aus Synthea erzeugt oder
-fachlich in die neue Eingabe überführt werden. Der Converter lehnt ihre stille
-Umdeutung ab. `simplify_contact_template.py` aktualisiert ausschließlich Vorlagen
-mit leeren technischen Kontaktspalten über LibreOffice/UNO; kein automatischer
-Konverter für explizite Patientenhierarchien.
+The KDS model uses `Encounter.partOf` for parent contacts, plus the code systems
+`http://fhir.de/CodeSystem/kontaktart-de` and
+`http://fhir.de/CodeSystem/Kontaktebene`. See the
+[KDS contact guide](https://medizininformatik-initiative.github.io/kerndatensatz-basis/de/StructureDefinition-mii-pr-fall-kontakt-gesundheitseinrichtung.html).

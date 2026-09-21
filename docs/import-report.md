@@ -1,66 +1,51 @@
-# Importbilanz
+# Import reports
 
-Jede begonnene CSV→FHIR-Konvertierung schreibt im Ausgabeverzeichnis eine
-`*.import.json`. `COMPLETE` bedeutet, dass die erfassten Eingaben ohne erkannte
-Importfehler verarbeitet wurden. `INCOMPLETE` führt auch mit `--no-validate-bundles` zum CLI-Exitcode
-1. Bei bekannten Eingabefehlern wird vor der FHIR-Erzeugung abgebrochen; der Bericht
-enthält trotzdem alle gesammelten Befunde. Bei unerwarteten Konvertierungsfehlern
-bleiben bereits erzeugte Ergebnisse für die Fehlersuche erhalten; sie dürfen
-bei diesem Status nicht als vollständiger Export behandelt werden.
+Each CSV-to-FHIR conversion writes `*.import.json` under `details/reports/`.
+`COMPLETE` means the recorded input was processed without detected import errors.
+`INCOMPLETE` produces exit code 1, including when FHIR validation is disabled.
+Partial output is retained for diagnosis under `details/pending/`.
 
-Der Bericht nennt Tabelle, CSV-Datei, logische Datensatznummer (ohne Kopfzeile),
-Fehlerkategorie und Ursache. Die Datensatznummer ist keine Excel-Zeilennummer:
-CSV-Felder können mehrere Textzeilen enthalten. Bei wiederholter Konvertierung
-werden zusätzlich Ausgabepräfix und Iteration angegeben. Vollständige CSV-Zeilen
-werden nicht absichtlich in den Bericht kopiert; Fehlermeldungen können dennoch
-betroffene Eingabewerte enthalten.
+Findings identify the table, CSV file, logical record number, category and cause.
+Record numbers exclude the header and count CSV records, which may span several
+physical lines. Repeated conversion attempts also identify the output prefix and
+iteration. Error messages may include affected input values.
 
-Die Konverteransichten `Person` und `Consent` lesen dasselbe Person-Blatt,
-werden aber getrennt bilanziert. Ihre Zeilenzahlen daher nicht als unterschiedliche
-Eingabezeilen addieren.
+## Counters
 
-Pro Tabelle bzw. Konverteransicht stehen folgende Zähler bereit:
-
-- `rowsRead`: vollständig eingelesene CSV-Datensätze.
-- `emptyRows`: gemäß den vorhandenen Tabellenregeln leere Datensätze.
-- `processedRows` / `failedRows`: eindeutige erfolgreich bzw. fehlerhaft
-  verarbeitete Datensätze. Bei mehreren Ausgabevarianten können sich diese Mengen
-  überschneiden.
-- `successfulAttempts` / `failedAttempts`: tatsächliche Aufrufe des jeweiligen
-  Zeilenkonverters; Vorprüfungsfehler zählen nicht als Konvertierungsversuch.
-- `returnedResources`: vom Zeilenkonverter zurückgegebene Ressourcen über alle
-  erfolgreichen Versuche, keine Anzahl eindeutiger Ressourcen in der Ausgabe.
-- `unprocessedRows`: eingelesene, nicht leere Datensätze ohne Erfolg oder
-  zugeordneten Zeilenfehler, beispielsweise nach Ablehnung einer ganzen Tabelle.
-- `rejected`: die Tabelle konnte nicht regulär eingelesen oder akzeptiert werden.
-
-Fehlende Pflichtspalten einschließlich Patient-ID, doppelte Spaltennamen,
-abweichende Feldanzahlen, unbekannte Patienten und Konvertierungsfehler werden
-sichtbar. Leere Patient-IDs übernehmen weiterhin die vorherige ID derselben
-Tabelle. Eine fehlerhafte Feldanzahl unterbricht diese Übernahme. Patient-IDs
-werden ohne Berücksichtigung der Groß-/Kleinschreibung als ganze Zeichenfolge
-verglichen, nicht als regulärer Ausdruck.
-
-Bei syntaktisch unlesbarem CSV kann keine vollständige Zeilenzahl angegeben
-werden. Ein vor Beginn der CSV-Konvertierung abgebrochener Excel-Vorcheck oder
-ungültiger CLI-Aufruf liefert Exitcode 1 und die Fehlermeldung, aber noch keinen
-Importbericht. Zeilenkonvertierungen sind keine Transaktionen: nach einem Fehler
-können bereits vorgenommene Änderungen an Ressourcen erhalten bleiben.
-
-Die drei Berichte beantworten unterschiedliche Fragen:
-
-| Bericht | Bedeutung |
+| Field | Meaning |
 | --- | --- |
-| `*.loss.json` | Welche Synthea-Inhalte wurden projiziert, ersetzt oder ausgelassen? |
-| `*.import.json` | Wurden die Excel-/CSV-Eingaben vollständig verarbeitet? |
-| `*.validation.json` (mit `-v`) | Welche FHIR-Prüfungen bestanden, scheiterten oder waren `NOT_CHECKED`? |
+| `rowsRead` | Successfully read CSV records. |
+| `emptyRows` | Records considered empty by that table's rules. |
+| `processedRows` / `failedRows` | Distinct records with successful/failed processing; a record can appear in both across attempts. |
+| `successfulAttempts` / `failedAttempts` | Actual row-converter calls. |
+| `returnedResources` | Resources returned across successful calls, counted per attempt. |
+| `unprocessedRows` | Read, nonempty records with neither success nor an assigned row error. |
+| `rejected` | Table reading or acceptance failed. |
 
-Die gemeinsame [Kontakt-Vorprüfung](contact-input-checks.md) meldet im CSV-Bericht
-`CONTACT_INPUT_ERROR` mit Feld, Datensatznummer und Ursache. Sie läuft vor allen
-Ausgabevarianten und vor dem Erzeugen von Bundles. `successfulAttempts = 0` und
-`unprocessedRows` zeigen dann, welche Datensätze wegen des Vorprüfungsabbruchs
-noch nicht konvertiert wurden. Mehrere Befunde derselben Zeile zählen weiterhin
-als eine fehlerhafte Zeile.
+`Person` and `Consent` read the same source sheet and have separate counters.
+Use their counts as converter views rather than summing them as distinct input rows.
+Malformed CSV can prevent a complete record count. A workbook precheck or command
+error that occurs before CSV conversion is reported in the log and exit status.
 
-Ein vollständiger Import ist keine bestandene FHIR-Validierung. Fehlende
-Terminologien bleiben `NOT_CHECKED` und führen bei aktiver FHIR-Prüfung weiterhin zu Exitcode 1.
+## Input handling
+
+Checks cover required columns, duplicate headings, field counts, patient references
+and conversion errors. An empty patient ID inherits the preceding ID in the same
+table; malformed field counts interrupt that inheritance. Patient IDs are compared
+as whole strings, case-insensitively.
+
+[Contact checks](contact-input-checks.md) run before bundle generation. Findings
+include field and record number; several findings on one record count as one
+failed row. `successfulAttempts = 0` and `unprocessedRows` show a precheck abort.
+A row-conversion error can leave earlier changes to resources in the partial output.
+
+## Related reports
+
+| Report | Question answered |
+| --- | --- |
+| `*.loss.json` | Which Synthea source data was projected, substituted or omitted? |
+| `*.import.json` | Was the Excel/CSV input fully processed? |
+| `*.validation.json` | What did the requested FHIR checks find? |
+
+[FHIR validation](fhir-validation.md) has its own status. An unavailable terminology
+check produces `NOT_CHECKED` and exit code 1 when validation is enabled.

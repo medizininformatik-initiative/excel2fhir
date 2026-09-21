@@ -1,174 +1,152 @@
-# Excel und CSV konvertieren
+# Convert Excel and CSV
 
-Die [Vorlage](../FHIR_Testdatengenerator_Vorlage.xlsx) und die
-[Demo](../FHIR_Testdatengenerator_Interpolar_Demo.xlsx) enthalten die vorgesehenen
-Spalten und Auswahllisten. Blattnamen und Spaltenüberschriften beibehalten.
-Die Patient-ID verbindet die Blätter; Fall-Nr ordnet Angaben einem Kontakt zu.
-Eine Arbeitsmappe darf mehrere Patienten enthalten.
+The [template](../input/FHIR_Testdatengenerator_Vorlage.xlsx) and
+[demo](../FHIR_Testdatengenerator_Interpolar_Demo.xlsx) provide the supported
+columns and dropdowns. Keep their German sheet names and column headings.
+`Patient-ID` links rows across sheets; `Fall-Nr` assigns them to a case.
+A workbook can contain several patients. See [input fields](template-input-contracts.md)
+and [selection lists](clinical-selections.md) for field-level guidance.
 
-## Mit Docker starten (empfohlen)
+## Run with Docker
 
-Alle Befehle werden im Projektverzeichnis ausgeführt. Der Converter liest
-standardmäßig Excel-Dateien aus `input/`. Alternativ eine Datei auswählen:
+Edit or replace the supplied workbook in `input/`, then run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f FHIR_Testdatengenerator_Interpolar_Demo.xlsx
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
 ```
 
-Der Projektordner ist im Container unter `/workspace` eingebunden und das
-Arbeitsverzeichnis. Relative Pfade sind deshalb dieselben wie beim lokalen Aufruf.
-Die Eingaben sind schreibgeschützt; `outputGlobal/` ist beschreibbar.
+The Compose file mounts the project at `/workspace` and writes results to
+`outputGlobal/`. `-f docker/docker-compose.yml` selects the Compose file in its
+subdirectory. To select one workbook, append `-f input/MyCase.xlsx` after
+`excel2fhir`; this second `-f` is an Excel2FHIR option.
 
-Für einen ganzen Ordner `-i /pfad/excel` verwenden. Ohne `-f` oder `-i` wird
-`input/` im aktuellen Arbeitsverzeichnis gelesen. Fehlen passende Dateien,
-endet der Aufruf mit einer Fehlermeldung. Die Vorlage wird nur mit einem
-expliziten `-f FHIR_Testdatengenerator_Vorlage.xlsx` verwendet.
+## Output
 
-## Ergebnisse
-
-Jeder Start erzeugt einen neuen Ordner, beispielsweise:
+Each invocation creates a fresh run directory:
 
 ```text
-outputGlobal/run-20260918-203000Z-excel-to-fhir/
+outputGlobal/run-YYYYMMDD-HHmmssZ-excel-to-fhir/
   fhir/
-    Konvertierungsoptionen/  JSON-Bundles und patients.ndjson
-  status.txt            Kurzer Gesamtstatus
+    Konvertierungsoptionen/  JSON bundles and patients.ndjson
+  status.txt                Overall result
   details/
-    csv/                Aus Excel extrahierte Eingaben
-    reports/            Import- und Validierungsberichte je Variante
-    options/            Wirksame Konvertierungsoptionen je Variante
-    logs/               Konverterprotokoll
-    pending/            Bei Fehlern: unvollständige Ausgaben zur Diagnose
+    csv/                    Extracted workbook data
+    reports/                Import and requested validation reports
+    options/                Effective Converter Options
+    logs/                   Converter log
+    pending/                Incomplete output for diagnosis
 ```
 
-`Z` bezeichnet UTC; 20:30 UTC entspricht im deutschen Sommer 22:30 Uhr.
-Bei gleichzeitigen Starts erhält ein weiterer Lauf eine zusätzliche Nummer.
-Ergebnisse vorheriger Läufe bleiben erhalten.
+Run names use UTC and a numeric suffix when needed. Previous runs remain available.
+Each KDS variant has its own output directory. Multiple inputs receive additional
+input directories.
 
-JSON und NDJSON entstehen standardmäßig zusammen. JSON gruppiert die Patienten
-eines Datensatzes in einem Bundle; `-p 1` erzeugt einzelne Patienten-Bundles.
-`patients.ndjson` enthält unabhängig davon **ein vollständiges Patienten-Bundle
-pro Zeile** für den jeweiligen Datensatz und Optionssatz. Es ist kein nach Ressourcentypen
-aufgeteilter FHIR-Bulk-Export. Die beiden Formate enthalten dieselben Patientendaten. Bei mehreren Eingaben
-werden die JSON-Dateien je Eingabe in Unterordnern abgelegt, damit gleiche
-Dateinamen sich nicht überschreiben. Jeder dieser Ordner enthält seine eigene NDJSON-Datei.
+JSON bundles contain all patients of an input by default; `-p 1` creates one
+patient per bundle. NDJSON contains one complete patient bundle per line in each
+input/variant directory. Both representations contain the same patient data.
 
-## Parameter
+## Common options
 
-| Option | Bedeutung |
+| Option | Purpose |
 | --- | --- |
-| `-f DATEI` | Eine Excel-Datei; nicht zusammen mit `-i`. |
-| `-i ORDNER` | Eingabeordner, standardmäßig `input/`. |
-| `-o ORDNER` | Wurzel für neue Laufordner, standardmäßig `outputGlobal/`. |
-| `-t ORDNER` | Optionaler separater CSV-Wurzelordner für Excel; darin entsteht ebenfalls ein neuer Laufordner. Normalerweise unnötig. |
-| `-p ANZAHL` | Maximale Patientenanzahl je JSON-Bundle; standardmäßig alle eines Datensatzes. |
-| `-r FORMATE` | Standard `JSON,NDJSON`; explizit auch `XML`, `JSONGZIP`, `JSONBZ2`, `ZIPJSON`. |
-| `-v` / `--validate-bundles` | Optionale FHIR-Profil- und Terminologieprüfung aktivieren; standardmäßig deaktiviert. |
-| `--converter-options DATEI` | Externe Optionsdatei verwenden; für mehrere Varianten wiederholen. |
-| `-vll STUFE` | Ausführlichkeit des Validierungslogs. |
-| `--help` | Hilfe zum jeweiligen Einstieg. |
+| `-f FILE` | Select one workbook. |
+| `-i DIRECTORY` | Select an input directory; default `input/`. Use either `-f` or `-i`. |
+| `-o DIRECTORY` | Output root; default `outputGlobal/`. |
+| `--converter-options FILE` | Select an external options file; repeat for multiple KDS variants. |
+| `-r FORMATS` | Comma-separated output formats; default `JSON,NDJSON`. |
+| `-p COUNT` | Maximum patients per bundle; default all patients of an input. |
+| `-v` | Enable FHIR profile and terminology validation. |
 
-Die lokalen Defaults beziehen sich auf das **aktuelle Arbeitsverzeichnis**,
-nicht den Speicherort der Eingabe oder des JARs. Ein eigenes Ausgabeziel lässt
-sich mit `-o /pfad/ergebnisse` wählen. Im Container muss es zusätzlich beschreibbar
-eingebunden sein; für die üblichen Starts genügt die Compose-Konvention.
+Formats are `JSON`, `NDJSON`, `XML`, `JSONGZIP`, `JSONBZ2` and `ZIPJSON`.
+NDJSON and ZIPJSON contain individual patient bundles. Use `--help` for logging
+and intermediate-file settings. Relative paths are resolved from the working
+directory. Custom Docker output paths need a writable volume mount.
 
-## CSV verwenden
-
-CSV-Dateien müssen den Tabellen und Spalten der Vorlage entsprechen. Beispiele
-liefert `details/csv/` eines Excel-Laufs. Die Datei `…_Konvertierungsoptionen.csv`
-enthält Properties-Text aus dem Optionsblatt, keine normale CSV-Tabelle.
+For example, explicitly select `input/` and generate one patient per JSON bundle:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java excel2fhir \
-  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i input
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -i input -p 1
 ```
 
-Die CSV-Eingaben dafür unter `input/` ablegen.
+## Converter Options
 
-Auch hier sind `input/` und `outputGlobal/` die Defaults. Der Laufname endet auf
-`csv-to-fhir`. `-o` bezeichnet die Ausgabe-Wurzel.
-Der Converter erkennt Präfixe automatisch: `Fall_Person.csv` gehört zum Datensatz
-`Fall_`; weitere Tabellen wie `Fall_Fall.csv` werden zugeordnet. Mehrere
-Datensätze in einem Ordner werden gemeinsam verarbeitet. Mehrdeutige Varianten
-wie `Fall_Person.csv` und `Fall-Person.csv` werden abgelehnt.
+The data sheets describe the cases. Converter Options determine their FHIR
+representation, including reference directions and patient-ID generation.
 
-## Optionen und Fehler
-
-Die Datenblätter beschreiben den Fall. Die Converter Options bestimmen seine
-FHIR-Darstellung. Jedes Blatt, dessen Name **Konvertierungsoptionen** enthält,
-bildet einen eigenen Optionssatz. Beispielsweise erzeugen
-`Konvertierungsoptionen_A` und `Konvertierungsoptionen_B` zwei Varianten
-derselben Fälle. Bei CSV stehen die Optionssätze in den zugehörigen Dateien,
-etwa `Fall_Konvertierungsoptionen_A.csv`.
-
-Externe Optionsdateien lassen sich für verschiedene Falldateien wiederverwenden:
+Each sheet whose name contains `Konvertierungsoptionen` defines an independent
+KDS variant. For example, `Konvertierungsoptionen_A` and
+`Konvertierungsoptionen_B` generate two variants of the same cases.
+External options files select the variants for an invocation:
 
 ```sh
 docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f input/MeinFall.xlsx \
-  --converter-options optionen/DIZ-A.config \
-  --converter-options optionen/DIZ-B.config
+  --converter-options options/KDS-A.config \
+  --converter-options options/KDS-B.config
 ```
 
-Mit `--converter-options` bestimmen ausschließlich die angegebenen Dateien die
-Optionssätze dieses Aufrufs. Jede Datei enthält Properties-Text, beispielsweise:
+Each file contains Properties text, for example:
 
 ```properties
 SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true
 SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false
 ```
 
-Für ausgelassene Werte gelten die gemeinsamen Converter-Defaults. Die Auswahl
-funktioniert ebenso beim CSV-Einstieg. Ein Aufruf ohne Optionsblatt oder externe
-Datei verwendet den Optionssatz `default`.
+When external files are selected, they supply the run's options sets. Otherwise,
+the converter uses the workbook's options sheets. Missing values use shared
+defaults; an input with no options set uses the `default` variant.
 
-Jede Variante erhält unter `fhir/` einen eigenen Ordner. Dessen Name entspricht
-dem Blattnamen oder dem Namen der externen Datei ohne Endung. Leerzeichen und
-Sonderzeichen werden durch `_` ersetzt; die Namen innerhalb eines Datensatzes
-müssen eindeutig sein. So können Varianten dieselben Patienten-IDs verwenden.
-Bei mehreren Eingabedatensätzen werden zusätzliche Datensatzordner angelegt.
-`details/options/` enthält für jede Variante sämtliche wirksamen Optionswerte,
-einschließlich der Defaults. Die zugehörigen Import- und Validierungsberichte
-stehen unter `details/reports/`.
+Variant directories use the sheet name or options filename without its extension.
+Spaces and special characters become `_`; names within an input must be unique.
+`details/options/` records every effective setting, including defaults.
 
-`CHECK_INPUT_CONSISTENCY=true` (Standard) prüft
-Excel-Eingabedaten vor der Konvertierung auf Konsistenz. Mit `false` beschränkt
-sich diese Vorprüfung auf Tabellenstruktur und Konvertierungsoptionen.
-Die optionale FHIR-Prüfung aktivieren Sie mit `--validate-bundles` / `-v`, zum Beispiel:
+`CHECK_INPUT_CONSISTENCY=true` enables the workbook consistency checks. With
+`false`, the workbook precheck covers structure and options. Shared converter
+checks also apply during CSV processing; see [input checks](contact-input-checks.md).
+
+## CSV input
+
+CSV tables follow the workbook's columns. A run's `details/csv/` directory provides
+examples. An options file such as `Case_Konvertierungsoptionen_A.csv` contains
+Properties text from the options sheet.
+
+Place the CSV files in `input/` and run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f input/MeinFall.xlsx -v
+docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java excel2fhir \
+  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
 ```
 
-Für die FHIR-Prüfung mindestens 8 GB Docker-Arbeitsspeicher bereitstellen;
-große Datensätze benötigen mehr. Java kann die Hälfte des verfügbaren Speichers
-als Heap nutzen.
+The converter groups files by their prefix: `Case_Person.csv` and `Case_Fall.csv`
+belong to the same input. Multiple inputs in one directory are processed together.
+Ambiguous prefixes such as `Case_Person.csv` and `Case-Person.csv` produce an error.
+CSV runs use the same options and output conventions, with the suffix `csv-to-fhir`.
 
-Ein unvollständiger Import bleibt unter `details/pending/`; der direkte
-Excel-/CSV-Lauf veröffentlicht dann keine finalen Dateien. FHIR-Prüffehler
-lassen die vollständig importierten Daten erhalten, führen aber zu `FAILED`
-und Exitcode 1. `NOT_CHECKED` bedeutet, dass Teile der Terminologieprüfung nicht
-ausführbar waren, ebenfalls mit Exitcode 1. Bei der standardmäßigen Konvertierung ist die FHIR-Prüfung deaktiviert:
-Der Status lautet `NOT_VALIDATED`, ein vollständiger Import liefert Exitcode 0.
-Den Gesamtstatus des Laufs zeigt `status.txt`.
+## Results and errors
 
-Details: [Importbilanz](import-report.md), [Eingabeprüfungen](contact-input-checks.md),
-[FHIR-Validierung](fhir-validation.md).
+| Run status | Exit code | Meaning |
+| --- | --- | --- |
+| `NOT_VALIDATED` | 0 | Conversion completed with FHIR validation disabled. |
+| `COMPLETE` | 0 | Conversion and requested validation completed successfully. |
+| `NOT_CHECKED` | 1 | Some requested terminology checks could not run. |
+| `FAILED` | 1 | An input, conversion or validation error occurred. |
 
-## Alternative ohne Docker
+Incomplete imports remain in `details/pending/`. Completed FHIR output remains
+available when validation finds errors. Inspect `status.txt` and the reports for
+the affected input and KDS variant.
 
-Lokal mit JDK 17 und Maven 3.x:
+See [import reports](import-report.md) and [FHIR validation](fhir-validation.md).
+
+## Local execution
+
+With JDK 17 and Maven 3.x:
 
 ```sh
 mvn test package
-java -jar target/excel2fhir.jar -f MeineDaten.xlsx
+java -jar target/excel2fhir.jar
 ```
 
-CSV-Dateien mit dem lokal gebauten JAR konvertieren:
+This reads workbooks from `input/`. For CSV input:
 
 ```sh
-java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main -i /pfad/csv
+java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
 ```

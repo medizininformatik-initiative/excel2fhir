@@ -1,71 +1,41 @@
-# FHIR validation package baseline
+# FHIR validation packages
 
-The application targets FHIR R4 (4.0.1). The package set was checked against
-https://packages.fhir.org on 2026-09-12. Only stable KDS releases are selected;
-2027 ballot packages are not release dependencies.
-
-## Current KDS roots
+The application targets FHIR R4 (4.0.1). The bundled KDS roots are:
 
 | Module | Version |
-|---|---|
-| Base (person, encounter, diagnosis, procedure) | 2026.0.1 |
+| --- | --- |
+| Base: person, encounter, diagnosis, procedure | 2026.0.1 |
 | Laboratory | 2026.0.3 |
 | Medication | 2026.0.1 |
 | Consent | 2026.0.0 |
 
-Dependencies are resolved from the published package manifests. Wildcards select
-the newest matching stable release (currently de.fhir.medication 1.0.7).
-The current KDS roots explicitly require de.basisprofil.r4 1.5.4 / 1.5.x;
-1.6.0 is newer but outside those requirements. Likewise, newer standalone IPS,
-consent-management, SMART and terminology releases do not automatically replace
-versions explicitly required by the KDS dependency graph.
+## Loading and dependencies
 
-## Loading and reproducibility
+`src/main/resources/fhir-packages.txt` defines the load order. Packages are read
+from the classpath, including in the shaded JAR. Initialization fails with an error
+if a required package is missing, unreadable or incompatible.
 
-`src/main/resources/fhir-packages.txt` is the explicit load order. All files are
-read as classpath streams, including when running the shaded JAR. A missing,
-unreadable or incompatible package aborts validator initialization instead of
-silently continuing with incomplete validation support.
+The resolved versions follow the root manifests and their transitive requirements.
+Multiple versions support version-qualified canonical references. For unversioned
+references, versions load in ascending order so the newest included version takes
+precedence. The R4 cross-version package loads before R4 core, preserving R4
+semantics for shared unversioned core URLs such as Encounter status.
 
-Multiple versions required by dependencies remain available for version-qualified
-canonical references. For unversioned references, package versions are loaded in
-ascending order so the newest included version of each package takes precedence.
-No FHIR R5 package is included in this R4 closure. R5 element extensions use the
-published R4 cross-version package instead. That package also contains R5 code
-systems under shared canonical URLs (e.g. Encounter.status). It therefore loads
-before the R4 core package: unversioned core references must retain R4 semantics,
-including the valid R4 encounter status `finished`. Version-qualified R5 resources
-remain available to the cross-version extensions.
+To update the baseline, resolve the published package dependencies, replace the
+archives and update the ordered manifest and checksums. Run `mvn clean test package`
+and exercise validation from the packaged JAR. Terminology coverage is described
+in [FHIR validation](fhir-validation.md#terminology-coverage).
 
-To update: query the registry, inspect root manifests, resolve all transitive
-requirements, replace the package set and update the ordered manifest and table
-below. Then run `mvn clean test package` and exercise validation from the packaged
-JAR. Profile availability is not proof of SNOMED code validity: a matching licensed
-terminology edition/service is still needed for that check.
+## Memory
 
-## Memory for profile validation
+Profile loading and HAPI canonical-model conversion require substantial heap on
+first use. The converter container permits Java to use half the available memory;
+allow at least 8 GB of Docker memory, with more for large cases. Local JVM heap
+settings can be supplied through `JAVA_TOOL_OPTIONS`.
 
-The complete package set and HAPI's canonical model conversion need substantial
-heap during the first validation. On the tested Java 17 container, the default
-heap (about 1.94 GiB) and an explicit 2 GiB heap ran out of memory. The standard
-workbook completed with profile validation and no validation errors at 4 GiB heap.
-This is a tested setting, not a measured universal minimum.
+## Archive checksums
 
-For the container's optional `-v` validation, provision sufficient container/host
-memory in addition to the Java heap and use the JVM's existing environment setting:
-
-```sh
-docker run --rm -e JAVA_TOOL_OPTIONS=-Xmx4g <image> -v
-```
-
-For standalone Java, the equivalent is `java -Xmx4g -jar excel2fhir.jar -v ...`.
-No new application option is introduced. Without `-v`, the profile validator is
-not instantiated. The packaged-JAR and container checks matter in addition to
-unit tests, which do not exercise the complete first-validation memory peak.
-
-## Resolved packages
-
-The SHA-256 values identify the downloaded archives, not an independent signature.
+SHA-256 values identify the bundled archives.
 
 | Package | Version | SHA-256 |
 |---|---|---|
