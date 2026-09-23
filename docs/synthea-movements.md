@@ -53,8 +53,23 @@ Procedure times are entered separately in `Prozedur`.
 
 `scripts/synthea_movements.py` generates reproducible primary movements within
 completed source encounters. The report records the seed, rule version and
-synthetic assumptions for department, room, bed and intensive-care changes.
+synthetic assumptions for department selection and room and bed changes.
 Open encounters retain their source representation.
+
+Department selection uses specific source specialties, mapped operations and
+time-compatible diagnoses. The rules in
+[`synthea-departments.json`](../scripts/mappings/synthea-departments.json) group
+existing ICD-10-GM mappings into candidate departments and apply age at admission
+and clinical eligibility rules. Equally suitable departments are sampled
+reproducibly. When the evidence yields no suitable department, the fallback is paediatrics
+for children and internal medicine for adults. Missing age uses internal medicine.
+These are approximate rules for synthetic data.
+
+The department stays constant during the primary stay. Ward names use its prefix
+and the number `1`, such as `Station CH1`; room and bed changes provide movement
+variation. Intensive care requires specific source specialty evidence.
+`movements.departmentDecisions` records candidates, evidence, rejected choices,
+unmapped codes and fallback decisions in each case's `Fall.loss.json`.
 
 The operative subset in `synthea-operative-procedures.json` adds operating-room
 rows. Procedure start supplies the synthetic contact start. The empty contact end
