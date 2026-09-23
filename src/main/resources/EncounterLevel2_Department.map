@@ -79,3 +79,8 @@ Sonstige\u0020Fachabteilung									3700
 # the following codes are here for completeness
 ###
 Gefäßchirurgie												1800	
+
+# Department labels used by synthetic case generation
+Pädiatrie													1000
+Hämatologie\u0020und\u0020Onkologie						0500
+Psychiatrie												2900

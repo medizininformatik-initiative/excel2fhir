@@ -1,10 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
-import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Anschrift;
+
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geburtsdatum;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Geschlecht;
-import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Krankenkasse;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Nachname;
 import static de.uni_leipzig.life.csv2fhir.converter.PatientConverter.Person_Columns.Vorname;
 import static org.hl7.fhir.r4.model.Enumerations.AdministrativeGender.FEMALE;
@@ -25,7 +24,6 @@ import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
 
@@ -49,11 +47,20 @@ public class PatientConverter extends Converter {
     public static enum Person_Columns implements TableColumnIdentifier {
         Vorname,
         Nachname,
-        Anschrift,
         Geburtsdatum,
-        Geschlecht,
-        Krankenkasse
+        Geschlecht
     }
+
+    // ISO 3166-2:DE, as bound by the German address profile. Keep human-readable Excel values.
+    private static final java.util.Map<String, String> GERMAN_STATES = java.util.Map.ofEntries(
+            java.util.Map.entry("Baden-Württemberg", "DE-BW"), java.util.Map.entry("Bayern", "DE-BY"),
+            java.util.Map.entry("Berlin", "DE-BE"), java.util.Map.entry("Brandenburg", "DE-BB"),
+            java.util.Map.entry("Bremen", "DE-HB"), java.util.Map.entry("Hamburg", "DE-HH"),
+            java.util.Map.entry("Hessen", "DE-HE"), java.util.Map.entry("Mecklenburg-Vorpommern", "DE-MV"),
+            java.util.Map.entry("Niedersachsen", "DE-NI"), java.util.Map.entry("Nordrhein-Westfalen", "DE-NW"),
+            java.util.Map.entry("Rheinland-Pfalz", "DE-RP"), java.util.Map.entry("Saarland", "DE-SL"),
+            java.util.Map.entry("Sachsen", "DE-SN"), java.util.Map.entry("Sachsen-Anhalt", "DE-ST"),
+            java.util.Map.entry("Schleswig-Holstein", "DE-SH"), java.util.Map.entry("Thüringen", "DE-TH"));
 
     /**  */
     String PROFILE = "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient";
@@ -83,7 +90,7 @@ public class PatientConverter extends Converter {
         patient.setGender(parseGender());
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
-        patient.addGeneralPractitioner(parseHealthProvider());
+        patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
         // String resourceAsJson =
         // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient);
         // // for debug
@@ -182,35 +189,16 @@ public class PatientConverter extends Converter {
      * @return
      */
     private Address parseAddress() {
-        String address = get(Anschrift);
-        Address addressResource;
-        if (address != null) {
-            addressResource = new Address();
-            String[] addressSplitByComma = address.split(",");
-            if (addressSplitByComma.length == 2) {
-                String[] addressPlzAndCity = addressSplitByComma[1].split(" ");
-                String plz = addressPlzAndCity[1];
-                StringBuilder city = new StringBuilder();
-                for (int i = 2; i < addressPlzAndCity.length; i++) {
-                    city.append(addressPlzAndCity[i]);
-                }
-                List<StringType> l = Collections.singletonList(new StringType(addressSplitByComma[0]));
-                addressResource.setCity(city.toString()).setPostalCode(plz).setLine(l);
-            } else {
-                // "12345 ORT"
-                String[] addressPlzAndCity = address.split(" ");
-                if (addressPlzAndCity.length == 2) {
-                    String plz = addressPlzAndCity[0];
-                    String city = addressPlzAndCity[1];
-                    addressResource.setCity(city).setPostalCode(plz).setText(address);
-                } else {
-                    addressResource.setText(address);
-                }
-            }
-            return addressResource.setType(AddressType.BOTH).setCountry("DE");
-        }
-        warning("On " + Person + ": " + Anschrift + " empty. " + this);
-        return getDataAbsentAddress(); // needed to be KDS compliant
+        Address address = new Address();
+        String street = ClinicalValues.get(this, ClinicalValues.Column.Straße);
+        if (street != null) address.addLine(street);
+        address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
+        address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
+        String country = ClinicalValues.get(this, ClinicalValues.Column.Land);
+        address.setCountry(country);
+        String state = ClinicalValues.get(this, ClinicalValues.Column.Bundesland);
+        address.setState("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state);
+        return address.isEmpty() ? getDataAbsentAddress() : address.setType(AddressType.BOTH);
     }
 
     /**
@@ -224,16 +212,4 @@ public class PatientConverter extends Converter {
         return address;
     }
 
-    /**
-     * @return
-     * @throws Exception
-     */
-    private Reference parseHealthProvider() throws Exception {
-        String practitioner = get(Krankenkasse);
-        if (!Strings.isNullOrEmpty(practitioner)) {
-            return new Reference().setDisplay(practitioner);
-        }
-        info(Krankenkasse + " empty for Record");
-        return null;
-    }
 }

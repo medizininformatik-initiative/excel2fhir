@@ -45,7 +45,7 @@ public class MultiSinglePatientBundlesFileWriter {
 
     /**
      * The validator. If not null every bundle will be validated by this validator
-     * and only written if the validtaion result is not error.
+     * without dropping invalid resources.
      */
     private final FHIRValidator validator;
 
@@ -126,7 +126,7 @@ public class MultiSinglePatientBundlesFileWriter {
 
     /**
      * Append one line with the given bundle. If validator is not <code>null</code>
-     * then the bundle will be added only if it is valid-
+     * then the bundle is checked and a report is written; its data is retained.
      *
      * @param bundle
      * @throws Exception
@@ -134,7 +134,11 @@ public class MultiSinglePatientBundlesFileWriter {
     public void appendBundle(Bundle bundle) throws Exception {
         if (ndjsonWriter != null || zipJsonOutputStream != null) {
             if (bundle != null && !bundle.getEntry().isEmpty()) {
-                if (validator == null || !validator.validateBundle(bundle).isError()) {
+                if (validator != null) {
+                    validator.validateAndWriteReport(bundle, new File(ndjsonFile.getParentFile(),
+                            outputFileNameBase + extractPatientID(bundle) + ".validation.json"));
+                }
+                {
                     if (ndjsonWriter != null) {
                         String encodedBundle = NDJSON.getParser()
                                 .setPrettyPrint(false)
@@ -192,20 +196,18 @@ public class MultiSinglePatientBundlesFileWriter {
      * @throws Exception
      */
     public void closeWriterAndRenameOrDeleteIfEmpty(String nameExtension) throws Exception {
-        boolean writeNDJsonFile = ndjsonWriter != null;
-        boolean writeZipFile = zipJsonOutputStream != null;
-        if (writeNDJsonFile) {
+        if (ndjsonWriter != null) {
             ndjsonWriter.close();
         }
-        if (writeNDJsonFile && !deleteIfEmpty(ndjsonFile)) {
+        if (ndjsonWriter != null && !deleteIfEmpty(ndjsonFile)) {
             String newFileName = getFileName(nameExtension, NDJSON);
             File newFile = new File(ndjsonFile.getParentFile(), newFileName);
             Files.move(ndjsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-        if (writeZipFile) {
+        if (zipJsonOutputStream != null) {
             zipJsonOutputStream.close();
         }
-        if (writeZipFile && !deleteIfEmpty(zipJsonFile)) {
+        if (zipJsonOutputStream != null && !deleteIfEmpty(zipJsonFile)) {
             String newFileName = getFileName(nameExtension, ZIPJSON);
             File newFile = new File(zipJsonFile.getParentFile(), newFileName);
             Files.move(zipJsonFile.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);

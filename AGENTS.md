@@ -6,6 +6,10 @@
 - The main integration branch for current work is `develop`.
 - Use `codex/` as the branch prefix for Codex-created branches.
 - Prefer small, reviewable pull requests.
+- Ship a ready-to-run workbook in `input/`. When maintaining the template, update its bundled starter copy there as well.
+- Write user documentation in English and describe current behavior directly. Use “KDS variants”, keep examples focused on essential parameters, and link to shared explanations instead of repeating them.
+- Assume familiarity with Git, Docker and spreadsheet editors. Focus documentation on project-specific input, commands and results; omit generic setup and first-build explanations.
+- Omit repository checkout instructions. Branch-specific links in user documentation must use `main`.
 
 ## Build and Validation
 
@@ -36,4 +40,3 @@ gh api 'repos/medizininformatik-initiative/excel2fhir/code-scanning/alerts?ref=r
 - The previous GitHub Advanced Security cleanup was tracked in issue #29.
 - Security/code-scanning fixes were merged through PRs #30, #31, #32, and #33.
 - As of the `develop` CI run for commit `80d29ce`, code scanning reported `0` open alerts.
-

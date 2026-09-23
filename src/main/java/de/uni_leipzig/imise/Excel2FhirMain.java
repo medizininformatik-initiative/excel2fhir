@@ -1,7 +1,5 @@
 package de.uni_leipzig.imise;
 
-import static de.uni_leipzig.imise.utils.ApplicationManager.getApplicationDir;
-
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -13,6 +11,7 @@ import com.google.common.base.Stopwatch;
 
 import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
+import de.uni_leipzig.imise.utils.WorkflowRun;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
 import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
@@ -30,50 +29,47 @@ public class Excel2FhirMain implements Callable<Integer> {
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Excel2FhirMain.class);
 
-    /** the project directory */
-    public static final File APPLICATION_DIR = getApplicationDir();
-
-    /** Default input template for a checkout without additional arguments. */
-    private static final File DEFAULT_INPUT_FILE = new File(APPLICATION_DIR, "FHIR_Testdatengenerator_Vorlage.xlsx");
-
     @Option(names = { "-f",
-            "--input-file" }, paramLabel = "INPUT-File", description = "Input excel file. If specified the input directory is ignored.")
-    static File inputFile;
+            "--input-file" }, paramLabel = "INPUT-File", description = "Input Excel file; use either -f or -i.")
+    File inputFile;
 
     @Option(names = { "-i",
-            "--input-directory" }, paramLabel = "INPUT-DIRECTORY", description = "Input directory for the excel file")
-    static File inputDirectory;
+            "--input-directory" }, paramLabel = "INPUT-DIRECTORY", description = "Input directory for Excel files. Default: input in the working directory.")
+    File inputDirectory;
 
     @Option(names = { "-o",
-            "--output-directory" }, paramLabel = "OUTPUT-DIRECTORY", description = "Output directory for the result json file(s).")
-    static File outputDirectory;
+            "--output-directory" }, paramLabel = "OUTPUT-DIRECTORY", description = "Output root for fresh runs. Default: outputGlobal in the working directory.")
+    File outputDirectory;
 
     @Option(names = { "-t",
-            "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Temp directory for csv files converted from input files and needed to create output files. If parameter is missing then the temp directory is the input directory.")
-    static File tempDirectory;
+            "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Optional CSV root; creates a fresh run subdirectory. Default: details/csv inside the output run.")
+    File tempDirectory;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    List<File> converterOptions = new java.util.ArrayList<>();
 
     @Option(names = { "-r",
-            "--result-file-format" }, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Result file format (comma separated) \"JSON\" (default), \"XML\", \"NDJSON\", \"JSONGZIP\" or \"JSONBZ2\".")
-    static OutputFileType[] outputFileTypes = { OutputFileType.JSON };
+            "--result-file-format" }, split = ",", paramLabel = "RESULT-FILE-FORMAT", description = "Output formats (comma separated). Default: JSON,NDJSON. Also XML,JSONGZIP,JSONBZ2,ZIPJSON.")
+    OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
 
     @Option(names = { "-p",
             "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
-    static int patientsPerBundle = Integer.MAX_VALUE;
+    int patientsPerBundle = Integer.MAX_VALUE;
 
     @Option(names = { "-l",
             "--log-layout" }, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
-    static LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; // the console log
-                                                                                                  // layout is set in
-                                                                                                  // the projects
-                                                                                                  // log4j2.xml file!
+    LogContentLayout logFileContentLayout = LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER; // the console log
+                                                                                           // layout is set in
+                                                                                           // the projects
+                                                                                           // log4j2.xml file!
 
     @Option(names = { "-v",
-            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
-    static boolean validateBundles = false;
+            "--validate-bundles" }, negatable = true, defaultValue = "false", fallbackValue = "true", paramLabel = "VALIDATE-BUNDLES", description = "Enables FHIR bundle validation (default: disabled), writes reports and exits nonzero on errors or incomplete checks.")
+    boolean validateBundles = false;
 
     @Option(names = { "-vll",
             "--validation-log-level" }, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
-    static ValidationResultType minLogLevel = ValidationResultType.ERROR;
+    ValidationResultType minLogLevel = ValidationResultType.ERROR;
 
     /**
      * @param args
@@ -92,61 +88,41 @@ public class Excel2FhirMain implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    /**
-     *
-     */
-    public static void initDirectoriesAndLogger() {
-        File defaultOutputDirectory = getInputFileOrDirectory().getParentFile();
-        if (tempDirectory == null) {
-            tempDirectory = new File(defaultOutputDirectory, "outputLocal");
-        }
-        if (outputDirectory == null) {
-            outputDirectory = new File(defaultOutputDirectory, "outputGlobal");
-        }
-        File absoluteLogFile = new File(tempDirectory, Excel2FhirMain.class.getSimpleName() + ".log");
-        FileLogger.addRootFileLogger(absoluteLogFile, logFileContentLayout);
-    }
-
-    /**
-     * @return the explicitly configured input file or directory, or the default
-     *         template in the application directory.
-     */
-    private static File getInputFileOrDirectory() {
-        if (inputFile != null) {
-            return inputFile;
-        }
-        if (inputDirectory != null) {
-            return inputDirectory;
-        }
-        return DEFAULT_INPUT_FILE;
-    }
-
     @Override
     public Integer call() throws Exception {
-        if (outputDirectory == null) {
-            initDirectoriesAndLogger();
+        if (patientsPerBundle < 1)
+            throw new IllegalArgumentException("-p must be positive.");
+        if (inputFile != null && inputDirectory != null) {
+            throw new IllegalArgumentException("Choose either -f or -i.");
         }
+        if (inputFile == null && inputDirectory == null)
+            inputDirectory = new File("input");
+        if (inputFile != null && !inputFile.isFile())
+            throw new IllegalArgumentException("Input file not found: " + inputFile);
+        if (inputDirectory != null) {
+            File[] inputs = inputDirectory.listFiles(f -> f.isFile() && !f.getName().startsWith("~")
+                    && f.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".xlsx"));
+            if (inputs == null || inputs.length == 0)
+                throw new IllegalArgumentException("No Excel workbooks in " + inputDirectory);
+        }
+        WorkflowRun run = new WorkflowRun(outputDirectory, tempDirectory, "excel-to-fhir");
+        FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
+                logFileContentLayout);
         try {
-            List<String> excelSheetNamePatterns = TableIdentifier.getExcelSheetNamePatterns();
-            Excel2Fhir excel2Fhir = new Excel2Fhir(validateBundles, minLogLevel);
+            List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
+            Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
             if (inputFile != null) {
-                excel2Fhir.convertExcelFile(inputFile, excelSheetNamePatterns, tempDirectory, outputDirectory,
-                        patientsPerBundle, outputFileTypes);
-            } else if (inputDirectory != null) {
-                if (!inputDirectory.isDirectory()) {
-                    throw new Exception("Provided input Directory is NOT a directory!");
-                }
-                excel2Fhir.convertAllExcelInDir(inputDirectory, excelSheetNamePatterns, tempDirectory, outputDirectory,
+                converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             } else {
-                excel2Fhir.convertExcelFile(DEFAULT_INPUT_FILE, excelSheetNamePatterns, tempDirectory, outputDirectory,
+                converter.convertAllExcelInDir(inputDirectory, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             }
+            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), validateBundles);
         } catch (Exception e) {
+            run.fail(e);
             LOG.error(e.getMessage(), e);
             return 1;
         }
-        return 0;
     }
-
 }

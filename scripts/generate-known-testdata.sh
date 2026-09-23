@@ -57,30 +57,30 @@ require_file "$POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFAU.xlsx"
 require_file "$POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKSH.xlsx"
 require_file "$POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFR.xlsx"
 
-run_generator "-f $VHF_DIR/VHF-Testdaten_01.xlsx -o $VHF_DIR -t $VHF_DIR/outputLocal $COMMON_ARGS -p 1000"
-run_generator "-f $VHF_DIR/VHF-Testdaten_02-andereDiagnose.xlsx -o $VHF_DIR -t $VHF_DIR/outputLocal $COMMON_ARGS -p 1000"
-run_generator "-f $VHF_DIR/VHF-Testdaten_03-andererLaborwert.xlsx -o $VHF_DIR -t $VHF_DIR/outputLocal $COMMON_ARGS -p 1000"
+run_generator "-f $VHF_DIR/VHF-Testdaten_01.xlsx -o $VHF_DIR $COMMON_ARGS -p 1000"
+run_generator "-f $VHF_DIR/VHF-Testdaten_02-andereDiagnose.xlsx -o $VHF_DIR $COMMON_ARGS -p 1000"
+run_generator "-f $VHF_DIR/VHF-Testdaten_03-andererLaborwert.xlsx -o $VHF_DIR $COMMON_ARGS -p 1000"
 
 # No -p here: this workbook uses conversion-option variants a/b/c/d and the
-# committed file names are option-based, not patient-range based.
-run_generator "-f $VHF_DIR/VHF-Testdaten_04-MixedCases.xlsx -o $VHF_DIR -t $VHF_DIR/outputLocal $COMMON_ARGS"
+# outputs are grouped by conversion-option variant.
+run_generator "-f $VHF_DIR/VHF-Testdaten_04-MixedCases.xlsx -o $VHF_DIR $COMMON_ARGS"
 
-run_generator "-f $POLAR_DIR/POLAR_WP_1.1_v2.xlsx -o $POLAR_DIR -t $POLAR_DIR/outputLocal $COMMON_ARGS -p 1650"
+run_generator "-f $POLAR_DIR/POLAR_WP_1.1_v2.xlsx -o $POLAR_DIR $COMMON_ARGS -p 1650"
 
-run_generator "-f $POLAR_V3_DIR/POLAR_WP_1.1_v3_MultipleEncountersOverlappingStartEnd.xlsx -o $POLAR_V3_DIR -t $POLAR_V3_DIR/outputLocal $COMMON_ARGS -p 70"
+run_generator "-f $POLAR_V3_DIR/POLAR_WP_1.1_v3_MultipleEncountersOverlappingStartEnd.xlsx -o $POLAR_V3_DIR $COMMON_ARGS -p 70"
 
-run_generator "-f $POLAR_MIX_DIR/POLAR_WP_1.x_v1_MixedTestCasesForAllWorkpackages.xlsx -o $POLAR_MIX_DIR -t $POLAR_MIX_DIR/outputLocal $COMMON_ARGS -p 17"
+run_generator "-f $POLAR_MIX_DIR/POLAR_WP_1.x_v1_MixedTestCasesForAllWorkpackages.xlsx -o $POLAR_MIX_DIR $COMMON_ARGS -p 17"
 
-run_generator "-f $POLAR_V4A_DIR/POLAR_WP_1.1_v4a_ReferencesConditionsToEncounter.xlsx -o $POLAR_V4A_DIR -t $POLAR_V4A_DIR/outputLocal $COMMON_ARGS -p 165"
+run_generator "-f $POLAR_V4A_DIR/POLAR_WP_1.1_v4a_ReferencesConditionsToEncounter.xlsx -o $POLAR_V4A_DIR $COMMON_ARGS -p 165"
 
-run_generator "-f $POLAR_V4B_DIR/POLAR_WP_1.1_v4b_ReferencesOnlyConditionsToEncounter.xlsx -o $POLAR_V4B_DIR -t $POLAR_V4B_DIR/outputLocal $COMMON_ARGS -p 165"
+run_generator "-f $POLAR_V4B_DIR/POLAR_WP_1.1_v4b_ReferencesOnlyConditionsToEncounter.xlsx -o $POLAR_V4B_DIR $COMMON_ARGS -p 165"
 
-run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKB.xlsx -o $POLAR_ORIGINAL_DIR -t $POLAR_ORIGINAL_DIR/outputLocal $COMMON_ARGS -p 15"
+run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKB.xlsx -o $POLAR_ORIGINAL_DIR $COMMON_ARGS -p 15"
 
-run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKE.xlsx -o $POLAR_ORIGINAL_DIR -t $POLAR_ORIGINAL_DIR/outputLocal $COMMON_ARGS -p 20"
+run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKE.xlsx -o $POLAR_ORIGINAL_DIR $COMMON_ARGS -p 20"
 
-run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFAU.xlsx -o $POLAR_ORIGINAL_DIR -t $POLAR_ORIGINAL_DIR/outputLocal $COMMON_ARGS -p 11"
+run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFAU.xlsx -o $POLAR_ORIGINAL_DIR $COMMON_ARGS -p 11"
 
-run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKSH.xlsx -o $POLAR_ORIGINAL_DIR -t $POLAR_ORIGINAL_DIR/outputLocal $COMMON_ARGS -p 5"
+run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKSH.xlsx -o $POLAR_ORIGINAL_DIR $COMMON_ARGS -p 5"
 
-run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFR.xlsx -o $POLAR_ORIGINAL_DIR -t $POLAR_ORIGINAL_DIR/outputLocal $COMMON_ARGS -p 10"
+run_generator "-f $POLAR_ORIGINAL_DIR/POLAR_Testdaten_Original_UKFR.xlsx -o $POLAR_ORIGINAL_DIR $COMMON_ARGS -p 10"

@@ -1,22 +1,19 @@
 package de.uni_leipzig.life.csv2fhir;
 
 import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getResource;
-import static de.uni_leipzig.life.csv2fhir.Converter.DATA_ABSENT_REASON_UNKNOWN;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
-import org.hl7.fhir.r4.model.StringType;
 
 import com.google.common.base.Objects;
 
@@ -54,36 +51,42 @@ public class BundlePostProcessor {
      */
     public static void convert(Bundle bundle, ConverterOptions converterOptions) {
         BundlePostProcessor postProcessor = new BundlePostProcessor(bundle, converterOptions);
-        postProcessor.addMissingDiagnosesAndClassToLevel2Encounters();
+        postProcessor.addMissingDiagnosesToSubEncounters();
     }
 
     /**
      *
      */
-    private void addMissingDiagnosesAndClassToLevel2Encounters() {
+    private void addMissingDiagnosesToSubEncounters() {
         for (BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof Encounter) {
                 if (!(resource instanceof EncounterLevel1)) {
                     Encounter encounter = (Encounter) resource;
                     addMissingDiagnosesFromSuperEncounter(encounter);
-                    addMissingClassCodingFromSuperencounter(encounter);
                 }
             }
         }
     }
 
     /**
-     * Add missing diagnoses from sub encounter to super encounter
+     * Inherit a missing diagnosis from the parent encounter when enabled.
      *
      * @param encounter
      */
     private void addMissingDiagnosesFromSuperEncounter(Encounter encounter) {
+        addMissingDiagnosesFromSuperEncounter(encounter, new HashSet<>());
+    }
+
+    private void addMissingDiagnosesFromSuperEncounter(Encounter encounter, Set<Encounter> visited) {
+        if (!visited.add(encounter)) return;
         if (converterOptions.is(ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER)) {
             List<DiagnosisComponent> diagnoses = encounter.getDiagnosis();
             if (diagnoses.isEmpty()) {
                 Encounter superEncounter = getSuperEncounter(encounter);
                 if (superEncounter != null) {
+                    // Resolve ancestors first, independently of the bundle entry order.
+                    addMissingDiagnosesFromSuperEncounter(superEncounter, visited);
                     // copy one diagnosis from super encounter to sub encounter
                     diagnoses = superEncounter.getDiagnosis();
                     // Also the parent Encounter has no diagnosis -> nothing to do
@@ -101,7 +104,7 @@ public class BundlePostProcessor {
                                     for (Coding coding : codings) {
                                         String code = coding.getCode();
                                         if (Objects.equal(preferedDiagnosisUseCode, code)) {
-                                            encounter.addDiagnosis(diagnosis);
+                                            encounter.addDiagnosis(diagnosis.copy());
                                             return;
                                         }
                                     }
@@ -111,79 +114,16 @@ public class BundlePostProcessor {
                         // no diagnosis has an valid use -> simply add the first to the sub encounter
                         DiagnosisComponent diagnosisComponent = diagnoses.get(0); // must exists because we check empty
                                                                                   // above
-                        encounter.addDiagnosis(diagnosisComponent);
+                        encounter.addDiagnosis(diagnosisComponent.copy());
                     }
                 }
             }
         }
-        // the Encounter still has no diagnosis -> add "unknown" Data Absent Reason
-        if (EncounterConverter.isLevel1Encounter(encounter)) {
-            List<DiagnosisComponent> diagnoses = encounter.getDiagnosis();
-
-            if (diagnoses.isEmpty()) {
-                DiagnosisComponent diagnosisComponent = new DiagnosisComponent();
-                Reference condition = diagnosisComponent.getCondition();
-                StringType referenceElement_ = condition.getReferenceElement_();
-                referenceElement_.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-                diagnoses.add(diagnosisComponent);
-                encounter.setDiagnosis(diagnoses);
-            }
-        }
     }
 
-    /**
-     * Add encounter class coding from super encounter or add data absent reason if
-     * not exists.
-     *
-     * @param encounter
-     */
-    private void addMissingClassCodingFromSuperencounter(Encounter encounter) {
-        if (converterOptions.is(ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER)) {
-            Coding class_ = encounter.getClass_();
-            if (class_.isEmpty()) {
-                // copy encounter class from super encounter to sub encounter
-                Encounter superEncounter = getSuperEncounter(encounter);
-                class_ = superEncounter.getClass_();
-                encounter.setClass_(class_);
-            }
-        }
-        // the Encounter still has no class coding -> add "unknown" Data Absent Reason
-        Coding class_ = encounter.getClass_();
-        if (class_.isEmpty()) {
-            Coding coding = new Coding();
-            coding.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            encounter.setClass_(coding);
-        }
-
-    }
-
-    /**
-     * Caches the super encounter for an encounter. The key (first element) is the
-     * encounter and the value (second element) is the
-     */
-    private final MutablePair<Encounter, Encounter> lastEncounterToSuoerEncounter = MutablePair.of(null, null);
-
-    /**
-     * @param encounter
-     * @return
-     */
     private Encounter getSuperEncounter(Encounter encounter) {
-        if (encounter == lastEncounterToSuoerEncounter.left) {
-            return lastEncounterToSuoerEncounter.right;
-        }
-        // Get the Encounter of which this Encounter is a part
-        Encounter superEncounter = null;
-        Reference partOfReference = encounter.getPartOf();
-        if (partOfReference != null) {
-            String superEncounterID = partOfReference.getReference();
-            // encounter found from which we can copy a diagnosis reference
-            if (superEncounterID != null) {
-                superEncounter = getResource(bundle, Encounter.class, superEncounterID);
-            }
-        }
-        lastEncounterToSuoerEncounter.left = encounter;
-        lastEncounterToSuoerEncounter.right = superEncounter;
-        return null;
+        if (!encounter.hasPartOf() || !encounter.getPartOf().hasReference()) return null;
+        return getResource(bundle, Encounter.class, encounter.getPartOf().getReference());
     }
 
 }

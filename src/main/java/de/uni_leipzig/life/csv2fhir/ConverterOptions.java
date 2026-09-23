@@ -3,8 +3,16 @@ package de.uni_leipzig.life.csv2fhir;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_OFFSET;
 
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +39,8 @@ public class ConverterOptions {
     /** Map with all default options for the converting process */
     private final ResourceMapper options = ResourceMapper.of("Converter_Options.config");
 
+    private final List<String> errors = new ArrayList<>();
+
     /** Cache for the boolean values */
     private final Map<BooleanOption, Boolean> booleanValues = new HashMap<>();
 
@@ -47,14 +57,75 @@ public class ConverterOptions {
         putValues(optionsAbsoluteFileName);
     }
 
-    /**
-     * @param optionsAbsoluteFileName options file to load
-     */
-    private void putValues(String optionsAbsoluteFileName) {
-        // add or overwrite the defaults with the project specific option values
-        if (!options.load(optionsAbsoluteFileName)) {
-            options.load(optionsAbsoluteFileName + CONVERTER_OPTIONS_FILE_EXTENSION);
+    /** Read the optional file using the same Properties syntax as the Excel text. */
+    private void putValues(String fileName) {
+        if (fileName == null || fileName.isBlank()) return;
+        Path path = Path.of(fileName);
+        if (!Files.isRegularFile(path)) path = Path.of(fileName + CONVERTER_OPTIONS_FILE_EXTENSION);
+        if (!Files.isRegularFile(path)) {
+            errors.add("Options file not found: " + fileName);
+            return;
         }
+        try {
+            readValues(Files.readString(path));
+        } catch (IOException e) {
+            errors.add("Cannot read options file: " + fileName + ": " + e.getMessage());
+        }
+    }
+
+    public static ConverterOptions fromText(String text) {
+        return fromText(text, Map.of());
+    }
+
+    /** Layer explicit values over the caller's defaults without treating overrides as duplicates. */
+    public static ConverterOptions fromText(String text, Map<String, String> defaults) {
+        ConverterOptions result = new ConverterOptions("");
+        result.options.putAll(defaults);
+        result.readValues(text);
+        return result;
+    }
+
+    private void readValues(String text) {
+        Properties values = new Properties() {
+            @Override public synchronized Object put(Object key, Object value) {
+                Object previous = super.put(key, value);
+                if (previous != null && !previous.equals(value))
+                    errors.add(key + ": conflicting duplicate values");
+                return previous;
+            }
+        };
+        try {
+            values.load(new StringReader(text));
+        } catch (IOException | IllegalArgumentException e) {
+            errors.add("Invalid converter options: " + e.getMessage());
+        }
+        options.putAll(values);
+        for (BooleanOption option : BooleanOption.values()) {
+            if (options.containsKey(option.name())) {
+                try { booleanValues.put(option, BooleanOption.isTrue(options.get(option.name()))); }
+                catch (IllegalArgumentException e) {
+                    errors.add(option + ": " + e.getMessage());
+                    booleanValues.put(option, option.getDefault());
+                }
+            }
+        }
+        for (IntOption option : IntOption.values()) {
+            if (options.containsKey(option.name())) {
+                try {
+                    int value = parseIntOption(option, options.get(option.name()));
+                    if (option.name().startsWith("PID_LAST_NUMBER_") && value < 0)
+                        throw new IllegalArgumentException("Value must be at least 0");
+                    intValues.put(option, value);
+                } catch (IllegalArgumentException e) {
+                    errors.add(option + ": " + e.getMessage());
+                    intValues.put(option, option.getDefault());
+                }
+            }
+        }
+    }
+
+    public List<String> getErrors() {
+        return List.copyOf(errors);
     }
 
     /**
@@ -180,27 +251,19 @@ public class ConverterOptions {
 
         /**
          * If <code>true</code>, then Sub Encounters will have a diagnosis of the Super
-         * Encounter attached instead of a Data Absent Reason. If the Super Encounter
+         * Encounter attached. If the Super Encounter
          * has a main diagnosis (chief complaint), it is preferred.</br>
-         * If <code>false</code>, the non-existing diagnoses are supplemented by an
-         * "unknown" Data Absent Reason.
+         * If <code>false</code>, no diagnosis is inherited. Missing diagnoses remain
+         * absent; this option does not generate Data Absent Reasons.
          */
         ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER,
         /**
-         * If <code>true</code>, then Sub Encounters will have the same class coding
-         * like the Super Encounter attached instead of a Data Absent Reason.</br>
-         * If <code>false</code>, the non-existing class codings are supplemented by an
-         * "unknown" Data Absent Reason.</br>
-         * Every Encounter needs at least one class coding to be valid.
+         * If true, Excel input data is checked for consistency before conversion.
+         * Inconsistent input data aborts the conversion. Template structure and
+         * converter options are checked even if false. This does not control FHIR
+         * bundle validation. The default is true.
          */
-        ADD_MISSING_CLASS_FROM_SUPER_ENCOUNTER,
-
-        /**
-         * If true, the Excel input template is validated strictly before the
-         * conversion starts. Strict validation aborts the conversion on inconsistent
-         * input data instead of generating fallback resources.
-         */
-        VALIDATE_STRICT;
+        CHECK_INPUT_CONSISTENCY;
 
         /**
          * Set of String values which can be interpreted as booleans with value
@@ -213,7 +276,7 @@ public class ConverterOptions {
         private static final Set<BooleanOption> DEFAULT_TRUE_PROERTIES = ImmutableSet.of(
                 SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION,
                 SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION,
-                VALIDATE_STRICT);
+                CHECK_INPUT_CONSISTENCY);
 
         /**
          * @return Default-Wert dieser Property
@@ -222,8 +285,13 @@ public class ConverterOptions {
             return DEFAULT_TRUE_PROERTIES.contains(this);
         }
 
+        private static final Set<String> falseValues = ImmutableSet.of("false", "f", "falsch", "no", "n", "nein", "0");
+
         public static boolean isTrue(Object value) {
-            return value != null && trueValues.contains(value.toString().trim().toLowerCase());
+            String text = value == null ? "" : value.toString().trim().toLowerCase(Locale.ROOT);
+            if (trueValues.contains(text)) return true;
+            if (falseValues.contains(text)) return false;
+            throw new IllegalArgumentException("Invalid boolean value: " + value + "; expected true or false");
         }
 
     }
@@ -257,8 +325,8 @@ public class ConverterOptions {
         PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0),
         /**
          * The last number in all patient IDs of an data set will be increased by this
-         * value on every loop. This number should be greater or equal to the
-         * difference between the highest and the lowast number in all patient IDs. If
+         * value on every loop. For a contiguous numeric ID range this number must be
+         * greater than the difference between the highest and lowest number. If
          * not then some patients can be generated with the same ID.</br>
          * Default value is 0.
          */
@@ -266,7 +334,7 @@ public class ConverterOptions {
         /**
          * Count of repetitions of increasings of the patient ID. If you want to expand
          * a data set n times then set this value to n and the
-         * PID_LAST_NUMBER_INCREASE_START_OFFSET in the described way.</br>
+         * PID_LAST_NUMBER_INCREASE_LOOP_OFFSET in the described way.</br>
          * Default value is 0.
          */
         PID_LAST_NUMBER_INCREASE_LOOP_COUNT(0);
@@ -369,7 +437,7 @@ public class ConverterOptions {
         String afterNumberString = pid.substring(end);
         int numberLength = numberSubString.length();
         int number = parsePidNumber(pid, numberSubString);
-        number += value;
+        number = Math.addExact(number, value);
         numberSubString = Integer.toString(number);
         if (numberSubString.length() < numberLength) {
             numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
@@ -390,18 +458,20 @@ public class ConverterOptions {
      * @return
      */
     public String getFullPID(String pid) {
-        return getFullPIDForFileName(pid).replace('_', '-'); // AXS: (Some) FHIR Server will not accept IDs with an
-                                                             // underscore!
+        return getFullPID(pid, loopCounter);
     }
 
-    /**
-     * @param pid
-     * @return the PID including configured offsets/prefix/suffix, preserving the
-     *         original characters for output file names.
-     */
+    public String getFullPID(String pid, int iteration) {
+        return getFullPIDForFileName(pid, iteration).replace('_', '-');
+    }
+
     public String getFullPIDForFileName(String pid) {
-        int loopOffset = loopCounter == 0 ? 0 : loopCounter * getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET);
-        int pidOffset = getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET) + loopOffset;
+        return getFullPIDForFileName(pid, loopCounter);
+    }
+
+    private String getFullPIDForFileName(String pid, int iteration) {
+        int loopOffset = Math.multiplyExact(iteration, getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET));
+        int pidOffset = Math.addExact(getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET), loopOffset);
         if (pidOffset > 0) {
             pid = getIncreasedLastPidNumber(pid, pidOffset);
         }

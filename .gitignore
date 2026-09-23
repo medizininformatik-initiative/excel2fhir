@@ -12,6 +12,17 @@
 !/.settings/.gitignore
 !/.settings/org.eclipse.jdt.core.prefs
 !/.settings/org.eclipse.jdt.ui.prefs
+/input/*
+!/input/FHIR_Testdatengenerator_Vorlage.xlsx
 /outputLocal/
-/outputGlobal/
+/outputGlobal/*
+!/outputGlobal/.gitkeep
 /src/main/resources/fhir_2024/
+
+# Python helper caches
+__pycache__/
+*.pyc
+
+# Complete Synthea workflow results
+/outputSynthea/*
+!/outputSynthea/converter-options.config

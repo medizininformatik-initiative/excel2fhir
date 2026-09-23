@@ -1,8 +1,12 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
-
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
+
+import de.uni_leipzig.imise.utils.WorkflowRun;
+import de.uni_leipzig.imise.utils.FileLogger;
 import java.util.concurrent.Callable;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
@@ -21,27 +25,32 @@ public class Main implements Callable<Integer> {
      */
     @CommandLine.Option(names = {
             "-i", "--input-directory"
-    }, required = true, paramLabel = "INPUT-DIRECTORY", description = "supply the input Directory here")
-    File inputDirectory;
+    }, paramLabel = "INPUT-DIRECTORY", description = "CSV input directory. Default: input in the working directory.")
+    File inputDirectory = new File("input");
 
-    /**
-     *
-     */
-    @CommandLine.Option(names = {
-            "-o", "--output-file"
-    }, required = true, paramLabel = "OUTPUT-FILE", description = "supply the output File here")
-    String outputFile;
+    @Option(names = { "-o", "--output-directory" }, description = "Output root for fresh runs. Default: outputGlobal.")
+    File outputDirectory;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    List<File> converterOptions = new java.util.ArrayList<>();
+
+    @Option(names = { "-r",
+            "--result-file-format" }, split = ",", description = "Output formats. Default: JSON,NDJSON.")
+    OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
+
+    @Option(names = { "-p", "--patients-count" }, description = "Maximum number of patients per JSON bundle.")
+    int patientsPerBundle = Integer.MAX_VALUE;
 
     /**
      *
      */
     @Option(names = { "-v",
-            "--validate-bundles" }, negatable = true, paramLabel = "VALIDATE-BUNDLES", description = "Adds only valid resources to the bundle.")
-    static boolean validateBundles = false;
+            "--validate-bundles" }, negatable = true, defaultValue = "false", fallbackValue = "true", paramLabel = "VALIDATE-BUNDLES", description = "Enables FHIR bundle validation (default: disabled), writes reports and exits nonzero on errors or incomplete checks.")
+    boolean validateBundles = false;
 
     @Option(names = { "-vll",
             "--validation-log-level" }, paramLabel = "VALIDATION-LOG-LEVEL", description = "Sets the log level for validation. Default ist ERROR. Other values are IGNORED, WARNING or VALID")
-    static ValidationResultType minLogLevel = null;
+    ValidationResultType minLogLevel = ValidationResultType.ERROR;
 
     /**
      * @param args
@@ -54,13 +63,50 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (!inputDirectory.isDirectory()) {
-            throw new Exception("provided input Directory is NOT a directory!");
+        if (patientsPerBundle < 1)
+            throw new IllegalArgumentException("-p must be positive.");
+        File[] persons = inputDirectory.listFiles(f -> f.isFile() && f.getName().endsWith("Person.csv"));
+        if (persons == null || persons.length == 0) {
+            throw new IllegalArgumentException("No CSV data sets (*Person.csv) in " + inputDirectory);
         }
-        FHIRValidator validator = validateBundles ? new FHIRValidator(minLogLevel) : null;
-        outputFile += outputFile.endsWith("_") ? "" : "_";
-        Csv2Fhir converter = new Csv2Fhir(inputDirectory, outputFile, validator);
-        converter.convertFiles(Integer.MAX_VALUE, JSON);
-        return 0;
+        Arrays.sort(persons);
+        List<String> prefixes = Arrays.stream(persons).map(f -> f.getName().substring(0,
+                f.getName().length() - "Person.csv".length())).toList();
+        // The converter accepts separator variants. Reject ambiguous sets instead of
+        // converting them twice.
+        if (prefixes.stream().map(p -> p.replaceFirst("[-_]$", "")).distinct().count() != prefixes.size()) {
+            throw new IllegalArgumentException("Ambiguous CSV prefixes: " + prefixes);
+        }
+        WorkflowRun run = new WorkflowRun(outputDirectory, null, "csv-to-fhir");
+        FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
+                FileLogger.LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER);
+        try {
+            FHIRValidator validator = validateBundles ? createValidator() : null;
+            boolean importProblems = false;
+            for (String prefix : prefixes) {
+                var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
+                        : ConverterOptionSet.external(converterOptions);
+                for (var set : sets) {
+                    var destination = sets.size() > 1 ? run.staging.resolve(set.directoryName()) : run.staging;
+                    if (prefixes.size() > 1) destination = destination.resolve(prefix + "Person");
+                    Files.createDirectories(destination);
+                    var snapshot = run.directory.resolve("details/options").resolve(set.directoryName());
+                    if (prefixes.size() > 1) snapshot = snapshot.resolve(prefix + "Person");
+                    set.snapshot(snapshot);
+                    Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
+                    converter.convertFiles(patientsPerBundle, outputFileTypes);
+                    importProblems |= converter.hasImportProblems();
+                }
+            }
+            boolean validationProblems = validator != null && validator.hasValidationProblems();
+            return run.finish(importProblems, validationProblems, validateBundles);
+        } catch (Exception e) {
+            run.fail(e);
+            throw e;
+        }
+    }
+
+    FHIRValidator createValidator() {
+        return new FHIRValidator(minLogLevel);
     }
 }

@@ -1,0 +1,26 @@
+{
+  "id": "synthea-observation-logmar-v1",
+  "review": "pending-human-review",
+  "copyright": "LOINC codes and names: Copyright Regenstrief Institute, Inc. All rights reserved. https://loinc.org/license",
+  "scope": "Correct a source coding conflict without changing the measured LogMAR value; no claim of an official SNOMED-to-LOINC map.",
+  "entries": [
+    {
+      "sourceCode": "413077008",
+      "sourceDisplay": "LogMAR visual acuity left eye (observable entity)",
+      "sourceAdditionalCode": "98498-9",
+      "targetCode": "6617-5",
+      "targetName": "Visual acuity log MAR Eye - left",
+      "evidence": ["https://loinc.org/6617-5", "https://loinc.org/98498-9"],
+      "reason": "LogMAR-Wert links: Quell-Zusatzcode 98498-9 beschreibt LenRto, nicht LogMAR. LOINC 6617-5 als passende logarithmische Untersuchung; SNOMED zusätzlich. Keine Wertumrechnung, keine Behauptung einer bestimmten Messtafel."
+    },
+    {
+      "sourceCode": "413078003",
+      "sourceDisplay": "LogMAR visual acuity right eye (observable entity)",
+      "sourceAdditionalCode": "98499-7",
+      "targetCode": "6616-7",
+      "targetName": "Visual acuity log MAR Eye - right",
+      "evidence": ["https://loinc.org/6616-7", "https://loinc.org/98499-7"],
+      "reason": "LogMAR-Wert rechts: Quell-Zusatzcode 98499-7 beschreibt LenRto, nicht LogMAR. LOINC 6616-7 als passende logarithmische Untersuchung; SNOMED zusätzlich. Keine Wertumrechnung, keine Behauptung einer bestimmten Messtafel."
+    }
+  ]
+}

@@ -220,15 +220,6 @@ public abstract class Converter {
     }
 
     /**
-     * @param resource
-     * @return <code>true</code> if the validation is not to be performed or the
-     *         validation does not find an error.
-     */
-    protected final boolean isValid(Resource resource) {
-        return validator == null || !validator.validate(resource).isError();
-    }
-
-    /**
      * @param msg
      * @throws Exception
      */
@@ -330,11 +321,6 @@ public abstract class Converter {
             }
         } else {
             entry = record.get(columnName);
-        }
-        // replace the escaped quotes from Excel2Csv with
-        // real quotes
-        if (entry != null) {
-            entry = entry.replace(Excel2Csv.QUOTE_ESCAPE, "\"");
         }
         return entry;
     }
@@ -847,7 +833,8 @@ public abstract class Converter {
      * @return
      */
     private static Extension createDataAbsentReason(DataAbsentReason dataAbsentReason) {
-        return Factory.newExtension(dataAbsentReason.getSystem(), new CodeType(dataAbsentReason.toCode()), true);
+        return Factory.newExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
+                new CodeType(dataAbsentReason.toCode()), true);
     }
 
     /**

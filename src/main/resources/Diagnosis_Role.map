@@ -22,7 +22,7 @@ CODE_SYSTEM_URL		http://terminology.hl7.org/CodeSystem/diagnosis-role
 ###########################################################################################################
 ### NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE ###
 ###                                                                                                     ###
-###      Every part-of-Encounter (Fachabteilungsfall / - kontakt) needs a diagnosis to be valid.        ###
+###      Diagnosis inheritance is optional and controlled by the converter options.                   ###
 ###      The order of the Code values (CC, CM, AD, DD, ...) in this map determines which diagnosis      ###
 ###                     type should be preferentially added to the part-of-Encounter!                   ###
 ###                                                                                                     ###

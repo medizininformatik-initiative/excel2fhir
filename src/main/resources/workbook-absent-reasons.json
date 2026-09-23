@@ -1,0 +1,17 @@
+{
+  "unknown": "Unbekannt (Data Absent Reason)",
+  "asked-unknown": "Erfragt, aber unbekannt (Data Absent Reason)",
+  "temp-unknown": "Noch nicht bekannt (Data Absent Reason)",
+  "not-asked": "Nicht erhoben (Data Absent Reason)",
+  "asked-declined": "Auskunft verweigert (Data Absent Reason)",
+  "masked": "Aus Datenschutzgründen verborgen (Data Absent Reason)",
+  "not-applicable": "Nicht zutreffend (Data Absent Reason)",
+  "unsupported": "Vom Quellsystem nicht unterstützt (Data Absent Reason)",
+  "as-text": "Nur im Ressourcentext vorhanden (Data Absent Reason)",
+  "error": "Fehler bei der Ermittlung (Data Absent Reason)",
+  "not-a-number": "Kein Zahlenwert (NaN) (Data Absent Reason)",
+  "negative-infinity": "Negative Unendlichkeit (Data Absent Reason)",
+  "positive-infinity": "Positive Unendlichkeit (Data Absent Reason)",
+  "not-performed": "Untersuchung nicht durchgeführt (Data Absent Reason)",
+  "not-permitted": "Wert im Zielprofil nicht zulässig (Data Absent Reason)"
+}

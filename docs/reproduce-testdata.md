@@ -2,23 +2,13 @@
 
 This repository contains the generator. The generated test data live in the separate `kerndatensatz-testdaten` repository.
 
-## Expected checkout layout
-
-The helper script works without configuration when both repositories are checked out next to each other:
-
-```text
-workspace/
-  csv2fhir/
-  kerndatensatz-testdaten/
-```
-
 From the generator repository run:
 
 ```bash
 ./scripts/generate-known-testdata.sh
 ```
 
-If the test-data repository is elsewhere, set `TESTDATA_ROOT` to its `Test_Data` directory:
+The default input is `../kerndatensatz-testdaten/Test_Data`. If it is elsewhere, set `TESTDATA_ROOT` to its `Test_Data` directory:
 
 ```bash
 TESTDATA_ROOT=/path/to/kerndatensatz-testdaten/Test_Data ./scripts/generate-known-testdata.sh
@@ -26,13 +16,17 @@ TESTDATA_ROOT=/path/to/kerndatensatz-testdaten/Test_Data ./scripts/generate-know
 
 ## What the script generates
 
-The script regenerates the currently migrated workbooks with validation enabled and both result formats:
+The script converts the selected workbooks with validation enabled and both result formats:
 
 ```text
 --result-file-format ZIPJSON --result-file-format NDJSON -v
 ```
 
-It preserves the committed patient grouping by using the same `-p` values as the existing output files:
+Each workbook produces a new `run-…-excel-to-fhir` directory beside it. Results are
+in `fhir/`; reports and intermediate files are in `details/`. The inputs use the
+[current workbook schema](template-input-contracts.md).
+
+The script uses these patient counts per bundle:
 
 ```text
 Vorhofflimmern/VHF-Testdaten_01.xlsx                         -p 1000
@@ -50,4 +44,5 @@ Polar/POLAR_Testdaten_Original_UKSH.xlsx                      -p 5
 Polar/POLAR_Testdaten_Original_UKFR.xlsx                      -p 10
 ```
 
-`Vorhofflimmern/VHF-Testdaten_04-MixedCases.xlsx` is intentionally generated without `-p`, because its committed output names are based on conversion-option variants `a` to `d`, not patient ranges.
+`Vorhofflimmern/VHF-Testdaten_04-MixedCases.xlsx` uses the default patient count
+and groups its output by conversion-option variants `a` to `d`.
