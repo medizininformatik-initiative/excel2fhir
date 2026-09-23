@@ -29,7 +29,7 @@ class WorkflowTest(unittest.TestCase):
             directory = Path(d)
             (directory / 'Fall.json').write_text('{}')
             for code in (-9, 137):
-                with self.subTest(code=code), self.assertRaisesRegex(ValueError, 'Docker-/System-RAM'):
+                with self.subTest(code=code), self.assertRaisesRegex(ValueError, 'Docker/system memory'):
                     inspect_conversion(directory, code)
 
     def test_heap_exhaustion_is_explained_instead_of_only_listing_missing_reports(self):
@@ -38,7 +38,7 @@ class WorkflowTest(unittest.TestCase):
             directory.mkdir()
             (directory.parent / 'conversion.log').write_text(
                 'Exception in thread main java.lang.OutOfMemoryError: Java heap space')
-            with self.assertRaisesRegex(ValueError, 'Java-Arbeitsspeicher erschöpft'):
+            with self.assertRaisesRegex(ValueError, 'Java heap exhausted'):
                 inspect_conversion(directory, 1, validate=True)
 
     def test_missing_references_fail_even_with_an_acceptable_validator_status(self):
@@ -112,10 +112,10 @@ class WorkflowTest(unittest.TestCase):
             self.assertEqual('COMPLETE', status['importStatus'])
             report = directory / 'DIZ-B/case.import.json'
             report.write_text('{"status":"INCOMPLETE"}')
-            with self.assertRaisesRegex(ValueError, 'Import unvollständig'):
+            with self.assertRaisesRegex(ValueError, 'Import incomplete'):
                 inspect_conversion(directory, 0, expected_imports=2)
             report.unlink()
-            with self.assertRaisesRegex(ValueError, 'fehlt'):
+            with self.assertRaisesRegex(ValueError, 'missing'):
                 inspect_conversion(directory, 0, expected_imports=2)
 
     def test_output_layout_for_single_and_multiple_sources_and_variants(self):

@@ -96,7 +96,7 @@ public final class ConverterOptionSet {
         for (var set : sets) {
             String name = set.directoryName();
             if (!names.add(name.toLowerCase(Locale.ROOT)))
-                throw new IllegalArgumentException("Optionssätze haben denselben Ausgabenamen: " + name);
+                throw new IllegalArgumentException("Option sets have the same output name: " + name);
         }
         return List.copyOf(sets);
     }
@@ -104,7 +104,7 @@ public final class ConverterOptionSet {
     public String directoryName() {
         String result = name.replaceAll("[^\\p{L}\\p{N}._-]", "_");
         if (result.isBlank() || result.equals(".") || result.equals(".."))
-            throw new IllegalArgumentException("Ungültiger Optionssatzname: " + name);
+            throw new IllegalArgumentException("Invalid option set name: " + name);
         return result;
     }
 

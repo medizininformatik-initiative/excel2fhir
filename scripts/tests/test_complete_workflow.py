@@ -51,7 +51,7 @@ class CompleteWorkflowTest(unittest.TestCase):
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=2))
     @patch.object(workflow, 'convert_cases')
     def test_failed_generation_never_starts_conversion(self, convert, generate):
-        with self.assertRaisesRegex(RuntimeError, 'Synthea fehlgeschlagen'):
+        with self.assertRaisesRegex(RuntimeError, 'Synthea failed'):
             workflow.run(self.root / 'output', [])
         convert.assert_not_called()
         directory = next((self.root/'output').glob('run-*'))
@@ -59,7 +59,7 @@ class CompleteWorkflowTest(unittest.TestCase):
 
     def test_wrong_source_version_does_not_generate_or_create_output(self):
         (self.root/'target/synthea-revision.txt').write_text('new modules')
-        with self.assertRaisesRegex(ValueError, 'Stand passt nicht'):
+        with self.assertRaisesRegex(ValueError, 'revision does not match'):
             workflow.run(self.root/'output', [])
         self.assertFalse((self.root/'output').exists())
 

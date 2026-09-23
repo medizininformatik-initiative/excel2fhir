@@ -37,7 +37,7 @@ def read_output(directory):
                 bundles = json.loads(output.read_text())
         break
     if not bundles:
-        raise ValueError('FHIR-Ausgabe fehlt: ' + str(directory))
+        raise ValueError('FHIR output is missing: ' + str(directory))
     entries = []
     shared = {}
     for bundle in bundles:
@@ -47,7 +47,7 @@ def read_output(directory):
                 key = (resource['resourceType'], resource['id'])
                 if key in shared:
                     if shared[key] != resource:
-                        raise ValueError('Widersprüchliche gemeinsame Ressource: ' + str(key))
+                        raise ValueError('Conflicting shared resource: ' + str(key))
                     continue
                 shared[key] = resource
             entries.append(entry)

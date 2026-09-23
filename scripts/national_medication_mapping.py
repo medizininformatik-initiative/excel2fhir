@@ -48,31 +48,31 @@ class NationalMedicationMapping:
             atc = entry['atc']
             if atc and (not re.fullmatch(r'[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}', atc['code'])
                         or atc['version'] != '2026'):
-                raise ValueError('Ungültige ATC-Zuordnung: ' + str(key))
+                raise ValueError('Invalid ATC mapping: ' + str(key))
             product = entry['product']
             ingredients = entry.get('ingredients', [])
             if any(i.get('system') != 'http://fdasis.nlm.nih.gov'
                    or not re.fullmatch(r'[A-Z0-9]{10}', i.get('code', '')) for i in ingredients):
-                raise ValueError('Ungültige öffentliche Wirkstoffzuordnung: ' + str(key))
+                raise ValueError('Invalid public ingredient mapping: ' + str(key))
             if product:
                 pzn = product['code']
                 if (not re.fullmatch(r'[0-9]{8}', pzn)
                         or sum(int(n) * i for i, n in enumerate(pzn[:7], 1)) % 11 != int(pzn[-1])
                         or product['doseCompatibility'] not in ('unchanged', 'synthetic-representative')
                         or product['source'] not in data['productSources']):
-                    raise ValueError('Ungültige Produktzuordnung: ' + str(key))
+                    raise ValueError('Invalid product mapping: ' + str(key))
                 if product['doseCompatibility'] == 'synthetic-representative':
                     enrichment = entry.get('enrichment') or {}
                     if not (product.get('selectionReason') and product.get('dosePolicy') in
                             ('preserve-source-regimen', 'explicit-synthetic-regimen')):
-                        raise ValueError('Synthetische Produktwahl benötigt Begründung und Dosierungsentscheidung: ' + str(key))
+                        raise ValueError('Synthetic product selection requires a rationale and dosage decision: ' + str(key))
                     if product.get('sourceCountUnit') not in (None, '{tbl}', '{caps}'):
-                        raise ValueError('Unzulässige Ergänzung einer Stückdosierung: ' + str(key))
+                        raise ValueError('Unsupported addition of a unit dose: ' + str(key))
                     if product['dosePolicy'] == 'explicit-synthetic-regimen' and not enrichment.get('resetDose'):
-                        raise ValueError('Synthetisches Dosierungsschema fehlt: ' + str(key))
+                        raise ValueError('Synthetic dosage regimen is missing: ' + str(key))
                     if enrichment.get('resetDose') and not all(
                             k in enrichment.get('dose', {}) for k in ('value', 'unit', 'frequency', 'text')):
-                        raise ValueError('Unvollständiges synthetisches Dosierungsschema: ' + str(key))
+                        raise ValueError('Incomplete synthetic dosage regimen: ' + str(key))
             self.entries[key] = entry
         self.metadata = {'id': data['id'], 'sha256': hashlib.sha256(raw).hexdigest(),
                          'atcSource': data['atcSource'], 'productSources': data['productSources']}

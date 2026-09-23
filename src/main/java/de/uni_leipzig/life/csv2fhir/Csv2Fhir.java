@@ -90,7 +90,7 @@ public class Csv2Fhir {
             if (!table.isConvertableTableSheet()) continue;
             File file = getCsvInputFile(outputFileNameBase, table.toString());
             if (!file.isFile()) {
-                if (table == Person) importReport.failure(null, null, "MISSING_PATIENT_FILE", "Person.csv fehlt", null);
+                if (table == Person) importReport.failure(null, null, "MISSING_PATIENT_FILE", "Person.csv is missing", null);
                 continue;
             }
             ImportReport.Table summary = importReport.table(table, file.getName());
@@ -101,13 +101,13 @@ public class Csv2Fhir {
                 boolean duplicate = parser.getHeaderNames().stream()
                         .filter(h -> !isNullOrEmpty(h)).anyMatch(h -> !headers.add(h));
                 if (duplicate) {
-                    importReport.failure(table, null, "DUPLICATE_COLUMNS", "Spaltenname mehrfach vorhanden", null);
+                    importReport.failure(table, null, "DUPLICATE_COLUMNS", "Duplicate column name", null);
                     continue;
                 }
                 Set<String> required = new LinkedHashSet<>(table.getMandatoryColumnNames());
                 required.add(table.getPIDColumnIdentifier().toString());
                 if (isColumnMissing(parser.getHeaderMap(), required)) {
-                    importReport.failure(table, null, "MISSING_COLUMNS", "Pflichtspalten fehlen: " +
+                    importReport.failure(table, null, "MISSING_COLUMNS", "Required columns are missing: " +
                             required.stream().filter(c -> !parser.getHeaderMap().containsKey(c)).collect(Collectors.joining(", ")), null);
                     continue;
                 }
@@ -117,7 +117,7 @@ public class Csv2Fhir {
                 String previous = null;
                 for (CSVRecord record : records) {
                     if (record.size() != parser.getHeaderNames().size()) {
-                        importReport.failure(table, record.getRecordNumber(), "MALFORMED_RECORD", "Feldanzahl stimmt nicht mit der Kopfzeile überein", null);
+                        importReport.failure(table, record.getRecordNumber(), "MALFORMED_RECORD", "Field count does not match the header", null);
                         // A malformed explicit ID must not silently redirect following continuation rows.
                         previous = null;
                         continue;
@@ -125,7 +125,7 @@ public class Csv2Fhir {
                     String pid = record.get(table.getPIDColumnIdentifier().toString());
                     if (isNullOrEmpty(pid) && isRecordEmpty(record, table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
                     if (!isNullOrEmpty(pid)) previous = pid;
-                    if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Keine Patient-ID und keine vorherige Patient-ID", null);
+                    if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Patient-ID is empty and no preceding Patient-ID is available", null);
                     else patients.put(record.getRecordNumber(), previous);
                 }
             } catch (Exception e) {
@@ -137,13 +137,13 @@ public class Csv2Fhir {
                 .map(pid -> pid.toUpperCase(java.util.Locale.ROOT)).collect(Collectors.toSet());
         List<String> pids = new ArrayList<>(knownPatients);
         Alphabetical.sort(pids);
-        if (pids.isEmpty()) importReport.failure(null, null, "NO_PATIENTS", "Keine verarbeitbaren Patient-IDs", null);
+        if (pids.isEmpty()) importReport.failure(null, null, "NO_PATIENTS", "No patient IDs to process", null);
         for (var entry : recordPatients.entrySet()) {
             var iterator = entry.getValue().entrySet().iterator();
             while (iterator.hasNext()) {
                 var row = iterator.next();
                 if (!knownPatients.contains(row.getValue().toUpperCase(java.util.Locale.ROOT))) {
-                    importReport.failure(entry.getKey(), row.getKey(), "UNKNOWN_PATIENT", "Patient-ID fehlt im Person-Blatt", null);
+                    importReport.failure(entry.getKey(), row.getKey(), "UNKNOWN_PATIENT", "Patient-ID is missing from the Person sheet", null);
                     iterator.remove();
                 }
             }
@@ -248,7 +248,7 @@ public class Csv2Fhir {
             preflightContacts();
             preflightOptions();
             if (importReport.hasErrors()) {
-                LOG.error("Eingabeprüfung: {} Befunde; keine FHIR-Ausgabe erzeugt. Siehe Importbericht.", importReport.issues.size());
+                LOG.error("Input validation failed with {} issues. See the import report.", importReport.issues.size());
                 return new ConverterResultStatistics();
             }
             return convertPreparedFiles(patients, patientsPerBundle, outputFileTypes);
@@ -271,7 +271,7 @@ public class Csv2Fhir {
             try {
                 Math.multiplyExact(patients.size(), Math.addExact(repetitions, 1));
             } catch (ArithmeticException e) {
-                importReport.failure(null, null, "OPTION_ERROR", "Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich", options);
+                importReport.failure(null, null, "OPTION_ERROR", "Patient count including repetitions exceeds the supported numeric range", options);
                 continue;
             }
             Set<String> generated = new HashSet<>();
@@ -282,10 +282,10 @@ public class Csv2Fhir {
                     try {
                         String id = options.getFullPID(patient, iteration);
                         if (!generated.add(id)) importReport.failure(null, null, "PATIENT_ID_COLLISION",
-                                "Doppelte erzeugte Patient-ID: " + id + " (Durchlauf " + iteration + ")", options);
+                                "Duplicate generated patient ID: " + id + " (iteration " + iteration + ")", options);
                     } catch (IllegalArgumentException | ArithmeticException e) {
                         importReport.failure(null, null, "PATIENT_ID_ERROR",
-                                patient + " (Durchlauf " + iteration + "): " + ImportReport.describe(e), options);
+                                patient + " (iteration " + iteration + "): " + ImportReport.describe(e), options);
                     }
                 }
             }
@@ -538,7 +538,7 @@ public class Csv2Fhir {
                     importReport.success(table, record.getRecordNumber(), resources.size());
                 } catch (Exception e) {
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
-                    LOG.error("Konvertierungsfehler in {} Datensatz {}: {}", table, record.getRecordNumber(),
+                    LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
                             importReport.issues.get(importReport.issues.size() - 1).reason);
                 }
             }

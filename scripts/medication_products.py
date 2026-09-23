@@ -26,7 +26,7 @@ def require_external_path(path):
     """Resolve symlinks as well; an ignored repo directory is still in the repo."""
     resolved = Path(path).resolve()
     if resolved.is_relative_to(ROOT):
-        raise ValueError('Lokale Produktdaten müssen außerhalb des Projekt-Repos liegen: ' + str(path))
+        raise ValueError('Local product data must be stored outside the project repository: ' + str(path))
     return resolved
 
 
@@ -44,12 +44,12 @@ class ProductCatalog:
         raw = path.read_bytes()
         data = json.loads(raw)
         if data.get('schemaVersion') != 1 or data.get('provider') != 'mmi-local':
-            raise ValueError('Unbekanntes lokales Produktkatalogformat')
+            raise ValueError('Unknown local product catalog format')
         for field in ('id', 'sourceVersion'):
             if not isinstance(data.get(field), str) or not data[field].strip():
-                raise ValueError('Produktkatalog benötigt ' + field)
+                raise ValueError('Product catalog requires ' + field)
         if not isinstance(data.get('entries'), list):
-            raise ValueError('Produktkatalog benötigt entries')
+            raise ValueError('Product catalog requires entries')
         registry = json.loads((ROOT / 'scripts/mappings/synthea-source-code-registry.json').read_text())
         allowed = {(e['system'], e['code']) for e in registry['entries']
                    if 'state-code:MedicationOrder' in e['usages']}
@@ -57,29 +57,29 @@ class ProductCatalog:
             source = entry.get('source', {})
             key = (source.get('system'), source.get('code'))
             if key not in allowed or source.get('version'):
-                raise ValueError('Produktzuordnung außerhalb des unterstützten Synthea-Inventars: ' + str(key))
+                raise ValueError('Product mapping is outside the supported Synthea inventory: ' + str(key))
             if key in self.entries:
                 raise ValueError('Mehrdeutige Produktzuordnung: ' + str(key))
             target = entry.get('target', {})
             if (target.get('system') != PZN or not isinstance(target.get('code'), str)
                     or not re.fullmatch(r'[0-9]{8}', target['code']) or target.get('version')):
-                raise ValueError('Produktziel benötigt eine achtstellige PZN als Text')
+                raise ValueError('Target product requires an eight-digit PZN as text')
             for field in ('display', 'doseForm'):
                 if not isinstance(target.get(field), str) or not target[field].strip():
-                    raise ValueError('Produktziel benötigt deutschen ' + field)
+                    raise ValueError('Target product requires German ' + field)
             if target.keys() - {'system', 'code', 'display', 'doseForm', 'ingredient'}:
-                raise ValueError('Produktziel enthält noch nicht unterstützte Eigenschaften')
+                raise ValueError('Target product contains unsupported properties')
             ingredient = target.get('ingredient')
             if ingredient is not None and (ingredient.get('system') not in INGREDIENT_SYSTEMS
                     or not isinstance(ingredient.get('code'), str) or not ingredient['code'].strip()
                     or ingredient.get('version')):
-                raise ValueError('Nicht unterstützte Wirkstoffcodierung')
+                raise ValueError('Unsupported ingredient coding')
             if entry.get('doseCompatibility') not in ('unchanged', 'unresolved'):
-                raise ValueError('Produktzuordnung benötigt doseCompatibility')
+                raise ValueError('Product mapping requires doseCompatibility')
             provenance = entry.get('provenance', {})
             if any(not isinstance(provenance.get(f), str) or not provenance[f].strip()
                    for f in ('source', 'method', 'evidence')):
-                raise ValueError('Produktzuordnung benötigt Quelle, Methode und Begründung')
+                raise ValueError('Product mapping requires a source, method and rationale')
             self.entries[key] = copy.deepcopy(entry)
         self.metadata = {'id': data['id'], 'provider': 'mmi-local',
                          'nationalMapping': self.national.metadata,

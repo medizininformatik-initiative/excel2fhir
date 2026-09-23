@@ -61,7 +61,7 @@ public class DiagnosisWorkbookTest {
                 if (mode.equals("invalid")) assertEquals(2, result.getIssues().stream()
                         .filter(i -> i.getSheetName().equals("Konvertierungsoptionen")).count());
                 if (mode.equals("duplicate")) assertTrue(result.getIssues().stream()
-                        .anyMatch(i -> i.getMessage().contains("widersprüchliche")));
+                        .anyMatch(i -> i.getMessage().contains("conflicting duplicate values")));
             } finally { java.nio.file.Files.deleteIfExists(file); }
         }
     }

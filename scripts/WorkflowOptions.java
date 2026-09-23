@@ -27,7 +27,7 @@ public class WorkflowOptions {
                     for (int iteration = 0; iteration <= count; iteration++) {
                         try {
                             String id = options.getFullPID(source.getAsString(), iteration);
-                            if (!ids.add(id)) errors.add("Doppelte erzeugte Patient-ID: " + id);
+                            if (!ids.add(id)) errors.add("Duplicate generated patient ID: " + id);
                             copies.add(id);
                         } catch (IllegalArgumentException | ArithmeticException e) {
                             errors.add(source.getAsString() + ": " + e.getMessage());
@@ -36,7 +36,7 @@ public class WorkflowOptions {
                     patients.put(source.getAsString(), copies);
                 }
             } catch (ArithmeticException e) {
-                errors.add("Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich");
+                errors.add("Patient count including repetitions exceeds the supported numeric range");
             }
         }
         String name = input.has("name") ? new ConverterOptionSet(input.get("name").getAsString(), "").directoryName()

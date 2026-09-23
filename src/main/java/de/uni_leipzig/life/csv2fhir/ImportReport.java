@@ -36,7 +36,7 @@ public final class ImportReport {
     public void failure(TableIdentifier id, Long record, String category, String reason, ConverterOptions options) {
         status = "INCOMPLETE";
         // Converter exceptions historically append complete CSV records. Keep the cause, not a second data dump.
-        String concise = Objects.toString(reason, "Unbekannter Fehler").split("CSVRecord", 2)[0].strip();
+        String concise = Objects.toString(reason, "Unknown error").split("CSVRecord", 2)[0].strip();
         issues.add(new Issue(id == null ? null : id.name(), record, category, concise, options));
         if (id != null && record == null) tables.get(id.name()).rejected = true;
         if (id != null && record != null) {
@@ -53,7 +53,7 @@ public final class ImportReport {
     public static String describe(Exception error) {
         Throwable cause = error;
         while (cause instanceof java.lang.reflect.InvocationTargetException && cause.getCause() != null) cause = cause.getCause();
-        return cause.getClass().getSimpleName() + ": " + Objects.toString(cause.getMessage(), "ohne weitere Fehlerbeschreibung");
+        return cause.getClass().getSimpleName() + ": " + Objects.toString(cause.getMessage(), "no further error details");
     }
     public boolean hasErrors() { return !issues.isEmpty(); }
     public void write(Path path) throws IOException {

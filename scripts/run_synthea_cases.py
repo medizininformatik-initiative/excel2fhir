@@ -42,7 +42,7 @@ def environment():
     if not Path(office).is_file():
         office = shutil.which('libreoffice') or shutil.which('soffice')
     if not office:
-        raise RuntimeError('LibreOffice fehlt')
+        raise RuntimeError('LibreOffice is missing')
     versions = {}
     for name, command in [('java', ['java', '-version']), ('javac', ['javac', '-version']),
                           ('libreoffice', [office, '--version'])]:
@@ -58,9 +58,9 @@ def environment():
 def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate=False, expected_imports=1):
     reports = directory if reports is None else reports
     if exit_code < 0 or exit_code >= 128:
-        raise ValueError(f'Konverterprozess abgebrochen (Exitcode {exit_code}); '
-                         'siehe conversion.log. Bei SIGKILL/-9/137 auch das verfügbare '
-                         'Docker-/System-RAM prüfen.')
+        raise ValueError(f'Converter process terminated (exit code {exit_code}); '
+                         'see conversion.log. For SIGKILL/-9/137, check available '
+                         'Docker/system memory.')
     bundles = [p for p in directory.rglob('*') if p.is_file()
                and p.name.endswith(('.json', '.ndjson', '.xml', '.gz', '.bz2', '.zip'))
                and not p.name.endswith(('.import.json', '.validation.json'))]
@@ -71,32 +71,32 @@ def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate
         if log.is_file():
             with log.open(encoding='utf-8', errors='replace') as lines:
                 if any('java.lang.OutOfMemoryError' in line for line in lines):
-                    raise ValueError(f'Java-Arbeitsspeicher erschöpft (Exitcode {exit_code}); '
-                                     'für Docker bzw. den lokalen Lauf mehr RAM bereitstellen. '
-                                     'Siehe conversion.log.')
-        raise ValueError(f'FHIR-Bundle, Importbericht oder angeforderter Validierungsbericht fehlt '
-                         f'(Konverter-Exitcode {exit_code}); siehe conversion.log')
+                    raise ValueError(f'Java heap exhausted (exit code {exit_code}); '
+                                     'Allocate more memory to Docker or the local process. '
+                                     'See conversion.log.')
+        raise ValueError(f'FHIR bundle, import report or requested validation report is missing '
+                         f'(converter exit code {exit_code}); see conversion.log')
     for path in imports:
         if json.loads(path.read_text())['status'] != 'COMPLETE':
-            raise ValueError('Import unvollständig; siehe ' + str(path))
+            raise ValueError('Import incomplete; see ' + str(path))
     if not validate:
         if exit_code != 0:
-            raise ValueError(f'Unerwarteter Konverter-Exitcode {exit_code}')
+            raise ValueError(f'Unexpected converter exit code {exit_code}')
         return bundles[0], {'importStatus': 'COMPLETE', 'validationStatus': 'NOT_VALIDATED',
                             'converterExitCode': exit_code}
     statuses = []
     for path in validations:
         validation = json.loads(path.read_text())
         if validation.get('referencesWithoutTargetInBundle'):
-            raise ValueError('Nicht auflösbare lokale FHIR-Referenzen im erzeugten Bundle')
+            raise ValueError('Unresolved local FHIR references in the generated bundle')
         status = validation['status']
         if status not in {'VALID', 'WARNING', 'IGNORED', 'NOT_CHECKED'}:
-            raise ValueError('FHIR-Validierung fehlgeschlagen; siehe ' + str(path))
+            raise ValueError('FHIR validation failed; see ' + str(path))
         statuses.append(status)
     status = 'NOT_CHECKED' if 'NOT_CHECKED' in statuses else 'WARNING' if 'WARNING' in statuses else statuses[0]
     expected_exit = 1 if status == 'NOT_CHECKED' else 0
     if exit_code != expected_exit:
-        raise ValueError(f'Unerwarteter Konverter-Exitcode {exit_code} bei Status {status}')
+        raise ValueError(f'Unexpected converter exit code {exit_code} with status {status}')
     return bundles[0], {'importStatus': 'COMPLETE', 'validationStatus': status,
                         'converterExitCode': exit_code}
 
@@ -109,7 +109,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
     time.tzset()
     source_dir = Path(source_dir).resolve()
     if not source_dir.exists():
-        raise ValueError('Quellverzeichnis fehlt: ' + str(source_dir))
+        raise ValueError('Source directory is missing: ' + str(source_dir))
     metadata = environment()
     output = Path(output_dir).resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -149,7 +149,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             bundle = json.loads(source.read_text(encoding='utf-8'))
             if not any(e.get('resource', {}).get('resourceType') == 'Patient'
                        for e in bundle.get('entry', [])):
-                summary['skipped'].append({'source': str(source), 'reason': 'Kein Patient im Bundle'})
+                summary['skipped'].append({'source': str(source), 'reason': 'No Patient in the bundle'})
                 continue
             case = out / 'details/cases' / source.stem
             case.mkdir()
@@ -174,7 +174,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
                 conversion = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
             runs = list(case.glob('run-*-excel-to-fhir*'))
             if len(runs) != 1:
-                raise ValueError('Konverterlauf fehlt; siehe ' + str(case / 'conversion.log'))
+                raise ValueError('Converter run is missing; see ' + str(case / 'conversion.log'))
             converted = runs[0]
             generated = converted / 'fhir'
             destinations = {}
@@ -201,10 +201,10 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
                     result = check_configured(bundle, read_output(destinations[item['name']]), report, item['values'],
                                               item['patients'][report['sourcePatient']])
                 except Exception as error:
-                    raise ValueError(f"Variante {item['name']}: {error}") from error
+                    raise ValueError(f"Variant {item['name']}: {error}") from error
                 variants.append(dict(result, name=item['name']))
             if read_sheets(book)['Codes'] != codes:
-                raise ValueError('Codes-Blatt wurde beim Import verändert')
+                raise ValueError('The Codes sheet was modified during import')
             result = dict(statuses, variants=variants, source=str(source), workbook=str(book),
                           outputPatients=[pid for v in variants for pid in v['outputPatients']],
                           rows={n: len(v) for n, v in rows.items()},
@@ -217,7 +217,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
         finally:
             write_json(summary_file, summary)
     if not summary['results'] and not summary['failures']:
-        summary['failures'].append({'error': 'Keine Synthea-Patientenbundles gefunden'})
+        summary['failures'].append({'error': 'No Synthea patient bundles found'})
     summary['status'] = ('FAILED' if summary['failures'] else 'NOT_CHECKED'
         if any(r['validationStatus'] == 'NOT_CHECKED' for r in summary['results']) else 'COMPLETE' if validate else 'NOT_VALIDATED')
     write_json(summary_file, summary)

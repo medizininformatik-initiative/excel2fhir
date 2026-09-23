@@ -78,5 +78,5 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
         self.assertEqual(['a.config', 'b.config'], [s['path'] for s in selected])
         resolve.assert_any_call('b.config', ['patient1'])
         resolve.side_effect = [{'name': 'same'}, {'name': 'SAME'}]
-        with self.assertRaisesRegex(ValueError, 'denselben Ausgabenamen'):
+        with self.assertRaisesRegex(ValueError, 'the same output name'):
             options.selected_configs(['first.config', 'second.config'])

@@ -54,9 +54,9 @@ class OutputComparisonTest(unittest.TestCase):
         self.assertEqual(3, len(read_output(self.directory)['entry']))
         self.bundles[1]['entry'][1] = {'resource': dict(self.shared, name='Other ward')}
         path.write_text('\n'.join(json.dumps(b) for b in self.bundles))
-        with self.assertRaisesRegex(ValueError, 'Widersprüchliche gemeinsame Ressource'):
+        with self.assertRaisesRegex(ValueError, 'Conflicting shared resource'):
             read_output(self.directory)
 
     def test_missing_output_is_reported(self):
-        with self.assertRaisesRegex(ValueError, 'FHIR-Ausgabe fehlt'):
+        with self.assertRaisesRegex(ValueError, 'FHIR output is missing'):
             read_output(self.directory)

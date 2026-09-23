@@ -251,7 +251,7 @@ public class ExcelTemplateValidator {
             }
             if (("Laborbefund".equals(sheetName) || "laboratory".equals(get(row, columns, "Kategorie")))
                     && "Ja/Nein".equals(get(row, columns, "Werttyp"))) {
-                add(result, ERROR, sheetName, rowIndex + 1, "Werttyp", "Ja/Nein ist im KDS-Laborprofil nicht zulässig");
+                add(result, ERROR, sheetName, rowIndex + 1, "Werttyp", "The KDS laboratory profile requires a coded answer for boolean results");
             }
             String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
             if (columns.containsKey(idColumn)) {

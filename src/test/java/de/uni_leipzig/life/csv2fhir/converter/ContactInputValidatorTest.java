@@ -20,7 +20,7 @@ public class ContactInputValidatorTest {
         issues.addAll(check.accept(row(5,"q","1","2026-01-02","2026-01-01","","","")));
         assertEquals(5, issues.size());
         assertTrue(issues.stream().noneMatch(i -> i.row()==3));
-        assertTrue(issues.get(0).message().contains("Abhängige Kontaktzuordnungen"));
+        assertTrue(issues.get(0).message().contains("Dependent encounter assignments"));
     }
     @Test public void missingOrInvalidStartIsReportedBeforeComparingStays() {
         for (String start : List.of("", "not-a-date")) {
@@ -29,8 +29,8 @@ public class ContactInputValidatorTest {
             var issues = check.accept(row(3, "p", "1", start, "", "", "Bett 2", ""));
             assertEquals(1, issues.size());
             assertEquals("Start", issues.get(0).field());
-            assertTrue(issues.get(0).message().contains("Nicht verarbeitbarer Zeitpunkt"));
-            assertTrue(issues.get(0).message().contains("Abhängige Kontaktzuordnungen"));
+            assertTrue(issues.get(0).message().contains("Invalid timestamp"));
+            assertTrue(issues.get(0).message().contains("Dependent encounter assignments"));
         }
     }
     @Test public void openPrimaryAndParallelContactsNeedNoInventedTimes() {

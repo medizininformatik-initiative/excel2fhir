@@ -20,17 +20,17 @@ def create_run(output, operation):
     for folder in ('fhir', 'excel', 'details/sources', 'details/reports', 'details/logs', 'details/cases'):
         (candidate / folder).mkdir(parents=True, exist_ok=True)
     write_status(candidate, 'RUNNING')
-    print('Ausgabe: ' + str(candidate), flush=True)
+    print('Output: ' + str(candidate), flush=True)
     return candidate
 
 
 def write_status(directory, status):
-    explanation = {'NOT_CHECKED': 'Import und Rückvergleich bestanden; Terminologieprüfung teilweise nicht ausführbar.',
-                   'FAILED': 'Lauf unvollständig. Erzeugte FHIR-Dateien und Fehlerberichte stehen zur Prüfung bereit.',
-                   'NOT_VALIDATED': 'Import und Rückvergleich abgeschlossen; FHIR-Validierung deaktiviert.',
-                   'COMPLETE': 'Import, Rückvergleich und FHIR-Prüfung abgeschlossen.'}.get(status, 'Lauf wird ausgeführt.')
+    explanation = {'NOT_CHECKED': 'Import and source comparison passed; some terminology checks could not run.',
+                   'FAILED': 'Run incomplete. Generated FHIR files and error reports are available for review.',
+                   'NOT_VALIDATED': 'Import and source comparison completed; FHIR validation disabled.',
+                   'COMPLETE': 'Import, source comparison and FHIR validation completed.'}.get(status, 'Run in progress.')
     (directory / 'status.txt').write_text(status + '\n' + explanation
-        + '\nFHIR: fhir/ (gewählte Formate und Optionsvarianten)\nExcel: excel/\nDetails: details/\n', encoding='utf-8')
+        + '\nFHIR: fhir/ (selected formats and KDS variants)\nExcel: excel/\nDetails: details/\n', encoding='utf-8')
 
 
 def add_converter_arguments(parser):
@@ -50,9 +50,9 @@ def add_converter_arguments(parser):
 def converter_settings(args):
     formats = [f for group in (args.result_file_format or ['JSON,NDJSON']) for f in group.split(',')]
     if any(f not in {'JSON', 'NDJSON', 'XML', 'JSONGZIP', 'JSONBZ2', 'ZIPJSON'} for f in formats):
-        raise ValueError('Unbekanntes Ausgabeformat')
+        raise ValueError('Unknown output format')
     if args.patients_count < 1:
-        raise ValueError('-p muss positiv sein')
+        raise ValueError('-p must be positive')
     return dict(validate=args.validate_bundles, option_files=args.converter_options,
                 formats=list(dict.fromkeys(formats)), patients_per_bundle=args.patients_count,
                 validation_log_level=args.validation_log_level, log_layout=args.log_layout,
@@ -60,7 +60,7 @@ def converter_settings(args):
 
 
 def generator_arguments(arguments=None):
-    parser = argparse.ArgumentParser(description='Excel mit Synthea befüllen und konvertieren. Synthea-Argumente nach -- angeben.')
+    parser = argparse.ArgumentParser(description='Fill Excel with Synthea data and convert it. Place Synthea arguments after --.')
     add_converter_arguments(parser)
     parser.add_argument('synthea_arguments', nargs=argparse.REMAINDER)
     args = parser.parse_args(arguments)

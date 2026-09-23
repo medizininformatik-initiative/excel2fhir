@@ -74,7 +74,7 @@ def prepare_events(entries, pid, encounters, imported_observations):
                 activities=[]
                 for activity in r.get('activity',[]):
                     ac, sy, _=coding(activity.get('detail',{}).get('code',{}))
-                    if sy!='SNOMED CT (Version nicht angegeben)':raise UnsupportedValue('Aktivität ist nicht SNOMED')
+                    if sy!='SNOMED CT (Version nicht angegeben)':raise UnsupportedValue('Activity must use SNOMED')
                     activities.append(ac)
                 values['Aktivitätscodes']=';'.join(activities)
                 if activities:loss('activity','Aktivitätscodes übernommen; Detailstatus als unknown erzeugt, weitere Details fehlen')
@@ -113,13 +113,13 @@ def prepare_documents(entries, pid, encounters):
             nr=encounters[enc['id']]
         try:
             attachments=r.get('content',[])
-            if not attachments:raise UnsupportedValue('Dokumentinhalt fehlt')
+            if not attachments:raise UnsupportedValue('Document content is missing')
             a=attachments[0]['attachment']
-            if not a.get('contentType','').startswith('text/plain'):raise UnsupportedValue('Nur eingebetteter Klartext wird derzeit übernommen')
+            if not a.get('contentType','').startswith('text/plain'):raise UnsupportedValue('Document import requires embedded plain text')
             text=base64.b64decode(a.get('data',''),validate=True).decode('utf-8')
             original = text
             text, replacements = localize_document_identity(text, patient)
-            if not text or len(text)>32767:raise UnsupportedValue('Dokument leer oder größer als Excel-Zellgrenze')
+            if not text or len(text)>32767:raise UnsupportedValue('Document is empty or exceeds the Excel cell size limit')
             code,system,label=coding(r.get('type',{}))
             rows.append([pid,nr,'','ja',text,r.get('status',''),r.get('date',''),code,system,label])
             imports.append({'resourceType':'DocumentReference','sourceId':r['id']})

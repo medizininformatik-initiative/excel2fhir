@@ -63,13 +63,13 @@ public class ConverterOptions {
         Path path = Path.of(fileName);
         if (!Files.isRegularFile(path)) path = Path.of(fileName + CONVERTER_OPTIONS_FILE_EXTENSION);
         if (!Files.isRegularFile(path)) {
-            errors.add("Optionsdatei nicht gefunden: " + fileName);
+            errors.add("Options file not found: " + fileName);
             return;
         }
         try {
             readValues(Files.readString(path));
         } catch (IOException e) {
-            errors.add("Optionsdatei nicht lesbar: " + fileName + ": " + e.getMessage());
+            errors.add("Cannot read options file: " + fileName + ": " + e.getMessage());
         }
     }
 
@@ -90,14 +90,14 @@ public class ConverterOptions {
             @Override public synchronized Object put(Object key, Object value) {
                 Object previous = super.put(key, value);
                 if (previous != null && !previous.equals(value))
-                    errors.add(key + ": widersprüchliche mehrfache Angabe");
+                    errors.add(key + ": conflicting duplicate values");
                 return previous;
             }
         };
         try {
             values.load(new StringReader(text));
         } catch (IOException | IllegalArgumentException e) {
-            errors.add("Ungültige Konvertierungsoptionen: " + e.getMessage());
+            errors.add("Invalid converter options: " + e.getMessage());
         }
         options.putAll(values);
         for (BooleanOption option : BooleanOption.values()) {
@@ -114,7 +114,7 @@ public class ConverterOptions {
                 try {
                     int value = parseIntOption(option, options.get(option.name()));
                     if (option.name().startsWith("PID_LAST_NUMBER_") && value < 0)
-                        throw new IllegalArgumentException("Wert muss mindestens 0 sein");
+                        throw new IllegalArgumentException("Value must be at least 0");
                     intValues.put(option, value);
                 } catch (IllegalArgumentException e) {
                     errors.add(option + ": " + e.getMessage());
@@ -291,7 +291,7 @@ public class ConverterOptions {
             String text = value == null ? "" : value.toString().trim().toLowerCase(Locale.ROOT);
             if (trueValues.contains(text)) return true;
             if (falseValues.contains(text)) return false;
-            throw new IllegalArgumentException("Ungültiger Wahrheitswert: " + value + "; true oder false erwartet");
+            throw new IllegalArgumentException("Invalid boolean value: " + value + "; expected true or false");
         }
 
     }

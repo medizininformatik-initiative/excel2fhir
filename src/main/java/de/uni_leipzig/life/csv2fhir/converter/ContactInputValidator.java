@@ -55,17 +55,17 @@ public final class ContactInputValidator {
         Date start = date(input, "Start", true, issues);
         Date end = date(input, "Ende", false, issues);
         if (start != null && end != null && end.before(start))
-            issue(issues, input, "Start/Ende", "Kontaktende liegt vor Beginn");
+            issue(issues, input, "Start/Ende", "Encounter end precedes its start");
         String kind = input.get("Kontaktart");
         String department = input.get("Fachabteilung");
         boolean places = input.get("Station") != null || input.get("Zimmer") != null || input.get("Bett") != null;
         boolean secondary = SECONDARY.contains(kind == null ? "" : kind);
         if (kind != null && !EncounterConverter.CONTACT_KINDS.containsKey(kind))
-            issue(issues, input, "Kontaktart", "Unbekannte Kontaktart: " + kind);
+            issue(issues, input, "Kontaktart", "Unknown encounter type: " + kind);
         if (kind != null && !places)
-            issue(issues, input, "Kontaktart", "Kontaktart benötigt mindestens Station, Zimmer oder Bett");
+            issue(issues, input, "Kontaktart", "Kontaktart requires at least Station, Zimmer or Bett");
         for (String old : List.of("Kontakt-ID", "Kontaktebene", "Übergeordneter Kontakt"))
-            if (input.get(old) != null) issue(issues, input, old, "Veraltete Kontaktspalte: Fall auf die implizite Eingabe umstellen");
+            if (input.get(old) != null) issue(issues, input, old, "Unsupported encounter column: use the implicit encounter structure");
         String reason = input.get(AdmissionReasonValues.COLUMN);
         if (reason != null) {
             try { AdmissionReasonValues.extension(reason); }
@@ -81,7 +81,7 @@ public final class ContactInputValidator {
             state.number = number;
             patients.put(patient, state);
             if (secondary || number == null)
-                issue(issues, input, "Fall-Nr/Kontaktart", "Einrichtungskontakt muss vor seinen Aufenthalten stehen");
+                issue(issues, input, "Fall-Nr/Kontaktart", "The facility encounter must precede its stays");
         }
         if (start == null || !issues.isEmpty()) return invalidate(state, issues);
         // After a broken row do not guess its hierarchy or produce cascading errors.
@@ -97,13 +97,13 @@ public final class ContactInputValidator {
         } else {
             if (state.bounded) inside(input, span, state.facility, issues);
             if (classification != null && !Objects.equals(classCode, state.classification))
-                issue(issues, input, "Einrichtungskontaktklasse", "Widersprüchliche Einrichtungskontaktklasse im selben Fall");
+                issue(issues, input, "Einrichtungskontaktklasse", "Conflicting facility encounter classes within the same case");
             if (reason != null)
-                issue(issues, input, AdmissionReasonValues.COLUMN, "Aufnahmegrund nur in der ersten Fallzeile angeben");
+                issue(issues, input, AdmissionReasonValues.COLUMN, "Specify Aufnahmegrund in the first case row only");
         }
         if (secondary) {
             if (state.primary == null)
-                issue(issues, input, "Kontaktart", "Sekundärkontakt benötigt einen vorhergehenden primären Versorgungsstellenkontakt");
+                issue(issues, input, "Kontaktart", "A secondary encounter requires a preceding primary location encounter");
             else {
                 inside(input, span, state.primary, issues);
                 if (state.departmentPeriod != null) inside(input, span, state.departmentPeriod, issues);
@@ -114,10 +114,10 @@ public final class ContactInputValidator {
         }
         if (!newRoot && state.primary != null && (places || department != null)) {
             if (start.before(state.primary.start()) || (!state.derived && state.primary.end() != null && start.before(state.primary.end())))
-                issue(issues, input, "Start/Ende", "Überlappende oder unsortierte primäre Aufenthalte; Zuordnung ist nicht eindeutig");
+                issue(issues, input, "Start/Ende", "Primary stays overlap or are out of order; encounter assignment is ambiguous");
             if (state.derived || state.primary.end() == null) {
                 if (state.secondary.stream().anyMatch(s -> s.start().after(start) || (s.end() != null && s.end().after(start))))
-                    issue(issues, input, "Start", "Der neue primäre Aufenthalt würde einen vorherigen Sekundärkontakt abschneiden");
+                    issue(issues, input, "Start", "The new primary stay would truncate a preceding secondary encounter");
             }
             if (!issues.isEmpty()) return invalidate(state, issues);
             state.secondary.clear();
@@ -143,17 +143,17 @@ public final class ContactInputValidator {
     private static void inside(Input input, Span child, Span parent, List<Issue> issues) {
         if (child.start().before(parent.start()) || (parent.end() != null &&
                 (!child.start().before(parent.end()) || (child.end() != null && child.end().after(parent.end())))))
-            issue(issues, input, "Start/Ende", "Kontaktzeitraum liegt außerhalb des übergeordneten Aufenthalts");
+            issue(issues, input, "Start/Ende", "The encounter period falls outside its parent stay");
     }
     private static Date date(Input input, String field, boolean required, List<Issue> issues) {
         String value = input.get(field);
         try {
             var date = ClinicalValues.date(value);
             if ((required && date == null) || (date != null && !date.hasValue()))
-                throw new IllegalArgumentException("Konkreter Kontaktzeitpunkt erforderlich");
+                throw new IllegalArgumentException("An explicit encounter timestamp is required");
             return date == null ? null : date.getValue();
         } catch (Exception e) {
-            issue(issues, input, field, "Nicht verarbeitbarer Zeitpunkt: " + Objects.toString(value, "leer"));
+            issue(issues, input, field, "Invalid timestamp: " + Objects.toString(value, "empty"));
             return null;
         }
     }
@@ -165,7 +165,7 @@ public final class ContactInputValidator {
         state.invalid = true;
         Issue first = issues.get(0);
         issues.set(0, new Issue(first.row(), first.field(), first.message()
-                + ". Abhängige Kontaktzuordnungen dieses Falls werden bis zur Korrektur nicht weiter geprüft; einzelne Eingabefelder weiterhin."));
+                + ". Dependent encounter assignments for this case require correction before further checks; individual input fields are still checked."));
         return issues;
     }
 }

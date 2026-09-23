@@ -32,36 +32,36 @@ public final class MedicationValues {
         Function<String, String> get = key -> value(input, key);
         String type = get.apply("Medikationstyp");
         if (!STATUSES.containsKey(type == null ? "" : type)) {
-            errors.add("Medikationstyp: Verordnung, Verabreichung oder Medikationsaussage erforderlich");
+            errors.add("Medikationstyp must be Verordnung, Verabreichung or Medikationsaussage");
         } else {
             String status = get.apply("Status");
-            if (status != null && !STATUSES.get(type).contains(status)) errors.add("Status passt nicht zu " + type);
+            if (status != null && !STATUSES.get(type).contains(status)) errors.add("Status is not valid for " + type);
         }
         String intent = get.apply("Absicht");
-        if (!REQUEST.equals(type) && intent != null) errors.add("Absicht ist nur bei Verordnung zulässig");
+        if (!REQUEST.equals(type) && intent != null) errors.add("Absicht applies only to Verordnung");
         if (intent != null) {
             try { MedicationRequestIntent.fromCode(intent); }
-            catch (RuntimeException e) { errors.add("Unbekannte Verordnungsabsicht: " + intent); }
+            catch (RuntimeException e) { errors.add("Unknown medication request intent: " + intent); }
         }
         if (REQUEST.equals(type) && (get.apply("Beginn") != null || get.apply("Ende") != null)) {
-            errors.add("Verordnung: Beginn/Ende leer lassen; Dokumentationszeitpunkt bezeichnet die Erstellung");
+            errors.add("Verordnung: leave Beginn/Ende empty; Dokumentationszeitpunkt specifies the creation time");
         }
         if (ADMINISTRATION.equals(type) && get.apply("Dokumentationszeitpunkt") != null) {
-            errors.add("Verabreichung: Gabezeitpunkt unter Beginn eintragen, Dokumentationszeitpunkt leer lassen");
+            errors.add("Verabreichung: specify the administration time in Beginn and leave Dokumentationszeitpunkt empty");
         }
         if ((ADMINISTRATION.equals(type) || STATEMENT.equals(type)) && get.apply("Beginn") == null) {
-            errors.add("Beginn erforderlich; bei unbekanntem Zeitpunkt ausdrücklich Unbekannt auswählen");
+            errors.add("Beginn is required; select Unbekannt for an unknown timestamp");
         }
         for (String key : List.of("Dokumentationszeitpunkt", "Beginn", "Ende")) {
             try { ClinicalValues.date(get.apply(key)); }
-            catch (Exception e) { errors.add(key + ": ungültiges Datum oder Data Absent Reason"); }
+            catch (Exception e) { errors.add(key + ": invalid date or Data Absent Reason"); }
         }
         try {
             var start = ClinicalValues.date(get.apply("Beginn"));
             var end = ClinicalValues.date(get.apply("Ende"));
             if (start != null && end != null && start.hasValue() && end.hasValue()
                     && start.getPrecision() == end.getPrecision() && start.getValue().after(end.getValue())) {
-                errors.add("Ende liegt vor Beginn");
+                errors.add("End precedes start");
             }
         } catch (Exception e) { /* Individual date errors are reported above. */ }
         checkCode(get, "Präparatcode", "Präparatcodesystem", PRODUCT_SYSTEMS, errors);
@@ -72,24 +72,24 @@ public final class MedicationValues {
             for (String ingredient : ingredients.split(";", -1)) {
                 String code = ingredient.trim();
                 if (code.isEmpty() || DiagnosisValues.isAbsent(code) || !seen.add(code)) {
-                    errors.add("Wirkstoffcode: nichtleere, unterschiedliche Codes mit Semikolon trennen");
+                    errors.add("Wirkstoffcode: separate distinct, nonempty codes with semicolons");
                 } else if ("UNII".equals(get.apply("Wirkstoffcodesystem")) && !code.matches("[A-Z0-9]{10}")) {
-                    errors.add("UNII muss aus zehn Großbuchstaben oder Ziffern bestehen");
+                    errors.add("UNII must contain ten uppercase letters or digits");
                 }
             }
         }
-        if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode erforderlich; unbekannt: Unbekannt mit Codesystem");
+        if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode is required; for an unknown code, select Unbekannt and specify the code system");
         if (get.apply("Präparatcode") == null && get.apply("ATC-Code") == null && get.apply("Präparatbezeichnung") == null) {
-            errors.add("Präparatcode, ATC-Code oder Präparatbezeichnung erforderlich");
+            errors.add("At least one of Präparatcode, ATC-Code or Präparatbezeichnung is required");
         }
         String atc = get.apply("ATC-Code"), version = get.apply("ATC-Version");
-        if ((atc == null) != (version == null)) errors.add("ATC-Code und ATC-Version gemeinsam ausfüllen");
+        if ((atc == null) != (version == null)) errors.add("Specify both ATC-Code and ATC-Version");
         try { DiagnosisValues.absentReason(atc); }
-        catch (RuntimeException e) { errors.add("ATC-Code: ungültiger Data Absent Reason"); }
-        if (version != null && !version.matches("[0-9]{4}")) errors.add("ATC-Version als vierstellige Jahresversion angeben");
+        catch (RuntimeException e) { errors.add("ATC-Code: invalid Data Absent Reason"); }
+        if (version != null && !version.matches("[0-9]{4}")) errors.add("Specify ATC-Version as a four-digit year");
         if (ADMINISTRATION.equals(type) && get.apply("Einzeldosis") == null
                 && (get.apply("Dosierungstext") != null || get.apply("Dosen pro Tag") != null)) {
-            errors.add("Verabreichungsdosierung benötigt eine Einzeldosis; unbekannt: Unbekannt (FHIR mad-1)");
+            errors.add("Administration dosage requires Einzeldosis; select Unbekannt for an unknown dose (FHIR mad-1)");
         }
         if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {
@@ -98,8 +98,8 @@ public final class MedicationValues {
             try {
                 if ("Einzeldosis".equals(key) && DiagnosisValues.absentReason(number) != null) continue;
                 BigDecimal n = de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal(number);
-                if (n.signum() < 0 || ("Dosen pro Tag".equals(key) && n.signum() == 0)) errors.add(key + ": ungültige Menge");
-            } catch (Exception e) { errors.add(key + ": Zahl erforderlich"); }
+                if (n.signum() < 0 || ("Dosen pro Tag".equals(key) && n.signum() == 0)) errors.add(key + ": invalid quantity");
+            } catch (Exception e) { errors.add(key + ": a number is required"); }
         }
         return errors;
     }
@@ -109,12 +109,12 @@ public final class MedicationValues {
         String code = get.apply(column), system = get.apply(systemColumn);
         if (code == null && system == null) return;
         if (code == null || system == null || !systems.contains(system)) {
-            errors.add(column + " benötigt einen Code und ein passendes " + systemColumn);
+            errors.add(column + " requires a code and a matching " + systemColumn);
             return;
         }
         try {
             var absent = DiagnosisValues.absentReason(code);
-            if ("PZN".equals(system) && absent == null && !code.matches("[0-9]{8}")) errors.add("PZN muss acht Ziffern enthalten");
-        } catch (RuntimeException e) { errors.add(column + ": ungültiger Data Absent Reason"); }
+            if ("PZN".equals(system) && absent == null && !code.matches("[0-9]{8}")) errors.add("PZN must contain eight digits");
+        } catch (RuntimeException e) { errors.add(column + ": invalid Data Absent Reason"); }
     }
 }

@@ -56,11 +56,11 @@ def resolve_config(path=None, patients=None):
                              str(root / 'scripts/WorkflowOptions.java')],
                             input=json.dumps(request), capture_output=True, text=True)
     if result.returncode:
-        raise RuntimeError('Konvertierungsoptionen konnten nicht geprüft werden. '
-                           'Converter neu bauen. ' + result.stderr.strip())
+        raise RuntimeError('Converter options could not be checked. '
+                           'Rebuild the converter. ' + result.stderr.strip())
     resolved = json.loads(result.stdout)
     if resolved['errors']:
-        raise ValueError('Ungültige Konvertierungsoptionen:\n' + '\n'.join(resolved['errors']))
+        raise ValueError('Invalid converter options:\n' + '\n'.join(resolved['errors']))
     return resolved
 
 
@@ -78,7 +78,7 @@ def selected_configs(files=(), patients=None):
         resolved = resolve_config(path, patients)
         name = resolved.get('name', 'Konvertierungsoptionen')
         if name.lower() in names:
-            raise ValueError('Optionssätze haben denselben Ausgabenamen: ' + name)
+            raise ValueError('Option sets have the same output name: ' + name)
         names.add(name.lower())
         result.append({'name': name, 'path': str(path) if path is not None else None, **resolved})
     return result
