@@ -17,9 +17,11 @@ RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    ca-certificates python3 openjdk-17-jdk-headless libreoffice-calc \
+    ca-certificates tzdata python3 openjdk-17-jdk-headless libreoffice-calc \
     libreoffice-java-common fonts-crosextra-carlito \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/timezone /etc/localtime \
+    && cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
 ENV LANG=C.UTF-8
 WORKDIR /app
 COPY --from=build /build/target/excel2fhir.jar ./target/excel2fhir.jar

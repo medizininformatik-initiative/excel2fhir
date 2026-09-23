@@ -4,8 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -23,7 +24,10 @@ public final class WorkflowRun {
     public WorkflowRun(File outputRoot, File csvRoot, String operation) throws IOException {
         Path root = (outputRoot == null ? Path.of("outputGlobal") : outputRoot.toPath()).toAbsolutePath();
         Files.createDirectories(root);
-        String stamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss'Z'").withZone(ZoneOffset.UTC).format(Instant.now());
+        // Synthea supplies the system offset separately from its clinical time zone.
+        String offset = System.getProperty("excel2fhir.runOffset");
+        ZoneId zone = offset == null ? ZoneId.systemDefault() : ZoneOffset.of(offset);
+        String stamp = DateTimeFormatter.ofPattern("yyyyMMdd_HH-mm-ss").format(ZonedDateTime.now(zone));
         String name = "run-" + stamp + "-" + operation;
         Path candidate = root.resolve(name);
         for (int suffix = 2;; suffix++) {

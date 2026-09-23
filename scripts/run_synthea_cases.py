@@ -18,7 +18,7 @@ from check_synthea_roundtrip import check_configured
 from converter_options import resolve_config, selected_configs
 from synthea_to_excel import prepare, write_workbook
 from workbook_xml import read_sheets
-from workflow_layout import create_run, write_status, add_converter_arguments, converter_settings
+from workflow_layout import create_run, write_status, add_converter_arguments, converter_settings, run_time
 from fhir_output import read_output
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -161,7 +161,8 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             write_json(case / 'Fall.loss.json', report)
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=defaults)
-            command = ['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR),
+            command = ['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin',
+                       '-Dexcel2fhir.runOffset=' + run_time().strftime('%z'), '-jar', str(JAR),
                        '-f', str(book), '-o', str(case), '-r', ','.join(formats or ['JSON', 'NDJSON']),
                        '-p', str(patients_per_bundle), '-vll', validation_log_level, '-l', log_layout]
             if validate:

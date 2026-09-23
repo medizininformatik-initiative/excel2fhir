@@ -9,6 +9,7 @@ services:
     hostname: localhost
     working_dir: /workspace
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - ./:/workspace:ro
       - ./outputGlobal:/workspace/outputGlobal
     # Converter arguments precede --; native Synthea arguments follow it.
