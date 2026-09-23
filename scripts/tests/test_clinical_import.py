@@ -113,6 +113,6 @@ class ClinicalImportTest(unittest.TestCase):
             'code':{'coding':[{'system':'http://loinc.org', 'code':'1234-5'}]}, 'valueBoolean':True})
         rows, report = prepare(source)
         self.assertEqual(rows['Laborbefund'], [])
-        self.assertTrue(any('Ja/Nein' in str(loss) for loss in report['losses']))
+        self.assertTrue(any('boolean results' in str(loss) for loss in report['losses']))
 
 if __name__=='__main__':unittest.main()

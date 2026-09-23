@@ -1,11 +1,13 @@
 """Reproducible synthetic contacts around unchanged Synthea treatment times."""
-from datetime import datetime, timedelta
+from datetime import datetime
 import hashlib
 import json
 from pathlib import Path
 import random
 
-VERSION = 'synthea-movements-v2'
+from synthea_departments import DEPARTMENTS, metadata, select_department
+
+VERSION = 'synthea-movements-v3'
 SEED = 20260912
 MAPPING = Path(__file__).parent / 'mappings/synthea-operative-procedures.json'
 
@@ -29,7 +31,7 @@ def enrich(bundle, facility_rows, encounter_numbers):
         if coding:
             operations.setdefault(refs.get(r.get('encounter',{}).get('reference')), []).append((r,mapping[coding['code']]))
     reverse = {number: source for source,number in encounter_numbers.items()}
-    output, added, skipped, operation_sources = [], [], [], []
+    output, added, skipped, operation_sources, department_decisions = [], [], [], [], []
     for row in facility_rows:
         pid, number = row[:2]
         source_id = reverse[number]; source = encounters[source_id]
@@ -53,8 +55,13 @@ def enrich(bundle, facility_rows, encounter_numbers):
             # preparation/recovery or interrupt the continuing primary stay.
             windows.append([a, procedure['id'], rule['department']])
         windows.sort(key=lambda w:w[0])
-        default_department = windows[0][2] if windows else 'Innere Medizin'
-        normal_kind = 'Normalstationär' if inpatient else ''
+        department_rng = random.Random(int.from_bytes(hashlib.sha256(
+            f'departments|{SEED}|{pid}|{source_id}'.encode()).digest(), 'big'))
+        default_department, decision = select_department(resources, source, refs, windows, department_rng)
+        department_decisions.append(decision)
+        windows = [[a, source_id, decision['operationDepartments'][source_id]]
+                   for a, source_id, department in windows]
+        normal_kind = ('Intensivstationär' if default_department == 'Intensivmedizin' else 'Normalstationär') if inpatient else ''
         timeline=[]
         def gap(a,b):
             if a>=b:return
@@ -63,16 +70,10 @@ def enrich(bundle, facility_rows, encounter_numbers):
             if hours>=12 and rng.random()<.7:
                 for _ in range(rng.randint(1,min(3,max(1,int(hours//24))))):
                     cuts.append(a+(b-a)*rng.uniform(.15,.85))
-            if inpatient and hours>=48 and rng.random()<.12:
-                middle=(a+(b-a)*rng.uniform(.15,.4)).replace(microsecond=0)
-                timeline.append([a,middle,'Intensivstationär','Intensivmedizin',[]])
-                a=middle;cuts=[a]+[c for c in cuts if c>a]
             cuts=sorted(set([a,b]+[c.replace(microsecond=0) for c in cuts if a<c<b]))
             department=default_department
             for left,right in zip(cuts,cuts[1:]):
                 if left>=right:continue
-                if inpatient and not windows and hours>=48 and rng.random()<.25:
-                    department='Geriatrie' if department=='Innere Medizin' else 'Innere Medizin'
                 timeline.append([left,right,normal_kind,department,[]])
         gap(start, end)
         # Primary stays form one timeline. Secondary contacts are inserted after
@@ -81,9 +82,7 @@ def enrich(bundle, facility_rows, encounter_numbers):
         for index,(a,b,kind,department,_) in enumerate(timeline):
             if index and rng.random()<.5: bed=3-bed
             elif index: room+=1
-            prefix={'Innere Medizin':'IN','Geriatrie':'GE','Intensivmedizin':'ITS',
-                    'Allgemeine Chirurgie':'CH','Herzchirurgie':'HC','Urologie':'UR',
-                    'Frauenheilkunde und Geburtshilfe':'FG','Orthopädie':'OR'}.get(department,'ST')
+            prefix=DEPARTMENTS[department]['wardPrefix']
             primary=row[:10]+[kind]
             primary[2:4]=[a.isoformat(),b.isoformat()]
             primary[5:10]=[department,'Station '+prefix+'1',f'Zimmer {room}',f'Bett {bed}','']
@@ -99,7 +98,9 @@ def enrich(bundle, facility_rows, encounter_numbers):
         if not timeline:skipped.append({'sourceEncounter':source_id,'reason':'No eligible timeline'})
     return output, {'version':VERSION,'seed':SEED,'operativeMappingSha256':hashlib.sha256(mapping_bytes).hexdigest(),
                     'contacts':added,'skipped':skipped,'operationSources':operation_sources,
-                    'assumptions':['Synthetic movement probabilities, not calibrated hospital statistics',
+                    'departmentRules':metadata(),'departmentDecisions':department_decisions,
+                    'assumptions':['Synthetic room and bed movements within a stable department',
+                                   'Approximate department routing from specialty, procedures and time-compatible diagnoses',
                                    'Source procedure times and encounter classes remain unchanged',
                                    'OP contacts overlap primary stays; missing OP-contact end derives from primary stay end',
                                    'No clinical timestamp compatibility or cross-patient bed occupancy simulation']}

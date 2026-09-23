@@ -12,7 +12,8 @@ WORKDIR /build
 COPY pom.xml ./
 COPY src ./src
 COPY FHIR_Testdatengenerator_Vorlage.xlsx FHIR_Testdatengenerator_Interpolar_Demo.xlsx ./
-RUN mvn -B test package
+RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
+    mvn -B test package
 
 FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \

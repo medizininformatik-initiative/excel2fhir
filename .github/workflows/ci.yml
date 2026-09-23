@@ -14,6 +14,9 @@ on:
     - release
     - develop
 
+env:
+  TRIVY_VERSION: v0.74.0
+
 jobs:
 
   test:
@@ -64,8 +67,9 @@ jobs:
         push: false
 
     - name: Run Trivy Vulnerability Scanner and Save to Sarif File
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: security-scan-build:latest
         format: sarif
         output: trivy-results.sarif
@@ -78,8 +82,9 @@ jobs:
         sarif_file: trivy-results.sarif
 
     - name: Run Trivy Vulnerability Scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: security-scan-build:latest
         exit-code: 1
         ignore-unfixed: true
@@ -98,24 +103,30 @@ jobs:
       run: |
         mkdir -p "$RUNNER_TEMP/synthea-results"
         set +e
-        docker run --rm \
+        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
           -v "$PWD/scripts/tests/fixtures/synthea:/input:ro" \
           -v "$RUNNER_TEMP/synthea-results:/output" \
-          excel2fhir-synthea:ci /input /output/cases
+          excel2fhir-synthea:ci -v -i /input -o /output
         result=$?
         set -e
-        python3 - "$RUNNER_TEMP/synthea-results/cases/summary.json" "$result" <<'PYTHON'
-        import json, sys
-        report = json.load(open(sys.argv[1]))
+        python3 - "$RUNNER_TEMP/synthea-results" "$result" <<'PYTHON'
+        import json, pathlib, sys
+        directory = next(pathlib.Path(sys.argv[1]).glob("run-*"))
+        report = json.loads((directory / "details/reports/summary.json").read_text())
         assert not report['failures'], report
         assert len(report['results']) == 2, report
         assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
         assert int(sys.argv[2]) == (0 if report['status'] == 'COMPLETE' else 1), report
         assert all(r['importStatus'] == 'COMPLETE' for r in report['results']), report
+        bundles = [json.loads(p.read_text()) for p in sorted((directory / 'fhir').rglob('*.json'))]
+        lines = [json.loads(line) for p in sorted((directory / 'fhir').rglob('*.ndjson')) for line in p.read_text().splitlines()]
+        assert bundles == lines, 'JSON and NDJSON differ'
+        assert not list((directory / 'details').glob('cases/*/run-*/fhir/**/*.json')), 'Duplicate final bundles'
         PYTHON
     - name: Scan Synthea importer image
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: excel2fhir-synthea:ci
         exit-code: 1
         ignore-unfixed: true
@@ -134,18 +145,25 @@ jobs:
         set -e
         python3 - "$result" <<'PYTHON'
         import json, pathlib, sys
-        runs = list(pathlib.Path('outputSynthea').glob('run-*'))
+        runs = list(pathlib.Path('outputGlobal').glob('run-*'))
         assert len(runs) == 1, runs
-        report = json.loads((runs[0] / 'workflow.json').read_text())
-        summary = json.loads((runs[0] / 'cases/summary.json').read_text())
-        assert report['status'] in ('COMPLETE', 'NOT_CHECKED'), report
-        assert int(sys.argv[1]) == (0 if report['status'] == 'COMPLETE' else 1), report
+        report = json.loads((runs[0] / 'details/reports/workflow.json').read_text())
+        summary = json.loads((runs[0] / 'details/reports/summary.json').read_text())
+        assert report['status'] == 'NOT_VALIDATED', report
+        assert report['validationEnabled'] is False, report
+        assert int(sys.argv[1]) == 0, report
+        assert all(r['validationStatus'] == 'NOT_VALIDATED' for r in summary['results']), summary
+        assert not list(runs[0].rglob('*.validation.json')), 'Unexpected validation reports'
         assert summary['results'] and not summary['failures'], summary
-        assert len(list((runs[0] / 'fhir').glob('*.json'))) == len(summary['results'])
+        bundles = [json.loads(p.read_text()) for p in sorted((runs[0] / 'fhir').rglob('*.json'))]
+        lines = [json.loads(line) for p in sorted((runs[0] / 'fhir').rglob('*.ndjson')) for line in p.read_text().splitlines()]
+        assert len(bundles) == len(summary['results'])
+        assert bundles == lines, 'JSON and NDJSON differ'
         PYTHON
     - name: Scan complete workflow image
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: excel2fhir-ci-synthea:latest
         exit-code: 1
         ignore-unfixed: true
@@ -159,7 +177,7 @@ jobs:
         name: synthea-workflow-results
         path: |
           ${{ runner.temp }}/synthea-results
-          outputSynthea/
+          outputGlobal/
 
   build-excel2fhir:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}

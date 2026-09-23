@@ -1,0 +1,453 @@
+{
+  "version": "synthea-departments-v1",
+  "description": "Approximate routing for synthetic cases; age limits and weights are generation heuristics.",
+  "departments": {
+    "Innere Medizin": {
+      "wardPrefix": "IN",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Pädiatrie": {
+      "wardPrefix": "KI",
+      "minAge": 0,
+      "maxAge": 17
+    },
+    "Geriatrie": {
+      "wardPrefix": "GE",
+      "minAge": 70
+    },
+    "Allgemeine Chirurgie": {
+      "wardPrefix": "CH",
+      "minAge": 18,
+      "pediatricDepartment": "Kinderchirurgie"
+    },
+    "Kinderchirurgie": {
+      "wardPrefix": "KC",
+      "minAge": 0,
+      "maxAge": 17
+    },
+    "Unfallchirurgie": {
+      "wardPrefix": "UC",
+      "minAge": 18,
+      "pediatricDepartment": "Kinderchirurgie"
+    },
+    "Orthopädie": {
+      "wardPrefix": "OR",
+      "minAge": 18,
+      "pediatricDepartment": "Kinderchirurgie"
+    },
+    "Herzchirurgie": {
+      "wardPrefix": "HC",
+      "minAge": 18,
+      "pediatricDepartment": "Kinderchirurgie"
+    },
+    "Kardiologie": {
+      "wardPrefix": "KA",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Neurologie": {
+      "wardPrefix": "NE",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Neurochirurgie": {
+      "wardPrefix": "NC"
+    },
+    "Pneumologie": {
+      "wardPrefix": "PN",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Gastroenterologie": {
+      "wardPrefix": "GA",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Nephrologie": {
+      "wardPrefix": "NP",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Endokrinologie": {
+      "wardPrefix": "EN",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Hämatologie und Onkologie": {
+      "wardPrefix": "ON",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Psychiatrie": {
+      "wardPrefix": "PS",
+      "minAge": 18,
+      "pediatricDepartment": "Kinder- und Jugendpsychiatrie"
+    },
+    "Kinder- und Jugendpsychiatrie": {
+      "wardPrefix": "KP",
+      "minAge": 0,
+      "maxAge": 17
+    },
+    "Urologie": {
+      "wardPrefix": "UR"
+    },
+    "Frauenheilkunde und Geburtshilfe": {
+      "wardPrefix": "FG",
+      "requiresFemaleOrRelevantDiagnosis": true
+    },
+    "Hals-, Nasen-, Ohrenheilkunde": {
+      "wardPrefix": "HN"
+    },
+    "Augenheilkunde": {
+      "wardPrefix": "AU"
+    },
+    "Dermatologie": {
+      "wardPrefix": "DE"
+    },
+    "Rheumatologie": {
+      "wardPrefix": "RH",
+      "minAge": 18,
+      "pediatricDepartment": "Pädiatrie"
+    },
+    "Intensivmedizin": {
+      "wardPrefix": "ITS"
+    }
+  },
+  "specialties": [
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207R00000X",
+      "department": "Innere Medizin"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "208000000X",
+      "department": "Pädiatrie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RG0300X",
+      "department": "Geriatrie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "208600000X",
+      "department": "Allgemeine Chirurgie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207X00000X",
+      "department": "Orthopädie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RC0000X",
+      "department": "Kardiologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "2084N0400X",
+      "department": "Neurologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207T00000X",
+      "department": "Neurochirurgie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RP1001X",
+      "department": "Pneumologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RG0100X",
+      "department": "Gastroenterologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RN0300X",
+      "department": "Nephrologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RE0101X",
+      "department": "Endokrinologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RH0003X",
+      "department": "Hämatologie und Onkologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "2084P0800X",
+      "department": "Psychiatrie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "208800000X",
+      "department": "Urologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207V00000X",
+      "department": "Frauenheilkunde und Geburtshilfe"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207Y00000X",
+      "department": "Hals-, Nasen-, Ohrenheilkunde"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207W00000X",
+      "department": "Augenheilkunde"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207N00000X",
+      "department": "Dermatologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RR0500X",
+      "department": "Rheumatologie"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RI0200X",
+      "department": "Innere Medizin"
+    },
+    {
+      "system": "http://nucc.org/provider-taxonomy",
+      "code": "207RC0200X",
+      "department": "Intensivmedizin"
+    }
+  ],
+  "diagnosisGroups": [
+    {
+      "from": "A00",
+      "through": "B99",
+      "departments": [
+        "Innere Medizin"
+      ]
+    },
+    {
+      "from": "C00",
+      "through": "D48",
+      "departments": [
+        "Hämatologie und Onkologie"
+      ]
+    },
+    {
+      "from": "D50",
+      "through": "D89",
+      "departments": [
+        "Hämatologie und Onkologie"
+      ]
+    },
+    {
+      "from": "E00",
+      "through": "E90",
+      "departments": [
+        "Endokrinologie"
+      ]
+    },
+    {
+      "from": "F00",
+      "through": "F99",
+      "departments": [
+        "Psychiatrie"
+      ]
+    },
+    {
+      "from": "G00",
+      "through": "G99",
+      "departments": [
+        "Neurologie"
+      ]
+    },
+    {
+      "from": "H00",
+      "through": "H59",
+      "departments": [
+        "Augenheilkunde"
+      ]
+    },
+    {
+      "from": "H60",
+      "through": "H95",
+      "departments": [
+        "Hals-, Nasen-, Ohrenheilkunde"
+      ]
+    },
+    {
+      "from": "I00",
+      "through": "I52",
+      "departments": [
+        "Kardiologie"
+      ]
+    },
+    {
+      "from": "I60",
+      "through": "I69",
+      "departments": [
+        "Neurologie"
+      ]
+    },
+    {
+      "from": "J00",
+      "through": "J06",
+      "departments": [
+        "Hals-, Nasen-, Ohrenheilkunde"
+      ]
+    },
+    {
+      "from": "J09",
+      "through": "J99",
+      "departments": [
+        "Pneumologie"
+      ]
+    },
+    {
+      "from": "K20",
+      "through": "K31",
+      "departments": [
+        "Gastroenterologie"
+      ]
+    },
+    {
+      "from": "K35",
+      "through": "K38",
+      "departments": [
+        "Allgemeine Chirurgie"
+      ]
+    },
+    {
+      "from": "K40",
+      "through": "K46",
+      "departments": [
+        "Allgemeine Chirurgie"
+      ]
+    },
+    {
+      "from": "K50",
+      "through": "K52",
+      "departments": [
+        "Gastroenterologie"
+      ]
+    },
+    {
+      "from": "K55",
+      "through": "K64",
+      "departments": [
+        "Gastroenterologie",
+        "Allgemeine Chirurgie"
+      ]
+    },
+    {
+      "from": "K65",
+      "through": "K67",
+      "departments": [
+        "Allgemeine Chirurgie"
+      ]
+    },
+    {
+      "from": "K70",
+      "through": "K77",
+      "departments": [
+        "Gastroenterologie"
+      ]
+    },
+    {
+      "from": "K80",
+      "through": "K87",
+      "departments": [
+        "Gastroenterologie",
+        "Allgemeine Chirurgie"
+      ]
+    },
+    {
+      "from": "K90",
+      "through": "K93",
+      "departments": [
+        "Gastroenterologie"
+      ]
+    },
+    {
+      "from": "L00",
+      "through": "L99",
+      "departments": [
+        "Dermatologie"
+      ]
+    },
+    {
+      "from": "M00",
+      "through": "M35",
+      "departments": [
+        "Rheumatologie",
+        "Orthopädie"
+      ]
+    },
+    {
+      "from": "M40",
+      "through": "M99",
+      "departments": [
+        "Orthopädie"
+      ]
+    },
+    {
+      "from": "N00",
+      "through": "N19",
+      "departments": [
+        "Nephrologie"
+      ]
+    },
+    {
+      "from": "N20",
+      "through": "N51",
+      "departments": [
+        "Urologie"
+      ]
+    },
+    {
+      "from": "N60",
+      "through": "N99",
+      "departments": [
+        "Frauenheilkunde und Geburtshilfe"
+      ]
+    },
+    {
+      "from": "O00",
+      "through": "O99",
+      "departments": [
+        "Frauenheilkunde und Geburtshilfe"
+      ]
+    },
+    {
+      "from": "P00",
+      "through": "P96",
+      "departments": [
+        "Pädiatrie"
+      ]
+    },
+    {
+      "from": "S00",
+      "through": "T14",
+      "departments": [
+        "Unfallchirurgie",
+        "Orthopädie"
+      ]
+    },
+    {
+      "from": "T20",
+      "through": "T32",
+      "departments": [
+        "Allgemeine Chirurgie"
+      ]
+    }
+  ],
+  "specialtyCodeSource": "https://terminology.hl7.org/ValueSet-v3-NUCCProviderCodes.html"
+}

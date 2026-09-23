@@ -41,10 +41,10 @@ class UnsupportedValue(ValueError):
 def coding(cc):
     codes = cc.get('coding', [])
     if not codes or codes[0].get('system') not in SYSTEMS or codes[0].get('version'):
-        raise UnsupportedValue('Nicht unterstützte Coding-Struktur oder explizite Version')
+        raise UnsupportedValue('Unsupported coding structure or explicit version')
     c = codes[0]
     if not c.get('code'):
-        raise UnsupportedValue('Code fehlt')
+        raise UnsupportedValue('Code is missing')
     return str(c['code']), SYSTEMS[c['system']], cc.get('text') or c.get('display', '')
 
 
@@ -55,21 +55,21 @@ def observation_value(r):
     if r.get('dataAbsentReason'):
         codes = r['dataAbsentReason'].get('coding', [])
         if not codes or codes[0].get('system') != 'http://terminology.hl7.org/CodeSystem/data-absent-reason':
-            raise UnsupportedValue('Unbekannter Data Absent Reason')
+            raise UnsupportedValue('Unknown Data Absent Reason')
         return ['!dar:' + codes[0]['code'], '', 'Fehlend', '', '', '']
     if not values:
         return ['', '', 'Komponenten', '', '', '']
     key = values[0]; v = r[key]
     if key == 'valueQuantity':
         if v.get('system') not in (None, 'http://unitsofmeasure.org') or 'value' not in v or v.get('comparator'):
-            raise UnsupportedValue('Quantity ohne Zahl, mit Comparator oder mit anderem Einheitensystem')
+            raise UnsupportedValue('Quantity requires a number, no comparator and a supported unit system')
         return [str(v['value']), v.get('unit', ''), 'Zahl', '', '', v.get('code', '')]
     if key == 'valueString': return [v, '', 'Text', '', '', '']
     if key == 'valueBoolean': return [str(v).lower(), '', 'Ja/Nein', '', '', '']
     if key == 'valueCodeableConcept':
         code, system, text = coding(v)
         return [text, '', 'Code', code, system, '']
-    raise UnsupportedValue('Werttyp noch nicht unterstützt: ' + key)
+    raise UnsupportedValue('Unsupported value type: ' + key)
 
 
 def prepare_clinical(entries, pid, encounter_numbers):
@@ -114,7 +114,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 category = ''
                 if r.get('category'):
                     category, category_system, _ = coding(r['category'])
-                    if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Prozedurkategorie ist nicht SNOMED')
+                    if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Procedure category must use SNOMED')
                 decision = procedures[r['id']]
                 if decision['status'] == 'excluded':
                     mappings.append({'sourceId': r['id'], **decision})
@@ -139,7 +139,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 code, system, label = coding(r['code'])
                 categories = [c['code'] for cc in r.get('category', []) for c in cc.get('coding', [])
                               if c.get('system') == 'http://terminology.hl7.org/CodeSystem/observation-category']
-                if len(categories) != 1: raise UnsupportedValue('Genau eine Messwertkategorie erforderlich')
+                if len(categories) != 1: raise UnsupportedValue('Exactly one observation category is required')
                 category = categories[0]
                 sheet = 'Laborbefund' if category == 'laboratory' else 'Klinische Dokumentation'
                 data = []
@@ -148,7 +148,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     c, sy, text = coding(item['code'])
                     value, unit, kind, vc, vs, ucum = observation_value(item)
                     if sheet == 'Laborbefund' and kind == 'Ja/Nein':
-                        raise UnsupportedValue('Ja/Nein ist im KDS-Laborprofil nicht zulässig; codierte Antwort erforderlich')
+                        raise UnsupportedValue('The KDS laboratory profile requires a coded answer for boolean results; a coded answer is required')
                     extra_code, extra_system = '', ''
                     codings = item['code'].get('coding', [])
                     if len(codings) > 1:
@@ -172,7 +172,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                 cc = r.get('medicationCodeableConcept')
                 if cc is None:
                     medication = ref(r, 'medicationReference', 'Medication')
-                    if medication is None: raise UnsupportedValue('Medikation fehlt')
+                    if medication is None: raise UnsupportedValue('Medication is missing')
                     cc = medication['code']
                 code, system, label = coding(cc)
                 dosage = r.get('dosage', {}) if typ == 'MedicationAdministration' else (r.get('dosageInstruction') or [{}])[0]
@@ -207,7 +207,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     ingredients = decision['ingredients']
                     systems = {i['system'] for i in ingredients}
                     if len(systems) != 1:
-                        raise ValueError('Wirkstoffliste benötigt ein gemeinsames Codesystem')
+                        raise ValueError('Ingredient list requires a shared code system')
                     row[9] = '; '.join(i['code'] for i in ingredients)
                     row[10] = INGREDIENT_SYSTEMS[ingredients[0]['system']]
                 if decision.get('enrichment'):

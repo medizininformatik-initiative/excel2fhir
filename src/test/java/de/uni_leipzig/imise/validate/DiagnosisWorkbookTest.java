@@ -46,11 +46,11 @@ public class DiagnosisWorkbookTest {
                     var sheet = book.getSheet("Konvertierungsoptionen");
                     for (var row : sheet) {
                         var cell = row.getCell(0);
-                        if (cell != null && cell.toString().startsWith("VALIDATE_STRICT")) cell.setCellValue("# Default");
+                        if (cell != null && cell.toString().startsWith("CHECK_INPUT_CONSISTENCY")) cell.setCellValue("# Default");
                     }
                     sheet.createRow(150).createCell(mode.equals("columnB") ? 1 : 0)
-                            .setCellValue("VALIDATE_STRICT=" + (mode.equals("invalid") ? "treu" : "false"));
-                    if (mode.equals("duplicate")) sheet.createRow(151).createCell(0).setCellValue("VALIDATE_STRICT=true");
+                            .setCellValue("CHECK_INPUT_CONSISTENCY=" + (mode.equals("invalid") ? "treu" : "false"));
+                    if (mode.equals("duplicate")) sheet.createRow(151).createCell(0).setCellValue("CHECK_INPUT_CONSISTENCY=true");
                     if (mode.equals("invalid")) sheet.createRow(151).createCell(0).setCellValue("START_ID_CONDITION=abc");
                     try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
                 }
@@ -61,7 +61,7 @@ public class DiagnosisWorkbookTest {
                 if (mode.equals("invalid")) assertEquals(2, result.getIssues().stream()
                         .filter(i -> i.getSheetName().equals("Konvertierungsoptionen")).count());
                 if (mode.equals("duplicate")) assertTrue(result.getIssues().stream()
-                        .anyMatch(i -> i.getMessage().contains("widersprüchliche")));
+                        .anyMatch(i -> i.getMessage().contains("conflicting duplicate values")));
             } finally { java.nio.file.Files.deleteIfExists(file); }
         }
     }
@@ -73,17 +73,17 @@ public class DiagnosisWorkbookTest {
         var csv = directory.resolve("csv"); java.nio.file.Files.createDirectory(csv);
         try (var book = new XSSFWorkbook()) {
             var sheet = book.createSheet("Konvertierungsoptionen");
-            String[] lines = {"# first, comment", "# second, comment", "PID_PREFIX=demo-", "PID_SUFFIX=", "VALIDATE_STRICT=false"};
+            String[] lines = {"# first, comment", "# second, comment", "PID_PREFIX=demo-", "PID_SUFFIX=", "CHECK_INPUT_CONSISTENCY=false"};
             for (int i = 0; i < lines.length; i++) sheet.createRow(i).createCell(0).setCellValue(lines[i]);
             sheet.getRow(0).createCell(1).setCellValue("Ignored column");
-            sheet.getRow(1).createCell(1).setCellValue("VALIDATE_STRICT=true");
+            sheet.getRow(1).createCell(1).setCellValue("CHECK_INPUT_CONSISTENCY=true");
             try (var output = java.nio.file.Files.newOutputStream(source)) { book.write(output); }
         }
         de.uni_leipzig.imise.utils.Excel2Csv.splitExcel(source.toFile(), null, csv.toFile());
         var config = csv.resolve("input_Konvertierungsoptionen.csv");
         var options = new de.uni_leipzig.life.csv2fhir.ConverterOptions(config.toString());
         assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
-        assertFalse(options.is(de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.VALIDATE_STRICT));
+        assertFalse(options.is(de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY));
         assertEquals("demo-p1", options.getFullPID("p1"));
         try (var files = java.nio.file.Files.walk(directory)) {
             for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) java.nio.file.Files.delete(path);

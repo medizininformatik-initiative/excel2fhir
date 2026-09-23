@@ -2,6 +2,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import com.google.gson.*;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
 
 /** Use the converter's own parser and ID rules in the Python workflow. */
 public class WorkflowOptions {
@@ -26,7 +27,7 @@ public class WorkflowOptions {
                     for (int iteration = 0; iteration <= count; iteration++) {
                         try {
                             String id = options.getFullPID(source.getAsString(), iteration);
-                            if (!ids.add(id)) errors.add("Doppelte erzeugte Patient-ID: " + id);
+                            if (!ids.add(id)) errors.add("Duplicate generated patient ID: " + id);
                             copies.add(id);
                         } catch (IllegalArgumentException | ArithmeticException e) {
                             errors.add(source.getAsString() + ": " + e.getMessage());
@@ -35,9 +36,11 @@ public class WorkflowOptions {
                     patients.put(source.getAsString(), copies);
                 }
             } catch (ArithmeticException e) {
-                errors.add("Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich");
+                errors.add("Patient count including repetitions exceeds the supported numeric range");
             }
         }
-        System.out.println(new Gson().toJson(Map.of("values", values, "patients", patients, "errors", errors)));
+        String name = input.has("name") ? new ConverterOptionSet(input.get("name").getAsString(), "").directoryName()
+                : "Konvertierungsoptionen";
+        System.out.println(new Gson().toJson(Map.of("values", values, "patients", patients, "errors", errors, "name", name)));
     }
 }

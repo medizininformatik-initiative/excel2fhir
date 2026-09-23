@@ -1,137 +1,103 @@
-# Synthea starten und KDS-FHIR erzeugen
+# Fill Excel with Synthea
 
-Voraussetzung: Docker mit Compose und ausreichend Arbeitsspeicher (für den
-Einstieg mindestens 8 GB für Docker; große Lebensverläufe benötigen mehr).
-Java, Python und LibreOffice müssen nicht
-separat installiert werden. Der erste Build benötigt Internet; der fertige
-Komplettlauf läuft ohne Netzwerkzugriff und ohne Pharmindex oder externe Kataloge.
+Synthea generates patient histories. The importer fills the Excel template and
+runs the shared Excel-to-FHIR converter. The resulting workbooks can be edited
+and converted again with the desired KDS variants.
 
-## Starten
-
-Im frisch ausgecheckten Projektverzeichnis:
+## Run with Docker
 
 ```sh
 docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
-Der erste Start baut die Werkzeuge einschließlich der festgelegten Synthea-Version.
-Weitere Starts verwenden den Build-Cache; Änderungen am Projekt werden mitgebaut. Standardmäßig erzeugt Synthea
-einen erwachsenen Patienten; zusätzlich können verstorbene Patienten entstehen.
-Die vollständige Historie wird über unsere Excel-Vorlage nach FHIR konvertiert.
+With this command, the supplied Compose settings request one living patient aged
+30–80 in Massachusetts, with their full simulated history through 12 September
+2026. Patient and clinician seeds are both `20260912`. Synthea may also export
+patients who died during generation. Histories can include encounters, diagnoses,
+medications, procedures, observations and immunizations; the simulated life
+course determines which occur.
 
-## Ergebnisse finden
+## Configure Synthea generation
 
-Jeder Start legt einen neuen Ordner unter `outputSynthea/run-…/` an:
+Place Synthea arguments after `--`:
 
-- **`fhir/`**: FHIR-Bundles der vollständig importierten und abgeglichenen Patienten.
-- **`cases/<Patient-ID>/Fall.xlsx`**: befüllte Excel-Datei zum Ansehen oder Bearbeiten.
-- **`cases/<Patient-ID>/fhir/`**: FHIR-, Import- und Validierungsberichte des Patienten.
-- **`cases/summary.json`**: Übersicht, einschließlich fehlgeschlagener Patienten.
-- **`converter-options.config`**: unveränderte Kopie der für diesen Lauf verwendeten Optionen.
-- **`synthea/` und `synthea.log`**: unveränderte Synthea-Ausgabe und Generatorprotokoll.
+| Argument | Controls |
+| --- | --- |
+| `-p COUNT` | Requested population size. |
+| `-a MIN-MAX` | Patient age range. |
+| `-g F` or `-g M` | Patient sex. |
+| `-s SEED` | Random seed for patient generation. |
+| `STATE [CITY]` | US location used for the population. |
+| `--exporter.years_of_history=YEARS` | Exported history length; `0` includes the full history. |
 
-Vorherige Läufe und manuell bearbeitete Excel-Dateien werden nicht überschrieben.
-Die Konsolenausgabe nennt Containerpfade unter `/output`; auf Ihrem Rechner
-entspricht das `outputSynthea`. Es wird nichts auf einen FHIR-Server hochgeladen.
+A seed is the starting value for Synthea's random choices. The same patient seed
+(`-s`), clinician seed (`-cs`), Synthea version, settings and simulation dates
+reproduce the same patients and histories. When a seed is omitted, Synthea uses
+the current system time, so runs normally produce different patients. The Compose
+defaults above supply fixed seeds for a repeatable example.
 
-`NOT_CHECKED` bedeutet: Import und Rückvergleich haben funktioniert, aber Teile
-der FHIR-Prüfung waren wegen fehlender Terminologien nicht ausführbar. Die Dateien
-sind vorhanden; Exitcode 1 signalisiert diese Einschränkung. Das ist keine
-Bestätigung vollständiger KDS-Konformität. Bei `FAILED` ist der Lauf unvollständig;
-der zentrale FHIR-Ordner enthält dann nur die erfolgreich abgeglichenen Patienten.
-
-## Konvertierungsoptionen einstellen
-
-**`outputSynthea/converter-options.config`** liegt bereits nach dem Checkout mit
-kommentierten Workflow-Defaults bereit. Bei Bedarf vor dem ersten Start die
-gewünschten Werte in dieser Textdatei bearbeiten und den normalen Startbefehl
-ausführen. Der Workflow liest die Datei automatisch. Eine vorhandene Datei wird
-nicht überschrieben; fehlt sie, wird sie beim Start automatisch erzeugt.
-Für fehlende oder auskommentierte Angaben gelten die Workflow-Defaults.
-
-Beispiel für eine eigene Patienten-ID-Kennung:
-
-```properties
-PID_PREFIX = demo-
-```
-
-Der Workflow prüft die Optionen vor dem Synthea-Start. Jeder Lauf speichert eine
-Kopie seiner Optionsdatei; die tatsächlich wirksamen Werte stehen zusätzlich im
-Blatt **Konvertierungsoptionen** jeder erzeugten Excel-Datei. Dort lassen sie sich
-für eine spätere manuelle Konvertierung ändern. Eine nachträgliche Änderung der
-zentralen Textdatei verändert keine bereits erzeugten Dateien.
-
-Bei der Konvertierung vorhandener Synthea-Bundles mit `run_synthea_cases.py` gilt
-dieselbe Konvention direkt im angegebenen Ausgabeordner. Dieser darf vorher nur
-`converter-options.config` enthalten; fehlt sie, wird sie dort angelegt.
-
-## Synthea einstellen
-
-In `compose.synthea.yml` stehen die normalen Synthea-Argumente in `command`:
-`-p` ist die Patientenzahl, `-a` der Altersbereich, `-s` und `-cs` sind die Seeds,
-`-r` und `-e` die Simulationsdaten im Format `JJJJMMTT`.
-Der Workflow startet mit den voreingestellten Werten. Für wiederholbare Vergleiche Seeds
-und Daten beibehalten. Die Exportform setzt der Workflow passend zum Converter. Ohne ausdrückliche
-Angabe wird die vollständige Historie exportiert; mit dem normalen Synthea-Argument
-`--exporter.years_of_history=7` lässt sich der Rückblick begrenzen. Ältere, weiterhin
-relevante Diagnosen und Medikationen können samt Bezugskontakten erhalten bleiben.
-
-Für einen Bestand mit vielen stationären Fällen und ambulanten Kontakten siehe
-das [ausführbare Krankenhausbeispiel 2020–2026](../examples/synthea-hospital/README.md).
-
-Die Mappings passen zum mitgelieferten Synthea-Stand. Ein Austausch gegen eine
-andere Version oder zusätzliche Module braucht einen erneuten Mappingreview.
-
-## Excel bearbeiten
-
-Eine erzeugte `Fall.xlsx` öffnen, prüfen und bei Bedarf ändern. Die Hinweise
-stehen rechts auf den Eingabeblättern; Auswahlen unterscheiden fehlende Werte
-durch den Zusatz **(Data Absent Reason)** von echten Angaben. Eine leere optionale
-Spalte ist nicht automatisch ein Fehler: Ein OP-Kontakt kann etwa ohne eigenes
-Ende eingetragen werden, eine Prozedur kann SNOMED statt OPS verwenden.
-
-Für die erneute Konvertierung eine Kopie unter
-`outputSynthea/review/Fall.xlsx` speichern. Mit dem bereits gebauten Image:
+For example, generate five patients aged 30–80:
 
 ```sh
-docker compose -f compose.synthea.yml run --rm --entrypoint java synthea \
-  -XX:MaxRAMPercentage=50 -Duser.timezone=Europe/Berlin \
-  -jar /app/target/excel2fhir.jar -v \
-  -f /output/review/Fall.xlsx -t /output/review/csv -o /output/review/fhir
+docker compose -f compose.synthea.yml run --build --rm synthea -- -p 5 -a 30-80
 ```
 
-Die Ergebnisse liegen unter `outputSynthea/review/fhir/`. Bei Wiederholung werden
-die dortigen Ergebnisse und `review/csv/` ersetzt; die Excel-Datei bleibt erhalten.
-Dieser Schritt verwendet die Optionen im Excel-Blatt. Er startet Synthea nicht
-erneut und vergleicht Ihre Änderungen nicht gegen die ursprüngliche Geschichte.
+Generate two female patients aged 60–70, exporting the last five years:
 
-## Weitere Eingaben
+```sh
+docker compose -f compose.synthea.yml run --build --rm synthea \
+  -- -p 2 -g F -a 60-70 --exporter.years_of_history=5
+```
 
-Das Blatt [Fall](synthea-movements.md) erklärt primäre Aufenthalte und zusätzliche
-OP-/Konsilkontakte. Die [Eingabeprüfung](contact-input-checks.md) sammelt Fehler vor
-der FHIR-Erzeugung. Kontaktbeginn und Prozedurbeginn sind getrennte Eingaben.
+Explicit arguments replace the Compose command, including its seeds and dates.
+Synthea supplies defaults for omitted arguments; the workflow exports full
+histories unless a history length is specified. To reproduce the supplied sample,
+use the seeds and dates in [compose.synthea.yml](../compose.synthea.yml).
 
-Für vorhandene Synthea-Bundles, die erneute Konvertierung einer bearbeiteten
-Excel-Datei und einen Aufbau ohne Docker siehe [manuelle Anleitung](synthea-manual.md).
-Eigene Excel- und CSV-Dateien können Sie [direkt konvertieren](converter-usage.md).
+See Synthea's [command-line reference](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running#running-synthea)
+and [configuration reference](https://github.com/synthetichealth/synthea/wiki/Common-Configuration)
+for further settings.
 
-## Wenn ein Lauf nicht fertig wird
+## Choose a KDS variant
 
-- **Docker läuft nicht:** Docker starten und denselben Befehl erneut ausführen.
-- **Exitcode 1 bei `NOT_CHECKED`:** Dateien sind vorhanden; die Grenzen der
-  Terminologieprüfung stehen im Validierungsbericht.
-- **`FAILED`:** `cases/summary.json` bzw. `workflow.json` nennt den betroffenen
-  Schritt. Bei einem Konvertierungsfehler steht das Detail im zugehörigen
-  `conversion.log`, beim Generator in `synthea.log`.
-- **Speichermangel / Exitcode 137:** Docker mehr RAM bereitstellen oder mit
-  kürzerer Historie beginnen. Auch ein einzelner langer Patientenverlauf kann
-  viel Speicher und Validierungszeit brauchen. Ein neuer Start erzeugt einen
-  neuen Laufordner; abgebrochene Läufe werden nicht automatisch fortgesetzt.
+Place [converter options](converter-usage.md#common-options) before `--`, for
+example `--converter-options options/KDS-A.config`, `-r XML` or `-v`.
+Repeat `--converter-options` for additional KDS variants. Generated workbooks
+contain the shared converter defaults; external files select the variants for
+the current invocation. Before `--`, `-p` sets patients per bundle; after `--`,
+it sets the Synthea population size.
 
-Die Sicherheitsbefunde des eingebundenen Synthea-Generators werden separat in
-[Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
-bearbeitet. Der Offline-Lauf ist keine abgeschlossene Sicherheitsfreigabe.
+## Output
 
-Unter Linux gehören die Ergebnisse dem Eigentümer des eingebundenen
-Ausgabeordners. Der Container übernimmt dessen Benutzer- und Gruppen-ID
-automatisch, sodass Berichte lesbar und Excel-Dateien bearbeitbar bleiben.
+Each invocation creates `outputGlobal/run-…-synthea/`:
+
+| Path | Content |
+| --- | --- |
+| `excel/` | One editable workbook per source patient. |
+| `fhir/` | Selected formats, grouped by input and KDS variant. |
+| `details/options-input/` | Copies of selected external options files. |
+| `details/cases/` | Per-source converter runs, effective options, import and requested validation reports. |
+| `details/reports/` | Overall results, source comparisons and tool versions. |
+| `details/sources/` / `details/logs/` | Original Synthea output and logs. |
+| `status.txt` | Overall result. |
+
+`NOT_VALIDATED` with exit code 0 means import and source comparison succeeded
+with FHIR validation disabled. With `-v`, `COMPLETE` indicates success and
+`NOT_CHECKED` indicates unavailable terminology checks, with exit code 1.
+`FAILED` identifies a failed step; inspect the reports and retained output.
+
+Under Linux, the complete workflow uses the mounted output directory owner's
+UID/GID so the generated files remain editable by that user.
+
+## Edit a generated workbook
+
+Open the workbook, edit its data sheets, then pass its path to Excel2FHIR using
+`-f`. Apply the desired options sheets or external files as described in
+[converter usage](converter-usage.md).
+
+## Further reading
+
+- [Import existing bundles and local execution](synthea-manual.md)
+- [Supported data and mappings](synthea-clinical-import.md)
+- [Hospital example](../examples/synthea-hospital/README.md)
+- [FHIR validation](fhir-validation.md)

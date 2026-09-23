@@ -3,7 +3,6 @@ package de.uni_leipzig.life.csv2fhir;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_COUNT;
 import static de.uni_leipzig.life.csv2fhir.OutputFileType.JSON;
-import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Konvertierungsoptionen;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Person;
 
 import java.io.BufferedWriter;
@@ -70,6 +69,8 @@ public class Csv2Fhir {
 
     /** The options to convert the current csv file set. */
     private final List<ConverterOptions> allConverterOptions;
+    private final List<ConverterOptionSet> optionSets;
+    private boolean variantImportProblems;
 
     /** Counters for all resources created from one set of CSV files */
     private final ConverterResultStatistics fileSetStatistics = new ConverterResultStatistics();
@@ -80,7 +81,7 @@ public class Csv2Fhir {
     private final ImportReport importReport = new ImportReport();
     private final Map<TableIdentifier, Map<Long, String>> recordPatients = new HashMap<>();
 
-    public boolean hasImportProblems() { return importReport.hasErrors(); }
+    public boolean hasImportProblems() { return variantImportProblems || importReport.hasErrors(); }
     public ImportReport getImportReport() { return importReport; }
 
     private Collection<String> loadInputs() throws IOException {
@@ -89,7 +90,7 @@ public class Csv2Fhir {
             if (!table.isConvertableTableSheet()) continue;
             File file = getCsvInputFile(outputFileNameBase, table.toString());
             if (!file.isFile()) {
-                if (table == Person) importReport.failure(null, null, "MISSING_PATIENT_FILE", "Person.csv fehlt", null);
+                if (table == Person) importReport.failure(null, null, "MISSING_PATIENT_FILE", "Person.csv is missing", null);
                 continue;
             }
             ImportReport.Table summary = importReport.table(table, file.getName());
@@ -100,13 +101,13 @@ public class Csv2Fhir {
                 boolean duplicate = parser.getHeaderNames().stream()
                         .filter(h -> !isNullOrEmpty(h)).anyMatch(h -> !headers.add(h));
                 if (duplicate) {
-                    importReport.failure(table, null, "DUPLICATE_COLUMNS", "Spaltenname mehrfach vorhanden", null);
+                    importReport.failure(table, null, "DUPLICATE_COLUMNS", "Duplicate column name", null);
                     continue;
                 }
                 Set<String> required = new LinkedHashSet<>(table.getMandatoryColumnNames());
                 required.add(table.getPIDColumnIdentifier().toString());
                 if (isColumnMissing(parser.getHeaderMap(), required)) {
-                    importReport.failure(table, null, "MISSING_COLUMNS", "Pflichtspalten fehlen: " +
+                    importReport.failure(table, null, "MISSING_COLUMNS", "Required columns are missing: " +
                             required.stream().filter(c -> !parser.getHeaderMap().containsKey(c)).collect(Collectors.joining(", ")), null);
                     continue;
                 }
@@ -116,7 +117,7 @@ public class Csv2Fhir {
                 String previous = null;
                 for (CSVRecord record : records) {
                     if (record.size() != parser.getHeaderNames().size()) {
-                        importReport.failure(table, record.getRecordNumber(), "MALFORMED_RECORD", "Feldanzahl stimmt nicht mit der Kopfzeile überein", null);
+                        importReport.failure(table, record.getRecordNumber(), "MALFORMED_RECORD", "Field count does not match the header", null);
                         // A malformed explicit ID must not silently redirect following continuation rows.
                         previous = null;
                         continue;
@@ -124,7 +125,7 @@ public class Csv2Fhir {
                     String pid = record.get(table.getPIDColumnIdentifier().toString());
                     if (isNullOrEmpty(pid) && isRecordEmpty(record, table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
                     if (!isNullOrEmpty(pid)) previous = pid;
-                    if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Keine Patient-ID und keine vorherige Patient-ID", null);
+                    if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Patient-ID is empty and no preceding Patient-ID is available", null);
                     else patients.put(record.getRecordNumber(), previous);
                 }
             } catch (Exception e) {
@@ -136,13 +137,13 @@ public class Csv2Fhir {
                 .map(pid -> pid.toUpperCase(java.util.Locale.ROOT)).collect(Collectors.toSet());
         List<String> pids = new ArrayList<>(knownPatients);
         Alphabetical.sort(pids);
-        if (pids.isEmpty()) importReport.failure(null, null, "NO_PATIENTS", "Keine verarbeitbaren Patient-IDs", null);
+        if (pids.isEmpty()) importReport.failure(null, null, "NO_PATIENTS", "No patient IDs to process", null);
         for (var entry : recordPatients.entrySet()) {
             var iterator = entry.getValue().entrySet().iterator();
             while (iterator.hasNext()) {
                 var row = iterator.next();
                 if (!knownPatients.contains(row.getValue().toUpperCase(java.util.Locale.ROOT))) {
-                    importReport.failure(entry.getKey(), row.getKey(), "UNKNOWN_PATIENT", "Patient-ID fehlt im Person-Blatt", null);
+                    importReport.failure(entry.getKey(), row.getKey(), "UNKNOWN_PATIENT", "Patient-ID is missing from the Person sheet", null);
                     iterator.remove();
                 }
             }
@@ -174,6 +175,11 @@ public class Csv2Fhir {
      */
     public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
             @Nullable FHIRValidator validator) {
+        this(inputDirectory, outputDirectory, outputFileNameBase, validator, null);
+    }
+
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
+            @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions) {
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -185,39 +191,13 @@ public class Csv2Fhir {
                 .setHeader()
                 .setSkipHeaderRecord(true).get();
         this.validator = validator;
-        allConverterOptions = loadConverterOptions(inputDirectory, outputFileNameBase);
-    }
-
-    /**
-     * @return
-     */
-    private static final List<ConverterOptions> loadConverterOptions(File inputDirectory, String outputFileNameBase) {
-        List<ConverterOptions> allConverterOptions = new ArrayList<>();
-        // If there is no Konvertierungsoptionen.csv file in the outputLocal directory
-        // (that was extracted
-        // from the Excel file) then only the default options are loaded from the
-        // resources. If the file
-        // exists then it is loaded after the defaults are loaded.
-        File[] inputFiles = inputDirectory.listFiles();
-        if (inputFiles != null) {
-            List<String> inputBaseNameVariants = getOutputFileNameBaseVariants(outputFileNameBase);
-            for (File file : inputFiles) {
-                String fileName = file.getName();
-                for (String inputBaseNameVariant : inputBaseNameVariants) {
-                    String converterOptionsFileNamePattern = inputBaseNameVariant
-                            + Konvertierungsoptionen.getTableNamePattern() + "\\.csv";
-                    if (fileName.matches(converterOptionsFileNamePattern)) {
-                        ConverterOptions converterOptions = new ConverterOptions(file.getAbsolutePath());
-                        allConverterOptions.add(converterOptions);
-                        break;
-                    }
-                }
-            }
+        try {
+            optionSets = selectedOptions == null ? ConverterOptionSet.csv(inputDirectory, outputFileNameBase) : List.of();
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
         }
-        if (allConverterOptions.isEmpty()) {
-            allConverterOptions.add(new ConverterOptions(""));
-        }
-        return allConverterOptions;
+        allConverterOptions = selectedOptions == null ? optionSets.stream().map(ConverterOptionSet::options).toList()
+                : List.of(selectedOptions);
     }
 
     private static List<String> getOutputFileNameBaseVariants(String outputFileNameBase) {
@@ -252,12 +232,23 @@ public class Csv2Fhir {
      */
     public ConverterResultStatistics convertFiles(int patientsPerBundle, OutputFileType... outputFileTypes)
             throws Exception {
+        if (optionSets.size() > 1) {
+            for (var set : optionSets) {
+                var destination = outputDirectory.toPath().resolve(set.directoryName());
+                java.nio.file.Files.createDirectories(destination);
+                set.snapshot(outputDirectory.toPath().resolve("options").resolve(set.directoryName()));
+                Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), outputFileNameBase, validator, set.options());
+                fileSetStatistics.add(converter.convertFiles(patientsPerBundle, outputFileTypes));
+                variantImportProblems |= converter.hasImportProblems();
+            }
+            return fileSetStatistics;
+        }
         try {
             Collection<String> patients = loadInputs();
             preflightContacts();
             preflightOptions();
             if (importReport.hasErrors()) {
-                LOG.error("Eingabeprüfung: {} Befunde; keine FHIR-Ausgabe erzeugt. Siehe Importbericht.", importReport.issues.size());
+                LOG.error("Input validation failed with {} issues. See the import report.", importReport.issues.size());
                 return new ConverterResultStatistics();
             }
             return convertPreparedFiles(patients, patientsPerBundle, outputFileTypes);
@@ -280,7 +271,7 @@ public class Csv2Fhir {
             try {
                 Math.multiplyExact(patients.size(), Math.addExact(repetitions, 1));
             } catch (ArithmeticException e) {
-                importReport.failure(null, null, "OPTION_ERROR", "Anzahl der Patienten einschließlich Wiederholungen überschreitet den Zahlenbereich", options);
+                importReport.failure(null, null, "OPTION_ERROR", "Patient count including repetitions exceeds the supported numeric range", options);
                 continue;
             }
             Set<String> generated = new HashSet<>();
@@ -291,10 +282,10 @@ public class Csv2Fhir {
                     try {
                         String id = options.getFullPID(patient, iteration);
                         if (!generated.add(id)) importReport.failure(null, null, "PATIENT_ID_COLLISION",
-                                "Doppelte erzeugte Patient-ID: " + id + " (Durchlauf " + iteration + ")", options);
+                                "Duplicate generated patient ID: " + id + " (iteration " + iteration + ")", options);
                     } catch (IllegalArgumentException | ArithmeticException e) {
                         importReport.failure(null, null, "PATIENT_ID_ERROR",
-                                patient + " (Durchlauf " + iteration + "): " + ImportReport.describe(e), options);
+                                patient + " (iteration " + iteration + "): " + ImportReport.describe(e), options);
                     }
                 }
             }
@@ -501,7 +492,7 @@ public class Csv2Fhir {
         String normalizedExtension = Strings.nullToEmpty(fileNameExtension);
         String fileNameBase = Strings.isNullOrEmpty(normalizedExtension) ? removeTrailingSeparator(outputFileNameBase)
                 : outputFileNameBase + normalizedExtension;
-        return fileNameBase.replaceAll("__", "_") + outputFileType.getFileExtension();
+        return (fileNameBase.isEmpty() ? "patients" : fileNameBase.replaceAll("__", "_")) + outputFileType.getFileExtension();
     }
 
     private static String removeTrailingSeparator(String fileNameBase) {
@@ -547,7 +538,7 @@ public class Csv2Fhir {
                     importReport.success(table, record.getRecordNumber(), resources.size());
                 } catch (Exception e) {
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
-                    LOG.error("Konvertierungsfehler in {} Datensatz {}: {}", table, record.getRecordNumber(),
+                    LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
                             importReport.issues.get(importReport.issues.size() - 1).reason);
                 }
             }

@@ -1,46 +1,27 @@
-# Diagnoseabbildung aus Synthea
+# Import Synthea diagnoses
 
-Für den vollständigen Ablauf siehe [Synthea → Excel → FHIR](synthea-workflow.md).
-Diese Seite beschreibt die Diagnoseabbildung. Alle unterstützten Bereiche sind
-im [Importumfang](synthea-clinical-import.md) aufgeführt.
+The importer fills `Diagnose` with source times, statuses and patient/case
+associations. The [diagnosis mapping](diagnosis-mapping.md) supplies assessed
+ICD-10-GM 2026 codings and documented synthetic assumptions.
 
-## Codes und Zeiten
+ICD-10-GM is the primary coding; SNOMED is additional coding or the retained source
+when a target is unavailable. Existing source ICD-10-GM with an explicit version
+takes precedence. Exclusions and status adjustments are recorded with source IDs
+in `Fall.loss.json`. Excel2FHIR then converts the codes entered in the workbook.
 
-Der Import übernimmt Diagnosezeiten, Status und Patient-/Kontaktzuordnung in das
-Blatt **Diagnose**. Die versionierte Mappingtabelle ergänzt näherungsweise
-passende ICD-10-GM-2026-Codes, gegebenenfalls unter dokumentierten synthetischen
-Annahmen. ICD steht vor dem ergänzenden SNOMED-Coding. Bereits vorhandenes
-ICD-10-GM mit ausdrücklich angegebener Version hat Vorrang.
+## Emergency contacts
 
-Für das festgelegte produktive Diagnoseinventar gibt es 333 Entscheidungen:
-321 Zuordnungen, zehn bewusste Ausschlüsse und zwei SNOMED-Konzepte ohne
-ICD-Ergänzung. Auslassungen und Statusanpassungen werden mit Quell-ID im
-`Fall.loss.json` berichtet. [Mappingregeln, Quellen und Grenzen](diagnosis-mapping.md).
+A source `EMER` encounter becomes an `AMB` facility contact with admission-reason
+subelement `VierteStelle`, code `7`. Excel records these as `ambulant` and `Notfall`.
+Inpatient contacts use `IMP`. The source class and projection are recorded under
+`encounterMappings`.
 
-Die spätere Excel→FHIR-Konvertierung liest die Codes aus Excel. Sie führt kein
-erneutes Synthea-Mapping aus und ersetzt deshalb keine manuellen Änderungen.
+## Verification
 
-## Notfallkontakte
+Source comparison checks diagnosis counts, expected exclusions, coding versions,
+times, statuses and references according to the selected Converter Options.
+The [diagnosis input contract](diagnosis-workbook.md) describes required fields
+and Data Absent Reasons. Optional [FHIR validation](fhir-validation.md) checks
+the completed resources.
 
-Synthea-Notfallkontakte (`EMER`) werden im verwendeten KDS-Modell als `AMB` mit
-Aufnahmegrund, Unterelement `VierteStelle`, Code `7` abgebildet. Beide Angaben
-stehen in Excel. Stationäre Kontakte bleiben `IMP`. Der Verlust-/Mappingbericht
-enthält die ursprüngliche Klasse und die Überleitung unter `encounterMappings`.
-Eine zusätzliche stationäre Aufnahme wird daraus nicht erfunden.
-
-## Prüfung
-
-Der automatische Rückvergleich prüft Diagnoseanzahl unter Berücksichtigung
-expliziter Ausschlüsse, Codes/Versionen, Zeiten, Status und Referenzen gegen die
-Quelle und die verwendete Mappingversion. Die wirksamen Converter-Optionen werden
-berücksichtigt. Rohdaten und Mapping-Prüfsummen bleiben für den Review erhalten.
-
-Mit `-v` validiert der Java-Converter die vollständigen Zielbundles und erhält
-auch Ressourcen mit Fehlern. Nicht ausführbare Terminologieprüfungen führen zu
-`NOT_CHECKED` und Exitcode 1. Fehlende SNOMED-Ausgaben beweisen weder gültige noch
-ungültige Codes. [Details zur FHIR-Validierung](fhir-validation.md).
-
-`recordedDate` ist im eingebundenen Diagnoseprofil verpflichtend; Onset und
-Abatement sind optional. Data Absent Reasons und zeitliche Konsistenz müssen zur
-jeweiligen Eingabe passen. Ein technisch erfolgreicher Rückvergleich ersetzt
-keine medizinische Prüfung der synthetischen Zuordnungen.
+See [supported clinical input](synthea-clinical-import.md) for the other resource types.

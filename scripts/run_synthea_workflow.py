@@ -1,87 +1,79 @@
 #!/usr/bin/env python3
 """Generate with the pinned Synthea, then use the existing Excel/FHIR pipeline.
-Usage: run_synthea_workflow.py OUTPUT_DIRECTORY [native Synthea arguments...]
+Usage: run_synthea_workflow.py [-o OUTPUT_ROOT] [-v] -- [native Synthea arguments...]
 Build/copy target/synthea.jar and target/synthea-revision.txt for a local run.
 """
-from datetime import datetime, timezone
 import json
 from pathlib import Path
 import shutil
 import subprocess
 import sys
-import tempfile
-from converter_options import CONFIG_NAME, ensure_config, resolve_config
+from workflow_layout import create_run, write_status, generator_arguments
+from converter_options import selected_configs
 from run_synthea_cases import ROOT, run as convert_cases, sha256, write_json
 
 
-def run(output, arguments):
+def run(output, arguments, *, validate=False, option_files=(), **settings):
     jar = ROOT / 'target/synthea.jar'
     revision_file = ROOT / 'target/synthea-revision.txt'
     expected = (ROOT / 'scripts/synthea-version.txt').read_text().strip()
     if not jar.is_file() or not revision_file.is_file():
-        raise FileNotFoundError('Synthea fehlt. Den Compose-Komplettlauf oder die lokale Bauanleitung verwenden.')
+        raise FileNotFoundError('Synthea is missing. Use the Compose workflow or follow the local build instructions.')
     if revision_file.read_text().strip() != expected:
-        raise ValueError('Synthea-Stand passt nicht zu den mitgelieferten Mappings.')
+        raise ValueError('The Synthea revision does not match the bundled mappings.')
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=True)
-    config = ensure_config(output)
-    resolved = resolve_config(config)
-    stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    directory = Path(tempfile.mkdtemp(prefix='run-' + stamp + '-', dir=output))
-    shutil.copy2(config, directory / CONFIG_NAME)
-    resolved = resolve_config(directory / CONFIG_NAME)
+    selected_configs(option_files)
+    directory = create_run(output, 'synthea')
+    snapshots = []
+    for index, config in enumerate(option_files):
+        target = directory / 'details/options-input' / str(index) / Path(config).name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(config, target)
+        snapshots.append(target)
     command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
                '--exporter.years_of_history=0', *arguments,
-               '--exporter.baseDirectory=' + str(directory / 'synthea'),
+               '--exporter.baseDirectory=' + str(directory / 'details/sources/synthea'),
                '--exporter.fhir.export=true', '--exporter.fhir_stu3.export=false',
                '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',
                '--exporter.use_uuid_filenames=true',
                '--exporter.hospital.fhir.export=false', '--exporter.practitioner.fhir.export=false']
-    report = {'status': 'GENERATING', 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
+    report = {'status': 'GENERATING', 'validationEnabled': validate, 'syntheaRevision': expected, 'syntheaJarSha256': sha256(jar),
               'syntheaArguments': command[5:], 'output': str(directory),
-              'converterOptions': resolved['values'], 'converterOptionsSha256': sha256(directory / CONFIG_NAME)}
-    report_path = directory / 'workflow.json'
+              'converterOptions': [dict(path=str(p), sha256=sha256(p)) for p in snapshots], 'conversionSettings': settings}
+    report_path = directory / 'details/reports/workflow.json'
     write_json(report_path, report)
-    print('Ausgabe: ' + str(directory), flush=True)
     try:
-        print('Synthea erzeugt Patienten; Fortschritt in synthea.log.', flush=True)
-        with (directory / 'synthea.log').open('w') as log:
+        print('Synthea is generating patients; see details/logs/synthea.log for progress.', flush=True)
+        with (directory / 'details/logs/synthea.log').open('w') as log:
             generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
         if generated.returncode:
-            raise RuntimeError('Synthea fehlgeschlagen; siehe synthea.log (Exitcode ' + str(generated.returncode) + ').')
+            raise RuntimeError('Synthea failed; see details/logs/synthea.log (exit code ' + str(generated.returncode) + ').')
         report['status'] = 'CONVERTING'
         write_json(report_path, report)
-        print('Patienten werden über Excel nach FHIR konvertiert und geprüft.', flush=True)
-        code = convert_cases(directory / 'synthea/fhir', directory / 'cases', config=directory / CONFIG_NAME)
-        summary = json.loads((directory / 'cases/summary.json').read_text())
+        print('Converting patients through Excel to FHIR and comparing them with the source data.', flush=True)
+        code = convert_cases(directory / 'details/sources/synthea/fhir', output,
+                             option_files=snapshots, directory=directory, validate=validate, **settings)
+        summary = json.loads((directory / 'details/reports/summary.json').read_text())
         report['status'] = summary['status']
         report['completedSourcePatients'] = len(summary['results'])
         report['completedPatients'] = sum(len(r.get('outputPatients', [None])) for r in summary['results'])
         report['failedPatients'] = len(summary['failures'])
-        # Only outputs with complete import and successful source comparison are
-        # published in the convenient FHIR folder. Full evidence stays in cases/.
-        fhir = directory / 'fhir'
-        fhir.mkdir()
-        for result in summary['results']:
-            case = Path(result['workbook']).parent
-            for bundle in (case / 'fhir').glob('*.json'):
-                if not bundle.name.endswith(('.import.json', '.validation.json')):
-                    shutil.copy2(bundle, fhir / (case.name + '.json'))
-        print('FHIR-Dateien: ' + str(fhir), flush=True)
-        print('Excel und Einzelberichte: ' + str(directory / 'cases'), flush=True)
+        print('FHIR files: ' + str(directory / 'fhir'), flush=True)
+        print('Excel files: ' + str(directory / 'excel'), flush=True)
         if summary['status'] == 'NOT_CHECKED':
-            print('Import und Rückvergleich bestanden. FHIR-Validierung teilweise NICHT PRÜFBAR; siehe Berichte. Exitcode 1 bleibt erhalten.', flush=True)
+            print('Import and source comparison passed. Some FHIR validation checks could not run; see reports. Exit code: 1.', flush=True)
         elif summary['status'] == 'FAILED':
-            print('Lauf UNVOLLSTÄNDIG: siehe cases/summary.json. fhir/ enthält nur erfolgreich abgeglichene Patienten.', flush=True)
+            print('Run INCOMPLETE: see details/reports/summary.json. Generated FHIR files and error reports are available for review.', flush=True)
         return code
     except Exception as error:
         report.update(status='FAILED', error=str(error))
         raise
     finally:
         write_json(report_path, report)
+        write_status(directory, report['status'])
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        raise SystemExit(__doc__)
-    raise SystemExit(run(sys.argv[1], sys.argv[2:]))
+    output, native, settings = generator_arguments()
+    raise SystemExit(run(output, native, **settings))

@@ -8,7 +8,7 @@ import java.util.List;
 
 public class ConverterOptionsTest {
     @Test public void fileAndWorkbookTextUseTheSameParserAndCollectErrors() throws Exception {
-        String text = "# Comment\nVALIDATE_STRICT=treu\nSTART_ID_CONDITION=abc\n"
+        String text = "# Comment\nCHECK_INPUT_CONSISTENCY=treu\nSTART_ID_CONDITION=abc\n"
                 + "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\n"
                 + "PID_PREFIX=first\nPID_PREFIX=second\n";
         var file = Files.createTempFile("converter-options-", ".config");
@@ -19,18 +19,18 @@ public class ConverterOptionsTest {
             assertEquals(4, a.getErrors().size());
             assertEquals(a.getErrors(), b.getErrors());
             // Invalid input must not silently turn validation off.
-            assertTrue(a.is(VALIDATE_STRICT));
+            assertTrue(a.is(CHECK_INPUT_CONSISTENCY));
         } finally { Files.delete(file); }
     }
 
     @Test public void acceptsExplicitBooleansAndPropertiesSyntax() {
         for (String value : List.of("true", "TRUE", "ja", "1")) {
-            var o = ConverterOptions.fromText("VALIDATE_STRICT : " + value);
-            assertTrue(o.getErrors().isEmpty()); assertTrue(o.is(VALIDATE_STRICT));
+            var o = ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY : " + value);
+            assertTrue(o.getErrors().isEmpty()); assertTrue(o.is(CHECK_INPUT_CONSISTENCY));
         }
         for (String value : List.of("false", "FALSE", "nein", "0")) {
-            var o = ConverterOptions.fromText("VALIDATE_STRICT=" + value);
-            assertTrue(o.getErrors().isEmpty()); assertFalse(o.is(VALIDATE_STRICT));
+            var o = ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=" + value);
+            assertTrue(o.getErrors().isEmpty()); assertFalse(o.is(CHECK_INPUT_CONSISTENCY));
         }
         var o = ConverterOptions.fromText("PID_PREFIX=demo\\u002d\nPID_SUFFIX=-x\n"
                 + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=10\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=100");

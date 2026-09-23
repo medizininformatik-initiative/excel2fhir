@@ -1,86 +1,37 @@
 # excel2fhir
 
-Mit `excel2fhir` erzeugen Sie synthetische FHIR-R4-Testdaten für den deutschen
-MII-Kerndatensatz (KDS). Sie können Patienten mit Synthea erzeugen, die
-Excel-Vorlage ausfüllen oder CSV-Dateien konvertieren.
+Generate FHIR R4 test data for the German MII Core Data Set (KDS) from Excel
+workbooks or CSV files.
 
-| Ausgangspunkt | Anleitung |
-| --- | --- |
-| Neue Patienten mit Synthea erzeugen | [Synthea → Excel → FHIR](docs/synthea-workflow.md) |
-| Viele stationäre Fälle im Zeitraum 2020–2026 | [Krankenhausbeispiel](examples/synthea-hospital/README.md) |
-| Excel-Vorlage ausfüllen oder vorhandene Excel-/CSV-Daten konvertieren | [Excel und CSV verwenden](docs/converter-usage.md) |
-| Vorhandene Synthea-Bundles importieren oder ohne Docker arbeiten | [Manueller Ablauf](docs/synthea-manual.md) |
-
-## KDS-FHIR aus Synthea erzeugen
-
-Voraussetzung: Docker mit Compose, mindestens 8 GB für Docker und Internet für
-den ersten Build. Große Patientenverläufe benötigen mehr Speicher. Nach dem
-Checkout im Projektverzeichnis starten:
+## Usage
 
 ```sh
-docker compose -f compose.synthea.yml run --build --rm synthea
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
 ```
 
-Java, Python und LibreOffice sind im Image enthalten. Der fertige Lauf arbeitet
-ohne Netzwerk und benötigt keine externen Medikamentenkataloge.
+`input/` contains a ready-to-run [example workbook](input/FHIR_Testdatengenerator_Vorlage.xlsx).
+Edit or replace it with your own cases, keeping the sheet names and column headings.
+The converter processes all workbooks in that directory.
 
-- **FHIR-Dateien:** `outputSynthea/run-…/fhir/`
-- **Excel-Dateien:** `outputSynthea/run-…/cases/<Patient-ID>/Fall.xlsx`
-- **Einstellungen:** Synthea-Argumente in `compose.synthea.yml`, Converter-Optionen
-  in `outputSynthea/converter-options.config`. Beide Dateien sind bereits vorhanden.
+Each run writes JSON and NDJSON to `outputGlobal/run-…/fhir/`.
+`status.txt` shows the result; `details/` contains reports, effective options and
+intermediate files. Add `-v` to enable FHIR profile and terminology validation.
 
-Jeder Lauf bekommt einen eigenen Ordner. Die Excel-Dateien können Sie ansehen,
-bearbeiten und anschließend [erneut konvertieren](docs/synthea-workflow.md#excel-bearbeiten).
-Standardmäßig entsteht die Lebensgeschichte eines erwachsenen Patienten;
-Synthea kann zusätzlich verstorbene Patienten ausgeben.
+Converter Options control the KDS variant. Use the workbook's options sheet or
+select external options files. See [converter usage](docs/converter-usage.md)
+for input selection, options and output formats.
 
-## Ergebnisse beurteilen
+## Other inputs
 
-Der Workflow prüft den Import, vergleicht die übernommenen Inhalte mit Synthea
-und validiert das erzeugte FHIR. **`NOT_CHECKED`** bedeutet, dass Teile der
-Terminologieprüfung nicht ausführbar waren. Die Dateien liegen trotzdem vor;
-der Prozess liefert dafür Exitcode 1. **`FAILED`** bezeichnet einen unvollständigen
-Lauf. Einzelheiten stehen in `workflow.json` und `cases/summary.json`.
+- [CSV files](docs/converter-usage.md#csv-input)
+- [Patient histories generated with Synthea](docs/synthea-workflow.md)
+- [Existing Synthea bundles](docs/synthea-manual.md)
 
-Die Daten enthalten ausdrücklich synthetische deutsche Ergänzungen und
-näherungsweise Codezuordnungen. Nicht jede Synthea-Eigenschaft wird übernommen;
-Auslassungen werden berichtet. Vollständige KDS-/Terminologiekonformität wird
-nicht pauschal zugesichert. [Importumfang und Grenzen](docs/synthea-clinical-import.md).
-
-Im eingebundenen Synthea-Generator bestehen bekannte Sicherheitsbefunde in
-Abhängigkeiten. Ihre Bereinigung wird in [Ticket #55](https://github.com/medizininformatik-initiative/excel2fhir/issues/55)
-bearbeitet; der vollständige Workflow hat noch keine abgeschlossene Sicherheitsfreigabe.
-Das Image für die Excel-/CSV-Konvertierung enthält nur den Converter und seine
-Abhängigkeiten.
-
-## KDS-FHIR aus Excel oder CSV erzeugen
-
-Das Repository enthält die [Vorlage](FHIR_Testdatengenerator_Vorlage.xlsx) und
-eine [ausgefüllte Demo](FHIR_Testdatengenerator_Interpolar_Demo.xlsx). Eine Datei
-kann mehrere Patienten enthalten. Mit Docker:
-
-```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  -f /app/input/FHIR_Testdatengenerator_Interpolar_Demo.xlsx
-```
-
-FHIR liegt unter `outputGlobal/`, Zwischen-CSV unter `outputLocal/`.
-Diese Ordner sind für Konverterausgaben reserviert und können beim nächsten
-Aufruf geleert werden. [Eigene Dateien, Optionen und CSV-Einstieg](docs/converter-usage.md).
-
-## Entwicklung und fachliche Details
-
-Für die Java-Entwicklung: JDK 17 und Maven 3.x. Der lokale Synthea-Import benötigt
-zusätzlich Python und LibreOffice; die [manuelle Anleitung](docs/synthea-manual.md)
-erklärt den Aufbau.
+## Development
 
 ```sh
 mvn test package
 python3 -m unittest discover -s scripts/tests -v
 ```
 
-- [Architektur, Skripte und Mappingdateien](docs/architecture.md)
-- [Aufenthalte und OP-/Konsilkontakte](docs/synthea-movements.md)
-- [Kontakt-Eingabeprüfungen](docs/contact-input-checks.md)
-- [Importbilanz](docs/import-report.md) und [FHIR-Validierung](docs/fhir-validation.md)
-- [Lizenz](LICENSE)
+[Architecture](docs/architecture.md) · [Local execution](docs/converter-usage.md#local-execution) · [License](LICENSE)

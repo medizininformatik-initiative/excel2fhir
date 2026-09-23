@@ -94,7 +94,7 @@ public class EncounterConverter extends Converter {
             note = new java.util.LinkedHashMap<>();
             note.put("encounter", child.getId());
             note.put("record", Long.toString(inputRecord.getRecordNumber()));
-            note.put("reason", "Fehlendes Kontaktende aus dem zugehörigen primären Kontakt bzw. Einrichtungskontakt abgeleitet; keine Prozedurzeit.");
+            note.put("reason", "Missing encounter end derived from the associated primary or facility encounter, independently of procedure times.");
             result.contactEndDerivations.add(note);
             derivedEnds.put(child, note);
         }
@@ -109,13 +109,13 @@ public class EncounterConverter extends Converter {
                 if (secondary.getPeriod().getStart().after(boundary.getValue())
                         || (!derivedEnds.containsKey(secondary) && secondary.getPeriod().hasEnd()
                             && secondary.getPeriod().getEnd().after(boundary.getValue())))
-                    throw new IllegalArgumentException("Sekundärkontakt liegt außerhalb des primären Aufenthalts");
+                    throw new IllegalArgumentException("The secondary encounter falls outside the primary stay");
             }
             primaryContact.getPeriod().setEndElement(boundary.copy());
             period(primaryContact, primaryContact.getPeriod());
             if (derivedEnds.containsKey(primaryContact)) {
                 derivedEnds.get(primaryContact).put("end", boundary.getValueAsString());
-                derivedEnds.get(primaryContact).put("reason", "Fehlendes primäres Kontaktende aus dem Beginn des nächsten primären Aufenthalts abgeleitet.");
+                derivedEnds.get(primaryContact).put("reason", "Missing primary encounter end derived from the start of the next primary stay.");
             }
             for (Encounter secondary : secondaryContacts)
                 if (derivedEnds.containsKey(secondary)) derivedEnd(secondary, primaryContact);
@@ -164,7 +164,7 @@ public class EncounterConverter extends Converter {
         if ((parent.hasStart() && child.getStart().before(parent.getStart()))
                 || (parent.hasEnd() && (child.getStart().compareTo(parent.getEnd()) >= 0
                     || (child.hasEnd() && child.getEnd().after(parent.getEnd())))))
-            throw new IllegalArgumentException("Kontaktzeitraum liegt außerhalb des übergeordneten Aufenthalts");
+            throw new IllegalArgumentException("The encounter period falls outside its parent stay");
     }
 
     @Override protected List<Resource> convertInternal() throws Exception {
@@ -172,30 +172,30 @@ public class EncounterConverter extends Converter {
         // Retired explicit hierarchy input must never be silently reinterpreted.
         for (String old : List.of("Kontakt-ID", "Kontaktebene", "Übergeordneter Kontakt")) {
             if (inputRecord.isMapped(old) && !isNullOrEmpty(inputRecord.get(old)))
-                throw new IllegalArgumentException("Veraltete Kontaktspalte " + old + ": Fall auf die implizite Eingabe umstellen");
+                throw new IllegalArgumentException("Unsupported encounter column " + old + ": use the implicit encounter structure");
         }
         String kind = value(ContactColumn.Kontaktart);
-        if (kind != null && !CONTACT_KINDS.containsKey(kind)) throw new IllegalArgumentException("Unbekannte Kontaktart: " + kind);
+        if (kind != null && !CONTACT_KINDS.containsKey(kind)) throw new IllegalArgumentException("Unknown encounter type: " + kind);
         boolean secondary = SECONDARY_KINDS.contains(kind == null ? "" : kind);
         String department = value(Fachabteilung);
         boolean hasPlaces = value(Station) != null || value(Zimmer) != null || value(Bett) != null;
-        if (kind != null && !hasPlaces) throw new IllegalArgumentException("Kontaktart benötigt mindestens Station, Zimmer oder Bett");
+        if (kind != null && !hasPlaces) throw new IllegalArgumentException("Kontaktart requires at least Station, Zimmer or Bett");
         Period p = new Period().setStartElement(ClinicalValues.date(value(Start))).setEndElement(ClinicalValues.date(value(Ende)));
-        if (!p.hasStart() || !p.getStartElement().hasValue()) throw new IllegalArgumentException("Kontaktbeginn erforderlich");
-        if (p.hasEnd() && p.getEnd().before(p.getStart())) throw new IllegalArgumentException("Kontaktende liegt vor Beginn");
+        if (!p.hasStart() || !p.getStartElement().hasValue()) throw new IllegalArgumentException("Encounter start is required");
+        if (p.hasEnd() && p.getEnd().before(p.getStart())) throw new IllegalArgumentException("Encounter end precedes its start");
         String rootId = getEncounterId();
         boolean newRoot = previousEncounterLevel1 == null || !previousEncounterLevel1.getSubject().getReference().equals(getPatientReference().getReference())
                 || (!isNullOrEmpty(rootId) && !rootId.equals(previousEncounterLevel1.getId()));
-        if (newRoot && (secondary || isNullOrEmpty(rootId))) throw new IllegalArgumentException("Einrichtungskontakt muss vor seinen Aufenthalten stehen");
+        if (newRoot && (secondary || isNullOrEmpty(rootId))) throw new IllegalArgumentException("The facility encounter must precede its stays");
         if (!newRoot) {
             if (facilityBound) inside(p, previousEncounterLevel1.getPeriod());
             if (value(Einrichtungskontaktklasse) != null
                     && !Objects.equals(getEncounterLevel1Class().getCode(), previousEncounterLevel1.getClass_().getCode()))
-                throw new IllegalArgumentException("Widersprüchliche Einrichtungskontaktklasse im selben Fall");
-            if (value(Encounter_Columns.Aufnahmegrund) != null) throw new IllegalArgumentException("Aufnahmegrund nur in der ersten Fallzeile angeben");
+                throw new IllegalArgumentException("Conflicting facility encounter classes within the same case");
+            if (value(Encounter_Columns.Aufnahmegrund) != null) throw new IllegalArgumentException("Specify Aufnahmegrund in the first case row only");
         }
         if (secondary) {
-            if (primaryContact == null) throw new IllegalArgumentException("Sekundärkontakt benötigt einen vorhergehenden primären Versorgungsstellenkontakt");
+            if (primaryContact == null) throw new IllegalArgumentException("A secondary encounter requires a preceding primary location encounter");
             inside(p, primaryContact.getPeriod());
             Encounter parent = previousEncounterLevel2 != null ? previousEncounterLevel2 : previousEncounterLevel1;
             if (previousEncounterLevel2 != null) inside(p, previousEncounterLevel2.getPeriod());
@@ -212,7 +212,7 @@ public class EncounterConverter extends Converter {
         if (!newRoot && primaryContact != null && (hasPlaces || department != null)) {
             if (p.getStart().before(primaryContact.getPeriod().getStart())
                     || (!primaryEndDerived && primaryContact.getPeriod().hasEnd() && p.getStart().before(primaryContact.getPeriod().getEnd())))
-                throw new IllegalArgumentException("Überlappende oder unsortierte primäre Aufenthalte; Zuordnung ist nicht eindeutig");
+                throw new IllegalArgumentException("Primary stays overlap or are out of order; encounter assignment is ambiguous");
             closePrimary(p.getStartElement());
         }
         List<Resource> resources = new ArrayList<>();

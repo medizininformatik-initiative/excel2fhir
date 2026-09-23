@@ -134,7 +134,7 @@ public class ObservationLaboratoryConverter extends Converter {
             value = ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Wertcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Wertcodesystem), raw);
         } else if (kind.equals("Ja/Nein")) {
-            if ("laboratory".equals(category)) throw new IllegalArgumentException("KDS-Laborbefunde erlauben keinen Ja/Nein-Wert; eine fachlich passende codierte Antwort verwenden");
+            if ("laboratory".equals(category)) throw new IllegalArgumentException("KDS laboratory observations require a clinically appropriate coded answer for boolean results");
             if (!"true".equals(raw) && !"false".equals(raw)) throw new IllegalArgumentException("Boolean must be true or false");
             value = new org.hl7.fhir.r4.model.BooleanType(Boolean.parseBoolean(raw));
         } else if (!kind.equals("Komponenten") && !kind.equals("Fehlend")) {

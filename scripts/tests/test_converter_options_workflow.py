@@ -7,21 +7,15 @@ import unittest
 from unittest.mock import patch, Mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import converter_options as options
-import run_synthea_workflow as workflow
 from synthea_to_excel import write_workbook
 
 
 class ConverterOptionsWorkflowTest(unittest.TestCase):
-    def test_initial_config_is_documented_and_existing_file_is_never_replaced(self):
-        with tempfile.TemporaryDirectory() as d:
-            path = options.ensure_config(d)
-            self.assertEqual('converter-options.config', path.name)
-            text = path.read_text()
-            self.assertIn('# Workflow-Default: true', text)
-            self.assertIn('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true', text)
-            path.write_text('# my settings\nPID_PREFIX=test-\n')
-            self.assertEqual(path, options.ensure_config(d))
-            self.assertEqual('# my settings\nPID_PREFIX=test-\n', path.read_text())
+    def test_shared_reference_defaults(self):
+        defaults = options.workflow_defaults()
+        self.assertEqual('false', defaults['SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER'])
+        self.assertEqual('true', defaults['SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION'])
+        self.assertEqual('false', defaults['SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER'])
 
     def test_effective_values_replace_every_template_setting(self):
         settings = options.workflow_defaults()
@@ -41,12 +35,13 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
     @patch('subprocess.run')
     def test_java_parser_failures_are_reported_before_conversion(self, run):
         with tempfile.TemporaryDirectory() as d:
-            path = options.ensure_config(d)
+            path = Path(d) / 'DIZ.config'
+            path.write_text('CHECK_INPUT_CONSISTENCY=bad')
             run.return_value = Mock(returncode=0, stdout=json.dumps({'errors': ['bad boolean', 'duplicate value']}))
             with self.assertRaisesRegex(ValueError, 'bad boolean\nduplicate value'):
                 options.resolve_config(path)
             payload = json.loads(run.call_args.kwargs['input'])
-            self.assertEqual(options.workflow_defaults(), payload['defaults'])
+            self.assertEqual({}, payload['defaults'])
 
     def test_properties_values_survive_csv_without_quotes_or_literal_newlines(self):
         line = options.property_line('PID_PREFIX', 'a b,"\\\n')
@@ -73,3 +68,15 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
                 self.assertEqual(call.args[2]['outputPatient'], selected[0]['resource']['id'])
             with self.assertRaises(AssertionError):
                 check_configured({}, bundle, {}, {}, ['demo-p1'])
+
+    @patch.object(options, 'resolve_config')
+    def test_named_variants_retain_independent_values_and_reject_collisions(self, resolve):
+        resolve.side_effect = [{'name': 'DIZ-A', 'values': {'PID_PREFIX': 'a-'}},
+                               {'name': 'DIZ-B', 'values': {'PID_PREFIX': 'b-'}}]
+        selected = options.selected_configs(['a.config', 'b.config'], ['patient1'])
+        self.assertEqual(['a-', 'b-'], [s['values']['PID_PREFIX'] for s in selected])
+        self.assertEqual(['a.config', 'b.config'], [s['path'] for s in selected])
+        resolve.assert_any_call('b.config', ['patient1'])
+        resolve.side_effect = [{'name': 'same'}, {'name': 'SAME'}]
+        with self.assertRaisesRegex(ValueError, 'the same output name'):
+            options.selected_configs(['first.config', 'second.config'])

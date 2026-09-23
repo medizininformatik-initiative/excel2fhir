@@ -20,7 +20,7 @@ def audit(atc_workbook):
     registry = json.loads(registry_path.read_text())
     sources = {(e['system'], e['code']): e for e in registry['entries'] if e['system'] == RXNORM}
     mapping = NationalMedicationMapping()
-    assert sources.keys() == mapping.entries.keys(), 'Quellinventar unvollständig'
+    assert sources.keys() == mapping.entries.keys(), 'Source inventory is incomplete'
     sheet = read_sheets(atc_workbook)['Amtl. Index 2026 ATC-sortiert']
     codes = {value.strip() for cell, value in sheet.items() if cell.startswith('A') and cell[1:].isdigit()}
     for key, entry in mapping.entries.items():

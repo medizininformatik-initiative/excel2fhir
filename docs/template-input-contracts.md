@@ -1,89 +1,78 @@
-# Eingabespalten und offene Inkonsistenzen der Vorlagen
+# Workbook input fields
 
-Geprüft wurden die Überschriften, Ausfüllhilfen und Auswahllisten beider ausgelieferten Arbeitsmappen sowie ihre Verwendung in den Konvertern. Die folgende Liste dokumentiert konkrete Befunde; sie ist keine vollständige fachliche Prüfung aller Eingabekombinationen.
+Use the supplied workbook's sheet names, column headings and dropdowns. This page
+summarizes how input fields map to FHIR. Detailed instructions are available for
+[diagnoses](diagnosis-workbook.md), [contacts](synthea-movements.md) and
+[selection lists](clinical-selections.md).
 
-## Person: Anschrift bereinigt
+## Person and address
 
-Die frühere Freitextspalte `Anschrift` ist entfernt. Anschriften werden ausschließlich in `Straße`, `Postleitzahl`, `Ort`, `Bundesland` und `Land` erfasst. Vorhandene Beispieladressen wurden in die strukturierten Felder übertragen. Alle anderen Person-Spalten rechts von der früheren Spalte D rücken um eine Spalte nach links; die übrigen Blätter bleiben unverändert. Nach der anschließenden Entfernung von Krankenkasse steht die Ausfüllhilfe in R.
+`Person` records identity, consent and address fields. Enter address components
+in `Straße`, `Postleitzahl`, `Ort`, `Bundesland` and `Land`. Available components
+are preserved when the country is empty. An entirely empty address receives the
+Data Absent Reason `unknown`. For country `DE`, German state names become
+ISO 3166-2 codes.
 
-Der Konverter übernimmt vorhandene Adressbestandteile auch ohne Land. Ein leeres Land bedeutet unbekannt, nicht automatisch DE. Eine vollständig leere Adresse bekommt Data Absent Reason unknown. Bei Land DE werden ausgeschriebene Bundesländer im FHIR in ISO-Codes umgewandelt. Unbekannte Länder oder Adressbestandteile werden nicht erfunden. Alte Mappen mit `Anschrift` passen nicht mehr zum aktuellen Schema und müssen auf die neuen Spalten migriert werden.
+## Medication
 
-## Person: Krankenkassenfeld entfernt
+`Medikation` separates product identity, ATC classification, ingredients and dose:
 
-Das frühere Feld `Krankenkasse` ist entfernt. Es erzeugte fälschlich einen Eintrag
-in `Patient.generalPractitioner`. Es gibt dafür keinen Ersatz als Hausarztangabe
-und noch keine neue Versicherungsressource. Einwilligungsspalten und strukturierte
-Anschrift bleiben erhalten; sie rücken um eine Spalte nach links.
+- `Präparatbezeichnung`, `Präparatcode` and `Präparatcodesystem` identify the product.
+- `ATC-Code` and `ATC-Version` provide the classification and its explicit year.
+- `Wirkstoffcode` and `Wirkstoffcodesystem` identify ingredients. Separate multiple
+  ingredients with semicolons; all use the selected system. Supported systems are
+  ASK, UNII, SNOMED CT and RxNorm. Each ingredient becomes a separate FHIR entry.
+- `Darreichungsform` is the dose-form text. `Einzeldosis` is the amount per dose.
 
-## Medikation: eindeutiger Eingabevertrag
+| Medication type | `Dokumentationszeitpunkt` | `Beginn` / `Ende` |
+| --- | --- | --- |
+| `Verordnung` (request) | Optional `authoredOn` | Leave empty. |
+| `Verabreichung` (administration) | Leave empty. | `effectiveDateTime` or `effectivePeriod`; start required. |
+| `Medikationsaussage` (statement) | Optional `dateAsserted` | `effectiveDateTime` or `effectivePeriod`; start required. |
 
-Die Medikation enthält jetzt 20 Datenspalten statt 24. Präparatbezeichnung,
-Präparatcode und Präparatcodesystem ersetzen die konkurrierenden Produktfelder.
-ATC-Code mit ausdrücklich eingegebener ATC-Version bleibt zusätzlich erhalten.
-Wirkstoffcode und Wirkstoffcodesystem sind unabhängig davon. Mehrere Wirkstoffe
-werden mit Semikolon getrennt angegeben; alle verwenden das ausgewählte Codesystem.
-UNII ist neben ASK, SNOMED CT und RxNorm unterstützt. Pro Wirkstoff entsteht ein
-eigenes FHIR-Ingredient; mehrere Wirkstoffe sind keine alternativen Codings. Ein unbekannter
-Wirkstoff benötigt ausdrücklich `!dar:unknown` mit einem Codesystem. Die
-Darreichungsform wird als Text übernommen. Aus der Einzeldosis entsteht keine
-Produkt- oder Wirkstoffstärke.
+Use an explicit Data Absent Reason for an unknown required time or ingredient.
+Unknown ingredients also require their code system. Status choices depend on the
+medication type. The default status is `active` for requests/statements and
+`completed` for administrations. Request intent defaults to `order`.
 
-| Medikationstyp | Dokumentationszeitpunkt | Beginn / Ende |
-|---|---|---|
-| Verordnung | authoredOn, optional | leer lassen |
-| Verabreichung | leer lassen | effectiveDateTime oder effectivePeriod |
-| Medikationsaussage | dateAsserted, optional | effectiveDateTime oder effectivePeriod |
+For requests and statements, a complete dose, unit and integer daily frequency
+produce structured dosage. Free text or partial instructions preserve all
+provided facts in `Dosage.text`. Administrations keep dose structured and daily
+frequency as text; a missing dose unit receives DAR `unknown`. A text-only
+administration dosage requires an explicit unknown dose to satisfy the input rule.
 
-Beginn ist bei Verabreichung und Medikationsaussage erforderlich; unbekannte
-Pflichtzeitpunkte werden mit `!dar:unknown` ausdrücklich bezeichnet. Unpassende
-Zeitfelder, ungültige Medikationstypen und nicht passende Statuswerte werden als
-Eingabefehler gemeldet. Absicht gilt nur für Verordnungen. Leerer Status bedeutet
-weiterhin active bei Verordnung/Medikationsaussage und completed bei Verabreichung;
-leere Verordnungsabsicht bedeutet order. Diese Vorgaben stehen in der Ausfüllhilfe.
+Medication IDs include product details, ATC version, form and ingredient system;
+references use those generated IDs.
 
-Die Statusauswahl verweist abhängig vom Medikationstyp auf die sichtbaren Listen
-im Codes-Blatt. Die gemeinsame Java-Eingabeprüfung schützt auch direkt eingelesene
-CSV-Dateien. Einzeldosis, Dosiereinheit und ganzzahlige Dosen pro Tag ergeben ohne
-Freitext eine strukturierte Dosierung. Teilangaben, nicht ganzzahlige Häufigkeiten
-und mit Freitext kombinierte Angaben bleiben vollständig im Dosierungstext.
-Verabreichungen erhalten die Tageshäufigkeit als Text, weil ihr Dosierungstyp kein
-entsprechendes Timing-Feld besitzt. Eine vorhandene Einzeldosis bleibt dabei
-strukturiert, auch ohne Einheit (fehlende Einheit als DAR unknown). Reiner
-Dosierungstext ohne Dosis wird wegen FHIR-Regel mad-1 als Eingabefehler erkannt;
-bei unbekannter Dosis ist ausdrücklich !dar:unknown einzutragen.
+## Observations
 
-Die vorhandenen Vorlagen wurden mit LibreOffice/UNO aus ihren Originalen geändert.
-Alte, zuvor ignorierte Therapiestart-/Therapieende-Werte bleiben als ausdrücklich
-benannte alte Therapieeinträge im Dosierungstext erhalten. Die ATC-Version wurde
-aus der vorherigen tatsächlichen FHIR-Ausgabe übernommen (Vorlage 2019, Demo 2025),
-nicht neu aus dem Ereignisdatum abgeleitet. Das ist eine Migration des bisherigen
-Verhaltens, keine fachliche Bestätigung historischer Beispielpräparate.
+The investigation code identifies what was measured. An additional coding describes
+the same investigation. Result code/system describe a coded answer.
+`Einheit` is the unit label; `Einheitencode` is its UCUM code.
 
-Medication-IDs berücksichtigen alle Produktangaben einschließlich ATC-Version,
-Darreichungsform und Wirkstoffsystem. Dadurch können sich IDs gegenüber alten
-Ausgaben ändern; alle zugehörigen Referenzen werden gemeinsam erzeugt.
-Alte Arbeitsmappen müssen auf das neue Schema angepasst werden. Das einmalige
-historische Erweiterungsskript ist entfernt; Ausgangspunkt ist die aktuelle Vorlage.
+Laboratory rows support number, text, coded answer, components and missing value.
+Clinical documentation also supports Boolean values. Components follow their
+parent row and refer to its `Untersuchung ID` through `Komponente von`.
+A parent and its components form one Observation. Diagnostic reports use those
+investigation IDs for result references.
 
-## Weitere bereinigte Vorlagenkonflikte
+Laboratory text results become `valueCodeableConcept.text`, with explicit DAR
+for the unavailable coding. Clinical text observations use `valueString`.
 
-- Labor: eigene Werttypenauswahl ohne Ja/Nein. Solche Eingaben werden vorab und im Konverter abgewiesen. Entsprechende Synthea-Quellen werden ausdrücklich im Verlustbericht ausgewiesen; es werden keine Ersatzcodes erfunden.
-- Prozedur: Durchführungsbeginn benennt das tatsächliche FHIR-Zielfeld performed[x].
-- Klinische Dokumentation: Untersuchungscode bezeichnet sowohl LOINC- als auch SNOMED-Codes.
-- Labor behält die einheitliche Codesystemspalte mit festem Auswahlwert LOINC.
+## Other clinical fields
 
-## Bewusste Alternativen, keine pauschal zu löschenden Doppelungen
+- `Prozedur`: procedure code/system, optional additional coding, performed start/end,
+  status and category. Contact periods and procedure periods are separate inputs.
+- `DocumentReference`: `Dokumenttext` supplies embedded text. Otherwise,
+  `Dateipfad` and `Embed` select file content. Document type, date and status
+  describe the document.
+- `Impfung`, `Befundbericht` and `Behandlungsplan`: event code/system, time and
+  resource-specific status fields. See the workbook's field help.
 
-- `DocumentReference`: Dokumenttext und Dateipfad/Embed sind unterschiedliche Quellen. Dokumenttext hat Vorrang; Dateipfad/Embed werden dann nicht für den Inhalt verwendet. Das ist dokumentiert, könnte aber eine Prüfung auf gleichzeitig ausgefüllte Quellen vertragen.
-- Diagnose: Code und Zusatzcode ermöglichen mehrere Codierungen desselben Befunds. SNOMED und ICD-10-GM sind nicht allein wegen zweier Codefelder redundant.
-- Diagnose: Dokumentationszeitpunkt, Beginn und Ende entsprechen recordedDate, onset und abatement. Sie beschreiben unterschiedliche Sachverhalte.
-- Messwerte: Einheit ist der Lesetext, Einheitencode der maschinenlesbare UCUM-Code. Ebenso sind Untersuchungscode und Wertcode unterschiedliche Konzepte.
-- Fall: Kontakte entstehen nur anhand der fachlichen Angaben; technische Identifikatoren und Elternbezüge werden automatisch erzeugt. Sekundärkontakte laufen parallel zum primären Aufenthalt.
+## Missing values
 
-Die Medikationsfelder und die Krankenkassenabbildung sind bereinigt. Die aktuellen
-Kontaktregeln einschließlich ihrer Grenzen stehen unter
-[Kontakt-Eingabeprüfungen](contact-input-checks.md).
-
-## Prüfung der Anschriftbereinigung
-
-47 Java-Tests und 39 Python-Tests bestanden. Drei Synthea-Beispiele wurden mit der bereinigten Vorlage neu erzeugt und vollständig zurückkonvertiert. Die 20.844 FHIR-Ressourcen sind inhaltlich identisch zum zuvor validierten Stand. Deshalb wurden die unveränderten FHIR-Bundles nicht nochmals einer vollständigen Terminologieprüfung unterzogen. Vorlagenstile, Zeilenhöhen, verschobene Spaltenbreiten und Auswahllisten wurden gegen die vorherigen Dateien geprüft; die neuen Adressbereiche beider Mappen wurden visuell kontrolliert.
+An empty optional field omits the corresponding property. Explicit missing-value
+choices such as `Unbekannt (Data Absent Reason)` or `!dar:unknown` create the
+appropriate FHIR extension. [Selection lists](clinical-selections.md) describe
+where those choices apply. Profile requirements are checked by the optional
+[FHIR validator](fhir-validation.md).

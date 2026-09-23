@@ -5,7 +5,7 @@ OPTIONS = [
  ('SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER', 'false', ['Prozedur verweist auf den Kontakt (Procedure.encounter).']),
  ('SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION', 'true', ['Kontakt verweist auf Prozeduren in Encounter.diagnosis.']),
  ('ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER', 'false', ['Fehlende Diagnose des Unterkontakts aus dem übergeordneten Kontakt ergänzen.', 'Bei false erfolgt keine automatische Diagnoseübernahme.']),
- ('VALIDATE_STRICT', 'true', ['Excel-Eingaben vor der Konvertierung streng prüfen und bei Fehlern abbrechen.', 'Dies ersetzt nicht die anschließende FHIR-Validierung.']),
+ ('CHECK_INPUT_CONSISTENCY', 'true', ['Excel-Eingaben vor der Konvertierung auf Konsistenz prüfen und bei Fehlern abbrechen.', 'Tabellenstruktur und Optionen werden immer geprüft; FHIR-Validierung wird separat gesteuert.']),
 ]
 for key,label in [('CONSENT','Consent'),('CONDITION','Diagnosen'),('ENCOUNTER_LEVEL_2','Abteilungskontakte'),
                   ('ENCOUNTER_LEVEL_3','Versorgungsstellenkontakte'),('MEDICATION_REQUEST','Verordnungen'),
@@ -20,17 +20,10 @@ OPTIONS += [
  ('PID_LAST_NUMBER_INCREASE_LOOP_OFFSET', '0', ['Versatz der letzten ID-Zahl je zusätzlichem Durchlauf.', 'Versatz so wählen, dass keine doppelten Patienten-IDs entstehen.']),
  ('PID_LAST_NUMBER_INCREASE_LOOP_COUNT', '0', ['Zusätzliche Durchläufe zur Vervielfachung des Datensatzes.', '0 bedeutet keine zusätzlichen Durchläufe; passende ID-Versätze festlegen.']),
 ]
-SYNTHEA_OVERRIDES = {
-    'SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER': 'true',
-    'SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION': 'false',
-    'SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER': 'true',
-    'SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION': 'false',
-    'VALIDATE_STRICT': 'true',
-}
 
 
 def lines(overrides=None):
-    overrides = overrides or {'VALIDATE_STRICT': 'true'}
+    overrides = overrides or {'CHECK_INPUT_CONSISTENCY': 'true'}
     result = ['# Konvertierungsoptionen', '# Gelbe Zeilen enthalten die eigentlichen Einstellungen.',
               '# # am Zeilenanfang: auskommentiert, der Default gilt.',
               '# Auskommentiert bedeutet nicht automatisch false oder ausgeschaltet.',
@@ -45,55 +38,29 @@ def lines(overrides=None):
     return result
 
 
-CONFIG_NAME = 'converter-options.config'
-
-
 def workflow_defaults():
-    return {name: SYNTHEA_OVERRIDES.get(name, default) for name, default, _ in OPTIONS}
+    return {name: default for name, default, _ in OPTIONS}
 
 
-def config_text():
-    result = ['# Konvertierungsoptionen für Synthea → Excel → FHIR',
-              '# Vorhandene Dateien werden nicht überschrieben.',
-              '# Aktive Angaben überschreiben die Workflow-Defaults.',
-              '# Fehlende oder auskommentierte Angaben verwenden den Workflow-Default.',
-              '# true = ja; false = nein.', '']
-    for name, default, description in OPTIONS:
-        value = SYNTHEA_OVERRIDES.get(name, default)
-        result.extend('# ' + line for line in description)
-        result.extend(['# Workflow-Default: ' + (value or '(leer)'), name + ' =' + (' ' + value if value else ''), ''])
-    return '\n'.join(result).rstrip() + '\n'
-
-
-def ensure_config(directory):
-    from pathlib import Path
-    path = Path(directory) / CONFIG_NAME
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        with path.open('x', encoding='utf-8') as file:
-            file.write(config_text())
-    except FileExistsError:
-        pass
-    return path
-
-
-def resolve_config(path, patients=None):
+def resolve_config(path=None, patients=None):
     import json
     from pathlib import Path
     import subprocess
     root = Path(__file__).resolve().parents[1]
-    request = {'text': Path(path).read_text(encoding='utf-8'), 'defaults': workflow_defaults()}
+    request = {'text': Path(path).read_text(encoding='utf-8') if path is not None else '', 'defaults': {}}
+    if path is not None:
+        request['name'] = Path(path).stem
     if patients is not None:
         request['patients'] = patients
     result = subprocess.run(['java', '-cp', str(root / 'target/excel2fhir.jar'),
                              str(root / 'scripts/WorkflowOptions.java')],
                             input=json.dumps(request), capture_output=True, text=True)
     if result.returncode:
-        raise RuntimeError('Konvertierungsoptionen konnten nicht geprüft werden. '
-                           'Converter neu bauen. ' + result.stderr.strip())
+        raise RuntimeError('Converter options could not be checked. '
+                           'Rebuild the converter. ' + result.stderr.strip())
     resolved = json.loads(result.stdout)
     if resolved['errors']:
-        raise ValueError('Ungültige Konvertierungsoptionen:\n' + '\n'.join(resolved['errors']))
+        raise ValueError('Invalid converter options:\n' + '\n'.join(resolved['errors']))
     return resolved
 
 
@@ -102,3 +69,16 @@ def property_line(name, value):
     value = str(value).replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
     value = value.replace(' ', '\\u0020').replace(',', '\\u002c').replace(chr(34), '\\u0022')
     return name + ' =' + (' ' + value if value else '')
+
+
+def selected_configs(files=(), patients=None):
+    result = []
+    names = set()
+    for path in files or [None]:
+        resolved = resolve_config(path, patients)
+        name = resolved.get('name', 'Konvertierungsoptionen')
+        if name.lower() in names:
+            raise ValueError('Option sets have the same output name: ' + name)
+        names.add(name.lower())
+        result.append({'name': name, 'path': str(path) if path is not None else None, **resolved})
+    return result
