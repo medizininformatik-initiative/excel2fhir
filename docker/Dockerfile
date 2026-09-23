@@ -2,7 +2,8 @@ FROM maven:3.8.5-openjdk-17 AS maven_tool_chain
 COPY pom.xml /tmp/
 COPY . /tmp/
 WORKDIR /tmp/
-RUN mvn clean install
+RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
+    mvn -B clean install
 
 
 FROM amazoncorretto:17.0.20-alpine
