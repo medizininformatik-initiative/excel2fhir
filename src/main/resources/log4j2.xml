@@ -18,11 +18,11 @@
 	<Loggers>
 		<!-- additivity="true" because only one logger catches the message if false -->
 <!-- 		DO NOT LOG WITH DEBUG WHEN YOU START THE VALIDATOR! The logfile size is then 1 - 5 GB -->
-		<Root level="warn" additivity="true" includeLocation="true">
+			<Root level="error" additivity="true" includeLocation="true">
 <!-- 			<AppenderRef ref="MyFile" /> -->
 <!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
 		</Root>
-		<logger name="de.uni_leipzig" level="warn" additivity="true" includeLocation="true">
+			<logger name="de.uni_leipzig" level="error" additivity="true" includeLocation="true">
 <!-- 			<AppenderRef ref="MESSAGE_ONLY" /> -->
 			<AppenderRef ref="DATE_LEVEL_SOURCE" />
 <!-- 			<AppenderRef ref="DATE_LEVEL_SOURCE_LINENUMBER" /> -->

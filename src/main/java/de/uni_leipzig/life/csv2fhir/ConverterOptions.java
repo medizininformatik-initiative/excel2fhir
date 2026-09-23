@@ -462,13 +462,21 @@ public class ConverterOptions {
     }
 
     public String getFullPID(String pid, int iteration) {
+        return getFullPIDForFileName(pid, iteration).replace('_', '-');
+    }
+
+    public String getFullPIDForFileName(String pid) {
+        return getFullPIDForFileName(pid, loopCounter);
+    }
+
+    private String getFullPIDForFileName(String pid, int iteration) {
         int loopOffset = Math.multiplyExact(iteration, getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET));
         int pidOffset = Math.addExact(getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET), loopOffset);
         if (pidOffset > 0) {
             pid = getIncreasedLastPidNumber(pid, pidOffset);
         }
         pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
-        return pid.replace('_', '-'); // AXS: (Some) FHIR Server will not accept IDs with an underscore!
+        return pid;
     }
 
     /**

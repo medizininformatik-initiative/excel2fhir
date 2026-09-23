@@ -83,7 +83,7 @@ public class FHIRValidatorTest {
                 OutputFileType.NDJSON);
         writer.appendBundle(bundle);
         writer.closeWriterAndRenameOrDeleteIfEmpty("");
-        assertTrue(Files.readString(directory.resolve("case-.ndjson")).contains("patient"));
+        assertTrue(Files.readString(directory.resolve("case.ndjson")).contains("patient"));
         try (var paths = Files.list(directory)) {
             var report = paths.filter(p -> p.toString().endsWith(".validation.json")).findFirst().orElseThrow();
             assertTrue(Files.readString(report).contains("Patient error"));

@@ -38,6 +38,13 @@ public class ConverterOptionsTest {
         assertEquals("demo-p111-x", o.getFullPID("p001", 1));
     }
 
+    @Test public void filenamesPreserveUnderscoresWhileResourceIdsUseHyphens() {
+        var options = ConverterOptions.fromText("PID_PREFIX=demo_\nPID_SUFFIX=_x\n"
+                + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=10");
+        assertEquals("demo_p_011_x", options.getFullPIDForFileName("p_001"));
+        assertEquals("demo-p-011-x", options.getFullPID("p_001"));
+    }
+
     @Test public void offsetsCannotWrapOrSilentlyIgnoreNegativeSettings() {
         assertFalse(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=-1").getErrors().isEmpty());
         assertFalse(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_LOOP_OFFSET=-1").getErrors().isEmpty());

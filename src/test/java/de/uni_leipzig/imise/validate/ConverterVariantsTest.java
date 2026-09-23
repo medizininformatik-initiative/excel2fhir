@@ -51,11 +51,11 @@ public class ConverterVariantsTest {
         for (var set : sets) {
             Path directory = run.resolve("fhir").resolve(set.directoryName());
             assertTrue(Files.isRegularFile(directory.resolve("patients.ndjson")));
-            assertTrue(Files.isRegularFile(directory.resolve("case-.json")));
+            assertTrue(Files.isRegularFile(directory.resolve("case.json")));
             assertTrue(Files.isRegularFile(run.resolve("details/options/case.xlsx").resolve(set.directoryName()).resolve("converter-options.config")));
         }
-        var a = Files.readString(run.resolve("fhir/Konvertierungsoptionen_A/case-.json"));
-        var b = Files.readString(run.resolve("fhir/B_Konvertierungsoptionen/case-.json"));
+        var a = Files.readString(run.resolve("fhir/Konvertierungsoptionen_A/case.json"));
+        var b = Files.readString(run.resolve("fhir/B_Konvertierungsoptionen/case.json"));
         var parser = de.uni_leipzig.life.csv2fhir.OutputFileType.JSON.getParser();
         var first = parser.parseResource(org.hl7.fhir.r4.model.Bundle.class, a);
         var second = parser.parseResource(org.hl7.fhir.r4.model.Bundle.class, b);

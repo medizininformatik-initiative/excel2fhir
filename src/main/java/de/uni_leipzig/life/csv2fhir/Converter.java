@@ -259,7 +259,7 @@ public abstract class Converter {
      * @param msg
      */
     public void info(String msg) {
-        warning(msg, 1);
+        info(msg, 1);
     }
 
     /**
