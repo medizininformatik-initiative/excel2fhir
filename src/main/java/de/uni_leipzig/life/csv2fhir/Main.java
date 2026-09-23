@@ -87,10 +87,12 @@ public class Main implements Callable<Integer> {
                 var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
                         : ConverterOptionSet.external(converterOptions);
                 for (var set : sets) {
-                    var destination = run.staging.resolve(set.directoryName());
+                    var destination = sets.size() > 1 ? run.staging.resolve(set.directoryName()) : run.staging;
                     if (prefixes.size() > 1) destination = destination.resolve(prefix + "Person");
                     Files.createDirectories(destination);
-                    set.snapshot(run.directory.resolve("details/options").resolve(run.staging.relativize(destination)));
+                    var snapshot = run.directory.resolve("details/options").resolve(set.directoryName());
+                    if (prefixes.size() > 1) snapshot = snapshot.resolve(prefix + "Person");
+                    set.snapshot(snapshot);
                     Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
                     converter.convertFiles(patientsPerBundle, outputFileTypes);
                     importProblems |= converter.hasImportProblems();

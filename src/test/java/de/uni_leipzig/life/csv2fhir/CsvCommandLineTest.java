@@ -61,14 +61,14 @@ public class CsvCommandLineTest {
     @Test
     public void successfulImportReturnsZeroWithoutValidation() throws Exception {
         assertEquals(0, run());
-        assertTrue(Files.exists(output.resolve("fhir/default/case.json")));
+        assertTrue(Files.exists(output.resolve("fhir/case.json")));
         assertTrue(Files.readString(output.resolve("status.txt")).contains("NOT_VALIDATED"));
-        assertTrue(Files.readString(output.resolve("fhir/default/patients.ndjson")).contains("p1"));
+        assertTrue(Files.readString(output.resolve("fhir/patients.ndjson")).contains("p1"));
         Path previous = output;
         output = output.getParent();
         assertEquals(0, run());
         assertNotEquals(previous, output);
-        assertTrue(Files.exists(previous.resolve("fhir/default/case.json")));
+        assertTrue(Files.exists(previous.resolve("fhir/case.json")));
         assertTrue(Files.exists(input.resolve("case_Person.csv")));
     }
 
@@ -76,8 +76,8 @@ public class CsvCommandLineTest {
     public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=treu\n");
         assertEquals(1, run());
-        assertTrue(Files.readString(output.resolve("details/reports/Konvertierungsoptionen/case.import.json")).contains("INCOMPLETE"));
-        assertFalse(Files.exists(output.resolve("fhir/default/case.json")));
+        assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
+        assertFalse(Files.exists(output.resolve("fhir/case.json")));
     }
 
     @Test
@@ -96,9 +96,9 @@ public class CsvCommandLineTest {
         try (var runs = Files.list(output)) {
             output = runs.findFirst().orElseThrow();
         }
-        assertTrue(Files.readString(output.resolve("fhir/default/case.json")).contains("p1"));
+        assertTrue(Files.readString(output.resolve("fhir/case.json")).contains("p1"));
         verify(validator).validateAndWriteReport(any(Bundle.class),
-                eq(output.resolve("details/pending/default/case_.validation.json").toFile()));
+                eq(output.resolve("details/pending/case_.validation.json").toFile()));
     }
 
     @Test
@@ -218,12 +218,31 @@ public class CsvCommandLineTest {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_PREFIX=A-\n");
         Files.writeString(input.resolve("case2_Konvertierungsoptionen.csv"), "PID_PREFIX=B-\n");
         assertEquals(0, run());
-        assertTrue(Files.readString(output.resolve("fhir/Konvertierungsoptionen/case_Person/case_A-.json")).contains("A-p1"));
-        assertTrue(Files.readString(output.resolve("fhir/Konvertierungsoptionen/case2_Person/case2_B-.json")).contains("B-p2"));
+        assertTrue(Files.readString(output.resolve("fhir/case_Person/case_A-.json")).contains("A-p1"));
+        assertTrue(Files.readString(output.resolve("fhir/case2_Person/case2_B-.json")).contains("B-p2"));
         var a = new ConverterOptions(output.resolve("details/options/Konvertierungsoptionen/case_Person/converter-options.config").toString());
         var b = new ConverterOptions(output.resolve("details/options/Konvertierungsoptionen/case2_Person/converter-options.config").toString());
         assertEquals("A-p1", a.getFullPID("p1"));
         assertEquals("B-p2", b.getFullPID("p2"));
+    }
+
+    @Test
+    public void multipleInputsAndVariantsKeepSeparatePatientStreams() throws Exception {
+        Files.writeString(input.resolve("case2_Person.csv"),
+                Files.readString(input.resolve("case_Person.csv")).replace("p1", "p2"));
+        Path a = temp.newFile("KDS-A.config").toPath();
+        Path b = temp.newFile("KDS-B.config").toPath();
+        Files.writeString(a, "PID_PREFIX=A-\n");
+        Files.writeString(b, "PID_PREFIX=B-\n");
+        assertEquals(0, run("--converter-options", a.toString(), "--converter-options", b.toString()));
+        for (String variant : java.util.List.of("KDS-A", "KDS-B")) {
+            for (String source : java.util.List.of("case", "case2")) {
+                Path directory = output.resolve("fhir/" + variant + "/" + source + "_Person");
+                var lines = Files.readAllLines(directory.resolve("patients.ndjson"));
+                assertEquals(1, lines.size());
+                assertTrue(lines.get(0).contains(source.equals("case") ? "p1" : "p2"));
+            }
+        }
     }
 
 }

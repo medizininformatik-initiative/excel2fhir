@@ -138,9 +138,9 @@ public class Excel2Fhir {
         java.util.Arrays.sort(sources);
         for (File sourceExcelFile : sources) {
             File csv = sources.length == 1 ? tempDir : new File(tempDir, sourceExcelFile.getName());
-            File result = sources.length == 1 ? resultDir : new File(resultDir, sourceExcelFile.getName());
-            convertExcelFile(sourceExcelFile, sheetNamePatterns, csv, result, patientsPerBundle, sources.length > 1,
-                    outputFileTypes);
+            Files.createDirectories(csv.toPath());
+            convertExcelFile(sourceExcelFile, sheetNamePatterns, csv, resultDir, patientsPerBundle, false,
+                    sources.length > 1 ? sourceExcelFile.getName() : null, outputFileTypes);
         }
     }
 
@@ -159,7 +159,7 @@ public class Excel2Fhir {
     public void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir,
             File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
-        convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true,
+        convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true, null,
                 outputFileTypes);
     }
 
@@ -179,7 +179,7 @@ public class Excel2Fhir {
      */
     private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir,
             File resultDir,
-            int patientsPerBundle, boolean createAndCleanOutputDirectories, OutputFileType... outputFileTypes)
+            int patientsPerBundle, boolean createAndCleanOutputDirectories, String inputName, OutputFileType... outputFileTypes)
             throws IOException {
         var sets = optionFiles.isEmpty() ? ConverterOptionSet.workbook(sourceExcelFile)
                 : ConverterOptionSet.external(optionFiles);
@@ -194,7 +194,9 @@ public class Excel2Fhir {
         String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "-";
         Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
         for (var set : sets) {
-            Path destination = resultDir.toPath().resolve(set.directoryName());
+            Path destination = resultDir.toPath();
+            if (sets.size() > 1) destination = destination.resolve(set.directoryName());
+            if (inputName != null) destination = destination.resolve(inputName);
             Files.createDirectories(destination);
             Path snapshots = optionsDirectory == null ? resultDir.toPath().resolve("options") : optionsDirectory;
             set.snapshot(snapshots.resolve(sourceExcelFile.getName()).resolve(set.directoryName()));

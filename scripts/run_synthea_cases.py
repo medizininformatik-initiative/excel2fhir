@@ -115,9 +115,12 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
     output.mkdir(parents=True, exist_ok=True)
     sources = [source_dir] if source_dir.is_file() else sorted(source_dir.glob('*.json'))
     source_patients = []
+    patient_sources = []
     for path in sources:
         try:
             candidate = json.loads(path.read_text(encoding='utf-8'))
+            if any(e.get('resource', {}).get('resourceType') == 'Patient' for e in candidate.get('entry', [])):
+                patient_sources.append(path)
             source_patients.extend(e['resource']['id'] for e in candidate.get('entry', [])
                                    if e.get('resource', {}).get('resourceType') == 'Patient')
         except (ValueError, KeyError, TypeError, AttributeError):
@@ -173,21 +176,29 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             if len(runs) != 1:
                 raise ValueError('Konverterlauf fehlt; siehe ' + str(case / 'conversion.log'))
             converted = runs[0]
-            final = out / 'fhir'
-            if len(sources) > 1:
-                final = final / book.name
-            # Publish precisely the converter's output formats and variant directories.
-            if (converted / 'fhir').is_dir():
-                final.mkdir(parents=True, exist_ok=True)
-                for variant in (converted / 'fhir').iterdir():
-                    shutil.move(str(variant), final / variant.name)
-            _, statuses = inspect_conversion(final, conversion.returncode,
-                converted / 'details/reports', case / 'conversion.log', validate=validate,
-                expected_imports=len(selected))
+            generated = converted / 'fhir'
+            destinations = {}
+            try:
+                _, statuses = inspect_conversion(generated, conversion.returncode,
+                    converted / 'details/reports', case / 'conversion.log', validate=validate,
+                    expected_imports=len(selected))
+            finally:
+                for item in selected:
+                    origin = generated / item['name'] if len(selected) > 1 else generated
+                    final = out / 'fhir'
+                    if len(selected) > 1:
+                        final /= item['name']
+                    if len(patient_sources) > 1:
+                        final /= book.name
+                    if origin.is_dir():
+                        final.mkdir(parents=True, exist_ok=True)
+                        for artifact in origin.iterdir():
+                            shutil.move(str(artifact), final / artifact.name)
+                    destinations[item['name']] = final
             variants = []
             for item in selected:
                 try:
-                    result = check_configured(bundle, read_output(final / item['name']), report, item['values'],
+                    result = check_configured(bundle, read_output(destinations[item['name']]), report, item['values'],
                                               item['patients'][report['sourcePatient']])
                 except Exception as error:
                     raise ValueError(f"Variante {item['name']}: {error}") from error

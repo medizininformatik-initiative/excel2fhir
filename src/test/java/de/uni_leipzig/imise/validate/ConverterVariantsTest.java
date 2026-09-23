@@ -82,9 +82,44 @@ public class ConverterVariantsTest {
                 "--converter-options", options.toString()));
         Path run;
         try (var runs = Files.list(output)) { run = runs.findFirst().orElseThrow(); }
-        assertTrue(Files.exists(run.resolve("fhir/DIZ/case-site-.json")));
+        assertTrue(Files.exists(run.resolve("fhir/case-site-.json")));
         var saved = new ConverterOptions(run.resolve("details/options/case.xlsx/DIZ/converter-options.config").toString());
         assertTrue(saved.is(ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY));
         assertFalse(saved.is(ConverterOptions.BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER));
     }
+    @Test
+    public void outputGroupsOnlyMultipleInputsAndVariants() throws Exception {
+        for (int inputs : List.of(1, 2)) {
+            for (int variants : List.of(1, 2)) {
+                Path root = temp.newFolder("layout-" + inputs + "-" + variants).toPath();
+                Path input = Files.createDirectory(root.resolve("input"));
+                Path output = Files.createDirectory(root.resolve("output"));
+                for (int i = 1; i <= inputs; i++) {
+                    Files.copy(Path.of("FHIR_Testdatengenerator_Vorlage.xlsx"), input.resolve("case" + i + ".xlsx"));
+                }
+                var args = new java.util.ArrayList<>(List.of("-i", input.toString(), "-o", output.toString()));
+                for (int v = 1; v <= variants; v++) {
+                    Path options = root.resolve("KDS-" + v + ".config");
+                    Files.writeString(options, "PID_PREFIX=variant" + v + "-\n");
+                    args.addAll(List.of("--converter-options", options.toString()));
+                }
+                assertEquals(0, new CommandLine(new Excel2FhirMain()).execute(args.toArray(String[]::new)));
+                Path run;
+                try (var runs = Files.list(output)) { run = runs.findFirst().orElseThrow(); }
+                for (int v = 1; v <= variants; v++) {
+                    for (int i = 1; i <= inputs; i++) {
+                        Path directory = run.resolve("fhir");
+                        if (variants > 1) directory = directory.resolve("KDS-" + v);
+                        if (inputs > 1) directory = directory.resolve("case" + i + ".xlsx");
+                        assertTrue(Files.exists(directory.resolve("case" + i + "-variant" + v + "-.json")));
+                        assertEquals(10, Files.readAllLines(directory.resolve("patients.ndjson")).size());
+                        try (var files = Files.list(directory)) {
+                            assertEquals(2, files.count());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }

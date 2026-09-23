@@ -117,3 +117,54 @@ class WorkflowTest(unittest.TestCase):
             report.unlink()
             with self.assertRaisesRegex(ValueError, 'fehlt'):
                 inspect_conversion(directory, 0, expected_imports=2)
+
+    def test_output_layout_for_single_and_multiple_sources_and_variants(self):
+        from types import SimpleNamespace
+        for inputs in (1, 2):
+            for variants in (1, 2):
+                with self.subTest(inputs=inputs, variants=variants), tempfile.TemporaryDirectory() as d:
+                    root = Path(d)
+                    source = root / 'source'
+                    source.mkdir()
+                    bundle = {'resourceType': 'Bundle', 'entry': [
+                        {'resource': {'resourceType': 'Patient', 'id': 'p1'}}]}
+                    for i in range(inputs):
+                        (source / f'patient{i}.json').write_text(json.dumps(bundle))
+                    # An auxiliary bundle does not require an input grouping level.
+                    (source / 'providers.json').write_text('{"entry": []}')
+                    selected = [{'name': f'KDS-{v}', 'values': {}, 'patients': {'p1': ['p1']}}
+                                for v in range(variants)]
+
+                    def convert(command, **kwargs):
+                        case = Path(command[command.index('-o') + 1])
+                        converted = case / 'run-test-excel-to-fhir'
+                        for item in selected:
+                            target = converted / 'fhir'
+                            if variants > 1:
+                                target /= item['name']
+                            target.mkdir(parents=True, exist_ok=True)
+                            (target / 'case.json').write_text(json.dumps(bundle))
+                            (target / 'patients.ndjson').write_text(json.dumps(bundle) + '\n')
+                            reports = converted / 'details/reports' / item['name']
+                            reports.mkdir(parents=True)
+                            (reports / 'case.import.json').write_text('{"status":"COMPLETE"}')
+                        return SimpleNamespace(returncode=0)
+
+                    with patch('run_synthea_cases.environment', return_value={}), \
+                         patch('run_synthea_cases.selected_configs', return_value=selected), \
+                         patch('run_synthea_cases.read_sheets', return_value={'Codes': []}), \
+                         patch('run_synthea_cases.prepare', return_value=({}, {'sourcePatient': 'p1'})), \
+                         patch('run_synthea_cases.write_workbook'), \
+                         patch('run_synthea_cases.check_configured', return_value={'outputPatients': ['p1']}) as check, \
+                         patch('run_synthea_cases.subprocess.run', side_effect=convert):
+                        self.assertEqual(0, run(source, root / 'output'))
+                        self.assertEqual(inputs * variants, check.call_count)
+                    run_dir = next((root / 'output').glob('run-*'))
+                    for item in selected:
+                        for i in range(inputs):
+                            target = run_dir / 'fhir'
+                            if variants > 1:
+                                target /= item['name']
+                            if inputs > 1:
+                                target /= f'Fall-patient{i}.xlsx'
+                            self.assertEqual({'case.json', 'patients.ndjson'}, {p.name for p in target.iterdir()})
