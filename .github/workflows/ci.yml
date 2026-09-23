@@ -103,7 +103,7 @@ jobs:
       run: |
         mkdir -p "$RUNNER_TEMP/synthea-results"
         set +e
-        docker run --rm \
+        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
           -v "$PWD/scripts/tests/fixtures/synthea:/input:ro" \
           -v "$RUNNER_TEMP/synthea-results:/output" \
           excel2fhir-synthea:ci -v -i /input -o /output
