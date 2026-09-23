@@ -14,6 +14,9 @@ on:
     - release
     - develop
 
+env:
+  TRIVY_VERSION: v0.74.0
+
 jobs:
 
   test:
@@ -66,7 +69,7 @@ jobs:
     - name: Run Trivy Vulnerability Scanner and Save to Sarif File
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: security-scan-build:latest
         format: sarif
         output: trivy-results.sarif
@@ -81,7 +84,7 @@ jobs:
     - name: Run Trivy Vulnerability Scanner
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: security-scan-build:latest
         exit-code: 1
         ignore-unfixed: true
@@ -123,7 +126,7 @@ jobs:
     - name: Scan Synthea importer image
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: excel2fhir-synthea:ci
         exit-code: 1
         ignore-unfixed: true
@@ -160,7 +163,7 @@ jobs:
     - name: Scan complete workflow image
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
-        version: v0.74.0
+        version: ${{ env.TRIVY_VERSION }}
         image-ref: excel2fhir-ci-synthea:latest
         exit-code: 1
         ignore-unfixed: true
