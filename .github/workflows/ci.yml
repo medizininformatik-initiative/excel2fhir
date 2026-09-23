@@ -64,8 +64,9 @@ jobs:
         push: false
 
     - name: Run Trivy Vulnerability Scanner and Save to Sarif File
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: v0.74.0
         image-ref: security-scan-build:latest
         format: sarif
         output: trivy-results.sarif
@@ -78,8 +79,9 @@ jobs:
         sarif_file: trivy-results.sarif
 
     - name: Run Trivy Vulnerability Scanner
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: v0.74.0
         image-ref: security-scan-build:latest
         exit-code: 1
         ignore-unfixed: true
@@ -119,8 +121,9 @@ jobs:
         assert not list((directory / 'details').glob('cases/*/run-*/fhir/**/*.json')), 'Duplicate final bundles'
         PYTHON
     - name: Scan Synthea importer image
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: v0.74.0
         image-ref: excel2fhir-synthea:ci
         exit-code: 1
         ignore-unfixed: true
@@ -155,8 +158,9 @@ jobs:
         assert bundles == lines, 'JSON and NDJSON differ'
         PYTHON
     - name: Scan complete workflow image
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
+        version: v0.74.0
         image-ref: excel2fhir-ci-synthea:latest
         exit-code: 1
         ignore-unfixed: true
