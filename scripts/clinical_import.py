@@ -116,7 +116,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
                     category, category_system, _ = coding(r['category'])
                     if category_system != SYSTEMS[SNOMED]: raise UnsupportedValue('Procedure category must use SNOMED')
                 decision = procedures[r['id']]
-                if decision['status'] == 'excluded':
+                if decision['status'] in ('excluded', 'context-conflict'):
                     mappings.append({'sourceId': r['id'], **decision})
                     loss('$', decision['reason'])
                     continue
@@ -255,7 +255,9 @@ def prepare_clinical(entries, pid, encounter_numbers):
             loss('$', 'Ressource ausgelassen: ' + str(ex))
     has_local_products = any(m.get('provider') == 'mmi-local' for m in mappings)
     medication_mappings = [m for m in mappings if m['source'].get('system') == RXNORM]
-    return rows, {'productCatalog': products.metadata, 'productTexts': product_texts.report(),
+    from contextual_procedures import summary as procedure_summary
+    return rows, {'procedureMappingSummary': procedure_summary(procedures),
+                  'productCatalog': products.metadata, 'productTexts': product_texts.report(),
                   'medicationMappingSummary': {
                       'events': len(medication_mappings),
                       'withAtc': sum(bool(m.get('atc')) for m in medication_mappings),

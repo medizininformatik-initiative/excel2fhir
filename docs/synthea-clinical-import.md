@@ -36,7 +36,8 @@ resource-specific tables:
   source concepts, exclusions and provisional statuses.
 - [Medication](medication-product-catalog.md): German ATC, PZN and UNII assignments
   with dose policies and source evidence.
-- `synthea-procedures-ops-2026.json`: OPS assignments, regional splits and therapy blocks.
+- [Procedures](procedure-mapping-maintenance.md): OPS assignments, contextual
+  candidates, source provenance, regional splits and therapy blocks.
 - [German names and addresses](synthea-german-demographics.md) and
   [clinical text](synthea-german-texts.md).
 
@@ -63,11 +64,16 @@ Regional CT rows and radiation fractions retain their source time window. A
 chemotherapy block spans its first through last event. Split rows retain source
 codes and IDs in the report, with their own target coding in Excel.
 
-Other documented assumptions cover dental material, pulmonary function tests,
-the six-minute walk test and cardiopulmonary bypass. A needs assessment can become
-a geriatric assessment when source age supports that rule. Referrals and routine
-services with insufficient OPS evidence retain SNOMED coding. The metabolic-panel
-procedure is recorded as omitted while its laboratory results and reports are retained.
+Contextual rules enrich 261 additional source concepts with compatible OPS
+replacements or separate companion services. Selection is deterministic per source
+event, with guards for age, reproductive context, anatomy, indication and time.
+Conflicting source events are reported and withheld; incompatible enrichments retain
+the source service. The report records rejected candidates, assumptions, selection
+seeds, synthetic periods and shared output links. See
+[procedure mapping behavior and maintenance](procedure-mapping-maintenance.md) for
+precise defaults, coverage interpretation and reproducible source checks.
+The metabolic-panel procedure is recorded as omitted while its laboratory results
+and reports are retained.
 
 The table records sources for these decisions, including the
 [OPS chemotherapy/radiotherapy rules](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm).
