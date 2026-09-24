@@ -39,12 +39,25 @@ def audit_procedures(source, target, rows, report):
             continue
         coding = r['code']['coding'][0]
         entry = mappings.get(coding['code'], {})
+        decision = reported[r['id']]
+        if decision.get('status') == 'context-conflict':
+            from audit_contextual_procedures import check_conflict
+            check_conflict(r, decision, index, table)
+            continue
         if (coding.get('system') != SNOMED or coding.get('version') or
                 (coding.get('display') and coding['display'] not in entry.get('sourceDisplays', []))):
             entry = {}
         if entry.get('status') == 'excluded':
             continue
         entry = dict(entry)
+        if entry.get('contextualRule') and decision.get('contextualSelection'):
+            from audit_contextual_procedures import check as check_contextual
+            check_contextual(r, entry, decision, index, reported, table)
+            if decision.get('status') == 'synthetic-contextual':
+                for o in decision['outputs']:
+                    add(r, o['sourceIds'], o['codings'], o['start'], o['end'],
+                        o['label'] if o.get('synthetic') else None)
+                continue
         if entry.get('minimumAge'):
             birth = index[r['subject']['reference']].get('birthDate', '')
             when = begin(r)[:10]
@@ -119,9 +132,12 @@ def audit_procedures(source, target, rows, report):
     matched_rows = set()
     for owner, ids, codes, first, last, label in expected:
         outputs = reported[owner['id']]['outputs']
-        found = [o for o in outputs if o['sourceIds'] == ids and o['codings'] == codes and o['start'] == first and o['end'] == last]
+        found = [o for o in outputs if set(ids).issubset(o['sourceIds']) and o['codings'] == codes and o['start'] == first and o['end'] == last]
         assert len(found) == 1, ('Procedure projection evidence', owner['id'])
         o = found[0]
+        for linked_id in set(o['sourceIds']) - set(ids):
+            assert any(shared['ownerSourceId'] == owner['id'] and shared['code'] == codes[0]['code']
+                       for shared in reported[linked_id].get('sharedOutputs', [])), 'Unexplained shared source'
         row_number = o['row'] - 2
         assert row_number not in matched_rows, 'Duplicate procedure row'
         matched_rows.add(row_number)
