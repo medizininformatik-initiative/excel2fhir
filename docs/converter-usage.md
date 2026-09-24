@@ -25,7 +25,7 @@ subdirectory. To select one workbook, append `-f input/MyCase.xlsx` after
 Each invocation creates a fresh run directory:
 
 ```text
-outputGlobal/run-YYYYMMDD-HHmmssZ-excel-to-fhir/
+outputGlobal/run-YYYYMMDD_HH-mm-ss-excel-to-fhir/
   fhir/
     Konvertierungsoptionen/  JSON bundles and patients.ndjson
   status.txt                Overall result
@@ -37,7 +37,8 @@ outputGlobal/run-YYYYMMDD-HHmmssZ-excel-to-fhir/
     pending/                Incomplete output for diagnosis
 ```
 
-Run names use UTC and a numeric suffix when needed. Previous runs remain available.
+Run names use local system time and a numeric suffix when needed.
+Previous runs remain available.
 Each KDS variant has its own output directory. Multiple inputs receive additional
 input directories.
 
