@@ -30,6 +30,20 @@ public class EncounterConverterTest {
     private static final String PRIMARY = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,Normalstationär\n";
     private static final String OP = "PID1,1,2026-05-02T09:00:00Z,,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,Operation\n";
 
+    @Test
+    public void unicodeDepartmentsProduceCodedServiceTypes() throws Exception {
+        String[][] departments = {{"Hämatologie und Onkologie", "0500"}, {"Pädiatrie", "1000"}};
+        for (String[] department : departments) {
+            EncounterConverter.resetStateForTesting();
+            ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT
+                    + PRIMARY.replace("Allgemeine Chirurgie", department[0]));
+            var coding = getEncounters(result, EncounterLevel2.class).get(0)
+                    .getServiceType().getCodingFirstRep();
+            assertEquals("http://fhir.de/CodeSystem/dkgev/Fachabteilungsschluessel", coding.getSystem());
+            assertEquals(department[1], coding.getCode());
+        }
+    }
+
     @Test public void operationRunsAlongsideBedUntilPrimaryEnd() throws Exception {
         ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY + OP
                 + "PID1,1,2026-05-03T12:00:00Z,2026-05-05T12:00:00Z,stationaer,Innere Medizin,ITS,Zimmer 2,Bett 2,,Intensivstationär\n");

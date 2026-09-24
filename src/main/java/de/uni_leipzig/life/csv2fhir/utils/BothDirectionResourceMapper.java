@@ -1,7 +1,9 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,8 +63,9 @@ public class BothDirectionResourceMapper implements Map<String, String> {
             if (mapFile == null) {
                 mapFile = Thread.currentThread().getContextClassLoader().getResource(resourceFileName);
             }
-            try (InputStream inputStream = mapFile.openStream()) {
-                codeMapLoader.load(inputStream);
+            try (InputStream inputStream = mapFile.openStream();
+                    InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                codeMapLoader.load(reader);
             } catch (Exception e) {
                 e.printStackTrace();
             }
