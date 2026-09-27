@@ -77,7 +77,7 @@ coverage, companion coverage, context conflicts and emitted OPS rows.
 Every entry's `provenance` contains its rationale, review status and pinned module
 evidence. Evidence includes repository/commit, module path, JSON pointer, state,
 file and state hashes, plus source facts used in the decision. The snapshot is
-[Synthea commit 869182a](https://github.com/astruebi/synthea/tree/869182a0a5e54f090066d9fc4a971cf14e3d3dbf),
+[Synthea commit 1c6d569](https://github.com/astruebi/synthea/tree/1c6d5693c3c95f8ea385b76abe7a2386127a6892),
 also pinned in `scripts/synthea-version.txt`. The 429 concepts have 662 evidence
 locations across 118 module files.
 
