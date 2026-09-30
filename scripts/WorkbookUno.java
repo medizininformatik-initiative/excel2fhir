@@ -75,6 +75,9 @@ public class WorkbookUno {
                 } else if (a[0].equals("set")) {
                     q(XText.class, sheet.getCellRangeByName(a[2]).getCellByPosition(0, 0)).setString(
                             new String(Base64.getDecoder().decode(a[3]), StandardCharsets.UTF_8));
+                } else if (a[0].equals("formula")) {
+                    sheet.getCellRangeByName(a[2]).getCellByPosition(0, 0).setFormula(
+                            new String(Base64.getDecoder().decode(a[3]), StandardCharsets.UTF_8));
                 } else if (a[0].equals("noValidation")) {
                     XPropertySet cells = q(XPropertySet.class, sheet.getCellRangeByName(a[2]));
                     Object validation = cells.getPropertyValue("Validation");

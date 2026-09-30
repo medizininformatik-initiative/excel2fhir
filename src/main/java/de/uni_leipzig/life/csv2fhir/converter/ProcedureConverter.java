@@ -111,6 +111,8 @@ public class ProcedureConverter extends Converter {
             CodeableConcept code = ClinicalValues.concept(get(Prozedurencode), selection, get(Prozedurentext));
             Coding extra = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
+            if (hasColumn("Version")) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
+            if (hasColumn("Zusatzversion")) CodingVersion.apply(extra, get("Zusatzversion"));
             if (extra != null) code.addCoding(extra);
             return code;
         }

@@ -9,10 +9,13 @@ from german_demographics import identity
 
 
 def check_clinical(source, target, report):
+    from terminology_year import emitted, signature
+    terminology = report.get('terminology', {})
+    year, mode = terminology.get('mappingYear', '2026'), terminology.get('versionOutput', 'Jahr')
     entries = source['entry']; pid = report['sourcePatient']
-    rows, expected = prepare_clinical(entries, pid, report['encounterNumbers'])
+    rows, expected = prepare_clinical(entries, pid, report['encounterNumbers'], year)
     events, event_report = prepare_events(entries, pid, report['encounterNumbers'],
-        {r['sourceId'] for r in expected['clinicalImports'] if r['resourceType']=='Observation'})
+        {r['sourceId'] for r in expected['clinicalImports'] if r['resourceType']=='Observation'}, year)
     expected['clinicalImports'].extend(event_report['clinicalImports'])
     document_rows, document_report = prepare_documents(entries, pid, report['encounterNumbers'])
     localize_rows({'DocumentReference':document_rows})
@@ -68,7 +71,7 @@ def check_clinical(source, target, report):
     assert wanted_obs==actual_obs, {'missingObservations':list((wanted_obs-actual_obs).items())[:2],
                                   'unexpectedObservations':list((actual_obs-wanted_obs).items())[:2]}
     def procedure(r):
-        return (tuple((c['system'], c['code'], c.get('version')) for c in r['code'].get('coding', [])),
+        return (tuple(signature(c) for c in r['code'].get('coding', [])),
                 r['code'].get('text', ''), r['status'],
                 r.get('performedDateTime', r.get('performedPeriod', {}).get('start', '')),
                 r.get('performedPeriod', {}).get('end', ''))
@@ -80,18 +83,18 @@ def check_clinical(source, target, report):
             if not codes[0]['system'].endswith('/ops'):
                 original = src[mapping['sourceId']]['code']['coding'][0]
                 label = translations.text(label, 'Prozedur', SYSTEMS[original['system']], original['code'])
-            wanted_procedures[(tuple((c['system'], c['code'], c.get('version')) for c in codes),
+            wanted_procedures[(tuple(signature(emitted(c, mode)) for c in codes),
                                label, projected['status'], projected['start'], projected['end'])] += 1
     assert wanted_procedures == Counter(procedure(r) for r in dst if r['resourceType'] == 'Procedure'), 'Procedure codes, descriptions, count or event changed'
     assert report.get('vaccineMapping') == event_report['vaccineMapping'], 'Vaccine mapping changed'
     assert report.get('vaccineMappings') == event_report['vaccineMappings'], 'Vaccine decisions changed'
     vaccine_rows = events['Impfung']
     def vaccine_row(row):
-        systems = {'ATC 2026': ('http://fhir.de/CodeSystem/bfarm/atc', '2026')}
+        systems = {'ATC ' + year: ('http://fhir.de/CodeSystem/bfarm/atc', year)}
         system, version = systems.get(row[5], (next((k for k,v in SYSTEMS.items() if v == row[5]), None), None))
-        return (row[3], ((system, row[4], version),) if row[4] else (), row[6], row[7], row[8])
+        return (row[3], (signature(emitted({'system': system, 'code': row[4], 'version': version}, mode)),) if row[4] else (), row[6], row[7], row[8])
     assert Counter(vaccine_row(row) for row in vaccine_rows) == Counter((
-        r['vaccineCode'].get('text', ''), tuple((c.get('system'), c.get('code'), c.get('version'))
+        r['vaccineCode'].get('text', ''), tuple(signature(c)
         for c in r['vaccineCode'].get('coding', [])), r.get('occurrenceDateTime', ''),
         r.get('status', ''), str(r['primarySource']).lower() if 'primarySource' in r else '')
         for r in dst if r['resourceType'] == 'Immunization'), 'Vaccine coding, description or event changed'
@@ -100,12 +103,12 @@ def check_clinical(source, target, report):
     localize_rows({'Medikation': rows['Medikation']})
     def product_row(row):
         codings = []
-        if row[4]: codings.append((next(k for k,v in product_systems.items() if v == row[5]), row[4], None))
-        if row[6]: codings.append(('http://fhir.de/CodeSystem/bfarm/atc', row[6], row[7]))
+        if row[4]: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row[5]), 'code': row[4]}))
+        if row[6]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
         return row[3], tuple(codings), row[8]
     expected_products = Counter(set(product_row(row) for row in rows['Medikation']))
     actual_products = Counter((r['code'].get('text', ''),
-        tuple((c.get('system'),c.get('code'),c.get('version')) for c in r['code'].get('coding', [])),
+        tuple(signature(c) for c in r['code'].get('coding', [])),
         r.get('form', {}).get('text', '')) for r in medications.values())
     assert actual_products == expected_products, 'Medication definitions, ATC versions or forms lost or merged'
     for r in dst:

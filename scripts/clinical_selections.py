@@ -21,7 +21,7 @@ SNOMED = 'SNOMED CT (Version nicht angegeben)'
 # The lists describe supported input choices, not exhaustive terminology bindings.
 # Evidence and the distinction between measurement and answer: docs/clinical-selections.md.
 LISTS = {
-    'AB': ['Prozeduren', SNOMED] + ['OPS ' + str(year) for year in range(2009, 2027)],
+    'AB': ['Prozeduren', SNOMED, 'OPS'],
     'AD': ['Labor', 'laboratory'],
     'AR': ['Klinische Messwertkategorien', 'vital-signs', 'survey', 'social-history', 'exam',
            'imaging', 'procedure', 'therapy', 'activity'],
@@ -30,7 +30,7 @@ LISTS = {
     'AU': ['Codierte Messwertantworten', 'LOINC', SNOMED],
     'AV': ['Medikamentencodes', 'PZN', SNOMED, 'RxNorm', 'CVX'],
     'AW': ['Wirkstoffcodes', 'ASK', 'UNII', SNOMED, 'RxNorm'],
-    'AY': ['Impfstoffcodes', 'ATC 2026', SNOMED, 'RxNorm', 'CVX'],
+    'AY': ['Impfstoffcodes', 'ATC', SNOMED, 'RxNorm', 'CVX'],
     'AZ': ['Befund- und Dokumenttypen', 'LOINC', SNOMED],
     'BA': ['Behandlungsplancodes', SNOMED],
     'BB': ['Impfstatus', 'completed', 'entered-in-error', 'not-done'],
@@ -79,13 +79,17 @@ LISTS.update({
             'negative-infinity', 'positive-infinity', 'not-performed', 'not-permitted')],
 })
 LISTS['BH'] += COMMON
+LISTS['BM'] = ['Version', '2025', '2026'] + list(LABELS.values())
+LISTS['BN'] = ['Synthea: Mappingjahr', '2025', '2026']
+LISTS['BO'] = ['Synthea: Versionsausgabe', 'Jahr'] + list(LABELS.values())
+LISTS['W'] = ['Diagnosecodesystem', SNOMED, 'ICD-10-GM']
 
 SELECTIONS.update({
     'Person': {'Geschlecht': 'A4:A6', **{h: 'L4:L5' for h in
         ('PDAT Einwilligung', 'KKDAT retro Einwilligung', 'KKDAT Einwilligung', 'BIOMAT Einwilligung', 'BIOMAT Zusatz Einwilligung')}},
     'Fall': {'Einrichtungskontaktklasse': 'B4:B13', 'Fachabteilung': 'C4:C42',
              'Aufnahmegrund (4. Stelle)': 'AA', 'Kontaktart': 'BF30:BF34'},
-    'Diagnose': {'Codesystem': 'W30:W48', 'Zusatzcodesystem': 'W30:W48',
+    'Diagnose': {'Codesystem': 'W', 'Zusatzcodesystem': 'W',
                 'Klinischer Status': 'X', 'Verifikationsstatus': 'Y', 'Typ': 'D4:D13'},
 })
 for sheet, fields in {
@@ -109,6 +113,9 @@ for sheet, fields in FIELDS.items():
             OPEN_FIELDS[sheet][header] = 'BK' if header in (
                 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Durchführungsbeginn',
                 'Zeitstempel (Abnahme)', 'Zeitstempel', 'Zeitpunkt', 'Einzeldosis') else 'Z'
+for sheet, fields in {'Diagnose': ['Version', 'Zusatzversion'], 'Prozedur': ['Version', 'Zusatzversion'],
+                      'Impfung': ['Version'], 'Medikation': ['ATC-Version']}.items():
+    for header in fields: OPEN_FIELDS[sheet][header] = 'BM'
 OPEN_FIELDS['Laborbefund']['Messwert'] = 'BL'
 OPEN_FIELDS['Klinische Dokumentation']['Wert'] = 'BL'
 

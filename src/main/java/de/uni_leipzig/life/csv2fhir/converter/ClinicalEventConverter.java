@@ -20,7 +20,11 @@ public abstract class ClinicalEventConverter extends Converter {
         super(row, pid, result, validator, options); this.type = type;
     }
     private String v(Columns c) { String v = get(c); return v == null || v.isBlank() ? null : v; }
-    private CodeableConcept code() { return ClinicalValues.concept(v(Columns.Code), v(Columns.Codesystem), v(Columns.Bezeichner)); }
+    private CodeableConcept code() {
+        CodeableConcept code = ClinicalValues.concept(v(Columns.Code), v(Columns.Codesystem), v(Columns.Bezeichner));
+        if (hasColumn("Version") && code.hasCoding()) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
+        return code;
+    }
     @Override protected List<Resource> convertInternal() throws Exception {
         String sourceId = v(Columns.Eintrag_ID);
         if (sourceId == null) throw new IllegalArgumentException("Eintrag ID required");

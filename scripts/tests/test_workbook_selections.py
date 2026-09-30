@@ -45,7 +45,7 @@ class WorkbookSelectionsTest(unittest.TestCase):
                             self.assertNotEqual('Erklärung/Ausfüllhilfe',headers[col])
                             if name == 'Klinische Dokumentation':
                                 self.assertNotEqual('Bezeichner',headers[col])
-                            if headers[col] in ('Code','Zusatzcode','Einzeldosis','Wirkstoffcode','Wert','Messwert','Prozedurencode'):
+                            if headers[col] in ('Code','Zusatzcode','Einzeldosis','Wirkstoffcode','Wert','Messwert','Prozedurencode','Version','Zusatzversion','ATC-Version'):
                                 self.assertNotIn(d.get('showErrorMessage'), ('1', 'true'), (name,col))
                         for col, first, endcol, last in re.findall(r'Codes!\$([A-Z]+)\$(\d+)(?::\$([A-Z]+)\$(\d+))?',formula):
                             self.assertTrue(all(cells['Codes'].get(col+str(n)) for n in range(int(first),int(last or first)+1)),formula)

@@ -24,7 +24,7 @@ public final class MedicationValues {
 
     public static String value(Function<String, String> input, String key) {
         String value = input.apply(key);
-        return value == null || value.isBlank() ? null : value.trim();
+        return value == null || value.isBlank() ? null : ("ATC-Version".equals(key) ? value : value.trim());
     }
 
     public static List<String> errors(Function<String, String> input) {
@@ -83,10 +83,11 @@ public final class MedicationValues {
             errors.add("At least one of Präparatcode, ATC-Code or Präparatbezeichnung is required");
         }
         String atc = get.apply("ATC-Code"), version = get.apply("ATC-Version");
-        if ((atc == null) != (version == null)) errors.add("Specify both ATC-Code and ATC-Version");
+        if (atc == null && version != null) errors.add("ATC-Version requires ATC-Code");
         try { DiagnosisValues.absentReason(atc); }
         catch (RuntimeException e) { errors.add("ATC-Code: invalid Data Absent Reason"); }
-        if (version != null && !version.matches("[0-9]{4}")) errors.add("Specify ATC-Version as a four-digit year");
+        try { DiagnosisValues.absentReason(version); }
+        catch (RuntimeException e) { errors.add("ATC-Version: invalid Data Absent Reason"); }
         if (ADMINISTRATION.equals(type) && get.apply("Einzeldosis") == null
                 && (get.apply("Dosierungstext") != null || get.apply("Dosen pro Tag") != null)) {
             errors.add("Administration dosage requires Einzeldosis; select Unbekannt for an unknown dose (FHIR mad-1)");

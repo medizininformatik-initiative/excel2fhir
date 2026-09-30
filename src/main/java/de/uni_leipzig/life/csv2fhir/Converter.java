@@ -308,6 +308,10 @@ public abstract class Converter {
      * @param columnIdentifier
      * @return
      */
+    public boolean hasColumn(String name) {
+        return record.isMapped(name);
+    }
+
     public String get(Object columnIdentifier) {
         String columnName = Objects.toString(columnIdentifier, null);
         boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier

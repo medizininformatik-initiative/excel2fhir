@@ -12,6 +12,10 @@ OPS = 'http://fhir.de/CodeSystem/bfarm/ops'
 
 def audit_procedures(source, target, rows, report):
     table = json.loads((MAPS / 'synthea-procedures-ops-2026.json').read_text())
+    from audit_annual_versions import annual_table, expected_signature, coding_signature
+    terminology = report.get('terminology', {})
+    year, mode = terminology.get('mappingYear', '2026'), terminology.get('versionOutput', 'Jahr')
+    table = annual_table(table, year)
     mappings = {e['sourceCode']: e for e in table['entries']}
     medications = {e['source']['code']: e for e in json.loads(
         (MAPS / 'synthea-medications-de-2026.json').read_text())['entries']}
@@ -146,8 +150,10 @@ def audit_procedures(source, target, rows, report):
         assert row.get('Zusatzcode', '') == (codes[1]['code'] if len(codes) == 2 else '')
         assert row.get('Durchführungsbeginn', '') == first and row.get('Ende', '') == last
         assert row.get('Status', '') == owner['status']
-        expected_system = 'OPS 2026' if codes[0]['system'] == OPS else 'SNOMED CT (Version nicht angegeben)'
+        expected_system = 'OPS' if codes[0]['system'] == OPS else 'SNOMED CT (Version nicht angegeben)'
         assert row['Codesystem'] == expected_system
+        if codes[0]['system'] == OPS:
+            assert row.get('Version', '') == (year if mode == 'Jahr' else mode)
         assert row.get('Zusatzcodesystem', '') == ('SNOMED CT (Version nicht angegeben)' if len(codes) == 2 else '')
         if label is not None:
             assert row['Prozedurentext'] == label == o['label'], 'Wrong OPS description'
@@ -155,14 +161,14 @@ def audit_procedures(source, target, rows, report):
             label = row.get('Prozedurentext', '')
         assert o['status'] == owner['status']
         # Compare FHIR's normalized instants with the original time window.
-        wanted[(tuple((c['system'], c['code'], c.get('version')) for c in codes), label,
+        wanted[(tuple(expected_signature(c, year, mode) for c in codes), label,
                 owner['status'], parsed(first) if first else None, parsed(last) if last else None)] += 1
     actual = Counter()
     for r in target['entry']:
         r = r['resource']
         if r['resourceType'] != 'Procedure':
             continue
-        cs = tuple((c['system'], c['code'], c.get('version')) for c in r['code']['coding'])
+        cs = tuple(coding_signature(c) for c in r['code']['coding'])
         end = r.get('performedPeriod', {}).get('end')
         actual[(cs, r['code'].get('text', ''), r['status'], parsed(begin(r)) if begin(r) else None,
                 parsed(end) if end else None)] += 1

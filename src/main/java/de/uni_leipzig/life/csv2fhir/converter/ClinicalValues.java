@@ -10,7 +10,7 @@ import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 /** Shared explicit clinical inputs. Blank is omitted; DAR must be entered explicitly. */
 public final class ClinicalValues {
     public enum Column implements TableColumnIdentifier {
-        Codesystem, Zusatzcode, Zusatzcodesystem, Ende, Status, Kategorie,
+        Codesystem, Zusatzcode, Zusatzcodesystem, Version, Zusatzversion, Ende, Status, Kategorie,
         Absicht, Dosierungstext, Werttyp, Wertcode, Wertcodesystem, Untersuchung_ID,
         Komponente_von, Ausgabezeitpunkt, Einheitencode, Wirkstoffcode, Wirkstoffcodesystem, Straße, Postleitzahl, Ort, Bundesland, Land, Sterbezeitpunkt, Dokumenttext, Dokumentcode, Dokumentcodesystem, Dokumentbezeichner;
         @Override public boolean isMandatory() { return false; }
@@ -31,6 +31,9 @@ public final class ClinicalValues {
         values.put("PZN", new Coding().setSystem("http://fhir.de/CodeSystem/ifa/pzn"));
         values.put("RxNorm", new Coding().setSystem("http://www.nlm.nih.gov/research/umls/rxnorm"));
         values.put("CVX", new Coding().setSystem("http://hl7.org/fhir/sid/cvx"));
+        values.put("OPS", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/ops"));
+        values.put("ATC", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc"));
+        values.put("ATC 2025", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setVersion("2025"));
         values.put("ATC 2026", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc").setVersion("2026"));
         values.put("ASK", new Coding().setSystem("http://fhir.de/CodeSystem/ask"));
         values.put("UNII", new Coding().setSystem("http://fdasis.nlm.nih.gov"));

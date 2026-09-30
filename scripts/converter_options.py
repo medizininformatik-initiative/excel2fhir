@@ -1,5 +1,7 @@
 """Visible, documented options for template copies; names match ConverterOptions."""
 OPTIONS = [
+ ('SYNTHEA_MAPPING_YEAR', '2026', ['Synthea-Import: Katalogjahr für ICD-10-GM, OPS und ATC. Auswahl: 2025 oder 2026.']),
+ ('SYNTHEA_VERSION_OUTPUT', 'Jahr', ['Synthea-Import: Jahr, einen ausgeschriebenen Data Absent Reason oder leer eintragen.', 'Jahr schreibt das Mappingjahr; leer lässt die Version weg.']),
  ('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'false', ['Diagnose verweist auf den zugehörigen Kontakt (Condition.encounter).']),
  ('SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION', 'true', ['Kontakt verweist auf seine Diagnosen (Encounter.diagnosis).']),
  ('SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER', 'false', ['Prozedur verweist auf den Kontakt (Procedure.encounter).']),

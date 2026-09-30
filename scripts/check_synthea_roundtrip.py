@@ -24,7 +24,12 @@ def check(source, target, report):
     demographic_check = check_patient(next(r for r in src if r['resourceType']=='Patient'),
         next(r for r in dst if r['resourceType']=='Patient'), report)
     assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
-    decisions = [map_diagnosis(r) for r in src if r['resourceType'] == 'Condition']
+    from terminology_year import emitted, signature as coding_signature, metadata as terminology_metadata
+    terminology = report.get('terminology', {})
+    year, mode = terminology.get('mappingYear', '2026'), terminology.get('versionOutput', 'Jahr')
+    if terminology:
+        assert terminology == terminology_metadata(year, mode), 'Annual catalogue evidence changed'
+    decisions = [map_diagnosis(r, year) for r in src if r['resourceType'] == 'Condition']
     assert report['diagnosisMappings'] == decisions, 'Mapping report differs from the versioned decisions'
     excluded = {d['sourceId'] for d in decisions if d['status'] == 'excluded'}
     assert excluded == {l['id'] for l in report['losses']
@@ -32,12 +37,12 @@ def check(source, target, report):
     def signature(r, original):
         expected_codings = list(r['code']['coding'])
         if original:
-            decision = map_diagnosis(r)
+            decision = map_diagnosis(r, year)
             if decision['target'] is not None:
                 expected_codings.append(decision['target'])
         if not original and any(c['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm' for c in expected_codings):
             assert expected_codings[0]['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm', 'ICD-10-GM must be first'
-        codings = tuple(sorted((c['system'],c.get('version',''),c['code'])for c in expected_codings))
+        codings = tuple(sorted(coding_signature(emitted(c, mode) if original else c) for c in expected_codings))
         encounter = r.get('encounter',{}).get('reference','')
         if original and report.get('converterOptions', {}).get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'true') == 'false':
             encounter = ''
