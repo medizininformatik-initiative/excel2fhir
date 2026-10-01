@@ -101,8 +101,8 @@ public class DiagnosisWorkbookTest {
                 var optionNames = new java.util.HashSet<String>();
                 for (var optionRow : book.getSheet("Konvertierungsoptionen")) {
                     var cell = optionRow.getCell(0);
-                    if (cell == null || cell.getCellType() != CellType.STRING) continue;
-                    String value = cell.getStringCellValue().replaceFirst("^#\\s*", "").trim();
+                    if (cell == null) continue;
+                    String value = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell, book.getCreationHelper().createFormulaEvaluator()).replaceFirst("^#\\s*", "").trim();
                     if (value.matches("[A-Z][A-Z_0-9]*\\s*=.*")) {
                         String optionName = value.split("=", 2)[0].trim();
                         assertTrue("Duplicate option: " + optionName, optionNames.add(optionName));
@@ -128,19 +128,19 @@ public class DiagnosisWorkbookTest {
                 assertEquals("Typ", diagnoses.getRow(0).getCell(12).getStringCellValue());
                 assertEquals(CellType.STRING, diagnoses.getRow(1).getCell(3).getCellType());
                 assertEquals("@", diagnoses.getRow(1).getCell(3).getCellStyle().getDataFormatString());
-                for (String formula : List.of("Codes!$W$30:$W$48", "Codes!$X$30:$X$41",
+                for (String formula : List.of("Codes!$W$30:$W$31", "Codes!$X$30:$X$41",
                         "Codes!$Y$30:$Y$41", "Codes!$Z$30:$Z$37", "Codes!$D$4:$D$13")) {
                     assertTrue(formula, diagnoses.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
                 assertEquals("SNOMED CT (Version nicht angegeben)", book.getSheet("Codes").getRow(29).getCell(22).getStringCellValue());
-                assertEquals("ICD-10-GM 2026", book.getSheet("Codes").getRow(47).getCell(22).getStringCellValue());
+                assertEquals("ICD-10-GM", book.getSheet("Codes").getRow(30).getCell(22).getStringCellValue());
                 assertEquals("PZN", book.getSheet("Codes").getRow(29).getCell(47).getStringCellValue());
                 assertTrue(book.getSheet("Medikation").getDataValidations().stream()
                         .map(DataValidation::getValidationConstraint)
                         .anyMatch(v -> "Codes!$AV$30:$AV$33".equals(v.getFormula1())));
                 assertNull(book.getSheet("Allergie"));
-                assertEquals("ATC 2026", book.getSheet("Codes").getRow(29).getCell(50).getStringCellValue());
+                assertEquals("ATC", book.getSheet("Codes").getRow(29).getCell(50).getStringCellValue());
                 var encounters = book.getSheet("Fall");
                 assertEquals("Aufnahmegrund (4. Stelle)", encounters.getRow(0).getCell(9).getStringCellValue());
                 assertEquals("Kontaktart", encounters.getRow(0).getCell(10).getStringCellValue());

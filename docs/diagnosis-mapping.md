@@ -23,8 +23,9 @@ module states, ignoring case and whitespace. `code.text` supplies the label when
 `coding.display` is empty. Accepted explicit versions follow the importer's source
 system rules.
 
-The target catalog is ICD-10-GM 2026, including for historical synthetic events.
-It is recorded explicitly in Excel. Source coding, label, times and relationships
+The selected target catalog is ICD-10-GM 2025 or 2026, including for historical
+synthetic events. [Catalogue-year settings](terminology-versions.md) control
+the target codes independently of the version representation in Excel. Source coding, label, times and relationships
 remain traceable; additional coding describes the same Condition.
 
 For the table's suspected lung-cancer, prostate-cancer and COVID concepts,

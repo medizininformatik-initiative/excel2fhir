@@ -2,7 +2,7 @@
 
 The importer fills `Diagnose` with source times, statuses and patient/case
 associations. The [diagnosis mapping](diagnosis-mapping.md) supplies assessed
-ICD-10-GM 2026 codings and documented synthetic assumptions.
+ICD-10-GM codings for the [selected catalogue year](terminology-versions.md) and documented synthetic assumptions.
 
 ICD-10-GM is the primary coding; SNOMED is additional coding or the retained source
 when a target is unavailable. Existing source ICD-10-GM with an explicit version

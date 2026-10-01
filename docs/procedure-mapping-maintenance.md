@@ -76,10 +76,11 @@ coverage, companion coverage, context conflicts and emitted OPS rows.
 
 Every entry's `provenance` contains its rationale, review status and pinned module
 evidence. Evidence includes repository/commit, module path, JSON pointer, state,
-file and state hashes, plus source facts used in the decision. The snapshot is
-[Synthea commit 1c6d569](https://github.com/astruebi/synthea/tree/1c6d5693c3c95f8ea385b76abe7a2386127a6892),
-also pinned in `scripts/synthea-version.txt`. The 429 concepts have 662 evidence
-locations across 118 module files.
+file and state hashes, plus source facts used in the decision. The generator is
+[Synthea commit 0b384785](https://github.com/astruebi/synthea/tree/0b384785719a5340084e635a98a6b28f9c2760af),
+also pinned in `scripts/synthea-version.txt`. Its module and state hashes match
+the per-entry source evidence. The 429 concepts have 662 evidence locations
+across 118 module files.
 
 `targetSource` identifies the official
 [BfArM terminal OPS 2026 catalogue](https://terminologien.bfarm.de/rendering_data/ValueSet-ops-terminale-kodes-2026.json)

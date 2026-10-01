@@ -18,7 +18,8 @@ ISO 3166-2 codes.
 `Medikation` separates product identity, ATC classification, ingredients and dose:
 
 - `Präparatbezeichnung`, `Präparatcode` and `Präparatcodesystem` identify the product.
-- `ATC-Code` and `ATC-Version` provide the classification and its explicit year.
+- `ATC-Code` provides the classification. `ATC-Version` accepts edition text, a
+  readable DAR selection or an empty cell for omission; see [version handling](terminology-versions.md).
 - `Wirkstoffcode` and `Wirkstoffcodesystem` identify ingredients. Separate multiple
   ingredients with semicolons; all use the selected system. Supported systems are
   ASK, UNII, SNOMED CT and RxNorm. Each ingredient becomes a separate FHIR entry.

@@ -100,6 +100,15 @@ public class ConverterOptions {
             errors.add("Invalid converter options: " + e.getMessage());
         }
         options.putAll(values);
+        String versionOutput = getValue(StringOption.SYNTHEA_VERSION_OUTPUT);
+        if (!versionOutput.isEmpty() && !versionOutput.equals("Jahr")) {
+            try {
+                if (de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(versionOutput) == null)
+                    errors.add("SYNTHEA_VERSION_OUTPUT: choose Jahr, a Data Absent Reason or an empty value");
+            } catch (RuntimeException e) {
+                errors.add("SYNTHEA_VERSION_OUTPUT: invalid Data Absent Reason");
+            }
+        }
         for (BooleanOption option : BooleanOption.values()) {
             if (options.containsKey(option.name())) {
                 try { booleanValues.put(option, BooleanOption.isTrue(options.get(option.name()))); }
@@ -115,6 +124,8 @@ public class ConverterOptions {
                     int value = parseIntOption(option, options.get(option.name()));
                     if (option.name().startsWith("PID_LAST_NUMBER_") && value < 0)
                         throw new IllegalArgumentException("Value must be at least 0");
+                    if (option == IntOption.SYNTHEA_MAPPING_YEAR && value != 2025 && value != 2026)
+                        throw new IllegalArgumentException("Choose 2025 or 2026");
                     intValues.put(option, value);
                 } catch (IllegalArgumentException e) {
                     errors.add(option + ": " + e.getMessage());
@@ -300,6 +311,9 @@ public class ConverterOptions {
      * Integer Options
      */
     public static enum IntOption {
+        /** German annual target catalogue used by the Synthea import. */
+        SYNTHEA_MAPPING_YEAR(2026),
+
         /**
          * Start index counter for the number that will be added on the first element
          * of this type. The only resource type that will not get such an index counter
@@ -371,6 +385,8 @@ public class ConverterOptions {
      * String options
      */
     public static enum StringOption {
+        /** Synthea version representation: Jahr, a DAR label/token, or omission. */
+        SYNTHEA_VERSION_OUTPUT("Jahr"),
 
         /**
          * This prefix will be added to all patient IDs.</br>

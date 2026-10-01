@@ -36,7 +36,8 @@ def source_dose_form(display):
 
 
 class NationalMedicationMapping:
-    def __init__(self):
+    def __init__(self, year=2026):
+        self.year = year
         raw = PATH.read_bytes()
         data = json.loads(raw)
         self.entries = {}
@@ -89,6 +90,8 @@ class NationalMedicationMapping:
                       target=copy.deepcopy(entry['product']), reason=entry['reason'],
                       review=entry['review'], ingredients=copy.deepcopy(entry.get('ingredients', [])),
                       enrichment=copy.deepcopy(entry.get('enrichment')))
+        from terminology_year import target
+        result['atc'] = target(result['atc'], self.year, 'http://fhir.de/CodeSystem/bfarm/atc')
         if result['target']:
             result['status'] = 'public-product'
         return result

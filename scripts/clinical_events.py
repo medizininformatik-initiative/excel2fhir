@@ -15,7 +15,7 @@ SCHEMAS = {
 SHEETS = dict(zip(['Immunization','DiagnosticReport','CarePlan'], SCHEMAS))
 
 
-def prepare_events(entries, pid, encounters, imported_observations):
+def prepare_events(entries, pid, encounters, imported_observations, year=2026):
     rows = {s: [] for s in SCHEMAS}; imported, losses, vaccines = [], [], []
     texts = GermanTexts()
     index = {}
@@ -46,7 +46,7 @@ def prepare_events(entries, pid, encounters, imported_observations):
                 if target in SCHEMAS[SHEETS[typ]]:
                     values[target] = r.get(source,''); handled.add(source)
             if typ=='Immunization':
-                decision = map_vaccine(cc['coding'][0])
+                decision = map_vaccine(cc['coding'][0], year)
                 vaccines.append({'sourceId': r['id'], **decision})
                 if cc['coding'][0]['system'] == 'http://hl7.org/fhir/sid/cvx':
                     values['Bezeichner'] = texts.text(label, 'Impfung', system, code)

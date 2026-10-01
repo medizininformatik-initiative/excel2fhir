@@ -1,6 +1,14 @@
 {
+  "snomedNotice": {
+    "copyright": "This material includes SNOMED Clinical Terms® (SNOMED CT®). All rights reserved. SNOMED CT® was originally created by The College of American Pathologists. SNOMED and SNOMED CT are registered trademarks of SNOMED International. Implementers of these artefacts must have the appropriate SNOMED CT Affiliate license.",
+    "conditionsUrl": "https://www.snomed.org/get-snomed"
+  },
+  "targetTerminologyNotice": {
+    "copyright": "Herausgegeben vom Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) im Auftrag des Bundesministeriums für Gesundheit (BMG). Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM).",
+    "conditionsUrl": "https://www.bfarm.de/SharedDocs/Downloads/DE/Kodiersysteme/downloadbedingungen_20250801.pdf?__blob=publicationFile"
+  },
   "id": "synthea-procedures-ops-2026-v5",
-  "sourceRegistrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
+  "sourceRegistrySha256": "7474c75fed99ea96d2505ddf3331535ef603f65c6abd182d2d82851a5dbbc700",
   "targetSource": {
     "url": "https://terminologien.bfarm.de/rendering_data/ValueSet-ops-terminale-kodes-2026.json",
     "sha256": "023cfd34a8304428659645f76b42d4aa39bf56f88efdb345f251e154f6ed9b15",
@@ -37276,7 +37284,7 @@
   "provenancePolicy": {
     "sourceSnapshot": {
       "repository": "https://github.com/astruebi/synthea",
-      "commit": "1c6d5693c3c95f8ea385b76abe7a2386127a6892",
+      "commit": "0b384785719a5340084e635a98a6b28f9c2760af",
       "pinFile": "scripts/synthea-version.txt"
     },
     "creationMethod": "Human-readable clinical-topic grouping authored by an agent, then checked against the official OPS terminal catalogue. The choices are deliberate synthetic assumptions, not an automatic terminology crosswalk or a clinically validated equivalence map.",

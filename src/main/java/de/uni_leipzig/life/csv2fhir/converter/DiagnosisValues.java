@@ -61,6 +61,7 @@ public final class DiagnosisValues {
     public static Map<String, Coding> systems() {
         Map<String, Coding> values = new LinkedHashMap<>();
         values.put(SNOMED, new Coding().setSystem("http://snomed.info/sct"));
+        values.put("ICD-10-GM", new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/icd-10-gm"));
         for (int year = 2009; year <= 2026; year++) {
             values.put("ICD-10-GM " + year, new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/icd-10-gm")
                     .setVersion(Integer.toString(year)));

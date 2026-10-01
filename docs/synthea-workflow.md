@@ -58,6 +58,13 @@ See Synthea's [command-line reference](https://github.com/synthetichealth/synthe
 and [configuration reference](https://github.com/synthetichealth/synthea/wiki/Common-Configuration)
 for further settings.
 
+## Catalogue year and version output
+
+Use `SYNTHEA_MAPPING_YEAR` and `SYNTHEA_VERSION_OUTPUT` in the Converter Options
+file to choose 2025 or 2026 and year, DAR or omitted version output. See
+[catalogue years and coding versions](terminology-versions.md) for the input
+choices, workbook fields and reproducible mapping evidence.
+
 ## Choose a KDS variant
 
 Place [converter options](converter-usage.md#common-options) before `--`, for

@@ -23,7 +23,7 @@ def date(value):
     return instant(value).astimezone(BERLIN).date()
 
 
-def project(entries):
+def project(entries, year=2026):
     resources = [e.get('resource', {}) for e in entries]
     index = {r['resourceType'] + '/' + r['id']: r for r in resources if r.get('id')}
     index.update({e['fullUrl']: e['resource'] for e in entries if e.get('fullUrl')})
@@ -150,7 +150,8 @@ def project(entries):
                 result[r['id']]['chemotherapyBlock'] = copy.deepcopy(facts)
             result[batch[0]['id']]['outputs'].append(projected)
     from contextual_procedures import apply_contextual
-    return apply_contextual(result, contexts)
+    from terminology_year import procedure_decisions
+    return procedure_decisions(apply_contextual(result, contexts), year)
 
 
 def output(resource, codings, label):

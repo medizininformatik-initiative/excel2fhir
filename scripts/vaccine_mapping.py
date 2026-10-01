@@ -10,14 +10,15 @@ DATA = json.loads(RAW)
 ENTRIES = {e['sourceCode']: e for e in DATA['entries']}
 
 
-def map_vaccine(coding):
+def map_vaccine(coding, year=2026):
     result = {'source': copy.deepcopy(coding), 'target': None, 'status': 'unmapped',
               'reason': 'Keine geprüfte Impfstoffklassifikation; Ereignis und Beschreibung bleiben erhalten.'}
     entry = ENTRIES.get(coding.get('code'))
     if (coding.get('system') != 'http://hl7.org/fhir/sid/cvx' or coding.get('version') or not entry
             or (coding.get('display') and coding['display'] not in entry['sourceDisplays'])):
         return result
-    result.update(target=copy.deepcopy(entry['target']), status=entry['relation'], reason=entry['reason'])
+    from terminology_year import target
+    result.update(target=target(entry['target'], year), status=entry['relation'], reason=entry['reason'])
     return result
 
 

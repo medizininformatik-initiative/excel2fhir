@@ -127,6 +127,12 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             pass  # The per-file conversion below records malformed inputs individually.
     selected = selected_configs(option_files, source_patients)
     defaults = resolve_config()['values'] if option_files else selected[0]['values']
+    from terminology_year import settings
+    import_settings = settings(selected[0]['values'])
+    if any(settings(item['values']) != import_settings for item in selected):
+        raise ValueError('One Synthea import uses one mapping year and version output; run differing settings separately')
+    for key in ('SYNTHEA_MAPPING_YEAR', 'SYNTHEA_VERSION_OUTPUT'):
+        defaults[key] = selected[0]['values'].get(key, '2026' if key == 'SYNTHEA_MAPPING_YEAR' else 'Jahr')
     out = create_run(output, 'synthea-import') if directory is None else Path(directory)
     snapshots = []
     for index, config in enumerate(option_files):
@@ -156,7 +162,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             saved_source = out / 'details/sources' / source.name
             if not source.is_relative_to(out / 'details/sources'):
                 shutil.copy2(source, saved_source)
-            rows, report = prepare(bundle)
+            rows, report = prepare(bundle, defaults)
             write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
             write_json(case / 'Fall.loss.json', report)
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')

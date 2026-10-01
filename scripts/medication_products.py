@@ -31,9 +31,9 @@ def require_external_path(path):
 
 
 class ProductCatalog:
-    def __init__(self):
+    def __init__(self, year=2026):
         self.entries = {}
-        self.national = NationalMedicationMapping()
+        self.national = NationalMedicationMapping(year)
         self.metadata = {'id': 'source-products-v1', 'provider': 'public-source',
                          'nationalMapping': self.national.metadata,
                          'description': 'Öffentliche deutsche ATC- und Produktzuordnungen'}

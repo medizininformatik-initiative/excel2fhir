@@ -72,8 +72,8 @@ def observation_value(r):
     raise UnsupportedValue('Unsupported value type: ' + key)
 
 
-def prepare_clinical(entries, pid, encounter_numbers):
-    products = ProductCatalog()
+def prepare_clinical(entries, pid, encounter_numbers, year=2026):
+    products = ProductCatalog(year)
     product_texts = GermanTexts()
     index = {}
     for e in entries:
@@ -81,7 +81,7 @@ def prepare_clinical(entries, pid, encounter_numbers):
         if r.get('id'):
             index[r['resourceType'] + '/' + r['id']] = r
             if e.get('fullUrl'): index[e['fullUrl']] = r
-    procedures = project_procedures(entries)
+    procedures = project_procedures(entries, year)
     rows = {'Prozedur': [], 'Laborbefund': [], 'Klinische Dokumentation': [], 'Medikation': []}
     losses, mappings, imported = [], [], []
     def ref(r, field, expected):

@@ -27,6 +27,8 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
                    for op in apply.call_args.args[1] if (parts := op.split('\t'))[0] == 'set'
                    and parts[1] == 'Konvertierungsoptionen'}
         self.assertEqual(len(settings), len(written))
+        self.assertIn('2026', written.values())
+        self.assertIn('Jahr', written.values())
         self.assertIn('PID_PREFIX = demo-', written.values())
         self.assertIn('START_ID_CONDITION = 47', written.values())
         self.assertIn('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = false', written.values())

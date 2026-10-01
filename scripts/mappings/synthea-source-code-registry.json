@@ -1,4 +1,8 @@
 {
+  "snomedNotice": {
+    "copyright": "This material includes SNOMED Clinical Terms® (SNOMED CT®). All rights reserved. SNOMED CT® was originally created by The College of American Pathologists. SNOMED and SNOMED CT are registered trademarks of SNOMED International. Implementers of these artefacts must have the appropriate SNOMED CT Affiliate license.",
+    "conditionsUrl": "https://www.snomed.org/get-snomed"
+  },
   "id": "synthea-source-code-registry-v2",
   "scope": "verified archived source inventory excluding module templates; mapping decisions live in the separate mapping tables",
   "inventorySha256": "7e87ee094f04382d7f8f7ee79e8d955f5ee4c04a91b30342b1fd5adc3d77a3c1",

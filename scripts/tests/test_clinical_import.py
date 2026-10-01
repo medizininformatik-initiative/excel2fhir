@@ -41,7 +41,7 @@ class ClinicalImportTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC 2026', '2020-01-02', 'completed', 'true'])
+        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC', '2020-01-02', 'completed', 'true'])
         self.assertIn('Poliomyelitis', rows['Impfung'][0][3])
         self.assertEqual(report['vaccineMappings'][0]['source']['code'], '10')
         source['entry'][-1]['resource']['vaccineCode']['coding'][0]['code'] = 'unmapped'

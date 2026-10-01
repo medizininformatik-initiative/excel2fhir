@@ -9,6 +9,45 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void annualVersionInputsSerializeTextAbsenceAndOmissionForEveryAnnualResource() throws Exception {
+        var options = new ConverterOptions("");
+        var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();
+        var inputs = new ArrayList<>(List.of("2025", "2026", "2015", "custom edition", " release #1 ", ""));
+        inputs.addAll(DiagnosisValues.ABSENT_LABELS.keySet());
+        var ids = new HashSet<String>();
+        for (String version : inputs) {
+            var medicationValues = new HashMap<>(Map.of("Medikationstyp", "Verordnung", "ATC-Code", "A10BA02",
+                    "ATC-Version", version, "Präparatbezeichnung", "Test", "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", "UNII"));
+            assertTrue(MedicationValues.errors(medicationValues::get).toString(), MedicationValues.errors(medicationValues::get).isEmpty());
+            Medication medication = (Medication) new MedicationConverter(row(medicationValues, MedicationConverter.Medication_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal().get(0);
+            ids.add(medication.getId());
+            Condition condition = (Condition) new ConditionConverter(row(Map.of("Code", "R53", "Codesystem", "ICD-10-GM",
+                    "Version", version), ConditionConverter.Diagnosis_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+            Procedure procedure = (Procedure) new ProcedureConverter(row(Map.of("Prozedurencode", "5-511.y", "Codesystem", "OPS",
+                    "Version", version), ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+            assertTrue("OPS requires a SNOMED category regardless of version representation",
+                    procedure.getCategory().hasCoding("http://snomed.info/sct", "387713003"));
+            Immunization vaccine = (Immunization) new ClinicalEventConverter.Vaccine(row(Map.of("Eintrag ID", "v", "Code", "J07BF03",
+                    "Codesystem", "ATC", "Version", version), ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+            for (Coding coding : List.of(medication.getCode().getCodingFirstRep(), condition.getCode().getCodingFirstRep(),
+                    procedure.getCode().getCodingFirstRep(), vaccine.getVaccineCode().getCodingFirstRep())) {
+                var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(parser.encodeResourceToString(
+                        new Observation().setCode(new CodeableConcept().addCoding(coding)))).path("code").path("coding").get(0);
+                var absent = DiagnosisValues.absentReason(version);
+                if (absent != null) {
+                    assertFalse(json.has("version"));
+                    assertEquals(absent.getValue().primitiveValue(), json.path("_version").path("extension").get(0).path("valueCode").asText());
+                } else if (version.isEmpty()) {
+                    assertFalse(json.has("version")); assertFalse(json.has("_version"));
+                } else {
+                    assertEquals(version, json.path("version").asText()); assertFalse(json.has("_version"));
+                }
+            }
+        }
+        assertTrue("Different version representations must not merge medications", ids.size() >= 20);
+    }
+
     @Test public void germanMissingLabelsPreserveFhirMeaningAndLegacyInputs() throws Exception {
         for (var entry : DiagnosisValues.ABSENT_LABELS.entrySet()) {
             assertTrue(DiagnosisValues.absentReason(entry.getKey()).equalsDeep(

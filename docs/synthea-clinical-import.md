@@ -16,7 +16,7 @@ See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-m
 | Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and UCUM units. |
 | MedicationRequest / MedicationAdministration | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
 | Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
-| Immunization | `Impfung` | ATC 2026 classification, vaccine text, time, status, primary-source flag and patient/case association. |
+| Immunization | `Impfung` | ATC classification for the selected catalogue year, vaccine text, time, status, primary-source flag and patient/case association. |
 | DiagnosticReport | `Befundbericht` | First coding, times, status, resolvable result references and conclusion. |
 | CarePlan | `Behandlungsplan` | Clinical SNOMED category, period, status, intent, description and activity codes. |
 | DocumentReference | `DocumentReference` | First document type, status, date, first contact and embedded UTF-8 text, up to Excel's 32,767-character cell limit. |
@@ -49,7 +49,7 @@ change requires reassessing inventory coverage.
 
 The procedure table covers 429 source concepts: 428 Procedure-State concepts and
 a combined thorax/abdomen/pelvis CT found in generated output. Single-code OPS
-assignments use terminal OPS 2026 descriptions. Source SNOMED concepts are retained
+assignments use terminal descriptions from the [selected OPS catalogue](terminology-versions.md). Source SNOMED concepts are retained
 where appropriate; the report records every synthetic assumption and output row.
 
 Combined CT examinations create one row per body region. Radiochemotherapy creates
