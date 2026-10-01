@@ -37284,7 +37284,7 @@
   "provenancePolicy": {
     "sourceSnapshot": {
       "repository": "https://github.com/astruebi/synthea",
-      "commit": "1c6d5693c3c95f8ea385b76abe7a2386127a6892",
+      "commit": "0b384785719a5340084e635a98a6b28f9c2760af",
       "pinFile": "scripts/synthea-version.txt"
     },
     "creationMethod": "Human-readable clinical-topic grouping authored by an agent, then checked against the official OPS terminal catalogue. The choices are deliberate synthetic assumptions, not an automatic terminology crosswalk or a clinically validated equivalence map.",
