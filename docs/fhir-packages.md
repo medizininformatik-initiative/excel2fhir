@@ -9,6 +9,13 @@ The application targets FHIR R4 (4.0.1). The bundled KDS roots are:
 | Medication | 2026.0.1 |
 | Consent | 2026.0.0 |
 
+Package versions and resource versions are distinct. Base, laboratory and
+medication StructureDefinitions carry the versions shown above. In the consent
+package, the consent StructureDefinition is `1.0.9`; its DocumentReference and
+Provenance StructureDefinitions are `1.0.8`. These are the versions resolved by
+the loader for their canonical URLs. The bundled package manifests use the
+release versions listed here, without a `-ballot` suffix.
+
 ## Loading and dependencies
 
 `src/main/resources/fhir-packages.txt` defines the load order. Packages are read

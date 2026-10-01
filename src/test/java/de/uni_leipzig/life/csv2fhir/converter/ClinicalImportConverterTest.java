@@ -26,6 +26,8 @@ public class ClinicalImportConverterTest {
                     "Version", version), ConditionConverter.Diagnosis_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
             Procedure procedure = (Procedure) new ProcedureConverter(row(Map.of("Prozedurencode", "5-511.y", "Codesystem", "OPS",
                     "Version", version), ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+            assertTrue("OPS requires a SNOMED category regardless of version representation",
+                    procedure.getCategory().hasCoding("http://snomed.info/sct", "387713003"));
             Immunization vaccine = (Immunization) new ClinicalEventConverter.Vaccine(row(Map.of("Eintrag ID", "v", "Code", "J07BF03",
                     "Codesystem", "ATC", "Version", version), ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
             for (Coding coding : List.of(medication.getCode().getCodingFirstRep(), condition.getCode().getCodingFirstRep(),

@@ -52,7 +52,18 @@ Changing a version cell changes its FHIR representation; it does not remap the
 code. The Synthea settings are import settings and do not rewrite manually entered
 rows during Excel-to-FHIR conversion. Profile validation checks the resulting
 resource against the loaded packages, including required versions and terminology
-bindings. Selecting DAR or omission does not guarantee profile conformance.
+bindings. The bundled KDS diagnosis, procedure and medication profiles require
+versions for ICD-10-GM, OPS and ATC codings. Omission therefore produces profile
+errors. A DAR extension supplies the primitive element, but does not establish
+terminology membership.
+
+The medication package `2026.0.1` binds ATC codings to a required ValueSet that
+includes editions 2018–2025. An explicit ATC version `2026` is outside that binding,
+even when the code exists in the official 2026 catalogue. The base package
+`2026.0.1` includes 2026 in its ICD-10-GM and OPS ValueSets. Package release years
+and permitted terminology editions are separate. Missing terminology content can
+prevent the validator from resolving these bindings; `NOT_CHECKED` does not
+establish conformance. See [terminology coverage](fhir-validation.md#terminology-coverage).
 
 ## Maintaining the annual mappings
 
