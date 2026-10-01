@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 
 MAPS = Path(__file__).parent / 'mappings'
+NOTICES = json.loads((Path(__file__).parent / 'terminology-notices.json').read_text())
 SYSTEMS = {'icd10gm': 'http://fhir.de/CodeSystem/bfarm/icd-10-gm',
            'ops': 'http://fhir.de/CodeSystem/bfarm/ops',
            'atcgm': 'http://fhir.de/CodeSystem/bfarm/atc'}
@@ -35,7 +36,7 @@ def build(directory):
         mappings[path.name] = hashlib.sha256(raw).hexdigest()
     result = {'schemaVersion': 1, 'sourceMappings': mappings, 'catalogues': {},
               'scope': 'Offline annual targets for synthetic mappings. Clinical equivalence remains approximate.',
-              'copyright': 'WHO, BfArM. Prepared using the machine-readable BfArM classifications.'}
+              'copyright': 'Third-party classification notices are included with each catalogue.'}
     for name, system in SYSTEMS.items():
         for year in (2025, 2026):
             raw = (Path(directory) / f'{name}-{year}.json').read_bytes()
@@ -50,7 +51,7 @@ def build(directory):
                                             else 'Same code verified in the selected annual catalogue.')}
             result['catalogues'][system + '|' + str(year)] = {
                 'url': f'https://terminologien.bfarm.de/rendering_data/CodeSystem-{name}-{year}.json',
-                'sha256': hashlib.sha256(raw).hexdigest(), 'targets': targets}
+                'sha256': hashlib.sha256(raw).hexdigest(), **NOTICES[system], 'targets': targets}
     return result
 
 

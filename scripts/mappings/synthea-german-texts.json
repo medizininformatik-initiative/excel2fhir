@@ -1,7 +1,11 @@
 {
+  "snomedNotice": {
+    "copyright": "This material includes SNOMED Clinical Terms® (SNOMED CT®). All rights reserved. SNOMED CT® was originally created by The College of American Pathologists. SNOMED and SNOMED CT are registered trademarks of SNOMED International. Implementers of these artefacts must have the appropriate SNOMED CT Affiliate license.",
+    "conditionsUrl": "https://www.snomed.org/get-snomed"
+  },
   "id": "synthea-german-texts-v1",
   "syntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
-  "registrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
+  "registrySha256": "7474c75fed99ea96d2505ddf3331535ef603f65c6abd182d2d82851a5dbbc700",
   "description": "Projektinterne deutsche Lesetexte für synthetische Testdaten; keine amtliche Terminologieübersetzung. Codes bleiben unverändert.",
   "sources": {
     "editorial": "Einmalige redaktionelle Übersetzung/Korrektur für dieses Projekt; fachlicher Nutzerreview ausstehend.",

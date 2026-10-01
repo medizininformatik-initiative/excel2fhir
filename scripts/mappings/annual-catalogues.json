@@ -1,15 +1,17 @@
 {
   "schemaVersion": 1,
   "sourceMappings": {
-    "synthea-diagnoses-icd10gm-2026.json": "b12a459c3f8bd3ecd6285c66540a7849d168616ed80dc850ca67c28ab536395b",
-    "synthea-medications-de-2026.json": "21c95ef50921d22797d94aea59feadae5b8b0dcf20ac01009869d0779fd43123",
-    "synthea-procedures-ops-2026.json": "0154e9c633f7424a36ee2e3c9bbebf45e119f3378f96406146d284235d86403e",
-    "synthea-vaccines-atc-2026.json": "59d7520f3f35e6984bbf7a67315c5ea1054d2964af0920c9a32c6ff4e3d91bdc"
+    "synthea-diagnoses-icd10gm-2026.json": "6efbc069cb17f0c2bbb03a582c7c216ae648d185639a8b51420f2e56036b14bd",
+    "synthea-medications-de-2026.json": "127c5b2b03a735d2cb350d411d39e280127d7943ae4be3fe4390860fe23cb895",
+    "synthea-procedures-ops-2026.json": "88d8e47502aa39a344e49a66d9b4c2203c98679b02238b3c32c5f4cb3c3231d6",
+    "synthea-vaccines-atc-2026.json": "d8e202fee2196f0f0339309348003737faedf231b13076331c6fe2047661c425"
   },
   "catalogues": {
     "http://fhir.de/CodeSystem/bfarm/icd-10-gm|2025": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-icd10gm-2025.json",
       "sha256": "5c3cdb801b8e2572f8783413527c28e7cecd11be18c3b5e75cbf2a9dcc000650",
+      "copyright": "Die vorliegende Ausgabe beruht (1) auf der vollständigen amtlichen Fassung der Internationalen statistischen Klassifikation der Krankheiten und verwandter Gesundheitsprobleme, 10. Revision, und (2) auf der australischen ICD-10-AM, First Edition. Die englischsprachige Originalausgabe zu (1) wurde 1992 von der Weltgesundheitsorganisation (WHO) veröffentlicht als International Statistical Classification of Diseases and Related Health Problems, Tenth Revision, Geneva, WHO, Vol. 1, 1992; die englischsprachige Originalausgabe zu (2) wurde 1998 vom australischen National Centre for Classification in Health veröffentlicht als Volume 1 of The International Statistical Classification of Diseases and Related Health Problems, 10th Revision, Australian Modification (ICD-10-AM), First Edition. © zu (1): Weltgesundheitsorganisation (WHO) 1992 © zu (2): Commonwealth of Australia 1998 Der Generaldirektor der Weltgesundheitsorganisation (WHO) hat die Übersetzungsrechte für eine deutschsprachige Ausgabe an das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) vergeben, das für die Übersetzung allein verantwortlich ist. Das Commonwealth of Australia hat die Übersetzungsrechte für eine deutschsprachige Ausgabe an das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) vergeben, das für die Übersetzung allein verantwortlich ist. Herausgegeben vom Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) im Auftrag des Bundesministeriums für Gesundheit (BMG) Die Erstellung bzw. der Druck erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://www.bfarm.de/SharedDocs/Downloads/DE/Kodiersysteme/downloadbedingungen_20250801.pdf?__blob=publicationFile",
       "targets": {
         "A41.0": {
           "code": "A41.0",
@@ -1251,6 +1253,8 @@
     "http://fhir.de/CodeSystem/bfarm/icd-10-gm|2026": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-icd10gm-2026.json",
       "sha256": "5032633f5f91f4de5ab94a222ec26cb1bbc62117957d8005b251fef857687916",
+      "copyright": "Die vorliegende Ausgabe beruht (1) auf der vollständigen amtlichen Fassung der Internationalen statistischen Klassifikation der Krankheiten und verwandter Gesundheitsprobleme, 10. Revision, und (2) auf der australischen ICD-10-AM, First Edition. Die englischsprachige Originalausgabe zu (1) wurde 1992 von der Weltgesundheitsorganisation (WHO) veröffentlicht als International Statistical Classification of Diseases and Related Health Problems, Tenth Revision, Geneva, WHO, Vol. 1, 1992; die englischsprachige Originalausgabe zu (2) wurde 1998 vom australischen National Centre for Classification in Health veröffentlicht als Volume 1 of The International Statistical Classification of Diseases and Related Health Problems, 10th Revision, Australian Modification (ICD-10-AM), First Edition. © zu (1): Weltgesundheitsorganisation (WHO) 1992 © zu (2): Commonwealth of Australia 1998 Der Generaldirektor der Weltgesundheitsorganisation (WHO) hat die Übersetzungsrechte für eine deutschsprachige Ausgabe an das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) vergeben, das für die Übersetzung allein verantwortlich ist. Das Commonwealth of Australia hat die Übersetzungsrechte für eine deutschsprachige Ausgabe an das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) vergeben, das für die Übersetzung allein verantwortlich ist. Herausgegeben vom Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) im Auftrag des Bundesministeriums für Gesundheit (BMG) Die Erstellung bzw. der Druck erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://www.bfarm.de/SharedDocs/Downloads/DE/Kodiersysteme/downloadbedingungen_20250801.pdf?__blob=publicationFile",
       "targets": {
         "A41.0": {
           "code": "A41.0",
@@ -2492,6 +2496,8 @@
     "http://fhir.de/CodeSystem/bfarm/ops|2025": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-ops-2025.json",
       "sha256": "4879fd4d8a821d136e53c770bf235d5aff57d3ddc400b501fb0c06e3e88727f4",
+      "copyright": "Herausgegeben vom Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) im Auftrag des Bundesministeriums für Gesundheit (BMG). Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://www.bfarm.de/SharedDocs/Downloads/DE/Kodiersysteme/downloadbedingungen_20250801.pdf?__blob=publicationFile",
       "targets": {
         "1-205": {
           "code": "1-205",
@@ -3568,6 +3574,8 @@
     "http://fhir.de/CodeSystem/bfarm/ops|2026": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-ops-2026.json",
       "sha256": "886dff2bb37d92a6765f32b6e04973acfea1f5d61561b1e051ce3317745f3d9b",
+      "copyright": "Herausgegeben vom Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM) im Auftrag des Bundesministeriums für Gesundheit (BMG). Die Erstellung erfolgt unter Verwendung der maschinenlesbaren Fassung des Bundesinstituts für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://www.bfarm.de/SharedDocs/Downloads/DE/Kodiersysteme/downloadbedingungen_20250801.pdf?__blob=publicationFile",
       "targets": {
         "1-205": {
           "code": "1-205",
@@ -4644,6 +4652,8 @@
     "http://fhir.de/CodeSystem/bfarm/atc|2025": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-atcgm-2025.json",
       "sha256": "0d17d1c1e051a7be51fe778c2402aeed27b86c9a2952c6263e5f851e08fdfbb3",
+      "copyright": "Das Wissenschaftliche Institut der AOK (WIdO) ist Urheber der ATC-GM mit DDD, die auf dem vom WHO Collaborating Centre for Drug Statistics Methodology herausgegebenen Werk mit dem Titel „ATC Index with DDDs and Guidelines for ATC Classification and DDD Assignment“ beruht. Die amtliche Veröffentlichung erfolgt durch das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://terminologien.bfarm.de/files/conditions/bfarm.terminologien.atcgm-conditions.xml",
       "targets": {
         "A01AA01": {
           "code": "A01AA01",
@@ -5915,6 +5925,8 @@
     "http://fhir.de/CodeSystem/bfarm/atc|2026": {
       "url": "https://terminologien.bfarm.de/rendering_data/CodeSystem-atcgm-2026.json",
       "sha256": "ceb96f576f3e6f7be12f093fb9b30cfaedea0e5e0541ad2aa24c072a44d6f914",
+      "copyright": "Das Wissenschaftliche Institut der AOK (WIdO) ist Urheber der ATC-GM mit DDD, die auf dem vom WHO Collaborating Centre for Drug Statistics Methodology herausgegebenen Werk mit dem Titel „ATC Index with DDDs and Guidelines for ATC Classification and DDD Assignment“ beruht. Die amtliche Veröffentlichung erfolgt durch das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM).",
+      "conditionsUrl": "https://terminologien.bfarm.de/files/conditions/bfarm.terminologien.atcgm-conditions.xml",
       "targets": {
         "A01AA01": {
           "code": "A01AA01",
@@ -7185,5 +7197,5 @@
     }
   },
   "scope": "Offline annual targets for synthetic mappings. Clinical equivalence remains approximate.",
-  "copyright": "WHO, BfArM. Prepared using the machine-readable BfArM classifications."
+  "copyright": "Third-party classification notices are included with each catalogue."
 }

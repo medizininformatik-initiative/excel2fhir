@@ -84,6 +84,10 @@ SHA-256 are recorded under `productCatalog`; per-event choices remain under
 
 ## Local data and distribution
 
+For public mapping provenance, notices and outstanding publication questions,
+see [mapping data and publication](mapping-data-publication.md).
+
+
 Output using a local catalog is marked with
 `productDataUsage.containsLocalProductData: true` and
 `redistribution: "not-cleared"`. Save those workbooks and reports outside the

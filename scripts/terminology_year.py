@@ -8,6 +8,7 @@ from workbook_absent import CODES, LABELS
 PATH = Path(__file__).with_name('mappings') / 'annual-catalogues.json'
 RAW = PATH.read_bytes()
 DATA = json.loads(RAW)
+NOTICES = json.loads(Path(__file__).with_name('terminology-notices.json').read_text())
 SYSTEMS = {key.split('|')[0] for key in DATA['catalogues']}
 
 
@@ -59,6 +60,7 @@ def procedure_decisions(decisions, year):
 
 def metadata(year, mode):
     return {'mappingYear': str(year), 'versionOutput': mode,
+            'snomedNotice': copy.deepcopy(NOTICES['http://snomed.info/sct']),
             'catalogueSubsetSha256': hashlib.sha256(RAW).hexdigest(),
             'catalogues': {system: {k: v for k, v in DATA['catalogues'][system+'|'+str(year)].items()
                                     if k != 'targets'} for system in sorted(SYSTEMS)}}
