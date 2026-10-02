@@ -1,0 +1,1468 @@
+{
+  "schemaVersion": 1,
+  "policy": "Semantic code lists are reviewed project decisions, not inferred HL7 prohibitions. Profile evidence is extracted from bundled definitions.",
+  "semanticGroups": {
+    "administrative": {
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable."
+    },
+    "clinical-time": {
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred."
+    },
+    "coding": {
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      }
+    },
+    "version": {
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event."
+    },
+    "status": {
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes a missing status. Related clinical/profile constraints still apply."
+    },
+    "text": {
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes."
+    },
+    "numeric-measurement": {
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-a-number",
+        "negative-infinity",
+        "positive-infinity",
+        "not-performed"
+      ],
+      "help": "Describes the missing numeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      }
+    },
+    "measurement": {
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-performed"
+      ],
+      "help": "Describes the missing nonnumeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      }
+    },
+    "dose": {
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable",
+        "as-text"
+      ],
+      "help": "Describes the absence of a structured dose, not a laboratory measurement.",
+      "codeConditions": {
+        "as-text": "The dose must actually be present in the resource narrative."
+      }
+    },
+    "document-content": {
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing document bytes. URL, size and hash must be handled consistently."
+    }
+  },
+  "fields": [
+    {
+      "id": "Patient.name.family",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "name.family",
+      "targets": [
+        "Patient.name.family"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name.family"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.name.given",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "name.given",
+      "targets": [
+        "Patient.name.given"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name.given"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.birthDate",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "birthDate",
+      "targets": [
+        "Patient.birthDate"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "birthDate"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.gender",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "gender",
+      "targets": [
+        "Patient.gender"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "gender"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.deceased[x]",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "deceased[x]",
+      "targets": [
+        "Patient.deceased[x]"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "deceased[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "Patient.address.line",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.line",
+      "targets": [
+        "Patient.address.line"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.line"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.address.postalCode",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.postalCode",
+      "targets": [
+        "Patient.address.postalCode"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.postalCode"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.address.city",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.city",
+      "targets": [
+        "Patient.address.city"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.city"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.address.state",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.state",
+      "targets": [
+        "Patient.address.state"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.state"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Patient.address.country",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.country",
+      "targets": [
+        "Patient.address.country"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.country"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Encounter.period.start",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "period.start",
+      "targets": [
+        "Encounter.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Encounter.period.end",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "period.end",
+      "targets": [
+        "Encounter.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Condition.recordedDate",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "recordedDate",
+      "targets": [
+        "Condition.recordedDate"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "recordedDate"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Condition.onset[x]",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "onset[x]",
+      "targets": [
+        "Condition.onset[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "onset[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "Condition.abatement[x]",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "abatement[x]",
+      "targets": [
+        "Condition.abatement[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "abatement[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "Procedure.performed[x]",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "performed[x]",
+      "targets": [
+        "Procedure.performed[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "performed[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ]
+    },
+    {
+      "id": "MedicationRequest.authoredOn",
+      "resourceType": "MedicationRequest",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest",
+      "field": "authoredOn",
+      "targets": [
+        "MedicationRequest.authoredOn"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "authoredOn"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "MedicationAdministration.effective[x]",
+      "resourceType": "MedicationAdministration",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration",
+      "field": "effective[x]",
+      "targets": [
+        "MedicationAdministration.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ]
+    },
+    {
+      "id": "MedicationStatement.effective[x]",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "effective[x]",
+      "targets": [
+        "MedicationStatement.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ]
+    },
+    {
+      "id": "MedicationStatement.dateAsserted",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "dateAsserted",
+      "targets": [
+        "MedicationStatement.dateAsserted"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "dateAsserted"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Immunization.occurrence[x]",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "occurrence[x]",
+      "targets": [
+        "Immunization.occurrence[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "occurrence[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "DiagnosticReport.effective[x]",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "effective[x]",
+      "targets": [
+        "DiagnosticReport.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ]
+    },
+    {
+      "id": "DiagnosticReport.issued",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "issued",
+      "targets": [
+        "DiagnosticReport.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "CarePlan.period.start",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "period.start",
+      "targets": [
+        "CarePlan.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "CarePlan.period.end",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "period.end",
+      "targets": [
+        "CarePlan.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "DocumentReference.date",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "date",
+      "targets": [
+        "DocumentReference.date"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "date"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "DocumentReference.content.attachment.creation",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.creation",
+      "targets": [
+        "DocumentReference.content.attachment.creation"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.creation"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "Consent.dateTime",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "dateTime",
+      "targets": [
+        "Consent.dateTime"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "dateTime"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Consent.provision.period.start",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "provision.period.start",
+      "targets": [
+        "Consent.provision.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "provision.period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Consent.provision.period.end",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "provision.period.end",
+      "targets": [
+        "Consent.provision.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "provision.period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Laboratory.effective[x]",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "effective[x]",
+      "targets": [
+        "Observation.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "Laboratory.issued",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "issued",
+      "targets": [
+        "Observation.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Laboratory.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ]
+    },
+    {
+      "id": "Laboratory.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ]
+    },
+    {
+      "id": "Laboratory.component.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ]
+    },
+    {
+      "id": "Laboratory.component.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ]
+    },
+    {
+      "id": "VitalSigns.effective[x]",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "effective[x]",
+      "targets": [
+        "Observation.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ]
+    },
+    {
+      "id": "VitalSigns.issued",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "issued",
+      "targets": [
+        "Observation.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "VitalSigns.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ]
+    },
+    {
+      "id": "VitalSigns.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ]
+    },
+    {
+      "id": "VitalSigns.component.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ]
+    },
+    {
+      "id": "VitalSigns.component.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ]
+    },
+    {
+      "id": "Condition.code.coding.code",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "code.coding.code",
+      "targets": [
+        "Condition.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Condition.code.coding.version",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "code.coding.version",
+      "targets": [
+        "Condition.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Procedure.code.coding.code",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "code.coding.code",
+      "targets": [
+        "Procedure.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Procedure.code.coding.version",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "code.coding.version",
+      "targets": [
+        "Procedure.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Laboratory.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "code.coding.code",
+      "targets": [
+        "Observation.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Laboratory.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "code.coding.version",
+      "targets": [
+        "Observation.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "VitalSigns.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "code.coding.code",
+      "targets": [
+        "Observation.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "VitalSigns.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "code.coding.version",
+      "targets": [
+        "Observation.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Medication.code.coding.code",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "code.coding.code",
+      "targets": [
+        "Medication.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Medication.code.coding.version",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "code.coding.version",
+      "targets": [
+        "Medication.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Immunization.vaccineCode.coding.code",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "vaccineCode.coding.code",
+      "targets": [
+        "Immunization.vaccineCode.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "vaccineCode.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "vaccineCode.coding.system"
+      ]
+    },
+    {
+      "id": "Immunization.vaccineCode.coding.version",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "vaccineCode.coding.version",
+      "targets": [
+        "Immunization.vaccineCode.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "vaccineCode.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "vaccineCode.coding.system"
+      ]
+    },
+    {
+      "id": "DiagnosticReport.code.coding.code",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "code.coding.code",
+      "targets": [
+        "DiagnosticReport.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "DiagnosticReport.code.coding.version",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "code.coding.version",
+      "targets": [
+        "DiagnosticReport.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ]
+    },
+    {
+      "id": "Condition.clinicalStatus",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "clinicalStatus",
+      "targets": [
+        "Condition.clinicalStatus"
+      ],
+      "semanticGroup": "status",
+      "representation": "complex-extension",
+      "clearFields": [
+        "clinicalStatus"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "conditions": [
+        "Respect con-4 and con-5; reject incompatible status/abatement combinations."
+      ]
+    },
+    {
+      "id": "Condition.verificationStatus",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "verificationStatus",
+      "targets": [
+        "Condition.verificationStatus"
+      ],
+      "semanticGroup": "status",
+      "representation": "complex-extension",
+      "clearFields": [
+        "verificationStatus"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "conditions": [
+        "Respect con-4 and con-5; reject incompatible status/abatement combinations."
+      ]
+    },
+    {
+      "id": "Medication.form",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "form",
+      "targets": [
+        "Medication.form"
+      ],
+      "semanticGroup": "text",
+      "representation": "complex-extension",
+      "clearFields": [
+        "form"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Medication.ingredient.item[x]",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "ingredient.item[x]",
+      "targets": [
+        "Medication.ingredient.item[x]"
+      ],
+      "semanticGroup": "coding",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "ingredient.item[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "CarePlan.description",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "description",
+      "targets": [
+        "CarePlan.description"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "description"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "DiagnosticReport.conclusion",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "conclusion",
+      "targets": [
+        "DiagnosticReport.conclusion"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "conclusion"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "Location.name",
+      "resourceType": "Location",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Location",
+      "field": "name",
+      "targets": [
+        "Location.name"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged"
+    },
+    {
+      "id": "DocumentReference.content.attachment.title",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.title",
+      "targets": [
+        "DocumentReference.content.attachment.title"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.title"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged"
+    },
+    {
+      "id": "MedicationRequest.dosageInstruction.doseAndRate.dose[x]",
+      "resourceType": "MedicationRequest",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest",
+      "field": "dosageInstruction.doseAndRate.dose[x]",
+      "targets": [
+        "MedicationRequest.dosageInstruction.doseAndRate.dose[x]"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosageInstruction.doseAndRate.dose[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ]
+    },
+    {
+      "id": "MedicationStatement.dosage.doseAndRate.dose[x]",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "dosage.doseAndRate.dose[x]",
+      "targets": [
+        "MedicationStatement.dosage.doseAndRate.dose[x]"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosage.doseAndRate.dose[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ]
+    },
+    {
+      "id": "MedicationAdministration.dosage.dose",
+      "resourceType": "MedicationAdministration",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration",
+      "field": "dosage.dose",
+      "targets": [
+        "MedicationAdministration.dosage.dose"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosage.dose"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ]
+    },
+    {
+      "id": "DocumentReference.content.attachment.data",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.data",
+      "targets": [
+        "DocumentReference.content.attachment.data"
+      ],
+      "semanticGroup": "document-content",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.data"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Clear associated size/hash; preserve an independently valid document URL."
+      ]
+    },
+    {
+      "id": "Encounter.admissionReasonFourthDigit",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "extension:Aufnahmegrund.extension:VierteStelle.value[x].code",
+      "targets": [
+        "Encounter.extension:Aufnahmegrund.extension:VierteStelle.value[x].code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "extension:Aufnahmegrund.extension:VierteStelle.value[x].code"
+      ],
+      "applyTo": "existing-admission-reason",
+      "default": "unchanged",
+      "preserveFields": [
+        "extension:Aufnahmegrund.extension:VierteStelle.value[x].system"
+      ]
+    },
+    {
+      "id": "Laboratory.component.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.code.coding.code",
+      "targets": [
+        "Observation.component.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ]
+    },
+    {
+      "id": "Laboratory.component.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.code.coding.version",
+      "targets": [
+        "Observation.component.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ]
+    },
+    {
+      "id": "VitalSigns.component.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.code.coding.code",
+      "targets": [
+        "Observation.component.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ]
+    },
+    {
+      "id": "VitalSigns.component.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.code.coding.version",
+      "targets": [
+        "Observation.component.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ]
+    }
+  ]
+}

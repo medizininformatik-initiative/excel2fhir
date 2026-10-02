@@ -54,3 +54,6 @@ See [validator performance](validator-performance.md) for large-bundle behavior.
 
 Clinical plausibility and the quality of synthetic mappings are assessed through
 review of the workbook and its source reports.
+
+The [DAR field catalogue](../web/catalog/dar/README.md) documents the generated configuration
+contract, its profile sources, semantic code selections and extension workflow.
