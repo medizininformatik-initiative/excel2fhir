@@ -5,6 +5,10 @@ workbooks or CSV files.
 
 ## Usage
 
+The [local web workbench prototype](docs/web-prototype.md) provides workbook
+selection, persistent conversion runs, logs and result downloads.
+
+
 ```sh
 docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
 ```

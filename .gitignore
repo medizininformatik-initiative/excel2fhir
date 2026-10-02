@@ -26,3 +26,8 @@ __pycache__/
 # Complete Synthea workflow results
 /outputSynthea/*
 !/outputSynthea/converter-options.config
+
+# Web workbench build output
+/web/frontend/node_modules/
+/web/frontend/dist/
+/web/frontend/*.tsbuildinfo
