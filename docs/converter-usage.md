@@ -42,8 +42,8 @@ Previous runs remain available.
 Each KDS variant has its own output directory. Multiple inputs receive additional
 input directories.
 
-JSON bundles contain all patients of an input by default; `-p 1` creates one
-patient per bundle. NDJSON contains one complete patient bundle per line in each
+JSON bundles contain one patient by default; `-p COUNT` sets the maximum
+patients per bundle. NDJSON contains one complete patient bundle per line in each
 input/variant directory. Both representations contain the same patient data.
 
 ## Common options
@@ -55,7 +55,7 @@ input/variant directory. Both representations contain the same patient data.
 | `-o DIRECTORY` | Output root; default `outputGlobal/`. |
 | `--converter-options FILE` | Select an external options file; repeat for multiple KDS variants. |
 | `-r FORMATS` | Comma-separated output formats; default `JSON,NDJSON`. |
-| `-p COUNT` | Maximum patients per bundle; default all patients of an input. |
+| `-p COUNT` | Maximum patients per bundle; default `1`. |
 | `-v` | Enable FHIR profile and terminology validation. |
 
 Formats are `JSON`, `NDJSON`, `XML`, `JSONGZIP`, `JSONBZ2` and `ZIPJSON`.
@@ -63,10 +63,10 @@ NDJSON and ZIPJSON contain individual patient bundles. Use `--help` for logging
 and intermediate-file settings. Relative paths are resolved from the working
 directory. Custom Docker output paths need a writable volume mount.
 
-For example, explicitly select `input/` and generate one patient per JSON bundle:
+For example, explicitly select a workbook:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -i input -p 1
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -f input/MyCase.xlsx
 ```
 
 ## Converter Options

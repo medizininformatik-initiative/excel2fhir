@@ -44,12 +44,32 @@ public class CsvCommandLineTest {
         }
     }
 
+    @Test
+    public void defaultOutputContainsOnePatientPerJsonBundle() throws Exception {
+        Path source = input.resolve("case_Person.csv");
+        var rows = Files.readAllLines(source);
+        Files.writeString(source, rows.get(1).replace("p1", "p2") + System.lineSeparator(),
+                java.nio.file.StandardOpenOption.APPEND);
+        assertEquals(0, new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString()));
+        try (var files = Files.walk(output)) {
+            var bundles = files.filter(p -> p.toString().endsWith(".json")
+                    && p.getParent().getFileName().toString().equals("fhir")).toList();
+            assertEquals(2, bundles.size());
+            for (var file : bundles) {
+                Bundle bundle = OutputFileType.JSON.getParser().parseResource(Bundle.class, Files.readString(file));
+                assertEquals(1, bundle.getEntry().stream()
+                        .filter(entry -> entry.getResource() instanceof org.hl7.fhir.r4.model.Patient).count());
+            }
+        }
+    }
+
     private int run(String... validation) throws Exception {
         java.util.Set<Path> before;
         try (var runs = Files.list(output)) {
             before = runs.collect(java.util.stream.Collectors.toSet());
         }
         var args = new java.util.ArrayList<>(java.util.List.of("-i", input.toString(), "-o", output.toString()));
+        if (!java.util.List.of(validation).contains("-p")) args.addAll(java.util.List.of("-p", "1000"));
         args.addAll(java.util.List.of(validation));
         int code = new CommandLine(new Main()).execute(args.toArray(String[]::new));
         try (var runs = Files.list(output)) {
@@ -92,7 +112,7 @@ public class CsvCommandLineTest {
                 return validator;
             }
         };
-        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(), "-v"));
+        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(), "-p", "1000", "-v"));
         try (var runs = Files.list(output)) {
             output = runs.findFirst().orElseThrow();
         }
@@ -127,7 +147,7 @@ public class CsvCommandLineTest {
     @Test
     public void ambiguousCsvSetsFailBeforeCreatingARun() throws Exception {
         Files.copy(input.resolve("case_Person.csv"), input.resolve("case-Person.csv"));
-        assertNotEquals(0, new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString()));
+        assertNotEquals(0, new CommandLine(new Main()).execute("-i", input.toString(), "-o", output.toString(), "-p", "1000"));
         try (var runs = Files.list(output)) {
             assertEquals(0, runs.count());
         }
