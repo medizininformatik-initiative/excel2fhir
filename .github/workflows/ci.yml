@@ -15,7 +15,7 @@ on:
     - develop
 
 env:
-  TRIVY_VERSION: v0.74.0
+  TRIVY_VERSION: v0.75.0
 
 jobs:
 
