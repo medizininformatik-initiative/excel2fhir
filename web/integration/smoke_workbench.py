@@ -1,6 +1,6 @@
 """Exercise the isolated Compose prototype, including a worker container crash.
 
-Run after `docker compose -f compose.web.yml up -d --build`.
+Run after `docker compose -f web/compose.yml up -d --build`.
 Only the worker in the excel2fhir-web-prototype project is stopped/restarted.
 """
 import io
@@ -12,7 +12,7 @@ import urllib.request
 import zipfile
 
 BASE = 'http://127.0.0.1:5184/api'
-COMPOSE = ['docker', 'compose', '-f', str(Path(__file__).resolve().parents[2] / 'compose.web.yml')]
+COMPOSE = ['docker', 'compose', '-f', str(Path(__file__).resolve().parents[2] / 'web/compose.yml')]
 
 
 def request(path, data=None):
@@ -48,6 +48,18 @@ bundles = [name for name in archive.namelist() if '/fhir/' in name and name.ends
 assert bundles and all(json.loads(archive.read(name))['resourceType'] == 'Bundle' for name in bundles)
 assert request(f'/jobs/{job}/logs')
 print(f'PASS conversion, reconnect, immutable snapshot, logs, FHIR download: {job}', flush=True)
+
+subprocess.run(COMPOSE + ['up', '-d', '--no-deps', '--force-recreate', 'api'], check=True)
+deadline = time.monotonic() + 30
+while True:
+    try:
+        assert snapshot == request(f'/jobs/{job}/snapshot')
+        break
+    except OSError:
+        if time.monotonic() >= deadline:
+            raise
+        time.sleep(0.5)
+print('PASS API recreation and automatic web proxy reconnect', flush=True)
 
 subprocess.run(COMPOSE + ['stop', 'worker'], check=True)
 try:

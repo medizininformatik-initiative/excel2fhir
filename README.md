@@ -5,7 +5,7 @@ workbooks or CSV files.
 
 ## Usage
 
-The [local web workbench prototype](docs/web-prototype.md) provides workbook
+The [local web workbench prototype](web/README.md) provides workbook
 selection, persistent conversion runs, logs and result downloads.
 
 

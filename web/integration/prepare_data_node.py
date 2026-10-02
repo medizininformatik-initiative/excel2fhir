@@ -56,14 +56,14 @@ services:
       service: torch
     ports: !override ["127.0.0.1:5186:8080"]
     environment:
-      JAVA_TOOL_OPTIONS: -Xmx1024m
+      JAVA_TOOL_OPTIONS: -Xmx2048m
       TORCH_FHIR_OAUTH_ISSUER_URI: ""
       TORCH_BASE_URL: https://localhost:5188/torch
       TORCH_OUTPUT_FILE_SERVER_URL: https://localhost:5188/torch/fileserver
       TORCH_FHIR_URL: http://fhir-server:8080/fhir
       TORCH_MAXCONCURRENCY: 1
       TORCH_BATCHSIZE: 10
-    mem_limit: 1536m
+    mem_limit: 3072m
     cpus: 1
     restart: "no"
   torch-nginx:

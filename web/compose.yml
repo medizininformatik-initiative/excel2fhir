@@ -2,7 +2,7 @@ name: excel2fhir-web-prototype
 services:
   api:
     build:
-      context: .
+      context: ..
       dockerfile: web/backend/Dockerfile
     volumes:
       - workbench:/data
@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
   worker:
     build:
-      context: .
+      context: ..
       dockerfile: web/backend/Dockerfile
     command: [python, worker.py]
     init: true
@@ -22,7 +22,7 @@ services:
     stop_grace_period: 15s
     restart: unless-stopped
   web:
-    build: web/frontend
+    build: ./frontend
     ports:
       - '127.0.0.1:5184:8080'
     depends_on:

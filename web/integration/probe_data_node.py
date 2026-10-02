@@ -65,6 +65,8 @@ status, headers, body = call(url, parameters, auth=True)
 (root / 'torch-response.json').write_text(json.dumps({'status': status, 'headers': headers, 'body': body}, indent=2))
 print(f'TORCH submission with verified certificate and Basic auth: HTTP {status}', flush=True)
 location = next((v for k, v in headers.items() if k.lower() == 'content-location'), None)
+if status != 202 or not location:
+    raise SystemExit(f'TORCH submission failed: HTTP {status}; response preserved')
 if location:
     # Never send test credentials to an unexpected upstream-provided host.
     if not location.startswith('https://localhost:5188/torch/'):
@@ -76,3 +78,34 @@ if location:
         time.sleep(1)
     (root / 'torch-result.json').write_text(body)
     print(f'TORCH result: HTTP {status}', flush=True)
+
+    if status != 200:
+        raise SystemExit(f'TORCH extraction did not finish successfully: HTTP {status}')
+    result = json.loads(body)
+    if result.get('error') or not result.get('output'):
+        raise SystemExit('TORCH produced errors or no output files')
+    extracted_patients = set()
+    resource_counts = {}
+    output = root / 'torch-downloads'
+    output.mkdir(exist_ok=True)
+    for index, item in enumerate(result['output']):
+        url = item['url']
+        if not url.startswith('https://localhost:5188/torch/fileserver/'):
+            raise SystemExit(f'Unexpected output URL: {url}')
+        file_status, _, content = call(url, auth=True)
+        assert file_status == 200, file_status
+        (output / f'part-{index}.ndjson').write_text(content)
+        for line in content.splitlines():
+            if not line.strip():
+                continue
+            bundle = json.loads(line)
+            assert bundle['resourceType'] == 'Bundle'
+            for entry in bundle.get('entry', []):
+                resource = entry['resource']
+                kind = resource['resourceType']
+                resource_counts[kind] = resource_counts.get(kind, 0) + 1
+                if kind == 'Patient':
+                    extracted_patients.add(resource['id'])
+    assert extracted_patients == set(patients), (extracted_patients, patients)
+    (root / 'torch-download-summary.json').write_text(json.dumps(resource_counts, indent=2))
+    print(f'TORCH files verified: {resource_counts}', flush=True)
