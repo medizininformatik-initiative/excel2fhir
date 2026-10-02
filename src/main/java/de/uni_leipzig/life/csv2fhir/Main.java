@@ -38,8 +38,8 @@ public class Main implements Callable<Integer> {
             "--result-file-format" }, split = ",", description = "Output formats. Default: JSON,NDJSON.")
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
 
-    @Option(names = { "-p", "--patients-count" }, description = "Maximum number of patients per JSON bundle.")
-    int patientsPerBundle = Integer.MAX_VALUE;
+    @Option(names = { "-p", "--patients-count" }, description = "Maximum number of patients per output file (default: 1).")
+    int patientsPerBundle = 1;
 
     /**
      *

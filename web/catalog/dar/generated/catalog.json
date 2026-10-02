@@ -1,0 +1,4032 @@
+{
+  "schemaVersion": 1,
+  "scope": "Supported converter fields; semantic allowlists are reviewed project rules.",
+  "sources": {
+    "rules": {
+      "file": "web/catalog/dar/source/field-rules.json",
+      "sha256": "32f37dc5435950c3c50aa2f2946690ab742aacfcb0707ecb8c0eb6d615d3f0b1"
+    },
+    "labels": {
+      "file": "src/main/resources/workbook-absent-reasons.json",
+      "sha256": "ee56fd3a11f29e512886cd770558bded57449f03b956fc7a38e82cf9d905dd06"
+    },
+    "generatorSha256": "8b83ed07b2955cb1b81f3a409a2a92d81b155f8886f12a0ebdff3259c2f1d3a6",
+    "packages": [
+      {
+        "file": "hl7.fhir.uv.xver-r5.r4-0.1.0.tgz",
+        "sha256": "7ee6f04d78ced803dd567559a0d178bafbd2d3b71db61bbbf6b15c796a1a664d"
+      },
+      {
+        "file": "hl7.fhir.r4.core-4.0.1.tgz",
+        "sha256": "ebd7731df7d36b5b7d39d5fb6c9d77b44bb7fe5742f1a2e87f164738c3289d44"
+      },
+      {
+        "file": "de.basisprofil.r4-1.5.4.tgz",
+        "sha256": "9dc5392b5471060db07cf8ace2e8c81e99e3cee1e89f0b5febad362561fb739f"
+      },
+      {
+        "file": "de.einwilligungsmanagement-2.0.2.tgz",
+        "sha256": "8570752e595e459dea48af6410c74f0631d3774d2b6ee18b1b7f198c2caea7f2"
+      },
+      {
+        "file": "de.fhir.medication-1.0.7.tgz",
+        "sha256": "eeaac78ee4be6231c9632006bf91f2f3844f6decc14a181ba80e0c6262628574"
+      },
+      {
+        "file": "de.ihe-d.terminology-3.0.1.tgz",
+        "sha256": "c0e90a5c42a50dbc02eceb4e6121a4b8e0cc208ab3ca6e0102d279d6a681b4b9"
+      },
+      {
+        "file": "de.medizininformatikinitiative.kerndatensatz.base-2026.0.1.tgz",
+        "sha256": "173eb412c3dbadf4e9a73c6722de475f39e3ef8bc0526b516a013d8cb9945c79"
+      },
+      {
+        "file": "de.medizininformatikinitiative.kerndatensatz.consent-2026.0.0.tgz",
+        "sha256": "3402dffbabee2788dd9dd07c16b4077ed2f7743e7464812138a09e587a24733a"
+      },
+      {
+        "file": "de.medizininformatikinitiative.kerndatensatz.laborbefund-2026.0.3.tgz",
+        "sha256": "bc1f943729beda83a4f3ee7b8777f995815577b35fdc55ea0442c5eab5df194d"
+      },
+      {
+        "file": "de.medizininformatikinitiative.kerndatensatz.medikation-2026.0.1.tgz",
+        "sha256": "af66a61db14a24b77e15ff577750063a44beb03b802c6e1f70ec8ed865868516"
+      },
+      {
+        "file": "de.medizininformatikinitiative.kerndatensatz.meta-2026.0.0.tgz",
+        "sha256": "0722e8040e04f14680775fc710f626fd0312ab95791772b17007fccc6e7c8fb1"
+      },
+      {
+        "file": "hl7.fhir.uv.crmi-2.0.0.tgz",
+        "sha256": "c52b8c919e8740c0a6e5d8df25beb0ad7ccef2ef5d74362c7be8f101ff757d47"
+      },
+      {
+        "file": "hl7.fhir.uv.extensions.r4-5.2.0.tgz",
+        "sha256": "b406e75575f05676559d0759770c5939d023ee72fb2ef38e0b3259328487720a"
+      },
+      {
+        "file": "hl7.fhir.uv.extensions.r4-5.3.0.tgz",
+        "sha256": "dfbc3ac95df91ed845cc6b60920d2875f679361fa0e16f227cee93c4a9ab2104"
+      },
+      {
+        "file": "hl7.fhir.uv.ipa-1.1.0.tgz",
+        "sha256": "013b9f91683c496fc09eed93a8798b47dcbfb775587890fa3e11253a2409feef"
+      },
+      {
+        "file": "hl7.fhir.uv.ips-2.0.0.tgz",
+        "sha256": "b3964eba08ee699bc121b905c4290641e54dd34f2cf3b5cd3edeb08a40a66979"
+      },
+      {
+        "file": "hl7.fhir.uv.smart-app-launch-2.0.0.tgz",
+        "sha256": "627e7a64e7abe130201fbae2ee7d2cb85d7d94972458d302c4d06d59e2c7d084"
+      },
+      {
+        "file": "hl7.terminology.r4-6.2.0.tgz",
+        "sha256": "79404c9cc95491fc0155627cd039c401a6eb4748175328131e91b709a41300e2"
+      },
+      {
+        "file": "hl7.terminology.r4-6.5.0.tgz",
+        "sha256": "a28b638483a11df696ed92198276236d759e41c7a3a8960c9e7e7d0a1185bd06"
+      },
+      {
+        "file": "hl7.terminology.r4-7.1.0.tgz",
+        "sha256": "1cb0cd5601972925fcd04f2c175d9cc63a9ecd9346a91a6e735f1a865dc5fba1"
+      },
+      {
+        "file": "hl7.terminology.r4-7.2.0.tgz",
+        "sha256": "f8c33fd30f8daf78f7496540a841e3fd20585279c0e785fb97394e44d6f24fee"
+      }
+    ]
+  },
+  "codes": [
+    {
+      "code": "unknown",
+      "label": "Unbekannt (Data Absent Reason)"
+    },
+    {
+      "code": "asked-unknown",
+      "label": "Erfragt, aber unbekannt (Data Absent Reason)"
+    },
+    {
+      "code": "temp-unknown",
+      "label": "Noch nicht bekannt (Data Absent Reason)"
+    },
+    {
+      "code": "not-asked",
+      "label": "Nicht erhoben (Data Absent Reason)"
+    },
+    {
+      "code": "asked-declined",
+      "label": "Auskunft verweigert (Data Absent Reason)"
+    },
+    {
+      "code": "masked",
+      "label": "Aus Datenschutzgründen verborgen (Data Absent Reason)"
+    },
+    {
+      "code": "not-applicable",
+      "label": "Nicht zutreffend (Data Absent Reason)"
+    },
+    {
+      "code": "unsupported",
+      "label": "Vom Quellsystem nicht unterstützt (Data Absent Reason)"
+    },
+    {
+      "code": "as-text",
+      "label": "Nur im Ressourcentext vorhanden (Data Absent Reason)"
+    },
+    {
+      "code": "error",
+      "label": "Fehler bei der Ermittlung (Data Absent Reason)"
+    },
+    {
+      "code": "not-a-number",
+      "label": "Kein Zahlenwert (NaN) (Data Absent Reason)"
+    },
+    {
+      "code": "negative-infinity",
+      "label": "Negative Unendlichkeit (Data Absent Reason)"
+    },
+    {
+      "code": "positive-infinity",
+      "label": "Positive Unendlichkeit (Data Absent Reason)"
+    },
+    {
+      "code": "not-performed",
+      "label": "Untersuchung nicht durchgeführt (Data Absent Reason)"
+    },
+    {
+      "code": "not-permitted",
+      "label": "Wert im Zielprofil nicht zulässig (Data Absent Reason)"
+    }
+  ],
+  "profiles": {
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "mii-pat-1",
+          "severity": "error",
+          "expression": "gender.exists() and gender='other' implies gender.extension('http://fhir.de/StructureDefinition/gender-amtlich-de').exists()",
+          "human": "Falls die Geschlechtsangabe 'other' gewählt wird, muss die amtliche Differenzierung per Extension angegeben werden"
+        },
+        {
+          "key": "kvid-2",
+          "severity": "warning",
+          "expression": "($this.coding.exists(system='http://fhir.de/CodeSystem/identifier-type-de-basis' and code='GKV') or $this.coding.exists(system='http://fhir.de/CodeSystem/identifier-type-de-basis' and code='PKV')).not()",
+          "human": "Die type Codes 'GKV' und 'PKV' haben den Status 'retired', daher sollen diese nicht mehr verwendet werden"
+        },
+        {
+          "key": "kvid-1",
+          "severity": "warning",
+          "expression": "matches('^[A-Z][0-9]{9}$')",
+          "human": "Der unveränderliche Teil der KVID muss 10-stellig sein und mit einem Großbuchstaben anfangen"
+        },
+        {
+          "key": "ik-1",
+          "severity": "warning",
+          "expression": "matches('^[0-9]{9}$')",
+          "human": "Eine IK muss eine numerische 9-stellige Zeichenkette (mit Prüfziffer) sein"
+        },
+        {
+          "key": "mii-pat-2",
+          "severity": "error",
+          "expression": "$this = 'http://fhir.de/sid/arge-ik/iknr' or $this = 'https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/core-location-identifier'",
+          "human": "Entweder IKNR oder MII Core Location Identifier muss verwendet werden"
+        },
+        {
+          "key": "gender-amtlich-1",
+          "severity": "error",
+          "expression": "%resource.where(gender='other').exists()",
+          "human": "Die amtliche Differenzierung der Geschlechtsangabe 'other' darf nur gefüllt sein, wenn das Geschlecht 'other' angegeben ist"
+        },
+        {
+          "key": "pat-cnt-2or3-char",
+          "severity": "warning",
+          "expression": "country.empty() or (country.memberOf('http://hl7.org/fhir/ValueSet/iso3166-1-2') or country.memberOf('http://hl7.org/fhir/ValueSet/iso3166-1-3'))",
+          "human": "The content of the country element (if present) SHALL be selected EITHER from ValueSet ISO Country Alpha-2 http://hl7.org/fhir/ValueSet/iso3166-1-2 OR MAY be selected from ISO Country Alpha-3 Value Set http://hl7.org/fhir/ValueSet/iso3166-1-3, IF the country is not specified in value Set ISO Country Alpha-2 http://hl7.org/fhir/ValueSet/iso3166-1-2."
+        },
+        {
+          "key": "ags-extension-1",
+          "severity": "error",
+          "expression": "$this.matches('^[0-9]{8}$')",
+          "human": "Der Amtliche Gemeindeschlüssel ist nummerisch und begrenzt auf acht Stellen"
+        },
+        {
+          "key": "pat-1",
+          "severity": "error",
+          "expression": "name.exists() or telecom.exists() or address.exists() or organization.exists()",
+          "human": "SHALL at least contain a contact's details or a reference to an organization"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "mii-enc-1",
+          "severity": "error",
+          "expression": "status = 'finished' implies period.end.exists()",
+          "human": "Falls der Encounter abgeschlossen wurde, MUSS ein Enddatum bekannt sein"
+        },
+        {
+          "key": "mii-enc-2",
+          "severity": "error",
+          "expression": "status = 'finished' and class.code = 'IMP' implies period.start.exists() and period.end.exists()",
+          "human": "Abgeschlossene, stationäre Kontakte MÜSSEN einen Start- und End-Zeitpunkt angeben"
+        },
+        {
+          "key": "mii-enc-3",
+          "severity": "error",
+          "expression": "status = 'planned' implies period.exists().not()",
+          "human": "Geplante Kontakte DÜRFEN NICHT einen Start- oder End-Zeitpunkt angeben"
+        },
+        {
+          "key": "mii-enc-4",
+          "severity": "warning",
+          "expression": "status = 'planned' implies extension.where(url = 'http://hl7.org/fhir/5.0/StructureDefinition/extension-Encounter.plannedStartDate').exists()",
+          "human": "Geplante Kontakte SOLLTEN die Extensions für den geplanten Start- oder End-Zeitpunkt verwenden"
+        },
+        {
+          "key": "mii-enc-5",
+          "severity": "error",
+          "expression": "status = 'in-progress' implies period.start.exists()",
+          "human": "In-Durchführung befindliche Kontakte MÜSSEN einen Start-Zeitpunkt angeben"
+        },
+        {
+          "key": "mii-enc-6",
+          "severity": "error",
+          "expression": "status = 'onleave' implies period.start.exists()",
+          "human": "Kontakte mit Abwesenheitsstatus MÜSSEN einen Start-Zeitpunkt angeben"
+        },
+        {
+          "key": "mii-enc-7",
+          "severity": "warning",
+          "expression": "status = 'unknown' implies period.start.exists()",
+          "human": "Kontakte mit unbekannten Status SOLLTEN einen Start-Zeitpunkt angeben"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "con-3",
+          "severity": "warning",
+          "expression": "clinicalStatus.exists() or verificationStatus.coding.where(system='http://terminology.hl7.org/CodeSystem/condition-ver-status' and code = 'entered-in-error').exists() or category.select($this='problem-list-item').empty()",
+          "human": "Condition.clinicalStatus SHALL be present if verificationStatus is not entered-in-error and category is problem-list-item"
+        },
+        {
+          "key": "con-4",
+          "severity": "error",
+          "expression": "abatement.empty() or clinicalStatus.coding.where(system='http://terminology.hl7.org/CodeSystem/condition-clinical' and (code='resolved' or code='remission' or code='inactive')).exists()",
+          "human": "If condition is abated, then clinicalStatus must be either inactive, resolved, or remission"
+        },
+        {
+          "key": "con-5",
+          "severity": "error",
+          "expression": "verificationStatus.coding.where(system='http://terminology.hl7.org/CodeSystem/condition-ver-status' and code='entered-in-error').empty() or clinicalStatus.empty()",
+          "human": "Condition.clinicalStatus SHALL NOT be present if verification Status is entered-in-error"
+        },
+        {
+          "key": "icd-4",
+          "severity": "warning",
+          "expression": "code!='A' or (%resource.verificationStatus.coding.where(code='refuted').exists() and %resource.clinicalStatus.empty())",
+          "human": "Wenn die Diagnosesicherheit \"A (Ausschluss)\" verwendet wird, dann muss clinicalStatus leer bleiben und verificationStaus auf \"refuted\" gesetzt werden."
+        },
+        {
+          "key": "icd-5",
+          "severity": "warning",
+          "expression": "code!='G' or (%resource.clinicalStatus.coding.where(code='active').exists() and %resource.verificationStatus.coding.where(code='confirmed').exists())",
+          "human": "Wenn die Diagnosesicherheit \"G (Gesichert)\" verwendet wird, dann muss clinicalStatus auf \"active\" und verificationStatus auf \"confirmed\" gesetzt werden."
+        },
+        {
+          "key": "icd-6",
+          "severity": "warning",
+          "expression": "code!='V' or (%resource.clinicalStatus.coding.where(code='active').exists() and (%resource.verificationStatus.coding.where(code='provisional').exists() or %resource.verificationStatus.coding.where(code='differential').exists()))",
+          "human": "Wenn die Diagnosesicherheit \"V (Verdacht auf)\" verwendet wird, dann muss clinicalStatus auf \"active\" und verificationStatus auf \"provisional\" oder \"differential\" gesetzt werden."
+        },
+        {
+          "key": "icd-7",
+          "severity": "warning",
+          "expression": "code!='Z' or (%resource.clinicalStatus.coding.where(code='resolved').exists() and %resource.verificationStatus.coding.where(code='confirmed').exists())",
+          "human": "Wenn die Diagnosesicherheit \"Z (Zustand nach)\" verwendet wird, dann muss clinicalStatus auf \"resolved\" und verificationStatus auf \"confirmed\" gesetzt werden."
+        },
+        {
+          "key": "icd-regex",
+          "severity": "warning",
+          "expression": "matches('^[A-Z][0-9][A-Z0-9](\\\\.?[A-Z0-9]{0,4})?$')",
+          "human": "In code sind nur gültige ICD-10-Codes ohne Zusätze erlaubt"
+        },
+        {
+          "key": "con-1",
+          "severity": "error",
+          "expression": "summary.exists() or assessment.exists()",
+          "human": "Stage SHALL have summary or assessment"
+        },
+        {
+          "key": "con-2",
+          "severity": "error",
+          "expression": "code.exists() or detail.exists()",
+          "human": "evidence SHALL have code or details"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "proc-mii-1",
+          "severity": "error",
+          "expression": "code.coding.where(system = 'http://fhir.de/CodeSystem/bfarm/ops').exists() implies category.coding.where(system = 'http://snomed.info/sct').exists()",
+          "human": "Falls die Prozedur per OPS kodiert wird, MUSS eine SNOMED-CT kodierte Category abgebildet werden"
+        },
+        {
+          "key": "sct-ops-1",
+          "severity": "error",
+          "expression": "coding.where(system = 'http://snomed.info/sct').exists() or coding.where(system = 'http://fhir.de/CodeSystem/bfarm/ops').exists()",
+          "human": "Eine Prozedur MUSS mit OPS oder SNOMED-CT kodiert werden."
+        },
+        {
+          "key": "ops-regex",
+          "severity": "warning",
+          "expression": "matches('^[1|3|5|6|8|9]-[a-zA-Z0-9]{3}([.][a-zA-Z0-9]{1,2})?$')",
+          "human": "In code sind nur gültige OPS-Codes ohne Zusätze erlaubt"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "DosageStructuredOrFreeTextWarning",
+          "severity": "warning",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | \n ofType(MedicationDispense).dosageInstruction | \n ofType(MedicationStatement).dosage).all(\n  (text.exists() and timing.empty() and doseAndRate.empty()) or\n  (text.empty() and (timing.exists() or doseAndRate.exists()))\n)",
+          "human": "Die Dosierungsangabe darf entweder nur als Freitext oder nur als vollständige strukturierte Information erfolgen — eine Mischung ist nicht erlaubt."
+        },
+        {
+          "key": "DosageStructuredRequiresBoth",
+          "severity": "error",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | \n ofType(MedicationDispense).dosageInstruction | \n ofType(MedicationStatement).dosage).all(\n  (timing.exists() implies doseAndRate.exists()) and\n  (doseAndRate.exists() implies timing.exists())\n)",
+          "human": "Wenn eine strukturierte Dosierungsangabe erfolgt, müssen sowohl timing als auch doseAndRate angegeben werden."
+        },
+        {
+          "key": "DosageDoseUnitSameCode",
+          "severity": "error",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | ofType(MedicationDispense).dosageInstruction | ofType(MedicationStatement).dosage).all(\ndoseAndRate.exists() implies\n  (\n    %resource.dosageInstruction.doseAndRate.dose.ofType(Quantity).code | \n    %resource.dosageInstruction.doseAndRate.dose.ofType(Range).low.code | \n    %resource.dosageInstruction.doseAndRate.dose.ofType(Range).high.code\n  ).distinct().count() = 1\n)",
+          "human": "Die Dosiereinheit muss über alle Dosierungen gleich sein."
+        },
+        {
+          "key": "DosageWarnungViererschemaInText",
+          "severity": "warning",
+          "expression": "text.exists() implies text.matches('.*\\\\d+\\\\s*[-–]\\\\s*\\\\d+\\\\s*[-–]\\\\s*\\\\d+\\\\s*[-–]\\\\d+.*').not()",
+          "human": "Hinweis: In Dosage.text wurde ein Viererschema (z. B. 1-1-1-1) erkannt. Bitte prüfen, ob dies strukturiert abgebildet werden kann."
+        },
+        {
+          "key": "FreeTextSingleDosageOnlyWarning",
+          "severity": "warning",
+          "expression": "(\n  (%resource.ofType(MedicationRequest).dosageInstruction |\n   %resource.ofType(MedicationDispense).dosageInstruction |\n   %resource.ofType(MedicationStatement).dosage\n  ).exists(text.exists() and timing.empty() and doseAndRate.empty())\n)\nimplies\n(\n  (%resource.ofType(MedicationRequest).dosageInstruction |\n   %resource.ofType(MedicationDispense).dosageInstruction |\n   %resource.ofType(MedicationStatement).dosage\n  ).count() = 1\n)",
+          "human": "Wenn eine Dosierung als reiner Freitext angegeben ist, soll nur genau ein Dosage-Element existieren."
+        },
+        {
+          "key": "dsg-1",
+          "severity": "error",
+          "expression": "text.exists() or doseAndRate.exists()",
+          "human": "If present, dosage must include free text or structured data"
+        },
+        {
+          "key": "tim-9",
+          "severity": "error",
+          "expression": "offset.empty() or (when.exists() and ((when in ('C' | 'CM' | 'CD' | 'CV')).not()))",
+          "human": "If there's an offset, there must be a when (and not C, CM, CD, CV)"
+        },
+        {
+          "key": "tim-5",
+          "severity": "error",
+          "expression": "period.exists() implies period >= 0",
+          "human": "period SHALL be a non-negative value"
+        },
+        {
+          "key": "tim-6",
+          "severity": "error",
+          "expression": "periodMax.empty() or period.exists()",
+          "human": "If there's a periodMax, there must be a period"
+        },
+        {
+          "key": "tim-7",
+          "severity": "error",
+          "expression": "durationMax.empty() or duration.exists()",
+          "human": "If there's a durationMax, there must be a duration"
+        },
+        {
+          "key": "tim-8",
+          "severity": "error",
+          "expression": "countMax.empty() or count.exists()",
+          "human": "If there's a countMax, there must be a count"
+        },
+        {
+          "key": "tim-1",
+          "severity": "error",
+          "expression": "duration.empty() or durationUnit.exists()",
+          "human": "if there's a duration, there needs to be duration units"
+        },
+        {
+          "key": "tim-10",
+          "severity": "error",
+          "expression": "timeOfDay.empty() or when.empty()",
+          "human": "If there's a timeOfDay, there cannot be a when, or vice versa"
+        },
+        {
+          "key": "tim-2",
+          "severity": "error",
+          "expression": "period.empty() or periodUnit.exists()",
+          "human": "if there's a period, there needs to be period units"
+        },
+        {
+          "key": "tim-4",
+          "severity": "error",
+          "expression": "duration.exists() implies duration >= 0",
+          "human": "duration SHALL be a non-negative value"
+        },
+        {
+          "key": "TimingSingleDosageForTimeOfDay",
+          "severity": "error",
+          "expression": "(\n  %resource.ofType(MedicationRequest).dosageInstruction\n  | %resource.ofType(MedicationDispense).dosageInstruction\n  | %resource.ofType(MedicationStatement).dosage\n).all(\n  (\n    timing.repeat.dayOfWeek.empty() and\n    timing.repeat.timeOfDay.exists() and\n    timing.repeat.when.empty() and\n    (timing.repeat.period.exists() and timing.repeat.period = 1) and\n    (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n  )\n  implies\n  (\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.timeOfDay.exists() and timing.repeat.when.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).count() = 1\n    )\n    or\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.timeOfDay.exists() and timing.repeat.when.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).doseAndRate.dose.ofType(Quantity).value.distinct().count() > 1\n    )\n  )\n)",
+          "human": "Wenn nur timeOfDay verwendet wird und täglich dosiert wird, ist die Angabe in einem einzigen Dosage-Element zu modellieren. Mehrere Dosage-Elemente sind nur zulässig, wenn sich die Dosis (Wert) unterscheidet."
+        },
+        {
+          "key": "TimingSingleDosageForWhen",
+          "severity": "error",
+          "expression": "(\n  %resource.ofType(MedicationRequest).dosageInstruction\n  | %resource.ofType(MedicationDispense).dosageInstruction\n  | %resource.ofType(MedicationStatement).dosage\n).all(\n  (\n    timing.repeat.dayOfWeek.empty() and\n    timing.repeat.when.exists() and\n    timing.repeat.timeOfDay.empty() and\n    (timing.repeat.period.exists() and timing.repeat.period = 1) and\n    (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n  )\n  implies\n  (\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.when.exists() and timing.repeat.timeOfDay.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).count() = 1\n    )\n    or\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.when.exists() and timing.repeat.timeOfDay.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).doseAndRate.dose.ofType(Quantity).value.distinct().count() > 1\n    )\n  )\n)",
+          "human": "Wenn nur when verwendet wird und täglich dosiert wird, ist die Angabe in einem einzigen Dosage-Element zu modellieren. Mehrere Dosage-Elemente sind nur zulässig, wenn sich die Dosis (Wert) unterscheidet."
+        },
+        {
+          "key": "TimingBoundsUnitMatchesCode",
+          "severity": "error",
+          "expression": "bounds.ofType(Duration).exists().not() or (\n  (\n    bounds.ofType(Duration).code = 'd'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Tag(e)' or\n      bounds.ofType(Duration).unit = 'Tag' or\n      bounds.ofType(Duration).unit = 'Tage'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'wk'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Woche(n)' or\n      bounds.ofType(Duration).unit = 'Woche' or\n      bounds.ofType(Duration).unit = 'Wochen'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'mo'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Monat(e)' or\n      bounds.ofType(Duration).unit = 'Monat' or\n      bounds.ofType(Duration).unit = 'Monate'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'a'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Jahr(e)' or\n      bounds.ofType(Duration).unit = 'Jahr' or\n      bounds.ofType(Duration).unit = 'Jahre'\n    )\n  )\n)",
+          "human": "boundsDuration.unit muss zur UCUM boundsDuration.code passen (z. B. 'Woche(n)' nur mit code='wk')."
+        },
+        {
+          "key": "qty-3",
+          "severity": "error",
+          "expression": "code.empty() or system.exists()",
+          "human": "If a code for the unit is present, the system SHALL also be present"
+        },
+        {
+          "key": "sqty-1",
+          "severity": "error",
+          "expression": "comparator.empty()",
+          "human": "The comparator is not used on a SimpleQuantity"
+        },
+        {
+          "key": "rat-1",
+          "severity": "error",
+          "expression": "(numerator.empty() xor denominator.exists()) and (numerator.exists() or extension.exists())",
+          "human": "Numerator and denominator SHALL both be present, or both are absent. If both are absent, there SHALL be some extension present"
+        },
+        {
+          "key": "drt-1",
+          "severity": "error",
+          "expression": "code.exists() implies ((system = %ucum) and value.exists())",
+          "human": "There SHALL be a code if there is a value and it SHALL be an expression of time.  If system is present, it SHALL be UCUM."
+        },
+        {
+          "key": "per-1",
+          "severity": "error",
+          "expression": "start.hasValue().not() or end.hasValue().not() or (start <= end)",
+          "human": "If present, start SHALL have a lower value than end"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "mad-1",
+          "severity": "error",
+          "expression": "dose.exists() or rate.exists()",
+          "human": "SHALL have at least one of dosage.dose or dosage.rate[x]"
+        },
+        {
+          "key": "qty-3",
+          "severity": "error",
+          "expression": "code.empty() or system.exists()",
+          "human": "If a code for the unit is present, the system SHALL also be present"
+        },
+        {
+          "key": "sqty-1",
+          "severity": "error",
+          "expression": "comparator.empty()",
+          "human": "The comparator is not used on a SimpleQuantity"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "DosageStructuredOrFreeTextWarning",
+          "severity": "warning",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | \n ofType(MedicationDispense).dosageInstruction | \n ofType(MedicationStatement).dosage).all(\n  (text.exists() and timing.empty() and doseAndRate.empty()) or\n  (text.empty() and (timing.exists() or doseAndRate.exists()))\n)",
+          "human": "Die Dosierungsangabe darf entweder nur als Freitext oder nur als vollständige strukturierte Information erfolgen — eine Mischung ist nicht erlaubt."
+        },
+        {
+          "key": "DosageStructuredRequiresBoth",
+          "severity": "error",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | \n ofType(MedicationDispense).dosageInstruction | \n ofType(MedicationStatement).dosage).all(\n  (timing.exists() implies doseAndRate.exists()) and\n  (doseAndRate.exists() implies timing.exists())\n)",
+          "human": "Wenn eine strukturierte Dosierungsangabe erfolgt, müssen sowohl timing als auch doseAndRate angegeben werden."
+        },
+        {
+          "key": "DosageDoseUnitSameCode",
+          "severity": "error",
+          "expression": "(%resource.ofType(MedicationRequest).dosageInstruction | ofType(MedicationDispense).dosageInstruction | ofType(MedicationStatement).dosage).all(\ndoseAndRate.exists() implies\n  (\n    %resource.dosageInstruction.doseAndRate.dose.ofType(Quantity).code | \n    %resource.dosageInstruction.doseAndRate.dose.ofType(Range).low.code | \n    %resource.dosageInstruction.doseAndRate.dose.ofType(Range).high.code\n  ).distinct().count() = 1\n)",
+          "human": "Die Dosiereinheit muss über alle Dosierungen gleich sein."
+        },
+        {
+          "key": "DosageWarnungViererschemaInText",
+          "severity": "warning",
+          "expression": "text.exists() implies text.matches('.*\\\\d+\\\\s*[-–]\\\\s*\\\\d+\\\\s*[-–]\\\\s*\\\\d+\\\\s*[-–]\\\\d+.*').not()",
+          "human": "Hinweis: In Dosage.text wurde ein Viererschema (z. B. 1-1-1-1) erkannt. Bitte prüfen, ob dies strukturiert abgebildet werden kann."
+        },
+        {
+          "key": "FreeTextSingleDosageOnlyWarning",
+          "severity": "warning",
+          "expression": "(\n  (%resource.ofType(MedicationRequest).dosageInstruction |\n   %resource.ofType(MedicationDispense).dosageInstruction |\n   %resource.ofType(MedicationStatement).dosage\n  ).exists(text.exists() and timing.empty() and doseAndRate.empty())\n)\nimplies\n(\n  (%resource.ofType(MedicationRequest).dosageInstruction |\n   %resource.ofType(MedicationDispense).dosageInstruction |\n   %resource.ofType(MedicationStatement).dosage\n  ).count() = 1\n)",
+          "human": "Wenn eine Dosierung als reiner Freitext angegeben ist, soll nur genau ein Dosage-Element existieren."
+        },
+        {
+          "key": "dsg-1",
+          "severity": "error",
+          "expression": "text.exists() or doseAndRate.exists()",
+          "human": "If present, dosage must include free text or structured data"
+        },
+        {
+          "key": "tim-9",
+          "severity": "error",
+          "expression": "offset.empty() or (when.exists() and ((when in ('C' | 'CM' | 'CD' | 'CV')).not()))",
+          "human": "If there's an offset, there must be a when (and not C, CM, CD, CV)"
+        },
+        {
+          "key": "tim-5",
+          "severity": "error",
+          "expression": "period.exists() implies period >= 0",
+          "human": "period SHALL be a non-negative value"
+        },
+        {
+          "key": "tim-6",
+          "severity": "error",
+          "expression": "periodMax.empty() or period.exists()",
+          "human": "If there's a periodMax, there must be a period"
+        },
+        {
+          "key": "tim-7",
+          "severity": "error",
+          "expression": "durationMax.empty() or duration.exists()",
+          "human": "If there's a durationMax, there must be a duration"
+        },
+        {
+          "key": "tim-8",
+          "severity": "error",
+          "expression": "countMax.empty() or count.exists()",
+          "human": "If there's a countMax, there must be a count"
+        },
+        {
+          "key": "tim-1",
+          "severity": "error",
+          "expression": "duration.empty() or durationUnit.exists()",
+          "human": "if there's a duration, there needs to be duration units"
+        },
+        {
+          "key": "tim-10",
+          "severity": "error",
+          "expression": "timeOfDay.empty() or when.empty()",
+          "human": "If there's a timeOfDay, there cannot be a when, or vice versa"
+        },
+        {
+          "key": "tim-2",
+          "severity": "error",
+          "expression": "period.empty() or periodUnit.exists()",
+          "human": "if there's a period, there needs to be period units"
+        },
+        {
+          "key": "tim-4",
+          "severity": "error",
+          "expression": "duration.exists() implies duration >= 0",
+          "human": "duration SHALL be a non-negative value"
+        },
+        {
+          "key": "TimingSingleDosageForTimeOfDay",
+          "severity": "error",
+          "expression": "(\n  %resource.ofType(MedicationRequest).dosageInstruction\n  | %resource.ofType(MedicationDispense).dosageInstruction\n  | %resource.ofType(MedicationStatement).dosage\n).all(\n  (\n    timing.repeat.dayOfWeek.empty() and\n    timing.repeat.timeOfDay.exists() and\n    timing.repeat.when.empty() and\n    (timing.repeat.period.exists() and timing.repeat.period = 1) and\n    (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n  )\n  implies\n  (\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.timeOfDay.exists() and timing.repeat.when.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).count() = 1\n    )\n    or\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.timeOfDay.exists() and timing.repeat.when.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).doseAndRate.dose.ofType(Quantity).value.distinct().count() > 1\n    )\n  )\n)",
+          "human": "Wenn nur timeOfDay verwendet wird und täglich dosiert wird, ist die Angabe in einem einzigen Dosage-Element zu modellieren. Mehrere Dosage-Elemente sind nur zulässig, wenn sich die Dosis (Wert) unterscheidet."
+        },
+        {
+          "key": "TimingSingleDosageForWhen",
+          "severity": "error",
+          "expression": "(\n  %resource.ofType(MedicationRequest).dosageInstruction\n  | %resource.ofType(MedicationDispense).dosageInstruction\n  | %resource.ofType(MedicationStatement).dosage\n).all(\n  (\n    timing.repeat.dayOfWeek.empty() and\n    timing.repeat.when.exists() and\n    timing.repeat.timeOfDay.empty() and\n    (timing.repeat.period.exists() and timing.repeat.period = 1) and\n    (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n  )\n  implies\n  (\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.when.exists() and timing.repeat.timeOfDay.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).count() = 1\n    )\n    or\n    (\n      (\n        %resource.ofType(MedicationRequest).dosageInstruction\n        | %resource.ofType(MedicationDispense).dosageInstruction\n        | %resource.ofType(MedicationStatement).dosage\n      ).where(\n        timing.repeat.dayOfWeek.empty() and timing.repeat.when.exists() and timing.repeat.timeOfDay.empty() and (timing.repeat.period.exists() and timing.repeat.period = 1) and (timing.repeat.periodUnit.exists() and timing.repeat.periodUnit = 'd')\n      ).doseAndRate.dose.ofType(Quantity).value.distinct().count() > 1\n    )\n  )\n)",
+          "human": "Wenn nur when verwendet wird und täglich dosiert wird, ist die Angabe in einem einzigen Dosage-Element zu modellieren. Mehrere Dosage-Elemente sind nur zulässig, wenn sich die Dosis (Wert) unterscheidet."
+        },
+        {
+          "key": "TimingBoundsUnitMatchesCode",
+          "severity": "error",
+          "expression": "bounds.ofType(Duration).exists().not() or (\n  (\n    bounds.ofType(Duration).code = 'd'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Tag(e)' or\n      bounds.ofType(Duration).unit = 'Tag' or\n      bounds.ofType(Duration).unit = 'Tage'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'wk'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Woche(n)' or\n      bounds.ofType(Duration).unit = 'Woche' or\n      bounds.ofType(Duration).unit = 'Wochen'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'mo'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Monat(e)' or\n      bounds.ofType(Duration).unit = 'Monat' or\n      bounds.ofType(Duration).unit = 'Monate'\n    )\n  ) and (\n    bounds.ofType(Duration).code = 'a'\n    implies \n    (\n      bounds.ofType(Duration).unit = 'Jahr(e)' or\n      bounds.ofType(Duration).unit = 'Jahr' or\n      bounds.ofType(Duration).unit = 'Jahre'\n    )\n  )\n)",
+          "human": "boundsDuration.unit muss zur UCUM boundsDuration.code passen (z. B. 'Woche(n)' nur mit code='wk')."
+        },
+        {
+          "key": "qty-3",
+          "severity": "error",
+          "expression": "code.empty() or system.exists()",
+          "human": "If a code for the unit is present, the system SHALL also be present"
+        },
+        {
+          "key": "sqty-1",
+          "severity": "error",
+          "expression": "comparator.empty()",
+          "human": "The comparator is not used on a SimpleQuantity"
+        },
+        {
+          "key": "rat-1",
+          "severity": "error",
+          "expression": "(numerator.empty() xor denominator.exists()) and (numerator.exists() or extension.exists())",
+          "human": "Numerator and denominator SHALL both be present, or both are absent. If both are absent, there SHALL be some extension present"
+        }
+      ]
+    },
+    "http://hl7.org/fhir/StructureDefinition/Immunization": {
+      "version": "4.0.1",
+      "constraints": [
+        {
+          "key": "imm-1",
+          "severity": "error",
+          "expression": "documentType.exists() or reference.exists()",
+          "human": "One of documentType or reference SHALL be present"
+        }
+      ]
+    },
+    "http://hl7.org/fhir/StructureDefinition/DiagnosticReport": {
+      "version": "4.0.1",
+      "constraints": []
+    },
+    "http://hl7.org/fhir/StructureDefinition/CarePlan": {
+      "version": "4.0.1",
+      "constraints": [
+        {
+          "key": "cpl-3",
+          "severity": "error",
+          "expression": "detail.empty() or reference.empty()",
+          "human": "Provide a reference or detail, not both"
+        }
+      ]
+    },
+    "http://hl7.org/fhir/StructureDefinition/DocumentReference": {
+      "version": "4.0.1",
+      "constraints": []
+    },
+    "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung": {
+      "version": "1.0.9",
+      "constraints": [
+        {
+          "key": "ppc-1",
+          "severity": "error",
+          "expression": "policy.exists() or policyRule.exists()",
+          "human": "Either a Policy or PolicyRule"
+        },
+        {
+          "key": "ppc-2",
+          "severity": "error",
+          "expression": "patient.exists() or scope.coding.where(system='something' and code='patient-privacy').exists().not()",
+          "human": "IF Scope=privacy, there must be a patient"
+        },
+        {
+          "key": "ppc-3",
+          "severity": "error",
+          "expression": "patient.exists() or scope.coding.where(system='something' and code='research').exists().not()",
+          "human": "IF Scope=research, there must be a patient"
+        },
+        {
+          "key": "ppc-4",
+          "severity": "error",
+          "expression": "patient.exists() or scope.coding.where(system='something' and code='adr').exists().not()",
+          "human": "IF Scope=adr, there must be a patient"
+        },
+        {
+          "key": "ppc-5",
+          "severity": "error",
+          "expression": "patient.exists() or scope.coding.where(system='something' and code='treatment').exists().not()",
+          "human": "IF Scope=treatment, there must be a patient"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab": {
+      "version": "2026.0.3",
+      "constraints": [
+        {
+          "key": "obs-7",
+          "severity": "error",
+          "expression": "value.empty() or component.code.where(coding.intersect(%resource.code.coding).exists()).empty()",
+          "human": "If Observation.code is the same as an Observation.component.code then the value element associated with the code SHALL NOT be present"
+        },
+        {
+          "key": "obs-6",
+          "severity": "error",
+          "expression": "dataAbsentReason.empty() or value.empty()",
+          "human": "dataAbsentReason SHALL only be present if Observation.value[x] is not present"
+        },
+        {
+          "key": "mii-lab-2",
+          "severity": "error",
+          "expression": "hasMember.exists() xor value.exists().not() implies dataAbsentReason.exists()",
+          "human": "Falls kein Laborwert verfügbar ist, muss eine dataAbsentReason angegeben werden"
+        },
+        {
+          "key": "per-1",
+          "severity": "error",
+          "expression": "start.hasValue().not() or end.hasValue().not() or (start <= end)",
+          "human": "If present, start SHALL have a lower value than end"
+        },
+        {
+          "key": "mii-lab-1",
+          "severity": "error",
+          "expression": "($this as dateTime).hasValue() implies ($this as dateTime).toString().length() >= 8",
+          "human": "Datetime must be at least to day"
+        },
+        {
+          "key": "obs-3",
+          "severity": "error",
+          "expression": "low.exists() or high.exists() or text.exists()",
+          "human": "Must have at least a low or a high or text"
+        },
+        {
+          "key": "qty-3",
+          "severity": "error",
+          "expression": "code.empty() or system.exists()",
+          "human": "If a code for the unit is present, the system SHALL also be present"
+        },
+        {
+          "key": "sqty-1",
+          "severity": "error",
+          "expression": "comparator.empty()",
+          "human": "The comparator is not used on a SimpleQuantity"
+        },
+        {
+          "key": "rng-2",
+          "severity": "error",
+          "expression": "low.empty() or high.empty() or (low <= high)",
+          "human": "If present, low SHALL have a lower value than high"
+        }
+      ]
+    },
+    "http://hl7.org/fhir/StructureDefinition/Observation": {
+      "version": "4.0.1",
+      "constraints": [
+        {
+          "key": "obs-6",
+          "severity": "error",
+          "expression": "dataAbsentReason.empty() or value.empty()",
+          "human": "dataAbsentReason SHALL only be present if Observation.value[x] is not present"
+        },
+        {
+          "key": "obs-7",
+          "severity": "error",
+          "expression": "value.empty() or component.code.where(coding.intersect(%resource.code.coding).exists()).empty()",
+          "human": "If Observation.code is the same as an Observation.component.code then the value element associated with the code SHALL NOT be present"
+        },
+        {
+          "key": "obs-3",
+          "severity": "error",
+          "expression": "low.exists() or high.exists() or text.exists()",
+          "human": "Must have at least a low or a high or text"
+        }
+      ]
+    },
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication": {
+      "version": "2026.0.1",
+      "constraints": [
+        {
+          "key": "rat-1",
+          "severity": "error",
+          "expression": "(numerator.empty() xor denominator.exists()) and (numerator.exists() or extension.exists())",
+          "human": "Numerator and denominator SHALL both be present, or both are absent. If both are absent, there SHALL be some extension present"
+        },
+        {
+          "key": "qty-3",
+          "severity": "error",
+          "expression": "code.empty() or system.exists()",
+          "human": "If a code for the unit is present, the system SHALL also be present"
+        }
+      ]
+    },
+    "http://hl7.org/fhir/StructureDefinition/Location": {
+      "version": "4.0.1",
+      "constraints": []
+    }
+  },
+  "fields": [
+    {
+      "id": "Patient.name.family",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "name.family",
+      "targets": [
+        "Patient.name.family"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name.family"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.name.family",
+          "definitionElement": "HumanName.family",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.name.given",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "name.given",
+      "targets": [
+        "Patient.name.given"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name.given"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.name.given",
+          "definitionElement": "HumanName.given",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "*"
+        }
+      ]
+    },
+    {
+      "id": "Patient.birthDate",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "birthDate",
+      "targets": [
+        "Patient.birthDate"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "birthDate"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.birthDate",
+          "definitionElement": "Patient.birthDate",
+          "types": [
+            "date"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.gender",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "gender",
+      "targets": [
+        "Patient.gender"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "gender"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.gender",
+          "definitionElement": "Patient.gender",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.deceased[x]",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "deceased[x]",
+      "targets": [
+        "Patient.deceased[x]"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "deceased[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.deceased[x]",
+          "definitionElement": "Patient.deceased[x]",
+          "types": [
+            "boolean",
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.address.line",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.line",
+      "targets": [
+        "Patient.address.line"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.line"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.address.line",
+          "definitionElement": "Address.line",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "*"
+        }
+      ]
+    },
+    {
+      "id": "Patient.address.postalCode",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.postalCode",
+      "targets": [
+        "Patient.address.postalCode"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.postalCode"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.address.postalCode",
+          "definitionElement": "Address.postalCode",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.address.city",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.city",
+      "targets": [
+        "Patient.address.city"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.city"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.address.city",
+          "definitionElement": "Address.city",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.address.state",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.state",
+      "targets": [
+        "Patient.address.state"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.state"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.address.state",
+          "definitionElement": "Address.state",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Patient.address.country",
+      "resourceType": "Patient",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-person/StructureDefinition/Patient",
+      "field": "address.country",
+      "targets": [
+        "Patient.address.country"
+      ],
+      "semanticGroup": "administrative",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "address.country"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Choose the actual reason why this personal or administrative fact is unavailable.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Patient.address.country",
+          "definitionElement": "Address.country",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Encounter.period.start",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "period.start",
+      "targets": [
+        "Encounter.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Encounter.period.start",
+          "definitionElement": "Encounter.period.start",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Encounter.period.end",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "period.end",
+      "targets": [
+        "Encounter.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Encounter.period.end",
+          "definitionElement": "Encounter.period.end",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.recordedDate",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "recordedDate",
+      "targets": [
+        "Condition.recordedDate"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "recordedDate"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.recordedDate",
+          "definitionElement": "Condition.recordedDate",
+          "types": [
+            "dateTime"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.onset[x]",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "onset[x]",
+      "targets": [
+        "Condition.onset[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "onset[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.onset[x]",
+          "definitionElement": "Condition.onset[x]",
+          "types": [
+            "dateTime",
+            "Age",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.abatement[x]",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "abatement[x]",
+      "targets": [
+        "Condition.abatement[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "abatement[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.abatement[x]",
+          "definitionElement": "Condition.abatement[x]",
+          "types": [
+            "dateTime",
+            "Age",
+            "Period",
+            "Range",
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Procedure.performed[x]",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "performed[x]",
+      "targets": [
+        "Procedure.performed[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "performed[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Procedure.performed[x]",
+          "definitionElement": "Procedure.performed[x]",
+          "types": [
+            "dateTime",
+            "Period"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationRequest.authoredOn",
+      "resourceType": "MedicationRequest",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest",
+      "field": "authoredOn",
+      "targets": [
+        "MedicationRequest.authoredOn"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "authoredOn"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "MedicationRequest.authoredOn",
+          "definitionElement": "MedicationRequest.authoredOn",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationAdministration.effective[x]",
+      "resourceType": "MedicationAdministration",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration",
+      "field": "effective[x]",
+      "targets": [
+        "MedicationAdministration.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "MedicationAdministration.effective[x]",
+          "definitionElement": "MedicationAdministration.effective[x]",
+          "types": [
+            "dateTime",
+            "Period"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationStatement.effective[x]",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "effective[x]",
+      "targets": [
+        "MedicationStatement.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "MedicationStatement.effective[x]",
+          "definitionElement": "MedicationStatement.effective[x]",
+          "types": [
+            "dateTime",
+            "Period"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationStatement.dateAsserted",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "dateAsserted",
+      "targets": [
+        "MedicationStatement.dateAsserted"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "dateAsserted"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "MedicationStatement.dateAsserted",
+          "definitionElement": "MedicationStatement.dateAsserted",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Immunization.occurrence[x]",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "occurrence[x]",
+      "targets": [
+        "Immunization.occurrence[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "occurrence[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Immunization.occurrence[x]",
+          "definitionElement": "Immunization.occurrence[x]",
+          "types": [
+            "dateTime",
+            "string"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DiagnosticReport.effective[x]",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "effective[x]",
+      "targets": [
+        "DiagnosticReport.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime",
+        "Period"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DiagnosticReport.effective[x]",
+          "definitionElement": "DiagnosticReport.effective[x]",
+          "types": [
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DiagnosticReport.issued",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "issued",
+      "targets": [
+        "DiagnosticReport.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DiagnosticReport.issued",
+          "definitionElement": "DiagnosticReport.issued",
+          "types": [
+            "instant"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "CarePlan.period.start",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "period.start",
+      "targets": [
+        "CarePlan.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "CarePlan.period.start",
+          "definitionElement": "Period.start",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "CarePlan.period.end",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "period.end",
+      "targets": [
+        "CarePlan.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "CarePlan.period.end",
+          "definitionElement": "Period.end",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DocumentReference.date",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "date",
+      "targets": [
+        "DocumentReference.date"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "date"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DocumentReference.date",
+          "definitionElement": "DocumentReference.date",
+          "types": [
+            "instant"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DocumentReference.content.attachment.creation",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.creation",
+      "targets": [
+        "DocumentReference.content.attachment.creation"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.creation"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DocumentReference.content.attachment.creation",
+          "definitionElement": "Attachment.creation",
+          "types": [
+            "dateTime"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Consent.dateTime",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "dateTime",
+      "targets": [
+        "Consent.dateTime"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "dateTime"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "1.0.9",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Consent.dateTime",
+          "definitionElement": "Consent.dateTime",
+          "types": [
+            "dateTime"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Consent.provision.period.start",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "provision.period.start",
+      "targets": [
+        "Consent.provision.period.start"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "provision.period.start"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "1.0.9",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Consent.provision.period.start",
+          "definitionElement": "Consent.provision.period.start",
+          "types": [],
+          "min": 1,
+          "max": null
+        }
+      ]
+    },
+    {
+      "id": "Consent.provision.period.end",
+      "resourceType": "Consent",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/modul-consent/StructureDefinition/mii-pr-consent-einwilligung",
+      "field": "provision.period.end",
+      "targets": [
+        "Consent.provision.period.end"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "provision.period.end"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "1.0.9",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Consent.provision.period.end",
+          "definitionElement": "Consent.provision.period.end",
+          "types": [],
+          "min": 0,
+          "max": null
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.effective[x]",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "effective[x]",
+      "targets": [
+        "Observation.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.effective[x]",
+          "definitionElement": "Observation.effective[x]",
+          "types": [
+            "dateTime"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.issued",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "issued",
+      "targets": [
+        "Observation.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.issued",
+          "definitionElement": "Observation.issued",
+          "types": [
+            "instant"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-a-number",
+        "negative-infinity",
+        "positive-infinity",
+        "not-performed"
+      ],
+      "help": "Describes the missing numeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.value[x]",
+          "definitionElement": "Observation.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "Range",
+            "Ratio"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-performed"
+      ],
+      "help": "Describes the missing nonnumeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.value[x]",
+          "definitionElement": "Observation.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "Range",
+            "Ratio"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.component.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-a-number",
+        "negative-infinity",
+        "positive-infinity",
+        "not-performed"
+      ],
+      "help": "Describes the missing numeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.value[x]",
+          "definitionElement": "Observation.component.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.component.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-performed"
+      ],
+      "help": "Describes the missing nonnumeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.value[x]",
+          "definitionElement": "Observation.component.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.effective[x]",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "effective[x]",
+      "targets": [
+        "Observation.effective[x]"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "effective[x]"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "supportedChoices": [
+        "dateTime"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.effective[x]",
+          "definitionElement": "Observation.effective[x]",
+          "types": [
+            "dateTime",
+            "Period",
+            "Timing",
+            "instant"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.issued",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "issued",
+      "targets": [
+        "Observation.issued"
+      ],
+      "semanticGroup": "clinical-time",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "issued"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable"
+      ],
+      "help": "Describes the absence of the clinical time, not whether the event occurred.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.issued",
+          "definitionElement": "Observation.issued",
+          "types": [
+            "instant"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-a-number",
+        "negative-infinity",
+        "positive-infinity",
+        "not-performed"
+      ],
+      "help": "Describes the missing numeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.value[x]",
+          "definitionElement": "Observation.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "value[x]",
+      "targets": [
+        "Observation.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-performed"
+      ],
+      "help": "Describes the missing nonnumeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.value[x]",
+          "definitionElement": "Observation.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.component.value[x].numeric-measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "numeric-measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Numeric Quantity measurement"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-a-number",
+        "negative-infinity",
+        "positive-infinity",
+        "not-performed"
+      ],
+      "help": "Describes the missing numeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.value[x]",
+          "definitionElement": "Observation.component.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.component.value[x].measurement",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.value[x]",
+      "targets": [
+        "Observation.component.value[x]"
+      ],
+      "semanticGroup": "measurement",
+      "representation": "dataAbsentReason",
+      "clearFields": [
+        "component.value[x]"
+      ],
+      "applyTo": "measurement-slot",
+      "default": "unchanged",
+      "reasonField": "component.dataAbsentReason",
+      "conditions": [
+        "Nonnumeric measurement"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "as-text",
+        "not-performed"
+      ],
+      "help": "Describes the missing nonnumeric measurement; the reason replaces the entire measurement value.",
+      "codeConditions": {
+        "as-text": "The measurement must actually be present in the resource narrative.",
+        "not-performed": "The measurement procedure was not performed."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.value[x]",
+          "definitionElement": "Observation.component.value[x]",
+          "types": [
+            "Quantity",
+            "CodeableConcept",
+            "string",
+            "boolean",
+            "integer",
+            "Range",
+            "Ratio",
+            "SampledData",
+            "time",
+            "dateTime",
+            "Period"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.code.coding.code",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "code.coding.code",
+      "targets": [
+        "Condition.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Condition.code.coding.code",
+          "definitionElement": "Condition.code.coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.code.coding.version",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "code.coding.version",
+      "targets": [
+        "Condition.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.code.coding.version",
+          "definitionElement": "Condition.code.coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Procedure.code.coding.code",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "code.coding.code",
+      "targets": [
+        "Procedure.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Procedure.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Procedure.code.coding.version",
+      "resourceType": "Procedure",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-prozedur/StructureDefinition/Procedure",
+      "field": "code.coding.version",
+      "targets": [
+        "Procedure.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Procedure.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "code.coding.code",
+      "targets": [
+        "Observation.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.code.coding.code",
+          "definitionElement": "Observation.code.coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "code.coding.version",
+      "targets": [
+        "Observation.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.code.coding.version",
+          "definitionElement": "Observation.code.coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "code.coding.code",
+      "targets": [
+        "Observation.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "code.coding.version",
+      "targets": [
+        "Observation.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Medication.code.coding.code",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "code.coding.code",
+      "targets": [
+        "Medication.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Medication.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Medication.code.coding.version",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "code.coding.version",
+      "targets": [
+        "Medication.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Medication.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Immunization.vaccineCode.coding.code",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "vaccineCode.coding.code",
+      "targets": [
+        "Immunization.vaccineCode.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "vaccineCode.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "vaccineCode.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Immunization.vaccineCode.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Immunization.vaccineCode.coding.version",
+      "resourceType": "Immunization",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Immunization",
+      "field": "vaccineCode.coding.version",
+      "targets": [
+        "Immunization.vaccineCode.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "vaccineCode.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "vaccineCode.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Immunization.vaccineCode.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DiagnosticReport.code.coding.code",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "code.coding.code",
+      "targets": [
+        "DiagnosticReport.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "DiagnosticReport.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DiagnosticReport.code.coding.version",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "code.coding.version",
+      "targets": [
+        "DiagnosticReport.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DiagnosticReport.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.clinicalStatus",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "clinicalStatus",
+      "targets": [
+        "Condition.clinicalStatus"
+      ],
+      "semanticGroup": "status",
+      "representation": "complex-extension",
+      "clearFields": [
+        "clinicalStatus"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "conditions": [
+        "Respect con-4 and con-5; reject incompatible status/abatement combinations."
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes a missing status. Related clinical/profile constraints still apply.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.clinicalStatus",
+          "definitionElement": "Condition.clinicalStatus",
+          "types": [
+            "CodeableConcept"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Condition.verificationStatus",
+      "resourceType": "Condition",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-diagnose/StructureDefinition/Diagnose",
+      "field": "verificationStatus",
+      "targets": [
+        "Condition.verificationStatus"
+      ],
+      "semanticGroup": "status",
+      "representation": "complex-extension",
+      "clearFields": [
+        "verificationStatus"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "conditions": [
+        "Respect con-4 and con-5; reject incompatible status/abatement combinations."
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes a missing status. Related clinical/profile constraints still apply.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Condition.verificationStatus",
+          "definitionElement": "Condition.verificationStatus",
+          "types": [
+            "CodeableConcept"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Medication.form",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "form",
+      "targets": [
+        "Medication.form"
+      ],
+      "semanticGroup": "text",
+      "representation": "complex-extension",
+      "clearFields": [
+        "form"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Medication.form",
+          "definitionElement": "Medication.form",
+          "types": [
+            "CodeableConcept"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Medication.ingredient.item[x]",
+      "resourceType": "Medication",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/Medication",
+      "field": "ingredient.item[x]",
+      "targets": [
+        "Medication.ingredient.item[x]"
+      ],
+      "semanticGroup": "coding",
+      "representation": "choice-aware-extension",
+      "clearFields": [
+        "ingredient.item[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Medication.ingredient.item[x]",
+          "definitionElement": "Medication.ingredient.item[x]",
+          "types": [
+            "CodeableConcept",
+            "Reference"
+          ],
+          "min": 1,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "CarePlan.description",
+      "resourceType": "CarePlan",
+      "profile": "http://hl7.org/fhir/StructureDefinition/CarePlan",
+      "field": "description",
+      "targets": [
+        "CarePlan.description"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "description"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "CarePlan.description",
+          "definitionElement": "CarePlan.description",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DiagnosticReport.conclusion",
+      "resourceType": "DiagnosticReport",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DiagnosticReport",
+      "field": "conclusion",
+      "targets": [
+        "DiagnosticReport.conclusion"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "conclusion"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DiagnosticReport.conclusion",
+          "definitionElement": "DiagnosticReport.conclusion",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Location.name",
+      "resourceType": "Location",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Location",
+      "field": "name",
+      "targets": [
+        "Location.name"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "name"
+      ],
+      "applyTo": "existing-or-missing-scalar",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Location.name",
+          "definitionElement": "Location.name",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DocumentReference.content.attachment.title",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.title",
+      "targets": [
+        "DocumentReference.content.attachment.title"
+      ],
+      "semanticGroup": "text",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.title"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "asked-unknown",
+        "temp-unknown",
+        "not-asked",
+        "asked-declined",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing descriptive information; do not use numeric error codes.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DocumentReference.content.attachment.title",
+          "definitionElement": "Attachment.title",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationRequest.dosageInstruction.doseAndRate.dose[x]",
+      "resourceType": "MedicationRequest",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationRequest",
+      "field": "dosageInstruction.doseAndRate.dose[x]",
+      "targets": [
+        "MedicationRequest.dosageInstruction.doseAndRate.dose[x]"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosageInstruction.doseAndRate.dose[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable",
+        "as-text"
+      ],
+      "help": "Describes the absence of a structured dose, not a laboratory measurement.",
+      "codeConditions": {
+        "as-text": "The dose must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "MedicationRequest.dosageInstruction.doseAndRate.dose[x]",
+          "definitionElement": "MedicationRequest.dosageInstruction.doseAndRate.dose[x]",
+          "types": [
+            "Range",
+            "Quantity"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationStatement.dosage.doseAndRate.dose[x]",
+      "resourceType": "MedicationStatement",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationStatement",
+      "field": "dosage.doseAndRate.dose[x]",
+      "targets": [
+        "MedicationStatement.dosage.doseAndRate.dose[x]"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosage.doseAndRate.dose[x]"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable",
+        "as-text"
+      ],
+      "help": "Describes the absence of a structured dose, not a laboratory measurement.",
+      "codeConditions": {
+        "as-text": "The dose must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "MedicationStatement.dosage.doseAndRate.dose[x]",
+          "definitionElement": "MedicationStatement.dosage.doseAndRate.dose[x]",
+          "types": [
+            "Range",
+            "Quantity"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "MedicationAdministration.dosage.dose",
+      "resourceType": "MedicationAdministration",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-medikation/StructureDefinition/MedicationAdministration",
+      "field": "dosage.dose",
+      "targets": [
+        "MedicationAdministration.dosage.dose"
+      ],
+      "semanticGroup": "dose",
+      "representation": "complex-extension",
+      "clearFields": [
+        "dosage.dose"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Replace structured dose value consistently; retain textual dose only if independently valid."
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted",
+        "not-applicable",
+        "as-text"
+      ],
+      "help": "Describes the absence of a structured dose, not a laboratory measurement.",
+      "codeConditions": {
+        "as-text": "The dose must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "MedicationAdministration.dosage.dose",
+          "definitionElement": "MedicationAdministration.dosage.dose",
+          "types": [
+            "Quantity"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "DocumentReference.content.attachment.data",
+      "resourceType": "DocumentReference",
+      "profile": "http://hl7.org/fhir/StructureDefinition/DocumentReference",
+      "field": "content.attachment.data",
+      "targets": [
+        "DocumentReference.content.attachment.data"
+      ],
+      "semanticGroup": "document-content",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "content.attachment.data"
+      ],
+      "applyTo": "existing-elements",
+      "default": "unchanged",
+      "conditions": [
+        "Clear associated size/hash; preserve an independently valid document URL."
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing document bytes. URL, size and hash must be handled consistently.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "DocumentReference.content.attachment.data",
+          "definitionElement": "Attachment.data",
+          "types": [
+            "base64Binary"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Encounter.admissionReasonFourthDigit",
+      "resourceType": "Encounter",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/StructureDefinition/KontaktGesundheitseinrichtung",
+      "field": "extension:Aufnahmegrund.extension:VierteStelle.value[x].code",
+      "targets": [
+        "Encounter.extension:Aufnahmegrund.extension:VierteStelle.value[x].code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "extension:Aufnahmegrund.extension:VierteStelle.value[x].code"
+      ],
+      "applyTo": "existing-admission-reason",
+      "default": "unchanged",
+      "preserveFields": [
+        "extension:Aufnahmegrund.extension:VierteStelle.value[x].system"
+      ],
+      "profileVersion": "2026.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Encounter.extension:Aufnahmegrund.extension:VierteStelle.value[x].code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.component.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.code.coding.code",
+      "targets": [
+        "Observation.component.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "Laboratory.component.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/StructureDefinition/ObservationLab",
+      "field": "component.code.coding.version",
+      "targets": [
+        "Observation.component.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ],
+      "profileVersion": "2026.0.3",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.component.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.component.code.coding.code",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.code.coding.code",
+      "targets": [
+        "Observation.component.code.coding.code"
+      ],
+      "semanticGroup": "coding",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.code"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "masked",
+        "unsupported",
+        "as-text",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes missing structured coding; retain the coding system and profile slice.",
+      "codeConditions": {
+        "as-text": "The clinical content must actually be present in the resource narrative."
+      },
+      "profileEvidence": [
+        {
+          "target": "Observation.component.code.coding.code",
+          "definitionElement": "Coding.code",
+          "types": [
+            "code"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    },
+    {
+      "id": "VitalSigns.component.code.coding.version",
+      "resourceType": "Observation",
+      "profile": "http://hl7.org/fhir/StructureDefinition/Observation",
+      "field": "component.code.coding.version",
+      "targets": [
+        "Observation.component.code.coding.version"
+      ],
+      "semanticGroup": "version",
+      "representation": "primitive-extension",
+      "clearFields": [
+        "component.code.coding.version"
+      ],
+      "applyTo": "all-existing-codings",
+      "default": "unchanged",
+      "preserveFields": [
+        "component.code.coding.system"
+      ],
+      "profileVersion": "4.0.1",
+      "allowedCodes": [
+        "unknown",
+        "temp-unknown",
+        "masked",
+        "not-applicable",
+        "unsupported",
+        "error",
+        "not-permitted"
+      ],
+      "help": "Describes the missing coding-system version, not the clinical event.",
+      "codeConditions": {},
+      "profileEvidence": [
+        {
+          "target": "Observation.component.code.coding.version",
+          "definitionElement": "Coding.version",
+          "types": [
+            "string"
+          ],
+          "min": 0,
+          "max": "1"
+        }
+      ]
+    }
+  ]
+}

@@ -53,8 +53,8 @@ public class Excel2FhirMain implements Callable<Integer> {
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
 
     @Option(names = { "-p",
-            "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
-    int patientsPerBundle = Integer.MAX_VALUE;
+            "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file (default: 1).")
+    int patientsPerBundle = 1;
 
     @Option(names = { "-l",
             "--log-layout" }, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")

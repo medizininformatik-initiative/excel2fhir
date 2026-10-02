@@ -45,7 +45,7 @@ public class ConverterVariantsTest {
         assertEquals(2, sets.size());
         assertTrue(sets.stream().allMatch(s -> s.options().getErrors().isEmpty()));
         Path output = temp.newFolder("output").toPath();
-        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", input.toString(), "-o", output.toString()));
+        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", input.toString(), "-o", output.toString(), "-p", "1000"));
         Path run;
         try (var runs = Files.list(output)) { run = runs.findFirst().orElseThrow(); }
         for (var set : sets) {
@@ -78,7 +78,7 @@ public class ConverterVariantsTest {
         Path options = temp.newFile("DIZ.config").toPath();
         Files.writeString(options, "PID_PREFIX=site-\n");
         Path output = temp.newFolder("external-output").toPath();
-        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", file.toString(), "-o", output.toString(),
+        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", file.toString(), "-o", output.toString(), "-p", "1000",
                 "--converter-options", options.toString()));
         Path run;
         try (var runs = Files.list(output)) { run = runs.findFirst().orElseThrow(); }
@@ -97,7 +97,7 @@ public class ConverterVariantsTest {
                 for (int i = 1; i <= inputs; i++) {
                     Files.copy(Path.of("FHIR_Testdatengenerator_Vorlage.xlsx"), input.resolve("case" + i + ".xlsx"));
                 }
-                var args = new java.util.ArrayList<>(List.of("-i", input.toString(), "-o", output.toString()));
+                var args = new java.util.ArrayList<>(List.of("-i", input.toString(), "-o", output.toString(), "-p", "1000"));
                 for (int v = 1; v <= variants; v++) {
                     Path options = root.resolve("KDS-" + v + ".config");
                     Files.writeString(options, "PID_PREFIX=variant" + v + "-\n");

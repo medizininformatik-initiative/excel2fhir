@@ -16,3 +16,7 @@
 !docker/
 !docker/**
 **/.DS_Store
+!web/
+!web/backend/
+!web/backend/**
+web/backend/__pycache__/
