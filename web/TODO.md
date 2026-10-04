@@ -10,7 +10,8 @@ planned work streams; this checklist does not change their status.
 - [x] Generate a JSON DAR catalogue from local 2026 profiles and maintained semantic field groups.
 - [x] Record source fingerprints, profile evidence and conditions; document regeneration and extension in [DAR maintenance](catalog/dar/README.md).
 - [x] Add representative validator checks and generator tests under `catalog/dar/tests/`.
-- [ ] Connect the generated catalogue to the API and configuration editor.
+- [x] Connect the generated catalogue to the configuration editor.
+- [ ] Connect the generated catalogue to the API.
 - [ ] Offer only clinically suitable standard DAR codes in option controls. The underlying vocabulary has 15 codes; each field offers its reviewed subset.
 - [ ] Keep input-table codes unrestricted, including intentionally invalid ordinary codes and arbitrary `!dar:<code>` values. Remove early rejection of unknown DAR codes from parsing, medication/diagnosis checks and input consistency checks. Preserve normal structural and type checks.
 - [ ] Represent arbitrary table DAR codes as the standard DAR extension, or Observation `dataAbsentReason` where appropriate, without enum parsing that rejects unknown code strings.
@@ -24,11 +25,11 @@ planned work streams; this checklist does not change their status.
 ## Form structure and defaults — #75 / #76
 
 - [x] Define a versioned machine-readable option contract for labels, controls, defaults, choices, help, dependencies and selected values. Keep converter semantics in shared Java code.
-- [ ] Put all resource selections/options on one continuous page, grouped by resource category, with Medication as its own section.
-- [ ] Use separate tabs for DAR, IDs/repetitions, terminology/versions and additional identifiers.
-- [ ] Keep controls permanently visible with a stable layout; disable unavailable options with a reason and retain their values. Add section anchors; use no accordions.
-- [ ] Provide longer help via an info icon on hover, keyboard focus and click.
-- [ ] Use checkboxes for independent choices, radio buttons for short exclusive choices and choice lists for longer selections.
+- [x] Put all resource selections/options on one continuous page, grouped by resource category, with Medication as its own section.
+- [x] Use separate tabs for DAR, IDs/repetitions, terminology/versions and additional identifiers.
+- [x] Keep controls permanently visible with a stable layout; disable unavailable options with a reason and retain their values. Add section anchors; use no accordions.
+- [x] Provide longer help via an info icon on hover, keyboard focus and click.
+- [x] Use checkboxes for independent choices, radio buttons for short exclusive choices and choice lists for longer selections.
 - [ ] Default all supported resources to enabled. Default Patient, Medication and Location to generate and reference.
 - [ ] In reference-only mode for Medication/Location, default existing-resource reference on and descriptive identifier/display off. Allow both independently and combine them in one Reference.
 - [ ] Keep resource selection authoritative across all replacements, additions, derivations and DAR transformations. Never emit an unselected resource.
@@ -68,7 +69,7 @@ planned work streams; this checklist does not change their status.
 
 ## Additional generated identifiers — #75 / #77
 
-- [ ] Add a dedicated tab with multiple enabled rules, resource multiselect, Identifier.system, value pattern, preview and help.
+- [x] Add a dedicated tab with multiple enabled rules, resource multiselect, Identifier.system, value pattern, preview and help.
 - [ ] Append generated identifiers while retaining existing ones; offer only resource types supporting identifier.
 - [ ] Use a shared deterministic counter per rule across resource types and repetitions, unaffected by output selection.
 - [ ] Automatically incorporate stable rule identity, resource type, resource ID and repetition index into hash input using unambiguous encoding.
