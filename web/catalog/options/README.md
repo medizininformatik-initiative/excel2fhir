@@ -10,6 +10,23 @@ contact assignment, transformations or identifier generation independently.
 Bindings identify existing Java properties and CLI inputs. A binding does not
 claim that the current converter already supports the full target behavior.
 
+## Interface languages
+
+The interface defaults to German and offers English. `de.json` and `en.json`
+contain the visible labels, choices, help, disabled-control reasons and interface
+messages. The contract references stable text keys; option IDs and values remain
+language independent. DAR field/code labels are resolved using the key patterns
+in `dar`; its clinical catalogue remains the source for allowed codes and rules.
+
+The language setting affects presentation only. FHIR output retains the German
+KDS profiles, terminology bindings and German descriptions/display text. Original
+converter logs and validation reports retain their source language. Configuration
+schema annotations use English independently of the current interface language.
+
+The localization test checks every required key, rejects missing/unused/duplicate
+keys and verifies matching placeholders in both languages. Add a new text key to
+both language files when adding a control or message.
+
 ## Configuration values
 
 A configuration contains `schemaVersion`, a `values` object keyed by option ID,

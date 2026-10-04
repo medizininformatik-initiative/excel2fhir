@@ -6,27 +6,27 @@
   "sections": [
     {
       "id": "resources",
-      "label": "Resources and contacts"
+      "labelKey": "section.resources"
     },
     {
       "id": "dar",
-      "label": "Data Absent Reason"
+      "labelKey": "section.dar"
     },
     {
       "id": "ids",
-      "label": "IDs, repetitions and dates"
+      "labelKey": "section.ids"
     },
     {
       "id": "terminology",
-      "label": "Terminology and versions"
+      "labelKey": "section.terminology"
     },
     {
       "id": "identifiers",
-      "label": "Additional identifiers"
+      "labelKey": "section.identifiers"
     },
     {
       "id": "output",
-      "label": "Checks and output"
+      "labelKey": "section.output"
     }
   ],
   "ui": {
@@ -40,154 +40,190 @@
       "focus",
       "click"
     ],
-    "sectionAnchors": true
+    "sectionAnchors": true,
+    "localization": {
+      "defaultLanguage": "de",
+      "languages": [
+        "de",
+        "en"
+      ],
+      "files": {
+        "de": "de.json",
+        "en": "en.json"
+      },
+      "scope": "Interface only; German KDS FHIR content is independent of interface language."
+    }
   },
   "resources": [
     {
       "id": "Patient",
       "resourceType": "Patient",
       "group": "demographics",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Patient.label"
     },
     {
       "id": "Encounter",
       "resourceType": "Encounter",
       "group": "contacts",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Encounter.label"
     },
     {
       "id": "Location",
       "resourceType": "Location",
       "group": "contacts",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Location.label"
     },
     {
       "id": "Condition",
       "resourceType": "Condition",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Condition.label"
     },
     {
       "id": "Procedure",
       "resourceType": "Procedure",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Procedure.label"
     },
     {
       "id": "Observation.laboratory",
       "resourceType": "Observation",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Observation.laboratory.label"
     },
     {
       "id": "Observation.vitalSigns",
       "resourceType": "Observation",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Observation.vitalSigns.label"
     },
     {
       "id": "Medication",
       "resourceType": "Medication",
       "group": "medication",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Medication.label"
     },
     {
       "id": "MedicationRequest",
       "resourceType": "MedicationRequest",
       "group": "medication",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.MedicationRequest.label"
     },
     {
       "id": "MedicationAdministration",
       "resourceType": "MedicationAdministration",
       "group": "medication",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.MedicationAdministration.label"
     },
     {
       "id": "MedicationStatement",
       "resourceType": "MedicationStatement",
       "group": "medication",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.MedicationStatement.label"
     },
     {
       "id": "Immunization",
       "resourceType": "Immunization",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Immunization.label"
     },
     {
       "id": "DiagnosticReport",
       "resourceType": "DiagnosticReport",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.DiagnosticReport.label"
     },
     {
       "id": "CarePlan",
       "resourceType": "CarePlan",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.CarePlan.label"
     },
     {
       "id": "DocumentReference",
       "resourceType": "DocumentReference",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.DocumentReference.label"
     },
     {
       "id": "Consent",
       "resourceType": "Consent",
       "group": "clinical",
-      "identifierEligible": true
+      "identifierEligible": true,
+      "labelKey": "resource.Consent.label"
     }
   ],
   "options": [
     {
       "id": "resource.Patient.mode",
       "section": "resources",
-      "label": "Patient output and references",
       "type": "enum",
       "default": "generate-reference",
-      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
       "status": "agreed",
       "control": "radio",
       "choices": [
         "generate-reference",
         "reference-only",
         "neither"
-      ]
+      ],
+      "labelKey": "option.resource.Patient.mode.label",
+      "helpKey": "option.resource.Patient.mode.help",
+      "choiceLabelKeys": {
+        "generate-reference": "choice.generate-reference",
+        "reference-only": "choice.reference-only",
+        "neither": "choice.neither"
+      }
     },
     {
       "id": "resource.Encounter.enabled",
       "section": "resources",
-      "label": "Generate Encounter",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Encounter.enabled.label",
+      "helpKey": "option.resource.Encounter.enabled.help"
     },
     {
       "id": "resource.Location.mode",
       "section": "resources",
-      "label": "Location output and references",
       "type": "enum",
       "default": "generate-reference",
-      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
       "status": "agreed",
       "control": "radio",
       "choices": [
         "generate-reference",
         "reference-only",
         "neither"
-      ]
+      ],
+      "labelKey": "option.resource.Location.mode.label",
+      "helpKey": "option.resource.Location.mode.help",
+      "choiceLabelKeys": {
+        "generate-reference": "choice.generate-reference",
+        "reference-only": "choice.reference-only",
+        "neither": "choice.neither"
+      }
     },
     {
       "id": "resource.Location.existingReference",
       "section": "resources",
-      "label": "Location: existing resource reference",
       "type": "boolean",
       "default": true,
-      "help": "Combine selected reference and descriptive information in the same Reference.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -195,15 +231,16 @@
           "option": "resource.Location.mode",
           "equals": "reference-only"
         }
-      ]
+      ],
+      "labelKey": "option.resource.Location.existingReference.label",
+      "helpKey": "option.resource.Location.existingReference.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "resource.Location.description",
       "section": "resources",
-      "label": "Location: identifier and display",
       "type": "boolean",
       "default": false,
-      "help": "Combine selected reference and descriptive information in the same Reference.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -211,70 +248,76 @@
           "option": "resource.Location.mode",
           "equals": "reference-only"
         }
-      ]
+      ],
+      "labelKey": "option.resource.Location.description.label",
+      "helpKey": "option.resource.Location.description.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "resource.Condition.enabled",
       "section": "resources",
-      "label": "Generate Condition",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Condition.enabled.label",
+      "helpKey": "option.resource.Condition.enabled.help"
     },
     {
       "id": "resource.Procedure.enabled",
       "section": "resources",
-      "label": "Generate Procedure",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Procedure.enabled.label",
+      "helpKey": "option.resource.Procedure.enabled.help"
     },
     {
       "id": "resource.Observation.laboratory.enabled",
       "section": "resources",
-      "label": "Generate Observation.laboratory",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Observation.laboratory.enabled.label",
+      "helpKey": "option.resource.Observation.laboratory.enabled.help"
     },
     {
       "id": "resource.Observation.vitalSigns.enabled",
       "section": "resources",
-      "label": "Generate Observation.vitalSigns",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Observation.vitalSigns.enabled.label",
+      "helpKey": "option.resource.Observation.vitalSigns.enabled.help"
     },
     {
       "id": "resource.Medication.mode",
       "section": "resources",
-      "label": "Medication output and references",
       "type": "enum",
       "default": "generate-reference",
-      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
       "status": "agreed",
       "control": "radio",
       "choices": [
         "generate-reference",
         "reference-only",
         "neither"
-      ]
+      ],
+      "labelKey": "option.resource.Medication.mode.label",
+      "helpKey": "option.resource.Medication.mode.help",
+      "choiceLabelKeys": {
+        "generate-reference": "choice.generate-reference",
+        "reference-only": "choice.reference-only",
+        "neither": "choice.neither"
+      }
     },
     {
       "id": "resource.Medication.existingReference",
       "section": "resources",
-      "label": "Medication: existing resource reference",
       "type": "boolean",
       "default": true,
-      "help": "Combine selected reference and descriptive information in the same Reference.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -282,15 +325,16 @@
           "option": "resource.Medication.mode",
           "equals": "reference-only"
         }
-      ]
+      ],
+      "labelKey": "option.resource.Medication.existingReference.label",
+      "helpKey": "option.resource.Medication.existingReference.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "resource.Medication.description",
       "section": "resources",
-      "label": "Medication: identifier and display",
       "type": "boolean",
       "default": false,
-      "help": "Combine selected reference and descriptive information in the same Reference.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -298,95 +342,96 @@
           "option": "resource.Medication.mode",
           "equals": "reference-only"
         }
-      ]
+      ],
+      "labelKey": "option.resource.Medication.description.label",
+      "helpKey": "option.resource.Medication.description.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "resource.MedicationRequest.enabled",
       "section": "resources",
-      "label": "Generate MedicationRequest",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.MedicationRequest.enabled.label",
+      "helpKey": "option.resource.MedicationRequest.enabled.help"
     },
     {
       "id": "resource.MedicationAdministration.enabled",
       "section": "resources",
-      "label": "Generate MedicationAdministration",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.MedicationAdministration.enabled.label",
+      "helpKey": "option.resource.MedicationAdministration.enabled.help"
     },
     {
       "id": "resource.MedicationStatement.enabled",
       "section": "resources",
-      "label": "Generate MedicationStatement",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.MedicationStatement.enabled.label",
+      "helpKey": "option.resource.MedicationStatement.enabled.help"
     },
     {
       "id": "resource.Immunization.enabled",
       "section": "resources",
-      "label": "Generate Immunization",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Immunization.enabled.label",
+      "helpKey": "option.resource.Immunization.enabled.help"
     },
     {
       "id": "resource.DiagnosticReport.enabled",
       "section": "resources",
-      "label": "Generate DiagnosticReport",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.DiagnosticReport.enabled.label",
+      "helpKey": "option.resource.DiagnosticReport.enabled.help"
     },
     {
       "id": "resource.CarePlan.enabled",
       "section": "resources",
-      "label": "Generate CarePlan",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.CarePlan.enabled.label",
+      "helpKey": "option.resource.CarePlan.enabled.help"
     },
     {
       "id": "resource.DocumentReference.enabled",
       "section": "resources",
-      "label": "Generate DocumentReference",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.DocumentReference.enabled.label",
+      "helpKey": "option.resource.DocumentReference.enabled.help"
     },
     {
       "id": "resource.Consent.enabled",
       "section": "resources",
-      "label": "Generate Consent",
       "type": "boolean",
       "default": true,
-      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.resource.Consent.enabled.label",
+      "helpKey": "option.resource.Consent.enabled.help"
     },
     {
       "id": "contact.facility.enabled",
       "section": "resources",
-      "label": "Generate facility contacts",
       "type": "boolean",
       "default": true,
-      "help": "Source contacts remain available internally for assignment.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -394,15 +439,16 @@
           "option": "resource.Encounter.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.contact.facility.enabled.label",
+      "helpKey": "option.contact.facility.enabled.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.department.enabled",
       "section": "resources",
-      "label": "Generate department contacts",
       "type": "boolean",
       "default": true,
-      "help": "Source contacts remain available internally for assignment.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -410,15 +456,16 @@
           "option": "resource.Encounter.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.contact.department.enabled.label",
+      "helpKey": "option.contact.department.enabled.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.ward-service.enabled",
       "section": "resources",
-      "label": "Generate ward-service contacts",
       "type": "boolean",
       "default": true,
-      "help": "Source contacts remain available internally for assignment.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -426,15 +473,16 @@
           "option": "resource.Encounter.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.contact.ward-service.enabled.label",
+      "helpKey": "option.contact.ward-service.enabled.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.department.partOf",
       "section": "resources",
-      "label": "ist Teil von (partOf)",
       "type": "enum",
       "default": "facility",
-      "help": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -458,15 +506,21 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.contact.department.partOf.label",
+      "helpKey": "option.contact.department.partOf.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.ward-service.partOf",
       "section": "resources",
-      "label": "ist Teil von (partOf)",
       "type": "enum",
       "default": "department",
-      "help": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -497,15 +551,22 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.contact.ward-service.partOf.label",
+      "helpKey": "option.contact.ward-service.partOf.help",
+      "choiceLabelKeys": {
+        "department": "choice.department",
+        "facility": "choice.facility",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.diagnoses.enabled",
       "section": "resources",
-      "label": "Encounter diagnoses references",
       "type": "boolean",
       "default": true,
-      "help": "Add references to diagnoses for the selected contact levels.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -522,17 +583,18 @@
         "kind": "java-property",
         "name": "SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION",
         "semantics": "Existing direction; level restriction requires #77."
-      }
+      },
+      "labelKey": "option.contact.diagnoses.enabled.label",
+      "helpKey": "option.contact.diagnoses.enabled.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.diagnoses.levels",
       "section": "resources",
-      "label": "diagnoses: contact levels",
       "type": "set",
       "default": [
         "facility"
       ],
-      "help": "Default to facility contacts; other levels are optional.",
       "status": "agreed",
       "control": "multiselect",
       "choices": [
@@ -553,15 +615,21 @@
           "option": "resource.Condition.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.contact.diagnoses.levels.label",
+      "helpKey": "option.contact.diagnoses.levels.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service"
+      },
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.procedureDiagnoses.enabled",
       "section": "resources",
-      "label": "Encounter procedureDiagnoses references",
       "type": "boolean",
       "default": true,
-      "help": "Add references to diagnoses for the selected contact levels.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -578,17 +646,18 @@
         "kind": "java-property",
         "name": "SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION",
         "semantics": "Existing direction; level restriction requires #77."
-      }
+      },
+      "labelKey": "option.contact.procedureDiagnoses.enabled.label",
+      "helpKey": "option.contact.procedureDiagnoses.enabled.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.procedureDiagnoses.levels",
       "section": "resources",
-      "label": "procedureDiagnoses: contact levels",
       "type": "set",
       "default": [
         "facility"
       ],
-      "help": "Default to facility contacts; other levels are optional.",
       "status": "agreed",
       "control": "multiselect",
       "choices": [
@@ -609,15 +678,21 @@
           "option": "resource.Condition.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.contact.procedureDiagnoses.levels.label",
+      "helpKey": "option.contact.procedureDiagnoses.levels.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service"
+      },
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "contact.inheritDiagnoses",
       "section": "resources",
-      "label": "Inherit missing parent diagnoses",
       "type": "boolean",
       "default": false,
-      "help": "Retain the existing preference for the parent chief complaint.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -629,15 +704,16 @@
       "binding": {
         "kind": "java-property",
         "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER"
-      }
+      },
+      "labelKey": "option.contact.inheritDiagnoses.label",
+      "helpKey": "option.contact.inheritDiagnoses.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.Condition.encounter",
       "section": "resources",
-      "label": "Condition: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -684,15 +760,23 @@
           "selected-level": true
         },
         "semantics": "Contact-level assignment requires #77."
-      }
+      },
+      "labelKey": "option.reference.Condition.encounter.label",
+      "helpKey": "option.reference.Condition.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.procedureDiagnosis.encounter",
       "section": "resources",
-      "label": "Procedure-related diagnosis: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -739,15 +823,23 @@
           "selected-level": true
         },
         "semantics": "Contact-level assignment requires #77."
-      }
+      },
+      "labelKey": "option.reference.procedureDiagnosis.encounter.label",
+      "helpKey": "option.reference.procedureDiagnosis.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.Procedure.encounter",
       "section": "resources",
-      "label": "Procedure: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -785,15 +877,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.Procedure.encounter.label",
+      "helpKey": "option.reference.Procedure.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.Observation.laboratory.encounter",
       "section": "resources",
-      "label": "Observation.laboratory: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -831,15 +931,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.Observation.laboratory.encounter.label",
+      "helpKey": "option.reference.Observation.laboratory.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.Observation.vitalSigns.encounter",
       "section": "resources",
-      "label": "Observation.vitalSigns: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -877,15 +985,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.Observation.vitalSigns.encounter.label",
+      "helpKey": "option.reference.Observation.vitalSigns.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.MedicationRequest.encounter",
       "section": "resources",
-      "label": "MedicationRequest: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -923,15 +1039,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.MedicationRequest.encounter.label",
+      "helpKey": "option.reference.MedicationRequest.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.MedicationAdministration.encounter",
       "section": "resources",
-      "label": "MedicationAdministration: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -969,15 +1093,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.MedicationAdministration.encounter.label",
+      "helpKey": "option.reference.MedicationAdministration.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.MedicationStatement.encounter",
       "section": "resources",
-      "label": "MedicationStatement: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1015,15 +1147,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.MedicationStatement.encounter.label",
+      "helpKey": "option.reference.MedicationStatement.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.Immunization.encounter",
       "section": "resources",
-      "label": "Immunization: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1061,15 +1201,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.Immunization.encounter.label",
+      "helpKey": "option.reference.Immunization.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.DiagnosticReport.encounter",
       "section": "resources",
-      "label": "DiagnosticReport: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1107,15 +1255,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.DiagnosticReport.encounter.label",
+      "helpKey": "option.reference.DiagnosticReport.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.CarePlan.encounter",
       "section": "resources",
-      "label": "CarePlan: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1153,15 +1309,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.CarePlan.encounter.label",
+      "helpKey": "option.reference.CarePlan.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.DocumentReference.encounter",
       "section": "resources",
-      "label": "DocumentReference: Encounter target",
       "type": "enum",
       "default": "department",
-      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1199,15 +1363,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.reference.DocumentReference.encounter.label",
+      "helpKey": "option.reference.DocumentReference.encounter.help",
+      "choiceLabelKeys": {
+        "facility": "choice.facility",
+        "department": "choice.department",
+        "ward-service": "choice.ward-service",
+        "none": "choice.none"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "reference.DocumentReference.knownInputContact",
       "section": "resources",
-      "label": "DocumentReference: use known input contact without a timestamp",
       "type": "boolean",
       "default": false,
-      "help": "Use the explicitly known input contact only when no usable clinical timestamp exists.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -1219,15 +1391,16 @@
           "option": "resource.Encounter.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.reference.DocumentReference.knownInputContact.label",
+      "helpKey": "option.reference.DocumentReference.knownInputContact.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "medication.requestTreatment",
       "section": "resources",
-      "label": "MedicationRequest treatment",
       "type": "enum",
       "default": "retain",
-      "help": "Replace requests before a single pass of additions. Unselected targets disable the respective choice.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1255,15 +1428,23 @@
             "equals": true
           }
         ]
-      }
+      },
+      "labelKey": "option.medication.requestTreatment.label",
+      "helpKey": "option.medication.requestTreatment.help",
+      "choiceLabelKeys": {
+        "retain": "choice.retain",
+        "omit": "choice.omit",
+        "replace-administration": "choice.replace-administration",
+        "replace-statement": "choice.replace-statement"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "choiceDisabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "medication.MedicationAdministration.addMedicationStatement",
       "section": "resources",
-      "label": "Additional MedicationStatement from MedicationAdministration",
       "type": "boolean",
       "default": false,
-      "help": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -1275,15 +1456,16 @@
           "option": "resource.MedicationStatement.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.medication.MedicationAdministration.addMedicationStatement.label",
+      "helpKey": "option.medication.MedicationAdministration.addMedicationStatement.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "medication.MedicationStatement.addMedicationAdministration",
       "section": "resources",
-      "label": "Additional MedicationAdministration from MedicationStatement",
       "type": "boolean",
       "default": false,
-      "help": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
       "status": "agreed",
       "control": "checkbox",
       "enabledWhen": [
@@ -1295,252 +1477,253 @@
           "option": "resource.MedicationAdministration.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.medication.MedicationStatement.addMedicationAdministration.label",
+      "helpKey": "option.medication.MedicationStatement.addMedicationAdministration.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "ids.patient.prefix",
       "section": "ids",
-      "label": "Patient ID prefix",
       "type": "string",
       "default": "",
-      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
       "status": "agreed",
       "control": "text",
       "binding": {
         "kind": "java-property",
         "name": "PID_PREFIX"
-      }
+      },
+      "labelKey": "option.ids.patient.prefix.label",
+      "helpKey": "option.ids.patient.prefix.help"
     },
     {
       "id": "ids.patient.suffix",
       "section": "ids",
-      "label": "Patient ID suffix",
       "type": "string",
       "default": "",
-      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
       "status": "agreed",
       "control": "text",
       "binding": {
         "kind": "java-property",
         "name": "PID_SUFFIX"
-      }
+      },
+      "labelKey": "option.ids.patient.suffix.label",
+      "helpKey": "option.ids.patient.suffix.help"
     },
     {
       "id": "ids.patient.initialOffset",
       "section": "ids",
-      "label": "Initial patient-number offset",
       "type": "integer",
       "default": 0,
-      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET"
       },
-      "minimum": 0
+      "minimum": 0,
+      "labelKey": "option.ids.patient.initialOffset.label",
+      "helpKey": "option.ids.patient.initialOffset.help"
     },
     {
       "id": "ids.patient.iterationOffset",
       "section": "ids",
-      "label": "Patient-number offset per repetition",
       "type": "integer",
       "default": 0,
-      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET"
       },
-      "minimum": 0
+      "minimum": 0,
+      "labelKey": "option.ids.patient.iterationOffset.label",
+      "helpKey": "option.ids.patient.iterationOffset.help"
     },
     {
       "id": "ids.patient.additionalRepetitions",
       "section": "ids",
-      "label": "Additional repetitions",
       "type": "integer",
       "default": 0,
-      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "PID_LAST_NUMBER_INCREASE_LOOP_COUNT"
       },
-      "minimum": 0
+      "minimum": 0,
+      "labelKey": "option.ids.patient.additionalRepetitions.label",
+      "helpKey": "option.ids.patient.additionalRepetitions.help"
     },
     {
       "id": "ids.start.CONSENT",
       "section": "ids",
-      "label": "CONSENT: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_CONSENT"
-      }
+      },
+      "labelKey": "option.ids.start.CONSENT.label",
+      "helpKey": "option.ids.start.CONSENT.help"
     },
     {
       "id": "ids.start.CONDITION",
       "section": "ids",
-      "label": "CONDITION: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_CONDITION"
-      }
+      },
+      "labelKey": "option.ids.start.CONDITION.label",
+      "helpKey": "option.ids.start.CONDITION.help"
     },
     {
       "id": "ids.start.ENCOUNTER_LEVEL_2",
       "section": "ids",
-      "label": "ENCOUNTER_LEVEL_2: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_ENCOUNTER_LEVEL_2"
-      }
+      },
+      "labelKey": "option.ids.start.ENCOUNTER_LEVEL_2.label",
+      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_2.help"
     },
     {
       "id": "ids.start.ENCOUNTER_LEVEL_3",
       "section": "ids",
-      "label": "ENCOUNTER_LEVEL_3: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_ENCOUNTER_LEVEL_3"
-      }
+      },
+      "labelKey": "option.ids.start.ENCOUNTER_LEVEL_3.label",
+      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_3.help"
     },
     {
       "id": "ids.start.MEDICATION_REQUEST",
       "section": "ids",
-      "label": "MEDICATION_REQUEST: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_MEDICATION_REQUEST"
-      }
+      },
+      "labelKey": "option.ids.start.MEDICATION_REQUEST.label",
+      "helpKey": "option.ids.start.MEDICATION_REQUEST.help"
     },
     {
       "id": "ids.start.MEDICATION_ADMINISTRATION",
       "section": "ids",
-      "label": "MEDICATION_ADMINISTRATION: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_MEDICATION_ADMINISTRATION"
-      }
+      },
+      "labelKey": "option.ids.start.MEDICATION_ADMINISTRATION.label",
+      "helpKey": "option.ids.start.MEDICATION_ADMINISTRATION.help"
     },
     {
       "id": "ids.start.MEDICATION_STATEMENT",
       "section": "ids",
-      "label": "MEDICATION_STATEMENT: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_MEDICATION_STATEMENT"
-      }
+      },
+      "labelKey": "option.ids.start.MEDICATION_STATEMENT.label",
+      "helpKey": "option.ids.start.MEDICATION_STATEMENT.help"
     },
     {
       "id": "ids.start.OBSERVATION_LABORATORY",
       "section": "ids",
-      "label": "OBSERVATION_LABORATORY: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_OBSERVATION_LABORATORY"
-      }
+      },
+      "labelKey": "option.ids.start.OBSERVATION_LABORATORY.label",
+      "helpKey": "option.ids.start.OBSERVATION_LABORATORY.help"
     },
     {
       "id": "ids.start.OBSERVATION_VITAL_SIGNS",
       "section": "ids",
-      "label": "OBSERVATION_VITAL_SIGNS: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_OBSERVATION_VITAL_SIGNS"
-      }
+      },
+      "labelKey": "option.ids.start.OBSERVATION_VITAL_SIGNS.label",
+      "helpKey": "option.ids.start.OBSERVATION_VITAL_SIGNS.help"
     },
     {
       "id": "ids.start.PROCEDURE",
       "section": "ids",
-      "label": "PROCEDURE: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_PROCEDURE"
-      }
+      },
+      "labelKey": "option.ids.start.PROCEDURE.label",
+      "helpKey": "option.ids.start.PROCEDURE.help"
     },
     {
       "id": "ids.start.DOCUMENT_REFERENCE",
       "section": "ids",
-      "label": "DOCUMENT_REFERENCE: first counter",
       "type": "integer",
       "default": 1,
-      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "java-property",
         "name": "START_ID_DOCUMENT_REFERENCE"
-      }
+      },
+      "labelKey": "option.ids.start.DOCUMENT_REFERENCE.label",
+      "helpKey": "option.ids.start.DOCUMENT_REFERENCE.help"
     },
     {
       "id": "timeShift.enabled",
       "section": "ids",
-      "label": "Shift clinical dates",
       "type": "boolean",
       "default": false,
-      "help": "Shift all clinical dates and timestamps, including birth date, together.",
       "status": "agreed",
-      "control": "checkbox"
+      "control": "checkbox",
+      "labelKey": "option.timeShift.enabled.label",
+      "helpKey": "option.timeShift.enabled.help"
     },
     {
       "id": "timeShift.baseDays",
       "section": "ids",
-      "label": "Base shift in whole days",
       "type": "integer",
       "default": 0,
-      "help": "Apply baseDays + iterationIndex * iterationDays.",
       "status": "agreed",
       "control": "number",
       "enabledWhen": [
@@ -1548,15 +1731,16 @@
           "option": "timeShift.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.timeShift.baseDays.label",
+      "helpKey": "option.timeShift.baseDays.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "timeShift.iterationDays",
       "section": "ids",
-      "label": "Additional shift per repetition in whole days",
       "type": "integer",
       "default": 0,
-      "help": "Apply baseDays + iterationIndex * iterationDays.",
       "status": "agreed",
       "control": "number",
       "enabledWhen": [
@@ -1564,15 +1748,16 @@
           "option": "timeShift.enabled",
           "equals": true
         }
-      ]
+      ],
+      "labelKey": "option.timeShift.iterationDays.label",
+      "helpKey": "option.timeShift.iterationDays.help",
+      "disabledReasonKey": "disabled.requiresSelection"
     },
     {
       "id": "terminology.syntheaYear",
       "section": "terminology",
-      "label": "Synthea mapping year",
       "type": "enum",
       "default": 2026,
-      "help": "Output the actual selected catalogue year. Table-provided versions remain unrestricted.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1582,15 +1767,19 @@
       "binding": {
         "kind": "java-property",
         "name": "SYNTHEA_MAPPING_YEAR"
+      },
+      "labelKey": "option.terminology.syntheaYear.label",
+      "helpKey": "option.terminology.syntheaYear.help",
+      "choiceLabelKeys": {
+        "2025": "choice.2025",
+        "2026": "choice.2026"
       }
     },
     {
       "id": "terminology.versionOutput",
       "section": "terminology",
-      "label": "Coding version",
       "type": "enum",
       "default": "catalogue-year",
-      "help": "Use the actual catalogue year, omit Coding.version, or apply an explicit DAR rule.",
       "status": "agreed",
       "control": "radio",
       "choices": [
@@ -1606,46 +1795,51 @@
           "omit": "",
           "dar": "DAR token from the field catalogue"
         }
+      },
+      "labelKey": "option.terminology.versionOutput.label",
+      "helpKey": "option.terminology.versionOutput.help",
+      "choiceLabelKeys": {
+        "catalogue-year": "choice.catalogue-year",
+        "omit": "choice.omit",
+        "dar": "choice.dar"
       }
     },
     {
       "id": "checks.inputConsistency",
       "section": "output",
-      "label": "Check input consistency",
       "type": "boolean",
       "default": true,
-      "help": "Preserve structural and type checks; arbitrary clinical and table DAR code strings reach the optional FHIR validator.",
       "status": "agreed",
       "control": "checkbox",
       "binding": {
         "kind": "java-property",
         "name": "CHECK_INPUT_CONSISTENCY"
-      }
+      },
+      "labelKey": "option.checks.inputConsistency.label",
+      "helpKey": "option.checks.inputConsistency.help"
     },
     {
       "id": "checks.fhirValidation",
       "section": "output",
-      "label": "Validate FHIR",
       "type": "boolean",
       "default": false,
-      "help": "Report errors and incomplete validation; retain generated data according to converter behavior.",
       "status": "agreed",
       "control": "checkbox",
       "binding": {
         "kind": "cli",
         "name": "--validate-bundles"
-      }
+      },
+      "labelKey": "option.checks.fhirValidation.label",
+      "helpKey": "option.checks.fhirValidation.help"
     },
     {
       "id": "output.formats",
       "section": "output",
-      "label": "Output formats",
       "type": "set",
       "default": [
         "JSON",
         "NDJSON"
       ],
-      "help": "Serialize the same logical resources into each selected format.",
       "status": "agreed",
       "control": "multiselect",
       "choices": [
@@ -1659,22 +1853,32 @@
       "binding": {
         "kind": "cli",
         "name": "--result-file-format"
+      },
+      "labelKey": "option.output.formats.label",
+      "helpKey": "option.output.formats.help",
+      "choiceLabelKeys": {
+        "JSON": "choice.JSON",
+        "NDJSON": "choice.NDJSON",
+        "XML": "choice.XML",
+        "JSONGZIP": "choice.JSONGZIP",
+        "JSONBZ2": "choice.JSONBZ2",
+        "ZIPJSON": "choice.ZIPJSON"
       }
     },
     {
       "id": "output.patientsPerFile",
       "section": "output",
-      "label": "Maximum patients per output file",
       "type": "integer",
       "default": 1,
-      "help": "Use the existing Java output splitting behavior.",
       "status": "agreed",
       "control": "number",
       "binding": {
         "kind": "cli",
         "name": "--patients-count"
       },
-      "minimum": 1
+      "minimum": 1,
+      "labelKey": "option.output.patientsPerFile.label",
+      "helpKey": "option.output.patientsPerFile.help"
     }
   ],
   "dar": {
@@ -1704,7 +1908,18 @@
       "Observation obs-6",
       "Observation mii-lab-2"
     ],
-    "tableCodes": "arbitrary strings; no enumeration parsing; validate with the optional FHIR validator"
+    "tableCodes": "arbitrary strings; no enumeration parsing; validate with the optional FHIR validator",
+    "fieldLabelKeyPattern": "dar.field.{id}.label",
+    "helpKeyPattern": "dar.help.{semanticGroup}",
+    "codeLabelKeyPattern": "dar.code.{code}",
+    "modeLabelKeys": {
+      "unchanged": "dar.mode.unchanged",
+      "overwrite": "dar.mode.overwrite"
+    },
+    "disabledReasonKeys": [
+      "disabled.darMode",
+      "disabled.profileConstraint"
+    ]
   },
   "contactAssignment": {
     "samePatient": true,
@@ -1828,7 +2043,15 @@
       "{{": "{",
       "}}": "}"
     },
-    "invalidPattern": "Reject unknown tokens, unmatched braces and malformed padding; no expression evaluation."
+    "invalidPattern": "Reject unknown tokens, unmatched braces and malformed padding; no expression evaluation.",
+    "fieldLabelKeys": {
+      "id": "identifier.id",
+      "enabled": "identifier.enabled",
+      "resources": "identifier.resources",
+      "system": "identifier.system",
+      "pattern": "identifier.pattern"
+    },
+    "helpKey": "identifier.help"
   },
   "profileBaseline": {
     "base": "2026.0.1",
@@ -1846,7 +2069,16 @@
     "conflictingDuplicate": "reject; do not silently apply last value",
     "disabledSelection": "retain stored value; compute effective disabled state in Java; no implicit fallback",
     "profileNames": "configuration profiles are separate from FHIR StructureDefinitions",
-    "executionSettings": "parallelism and environment selection are separate from clinical options"
+    "executionSettings": "parallelism and environment selection are separate from clinical options",
+    "errorMessageKeys": {
+      "unknownOption": "config.error.unknownOption",
+      "wrongType": "config.error.wrongType",
+      "unsupportedVersion": "config.error.unsupportedVersion",
+      "conflictingDuplicate": "config.error.conflictingDuplicate",
+      "identifierCollision": "config.error.identifierCollision",
+      "invalidPattern": "config.error.invalidPattern",
+      "missingDarCode": "config.error.missingDarCode"
+    }
   },
   "openDecisions": []
 }

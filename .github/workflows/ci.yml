@@ -55,6 +55,12 @@ jobs:
           python3 -m unittest discover -s web/catalog/options/tests -v
           java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindings.java
 
+      - name: Build localized workbench
+        working-directory: web/frontend
+        run: |
+          npm ci
+          npm run build
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 

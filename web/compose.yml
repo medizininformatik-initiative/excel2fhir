@@ -22,7 +22,9 @@ services:
     stop_grace_period: 15s
     restart: unless-stopped
   web:
-    build: ./frontend
+    build:
+      context: ..
+      dockerfile: web/frontend/Dockerfile
     ports:
       - '127.0.0.1:5184:8080'
     depends_on:
