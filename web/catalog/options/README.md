@@ -64,6 +64,80 @@ Location can combine an external reference with descriptive identifier/display
 information in the same Reference. Clinical timestamps are shifted together in
 whole days, including birth date.
 
+## Properties export and import
+
+The editor exports `converter-configuration.config` as UTF-8 Properties text.
+Descriptions, choice explanations, defaults and inactivity reasons use the selected
+interface language. Names and values are language independent. The contract's
+`propertyName` on each option is its stable uppercase export name. Existing Java
+property names are reused where value semantics match; level selectors and other
+expanded controls have their own names. The version line is required:
+
+```properties
+CONFIGURATION_VERSION = 1
+
+# Patient output and references
+# generate-reference: generate the Patient and references to it.
+# reference-only: retain references to an existing Patient.
+# neither: omit the Patient and references to it.
+PATIENT_MODE = generate-reference
+
+MEDICATION_ADMINISTRATION_ENABLED = false
+
+# Inactive because MedicationAdministration output is disabled.
+# MEDICATION_ADMINISTRATION_TREATMENT = add-statement
+```
+
+One physical text line corresponds to one row in column A of an options sheet.
+Comments are wrapped into separate lines. Strings use Java Properties escapes for
+backslashes, line breaks, tabs and leading spaces; literal Unicode is retained.
+Booleans use `true`/`false`, integers use decimal notation, enums use the contract's
+technical values and sets use comma-separated values (an empty set has an empty
+right-hand side). Strings are unquoted. All options and all DAR fields are exported,
+including defaults. Missing options use contract defaults.
+
+When a control or its selected choice is unavailable, its assignment is prefixed
+with `# `. Explicit effective `false` and `none` values remain active assignments.
+The web importer reads recognized uppercase assignments in comments as stored
+selections and reevaluates dependencies. Ordinary prose comments are ignored.
+Duplicate assignments, including active/commented duplicates, are rejected;
+edit the existing assignment rather than adding a second one. Unknown assignment
+names, malformed values and unsupported versions also fail import.
+
+A plain Java Properties reader ignores commented assignments. The shared
+configuration adapter must also restore recognized commented selections before
+evaluating dependencies, just as the web importer does. Otherwise an unavailable
+selected contact level could fall back to a different, available default level.
+Missing assignments use defaults; stored unavailable selections become ineffective
+without substituting another choice.
+
+The shared Java reader accepts this format from external files, CSV option files
+and Excel option sheets. It validates stored values and determines effective
+selections from the same contract. Existing directly equivalent Java properties
+are mapped; other effective settings produce explicit preflight errors, including
+unsupported defaults. The complete default configuration is therefore not yet
+executable. Patient output modes have an internally tested implementation that
+projects output after input derivations, preserving internal patient identity and
+resource IDs. Remaining execution semantics are tracked in #77. The current web
+Start conversion action still uses the existing converter defaults.
+
+`propertiesFormat.darProperties` maps each DAR field ID to its uppercase name.
+Each value is `unchanged` or an allowed field-specific DAR code. Missing DAR values
+mean `unchanged`; import represents unchanged fields by their absence in the draft.
+DAR assignments for resources not selected for output are commented out. The
+export includes the field descriptions, allowed codes and clinical conditions.
+
+Identifier rules use consecutive blocks starting at `IDENTIFIER_RULE_1_` with
+`ID`, `ENABLED`, `RESOURCES`, `SYSTEM` and `PATTERN` assignments. `ID` preserves the
+rule UUID; numbering preserves rule order. All five fields are required for each
+block. Resources are comma-separated FHIR resource types. Rules that are disabled
+or have no output resource selected retain their settings in commented assignments;
+an explicit `ENABLED = false` remains active. Identifier patterns use the syntax
+below and Properties escaping for literal backslashes and line breaks.
+
+Import validates the entire draft before replacing the editor contents. JSON is
+also accepted for saved drafts; browser persistence uses the configuration object.
+
 ## Contacts and references
 
 DocumentReference offers three encounter assignment strategies:

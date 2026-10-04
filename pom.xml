@@ -162,6 +162,17 @@
 
 	<build>
 		<finalName>excel2fhir</finalName>
+        <resources>
+            <resource><directory>src/main/resources</directory></resource>
+            <resource>
+                <directory>web/catalog</directory>
+                <targetPath>configuration</targetPath>
+                <includes>
+                    <include>options/contract.json</include>
+                    <include>dar/generated/catalog.json</include>
+                </includes>
+            </resource>
+        </resources>
 		<plugins>
 
 			<plugin>

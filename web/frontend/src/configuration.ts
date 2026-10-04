@@ -1,3 +1,4 @@
+import { parsePropertiesConfiguration } from './configuration-properties.ts'
 import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
 import contractData from '../../catalog/options/contract.json' with { type: 'json' }
@@ -8,6 +9,7 @@ export type Value = string | number | boolean | string[] | null
 export type Dependency = { option: string; equals: string | number | boolean }
 export type Option = {
   id: string
+  propertyName: string
   section: string
   type: string
   control: string
@@ -237,7 +239,9 @@ export function problems(input: unknown): Problem[] {
   return issues
 }
 export function importConfiguration(text: string): Configuration {
-  const parsed = parseUniqueJson(text)
+  const parsed = text.trimStart().startsWith('{')
+    ? parseUniqueJson(text)
+    : parsePropertiesConfiguration(text)
   // Preserve saved drafts from the editor that included a duplicate procedure control.
   // The remaining Procedure assignment is authoritative.
   if (parsed && typeof parsed === 'object' && 'values' in parsed) {

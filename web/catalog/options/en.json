@@ -398,5 +398,14 @@
   "choice.contact-fill-missing": "Derive missing encounter assignments from timestamps",
   "choice.contact-timestamp-only": "Always derive encounter assignments from timestamps",
   "option.reference.DocumentReference.assignmentStrategy.label": "DocumentReference: encounter assignment strategy",
-  "option.reference.DocumentReference.assignmentStrategy.help": "Supplied only: Retain supplied encounters. Without an input encounter, leave the reference absent.\n\nDerive missing: Retain supplied encounters and use timestamp matching only when none is supplied. This is the default.\n\nAlways derive: Recompute encounters from timestamps, replacing supplied encounters. Without a usable timestamp or matching encounter, omit even supplied references and report the reason.\n\nIn the first two modes, retain temporally conflicting encounters and report the conflict. Encounters are identified by the combination of patient ID and case number. If this combination is absent from the input, the nonexistent encounter is reported."
+  "option.reference.DocumentReference.assignmentStrategy.help": "Supplied only: Retain supplied encounters. Without an input encounter, leave the reference absent.\n\nDerive missing: Retain supplied encounters and use timestamp matching only when none is supplied. This is the default.\n\nAlways derive: Recompute encounters from timestamps, replacing supplied encounters. Without a usable timestamp or matching encounter, omit even supplied references and report the reason.\n\nIn the first two modes, retain temporally conflicting encounters and report the conflict. Encounters are identified by the combination of patient ID and case number. If this combination is absent from the input, the nonexistent encounter is reported.",
+  "app.config.fileTitle": "Excel2FHIR configuration",
+  "app.config.fileUsage": "Each text line corresponds to one row in column A of the Excel options sheet. Commented assignments retain inactive selections for web import. Missing values use contract defaults. Selection dependencies also apply to missing values.",
+  "app.config.filePending": "Execution of this complete format is being integrated in issue #77.",
+  "app.config.fileChoices": "Allowed values",
+  "app.config.fileDefault": "Default",
+  "app.config.fileInactive": "Inactive; stored selection.",
+  "app.config.fileDar": "DAR: unchanged preserves the field content; a DAR code replaces it after derivations. Missing DAR assignments mean unchanged.",
+  "app.config.fileRuleInactive": "The rule is disabled or none of its resource types is selected for output.",
+  "app.config.fileResourceInactive": "The corresponding resource is not selected for output."
 }

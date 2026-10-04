@@ -104,6 +104,13 @@ Spaces and special characters become `_`; names within an input must be unique.
 `false`, the workbook precheck covers structure and options. Shared converter
 checks also apply during CSV processing; see [input checks](contact-input-checks.md).
 
+The web editor exports a versioned `.config` format with descriptions and retained
+inactive selections. The Java reader validates that format through the same entry
+points. Execution currently rejects unsupported effective settings, including
+contact defaults, before publishing FHIR output. See the
+[shared configuration contract](../web/catalog/options/README.md#properties-export-and-import)
+for the implemented scope and syntax.
+
 ## CSV input
 
 CSV tables follow the workbook's columns. A run's `details/csv/` directory provides

@@ -398,5 +398,14 @@
   "choice.contact-fill-missing": "Fehlende Kontaktzuordnungen aus Zeitstempel ableiten",
   "choice.contact-timestamp-only": "Kontaktzuordnungen immer aus Zeitstempel ableiten",
   "option.reference.DocumentReference.assignmentStrategy.label": "DocumentReference: Strategie der Kontaktzuordnung",
-  "option.reference.DocumentReference.assignmentStrategy.help": "Nur angegebene Kontakte: Übernimmt die eingetragenen Kontakte. Ohne Eintrag bleibt die Kontaktreferenz leer.\n\nFehlende ableiten: Übernimmt eingetragene Kontakte und sucht nur bei fehlendem Eintrag anhand des Zeitstempels. Dies ist die Standardauswahl.\n\nImmer ableiten: Bestimmt den Kontakt anhand des Zeitstempels neu und ersetzt eingetragene Kontakte. Fehlt ein nutzbarer Zeitpunkt oder ein passender Kontakt, entfällt auch eine eingetragene Referenz; der Grund wird berichtet.\n\nIn den ersten beiden Modi bleiben zeitlich widersprüchliche Kontakte erhalten; der Widerspruch wird gemeldet. Kontakte werden durch Patient-ID und Fallnummer gemeinsam identifiziert. Gibt es diese Kombination nicht in der Eingabe, wird der nicht vorhandene Kontakt gemeldet."
+  "option.reference.DocumentReference.assignmentStrategy.help": "Nur angegebene Kontakte: Übernimmt die eingetragenen Kontakte. Ohne Eintrag bleibt die Kontaktreferenz leer.\n\nFehlende ableiten: Übernimmt eingetragene Kontakte und sucht nur bei fehlendem Eintrag anhand des Zeitstempels. Dies ist die Standardauswahl.\n\nImmer ableiten: Bestimmt den Kontakt anhand des Zeitstempels neu und ersetzt eingetragene Kontakte. Fehlt ein nutzbarer Zeitpunkt oder ein passender Kontakt, entfällt auch eine eingetragene Referenz; der Grund wird berichtet.\n\nIn den ersten beiden Modi bleiben zeitlich widersprüchliche Kontakte erhalten; der Widerspruch wird gemeldet. Kontakte werden durch Patient-ID und Fallnummer gemeinsam identifiziert. Gibt es diese Kombination nicht in der Eingabe, wird der nicht vorhandene Kontakt gemeldet.",
+  "app.config.fileTitle": "Konfiguration für Excel2FHIR",
+  "app.config.fileUsage": "Eine Textzeile entspricht einer Zeile in Spalte A des Excel-Optionsblatts. Auskommentierte Zuweisungen bewahren inaktive Auswahlen für den Web-Import. Fehlende Werte erhalten die Vertragsdefaults. Auswahlabhängigkeiten gelten auch für fehlende Werte.",
+  "app.config.filePending": "Die Ausführung dieses vollständigen Formats wird mit Issue #77 angebunden.",
+  "app.config.fileChoices": "Zulässige Werte",
+  "app.config.fileDefault": "Standardwert",
+  "app.config.fileInactive": "Inaktiv; gespeicherte Auswahl.",
+  "app.config.fileDar": "DAR: unchanged erhält den Feldinhalt; ein DAR-Code ersetzt ihn nach Ableitungen. Fehlende DAR-Zuweisungen bedeuten unchanged.",
+  "app.config.fileRuleInactive": "Die Regel ist deaktiviert oder keiner ihrer Ressourcentypen wird ausgegeben.",
+  "app.config.fileResourceInactive": "Die zugehörige Ressource ist nicht zur Ausgabe ausgewählt."
 }

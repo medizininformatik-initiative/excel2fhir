@@ -1,3 +1,4 @@
+import { exportPropertiesConfiguration } from './configuration-properties'
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, Download, Upload, Save, RotateCcw } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -268,8 +269,8 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     if (importRef.current) importRef.current.value = ''
   }
   const exportHref =
-    'data:application/json;charset=utf-8,' +
-    encodeURIComponent(JSON.stringify(config, null, 2) + '\n')
+    'data:text/plain;charset=utf-8,' +
+    encodeURIComponent(issues.length ? '' : exportPropertiesConfiguration(config, language))
   return (
     <section
       className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -304,7 +305,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
             </Button>
           ) : (
             <Button asChild variant="outline">
-              <a href={exportHref} download="converter-configuration.json">
+              <a href={exportHref} download="converter-configuration.config">
                 <Download size={15} />
                 {t('app.config.export')}
               </a>
@@ -329,7 +330,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
           <input
             ref={importRef}
             type="file"
-            accept="application/json,.json"
+            accept="text/plain,.config,application/json,.json"
             aria-label={t('app.config.import')}
             hidden
             onChange={(e) => void load(e.target.files?.[0])}

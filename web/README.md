@@ -24,11 +24,16 @@ navigation supports the arrow keys, Home and End.
 
 The first visit starts with contract defaults. **Save in browser** stores one
 configuration locally for subsequent visits. **Export file** downloads its
-versioned JSON representation; **Import file** validates the file before replacing
-the current draft. An imported draft must be saved to retain it after reloading.
+versioned UTF-8 `.config` file with uppercase variable names and comments in the
+selected interface language. Inactive selections are commented out and retained
+when imported again. Each line can be pasted into a separate row in column A of
+a `Konvertierungsoptionen` sheet. **Import file** accepts `.config` and JSON
+configurations and validates them before replacing the current draft. See the
+[configuration format](catalog/options/README.md#properties-export-and-import)
+for values, comments, DAR fields and identifier rules. An imported draft must be saved to retain it after reloading.
 **Restore defaults** resets the draft; save to retain that reset. Invalid drafts
 cannot be saved or exported. Imports reject unknown fields, incorrect types,
-unsupported schema versions, duplicate JSON members/rule IDs, unsuitable DAR
+unsupported schema versions, duplicate assignments, JSON members or rule IDs, unsuitable DAR
 codes and invalid identifier patterns.
 
 DAR replacements require a field-specific code. Resource selection controls their

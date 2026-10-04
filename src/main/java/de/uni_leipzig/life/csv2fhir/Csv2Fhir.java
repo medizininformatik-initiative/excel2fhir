@@ -528,6 +528,8 @@ public class Csv2Fhir {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult(options);
+        ConverterResult outputResult = new ConverterResult(options);
+        List<Map.Entry<TableIdentifier, Resource>> pendingOutput = new ArrayList<>();
         for (TableIdentifier table : TableIdentifier.values()) {
             List<CSVRecord> records = tableIdentifierToParsedRecords.get(table);
             if (records == null) continue;
@@ -537,11 +539,11 @@ public class Csv2Fhir {
                 if (pid == null || !pid.equalsIgnoreCase(filterID)) continue;
                 try {
                     List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
-                    for (Resource resource : resources) {
-                        addEntry(bundle, resource);
-                        addEntry(ndjsonBundle, resource);
-                    }
-                    importReport.success(table, record.getRecordNumber(), resources.size());
+                    for (Resource resource : resources) pendingOutput.add(Map.entry(table, resource));
+                    int emitted = (int)resources.stream().filter(resource ->
+                            options.patientOutputPolicy() == PatientOutputPolicy.GENERATE_REFERENCE
+                            || !(resource instanceof org.hl7.fhir.r4.model.Patient)).count();
+                    importReport.success(table, record.getRecordNumber(), emitted);
                 } catch (Exception e) {
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
                     LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
@@ -549,9 +551,25 @@ public class Csv2Fhir {
                 }
             }
         }
+        // Later rows can still complete earlier contacts. Project only after all derivations.
+        for (var pending : pendingOutput) {
+            Resource resource = pending.getValue();
+            Resource output = options.patientOutputPolicy().output(resource);
+            if (output != resource) {
+                importReport.outputSelections.add(Map.of(
+                        "resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", output == null ? "omit-resource" : "omit-patient-reference",
+                        "reason", "PATIENT_MODE=" + options.configuration().stored("resource.Patient.mode").asText(),
+                        "iteration", Integer.toString(options.loopCounter)));
+            }
+            if (output == null) continue;
+            addEntry(bundle, output);
+            addEntry(ndjsonBundle, output);
+            outputResult.add(pending.getKey(), output);
+        }
         importReport.contactEndDerivations.addAll(result.contactEndDerivations);
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
-        return result;
+        return outputResult;
     }
 
     /**
