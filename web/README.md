@@ -15,10 +15,11 @@ CSS and a shadcn/ui Button, with FastAPI and a separate Python worker.
 ## Configuration editor
 
 The configuration editor provides a continuous resource page with section links
-and separate tabs for DAR, IDs/repetitions/time shifts, terminology, additional
-identifiers, and checks/output. Controls use the agreed option contract and DAR
+and separate tabs for additional identifiers, Data Absent Reason (DAR),
+IDs/repetitions/time shifts, terminology, and checks/output. Controls use the agreed option contract and DAR
 catalogue. Unavailable controls remain visible, explain their dependencies, and
-retain selected values. Help icons support hover, keyboard focus and click. Tab
+retain selected values. Help icons support hover, keyboard focus and click, including the pattern syntax
+and sample-preview details. Tab
 navigation supports the arrow keys, Home and End.
 
 The first visit starts with contract defaults. **Save in browser** stores one
@@ -35,8 +36,11 @@ availability; existing DAR selections remain stored when unavailable. Conditiona
 codes display the applicable narrative or procedure condition. Identifier rules
 retain their UUID when edited or imported and provide deterministic sample
 previews. The preview uses counter 1 and repetition 0 with example resource and
-patient IDs, and caps displayed counter padding at 256 characters. Actual resource
-counters and collision checks belong to converter execution.
+patient IDs, and caps displayed counter padding at 256 characters. The identifier system shows an example placeholder while empty and unfocused.
+Pattern tokens use compact buttons with explanations on hover or keyboard focus,
+and can be clicked to insert at the
+cursor, replace selected text, or append when no cursor position is available.
+Actual resource counters and collision checks belong to converter execution.
 
 The editor is a configuration draft for the converter integration in #77.
 **Start conversion** currently uses the existing converter defaults. Its job

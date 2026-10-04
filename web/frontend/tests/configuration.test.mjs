@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import {
   defaults,
+  insertPatternToken,
   contract,
   resourceOptions,
   options,
@@ -144,4 +145,108 @@ test('DAR distinguishes laboratory and vital-sign Observation selections', () =>
   const vitalSigns = darFields.find((f) => f.id.startsWith('VitalSigns.'))
   assert.equal(resourceEnabled(darResource(laboratory), config.values), false)
   assert.equal(resourceEnabled(darResource(vitalSigns), config.values), true)
+})
+
+test('pattern tokens append, insert at the cursor and replace selected text', () => {
+  assert.deepEqual(insertPatternToken('ID-', '{count}', null), {
+    value: 'ID-{count}',
+    cursor: 10
+  })
+  assert.deepEqual(
+    insertPatternToken('ID--suffix', '{hash}', { start: 3, end: 3 }),
+    { value: 'ID-{hash}-suffix', cursor: 9 }
+  )
+  assert.deepEqual(
+    insertPatternToken('ID-old-suffix', '{patientId}', { start: 3, end: 6 }),
+    { value: 'ID-{patientId}-suffix', cursor: 14 }
+  )
+  assert.equal(
+    insertPatternToken('', '{count}', { start: 99, end: 99 }).value,
+    '{count}'
+  )
+})
+
+
+test('saved drafts retain their settings when the duplicate procedure assignment is removed', () => {
+  const draft = defaults()
+  draft.values['reference.Procedure.encounter'] = 'facility'
+  draft.values['reference.procedureDiagnosis.encounter'] = 'department'
+  draft.values['ids.patient.prefix'] = 'test-'
+  const restored = importConfiguration(JSON.stringify(draft))
+  assert.equal(restored.values['reference.Procedure.encounter'], 'facility')
+  assert.equal(restored.values['ids.patient.prefix'], 'test-')
+  assert.equal('reference.procedureDiagnosis.encounter' in restored.values, false)
+  assert.equal(resourceOptions('Condition').some(o => o.id.includes('procedureDiagnosis')), false)
+  draft.values['reference.procedureDiagnosis.encounter'] = 'invalid'
+  assert.throws(() => importConfiguration(JSON.stringify(draft)))
+})
+
+
+test('omitted requests in saved drafts become deselected requests without losing other settings', () => {
+  const draft = defaults()
+  draft.values['medication.requestTreatment'] = 'omit'
+  draft.values['resource.MedicationAdministration.enabled'] = true
+  draft.values['ids.patient.prefix'] = 'demo-'
+  const restored = importConfiguration(JSON.stringify(draft))
+  assert.equal(restored.values['medication.requestTreatment'], 'retain')
+  assert.equal(restored.values['resource.MedicationRequest.enabled'], false)
+  assert.equal(restored.values['resource.MedicationAdministration.enabled'], true)
+  assert.equal(restored.values['ids.patient.prefix'], 'demo-')
+  assert.deepEqual(options.find(o => o.id === 'medication.requestTreatment').choices,
+    ['retain', 'replace-administration', 'replace-statement'])
+})
+
+test('medication actions preserve saved additions and disable unavailable targets', () => {
+  const draft = defaults()
+  delete draft.values['medication.MedicationAdministration.treatment']
+  delete draft.values['medication.MedicationStatement.treatment']
+  draft.values['medication.MedicationAdministration.addMedicationStatement'] = true
+  draft.values['medication.MedicationStatement.addMedicationAdministration'] = false
+  const restored = importConfiguration(JSON.stringify(draft))
+  assert.equal(restored.values['medication.MedicationAdministration.treatment'], 'add-statement')
+  assert.equal(restored.values['medication.MedicationStatement.treatment'], 'retain')
+  assert.equal('medication.MedicationAdministration.addMedicationStatement' in restored.values, false)
+  for (const [source, target] of [
+    ['MedicationAdministration', 'MedicationStatement'],
+    ['MedicationStatement', 'MedicationAdministration']
+  ]) {
+    const option = options.find(o => o.id === `medication.${source}.treatment`)
+    restored.values[`resource.${target}.enabled`] = false
+    assert.equal(optionEnabled(option.id, restored.values), true)
+    for (const choice of option.choices.filter(v => v !== 'retain'))
+      assert.equal(unmetDependencies(option.choiceDependencies[choice], restored.values).length, 1)
+    restored.values[`resource.${target}.enabled`] = true
+  }
+  restored.values['medication.MedicationAdministration.treatment'] = 'replace-statement'
+  restored.values['medication.MedicationStatement.treatment'] = 'replace-administration'
+  assert.deepEqual(importConfiguration(JSON.stringify(restored)), restored)
+  draft.values['medication.MedicationAdministration.addMedicationStatement'] = 'yes'
+  assert.throws(() => importConfiguration(JSON.stringify(draft)))
+})
+
+test('document encounter strategies roundtrip and preserve saved checkbox choices', () => {
+  const strategyKey = 'reference.DocumentReference.assignmentStrategy'
+  const legacyKey = 'reference.DocumentReference.knownInputContact'
+  assert.equal(defaults().values[strategyKey], 'fill-missing')
+  for (const strategy of ['explicit-only', 'fill-missing', 'timestamp-only']) {
+    const config = defaults()
+    config.values[strategyKey] = strategy
+    assert.equal(importConfiguration(JSON.stringify(config)).values[strategyKey], strategy)
+  }
+  for (const [legacy, strategy] of [[true, 'fill-missing'], [false, 'timestamp-only']]) {
+    const config = defaults()
+    delete config.values[strategyKey]
+    config.values[legacyKey] = legacy
+    config.values['ids.patient.prefix'] = 'keep-'
+    const imported = importConfiguration(JSON.stringify(config))
+    assert.equal(imported.values[strategyKey], strategy)
+    assert.equal(imported.values['ids.patient.prefix'], 'keep-')
+    assert.equal(legacyKey in imported.values, false)
+  }
+  const invalid = defaults()
+  invalid.values[strategyKey] = 'unknown'
+  assert.throws(() => importConfiguration(JSON.stringify(invalid)))
+  const option = options.find(o => o.id === strategyKey)
+  invalid.values['resource.DocumentReference.enabled'] = false
+  assert.equal(optionEnabled(option.id, invalid.values), false)
 })

@@ -66,6 +66,24 @@ whole days, including birth date.
 
 ## Contacts and references
 
+DocumentReference offers three encounter assignment strategies:
+
+- **Use only supplied encounters:** retain input encounter references and leave
+  missing references absent.
+- **Derive missing assignments from timestamps** (default): retain supplied
+  encounters and use timestamp matching only for missing assignments.
+- **Always derive assignments from timestamps:** recompute references even when
+  encounters are supplied. If no usable timestamp or matching encounter exists,
+  omit the reference, including any supplied reference, and report the reason.
+
+The first two strategies report temporal conflicts without replacing supplied
+encounters. Input encounters are identified by the combination of patient ID and case
+number. A combination absent from the input is reported as a nonexistent
+encounter. In preserving strategies, an unresolved supplied encounter is not
+treated as a missing selection and silently replaced by timestamp matching. Contact levels apply to automatic matching;
+supplied encounters are not moved to a different level. Selecting no encounter
+reference omits the field in every strategy.
+
 Matching requires the same patient and selected contact level. Start and end
 boundaries are inclusive; a missing end is open. The latest matching start wins,
 then original input row order. Preserve that order during processing. If a
@@ -101,8 +119,12 @@ FHIR validation reports invalid vocabulary codes; a valid but clinically
 unsuitable DAR code can pass that validator. Editor choices provide the semantic
 selection policy.
 
-Medication replacements precede one pass of additions. Additions do not recurse;
-new resources receive distinct IDs. Missing medication facts are omitted. Active
+MedicationRequest replacement runs first. MedicationAdministration and
+MedicationStatement each offer one action: retain, additionally create the other
+type, or replace with the other type. The latter two require the target resource
+to be enabled. These actions run once on a snapshot after request replacement;
+resources created during this pass are not transformed again. Both directions
+can be configured without recursive conversions. New resources receive distinct IDs. Missing medication facts are omitted. Active
 DAR overrides are applied after these derivations.
 
 Additional identifiers append to existing identifiers. Each rule has a stable

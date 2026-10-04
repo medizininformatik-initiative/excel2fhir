@@ -15,7 +15,7 @@
       "properties": {
         "resource.Patient.mode": {
           "title": "Patient: output and references",
-          "description": "Generate the resource and references, refer to an existing resource, or omit both.",
+          "description": "Generate and reference: Output a Patient resource. Resources such as Encounter and Condition reference it through subject.\n\nReference only: Output no Patient; subject fields reference an existing patient.\n\nNeither: Output no Patient and omit patient references.",
           "default": "generate-reference",
           "enum": [
             "generate-reference",
@@ -25,13 +25,13 @@
         },
         "resource.Encounter.enabled": {
           "title": "Generate contact",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Encounter resources for Contact in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Location.mode": {
           "title": "Location: output and references",
-          "description": "Generate the resource and references, refer to an existing resource, or omit both.",
+          "description": "Generate and reference: Output Location resources for the locations. Encounters reference them through Encounter.location.location.\n\nReference only: Output no Location. Depending on the selections below, Encounter.location.location contains a reference to an existing location, identifier and display, or both.\n\nNeither: Output no Location and omit location references on encounters.",
           "default": "generate-reference",
           "enum": [
             "generate-reference",
@@ -41,43 +41,43 @@
         },
         "resource.Location.existingReference": {
           "title": "Location: reference existing resource",
-          "description": "Combine selected reference and descriptive information in the same Reference.",
+          "description": "Set reference in Encounter.location.location to an existing location. The referenced Location is not included in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.Location.description": {
-          "title": "Location: identifier and display",
-          "description": "Combine selected reference and descriptive information in the same Reference.",
+          "title": "Location references: add identifier and display",
+          "description": "Add identifier and display to Encounter.location.location. If referencing an existing location is also selected, reference, identifier and display appear in the same Reference.",
           "default": false,
           "type": "boolean"
         },
         "resource.Condition.enabled": {
           "title": "Generate diagnosis",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Condition resources for Diagnosis in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Procedure.enabled": {
           "title": "Generate procedure",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Procedure resources for Procedure in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Observation.laboratory.enabled": {
           "title": "Generate laboratory observation",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Observation resources for Laboratory observation in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Observation.vitalSigns.enabled": {
           "title": "Generate vital signs",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Observation resources for Vital signs in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Medication.mode": {
           "title": "Medication: output and references",
-          "description": "Generate the resource and references, refer to an existing resource, or omit both.",
+          "description": "Generate and reference: Output a Medication. Requests (MedicationRequest), administrations (MedicationAdministration) and statements (MedicationStatement) reference it through medicationReference.\n\nReference only: Output no Medication. Depending on the selections below, medicationReference contains a reference to an existing medication, identifier and display, or both.\n\nNeither: Output no Medication and omit references to it.",
           "default": "generate-reference",
           "enum": [
             "generate-reference",
@@ -87,85 +87,85 @@
         },
         "resource.Medication.existingReference": {
           "title": "Medication: reference existing resource",
-          "description": "Combine selected reference and descriptive information in the same Reference.",
+          "description": "Set reference in the medicationReference fields of requests, administrations and statements to an existing medication. The referenced Medication is not included in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.Medication.description": {
-          "title": "Medication: identifier and display",
-          "description": "Combine selected reference and descriptive information in the same Reference.",
+          "title": "Medication references: add identifier and display",
+          "description": "Add identifier and display to the medicationReference fields of requests, administrations and statements. If referencing an existing medication is also selected, reference, identifier and display appear in the same Reference.",
           "default": false,
           "type": "boolean"
         },
         "resource.MedicationRequest.enabled": {
           "title": "Generate medication request",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include MedicationRequest resources for Medication request in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.MedicationAdministration.enabled": {
           "title": "Generate medication administration",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include MedicationAdministration resources for Medication administration in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.MedicationStatement.enabled": {
           "title": "Generate medication statement",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include MedicationStatement resources for Medication statement in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Immunization.enabled": {
           "title": "Generate immunization",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Immunization resources for Immunization in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.DiagnosticReport.enabled": {
           "title": "Generate diagnostic report",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include DiagnosticReport resources for Diagnostic report in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.CarePlan.enabled": {
           "title": "Generate care plan",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include CarePlan resources for Care plan in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.DocumentReference.enabled": {
           "title": "Generate DocumentReference",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include DocumentReference resources for DocumentReference in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "resource.Consent.enabled": {
           "title": "Generate consent",
-          "description": "Emit selected resources. Other transformations never enable an unselected resource.",
+          "description": "Include Consent resources for Consent in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
         "contact.facility.enabled": {
           "title": "Generate facility contacts",
-          "description": "Source contacts remain available internally for assignment.",
+          "description": "Output facility encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.department.enabled": {
           "title": "Generate department contacts",
-          "description": "Source contacts remain available internally for assignment.",
+          "description": "Output department encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.ward-service.enabled": {
           "title": "Generate ward-service contacts",
-          "description": "Source contacts remain available internally for assignment.",
+          "description": "Output ward/service encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.department.partOf": {
           "title": "Department contact: is part of (partOf)",
-          "description": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
+          "description": "Set Encounter.partOf on the department encounter to its facility encounter. “None” omits the reference.",
           "default": "facility",
           "enum": [
             "facility",
@@ -174,7 +174,7 @@
         },
         "contact.ward-service.partOf": {
           "title": "Ward/service contact: is part of (partOf)",
-          "description": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
+          "description": "Set Encounter.partOf on the ward/service encounter to the selected parent department or facility encounter. “None” omits the reference.",
           "default": "department",
           "enum": [
             "department",
@@ -184,13 +184,13 @@
         },
         "contact.diagnoses.enabled": {
           "title": "Diagnosis references on contacts",
-          "description": "Add references to diagnoses for the selected contact levels.",
+          "description": "Add references to diagnoses (Condition) on the encounter (Encounter.diagnosis). The diagnosis role from the input is retained on the reference; this setting currently does not filter by primary or secondary diagnosis.",
           "default": true,
           "type": "boolean"
         },
         "contact.diagnoses.levels": {
           "title": "Diagnosis references: contact levels",
-          "description": "Default to facility contacts; other levels are optional.",
+          "description": "Choose the contact levels whose Encounter.diagnosis.condition references diagnoses (Condition). Facility encounters are selected by default.",
           "default": [
             "facility"
           ],
@@ -205,14 +205,14 @@
           }
         },
         "contact.procedureDiagnoses.enabled": {
-          "title": "Procedure-related diagnosis references on contacts",
-          "description": "Add references to diagnoses for the selected contact levels.",
+          "title": "Procedures as encounter diagnosis references",
+          "description": "Add references to procedures (Procedure) in Encounter.diagnosis.condition. KDS permits this field to reference both diagnoses (Condition) and procedures. The procedure remains a Procedure resource.",
           "default": true,
           "type": "boolean"
         },
         "contact.procedureDiagnoses.levels": {
-          "title": "Procedure-related diagnosis references: contact levels",
-          "description": "Default to facility contacts; other levels are optional.",
+          "title": "Procedures as diagnosis references: contact levels",
+          "description": "Choose the contact levels where procedures are referenced in Encounter.diagnosis.condition. Facility contacts are selected by default.",
           "default": [
             "facility"
           ],
@@ -228,24 +228,13 @@
         },
         "contact.inheritDiagnoses": {
           "title": "Inherit missing parent diagnoses",
-          "description": "Retain the existing preference for the parent chief complaint.",
+          "description": "If an encounter has no diagnosis reference, copy one from its parent encounter, preferring a primary diagnosis. Existing diagnosis references are retained.",
           "default": false,
           "type": "boolean"
         },
         "reference.Condition.encounter": {
           "title": "Diagnosis: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
-          "default": "department",
-          "enum": [
-            "facility",
-            "department",
-            "ward-service",
-            "none"
-          ]
-        },
-        "reference.procedureDiagnosis.encounter": {
-          "title": "Procedure-related diagnosis: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set Condition.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -256,7 +245,7 @@
         },
         "reference.Procedure.encounter": {
           "title": "Procedure: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set Procedure.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -267,7 +256,7 @@
         },
         "reference.Observation.laboratory.encounter": {
           "title": "Laboratory observation: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -278,7 +267,7 @@
         },
         "reference.Observation.vitalSigns.encounter": {
           "title": "Vital signs: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -289,7 +278,7 @@
         },
         "reference.MedicationRequest.encounter": {
           "title": "Medication request: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set MedicationRequest.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -300,7 +289,7 @@
         },
         "reference.MedicationAdministration.encounter": {
           "title": "Medication administration: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set MedicationAdministration.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -311,7 +300,7 @@
         },
         "reference.MedicationStatement.encounter": {
           "title": "Medication statement: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set MedicationStatement.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -322,7 +311,7 @@
         },
         "reference.Immunization.encounter": {
           "title": "Immunization: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set Immunization.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -333,7 +322,7 @@
         },
         "reference.DiagnosticReport.encounter": {
           "title": "Diagnostic report: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set DiagnosticReport.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -344,7 +333,7 @@
         },
         "reference.CarePlan.encounter": {
           "title": "Care plan: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Set CarePlan.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
             "facility",
@@ -355,7 +344,7 @@
         },
         "reference.DocumentReference.encounter": {
           "title": "DocumentReference: contact assignment",
-          "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+          "description": "Choose the encounter level for automatic matching in DocumentReference.context.encounter: facility, department or ward/service. The strategy below determines whether missing or all assignments are derived from the document timestamp. Supplied encounters are not reassigned to another level in the first two strategies. “None” omits all encounter references.",
           "default": "department",
           "enum": [
             "facility",
@@ -364,131 +353,142 @@
             "none"
           ]
         },
-        "reference.DocumentReference.knownInputContact": {
-          "title": "DocumentReference: use known input contact without a timestamp",
-          "description": "Use the explicitly known input contact only when no usable clinical timestamp exists.",
-          "default": false,
-          "type": "boolean"
+        "reference.DocumentReference.assignmentStrategy": {
+          "title": "DocumentReference: encounter assignment strategy",
+          "description": "Supplied only: Retain supplied encounters. Without an input encounter, leave the reference absent.\n\nDerive missing: Retain supplied encounters and use timestamp matching only when none is supplied. This is the default.\n\nAlways derive: Recompute encounters from timestamps, replacing supplied encounters. Without a usable timestamp or matching encounter, omit even supplied references and report the reason.\n\nIn the first two modes, retain temporally conflicting encounters and report the conflict. Encounters are identified by the combination of patient ID and case number. If this combination is absent from the input, the nonexistent encounter is reported.",
+          "default": "fill-missing",
+          "enum": [
+            "explicit-only",
+            "fill-missing",
+            "timestamp-only"
+          ]
         },
         "medication.requestTreatment": {
           "title": "MedicationRequest treatment",
-          "description": "Replace requests before a single pass of additions. Unselected targets disable the respective choice.",
+          "description": "Retain: Output the MedicationRequest.\n\nReplace with MedicationAdministration: Output a MedicationAdministration instead.\n\nReplace with MedicationStatement: Output a MedicationStatement instead. The target resource must itself be enabled.\n\nThe processing selected for MedicationAdministration or MedicationStatement then applies. Each of these resources is retained, supplemented or replaced once.",
           "default": "retain",
           "enum": [
             "retain",
-            "omit",
             "replace-administration",
             "replace-statement"
           ]
         },
-        "medication.MedicationAdministration.addMedicationStatement": {
-          "title": "Additional MedicationStatement from MedicationAdministration",
-          "description": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
-          "default": false,
-          "type": "boolean"
+        "medication.MedicationAdministration.treatment": {
+          "title": "Process MedicationAdministration",
+          "description": "Retain: Output the MedicationAdministration.\n\nAdd: Also output a MedicationStatement with its own ID, retaining the MedicationAdministration.\n\nReplace: Output a MedicationStatement instead of the MedicationAdministration.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
+          "default": "retain",
+          "enum": [
+            "retain",
+            "add-statement",
+            "replace-statement"
+          ]
         },
-        "medication.MedicationStatement.addMedicationAdministration": {
-          "title": "Additional MedicationAdministration from MedicationStatement",
-          "description": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
-          "default": false,
-          "type": "boolean"
+        "medication.MedicationStatement.treatment": {
+          "title": "Process MedicationStatement",
+          "description": "Retain: Output the MedicationStatement.\n\nAdd: Also output a MedicationAdministration with its own ID, retaining the MedicationStatement.\n\nReplace: Output a MedicationAdministration instead of the MedicationStatement.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
+          "default": "retain",
+          "enum": [
+            "retain",
+            "add-administration",
+            "replace-administration"
+          ]
         },
         "ids.patient.prefix": {
           "title": "Patient ID prefix",
-          "description": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+          "description": "Prepend the text to each patient ID. Example: prefix “test-” and ID “0012” produce “test-0012”.",
           "default": "",
           "type": "string"
         },
         "ids.patient.suffix": {
           "title": "Patient ID suffix",
-          "description": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+          "description": "Append the text to each patient ID. Example: ID “0012” and suffix “-demo” produce “0012-demo”.",
           "default": "",
           "type": "string"
         },
         "ids.patient.initialOffset": {
           "title": "Initial patient-number offset",
-          "description": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+          "description": "Increase the last numeric block of the patient ID by this value before the first pass. Example: “P0012” with offset 100 becomes “P0112”.",
           "default": 0,
           "type": "integer",
           "minimum": 0
         },
         "ids.patient.iterationOffset": {
           "title": "Patient-number offset per repetition",
-          "description": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+          "description": "Increase the last numeric block of the patient ID by this value for each additional repetition. Example with 100: “P0012”, “P0112”, “P0212”. The initial offset is applied as well.",
           "default": 0,
           "type": "integer",
           "minimum": 0
         },
         "ids.patient.additionalRepetitions": {
           "title": "Additional repetitions",
-          "description": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+          "description": "Generate additional passes of the same dataset. 0 means one pass; 2 means three passes in total. Patient IDs change according to the offset per repetition.",
           "default": 0,
           "type": "integer",
           "minimum": 0
         },
         "ids.start.CONSENT": {
           "title": "Consent: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.CONDITION": {
           "title": "Diagnosis: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_2": {
           "title": "Department contact: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_3": {
           "title": "Ward/service contact: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_REQUEST": {
           "title": "Medication request: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_ADMINISTRATION": {
           "title": "Medication administration: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_STATEMENT": {
           "title": "Medication statement: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_LABORATORY": {
           "title": "Laboratory observation: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_VITAL_SIGNS": {
           "title": "Vital signs: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.PROCEDURE": {
           "title": "Procedure: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.DOCUMENT_REFERENCE": {
           "title": "DocumentReference: first counter",
-          "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
@@ -500,19 +500,19 @@
         },
         "timeShift.baseDays": {
           "title": "Base shift in whole days",
-          "description": "Apply baseDays + iterationIndex * iterationDays.",
+          "description": "Shift all clinical dates by this number of whole days. Positive values move dates later; negative values move them earlier. This base offset applies to every pass.",
           "default": 0,
           "type": "integer"
         },
         "timeShift.iterationDays": {
           "title": "Additional shift per repetition in whole days",
-          "description": "Apply baseDays + iterationIndex * iterationDays.",
+          "description": "Add this day offset for each additional repetition. Example: base offset 10 and repetition offset 5 produce shifts of 10, 15 and 20 days in the first three passes.",
           "default": 0,
           "type": "integer"
         },
         "terminology.syntheaYear": {
           "title": "Synthea mapping year",
-          "description": "Output the actual selected catalogue year. Table-provided versions remain unrestricted.",
+          "description": "During Synthea import, diagnoses, procedures and medications are mapped to German ICD-10-GM, OPS and ATC codes from this year. Codes and descriptions can differ between 2025 and 2026; clinical dates stay the same. Manually entered workbook values are not remapped by this setting.\n\nWarning: The bundled medication profile permits ATC versions up to 2025. ATC 2026 with its year included therefore violates this profile requirement.",
           "default": 2026,
           "enum": [
             2025,
@@ -521,7 +521,7 @@
         },
         "terminology.versionOutput": {
           "title": "Coding version",
-          "description": "Use the actual catalogue year, omit Coding.version, or apply an explicit DAR rule.",
+          "description": "Controls version information for codes mapped during Synthea import. Codes and descriptions stay the same.\n\nCatalogue year: Coding.version contains the year used, e.g. “2025”.\n\nOmit: The version is absent. Since the KDS profiles require it for ICD-10-GM, OPS and ATC, validation reports profile errors.\n\nDAR: A Data Absent Reason explains the missing version. It does not establish that the code belongs to a permitted catalogue year.",
           "default": "catalogue-year",
           "enum": [
             "catalogue-year",
@@ -537,13 +537,13 @@
         },
         "checks.fhirValidation": {
           "title": "Validate FHIR",
-          "description": "Report errors and incomplete validation; retain generated data according to converter behavior.",
+          "description": "Validate generated FHIR resources against the bundled KDS profiles and terminology requirements. The report lists errors and warnings found.",
           "default": false,
           "type": "boolean"
         },
         "output.formats": {
           "title": "Output formats",
-          "description": "Serialize the same logical resources into each selected format.",
+          "description": "JSON writes FHIR Bundles; NDJSON writes one FHIR resource per line. Selecting both outputs the same resources in both formats.",
           "default": [
             "JSON",
             "NDJSON"
@@ -563,7 +563,7 @@
         },
         "output.patientsPerFile": {
           "title": "Maximum patients per output file",
-          "description": "Use the existing Java output splitting behavior.",
+          "description": "Limit the number of patients in one JSON Bundle file. With 1, each patient receives a separate Bundle file.",
           "default": 1,
           "type": "integer",
           "minimum": 1

@@ -14,6 +14,7 @@ export type Option = {
   default: Value
   labelKey: string
   helpKey: string
+  fhirPath?: string
   minimum?: number
   choices?: (string | number)[]
   choiceLabelKeys?: Record<string, string>
@@ -237,6 +238,42 @@ export function problems(input: unknown): Problem[] {
 }
 export function importConfiguration(text: string): Configuration {
   const parsed = parseUniqueJson(text)
+  // Preserve saved drafts from the editor that included a duplicate procedure control.
+  // The remaining Procedure assignment is authoritative.
+  if (parsed && typeof parsed === 'object' && 'values' in parsed) {
+    const values = (parsed as Configuration).values
+    if (values && typeof values === 'object' && 'reference.procedureDiagnosis.encounter' in values) {
+      if (!['facility', 'department', 'ward-service', 'none'].includes(String(values['reference.procedureDiagnosis.encounter'])))
+        throw new Error('invalid')
+      delete values['reference.procedureDiagnosis.encounter']
+    }
+    if (values && typeof values === 'object' && values['medication.requestTreatment'] === 'omit') {
+      values['medication.requestTreatment'] = 'retain'
+      values['resource.MedicationRequest.enabled'] = false
+    }
+    if (values && typeof values === 'object') {
+      const oldContactKey = 'reference.DocumentReference.knownInputContact'
+      if (oldContactKey in values) {
+        if (typeof values[oldContactKey] !== 'boolean') throw new Error('invalid')
+        const strategyKey = 'reference.DocumentReference.assignmentStrategy'
+        if (!(strategyKey in values))
+          values[strategyKey] = values[oldContactKey] ? 'fill-missing' : 'timestamp-only'
+        delete values[oldContactKey]
+      }
+      for (const [source, target, action] of [
+        ['MedicationAdministration', 'MedicationStatement', 'add-statement'],
+        ['MedicationStatement', 'MedicationAdministration', 'add-administration']
+      ]) {
+        const oldKey = `medication.${source}.add${target}`
+        if (oldKey in values) {
+          if (typeof values[oldKey] !== 'boolean') throw new Error('invalid')
+          const newKey = `medication.${source}.treatment`
+          if (!(newKey in values)) values[newKey] = values[oldKey] ? action : 'retain'
+          delete values[oldKey]
+        }
+      }
+    }
+  }
   if (problems(parsed).length) throw new Error('invalid')
   return normalize(parsed as Configuration)
 }
@@ -248,8 +285,6 @@ export function resourceOptions(id: string): Option[] {
       (o.id.startsWith(`resource.${id}.`) ||
         o.id.startsWith(`reference.${id}.`) ||
         (id === 'Encounter' && o.id.startsWith('contact.')) ||
-        (id === 'Condition' &&
-          o.id.startsWith('reference.procedureDiagnosis.')) ||
         (id === 'MedicationRequest' &&
           o.id === 'medication.requestTreatment') ||
         o.id.startsWith(`medication.${id}.`))
@@ -260,4 +295,20 @@ export function darResource(field: DarField): string {
   if (field.id.startsWith('Laboratory.')) return 'Laboratory'
   if (field.id.startsWith('VitalSigns.')) return 'VitalSigns'
   return field.resourceType
+}
+
+export function insertPatternToken(
+  value: string,
+  token: string,
+  selection: { start: number; end: number } | null
+): { value: string; cursor: number } {
+  const start = Math.max(
+    0,
+    Math.min(selection?.start ?? value.length, value.length)
+  )
+  const end = Math.max(start, Math.min(selection?.end ?? start, value.length))
+  return {
+    value: value.slice(0, start) + token + value.slice(end),
+    cursor: start + token.length
+  }
 }

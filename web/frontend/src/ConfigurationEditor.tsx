@@ -1,14 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import {
-  Info,
-  Plus,
-  Trash2,
-  Download,
-  Upload,
-  Save,
-  RotateCcw
-} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Plus, Trash2, Download, Upload, Save, RotateCcw } from 'lucide-react'
 import { Button } from './components/ui/button'
+import { Help } from './Help'
+import { IdentifierPatternControl } from './IdentifierPatternControl'
 import { translate, type Language, type TextKey, type Message } from './i18n'
 import {
   contract,
@@ -41,53 +35,6 @@ const resources = groups.flatMap((group) =>
   contract.resources.filter((r) => r.group === group.id)
 )
 type Translator = (key: string, params?: Message['params']) => string
-function Help({ text, t }: { text: string; t: Translator }) {
-  const [hovered, setHovered] = useState(false)
-  const [focused, setFocused] = useState(false)
-  const [pinned, setPinned] = useState(false)
-  const open = hovered || focused || pinned
-  const id = useId()
-  return (
-    <span
-      className="help relative inline-flex"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <button
-        type="button"
-        aria-label={t('app.config.help')}
-        aria-expanded={open}
-        aria-controls={id}
-        aria-describedby={open ? id : undefined}
-        onFocus={() => setFocused(true)}
-        onBlur={() => {
-          setFocused(false)
-          setPinned(false)
-        }}
-        onClick={() => setPinned(!pinned)}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            setPinned(false)
-            setFocused(false)
-            setHovered(false)
-          }
-        }}
-        className="rounded p-1 text-slate-500 focus-visible:outline-2 focus-visible:outline-teal-700"
-      >
-        <Info size={16} />
-      </button>
-      {open && (
-        <span
-          id={id}
-          role="tooltip"
-          className="absolute left-0 top-full z-30 w-64 rounded-lg bg-slate-900 p-3 text-sm font-normal leading-relaxed text-white shadow-lg"
-        >
-          {text}
-        </span>
-      )}
-    </span>
-  )
-}
 function OptionControl({
   option,
   config,
@@ -117,27 +64,34 @@ function OptionControl({
       className="option-row border-t border-slate-100 py-4 first:border-t-0"
       data-option={option.id}
     >
-      <div className="mb-2 flex items-center gap-1">
-        <label htmlFor={option.id} className="font-medium text-sm">
+      <div className={`${option.type === 'boolean' ? '' : 'mb-2'} flex flex-wrap items-center gap-x-2 gap-y-1`}>
+        <label htmlFor={option.id} className="flex items-center gap-2 font-medium text-sm">
+          {option.type === 'boolean' && (
+            <input
+              id={option.id}
+              type="checkbox"
+              disabled={!enabled}
+              checked={value === true}
+              onChange={(e) => update(option.id, e.target.checked)}
+              className="h-4 w-4 shrink-0 accent-teal-700"
+            />
+          )}
           {t(option.labelKey)}
         </label>
+        {option.fhirPath && (
+          <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600">
+            {t('app.config.fhirResource', { resource: option.fhirPath })}
+          </span>
+        )}
         <Help text={t(option.helpKey)} t={t} />
       </div>
-      {option.type === 'boolean' ? (
-        <input
-          id={option.id}
-          aria-label={t(option.labelKey)}
-          type="checkbox"
-          disabled={!enabled}
-          checked={value === true}
-          onChange={(e) => update(option.id, e.target.checked)}
-          className="h-4 w-4 accent-teal-700"
-        />
-      ) : option.type === 'enum' || option.type === 'set' ? (
+      {option.type === 'boolean' ? null : option.type === 'enum' || option.type === 'set' ? (
         <div
           role="group"
           aria-label={t(option.labelKey)}
-          className="flex flex-wrap gap-x-5 gap-y-3"
+          className={option.id === 'reference.DocumentReference.assignmentStrategy'
+            ? 'flex flex-col items-start gap-3'
+            : 'flex flex-wrap gap-x-5 gap-y-3'}
         >
           {option.choices?.map((choice) => {
             const unmet = unmetDependencies(
@@ -229,9 +183,12 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     }
   }, [rule, t])
   return (
-    <div className="mt-4 rounded-lg bg-slate-50 p-3">
-      <p className="text-xs text-slate-500">{t('app.config.previewHint')}</p>
-      <output className="mt-1 block break-all font-mono text-sm">
+    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-slate-50 px-3 py-2">
+      <div className="flex items-center gap-1">
+        <p className="text-xs text-slate-500">{t('app.config.previewLabel')}</p>
+        <Help text={t('app.config.previewHint')} t={t} />
+      </div>
+      <output className="block break-all font-mono text-sm">
         {preview}
       </output>
     </div>
@@ -397,7 +354,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
       <div
         role="tablist"
         aria-label={t('app.config.title')}
-        className="flex flex-wrap border-y border-slate-200 bg-slate-50 px-4"
+        className="flex flex-wrap gap-2 border-y border-slate-200 bg-slate-100 p-3"
       >
         {contract.sections.map((section, index) => (
           <button
@@ -425,7 +382,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                 .getElementById(`tab-${contract.sections[next].id}`)
                 ?.focus()
             }}
-            className={`border-b-2 px-3 py-4 text-sm font-medium ${tab === section.id ? 'border-teal-700 text-teal-800' : 'border-transparent text-slate-600 hover:text-teal-800'}`}
+            className={`rounded-lg border px-3 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 ${tab === section.id ? 'border-teal-800 bg-teal-800 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-teal-700 hover:bg-teal-50 hover:text-teal-900'}`}
           >
             {t(section.labelKey)}
           </button>
@@ -471,11 +428,16 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                     id={`resource-${r.id}`}
                     className="mb-6 scroll-mt-6 rounded-xl border border-slate-200 p-5"
                   >
-                    <h3 className="mb-3 flex items-center gap-3 text-lg font-semibold">
+                    <h3 className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-lg font-semibold">
                       <span className="text-xs font-normal text-slate-400">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       {t(r.labelKey)}
+                      <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600">
+                        {t('app.config.fhirResource', { resource: r.resourceType })}
+                        {r.id === 'Observation.vitalSigns' && ` · ${t('app.config.category')}: vital-signs (Vital Signs)`}
+                        {r.id === 'Observation.laboratory' && ` · ${t('app.config.category')}: laboratory`}
+                      </span>
                     </h3>
                     {resourceOptions(r.id).map((option) => (
                       <OptionControl
@@ -514,6 +476,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
         )}
         {tab === 'dar' && (
           <>
+            <h3 className="mb-3 text-lg font-semibold">{t('section.dar')}</h3>
             <p className="mb-4 text-sm text-slate-600">
               {t('app.config.darHint')}
             </p>
@@ -643,9 +606,10 @@ export function ConfigurationEditor({ language }: { language: Language }) {
         )}
         {tab === 'identifiers' && (
           <>
-            <p className="mb-4 text-sm leading-6 text-slate-600">
-              {t('identifier.help')}
-            </p>
+            <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className="text-sm font-medium">{t('section.identifiers')}</p>
+              <Help text={t('identifier.help')} t={t} />
+            </div>
             <p className="mb-4 text-xs text-slate-500">
               {t('app.config.hashSecurity')}
             </p>
@@ -680,9 +644,9 @@ export function ConfigurationEditor({ language }: { language: Language }) {
             {config.identifierRules.map((rule, index) => (
               <section
                 key={rule.id}
-                className="mt-5 rounded-xl border border-slate-200 p-5"
+                className="mt-4 rounded-xl border border-slate-200 p-4"
               >
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-semibold">
                     {t('app.config.rule', { number: index + 1 })}
                   </h3>
@@ -717,7 +681,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                   />
                   {t('identifier.enabled')}
                 </label>
-                <fieldset className="mt-4">
+                <fieldset className="mt-3">
                   <legend className="mb-2 text-sm font-medium">
                     {t('identifier.resources')}
                   </legend>
@@ -750,28 +714,21 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                   <label className="flex flex-col gap-2 text-sm">
                     {t('identifier.system')}
                     <input
+                      placeholder="https://example.org/fhir/sid/test-id"
                       value={rule.system}
                       onChange={(e) =>
                         updateRule(rule.id, { system: e.target.value })
                       }
-                      className="rounded-lg border border-slate-300 p-2"
+                      className="rounded-lg border border-slate-300 p-2 placeholder:text-slate-400 focus:placeholder:text-transparent"
                     />
                   </label>
-                  <label className="flex flex-col gap-2 text-sm">
-                    {t('identifier.pattern')}
-                    <input
-                      value={rule.pattern}
-                      onChange={(e) =>
-                        updateRule(rule.id, { pattern: e.target.value })
-                      }
-                      className="rounded-lg border border-slate-300 p-2 font-mono"
-                    />
-                  </label>
+                  <IdentifierPatternControl
+                    value={rule.pattern}
+                    onChange={(pattern) => updateRule(rule.id, { pattern })}
+                    t={t}
+                  />
                 </div>
                 <RulePreview rule={rule} t={t} />
-                <p className="mt-3 break-all font-mono text-xs text-slate-400">
-                  {rule.id}
-                </p>
               </section>
             ))}
           </>
