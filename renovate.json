@@ -7,6 +7,11 @@
     "develop"
   ],
   "dependencyDashboard": true,
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
+  "updateNotScheduled": false,
   "labels": [
     "dependencies"
   ],
