@@ -1,9 +1,8 @@
 # Converter option contract
 
 `contract.json` defines the agreed controls, defaults, dependencies and processing
-rules for the configuration editor and shared Java converter. It is a draft while
-the decisions listed in `openDecisions` remain unresolved. Issues #76 and #77
-deliver the editor and converter integration.
+rules for the configuration editor and shared Java converter. The contract records the agreed behavior. Issues #76 and #77 deliver the
+editor and converter integration.
 
 The Java converter owns execution semantics. Backend and frontend adapters use
 the contract to present settings and pass selected values; they do not implement
@@ -55,6 +54,10 @@ boundaries are inclusive; a missing end is open. The latest matching start wins,
 then original input row order. Preserve that order during processing. If a
 timestamp candidate finds no contact, try the next candidate. Missing matches
 omit the reference and appear in the report. Contact levels are not substituted.
+
+Immunization uses `occurrenceDateTime`. DiagnosticReport tries
+`effectiveDateTime`, then `issued`. CarePlan uses `period.start`. These follow
+the same next-candidate and contact matching rules.
 
 Hierarchy is derived from the known input contact structure. When Encounter is
 enabled with no selected level, generate one general case Encounter without a

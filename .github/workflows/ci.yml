@@ -49,6 +49,12 @@ jobs:
       - name: Build
         run: mvn -B package
 
+      - name: Check converter option contract
+        run: |
+          python3 web/catalog/options/generate_schema.py --check
+          python3 -m unittest discover -s web/catalog/options/tests -v
+          java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindings.java
+
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 

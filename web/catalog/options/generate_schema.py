@@ -43,7 +43,7 @@ def generate():
                        if r['identifierEligible']})
     return {
         '$schema': 'https://json-schema.org/draft/2020-12/schema',
-        'title': 'Converter configuration (draft contract)',
+        'title': 'Converter configuration',
         'type': 'object', 'required': ['schemaVersion'],
         'additionalProperties': False,
         'properties': {

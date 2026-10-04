@@ -23,7 +23,7 @@ planned work streams; this checklist does not change their status.
 
 ## Form structure and defaults — #75 / #76
 
-- [ ] Define a versioned machine-readable option contract for labels, controls, defaults, choices, help, dependencies and selected values. Keep converter semantics in shared Java code.
+- [x] Define a versioned machine-readable option contract for labels, controls, defaults, choices, help, dependencies and selected values. Keep converter semantics in shared Java code.
 - [ ] Put all resource selections/options on one continuous page, grouped by resource category, with Medication as its own section.
 - [ ] Use separate tabs for DAR, IDs/repetitions, terminology/versions and additional identifiers.
 - [ ] Keep controls permanently visible with a stable layout; disable unavailable options with a reason and retain their values. Add section anchors; use no accordions.
@@ -45,7 +45,7 @@ planned work streams; this checklist does not change their status.
 - [ ] Preserve the agreed exclusions of operation, consultation and examination/treatment contacts as ward/service reference targets.
 - [ ] Support a generic case Encounter without a false KDS contact-level claim when Encounter is enabled but no contact level is selected.
 - [ ] Use resource timestamp candidates: Observation effectiveDateTime; Procedure performedPeriod.start then performedDateTime; Administration/Statement effectivePeriod.start then effectiveDateTime; Request authoredOn; Condition recordedDate. Try the next candidate when the previous one finds no matching contact.
-- [ ] Finalize remaining proposed candidates: Immunization occurrenceDateTime; DiagnosticReport effectiveDateTime then issued; CarePlan period.start.
+- [x] Finalize timestamp candidates: Immunization occurrenceDateTime; DiagnosticReport effectiveDateTime then issued; CarePlan period.start.
 - [ ] For DocumentReference, use explicit output time then reliably entered document creation time as a fixed fallback. Avoid current time/filesystem copy times for clinical matching.
 - [ ] Add the optional known-input-contact fallback for DocumentReference without a usable timestamp, default off. Spell out DocumentReference in labels/documentation.
 - [ ] Default diagnosis and procedure-related diagnosis references to facility contacts only; allow other levels optionally. Default parent diagnosis inheritance off.
@@ -73,7 +73,7 @@ planned work streams; this checklist does not change their status.
 - [ ] Use a shared deterministic counter per rule across resource types and repetitions, unaffected by output selection.
 - [ ] Automatically incorporate stable rule identity, resource type, resource ID and repetition index into hash input using unambiguous encoding.
 - [ ] Check uniqueness of system/value pairs across generated resources/repetitions and report collisions. Account for repeated serialization of the same logical resource into different formats.
-- [ ] Finalize pattern grammar, counter start and hash length with the user. Proposed tokens: count/zero-padding, patientId, resourceId, resourceType, iteration and hash plus literal text. Proposed counter start: 1; proposed hash: full SHA-256. These details are not yet approved.
+- [x] Finalize identifier patterns: `{count}`, `{count:08}`, `{patientId}`, `{resourceId}`, `{resourceType}`, `{iteration}`, `{hash}`, literal text and escaped braces. Counter starts at 1; hash uses the first 32 lowercase hexadecimal SHA-256 characters with collision checking.
 - [ ] Explain that a deterministic hash identifier is not a secure pseudonymization guarantee.
 
 ## Checks, output and integration

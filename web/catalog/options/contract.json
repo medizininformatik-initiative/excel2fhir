@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "draft",
+  "status": "agreed",
   "issue": 75,
   "scope": "Option definitions for the shared Java converter and its adapters. Integration is delivered by #76 and #77.",
   "sections": [
@@ -1753,9 +1753,7 @@
       "DocumentReference": [
         "explicit output timestamp",
         "reliably entered document creation timestamp"
-      ]
-    },
-    "pendingTimestamps": {
+      ],
       "Immunization": [
         "occurrenceDateTime"
       ],
@@ -1765,6 +1763,9 @@
       ],
       "CarePlan": [
         "period.start"
+      ],
+      "procedureDiagnosis": [
+        "recordedDate"
       ]
     }
   },
@@ -1847,7 +1848,5 @@
     "profileNames": "configuration profiles are separate from FHIR StructureDefinitions",
     "executionSettings": "parallelism and environment selection are separate from clinical options"
   },
-  "openDecisions": [
-    "Immunization, DiagnosticReport and CarePlan timestamp candidates"
-  ]
+  "openDecisions": []
 }

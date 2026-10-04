@@ -66,6 +66,16 @@ class ContractConsistencyTest(unittest.TestCase):
         self.assertEqual(json.loads((ROOT / 'configuration.schema.json').read_text()),
                          generator.generate())
 
+    def test_every_clinical_reference_has_a_timestamp_policy(self):
+        assignment = self.contract['contactAssignment']
+        for key in self.options:
+            if key.startswith('reference.') and key.endswith('.encounter'):
+                resource = key[len('reference.'):-len('.encounter')]
+                self.assertIn(resource, assignment['timestamps'])
+                self.assertTrue(assignment['timestamps'][resource])
+        self.assertNotIn('pendingTimestamps', assignment)
+        self.assertEqual(self.contract['openDecisions'], [])
+
 
 if __name__ == '__main__':
     unittest.main()
