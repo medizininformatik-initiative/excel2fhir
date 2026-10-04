@@ -38,7 +38,7 @@ public class ContractConfigurationTest {
         assertEquals("generate-reference", second.stored("resource.Patient.mode").asText());
     }
 
-    @Test public void unsupportedDefaultsAndEffectiveDarAreReportedInsteadOfIgnored() {
+    @Test public void unsupportedDefaultsAreReportedAndDarIsSupported() {
         var options = ConverterOptions.fromText(VERSION);
         assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("OUTPUT_FORMATS")));
         assertFalse(options.getErrors().stream().anyMatch(e -> e.contains("REFERENCE_CONDITION_ENCOUNTER")));
@@ -46,7 +46,7 @@ public class ContractConfigurationTest {
         var config = ContractConfiguration.parse(VERSION + "PATIENT_MODE=neither\n# DAR_PATIENT_NAME_FAMILY=masked\n");
         assertFalse(config.unsupportedSettings().stream().anyMatch(e -> e.contains("Patient.name.family")));
         config = ContractConfiguration.parse(VERSION + "DAR_PATIENT_NAME_FAMILY=masked\n");
-        assertTrue(config.unsupportedSettings().stream().anyMatch(e -> e.contains("Patient.name.family")));
+        assertFalse(config.unsupportedSettings().stream().anyMatch(e -> e.contains("Patient.name.family")));
     }
 
     @Test public void strictFormatRejectsUnknownDuplicateAndInvalidInactiveValues() {
@@ -72,7 +72,7 @@ public class ContractConfigurationTest {
         var config = ContractConfiguration.parse(VERSION + rule);
         assertFalse(config.unsupportedSettings().stream().anyMatch(e -> e.contains("Identifier execution")));
         var active = ContractConfiguration.parse(VERSION + rule.replace("ENABLED=false", "ENABLED=true"));
-        assertTrue(active.unsupportedSettings().stream().anyMatch(e -> e.contains("Identifier execution")));
+        assertFalse(active.unsupportedSettings().stream().anyMatch(e -> e.contains("Identifier execution")));
         for (String bad : List.of("{bad}", "{count:8}", "{count:00}", "{", "}", "{count:0999999999999999999}")) {
             assertThrows(IllegalArgumentException.class, () -> ContractConfiguration.parse(VERSION + rule.replace("{{id}}-{count:08}-{hash}", bad)));
         }

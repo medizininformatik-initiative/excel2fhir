@@ -310,6 +310,7 @@ public class Csv2Fhir {
             OutputFileType... outputFileTypes) throws Exception {
 
         for (ConverterOptions converterOptions : allConverterOptions) {
+            AdditionalIdentifiers identifiers = new AdditionalIdentifiers(converterOptions.configuration());
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
 
@@ -364,7 +365,7 @@ public class Csv2Fhir {
                     Stopwatch stopwatch = Stopwatch.createStarted();
                     String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
                     ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter,
-                            converterOptions);
+                            converterOptions, identifiers);
                     ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
                     if (bundle != null) {
                         BundlePostProcessor.convert(bundle, converterOptions);
@@ -524,7 +525,7 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID,
-            ConverterOptions options) throws Exception {
+            ConverterOptions options, AdditionalIdentifiers identifiers) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult(options);
@@ -558,6 +559,7 @@ public class Csv2Fhir {
         for (var pending : pendingOutput) sourceTables.put(pending.getValue().fhirType() + "/"
                 + pending.getValue().getIdElement().getIdPart(), pending.getKey());
         MedicationTransformations transformations = new MedicationTransformations(result);
+        if (identifiers.enabled()) identifiers.reserve(transformations.potentialResources(potentialResources), result, options.loopCounter);
         List<Resource> transformed = transformations.apply(potentialResources);
         pendingOutput = transformed.stream().map(resource -> Map.entry(sourceTables.getOrDefault(
                 resource.fhirType() + "/" + resource.getIdElement().getIdPart(), TableIdentifier.Medikation), resource))
@@ -576,6 +578,7 @@ public class Csv2Fhir {
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.diagnosisReferenceIssues.add(reported);
         }
+        DarOverrides darOverrides = new DarOverrides(options.configuration());
         for (var pending : pendingOutput) {
             Resource resource = pending.getValue();
             if (!resourceSelection.emits(resource)) {
@@ -609,6 +612,8 @@ public class Csv2Fhir {
             }
             output = encounterAssignments.output(output);
             output = resourceSelection.output(output);
+            output = darOverrides.output(output);
+            output = identifiers.output(output, options.loopCounter);
             addEntry(bundle, output);
             addEntry(ndjsonBundle, output);
             outputResult.add(pending.getKey(), output);

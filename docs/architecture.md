@@ -80,7 +80,18 @@ are removed. Absolute external references are preserved. Output accounting count
 resources after projection, consistently for JSON and NDJSON.
 
 The import report includes resource omissions and medication transformations with
-unmapped fields and missing target facts. DAR, identifiers and remaining execution
+unmapped fields and missing target facts. `DarOverrides` then applies the bundled
+field catalogue to output copies. It preserves coding discriminators, replaces
+measurement values with `dataAbsentReason`, and clears attachment size/hash with
+the bytes. Missing scalar choices use the converter’s dateTime representation;
+repeated parents are never synthesized. Narrative requirements and incompatible
+Condition status/end combinations fail explicitly.
+
+`AdditionalIdentifiers` has one instance per option set. It allocates counts over
+original resources and potential medication derivatives before output selection,
+then appends identifiers after DAR. A resource identity and repetition consume
+one count per rule across formats and patient bundles. Collision checks include
+existing identifiers whenever a generated pair is involved. Remaining execution
 options are tracked in #77.
 
 ## Synthea input

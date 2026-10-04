@@ -1,0 +1,79 @@
+package de.uni_leipzig.life.csv2fhir;
+
+import static org.junit.Assert.*;
+import java.util.List;
+import org.junit.Test;
+import org.hl7.fhir.r4.model.*;
+
+public class AdditionalIdentifiersTest {
+    private static final String ID = "a152e771-3d5a-4cb1-9866-35fa6d91fd83";
+    private String settings(String pattern) {
+        return "CONFIGURATION_VERSION=1\nIDENTIFIER_RULE_1_ID=" + ID
+                + "\nIDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Patient,Observation,MedicationAdministration,MedicationStatement\n"
+                + "IDENTIFIER_RULE_1_SYSTEM=urn:extra\nIDENTIFIER_RULE_1_PATTERN=" + pattern + "\n";
+    }
+    private ConverterResult context(String settings, Resource... resources) throws Exception {
+        ConverterResult result = new ConverterResult(ConverterOptions.fromText(settings));
+        for (Resource resource : resources) result.recordInput(resource, new ConverterResult.InputContext("effective-patient-2", List.of(), 1, false));
+        return result;
+    }
+    @Test public void countsAcrossTypesAndIterationsAndCountsRepeatedSerializationOnce() throws Exception {
+        String settings = settings("{count:03}-{patientId}-{resourceType}-{iteration}");
+        Patient p = new Patient(); p.setId("p"); p.addIdentifier().setSystem("urn:original").setValue("original");
+        Observation o = new Observation(); o.setId("o");
+        ConverterResult context = context(settings,p,o);
+        AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p,o,p), context,0);
+        Patient out = (Patient)ids.output(p,0);
+        assertEquals("001-effective-patient-2-Patient-0",out.getIdentifier().get(1).getValue());
+        assertEquals(out.getIdentifier().get(1).getValue(),((Patient)ids.output(p,0)).getIdentifier().get(1).getValue());
+        assertEquals("002-effective-patient-2-Observation-0",((Observation)ids.output(o,0)).getIdentifierFirstRep().getValue());
+        ids.reserve(List.of(o),context,1);
+        assertEquals("003-effective-patient-2-Observation-1",((Observation)ids.output(o,1)).getIdentifierFirstRep().getValue());
+        assertEquals(1,p.getIdentifier().size());
+    }
+    @Test public void detectsGeneratedCollisionsAcrossResourcesAndRepetitions() throws Exception {
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        ConverterResult context = context(settings("constant"),p,o);
+        AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p,o),context,0); ids.output(p,0); ids.output(p,0);
+        var exception = assertThrows(IllegalArgumentException.class, () -> ids.output(o,0));
+        assertTrue(exception.getMessage().contains(ID)); assertTrue(exception.getMessage().contains("Patient/p")); assertTrue(exception.getMessage().contains("Observation/o"));
+        AdditionalIdentifiers repeated = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        repeated.reserve(List.of(p),context,0); repeated.output(p,0); repeated.reserve(List.of(p),context,1);
+        assertThrows(IllegalArgumentException.class, () -> repeated.output(p,1));
+    }
+    @Test public void detectsCollisionWithExistingIdentifierInEitherOrder() throws Exception {
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        o.addIdentifier().setSystem("urn:extra").setValue("p");
+        for (boolean existingFirst : List.of(false,true)) {
+            ConverterResult context = context(settings("{resourceId}"),p,o);
+            AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+            ids.reserve(List.of(p,o),context,0);
+            ids.output(existingFirst ? o : p,0);
+            assertThrows(IllegalArgumentException.class, () -> ids.output(existingFirst ? p : o,0));
+        }
+    }
+    @Test public void escapingPaddingAndHashFollowContract() {
+        Patient p = new Patient(); p.setId("p-ä");
+        assertEquals("3dd0c419695b2ff78480f92b89aac4a0",AdditionalIdentifiers.hash(ID.toUpperCase(),p,2));
+        assertEquals("{literal}-123-p-ä-Patient-2", AdditionalIdentifiers.expand("{{literal}}-{count:02}-{resourceId}-{resourceType}-{iteration}",123,"",p,2,ID));
+        assertEquals("{patientId}",AdditionalIdentifiers.expand("{{patientId}}",1,"",p,0,ID));
+        assertThrows(IllegalArgumentException.class, () -> AdditionalIdentifiers.expand("{count:01000001}",1,"",p,0,ID));
+    }
+    @Test public void potentialDerivationsKeepCountersStableWhenTargetIsDisabled() throws Exception {
+        MedicationAdministration a = new MedicationAdministration(); a.setId("a");
+        String settings = settings("{count}") + "MEDICATION_ADMINISTRATION_TREATMENT=add-statement\n";
+        for (boolean enabled : List.of(true,false)) {
+            ConverterResult context = context(settings + "MEDICATION_STATEMENT_ENABLED=" + enabled + "\n",a);
+            MedicationTransformations transformations = new MedicationTransformations(context);
+            List<Resource> potential = transformations.potentialResources(List.of(a));
+            assertEquals(2,potential.size());
+            AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+            ids.reserve(potential,context,0);
+            for (Resource resource : transformations.apply(List.of(a))) ids.output(resource,0);
+            Patient p = new Patient(); p.setId("p"); ids.reserve(List.of(p),context,0);
+            assertEquals("3",((Patient)ids.output(p,0)).getIdentifierFirstRep().getValue());
+        }
+    }
+}

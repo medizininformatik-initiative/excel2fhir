@@ -212,6 +212,10 @@ public final class ContractConfiguration {
         }
     }
 
+    List<Map<String, String>> identifierRules() { return List.copyOf(rules); }
+    Map<String, String> darOverrides() { return Map.copyOf(dar); }
+    JsonNode darFields() { return DAR.get("fields").deepCopy(); }
+
     public JsonNode stored(String id) { return values.get(id).deepCopy(); }
 
     private boolean enabled(String id, Set<String> visiting) {
@@ -233,15 +237,6 @@ public final class ContractConfiguration {
         if (!enabled(id, new HashSet<>()) || !dependencies(definitions.get(id).path("choiceDependencies").path(value.asText()), new HashSet<>()))
             return Optional.empty();
         return Optional.of(value.deepCopy());
-    }
-
-    private boolean resourceEnabled(String type) {
-        if (Set.of("Patient", "Medication", "Location").contains(type)) return values.get("resource." + type + ".mode").asText().equals("generate-reference");
-        if (type.equals("Observation")) return resourceEnabled("Observation.laboratory") || resourceEnabled("Observation.vitalSigns");
-        if (type.equals("Laboratory")) type = "Observation.laboratory";
-        if (type.equals("VitalSigns")) type = "Observation.vitalSigns";
-        JsonNode value = values.get("resource." + type + ".enabled");
-        return value != null && value.asBoolean();
     }
 
     /** Exact legacy semantics map to properties; contact assignment uses output projections. */
@@ -270,13 +265,6 @@ public final class ContractConfiguration {
                     && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));
         });
-        dar.forEach((id, code) -> {
-            if (resourceEnabled(id.substring(0, id.indexOf('.')))) errors.add("DAR override not implemented: " + id);
-        });
-        for (Map<String, String> rule : rules) {
-            if (booleanValue(rule.get("ENABLED")) && java.util.Arrays.stream(rule.get("RESOURCES").split(",")).anyMatch(this::resourceEnabled))
-                errors.add("Identifier execution not implemented: " + rule.get("ID"));
-        }
         return List.copyOf(errors);
     }
 }

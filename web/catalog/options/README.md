@@ -119,7 +119,7 @@ selections from the same contract. Existing directly equivalent Java properties
 are mapped; other effective settings produce explicit preflight errors, including
 unsupported defaults. The complete default configuration is therefore not yet
 executable. Resource output modes, diagnosis reference assignment, medication transformations,
-contact output levels and hierarchy, and clinical encounter assignment are
+DAR overrides, additional identifiers, contact output levels and hierarchy, and clinical encounter assignment are
 implemented as output projections after input derivations. Internal patient
 identity, contact history and resource IDs are preserved. Remaining execution
 semantics are tracked in #77. The current web
@@ -255,18 +255,23 @@ a semantic mapping prevent transformation.
 `medicationTransformations` in the import report records source, target, action,
 unmapped fields and missing target facts. Required facts can remain absent;
 FHIR validation reports these rather than the converter inventing them. Active
-DAR overrides are applied after derivations when DAR execution is available.
+DAR overrides are applied after derivations and contact assignment, including
+to derived medication resources.
 
 Additional identifiers append to existing identifiers. Each rule has a stable
 identity and one counter across eligible resources and repetitions, unaffected
-by output selection. The same logical resource serialized in several formats is
+by output selection. Counts are reserved for original resources followed by
+potential request and event derivatives, including stored actions whose output
+dependencies are inactive. Omitted resources can therefore leave gaps. Shared
+resources use their first occurrence’s patient context. The same logical resource serialized in several formats is
 counted once. Duplicate system/value pairs across distinct logical resources or
 repetitions fail with the rule and conflicting resource identities. Deterministic
 hash identifiers do not guarantee secure pseudonymization. Hashes use the first 32 lowercase hexadecimal characters of SHA-256 with
 collision checking. Patterns combine literal text with `{count}`, `{count:08}`, `{patientId}`,
 `{resourceId}`, `{resourceType}`, `{iteration}` and `{hash}`. The shared counter
 starts at 1; the repetition index starts at 0. Padding sets a minimum width, not
-a maximum. `{{` and `}}` insert literal braces. Unknown tokens, unmatched braces
+a maximum. The Java runtime rejects padding above 1,000,000 characters with
+a rule-specific error. `{{` and `}}` insert literal braces. Unknown tokens, unmatched braces
 and malformed padding are errors; patterns do not evaluate expressions.
 
 ## Checks

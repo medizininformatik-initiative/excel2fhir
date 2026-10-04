@@ -46,6 +46,32 @@ public final class MedicationTransformations {
         }
         return output;
     }
+    /** Stable counter allocation includes stored actions even when output dependencies disable them. */
+    List<Resource> potentialResources(List<Resource> sources) {
+        if (configuration == null) return sources;
+        List<Resource> potential = new ArrayList<>(sources);
+        List<Resource> intermediate = new ArrayList<>();
+        for (Resource source : sources) {
+            String action = source instanceof MedicationRequest ? configuration.stored("medication.requestTreatment").asText() : "retain";
+            if (action.startsWith("replace-")) {
+                Resource target = potentialTarget(source, action, true);
+                potential.add(target); intermediate.add(target);
+            } else intermediate.add(source);
+        }
+        for (Resource source : intermediate) {
+            String action = source instanceof MedicationAdministration ? configuration.stored("medication.MedicationAdministration.treatment").asText()
+                    : source instanceof MedicationStatement ? configuration.stored("medication.MedicationStatement.treatment").asText() : "retain";
+            if (!action.equals("retain")) potential.add(potentialTarget(source, action, false));
+        }
+        return potential;
+    }
+    private Resource potentialTarget(Resource source, String action, boolean requestPass) {
+        String type = action.endsWith("administration") ? "MedicationAdministration" : "MedicationStatement";
+        Resource target = type.equals("MedicationAdministration") ? new MedicationAdministration() : new MedicationStatement();
+        target.setId(derivedId(source, type, requestPass));
+        if (input.inputContext(source) != null) input.recordInput(target, input.inputContext(source));
+        return target;
+    }
     private static String derivedId(Resource source, String type, boolean requestPass) {
         String identity = source.fhirType() + "/" + source.getIdElement().getIdPart() + "/" + type + "/" + (requestPass ? "request" : "event");
         return "derived-" + UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8));
