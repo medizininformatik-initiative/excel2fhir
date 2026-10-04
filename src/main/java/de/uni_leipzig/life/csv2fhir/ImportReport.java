@@ -17,6 +17,7 @@ public final class ImportReport {
     public final List<Map<String, String>> outputSelections = new ArrayList<>();
     public final List<Map<String, String>> diagnosisReferenceIssues = new ArrayList<>();
     public final List<Map<String, String>> encounterReferenceIssues = new ArrayList<>();
+    public final List<Map<String, String>> medicationTransformations = new ArrayList<>();
 
     public static final class Table {
         public String file;

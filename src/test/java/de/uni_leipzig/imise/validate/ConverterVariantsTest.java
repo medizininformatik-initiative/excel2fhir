@@ -127,7 +127,7 @@ public class ConverterVariantsTest {
         var validation = new ExcelTemplateValidator().validate(
                 Path.of("FHIR_Testdatengenerator_Vorlage.xlsx").toFile(), options);
         assertTrue(validation.hasErrors());
-        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("LOCATION_MODE")));
+        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("OUTPUT_FORMATS")));
     }
 
 }

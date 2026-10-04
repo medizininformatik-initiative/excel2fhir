@@ -265,6 +265,8 @@ public final class ContractConfiguration {
                     "contact.facility.enabled", "contact.department.enabled", "contact.ward-service.enabled",
                     "contact.department.partOf", "contact.ward-service.partOf").contains(id)
                     && !ClinicalEncounterAssignment.supports(id)
+                    && !ResourceOutputPolicy.supports(id)
+                    && !MedicationTransformations.supports(id)
                     && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));
         });

@@ -64,8 +64,24 @@ run timestamp is not used for matching. Reference omissions and conflicts appear
 in `encounterReferenceIssues` in the import report.
 
 These projections are shared by JSON and NDJSON output. The complete contract
-defaults remain blocked until the remaining resource modes, transformations,
-DAR and identifier execution are implemented.
+defaults remain blocked until the remaining contract execution is implemented.
+
+## Resource output and medication transformations
+
+`MedicationTransformations` replaces requests first and then applies the selected
+administration/statement actions to one snapshot. Derived IDs use the source
+resource identity, destination type and transformation stage. Input context is
+copied to the derived resource; original resources remain unchanged.
+
+`ResourceOutputPolicy` controls boolean resource selections and Medication/Location
+output modes after derivations. Reference-only descriptions use internal resources
+without emitting them. References to known deselected or replaced internal targets
+are removed. Absolute external references are preserved. Output accounting counts
+resources after projection, consistently for JSON and NDJSON.
+
+The import report includes resource omissions and medication transformations with
+unmapped fields and missing target facts. DAR, identifiers and remaining execution
+options are tracked in #77.
 
 ## Synthea input
 

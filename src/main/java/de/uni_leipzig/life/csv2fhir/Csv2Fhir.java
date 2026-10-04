@@ -542,14 +542,8 @@ public class Csv2Fhir {
                 try {
                     List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
                     for (Resource resource : resources) pendingOutput.add(Map.entry(table, resource));
-                    int emitted = (int)resources.stream().filter(resource ->
-                            options.patientOutputPolicy() == PatientOutputPolicy.GENERATE_REFERENCE
-                            || !(resource instanceof org.hl7.fhir.r4.model.Patient))
-                            .filter(resource -> options.configuration() == null
-                                    || options.configuration().stored("resource.Condition.enabled").asBoolean()
-                                    || !(resource instanceof org.hl7.fhir.r4.model.Condition))
-                            .filter(contacts::emits).count();
-                    importReport.success(table, record.getRecordNumber(), emitted);
+                    // Count emitted resources after all output selections have been applied.
+                    importReport.success(table, record.getRecordNumber(), 0);
                 } catch (Exception e) {
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
                     LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
@@ -558,6 +552,23 @@ public class Csv2Fhir {
             }
         }
         // Later rows can still complete earlier contacts. Project only after all derivations.
+        List<Resource> potentialResources = pendingOutput.stream().map(Map.Entry::getValue)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        Map<String, TableIdentifier> sourceTables = new java.util.HashMap<>();
+        for (var pending : pendingOutput) sourceTables.put(pending.getValue().fhirType() + "/"
+                + pending.getValue().getIdElement().getIdPart(), pending.getKey());
+        MedicationTransformations transformations = new MedicationTransformations(result);
+        List<Resource> transformed = transformations.apply(potentialResources);
+        pendingOutput = transformed.stream().map(resource -> Map.entry(sourceTables.getOrDefault(
+                resource.fhirType() + "/" + resource.getIdElement().getIdPart(), TableIdentifier.Medikation), resource))
+                .collect(java.util.stream.Collectors.toList());
+        if (transformed != potentialResources) potentialResources.addAll(transformed);
+        for (var change : transformations.changes()) {
+            var reported = new java.util.LinkedHashMap<>(change);
+            reported.put("iteration", Integer.toString(options.loopCounter));
+            importReport.medicationTransformations.add(reported);
+        }
+        ResourceOutputPolicy resourceSelection = new ResourceOutputPolicy(options.configuration(), potentialResources, transformations.replaced());
         DiagnosisOutputPolicy diagnoses = new DiagnosisOutputPolicy(options.configuration(), result.contacts(),
                 pendingOutput.stream().map(Map.Entry::getValue).collect(java.util.stream.Collectors.toList()));
         for (var issue : diagnoses.issues()) {
@@ -567,6 +578,12 @@ public class Csv2Fhir {
         }
         for (var pending : pendingOutput) {
             Resource resource = pending.getValue();
+            if (!resourceSelection.emits(resource)) {
+                importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", "omit-resource", "reason", "resource-output-selection",
+                        "iteration", Integer.toString(options.loopCounter)));
+                continue;
+            }
             Resource output = options.patientOutputPolicy().output(resource);
             if (output != resource) {
                 importReport.outputSelections.add(Map.of(
@@ -591,9 +608,11 @@ public class Csv2Fhir {
                 continue;
             }
             output = encounterAssignments.output(output);
+            output = resourceSelection.output(output);
             addEntry(bundle, output);
             addEntry(ndjsonBundle, output);
             outputResult.add(pending.getKey(), output);
+            importReport.tables.get(pending.getKey().name()).returnedResources++;
         }
         importReport.contactEndDerivations.addAll(result.contactEndDerivations);
         for (var issue : encounterAssignments.issues()) {

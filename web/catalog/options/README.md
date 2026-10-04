@@ -60,7 +60,10 @@ Resource selection controls all output. IDs use the stable potential-resource
 sequence, so deselecting a resource does not renumber the retained resources.
 Reference-only modes can refer to existing external resources. Medication and
 Location can combine an external reference with descriptive identifier/display
-information in the same Reference. Clinical timestamps are shifted together in
+information in the same Reference. Descriptions use the existing resource
+identifier, or its generated ID when no identifier exists, plus the available
+product text or location name. Known references to deselected internal resources
+are removed; absolute external references are retained. Clinical timestamps are shifted together in
 whole days, including birth date.
 
 ## Properties export and import
@@ -115,7 +118,7 @@ and Excel option sheets. It validates stored values and determines effective
 selections from the same contract. Existing directly equivalent Java properties
 are mapped; other effective settings produce explicit preflight errors, including
 unsupported defaults. The complete default configuration is therefore not yet
-executable. Patient output modes, Condition output, diagnosis reference assignment,
+executable. Resource output modes, diagnosis reference assignment, medication transformations,
 contact output levels and hierarchy, and clinical encounter assignment are
 implemented as output projections after input derivations. Internal patient
 identity, contact history and resource IDs are preserved. Remaining execution
@@ -233,8 +236,26 @@ MedicationStatement each offer one action: retain, additionally create the other
 type, or replace with the other type. The latter two require the target resource
 to be enabled. These actions run once on a snapshot after request replacement;
 resources created during this pass are not transformed again. Both directions
-can be configured without recursive conversions. New resources receive distinct IDs. Missing medication facts are omitted. Active
-DAR overrides are applied after these derivations.
+can be configured without recursive conversions. Derived IDs are deterministic
+and distinct from the original resources and from the opposite transformation.
+Source patient identity and input contact context remain available to assignment.
+Replacement removes references to the replaced internal source.
+
+Transformations retain medication, subject, contact, notes, reasons and security
+labels where available. An administration's effective time and actual dosage can
+be carried to a statement. A statement's effective time can be carried to an
+administration, but its regimen does not become an individual administered dose.
+Request dosage instructions can be retained as a statement regimen. A request's
+status and authored time do not establish administration or intake status and
+time; planned request dosage is not copied as an administered dose. Shared event
+status codes are retained where their meanings agree. Other status values and
+unmapped fields are omitted and listed in the report. Modifier extensions without
+a semantic mapping prevent transformation.
+
+`medicationTransformations` in the import report records source, target, action,
+unmapped fields and missing target facts. Required facts can remain absent;
+FHIR validation reports these rather than the converter inventing them. Active
+DAR overrides are applied after derivations when DAR execution is available.
 
 Additional identifiers append to existing identifiers. Each rule has a stable
 identity and one counter across eligible resources and repetitions, unaffected

@@ -40,7 +40,7 @@ public class ContractConfigurationTest {
 
     @Test public void unsupportedDefaultsAndEffectiveDarAreReportedInsteadOfIgnored() {
         var options = ConverterOptions.fromText(VERSION);
-        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("LOCATION_MODE")));
+        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("OUTPUT_FORMATS")));
         assertFalse(options.getErrors().stream().anyMatch(e -> e.contains("REFERENCE_CONDITION_ENCOUNTER")));
         assertFalse(options.getErrors().stream().anyMatch(e -> e.contains("CONTACT_DEPARTMENT_PART_OF")));
         var config = ContractConfiguration.parse(VERSION + "PATIENT_MODE=neither\n# DAR_PATIENT_NAME_FAMILY=masked\n");

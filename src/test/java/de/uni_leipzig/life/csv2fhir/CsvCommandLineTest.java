@@ -273,7 +273,7 @@ public class CsvCommandLineTest {
         assertFalse(Files.exists(output.resolve("fhir")));
         try (var files = Files.walk(output)) {
             var report = files.filter(p -> p.toString().endsWith(".import.json")).findFirst().orElseThrow();
-            assertTrue(Files.readString(report).contains("LOCATION_MODE"));
+            assertTrue(Files.readString(report).contains("OUTPUT_FORMATS"));
         }
     }
 
