@@ -1,5 +1,13 @@
 # Web workbench prototype
 
+The interface defaults to German. The language selector switches between German
+and English and remembers the selection in this browser. Status messages and
+interface errors follow the selected language; converter logs and validation
+reports retain their original text. FHIR output uses the German KDS independently
+of the interface language. Shared interface texts live in
+[`catalog/options/de.json`](catalog/options/de.json) and
+[`catalog/options/en.json`](catalog/options/en.json).
+
 The local workbench converts the bundled starter or INTERPOLAR demo workbook
 with the existing converter defaults. It uses React, TypeScript, Vite, Tailwind
 CSS and a shadcn/ui Button, with FastAPI and a separate Python worker.

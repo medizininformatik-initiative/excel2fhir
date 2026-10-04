@@ -8,11 +8,14 @@ ROOT = Path(__file__).resolve().parent
 
 def generate():
     contract = json.loads((ROOT / 'contract.json').read_text())
+    # Schema annotations remain stable English metadata; interface language
+    # never changes accepted values or generated FHIR content.
+    texts = json.loads((ROOT / 'en.json').read_text())
     fields = json.loads((ROOT / contract['dar']['catalogue']).read_text())['fields']
     options = {}
     for option in contract['options']:
         definition = {
-            'title': option['label'], 'description': option['help'],
+            'title': texts[option['labelKey']], 'description': texts[option['helpKey']],
             'default': option['default'],
         }
         kind = option['type']

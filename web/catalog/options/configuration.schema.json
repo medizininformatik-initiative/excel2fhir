@@ -14,7 +14,7 @@
       "type": "object",
       "properties": {
         "resource.Patient.mode": {
-          "title": "Patient output and references",
+          "title": "Patient: output and references",
           "description": "Generate the resource and references, refer to an existing resource, or omit both.",
           "default": "generate-reference",
           "enum": [
@@ -24,13 +24,13 @@
           ]
         },
         "resource.Encounter.enabled": {
-          "title": "Generate Encounter",
+          "title": "Generate contact",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Location.mode": {
-          "title": "Location output and references",
+          "title": "Location: output and references",
           "description": "Generate the resource and references, refer to an existing resource, or omit both.",
           "default": "generate-reference",
           "enum": [
@@ -40,7 +40,7 @@
           ]
         },
         "resource.Location.existingReference": {
-          "title": "Location: existing resource reference",
+          "title": "Location: reference existing resource",
           "description": "Combine selected reference and descriptive information in the same Reference.",
           "default": true,
           "type": "boolean"
@@ -52,31 +52,31 @@
           "type": "boolean"
         },
         "resource.Condition.enabled": {
-          "title": "Generate Condition",
+          "title": "Generate diagnosis",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Procedure.enabled": {
-          "title": "Generate Procedure",
+          "title": "Generate procedure",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Observation.laboratory.enabled": {
-          "title": "Generate Observation.laboratory",
+          "title": "Generate laboratory observation",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Observation.vitalSigns.enabled": {
-          "title": "Generate Observation.vitalSigns",
+          "title": "Generate vital signs",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Medication.mode": {
-          "title": "Medication output and references",
+          "title": "Medication: output and references",
           "description": "Generate the resource and references, refer to an existing resource, or omit both.",
           "default": "generate-reference",
           "enum": [
@@ -86,7 +86,7 @@
           ]
         },
         "resource.Medication.existingReference": {
-          "title": "Medication: existing resource reference",
+          "title": "Medication: reference existing resource",
           "description": "Combine selected reference and descriptive information in the same Reference.",
           "default": true,
           "type": "boolean"
@@ -98,49 +98,49 @@
           "type": "boolean"
         },
         "resource.MedicationRequest.enabled": {
-          "title": "Generate MedicationRequest",
+          "title": "Generate medication request",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.MedicationAdministration.enabled": {
-          "title": "Generate MedicationAdministration",
+          "title": "Generate medication administration",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.MedicationStatement.enabled": {
-          "title": "Generate MedicationStatement",
+          "title": "Generate medication statement",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Immunization.enabled": {
-          "title": "Generate Immunization",
+          "title": "Generate immunization",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.DiagnosticReport.enabled": {
-          "title": "Generate DiagnosticReport",
+          "title": "Generate diagnostic report",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.CarePlan.enabled": {
-          "title": "Generate CarePlan",
+          "title": "Generate care plan",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.DocumentReference.enabled": {
-          "title": "Generate DocumentReference",
+          "title": "Generate documentreference",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
         },
         "resource.Consent.enabled": {
-          "title": "Generate Consent",
+          "title": "Generate consent",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
@@ -164,7 +164,7 @@
           "type": "boolean"
         },
         "contact.department.partOf": {
-          "title": "ist Teil von (partOf)",
+          "title": "Department contact: is part of (partOf)",
           "description": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
           "default": "facility",
           "enum": [
@@ -173,7 +173,7 @@
           ]
         },
         "contact.ward-service.partOf": {
-          "title": "ist Teil von (partOf)",
+          "title": "Ward/service contact: is part of (partOf)",
           "description": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
           "default": "department",
           "enum": [
@@ -183,13 +183,13 @@
           ]
         },
         "contact.diagnoses.enabled": {
-          "title": "Encounter diagnoses references",
+          "title": "Diagnosis references on contacts",
           "description": "Add references to diagnoses for the selected contact levels.",
           "default": true,
           "type": "boolean"
         },
         "contact.diagnoses.levels": {
-          "title": "diagnoses: contact levels",
+          "title": "Diagnosis references: contact levels",
           "description": "Default to facility contacts; other levels are optional.",
           "default": [
             "facility"
@@ -205,13 +205,13 @@
           }
         },
         "contact.procedureDiagnoses.enabled": {
-          "title": "Encounter procedureDiagnoses references",
+          "title": "Procedure-related diagnosis references on contacts",
           "description": "Add references to diagnoses for the selected contact levels.",
           "default": true,
           "type": "boolean"
         },
         "contact.procedureDiagnoses.levels": {
-          "title": "procedureDiagnoses: contact levels",
+          "title": "Procedure-related diagnosis references: contact levels",
           "description": "Default to facility contacts; other levels are optional.",
           "default": [
             "facility"
@@ -233,7 +233,7 @@
           "type": "boolean"
         },
         "reference.Condition.encounter": {
-          "title": "Condition: Encounter target",
+          "title": "Diagnosis: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -244,7 +244,7 @@
           ]
         },
         "reference.procedureDiagnosis.encounter": {
-          "title": "Procedure-related diagnosis: Encounter target",
+          "title": "Procedure-related diagnosis: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -255,7 +255,7 @@
           ]
         },
         "reference.Procedure.encounter": {
-          "title": "Procedure: Encounter target",
+          "title": "Procedure: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -266,7 +266,7 @@
           ]
         },
         "reference.Observation.laboratory.encounter": {
-          "title": "Observation.laboratory: Encounter target",
+          "title": "Laboratory observation: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -277,7 +277,7 @@
           ]
         },
         "reference.Observation.vitalSigns.encounter": {
-          "title": "Observation.vitalSigns: Encounter target",
+          "title": "Vital signs: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -288,7 +288,7 @@
           ]
         },
         "reference.MedicationRequest.encounter": {
-          "title": "MedicationRequest: Encounter target",
+          "title": "Medication request: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -299,7 +299,7 @@
           ]
         },
         "reference.MedicationAdministration.encounter": {
-          "title": "MedicationAdministration: Encounter target",
+          "title": "Medication administration: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -310,7 +310,7 @@
           ]
         },
         "reference.MedicationStatement.encounter": {
-          "title": "MedicationStatement: Encounter target",
+          "title": "Medication statement: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -321,7 +321,7 @@
           ]
         },
         "reference.Immunization.encounter": {
-          "title": "Immunization: Encounter target",
+          "title": "Immunization: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -332,7 +332,7 @@
           ]
         },
         "reference.DiagnosticReport.encounter": {
-          "title": "DiagnosticReport: Encounter target",
+          "title": "Diagnostic report: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -343,7 +343,7 @@
           ]
         },
         "reference.CarePlan.encounter": {
-          "title": "CarePlan: Encounter target",
+          "title": "Care plan: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -354,7 +354,7 @@
           ]
         },
         "reference.DocumentReference.encounter": {
-          "title": "DocumentReference: Encounter target",
+          "title": "DocumentReference: contact assignment",
           "description": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
           "default": "department",
           "enum": [
@@ -427,67 +427,67 @@
           "minimum": 0
         },
         "ids.start.CONSENT": {
-          "title": "CONSENT: first counter",
+          "title": "Consent: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.CONDITION": {
-          "title": "CONDITION: first counter",
+          "title": "Diagnosis: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_2": {
-          "title": "ENCOUNTER_LEVEL_2: first counter",
+          "title": "Department contact: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_3": {
-          "title": "ENCOUNTER_LEVEL_3: first counter",
+          "title": "Ward/service contact: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_REQUEST": {
-          "title": "MEDICATION_REQUEST: first counter",
+          "title": "Medication request: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_ADMINISTRATION": {
-          "title": "MEDICATION_ADMINISTRATION: first counter",
+          "title": "Medication administration: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_STATEMENT": {
-          "title": "MEDICATION_STATEMENT: first counter",
+          "title": "Medication statement: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_LABORATORY": {
-          "title": "OBSERVATION_LABORATORY: first counter",
+          "title": "Laboratory observation: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_VITAL_SIGNS": {
-          "title": "OBSERVATION_VITAL_SIGNS: first counter",
+          "title": "Vital signs: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.PROCEDURE": {
-          "title": "PROCEDURE: first counter",
+          "title": "Procedure: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.DOCUMENT_REFERENCE": {
-          "title": "DOCUMENT_REFERENCE: first counter",
+          "title": "DocumentReference: first counter",
           "description": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
           "default": 1,
           "type": "integer"
