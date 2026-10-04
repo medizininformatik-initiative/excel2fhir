@@ -277,7 +277,7 @@
   "option.resource.DiagnosticReport.enabled.help": "Emit selected resources. Other transformations never enable an unselected resource.",
   "option.resource.DiagnosticReport.enabled.label": "Generate diagnostic report",
   "option.resource.DocumentReference.enabled.help": "Emit selected resources. Other transformations never enable an unselected resource.",
-  "option.resource.DocumentReference.enabled.label": "Generate documentreference",
+  "option.resource.DocumentReference.enabled.label": "Generate DocumentReference",
   "option.resource.Encounter.enabled.help": "Emit selected resources. Other transformations never enable an unselected resource.",
   "option.resource.Encounter.enabled.label": "Generate contact",
   "option.resource.Immunization.enabled.help": "Emit selected resources. Other transformations never enable an unselected resource.",

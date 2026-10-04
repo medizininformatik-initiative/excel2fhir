@@ -134,7 +134,7 @@
           "type": "boolean"
         },
         "resource.DocumentReference.enabled": {
-          "title": "Generate documentreference",
+          "title": "Generate DocumentReference",
           "description": "Emit selected resources. Other transformations never enable an unselected resource.",
           "default": true,
           "type": "boolean"
