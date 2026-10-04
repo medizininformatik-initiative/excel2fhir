@@ -4,6 +4,7 @@ import { Download, Play, Square, Activity } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
+import { ConfigurationEditor } from './ConfigurationEditor'
 
 type Job = { id: string; state: string; created: number; cancel: number; exit_code: number | null }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
@@ -96,6 +97,7 @@ function App() {
         <Button onClick={() => void start()} disabled={busy}><Play size={16}/>{t('app.start')}</Button>
       </div><p className="mt-4 text-xs text-slate-500">{t('app.outputHint')}</p>
     </section>
+    <ConfigurationEditor language={language}/>
     {alert && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">{t(alert.key, alert.params)}</p>}
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><div className="space-y-2">

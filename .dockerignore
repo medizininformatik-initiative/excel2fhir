@@ -29,3 +29,8 @@ web/frontend/*.tsbuildinfo
 !web/catalog/options/
 !web/catalog/options/de.json
 !web/catalog/options/en.json
+!web/catalog/options/contract.json
+!web/catalog/options/configuration.schema.json
+!web/catalog/dar/
+!web/catalog/dar/generated/
+!web/catalog/dar/generated/catalog.json

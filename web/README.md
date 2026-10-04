@@ -12,6 +12,42 @@ The local workbench converts the bundled starter or INTERPOLAR demo workbook
 with the existing converter defaults. It uses React, TypeScript, Vite, Tailwind
 CSS and a shadcn/ui Button, with FastAPI and a separate Python worker.
 
+## Configuration editor
+
+The configuration editor provides a continuous resource page with section links
+and separate tabs for additional identifiers, Data Absent Reason (DAR),
+IDs/repetitions/time shifts, terminology, and checks/output. Controls use the agreed option contract and DAR
+catalogue. Unavailable controls remain visible, explain their dependencies, and
+retain selected values. Help icons support hover, keyboard focus and click, including the pattern syntax
+and sample-preview details. Tab
+navigation supports the arrow keys, Home and End.
+
+The first visit starts with contract defaults. **Save in browser** stores one
+configuration locally for subsequent visits. **Export file** downloads its
+versioned JSON representation; **Import file** validates the file before replacing
+the current draft. An imported draft must be saved to retain it after reloading.
+**Restore defaults** resets the draft; save to retain that reset. Invalid drafts
+cannot be saved or exported. Imports reject unknown fields, incorrect types,
+unsupported schema versions, duplicate JSON members/rule IDs, unsuitable DAR
+codes and invalid identifier patterns.
+
+DAR replacements require a field-specific code. Resource selection controls their
+availability; existing DAR selections remain stored when unavailable. Conditional
+codes display the applicable narrative or procedure condition. Identifier rules
+retain their UUID when edited or imported and provide deterministic sample
+previews. The preview uses counter 1 and repetition 0 with example resource and
+patient IDs, and caps displayed counter padding at 256 characters. The identifier system shows an example placeholder while empty and unfocused.
+Pattern tokens use compact buttons with explanations on hover or keyboard focus,
+and can be clicked to insert at the
+cursor, replace selected text, or append when no cursor position is available.
+Actual resource counters and collision checks belong to converter execution.
+
+The editor is a configuration draft for the converter integration in #77.
+**Start conversion** currently uses the existing converter defaults. Its job
+snapshot describes that actual execution. Browser-stored editor configurations
+are separate from execution snapshots. Named server profiles and additional
+Synthea/DIZ workflows are tracked separately.
+
 ## Start and use
 
 ```sh
@@ -64,7 +100,7 @@ this project's worker container to check recovery.
 
 The verified prototype uses the selected React/FastAPI stack, a persistent SQLite
 queue and a separate worker with one JVM per conversion. This is the architecture
-for the next workbench increments. The option contract and editor come next;
+for the next workbench increments. The shared converter integration comes next;
 bounded parallel execution follows the shared-state and resource-budget audit.
 
 1. FastAPI copies the selected workbook and Java-derived effective defaults into
@@ -91,7 +127,7 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    supervisors need leases/heartbeats and per-owner recovery first. Deterministic
    IDs, seeds, cross-resource validation and variant isolation belong to #84.
 
-The options contract and editor follow in #75–#77. Durable profile editing and
+Shared option execution follows in #77. Durable profile editing and
 richer job management follow in #78; expanded sources follow in #79. Data Node
 lifecycle/import controls and TORCH/FDE user workflows follow in #81–#82.
 
