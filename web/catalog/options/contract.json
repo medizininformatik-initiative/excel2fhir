@@ -1,0 +1,1853 @@
+{
+  "schemaVersion": 1,
+  "status": "draft",
+  "issue": 75,
+  "scope": "Option definitions for the shared Java converter and its adapters. Integration is delivered by #76 and #77.",
+  "sections": [
+    {
+      "id": "resources",
+      "label": "Resources and contacts"
+    },
+    {
+      "id": "dar",
+      "label": "Data Absent Reason"
+    },
+    {
+      "id": "ids",
+      "label": "IDs, repetitions and dates"
+    },
+    {
+      "id": "terminology",
+      "label": "Terminology and versions"
+    },
+    {
+      "id": "identifiers",
+      "label": "Additional identifiers"
+    },
+    {
+      "id": "output",
+      "label": "Checks and output"
+    }
+  ],
+  "ui": {
+    "resourceLayout": "continuous-page",
+    "otherSections": "tabs",
+    "alwaysVisible": true,
+    "retainDisabledValues": true,
+    "disabledReasonRequired": true,
+    "helpTriggers": [
+      "hover",
+      "focus",
+      "click"
+    ],
+    "sectionAnchors": true
+  },
+  "resources": [
+    {
+      "id": "Patient",
+      "resourceType": "Patient",
+      "group": "demographics",
+      "identifierEligible": true
+    },
+    {
+      "id": "Encounter",
+      "resourceType": "Encounter",
+      "group": "contacts",
+      "identifierEligible": true
+    },
+    {
+      "id": "Location",
+      "resourceType": "Location",
+      "group": "contacts",
+      "identifierEligible": true
+    },
+    {
+      "id": "Condition",
+      "resourceType": "Condition",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "Procedure",
+      "resourceType": "Procedure",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "Observation.laboratory",
+      "resourceType": "Observation",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "Observation.vitalSigns",
+      "resourceType": "Observation",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "Medication",
+      "resourceType": "Medication",
+      "group": "medication",
+      "identifierEligible": true
+    },
+    {
+      "id": "MedicationRequest",
+      "resourceType": "MedicationRequest",
+      "group": "medication",
+      "identifierEligible": true
+    },
+    {
+      "id": "MedicationAdministration",
+      "resourceType": "MedicationAdministration",
+      "group": "medication",
+      "identifierEligible": true
+    },
+    {
+      "id": "MedicationStatement",
+      "resourceType": "MedicationStatement",
+      "group": "medication",
+      "identifierEligible": true
+    },
+    {
+      "id": "Immunization",
+      "resourceType": "Immunization",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "DiagnosticReport",
+      "resourceType": "DiagnosticReport",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "CarePlan",
+      "resourceType": "CarePlan",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "DocumentReference",
+      "resourceType": "DocumentReference",
+      "group": "clinical",
+      "identifierEligible": true
+    },
+    {
+      "id": "Consent",
+      "resourceType": "Consent",
+      "group": "clinical",
+      "identifierEligible": true
+    }
+  ],
+  "options": [
+    {
+      "id": "resource.Patient.mode",
+      "section": "resources",
+      "label": "Patient output and references",
+      "type": "enum",
+      "default": "generate-reference",
+      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "generate-reference",
+        "reference-only",
+        "neither"
+      ]
+    },
+    {
+      "id": "resource.Encounter.enabled",
+      "section": "resources",
+      "label": "Generate Encounter",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Location.mode",
+      "section": "resources",
+      "label": "Location output and references",
+      "type": "enum",
+      "default": "generate-reference",
+      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "generate-reference",
+        "reference-only",
+        "neither"
+      ]
+    },
+    {
+      "id": "resource.Location.existingReference",
+      "section": "resources",
+      "label": "Location: existing resource reference",
+      "type": "boolean",
+      "default": true,
+      "help": "Combine selected reference and descriptive information in the same Reference.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Location.mode",
+          "equals": "reference-only"
+        }
+      ]
+    },
+    {
+      "id": "resource.Location.description",
+      "section": "resources",
+      "label": "Location: identifier and display",
+      "type": "boolean",
+      "default": false,
+      "help": "Combine selected reference and descriptive information in the same Reference.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Location.mode",
+          "equals": "reference-only"
+        }
+      ]
+    },
+    {
+      "id": "resource.Condition.enabled",
+      "section": "resources",
+      "label": "Generate Condition",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Procedure.enabled",
+      "section": "resources",
+      "label": "Generate Procedure",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Observation.laboratory.enabled",
+      "section": "resources",
+      "label": "Generate Observation.laboratory",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Observation.vitalSigns.enabled",
+      "section": "resources",
+      "label": "Generate Observation.vitalSigns",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Medication.mode",
+      "section": "resources",
+      "label": "Medication output and references",
+      "type": "enum",
+      "default": "generate-reference",
+      "help": "Generate the resource and references, refer to an existing resource, or omit both.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "generate-reference",
+        "reference-only",
+        "neither"
+      ]
+    },
+    {
+      "id": "resource.Medication.existingReference",
+      "section": "resources",
+      "label": "Medication: existing resource reference",
+      "type": "boolean",
+      "default": true,
+      "help": "Combine selected reference and descriptive information in the same Reference.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Medication.mode",
+          "equals": "reference-only"
+        }
+      ]
+    },
+    {
+      "id": "resource.Medication.description",
+      "section": "resources",
+      "label": "Medication: identifier and display",
+      "type": "boolean",
+      "default": false,
+      "help": "Combine selected reference and descriptive information in the same Reference.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Medication.mode",
+          "equals": "reference-only"
+        }
+      ]
+    },
+    {
+      "id": "resource.MedicationRequest.enabled",
+      "section": "resources",
+      "label": "Generate MedicationRequest",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.MedicationAdministration.enabled",
+      "section": "resources",
+      "label": "Generate MedicationAdministration",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.MedicationStatement.enabled",
+      "section": "resources",
+      "label": "Generate MedicationStatement",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Immunization.enabled",
+      "section": "resources",
+      "label": "Generate Immunization",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.DiagnosticReport.enabled",
+      "section": "resources",
+      "label": "Generate DiagnosticReport",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.CarePlan.enabled",
+      "section": "resources",
+      "label": "Generate CarePlan",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.DocumentReference.enabled",
+      "section": "resources",
+      "label": "Generate DocumentReference",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "resource.Consent.enabled",
+      "section": "resources",
+      "label": "Generate Consent",
+      "type": "boolean",
+      "default": true,
+      "help": "Emit selected resources. Other transformations never enable an unselected resource.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "contact.facility.enabled",
+      "section": "resources",
+      "label": "Generate facility contacts",
+      "type": "boolean",
+      "default": true,
+      "help": "Source contacts remain available internally for assignment.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "contact.department.enabled",
+      "section": "resources",
+      "label": "Generate department contacts",
+      "type": "boolean",
+      "default": true,
+      "help": "Source contacts remain available internally for assignment.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "contact.ward-service.enabled",
+      "section": "resources",
+      "label": "Generate ward-service contacts",
+      "type": "boolean",
+      "default": true,
+      "help": "Source contacts remain available internally for assignment.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "contact.department.partOf",
+      "section": "resources",
+      "label": "ist Teil von (partOf)",
+      "type": "enum",
+      "default": "facility",
+      "help": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "contact.department.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "contact.ward-service.partOf",
+      "section": "resources",
+      "label": "ist Teil von (partOf)",
+      "type": "enum",
+      "default": "department",
+      "help": "Derive the parent from the known input hierarchy. Do not substitute another contact level.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "department",
+        "facility",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "contact.ward-service.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "contact.diagnoses.enabled",
+      "section": "resources",
+      "label": "Encounter diagnoses references",
+      "type": "boolean",
+      "default": true,
+      "help": "Add references to diagnoses for the selected contact levels.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        }
+      ],
+      "binding": {
+        "kind": "java-property",
+        "name": "SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION",
+        "semantics": "Existing direction; level restriction requires #77."
+      }
+    },
+    {
+      "id": "contact.diagnoses.levels",
+      "section": "resources",
+      "label": "diagnoses: contact levels",
+      "type": "set",
+      "default": [
+        "facility"
+      ],
+      "help": "Default to facility contacts; other levels are optional.",
+      "status": "agreed",
+      "control": "multiselect",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service"
+      ],
+      "enabledWhen": [
+        {
+          "option": "contact.diagnoses.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "contact.procedureDiagnoses.enabled",
+      "section": "resources",
+      "label": "Encounter procedureDiagnoses references",
+      "type": "boolean",
+      "default": true,
+      "help": "Add references to diagnoses for the selected contact levels.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        }
+      ],
+      "binding": {
+        "kind": "java-property",
+        "name": "SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION",
+        "semantics": "Existing direction; level restriction requires #77."
+      }
+    },
+    {
+      "id": "contact.procedureDiagnoses.levels",
+      "section": "resources",
+      "label": "procedureDiagnoses: contact levels",
+      "type": "set",
+      "default": [
+        "facility"
+      ],
+      "help": "Default to facility contacts; other levels are optional.",
+      "status": "agreed",
+      "control": "multiselect",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service"
+      ],
+      "enabledWhen": [
+        {
+          "option": "contact.procedureDiagnoses.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "contact.inheritDiagnoses",
+      "section": "resources",
+      "label": "Inherit missing parent diagnoses",
+      "type": "boolean",
+      "default": false,
+      "help": "Retain the existing preference for the parent chief complaint.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "binding": {
+        "kind": "java-property",
+        "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER"
+      }
+    },
+    {
+      "id": "reference.Condition.encounter",
+      "section": "resources",
+      "label": "Condition: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      },
+      "binding": {
+        "kind": "java-property",
+        "name": "SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER",
+        "values": {
+          "none": false,
+          "selected-level": true
+        },
+        "semantics": "Contact-level assignment requires #77."
+      }
+    },
+    {
+      "id": "reference.procedureDiagnosis.encounter",
+      "section": "resources",
+      "label": "Procedure-related diagnosis: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Condition.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      },
+      "binding": {
+        "kind": "java-property",
+        "name": "SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER",
+        "values": {
+          "none": false,
+          "selected-level": true
+        },
+        "semantics": "Contact-level assignment requires #77."
+      }
+    },
+    {
+      "id": "reference.Procedure.encounter",
+      "section": "resources",
+      "label": "Procedure: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Procedure.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.Observation.laboratory.encounter",
+      "section": "resources",
+      "label": "Observation.laboratory: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Observation.laboratory.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.Observation.vitalSigns.encounter",
+      "section": "resources",
+      "label": "Observation.vitalSigns: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Observation.vitalSigns.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.MedicationRequest.encounter",
+      "section": "resources",
+      "label": "MedicationRequest: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationRequest.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.MedicationAdministration.encounter",
+      "section": "resources",
+      "label": "MedicationAdministration: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationAdministration.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.MedicationStatement.encounter",
+      "section": "resources",
+      "label": "MedicationStatement: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationStatement.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.Immunization.encounter",
+      "section": "resources",
+      "label": "Immunization: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.Immunization.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.DiagnosticReport.encounter",
+      "section": "resources",
+      "label": "DiagnosticReport: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.DiagnosticReport.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.CarePlan.encounter",
+      "section": "resources",
+      "label": "CarePlan: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.CarePlan.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.DocumentReference.encounter",
+      "section": "resources",
+      "label": "DocumentReference: Encounter target",
+      "type": "enum",
+      "default": "department",
+      "help": "Choose one contact level. Missing matches are omitted and reported; another level is never substituted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "facility",
+        "department",
+        "ward-service",
+        "none"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.DocumentReference.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "facility": [
+          {
+            "option": "contact.facility.enabled",
+            "equals": true
+          }
+        ],
+        "department": [
+          {
+            "option": "contact.department.enabled",
+            "equals": true
+          }
+        ],
+        "ward-service": [
+          {
+            "option": "contact.ward-service.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference.DocumentReference.knownInputContact",
+      "section": "resources",
+      "label": "DocumentReference: use known input contact without a timestamp",
+      "type": "boolean",
+      "default": false,
+      "help": "Use the explicitly known input contact only when no usable clinical timestamp exists.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.DocumentReference.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "medication.requestTreatment",
+      "section": "resources",
+      "label": "MedicationRequest treatment",
+      "type": "enum",
+      "default": "retain",
+      "help": "Replace requests before a single pass of additions. Unselected targets disable the respective choice.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "retain",
+        "omit",
+        "replace-administration",
+        "replace-statement"
+      ],
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationRequest.enabled",
+          "equals": true
+        }
+      ],
+      "choiceDependencies": {
+        "replace-administration": [
+          {
+            "option": "resource.MedicationAdministration.enabled",
+            "equals": true
+          }
+        ],
+        "replace-statement": [
+          {
+            "option": "resource.MedicationStatement.enabled",
+            "equals": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "medication.MedicationAdministration.addMedicationStatement",
+      "section": "resources",
+      "label": "Additional MedicationStatement from MedicationAdministration",
+      "type": "boolean",
+      "default": false,
+      "help": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationAdministration.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.MedicationStatement.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "medication.MedicationStatement.addMedicationAdministration",
+      "section": "resources",
+      "label": "Additional MedicationAdministration from MedicationStatement",
+      "type": "boolean",
+      "default": false,
+      "help": "Add once after replacements, with a distinct ID. Do not recursively add resources.",
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.MedicationStatement.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.MedicationAdministration.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "ids.patient.prefix",
+      "section": "ids",
+      "label": "Patient ID prefix",
+      "type": "string",
+      "default": "",
+      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+      "status": "agreed",
+      "control": "text",
+      "binding": {
+        "kind": "java-property",
+        "name": "PID_PREFIX"
+      }
+    },
+    {
+      "id": "ids.patient.suffix",
+      "section": "ids",
+      "label": "Patient ID suffix",
+      "type": "string",
+      "default": "",
+      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+      "status": "agreed",
+      "control": "text",
+      "binding": {
+        "kind": "java-property",
+        "name": "PID_SUFFIX"
+      }
+    },
+    {
+      "id": "ids.patient.initialOffset",
+      "section": "ids",
+      "label": "Initial patient-number offset",
+      "type": "integer",
+      "default": 0,
+      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET"
+      },
+      "minimum": 0
+    },
+    {
+      "id": "ids.patient.iterationOffset",
+      "section": "ids",
+      "label": "Patient-number offset per repetition",
+      "type": "integer",
+      "default": 0,
+      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET"
+      },
+      "minimum": 0
+    },
+    {
+      "id": "ids.patient.additionalRepetitions",
+      "section": "ids",
+      "label": "Additional repetitions",
+      "type": "integer",
+      "default": 0,
+      "help": "Use existing Java patient-ID semantics, including numeric padding and overflow checks.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "PID_LAST_NUMBER_INCREASE_LOOP_COUNT"
+      },
+      "minimum": 0
+    },
+    {
+      "id": "ids.start.CONSENT",
+      "section": "ids",
+      "label": "CONSENT: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_CONSENT"
+      }
+    },
+    {
+      "id": "ids.start.CONDITION",
+      "section": "ids",
+      "label": "CONDITION: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_CONDITION"
+      }
+    },
+    {
+      "id": "ids.start.ENCOUNTER_LEVEL_2",
+      "section": "ids",
+      "label": "ENCOUNTER_LEVEL_2: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_ENCOUNTER_LEVEL_2"
+      }
+    },
+    {
+      "id": "ids.start.ENCOUNTER_LEVEL_3",
+      "section": "ids",
+      "label": "ENCOUNTER_LEVEL_3: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_ENCOUNTER_LEVEL_3"
+      }
+    },
+    {
+      "id": "ids.start.MEDICATION_REQUEST",
+      "section": "ids",
+      "label": "MEDICATION_REQUEST: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_MEDICATION_REQUEST"
+      }
+    },
+    {
+      "id": "ids.start.MEDICATION_ADMINISTRATION",
+      "section": "ids",
+      "label": "MEDICATION_ADMINISTRATION: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_MEDICATION_ADMINISTRATION"
+      }
+    },
+    {
+      "id": "ids.start.MEDICATION_STATEMENT",
+      "section": "ids",
+      "label": "MEDICATION_STATEMENT: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_MEDICATION_STATEMENT"
+      }
+    },
+    {
+      "id": "ids.start.OBSERVATION_LABORATORY",
+      "section": "ids",
+      "label": "OBSERVATION_LABORATORY: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_OBSERVATION_LABORATORY"
+      }
+    },
+    {
+      "id": "ids.start.OBSERVATION_VITAL_SIGNS",
+      "section": "ids",
+      "label": "OBSERVATION_VITAL_SIGNS: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_OBSERVATION_VITAL_SIGNS"
+      }
+    },
+    {
+      "id": "ids.start.PROCEDURE",
+      "section": "ids",
+      "label": "PROCEDURE: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_PROCEDURE"
+      }
+    },
+    {
+      "id": "ids.start.DOCUMENT_REFERENCE",
+      "section": "ids",
+      "label": "DOCUMENT_REFERENCE: first counter",
+      "type": "integer",
+      "default": 1,
+      "help": "Keep the existing ID scheme. Resource selection must not renumber retained resources.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "java-property",
+        "name": "START_ID_DOCUMENT_REFERENCE"
+      }
+    },
+    {
+      "id": "timeShift.enabled",
+      "section": "ids",
+      "label": "Shift clinical dates",
+      "type": "boolean",
+      "default": false,
+      "help": "Shift all clinical dates and timestamps, including birth date, together.",
+      "status": "agreed",
+      "control": "checkbox"
+    },
+    {
+      "id": "timeShift.baseDays",
+      "section": "ids",
+      "label": "Base shift in whole days",
+      "type": "integer",
+      "default": 0,
+      "help": "Apply baseDays + iterationIndex * iterationDays.",
+      "status": "agreed",
+      "control": "number",
+      "enabledWhen": [
+        {
+          "option": "timeShift.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "timeShift.iterationDays",
+      "section": "ids",
+      "label": "Additional shift per repetition in whole days",
+      "type": "integer",
+      "default": 0,
+      "help": "Apply baseDays + iterationIndex * iterationDays.",
+      "status": "agreed",
+      "control": "number",
+      "enabledWhen": [
+        {
+          "option": "timeShift.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "terminology.syntheaYear",
+      "section": "terminology",
+      "label": "Synthea mapping year",
+      "type": "enum",
+      "default": 2026,
+      "help": "Output the actual selected catalogue year. Table-provided versions remain unrestricted.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        2025,
+        2026
+      ],
+      "binding": {
+        "kind": "java-property",
+        "name": "SYNTHEA_MAPPING_YEAR"
+      }
+    },
+    {
+      "id": "terminology.versionOutput",
+      "section": "terminology",
+      "label": "Coding version",
+      "type": "enum",
+      "default": "catalogue-year",
+      "help": "Use the actual catalogue year, omit Coding.version, or apply an explicit DAR rule.",
+      "status": "agreed",
+      "control": "radio",
+      "choices": [
+        "catalogue-year",
+        "omit",
+        "dar"
+      ],
+      "binding": {
+        "kind": "java-property",
+        "name": "SYNTHEA_VERSION_OUTPUT",
+        "values": {
+          "catalogue-year": "Jahr",
+          "omit": "",
+          "dar": "DAR token from the field catalogue"
+        }
+      }
+    },
+    {
+      "id": "checks.inputConsistency",
+      "section": "output",
+      "label": "Check input consistency",
+      "type": "boolean",
+      "default": true,
+      "help": "Preserve structural and type checks; arbitrary clinical and table DAR code strings reach the optional FHIR validator.",
+      "status": "agreed",
+      "control": "checkbox",
+      "binding": {
+        "kind": "java-property",
+        "name": "CHECK_INPUT_CONSISTENCY"
+      }
+    },
+    {
+      "id": "checks.fhirValidation",
+      "section": "output",
+      "label": "Validate FHIR",
+      "type": "boolean",
+      "default": false,
+      "help": "Report errors and incomplete validation; retain generated data according to converter behavior.",
+      "status": "agreed",
+      "control": "checkbox",
+      "binding": {
+        "kind": "cli",
+        "name": "--validate-bundles"
+      }
+    },
+    {
+      "id": "output.formats",
+      "section": "output",
+      "label": "Output formats",
+      "type": "set",
+      "default": [
+        "JSON",
+        "NDJSON"
+      ],
+      "help": "Serialize the same logical resources into each selected format.",
+      "status": "agreed",
+      "control": "multiselect",
+      "choices": [
+        "JSON",
+        "NDJSON",
+        "XML",
+        "JSONGZIP",
+        "JSONBZ2",
+        "ZIPJSON"
+      ],
+      "binding": {
+        "kind": "cli",
+        "name": "--result-file-format"
+      }
+    },
+    {
+      "id": "output.patientsPerFile",
+      "section": "output",
+      "label": "Maximum patients per output file",
+      "type": "integer",
+      "default": 1,
+      "help": "Use the existing Java output splitting behavior.",
+      "status": "agreed",
+      "control": "number",
+      "binding": {
+        "kind": "cli",
+        "name": "--patients-count"
+      },
+      "minimum": 1
+    }
+  ],
+  "dar": {
+    "catalogue": "../dar/generated/catalog.json",
+    "fieldKey": "id",
+    "overrideDefault": "unchanged",
+    "modes": [
+      "unchanged",
+      "overwrite"
+    ],
+    "codeChoices": "field.allowedCodes",
+    "codeConditions": "field.codeConditions",
+    "selectedCodeDefault": null,
+    "apply": "after-derivations",
+    "overwriteExistingValues": true,
+    "overwriteTableDar": true,
+    "representation": "field.representation",
+    "clearFields": "field.clearFields",
+    "preserve": [
+      "fixed/pattern fields",
+      "coding-system discriminators",
+      "profile metadata"
+    ],
+    "invariants": [
+      "Condition con-4",
+      "Condition con-5",
+      "Observation obs-6",
+      "Observation mii-lab-2"
+    ],
+    "tableCodes": "arbitrary strings; no enumeration parsing; validate with the optional FHIR validator"
+  },
+  "contactAssignment": {
+    "samePatient": true,
+    "boundaries": "inclusive",
+    "missingEnd": "open",
+    "precedence": [
+      "start descending",
+      "original input row ascending"
+    ],
+    "preserveOriginalInputOrder": true,
+    "levelFallback": false,
+    "noMatch": "omit reference and report",
+    "wardServiceExcludedKinds": [
+      "operation",
+      "consultation",
+      "examination-treatment"
+    ],
+    "nextTimestampCandidate": "try when previous candidate finds no matching contact",
+    "hierarchy": "derive from known input hierarchy",
+    "genericEncounter": "one case Encounter with no KDS contact-level claim when Encounter is enabled and all levels are disabled",
+    "timestamps": {
+      "Condition": [
+        "recordedDate"
+      ],
+      "Procedure": [
+        "performedPeriod.start",
+        "performedDateTime"
+      ],
+      "Observation.laboratory": [
+        "effectiveDateTime"
+      ],
+      "Observation.vitalSigns": [
+        "effectiveDateTime"
+      ],
+      "MedicationRequest": [
+        "authoredOn"
+      ],
+      "MedicationAdministration": [
+        "effectivePeriod.start",
+        "effectiveDateTime"
+      ],
+      "MedicationStatement": [
+        "effectivePeriod.start",
+        "effectiveDateTime"
+      ],
+      "DocumentReference": [
+        "explicit output timestamp",
+        "reliably entered document creation timestamp"
+      ]
+    },
+    "pendingTimestamps": {
+      "Immunization": [
+        "occurrenceDateTime"
+      ],
+      "DiagnosticReport": [
+        "effectiveDateTime",
+        "issued"
+      ],
+      "CarePlan": [
+        "period.start"
+      ]
+    }
+  },
+  "transformations": {
+    "order": [
+      "source IDs and stable potential-resource order",
+      "patient repetition and whole-day time shifts",
+      "contact hierarchy and clinical assignments",
+      "request replacements",
+      "one pass of medication additions",
+      "DAR overrides",
+      "additional identifiers",
+      "resource selection and serialization"
+    ],
+    "selectionAuthority": "Unselected resources are never emitted; disabled transformations do not resurrect resources. Reference-only modes may reference external resources.",
+    "missingMedicationData": "omit; do not invent values or DAR",
+    "identifierStability": "Selection cannot renumber retained resource IDs or generated identifier counters."
+  },
+  "additionalIdentifiers": {
+    "defaultRules": [],
+    "ruleFields": [
+      "id",
+      "enabled",
+      "resources",
+      "system",
+      "pattern"
+    ],
+    "stableRuleId": "Persist a UUID when the rule is created; preserve it when editing or importing.",
+    "append": true,
+    "retainExisting": true,
+    "counterScope": "one per rule across eligible resource types and repetitions",
+    "counterOrder": "stable potential-resource sequence independent of output selection",
+    "hashContext": [
+      "rule id",
+      "resource type",
+      "resource id",
+      "iteration index"
+    ],
+    "hashEncoding": "For each hashContext component in the listed order, concatenate ASCII decimal UTF-8 byte length, a colon, and the UTF-8 bytes. UUID uses canonical lowercase spelling; iteration uses its nonnegative decimal index.",
+    "uniqueness": "system/value across distinct logical resources and iterations",
+    "duplicateSerialization": "same logical resource in multiple formats is counted once",
+    "collision": "stop with rule and conflicting resource identities",
+    "security": "Deterministic hash identifiers do not guarantee secure pseudonymization.",
+    "patternDecision": "agreed",
+    "hashAlgorithm": "SHA-256",
+    "hashCharacters": 32,
+    "hashTruncation": "first 32 lowercase hexadecimal characters",
+    "counterStart": 1,
+    "iterationStart": 0,
+    "tokens": {
+      "count": "Shared per-rule counter starting at 1",
+      "count:0N": "Minimum width N with leading zeros, for example count:08; longer values are not truncated",
+      "patientId": "Effective patient ID for this repetition",
+      "resourceId": "Effective resource ID",
+      "resourceType": "FHIR resource type",
+      "iteration": "Zero-based repetition index",
+      "hash": "First 32 lowercase hex characters of SHA-256 over the fixed hash context"
+    },
+    "literalBraces": {
+      "{{": "{",
+      "}}": "}"
+    },
+    "invalidPattern": "Reject unknown tokens, unmatched braces and malformed padding; no expression evaluation."
+  },
+  "profileBaseline": {
+    "base": "2026.0.1",
+    "laboratory": "2026.0.3",
+    "medication": "2026.0.1",
+    "consent": "2026.0.0",
+    "rule": "Use a profile only when the emitted resource claims it; package releases are separate from terminology years."
+  },
+  "configuration": {
+    "schemaVersion": 1,
+    "missingOption": "use contract default",
+    "unknownOption": "reject with option id",
+    "wrongType": "reject with option id",
+    "unsupportedSchemaVersion": "reject",
+    "conflictingDuplicate": "reject; do not silently apply last value",
+    "disabledSelection": "retain stored value; compute effective disabled state in Java; no implicit fallback",
+    "profileNames": "configuration profiles are separate from FHIR StructureDefinitions",
+    "executionSettings": "parallelism and environment selection are separate from clinical options"
+  },
+  "openDecisions": [
+    "Immunization, DiagnosticReport and CarePlan timestamp candidates"
+  ]
+}
