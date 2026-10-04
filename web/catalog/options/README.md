@@ -48,7 +48,6 @@ reference target becomes ineffective while its selection is retained.
   "values": {
     "resource.Patient.mode": "reference-only",
     "reference.Condition.encounter": "department",
-    "contact.inheritDiagnoses": false,
     "checks.fhirValidation": true,
     "output.formats": ["JSON", "NDJSON"]
   },
@@ -116,9 +115,11 @@ and Excel option sheets. It validates stored values and determines effective
 selections from the same contract. Existing directly equivalent Java properties
 are mapped; other effective settings produce explicit preflight errors, including
 unsupported defaults. The complete default configuration is therefore not yet
-executable. Patient output modes have an internally tested implementation that
-projects output after input derivations, preserving internal patient identity and
-resource IDs. Remaining execution semantics are tracked in #77. The current web
+executable. Patient output modes, Condition output, diagnosis reference assignment,
+contact output levels and hierarchy, and clinical encounter assignment are
+implemented as output projections after input derivations. Internal patient
+identity, contact history and resource IDs are preserved. Remaining execution
+semantics are tracked in #77. The current web
 Start conversion action still uses the existing converter defaults.
 
 `propertiesFormat.darProperties` maps each DAR field ID to its uppercase name.
@@ -175,6 +176,40 @@ contacts remain excluded as ward/service clinical reference targets.
 
 The department target and facility diagnosis defaults are project conventions;
 generic Encounter targets in profile snapshots do not enforce these levels.
+
+Java output projection applies these contact selections to JSON and NDJSON.
+`encounterReferenceIssues` in the import report identifies omitted automatic
+references, unresolved supplied DocumentReference contacts, omitted contact
+targets and temporal conflicts, including resource identity and source row.
+DocumentReference matching uses explicitly entered `Ausgabezeitpunkt`; its
+automatically generated run timestamp and filesystem timestamps are excluded.
+
+## Diagnosis references
+
+Conditions are standalone resources. Disabling Condition output also disables
+Condition diagnosis references and parent diagnosis inheritance. Stored inactive
+selections remain available and are commented in the Properties export.
+
+`CONTACT_DIAGNOSES_ROLES` selects codes from
+`http://terminology.hl7.org/CodeSystem/diagnosis-role`, recorded in
+`Encounter.diagnosis.use.coding.code`: CC, CM, AD, DD, pre-op, post-op and billing.
+The role belongs to the contact association. All roles are selected by default.
+Selected contact levels determine the targets automatically. An input contact
+already at the target level keeps its reference. Assignment upward follows the
+original parent hierarchy. Assignment downward uses `Condition.recordedDate`
+(documentation time) to select at most one descendant per selected level, within
+the original contact branch and patient case. Matching uses inclusive boundaries,
+the latest contact start and then the earliest input row. Missing documentation
+times and unmatched targets are recorded in `diagnosisReferenceIssues` in the
+import report, with Condition ID, source contact, target level and iteration.
+There is no fallback to another contact branch or level.
+
+Existing references take precedence; a Condition is not added twice to a target.
+Procedure references in the diagnosis list are handled separately. Conditions
+remain standalone resources and are never duplicated by contact assignment.
+
+The Java diagnosis projection is implemented, while execution of the complete
+editor configuration remains blocked by other unsupported contract settings.
 
 ## DAR and transformations
 

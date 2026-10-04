@@ -133,6 +133,11 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       throw new Error('Expected NAME = VALUE')
     }
     const [, key, encoded] = match
+    if (key === 'ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER') {
+      if (seen.has(key) || !['true', 'false'].includes(encoded.trim())) throw new Error('Invalid retired setting')
+      seen.add(key)
+      continue
+    }
     const option = byName.get(key)
     const field = darNames.get(key)
     const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN)$/.exec(key)

@@ -78,3 +78,15 @@ test('complete allowed option values roundtrip and re-export deterministically',
     }
   }
 })
+
+test('diagnosis exports omit the retired inheritance switch and preserve inactive roles', () => {
+  const config = defaults()
+  for (const lang of ['de', 'en']) {
+    const text = exported(config, lang)
+    assert.doesNotMatch(text, /ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER/)
+    assert.match(text, /^CONTACT_DIAGNOSES_ROLES = CC,CM,AD,DD,pre-op,post-op,billing$/m)
+    assert.deepEqual(importConfiguration(text + '\nADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER = true\n'), config)
+  }
+  config.values['resource.Condition.enabled'] = false
+  assert.match(exported(config), /^# CONTACT_DIAGNOSES_ROLES = /m)
+})

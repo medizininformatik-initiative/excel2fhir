@@ -256,6 +256,10 @@ export function importConfiguration(text: string): Configuration {
       values['resource.MedicationRequest.enabled'] = false
     }
     if (values && typeof values === 'object') {
+      if ('contact.inheritDiagnoses' in values) {
+        if (typeof values['contact.inheritDiagnoses'] !== 'boolean') throw new Error('invalid')
+        delete values['contact.inheritDiagnoses']
+      }
       const oldContactKey = 'reference.DocumentReference.knownInputContact'
       if (oldContactKey in values) {
         if (typeof values[oldContactKey] !== 'boolean') throw new Error('invalid')

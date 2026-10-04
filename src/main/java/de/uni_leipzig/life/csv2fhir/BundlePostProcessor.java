@@ -18,7 +18,6 @@ import org.hl7.fhir.r4.model.Resource;
 import com.google.common.base.Objects;
 
 import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter;
-import de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.EncounterLevel1;
 
 /**
  * Post-processing of a bundle.
@@ -50,6 +49,8 @@ public class BundlePostProcessor {
      * @param converterOptions The options for the conversion
      */
     public static void convert(Bundle bundle, ConverterOptions converterOptions) {
+        // Versioned configurations assign diagnosis references before output projection.
+        if (converterOptions.configuration() != null) return;
         BundlePostProcessor postProcessor = new BundlePostProcessor(bundle, converterOptions);
         postProcessor.addMissingDiagnosesToSubEncounters();
     }
@@ -61,7 +62,7 @@ public class BundlePostProcessor {
         for (BundleEntryComponent entry : bundle.getEntry()) {
             Resource resource = entry.getResource();
             if (resource instanceof Encounter) {
-                if (!(resource instanceof EncounterLevel1)) {
+                if (!EncounterConverter.isLevel1Encounter((Encounter)resource)) {
                     Encounter encounter = (Encounter) resource;
                     addMissingDiagnosesFromSuperEncounter(encounter);
                 }

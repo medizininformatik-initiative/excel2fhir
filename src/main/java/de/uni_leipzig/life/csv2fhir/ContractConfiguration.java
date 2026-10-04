@@ -89,6 +89,8 @@ public final class ContractConfiguration {
             if (name.equals("CONFIGURATION_VERSION")) {
                 if (commented || !value.equals("1")) throw invalid("Unsupported configuration version");
                 version = true;
+            } else if (name.equals("ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER")) {
+                booleanValue(value); // Retired editor setting; assignment is automatic.
             } else if (names.containsKey(name)) {
                 String id = names.get(name);
                 config.values.put(id, parseValue(value, config.definitions.get(id)));
@@ -242,7 +244,7 @@ public final class ContractConfiguration {
         return value != null && value.asBoolean();
     }
 
-    /** Only exact existing Java semantics are mapped. Expanded contact semantics stay blocked. */
+    /** Exact legacy semantics map to properties; contact assignment uses output projections. */
     Map<String, String> javaProperties() {
         Map<String, String> result = new LinkedHashMap<>();
         definitions.forEach((id, option) -> {
@@ -258,7 +260,12 @@ public final class ContractConfiguration {
     public List<String> unsupportedSettings() {
         List<String> errors = new ArrayList<>();
         definitions.forEach((id, option) -> {
-            if (!id.equals("resource.Patient.mode") && !directBinding(id) && effective(id).isPresent())
+            if (!Set.of("resource.Patient.mode", "resource.Condition.enabled", "contact.diagnoses.enabled",
+                    "contact.diagnoses.levels", "contact.diagnoses.roles", "resource.Encounter.enabled",
+                    "contact.facility.enabled", "contact.department.enabled", "contact.ward-service.enabled",
+                    "contact.department.partOf", "contact.ward-service.partOf").contains(id)
+                    && !ClinicalEncounterAssignment.supports(id)
+                    && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));
         });
         dar.forEach((id, code) -> {

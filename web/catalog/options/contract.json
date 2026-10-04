@@ -615,6 +615,51 @@
       "propertyName": "SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION"
     },
     {
+      "id": "contact.diagnoses.roles",
+      "section": "resources",
+      "type": "set",
+      "default": [
+        "CC",
+        "CM",
+        "AD",
+        "DD",
+        "pre-op",
+        "post-op",
+        "billing"
+      ],
+      "status": "agreed",
+      "control": "multiselect",
+      "choices": [
+        "CC",
+        "CM",
+        "AD",
+        "DD",
+        "pre-op",
+        "post-op",
+        "billing"
+      ],
+      "enabledWhen": [
+        {
+          "option": "contact.diagnoses.enabled",
+          "equals": true
+        }
+      ],
+      "labelKey": "option.contact.diagnoses.roles.label",
+      "helpKey": "option.contact.diagnoses.roles.help",
+      "fhirPath": "Encounter.diagnosis.use.coding.code",
+      "choiceLabelKeys": {
+        "CC": "choice.diagnosisRole.CC",
+        "CM": "choice.diagnosisRole.CM",
+        "AD": "choice.diagnosisRole.AD",
+        "DD": "choice.diagnosisRole.DD",
+        "pre-op": "choice.diagnosisRole.pre-op",
+        "post-op": "choice.diagnosisRole.post-op",
+        "billing": "choice.diagnosisRole.billing"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_DIAGNOSES_ROLES"
+    },
+    {
       "id": "contact.diagnoses.levels",
       "section": "resources",
       "type": "set",
@@ -716,28 +761,6 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "propertyName": "CONTACT_PROCEDURE_DIAGNOSES_LEVELS"
-    },
-    {
-      "id": "contact.inheritDiagnoses",
-      "section": "resources",
-      "type": "boolean",
-      "default": false,
-      "status": "agreed",
-      "control": "checkbox",
-      "enabledWhen": [
-        {
-          "option": "resource.Encounter.enabled",
-          "equals": true
-        }
-      ],
-      "binding": {
-        "kind": "java-property",
-        "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER"
-      },
-      "labelKey": "option.contact.inheritDiagnoses.label",
-      "helpKey": "option.contact.inheritDiagnoses.help",
-      "disabledReasonKey": "disabled.requiresSelection",
-      "propertyName": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER"
     },
     {
       "id": "reference.Condition.encounter",

@@ -250,3 +250,14 @@ test('document encounter strategies roundtrip and preserve saved checkbox choice
   invalid.values['resource.DocumentReference.enabled'] = false
   assert.equal(optionEnabled(option.id, invalid.values), false)
 })
+
+test('diagnosis roles depend on Conditions; saved inheritance flags are retired', () => {
+  const config = defaults()
+  assert.equal(optionEnabled('contact.diagnoses.roles', config.values), true)
+  config.values['resource.Condition.enabled'] = false
+  assert.equal(optionEnabled('contact.diagnoses.roles', config.values), false)
+  config.values['contact.inheritDiagnoses'] = true
+  const restored = importConfiguration(JSON.stringify(config))
+  assert.equal('contact.inheritDiagnoses' in restored.values, false)
+  assert.equal(restored.values['resource.Condition.enabled'], false)
+})

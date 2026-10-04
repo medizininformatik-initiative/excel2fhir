@@ -30,6 +30,43 @@ flowchart LR
 
 [Converter usage](converter-usage.md) defines the common input and output contract.
 
+## Contact reconstruction and matching
+
+Each `ConverterResult` owns its `ContactConversionState` and `ContactIndex`.
+Contact reconstruction can interleave independent conversions without sharing the
+current facility, department, primary stay or derived-end bookkeeping. IDs are
+allocated from the resources of that conversion result.
+
+The input index records patient identity, facility case, contact level, original
+parent, source row and whether a care-location contact is secondary. It retains
+live input encounters so end times completed by later rows are available to
+matching. Output copies can omit patient references or change `partOf` without
+changing this input hierarchy. An Encounter without `partOf` is not sufficient
+evidence for a facility contact; explicit contact-level coding is preserved when
+FHIR resources are copied or serialized.
+
+The matching API requires the same patient and requested level, includes both
+period boundaries, and treats a missing end as open. It chooses the latest start
+and then the earliest input row. Timestamp candidates are tried in order until a
+match is found. Operation, consultation and examination/treatment contacts are
+excluded from automatic care-location targets. Input case lookup uses patient ID
+and case number together.
+
+`ContactOutputPolicy` selects emitted contact levels and derives `partOf` from
+that index. When all levels are deselected, the facility case is emitted as a
+general Encounter without its KDS contact-level coding or profile claim.
+`ClinicalEncounterAssignment` uses per-resource input context captured by the
+converter, retaining patient identity after patient references are removed.
+It applies the configured clinical timestamp candidates and contact level.
+DocumentReference strategies distinguish supplied contacts, missing contacts,
+unresolved contacts and an explicitly entered output timestamp. The generated
+run timestamp is not used for matching. Reference omissions and conflicts appear
+in `encounterReferenceIssues` in the import report.
+
+These projections are shared by JSON and NDJSON output. The complete contract
+defaults remain blocked until the remaining resource modes, transformations,
+DAR and identifier execution are implemented.
+
 ## Synthea input
 
 The Python importer projects Synthea R4 bundles into copies of the Excel template.
