@@ -38,7 +38,7 @@ def incoming():
 
 def input_filename(kind):
     try:
-        return {'workbook': 'input.xlsx', 'csv': 'input.zip', 'synthea': 'input.json', 'synthea-zip': 'input.zip'}[kind]
+        return {'workbook': 'input.xlsx', 'csv': 'input.zip', 'synthea': 'input.json', 'synthea-zip': 'input.zip', 'synthea-generation': 'generation.json'}[kind]
     except KeyError as error:
         raise ValueError('Unknown input kind') from error
 

@@ -102,8 +102,15 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook'):
-    if input_path is None:
+                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook', generation_settings=None):
+    specification = None
+    if input_path is None and source == 'synthea-generation':
+        import generation
+        specification = generation.normalize(generation_settings)
+        input_kind = 'synthea-generation'
+    elif generation_settings is not None:
+        raise ValueError('Generation settings require the Synthea generation source')
+    if input_path is None and specification is None:
         if source in SOURCES:
             input_path = APP / SOURCES[source]
         else:
@@ -119,7 +126,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     prepared.append(job_id)
     from inputs import input_filename
     filename = input_filename(input_kind)
-    shutil.copyfile(input_path, directory / filename)
+    if specification is None:
+        shutil.copyfile(input_path, directory / filename)
+    else:
+        (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
     if profile == 'workbook':
         execution = {}
         config = {'id': 'workbook', 'name': 'Input configurations'}
@@ -142,6 +152,12 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     if input_kind.startswith('synthea'):
         import synthea_runtime
         snapshot['syntheaImportSha256'] = synthea_runtime.fingerprint()
+        if input_kind == 'synthea-generation':
+            import generation
+            generation.normalize(json.loads((directory / filename).read_text()))
+            snapshot['syntheaGeneratorSha256'] = generation.catalogue()['sha256']
+            snapshot['syntheaRevision'] = generation.catalogue()['revision']
+            snapshot['generation'] = json.loads((directory / filename).read_text())
     if source_name:
         snapshot['sourceName'] = source_name
     if batch_id:
@@ -154,10 +170,12 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             (directory / name).chmod(0o444)
 
 
-def create(source, profile, configuration_properties=None, request_id=None):
+def create(source, profile, configuration_properties=None, request_id=None, generation_settings=None):
     descriptor = {'kind': 'single', 'source': source, 'profile': profile, 'configuration': configuration_properties}
+    if generation_settings is not None:
+        descriptor['generation'] = generation_settings
     return submit(descriptor, request_id,
-                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties))[0]
+                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings))[0]
 
 
 def repeat(job_id, request_id):
@@ -181,7 +199,7 @@ def repeat(job_id, request_id):
         prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
                     input_path=folder / filename, saved_configuration=config if text is not None else None,
                     repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256'],
-                                   **({'syntheaImportSha256': snapshot['syntheaImportSha256']} if 'syntheaImportSha256' in snapshot else {})},
+                                   **{key: snapshot[key] for key in ('syntheaImportSha256', 'syntheaGeneratorSha256', 'syntheaRevision') if key in snapshot}},
                     source_name=snapshot.get('sourceName'), input_kind=input_kind)
     return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 
@@ -200,7 +218,10 @@ def job_result(row):
         config = snapshot['profile']
         job.update(source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
-                   repeated_from=snapshot.get('repeatedFrom', {}).get('id'))
+                   repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
+        result = snapshot_path.parent / 'generation-result.json'
+        if job['state'] in {'succeeded', 'failed'} and result.is_file():
+            job['generation_result'] = json.loads(result.read_text())
     return job
 
 

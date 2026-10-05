@@ -1,3 +1,12 @@
+FROM maven:3.8.5-openjdk-17 AS synthea-build
+COPY scripts/synthea-version.txt /synthea-version.txt
+WORKDIR /synthea
+RUN git init && git remote add origin https://github.com/astruebi/synthea.git \
+    && git fetch --depth 1 origin "$(cat /synthea-version.txt)" \
+    && git checkout --detach FETCH_HEAD \
+    && test "$(git rev-parse HEAD)" = "$(cat /synthea-version.txt)" \
+    && ./gradlew --no-daemon shadowJar
+
 FROM maven:3.8.5-openjdk-17 AS converter
 WORKDIR /build
 COPY pom.xml .
@@ -9,6 +18,9 @@ RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked mvn -
 RUN java -cp target/excel2fhir.jar ExportDefaults.java /defaults
 
 FROM scratch AS runtime-files
+COPY --from=synthea-build /synthea/build/libs/synthea-with-dependencies.jar /synthea/target/synthea.jar
+COPY --from=synthea-build /synthea-version.txt /synthea/target/synthea-revision.txt
+COPY --from=synthea-build /synthea/LICENSE /synthea/NOTICE /synthea/third-party/synthea/
 COPY scripts /synthea/scripts
 COPY src/main/resources/workbook-absent-reasons.json /synthea/src/main/resources/workbook-absent-reasons.json
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /synthea/

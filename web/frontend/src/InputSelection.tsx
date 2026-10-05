@@ -57,7 +57,7 @@ export function InputSelection({ language, source, onChange, onBusy }: {
   return <div className="min-w-0 w-full sm:w-80">
     <label className="flex flex-col gap-2 text-sm font-medium">{t('app.input')}
       <select className="rounded-lg border border-slate-300 p-2.5" disabled={uploading} value={source} onChange={e => onChange(e.target.value)}>
-        <option value="starter">{t('app.starter')}</option><option value="demo">{t('app.demo')}</option>
+        <option value="synthea-generation">{t('app.generation.title')}</option><option value="starter">{t('app.starter')}</option><option value="demo">{t('app.demo')}</option>
         {items.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
       </select>
     </label>

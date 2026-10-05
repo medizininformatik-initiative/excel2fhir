@@ -134,7 +134,7 @@ def delete(configuration_id, revision):
         path_for(root, configuration_id).replace(trash / (item['id'] + '.json'))
 
 
-def start_jobs(source, selections, request_id):
+def start_jobs(source, selections, request_id, generation_settings=None):
     def prepare(prepared):
         if len({selection['id'] for selection in selections}) != len(selections):
             raise ValueError('Choose each saved configuration only once')
@@ -148,5 +148,8 @@ def start_jobs(source, selections, request_id):
         for item in items:
             store.prepare_job(prepared, source, 'default', item['configurationProperties'],
                               saved_configuration={key: item[key] for key in ('id', 'name', 'revision')},
-                              batch_id=batch_id)
-    return store.submit({'kind': 'saved', 'source': source, 'selections': selections}, request_id, prepare)
+                              batch_id=batch_id, generation_settings=generation_settings)
+    descriptor = {'kind': 'saved', 'source': source, 'selections': selections}
+    if generation_settings is not None:
+        descriptor['generation'] = generation_settings
+    return store.submit(descriptor, request_id, prepare)
