@@ -1,5 +1,6 @@
 """Persistent prototype queue. Each job owns its files and converter process."""
 from contextlib import contextmanager
+import fcntl
 import hashlib
 import json
 import os
@@ -18,15 +19,21 @@ SOURCES = {"starter": "input/FHIR_Testdatengenerator_Vorlage.xlsx", "demo": "FHI
 @contextmanager
 def connect():
     ROOT.mkdir(parents=True, exist_ok=True)
-    db = sqlite3.connect(ROOT / "jobs.sqlite", timeout=15)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, cancel INTEGER NOT NULL DEFAULT 0, exit_code INTEGER)")
+    db = None
     try:
+        # Serialize first-time WAL/schema initialization across API threads and worker.
+        with (ROOT / '.database-init.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            db = sqlite3.connect(ROOT / 'jobs.sqlite', timeout=15)
+            db.row_factory = sqlite3.Row
+            db.execute('PRAGMA journal_mode=WAL')
+            db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, cancel INTEGER NOT NULL DEFAULT 0, exit_code INTEGER)")
+            db.execute("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, jobs TEXT NOT NULL)")
         with db:
             yield db
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 def digest(path):
@@ -49,41 +56,118 @@ def validate_configuration(path):
         metadata.unlink(missing_ok=True)
 
 
-def create(source, profile, configuration_properties=None):
-    if source not in SOURCES or profile not in {"default", "workbook"}:
-        raise ValueError("Unknown input or configuration profile")
-    if profile == "workbook" and configuration_properties is not None:
-        raise ValueError("Workbook configuration cannot be combined with editor settings")
-    job_id = str(uuid.uuid4())
-    directory = ROOT / "jobs" / job_id
-    directory.mkdir(parents=True)
+class SubmissionConflict(ValueError):
+    pass
+
+
+def submitted(request_id, fingerprint, db):
+    if not request_id:
+        return None
+    row = db.execute("SELECT fingerprint,jobs FROM submissions WHERE id=?", (request_id,)).fetchone()
+    if row:
+        if row['fingerprint'] != fingerprint:
+            raise SubmissionConflict('This submission ID was already used for different settings')
+        return json.loads(row['jobs'])
+    return None
+
+
+def submit(descriptor, request_id, prepare):
+    """Publish all prepared snapshots in one transaction; retries return the same jobs."""
+    fingerprint = hashlib.sha256(json.dumps(descriptor, sort_keys=True).encode()).hexdigest()
+    with connect() as db:
+        existing = submitted(request_id, fingerprint, db)
+    if existing is not None:
+        return existing
+    prepared = []
+    accepted = False
     try:
-        shutil.copyfile(APP / SOURCES[source], directory / "input.xlsx")
-        if profile == "workbook":
-            execution = {}
-        elif configuration_properties is None:
-            shutil.copyfile(APP / "defaults.config", directory / "default.config")
-            execution = {"formats": ["JSON", "NDJSON"], "validation": False, "patientsPerFile": 1}
+        prepare(prepared)
+        with connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            existing = submitted(request_id, fingerprint, db)
+            if existing is not None:
+                return existing
+            now = time.time()
+            for index, job_id in enumerate(prepared):
+                db.execute("INSERT INTO jobs(id,state,created) VALUES (?, 'queued', ?)", (job_id, now + index * 0.000001))
+            if request_id:
+                db.execute("INSERT INTO submissions(id,fingerprint,jobs) VALUES (?,?,?)",
+                           (request_id, fingerprint, json.dumps(prepared)))
+        accepted = True
+        return prepared
+    finally:
+        if not accepted:
+            for job_id in prepared:
+                shutil.rmtree(ROOT / 'jobs' / job_id)
+
+
+def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
+                saved_configuration=None, batch_id=None, repeated_from=None):
+    if input_path is None and source not in SOURCES:
+        raise ValueError('Unknown input')
+    if profile not in {'default', 'workbook'}:
+        raise ValueError('Unknown configuration source')
+    if profile == 'workbook' and configuration_properties is not None:
+        raise ValueError('Workbook configuration cannot be combined with editor settings')
+    job_id = str(uuid.uuid4())
+    directory = ROOT / 'jobs' / job_id
+    directory.mkdir(parents=True)
+    prepared.append(job_id)
+    shutil.copyfile(input_path or APP / SOURCES[source], directory / 'input.xlsx')
+    if profile == 'workbook':
+        execution = {}
+        config = {'id': 'workbook', 'name': 'Workbook configurations'}
+    else:
+        if configuration_properties is None:
+            shutil.copyfile(APP / 'defaults.config', directory / 'default.config')
+            execution = {'formats': ['JSON', 'NDJSON'], 'validation': False, 'patientsPerFile': 1}
         else:
             if not isinstance(configuration_properties, str) or not 1 <= len(configuration_properties) <= 1_000_000:
-                raise ValueError("Invalid configuration size")
-            (directory / "default.config").write_text(configuration_properties)
-            execution = validate_configuration(directory / "default.config")
-        config = {"id": "default" if configuration_properties is None else "editor",
-                  "name": "Converter defaults" if configuration_properties is None else "Submitted configuration",
-                  "optionsProperties": (directory / "default.config").read_text()} if profile != "workbook" else {
-                      "id": "workbook", "name": "Workbook configurations"}
-        snapshot = {"schemaVersion": 1, "source": source, "profile": config, "inputSha256": digest(directory / "input.xlsx"), "converterSha256": digest(APP / "excel2fhir.jar"), **execution}
-        (directory / "snapshot.json").write_text(json.dumps(snapshot, indent=2))
-        for name in ("input.xlsx", "default.config", "snapshot.json"):
-            if (directory / name).exists():
-                (directory / name).chmod(0o444)
-        with connect() as db:
-            db.execute("INSERT INTO jobs(id,state,created) VALUES (?, 'queued', ?)", (job_id, time.time()))
-    except Exception:
-        shutil.rmtree(directory)
-        raise
-    return job_id
+                raise ValueError('Invalid configuration size')
+            (directory / 'default.config').write_text(configuration_properties)
+            execution = validate_configuration(directory / 'default.config')
+        config = {'id': 'default' if configuration_properties is None else 'editor',
+                  'name': 'Converter defaults' if configuration_properties is None else 'Submitted configuration',
+                  'optionsProperties': (directory / 'default.config').read_text()}
+        if saved_configuration:
+            config.update(saved_configuration)
+    snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
+                'inputSha256': digest(directory / 'input.xlsx'), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+    if batch_id:
+        snapshot['batchId'] = batch_id
+    if repeated_from:
+        snapshot['repeatedFrom'] = repeated_from
+    (directory / 'snapshot.json').write_text(json.dumps(snapshot, indent=2))
+    for name in ('input.xlsx', 'default.config', 'snapshot.json'):
+        if (directory / name).exists():
+            (directory / name).chmod(0o444)
+
+
+def create(source, profile, configuration_properties=None, request_id=None):
+    descriptor = {'kind': 'single', 'source': source, 'profile': profile, 'configuration': configuration_properties}
+    return submit(descriptor, request_id,
+                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties))[0]
+
+
+def repeat(job_id, request_id):
+    def prepare(prepared):
+        original = get(job_id)
+        if not original:
+            raise FileNotFoundError('Run not found')
+        if original['state'] in {'queued', 'running'}:
+            raise SubmissionConflict('Wait until the original run has ended before repeating it')
+        folder = ROOT / 'jobs' / job_id
+        snapshot = json.loads((folder / 'snapshot.json').read_text())
+        if digest(folder / 'input.xlsx') != snapshot['inputSha256']:
+            raise ValueError('The saved input has changed')
+        config = snapshot['profile']
+        text = None if config['id'] == 'workbook' else config['optionsProperties']
+        if text is not None and (folder / 'default.config').read_text() != text:
+            raise ValueError('The saved configuration has changed')
+        prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
+                    input_path=folder / 'input.xlsx', saved_configuration=config if text is not None else None,
+                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256']})
+    return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 
 
 def jobs():
@@ -94,6 +178,13 @@ def jobs():
 def job_result(row):
     job = dict(row)
     job["download_available"] = job["state"] in {"succeeded", "failed"} and (ROOT / "jobs" / job["id"] / "result.zip").is_file()
+    snapshot_path = ROOT / 'jobs' / job['id'] / 'snapshot.json'
+    if snapshot_path.is_file():
+        snapshot = json.loads(snapshot_path.read_text())
+        config = snapshot['profile']
+        job.update(source=snapshot['source'], configuration={'id': config['id'], 'name': config['name'],
+                   'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
+                   repeated_from=snapshot.get('repeatedFrom', {}).get('id'))
     return job
 
 

@@ -79,6 +79,23 @@ draft or an open confirmation.
 Changes to saved configurations never modify the snapshots of existing runs.
 Import and export continue to use the shared versioned configuration format.
 
+## Run saved configurations and repeat runs
+
+Choose **Saved configurations** as the configuration source and select one or
+more entries. Starting creates one independent run per selected configuration,
+using the same input workbook. Each snapshot records its configuration name,
+revision and settings. The shared submission identifier groups the runs; the
+worker processes them sequentially. A stale or invalid selection prevents the
+entire submission. Repeated delivery of the same submission returns its existing
+runs instead of creating duplicates.
+
+Each finished, failed, cancelled or interrupted run offers **Repeat run**. It
+copies the original input and settings, even if the saved configuration or
+bundled input has since changed. The new run uses the currently installed
+converter and records both its version hash and the source run's version hash.
+Existing results remain attached to their original runs. Repeating a run does
+not depend on the current editor draft or configuration selection.
+
 ## Start and use
 
 ```sh
@@ -170,7 +187,7 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    IDs, seeds, cross-resource validation and variant isolation belong to #84.
 
 Shared option execution uses the same Java pipeline for Excel, CSV and web.
-Multi-configuration runs and repeating saved runs are tracked in #78; expanded sources in #79. Data Node
+Persistent job execution and saved configurations are tracked in #78; expanded sources in #79. Data Node
 lifecycle/import controls and TORCH/FDE user workflows follow in #81–#82.
 
 ## Versioned Data Node probe

@@ -77,7 +77,7 @@
   "app.logs": "Converter logs",
   "app.outputHint": "Starting a run saves its input and selected configuration source. Running jobs continue when you reload the page.",
   "app.profile": "Configuration source",
-  "app.retry": "Start a new conversion to retry.",
+  "app.retry": "You can repeat this run using its saved input and configuration.",
   "app.runs": "Runs",
   "app.selectRun": "Select a run to inspect its logs.",
   "app.snapshot": "Configuration snapshot",
@@ -486,5 +486,18 @@
   "option.resource.Observation.laboratory.ucumCodeInUnit.label": "Output code in unit instead of code",
   "option.resource.Observation.laboratory.ucumCodeInUnit.help": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
   "option.resource.Observation.vitalSigns.ucumCodeInUnit.label": "Output code in unit instead of code",
-  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output."
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+  "app.runConfigurations": "Configurations for this submission",
+  "app.runConfigurationsHint": "Select one or more saved configurations. Each creates a separate run with the same input and independent results. Runs execute sequentially.",
+  "app.loadingConfigurations": "Loading configurations…",
+  "app.noRunConfigurations": "No configurations have been saved yet. Select “Current editor settings” to save a configuration.",
+  "app.runConfigurationsMissing": "A selected configuration was deleted. Remove missing entries before starting.",
+  "app.removeMissingSelections": "Remove missing entries",
+  "app.startConfigurations": "Start runs ({count})",
+  "app.savedConfigurationHint": "These runs use the saved configurations selected above. The disabled editor continues to show your draft.",
+  "app.converterDefaults": "Converter defaults",
+  "app.repeatRun": "Repeat run",
+  "app.repeatRunHint": "Create a new run using this run’s saved input and settings. Uses the currently installed converter version, which is recorded in the new snapshot.",
+  "app.runGroup": "Submission group",
+  "app.repeatedFrom": "Repeated from"
 }

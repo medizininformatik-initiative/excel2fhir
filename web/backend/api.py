@@ -24,6 +24,7 @@ async def local_mutations(request: Request, call_next):
 
 class JobRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    requestId: UUID | None = None
     source: str = "starter"
     profile: str = "default"
     configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
@@ -53,7 +54,9 @@ def jobs():
 @app.post("/api/jobs", status_code=201)
 def create(request: JobRequest):
     try:
-        job_id = store.create(request.source, request.profile, request.configurationProperties)
+        job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None)
+    except store.SubmissionConflict as error:
+        raise HTTPException(409, str(error))
     except ValueError as error:
         raise HTTPException(422, str(error))
     return store.get(job_id)
@@ -125,6 +128,8 @@ def configuration_call(action, *args):
         raise HTTPException(404, 'Configuration not found')
     except configurations.Conflict as error:
         raise HTTPException(409, str(error))
+    except store.SubmissionConflict as error:
+        raise HTTPException(409, str(error))
     except ValueError as error:
         raise HTTPException(422, str(error))
 
@@ -158,3 +163,35 @@ def duplicate_configuration(configuration_id: str, request: ConfigurationDuplica
 @app.delete('/api/configurations/{configuration_id}', status_code=204)
 def delete_configuration(configuration_id: str, request: ConfigurationDelete):
     configuration_call(configurations.delete, configuration_id, request.revision)
+
+
+class SavedSelection(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    id: UUID
+    revision: int = Field(ge=1, strict=True)
+
+
+class BatchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: UUID
+    source: str = 'starter'
+    configurations: list[SavedSelection] = Field(min_length=1, max_length=100)
+
+
+class RepeatRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: UUID
+
+
+@app.post('/api/job-batches', status_code=201)
+def start_batch(request: BatchRequest):
+    selections = [{'id': str(item.id), 'revision': item.revision} for item in request.configurations]
+    ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId))
+    return [store.get(job_id) for job_id in ids]
+
+
+@app.post('/api/jobs/{job_id}/repeat', status_code=201)
+def repeat_job(job_id: str, request: RepeatRequest):
+    directory(job_id)
+    new_id = configuration_call(store.repeat, job_id, str(request.requestId))
+    return store.get(new_id)
