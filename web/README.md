@@ -229,12 +229,13 @@ docker compose -f web/compose.yml down
 ```
 
 The workbench listens on the local loopback interface. It is intended for one
-local user. Only the web service publishes a port; API and worker communicate
+local user. The web service publishes the workbench port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
 The workbench offers the two bundled inputs and uploaded workbooks, CSV archives and Synthea bundles with embedded,
 editor or saved configurations.
 Saved configurations and uploaded inputs are stored in the local workbench volume.
-Environment controls are tracked separately.
+Optional FHIR servers and the local Data Portal are selected with Compose profiles; see
+[local services](deployment/README.md).
 
 ## Verify
 
@@ -317,7 +318,7 @@ volumes persist Blaze data and TORCH output. FDE uploads reports to Blaze;
 `verify_fde.py` exports the latest reports into `node-test/fde-output`.
 The TORCH test has a 2 GiB JVM heap and a 3 GiB container memory limit.
 Absolute host paths identify bind mounts; these must be available to the Docker
-host. Run the controller on the host for this probe.
+host. Run the preparation and probe scripts on the host.
 
 This data-plane probe uses direct internal FHIR access with OAuth issuer settings
 empty. TORCH's external proxy route requires Basic auth over locally verified
@@ -348,9 +349,8 @@ FDE reports data availability; it does not replace FHIR profile validation.
 docker compose -f /absolute/node-test/compose.yml down
 ```
 
-Use a separate project/target per dataset when resource IDs overlap. No web API
-accepts Docker commands or host paths. A future internal controller should expose
-only allowlisted environment operations and coordinate environment ownership.
+Use a separate project/target per dataset when resource IDs overlap. Start and stop services with Docker Compose. The web application communicates
+with configured services over HTTP and has no Docker socket access.
 
 ## Validation evidence and remaining integration work
 
