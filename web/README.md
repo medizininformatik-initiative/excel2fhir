@@ -79,26 +79,29 @@ draft or an open confirmation.
 Changes to saved configurations never modify the snapshots of existing runs.
 Import and export continue to use the shared versioned configuration format.
 
-## Uploaded workbooks
+## Uploaded inputs
 
-Use **Upload workbook** beside the input selector to add an `.xlsx` file using
-the supported template. Uploads are limited to 64 MiB (256 MiB expanded). The
+Use **Upload input** beside the input selector to add an `.xlsx` workbook using
+the supported template or a `.zip` containing CSV input groups. CSV files must
+be directly at the archive root; use the converter’s table names and group prefixes.
+Each group needs its `Person.csv`. CSV column, row and patient-assignment checks
+use the same parser as conversion. Uploads are limited to 64 MiB (256 MiB expanded). The
 workbench stores the original bytes in its persistent volume and runs the Java
 converter's structural checks before adding the file to the selection. The
-inspection lists sheet names and nonempty row counts, excluding each header.
+inspection lists table names and row counts, excluding each header.
 Clinical consistency checks run during conversion according to the selected
 configuration.
 
-Uploaded workbooks support workbook settings, the editor draft and multiple saved
+Uploaded inputs support embedded settings, the editor draft and multiple saved
 configurations. Each run receives its own copy and SHA-256 checksum; repeating a
 run uses that saved copy. Filenames are display labels, not filesystem paths.
-CSV groups and Synthea sources are covered by the subsequent source integrations.
+CSV archives retain their original bytes; each run extracts its own input directory.
 
 ## Run saved configurations and repeat runs
 
 Choose **Saved configurations** as the configuration source and select one or
 more entries. Starting creates one independent run per selected configuration,
-using the same input workbook. Each snapshot records its configuration name,
+using the same input. Each snapshot records its configuration name,
 revision and settings. The shared submission identifier groups the runs; the
 worker processes them sequentially. A stale or invalid selection prevents the
 entire submission. Repeated delivery of the same submission returns its existing
@@ -117,11 +120,11 @@ not depend on the current editor draft or configuration selection.
 docker compose -f web/compose.yml up -d --build
 ```
 
-Open <http://localhost:5184>, choose a workbook and a **Configuration source**,
-then select **Start conversion**. **Configuration from workbook** runs all included
-configuration sheets as separate variants, or converter defaults if none exist.
-**Current editor settings** uses the editable draft below. When the workbook is
-selected, the retained editor draft is greyed out; it does not preview workbook
+Open <http://localhost:5184>, choose an input and a **Configuration source**,
+then select **Start conversion**. **Configuration from input** runs included Excel configuration sheets or CSV option
+files as separate variants, or converter defaults if none exist.
+**Current editor settings** uses the editable draft below. When the input configuration source is
+selected, the retained editor draft is greyed out; it does not preview embedded
 settings. New browser sessions default to the workbook source; the last selected
 source is saved in the browser. Select a run to view its status and
 recent logs. **Snapshot** downloads the submitted configuration and input and
@@ -146,7 +149,7 @@ docker compose -f web/compose.yml down
 The workbench listens on the local loopback interface. It is intended for one
 local user. Only the web service publishes a port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
-The workbench offers the two bundled inputs and uploaded workbooks with workbook,
+The workbench offers the two bundled inputs and uploaded workbooks and CSV archives with embedded,
 editor or saved configurations.
 Saved configurations and uploaded inputs are stored in the local workbench volume.
 Synthea and environment controls are tracked separately.
@@ -174,7 +177,7 @@ queue and a separate worker with one JVM per conversion. This is the architectur
 for the next workbench increments. The shared converter integration comes next;
 bounded parallel execution follows the shared-state and resource-budget audit.
 
-1. FastAPI copies the selected workbook into a UUID job directory and records the
+1. FastAPI copies the selected input into a UUID job directory and records the
    selected configuration source. For editor settings, it also saves and validates
    the submitted configuration with Java. Workbook settings are read by the
    converter from the saved workbook. It writes the JSON snapshot, then inserts

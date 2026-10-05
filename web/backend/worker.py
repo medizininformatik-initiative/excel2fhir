@@ -8,6 +8,7 @@ import time
 import zipfile
 
 import store
+import inputs
 
 stopping = False
 
@@ -36,14 +37,23 @@ def terminate(process):
 
 def execute(job_id):
     folder = store.ROOT / "jobs" / job_id
-    command = ["java", "-Xmx3g", "-jar", str(store.APP / "excel2fhir.jar"), "-f", str(folder / "input.xlsx"), "-o", str(folder / "output")]
+    command = ["java", "-Xmx3g"]
     process = None
     try:
         snapshot = json.loads((folder / "snapshot.json").read_text())
         if store.digest(store.APP / "excel2fhir.jar") != snapshot["converterSha256"]:
             raise RuntimeError("Converter image changed after submission; start a new run")
-        if store.digest(folder / "input.xlsx") != snapshot["inputSha256"]:
+        kind = snapshot.get('inputKind', 'workbook')
+        input_path = folder / inputs.input_filename(kind)
+        if store.digest(input_path) != snapshot["inputSha256"]:
             raise RuntimeError("Input snapshot has changed")
+        if kind == 'csv':
+            expanded = folder / 'input-csv'
+            inputs.extract_csv(input_path, expanded)
+            command.extend(['-cp', str(store.APP / 'excel2fhir.jar'), 'de.uni_leipzig.life.csv2fhir.Main', '-i', str(expanded)])
+        else:
+            command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-f', str(input_path)])
+        command.extend(['-o', str(folder / 'output')])
         if snapshot["profile"]["id"] != "workbook":
             if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
                 raise RuntimeError("Configuration snapshot has changed")

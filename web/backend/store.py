@@ -102,13 +102,13 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None):
+                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook'):
     if input_path is None:
         if source in SOURCES:
             input_path = APP / SOURCES[source]
         else:
             from inputs import resolve
-            input_path, source_name = resolve(source)
+            input_path, source_name, input_kind = resolve(source)
     if profile not in {'default', 'workbook'}:
         raise ValueError('Unknown configuration source')
     if profile == 'workbook' and configuration_properties is not None:
@@ -117,10 +117,12 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     directory = ROOT / 'jobs' / job_id
     directory.mkdir(parents=True)
     prepared.append(job_id)
-    shutil.copyfile(input_path, directory / 'input.xlsx')
+    from inputs import input_filename
+    filename = input_filename(input_kind)
+    shutil.copyfile(input_path, directory / filename)
     if profile == 'workbook':
         execution = {}
-        config = {'id': 'workbook', 'name': 'Workbook configurations'}
+        config = {'id': 'workbook', 'name': 'Input configurations'}
     else:
         if configuration_properties is None:
             shutil.copyfile(APP / 'defaults.config', directory / 'default.config')
@@ -136,7 +138,7 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         if saved_configuration:
             config.update(saved_configuration)
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
-                'inputSha256': digest(directory / 'input.xlsx'), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+                'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
     if source_name:
         snapshot['sourceName'] = source_name
     if batch_id:
@@ -144,7 +146,7 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     if repeated_from:
         snapshot['repeatedFrom'] = repeated_from
     (directory / 'snapshot.json').write_text(json.dumps(snapshot, indent=2))
-    for name in ('input.xlsx', 'default.config', 'snapshot.json'):
+    for name in (filename, 'default.config', 'snapshot.json'):
         if (directory / name).exists():
             (directory / name).chmod(0o444)
 
@@ -164,16 +166,19 @@ def repeat(job_id, request_id):
             raise SubmissionConflict('Wait until the original run has ended before repeating it')
         folder = ROOT / 'jobs' / job_id
         snapshot = json.loads((folder / 'snapshot.json').read_text())
-        if digest(folder / 'input.xlsx') != snapshot['inputSha256']:
+        from inputs import input_filename
+        input_kind = snapshot.get('inputKind', 'workbook')
+        filename = input_filename(input_kind)
+        if digest(folder / filename) != snapshot['inputSha256']:
             raise ValueError('The saved input has changed')
         config = snapshot['profile']
         text = None if config['id'] == 'workbook' else config['optionsProperties']
         if text is not None and (folder / 'default.config').read_text() != text:
             raise ValueError('The saved configuration has changed')
         prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
-                    input_path=folder / 'input.xlsx', saved_configuration=config if text is not None else None,
+                    input_path=folder / filename, saved_configuration=config if text is not None else None,
                     repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256']},
-                    source_name=snapshot.get('sourceName'))
+                    source_name=snapshot.get('sourceName'), input_kind=input_kind)
     return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 
 

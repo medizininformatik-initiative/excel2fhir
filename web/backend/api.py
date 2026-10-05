@@ -210,11 +210,11 @@ async def upload_input(request: Request, filename: str):
         name = inputs.checked_name(filename)
         with inputs.incoming() as directory:
             size = 0
-            with (directory / 'input.xlsx').open('wb') as target:
+            with (directory / inputs.input_filename(inputs.kind_for_name(name))).open('wb') as target:
                 async for chunk in request.stream():
                     size += len(chunk)
                     if size > inputs.MAX_UPLOAD:
-                        raise HTTPException(413, 'The workbook exceeds 64 MiB')
+                        raise HTTPException(413, 'The input exceeds 64 MiB')
                     target.write(chunk)
             return await run_in_threadpool(inputs.publish, directory, name)
     except ValueError as error:

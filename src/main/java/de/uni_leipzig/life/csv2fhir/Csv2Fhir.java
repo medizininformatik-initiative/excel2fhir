@@ -91,6 +91,11 @@ public class Csv2Fhir {
     public boolean hasImportProblems() { return variantImportProblems || importReport.hasErrors(); }
     public ImportReport getImportReport() { return importReport; }
 
+    ImportReport inspectInputs() throws IOException {
+        loadInputs();
+        return importReport;
+    }
+
     private Collection<String> loadInputs() throws IOException {
         // Read each table once, even when patients or output options are repeated.
         for (TableIdentifier table : TableIdentifier.values()) {

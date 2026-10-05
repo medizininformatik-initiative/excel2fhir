@@ -5,7 +5,7 @@ import { translate, type Language } from './i18n'
 
 type Input = { id: string; name: string; size: number; inspection: { sheets: { name: string; rows: number }[] } }
 
-export function WorkbookInput({ language, source, onChange, onBusy }: {
+export function InputSelection({ language, source, onChange, onBusy }: {
   language: Language; source: string; onChange: (source: string) => void; onBusy: (busy: boolean) => void
 }) {
   const t = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(language, key, params)
@@ -35,7 +35,7 @@ export function WorkbookInput({ language, source, onChange, onBusy }: {
     if (!file) return
     setUploading(true); onBusy(true); setError(null)
     try {
-      if (!file.name.toLowerCase().endsWith('.xlsx') || file.size > 64 * 1024 * 1024) {
+      if (!/\.(xlsx|zip)$/i.test(file.name) || file.size > 64 * 1024 * 1024) {
         setError(t('app.uploadWorkbookLimit')); return
       }
       const response = await fetch('/api/inputs?filename=' + encodeURIComponent(file.name), {
@@ -62,7 +62,7 @@ export function WorkbookInput({ language, source, onChange, onBusy }: {
       </select>
     </label>
     <Button className="mt-2" variant="outline" disabled={uploading} onClick={() => fileInput.current?.click()}><Upload size={16}/>{t(uploading ? 'app.inspectingWorkbook' : 'app.uploadWorkbook')}</Button>
-    <input ref={fileInput} hidden type="file" accept=".xlsx" aria-label={t('app.uploadWorkbook')} onChange={e => void upload(e.target.files?.[0])}/>
+    <input ref={fileInput} hidden type="file" accept=".xlsx,.zip" aria-label={t('app.uploadWorkbook')} onChange={e => void upload(e.target.files?.[0])}/>
     <p className="mt-2 text-xs text-slate-500">{t('app.uploadWorkbookLimit')}</p>
     {failed && <p role="alert" className="mt-2 text-sm text-red-700">{t('app.inputListFailed')}</p>}
     {error && <p role="alert" className="mt-2 break-words text-sm text-red-700">{error}</p>}
