@@ -34,6 +34,9 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     assert list((folder / 'output').glob('*/details/cases/*/Fall.loss.json'))
     assert len(list((folder / 'output').glob('*/excel/*.xlsx'))) == 2
     assert store.get(job)['download_available']
+    manifest = json.loads((folder / 'datasets.json').read_text())
+    assert len(manifest['datasets']) == 1
+    assert manifest['datasets'][0]['inspection']['patients'] == 2
     repeated = store.repeat(job, str(uuid4()))
     assert store.claim() == repeated
     worker.execute(repeated)

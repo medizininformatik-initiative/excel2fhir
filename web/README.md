@@ -156,6 +156,30 @@ converter and records both its version hash and the source run's version hash.
 Existing results remain attached to their original runs. Repeating a run does
 not depend on the current editor draft or configuration selection.
 
+## Inspect datasets and reports
+
+Select a run to see **Datasets and reports**. Each embedded configuration variant
+has its own dataset archive; independent saved configurations remain separate
+runs. The overview shows unique Patient and resource counts, counts by resource
+type, repeated resource IDs and resources without IDs. Inspection streams one
+representation per output folder in this order: JSON, NDJSON, gzip JSON, bzip2
+JSON, ZIP JSON, XML. Additional formats do not increase the counts. Counts do
+not establish FHIR conformance or equality of resources sharing an ID.
+
+Expand the report section for import, validation and projection summaries, then
+use each report link for the complete file. Summaries cover reports up to 2 MiB;
+all reports remain accessible through the file list. Search the file list for
+workbooks, sources, options, reports or logs. File and dataset downloads stream
+from disk. The complete run ZIP remains available alongside the separate FHIR
+dataset archives. Failed runs retain available artifacts for diagnosis.
+
+The worker records a persistent dataset manifest and archive checksum. It indexes
+finished runs when idle and publishes each manifest atomically. The inspection
+JVM has a 512 MiB heap and a five-minute timeout; an inspection failure remains
+visible without changing the converter outcome. Run search filters by source,
+configuration name, run ID or status. **Repeat run** reuses the original input
+and settings; existing datasets remain available independently of a new run.
+
 ## Start and use
 
 ```sh

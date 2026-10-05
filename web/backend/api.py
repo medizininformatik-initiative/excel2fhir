@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 import store
 import configurations
 import inputs
+import datasets
 import generation
 from generation import Settings as GenerationSettings
 from starlette.concurrency import run_in_threadpool
@@ -230,3 +231,39 @@ async def upload_input(request: Request, filename: str):
 @app.get('/api/generation-catalogue')
 def generation_catalogue():
     return generation.catalogue()
+
+
+@app.get('/api/jobs/{job_id}/artifacts')
+def job_artifacts(job_id: str):
+    _, job = directory(job_id)
+    return datasets.get(job_id) if job['state'] in {'succeeded', 'failed'} else {'datasets': [], 'artifacts': []}
+
+
+@app.get('/api/jobs/{job_id}/artifacts/{artifact_id}')
+def artifact_download(job_id: str, artifact_id: str):
+    _, job = directory(job_id)
+    if job['state'] not in {'succeeded', 'failed'}:
+        raise HTTPException(409, 'Run has not ended')
+    try:
+        path = datasets.resolve_artifact(job_id, artifact_id)
+        return FileResponse(path, filename=path.name)
+    except FileNotFoundError as error:
+        raise HTTPException(404, str(error))
+
+
+@app.get('/api/datasets')
+def list_datasets():
+    return [{**item, 'jobId': job['id'], 'state': job['state'], 'created': job['created'],
+             'source': job.get('source'), 'sourceName': job.get('source_name'), 'configuration': job.get('configuration')}
+            for job in store.jobs() if job['state'] in {'succeeded', 'failed'} for item in datasets.get(job['id'])['datasets']]
+
+
+@app.get('/api/datasets/{dataset_id}/download')
+def dataset_download(dataset_id: str):
+    try:
+        _, item, path = datasets.resolve_dataset(dataset_id)
+        if not path.is_file():
+            raise HTTPException(409, 'Dataset archive is not available')
+        return FileResponse(path, filename='dataset-' + dataset_id + '.zip')
+    except FileNotFoundError as error:
+        raise HTTPException(404, str(error))

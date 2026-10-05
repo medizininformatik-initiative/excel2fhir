@@ -4,6 +4,7 @@ import { Download, Play, Square, Activity } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
+import { DatasetResults } from './DatasetResults'
 import { GenerationSettings, type Generation } from './GenerationSettings'
 import { InputSelection } from './InputSelection'
 import { SavedConfigurationSelection, type ConfigurationSelection } from './SavedConfigurationSelection'
@@ -59,6 +60,7 @@ function App() {
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const t = (key: TextKey, params?: Message['params']) => translate(language, key, params)
   const locale = language === 'de' ? 'de-DE' : 'en-GB'
+  const [runSearch, setRunSearch] = useState('')
   const [jobs, setJobs] = useState<Job[]>([])
   const [selected, setSelected] = useState<string | null>(localStorage.getItem('selectedJob'))
   const [source, setSource] = useState('starter')
@@ -155,9 +157,9 @@ function App() {
     </fieldset>
     {alert && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">{t(alert.key, alert.params)}</p>}
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
-      <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><div className="space-y-2">
+      <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => setRunSearch(e.target.value)}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {jobs.map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
+        {jobs.filter(j => [j.id, configurationName(j), j.source_name ?? j.source ?? '', t(stateKey(j.state))].join(' ').toLowerCase().includes(runSearch.toLowerCase())).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
       </div></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><a href={`/api/jobs/${job.id}/snapshot`}>{t('app.snapshot')}</a></Button>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(job.id)}>{t('app.repeatRun')}</Button>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}</div>}</div>
@@ -168,6 +170,7 @@ function App() {
           <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
           <div className="mt-3 flex gap-2"><Button disabled={busy} onClick={() => void repeat()}>{t('app.repeatRun')}</Button><Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(null)}>{t('app.saved.cancel')}</Button></div>
         </div>}
+        {job && <DatasetResults jobId={job.id} state={job.state} language={language}/>}
         <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
       </section>
     </div>

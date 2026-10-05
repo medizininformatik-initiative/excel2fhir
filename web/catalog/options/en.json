@@ -549,5 +549,20 @@
   "app.generation.invalid": "Check number ranges, seeds and dates. The reference date must be on or before the simulation end; the end cannot be in the future.",
   "app.generation.requested": "Requested: {count} patients",
   "app.generation.actual": "Generated: {generated} · imported: {imported} · failed: {failed}",
-  "app.generation.start": "Start generation"
+  "app.generation.start": "Start generation",
+  "app.datasets.title": "Datasets and reports",
+  "app.datasets.failed": "Could not load the result overview.",
+  "app.datasets.incomplete": "This run failed. Available datasets and reports support inspection; they do not establish a successful import.",
+  "app.datasets.download": "Download dataset",
+  "app.datasets.counts": "{patients} patients · {resources} unique resources",
+  "app.datasets.countHint": "Counted formats: {formats}. Repeated resource IDs: {repeated}. Resources without IDs: {missing}. Counting is not FHIR validation.",
+  "app.datasets.resources": "Resource counts",
+  "app.datasets.reports": "Validation and projection reports",
+  "app.datasets.reportCounts": "Import issues: {issues} · omitted content: {omissions} · failed cases: {failures} · end derivations: {derivations} · output decisions: {selections} · validation: {errors} errors, {warnings} warnings",
+  "app.datasets.files": "Result files ({count})",
+  "app.datasets.fileHint": "Files download directly. The complete run ZIP contains all results and reports; dataset ZIPs contain the FHIR files of one configuration.",
+  "app.datasets.search": "Find result files",
+  "app.datasets.moreFiles": "Showing the first 200 matches. Use search to narrow the selection.",
+  "app.datasets.pending": "Inspecting datasets…",
+  "app.datasets.searchRuns": "Find runs by input, configuration or status"
 }
