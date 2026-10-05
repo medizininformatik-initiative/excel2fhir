@@ -79,6 +79,21 @@ draft or an open confirmation.
 Changes to saved configurations never modify the snapshots of existing runs.
 Import and export continue to use the shared versioned configuration format.
 
+## Uploaded workbooks
+
+Use **Upload workbook** beside the input selector to add an `.xlsx` file using
+the supported template. Uploads are limited to 64 MiB (256 MiB expanded). The
+workbench stores the original bytes in its persistent volume and runs the Java
+converter's structural checks before adding the file to the selection. The
+inspection lists sheet names and nonempty row counts, excluding each header.
+Clinical consistency checks run during conversion according to the selected
+configuration.
+
+Uploaded workbooks support workbook settings, the editor draft and multiple saved
+configurations. Each run receives its own copy and SHA-256 checksum; repeating a
+run uses that saved copy. Filenames are display labels, not filesystem paths.
+CSV groups and Synthea sources are covered by the subsequent source integrations.
+
 ## Run saved configurations and repeat runs
 
 Choose **Saved configurations** as the configuration source and select one or
@@ -131,9 +146,10 @@ docker compose -f web/compose.yml down
 The workbench listens on the local loopback interface. It is intended for one
 local user. Only the web service publishes a port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
-The workbench offers the two bundled inputs with workbook or editor configuration.
-Saved configurations are stored in the local workbench volume. Uploads, Synthea
-and environment controls are tracked separately.
+The workbench offers the two bundled inputs and uploaded workbooks with workbook,
+editor or saved configurations.
+Saved configurations and uploaded inputs are stored in the local workbench volume.
+Synthea and environment controls are tracked separately.
 
 ## Verify
 

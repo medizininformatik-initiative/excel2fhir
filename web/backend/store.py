@@ -102,9 +102,13 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                saved_configuration=None, batch_id=None, repeated_from=None):
-    if input_path is None and source not in SOURCES:
-        raise ValueError('Unknown input')
+                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None):
+    if input_path is None:
+        if source in SOURCES:
+            input_path = APP / SOURCES[source]
+        else:
+            from inputs import resolve
+            input_path, source_name = resolve(source)
     if profile not in {'default', 'workbook'}:
         raise ValueError('Unknown configuration source')
     if profile == 'workbook' and configuration_properties is not None:
@@ -113,7 +117,7 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     directory = ROOT / 'jobs' / job_id
     directory.mkdir(parents=True)
     prepared.append(job_id)
-    shutil.copyfile(input_path or APP / SOURCES[source], directory / 'input.xlsx')
+    shutil.copyfile(input_path, directory / 'input.xlsx')
     if profile == 'workbook':
         execution = {}
         config = {'id': 'workbook', 'name': 'Workbook configurations'}
@@ -133,6 +137,8 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             config.update(saved_configuration)
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
                 'inputSha256': digest(directory / 'input.xlsx'), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+    if source_name:
+        snapshot['sourceName'] = source_name
     if batch_id:
         snapshot['batchId'] = batch_id
     if repeated_from:
@@ -166,7 +172,8 @@ def repeat(job_id, request_id):
             raise ValueError('The saved configuration has changed')
         prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
                     input_path=folder / 'input.xlsx', saved_configuration=config if text is not None else None,
-                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256']})
+                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256']},
+                    source_name=snapshot.get('sourceName'))
     return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 
 
@@ -182,7 +189,7 @@ def job_result(row):
     if snapshot_path.is_file():
         snapshot = json.loads(snapshot_path.read_text())
         config = snapshot['profile']
-        job.update(source=snapshot['source'], configuration={'id': config['id'], 'name': config['name'],
+        job.update(source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'))
     return job

@@ -4,12 +4,13 @@ import { Download, Play, Square, Activity } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
+import { WorkbookInput } from './WorkbookInput'
 import { SavedConfigurationSelection, type ConfigurationSelection } from './SavedConfigurationSelection'
 import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
 import { exportPropertiesConfiguration } from './configuration-properties'
 
-type Job = { id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null }
+type Job = { id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -60,6 +61,7 @@ function App() {
   const [jobs, setJobs] = useState<Job[]>([])
   const [selected, setSelected] = useState<string | null>(localStorage.getItem('selectedJob'))
   const [source, setSource] = useState('starter')
+  const [uploadingInput, setUploadingInput] = useState(false)
   const [configurationSource, setConfigurationSource] = useState(() => { const saved = localStorage.getItem('configurationSource'); return saved === 'editor' || saved === 'saved' ? saved : 'workbook' })
   const [runConfigurations, setRunConfigurations] = useState<ConfigurationSelection[]>([])
   const [repeatConfirmation, setRepeatConfirmation] = useState<string | null>(null)
@@ -134,9 +136,9 @@ function App() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-end gap-5">
-        <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.input')}<select className="rounded-lg border border-slate-300 p-2.5" value={source} onChange={e => setSource(e.target.value)}><option value="starter">{t('app.starter')}</option><option value="demo">{t('app.demo')}</option></select></label>
+        <WorkbookInput language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
         <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select className="rounded-lg border border-slate-300 p-2.5" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
-        <Button onClick={() => void start()} disabled={busy || !canStart}><Play size={16}/>{configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t('app.start')}</Button>
+        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t('app.start')}</Button>
       </div>{configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t('app.outputHint')}</p>
     </section>
     {configurationSource === 'workbook' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.workbookConfigurationHint')}</p>}
@@ -150,7 +152,7 @@ function App() {
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {jobs.map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source}</p>}</button>)}
+        {jobs.map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
       </div></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><a href={`/api/jobs/${job.id}/snapshot`}>{t('app.snapshot')}</a></Button>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(job.id)}>{t('app.repeatRun')}</Button>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}</div>}</div>

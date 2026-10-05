@@ -499,5 +499,13 @@
   "app.repeatRun": "Lauf erneut ausführen",
   "app.repeatRunHint": "Erstellt einen neuen Lauf mit der gespeicherten Eingabe und den damaligen Einstellungen dieses Laufs. Verwendet die aktuell installierte Konverterversion; deren Version wird im neuen Konfigurationsstand festgehalten.",
   "app.runGroup": "Gemeinsamer Start",
-  "app.repeatedFrom": "Wiederholung von"
+  "app.repeatedFrom": "Wiederholung von",
+  "app.uploadWorkbook": "Arbeitsmappe hochladen",
+  "app.inspectingWorkbook": "Arbeitsmappe wird geprüft…",
+  "app.uploadWorkbookLimit": "Excel-Arbeitsmappe (.xlsx), maximal 64 MiB. Die Datei wird unverändert gespeichert.",
+  "app.uploadWorkbookFailed": "Die Arbeitsmappe konnte nicht hochgeladen werden.",
+  "app.inputListFailed": "Gespeicherte Eingaben konnten nicht geladen werden.",
+  "app.workbookStructureChecked": "Struktur geprüft · {count} Tabellenblätter",
+  "app.workbookInspectionHint": "Geprüft werden die Tabellenstruktur und Spaltenüberschriften. Zeilen mit Inhalt werden ohne Kopfzeile gezählt. Fachliche Prüfungen erfolgen beim Lauf gemäß der gewählten Konfiguration.",
+  "app.inputRows": "{count} Zeilen mit Inhalt"
 }
