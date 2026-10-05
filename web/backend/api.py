@@ -7,6 +7,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 import store
 import configurations
+import inputs
+from starlette.concurrency import run_in_threadpool
 
 app = FastAPI(title="Excel2FHIR workbench prototype")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "api", "testserver"])
@@ -195,3 +197,25 @@ def repeat_job(job_id: str, request: RepeatRequest):
     directory(job_id)
     new_id = configuration_call(store.repeat, job_id, str(request.requestId))
     return store.get(new_id)
+
+
+@app.get('/api/inputs')
+def list_inputs():
+    return inputs.summaries()
+
+
+@app.post('/api/inputs', status_code=201)
+async def upload_input(request: Request, filename: str):
+    try:
+        name = inputs.checked_name(filename)
+        with inputs.incoming() as directory:
+            size = 0
+            with (directory / 'input.xlsx').open('wb') as target:
+                async for chunk in request.stream():
+                    size += len(chunk)
+                    if size > inputs.MAX_UPLOAD:
+                        raise HTTPException(413, 'The workbook exceeds 64 MiB')
+                    target.write(chunk)
+            return await run_in_threadpool(inputs.publish, directory, name)
+    except ValueError as error:
+        raise HTTPException(422, str(error))

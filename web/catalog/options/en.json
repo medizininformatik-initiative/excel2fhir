@@ -499,5 +499,13 @@
   "app.repeatRun": "Repeat run",
   "app.repeatRunHint": "Create a new run using this run’s saved input and settings. Uses the currently installed converter version, which is recorded in the new snapshot.",
   "app.runGroup": "Submission group",
-  "app.repeatedFrom": "Repeated from"
+  "app.repeatedFrom": "Repeated from",
+  "app.uploadWorkbook": "Upload workbook",
+  "app.inspectingWorkbook": "Inspecting workbook…",
+  "app.uploadWorkbookLimit": "Excel workbook (.xlsx), up to 64 MiB. The file is stored unchanged.",
+  "app.uploadWorkbookFailed": "The workbook could not be uploaded.",
+  "app.inputListFailed": "Saved inputs could not be loaded.",
+  "app.workbookStructureChecked": "Structure checked · {count} sheets",
+  "app.workbookInspectionHint": "Checks cover sheet structure and column headings. Nonempty rows are counted excluding the header. Clinical checks run according to the selected configuration during conversion.",
+  "app.inputRows": "{count} nonempty rows"
 }
