@@ -480,6 +480,24 @@
       "propertyName": "OBSERVATION_LABORATORY_ENABLED"
     },
     {
+      "id": "resource.Observation.laboratory.ucumCodeInUnit",
+      "section": "resources",
+      "type": "boolean",
+      "default": false,
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Observation.laboratory.enabled",
+          "equals": true
+        }
+      ],
+      "labelKey": "option.resource.Observation.laboratory.ucumCodeInUnit.label",
+      "helpKey": "option.resource.Observation.laboratory.ucumCodeInUnit.help",
+      "propertyName": "OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT",
+      "fhirPath": "Observation.valueQuantity / Observation.component.valueQuantity"
+    },
+    {
       "id": "resource.Observation.vitalSigns.enabled",
       "section": "resources",
       "type": "boolean",
@@ -489,6 +507,24 @@
       "labelKey": "option.resource.Observation.vitalSigns.enabled.label",
       "helpKey": "option.resource.Observation.vitalSigns.enabled.help",
       "propertyName": "OBSERVATION_VITAL_SIGNS_ENABLED"
+    },
+    {
+      "id": "resource.Observation.vitalSigns.ucumCodeInUnit",
+      "section": "resources",
+      "type": "boolean",
+      "default": false,
+      "status": "agreed",
+      "control": "checkbox",
+      "enabledWhen": [
+        {
+          "option": "resource.Observation.vitalSigns.enabled",
+          "equals": true
+        }
+      ],
+      "labelKey": "option.resource.Observation.vitalSigns.ucumCodeInUnit.label",
+      "helpKey": "option.resource.Observation.vitalSigns.ucumCodeInUnit.help",
+      "propertyName": "OBSERVATION_VITAL_SIGNS_UCUM_CODE_IN_UNIT",
+      "fhirPath": "Observation.valueQuantity / Observation.component.valueQuantity"
     },
     {
       "id": "resource.Medication.mode",

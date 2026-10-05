@@ -482,5 +482,9 @@
   "app.saved.invalid": "The configuration or its name is invalid. Check the editor messages and use a name of 1–120 characters.",
   "app.saved.failed": "The action could not be completed. Check the connection to the local workspace and try again.",
   "app.saved.loaded": "Configuration loaded into the editor.",
-  "app.saved.done": "Saved configurations updated."
+  "app.saved.done": "Saved configurations updated.",
+  "option.resource.Observation.laboratory.ucumCodeInUnit.label": "Output code in unit instead of code",
+  "option.resource.Observation.laboratory.ucumCodeInUnit.help": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.label": "Output code in unit instead of code",
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output."
 }

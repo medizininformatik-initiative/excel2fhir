@@ -482,5 +482,9 @@
   "app.saved.invalid": "Die Konfiguration oder ihr Name ist ungültig. Prüfe die Editorhinweise und verwende einen Namen mit 1–120 Zeichen.",
   "app.saved.failed": "Die Aktion konnte nicht abgeschlossen werden. Prüfe die Verbindung zum lokalen Arbeitsbereich und versuche es erneut.",
   "app.saved.loaded": "Konfiguration in den Editor geladen.",
-  "app.saved.done": "Gespeicherte Konfigurationen aktualisiert."
+  "app.saved.done": "Gespeicherte Konfigurationen aktualisiert.",
+  "option.resource.Observation.laboratory.ucumCodeInUnit.label": "Code in unit statt in code ausgeben",
+  "option.resource.Observation.laboratory.ucumCodeInUnit.help": "Verschiebt bei UCUM-codierten Messwerten den maschinenlesbaren Code aus code nach unit und entfernt code. Damit lassen sich fehlerhafte Testdaten erzeugen, etwa wenn mmol/L nur in unit steht. Gilt für valueQuantity und component.valueQuantity. Ersetzt die lesbare Einheitenangabe; Messwert, Vergleichszeichen und system bleiben erhalten. DAR-Regeln werden anschließend angewendet. Die FHIR-Validierung kann diese Ausgabe beanstanden.",
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.label": "Code in unit statt in code ausgeben",
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "Verschiebt bei UCUM-codierten Messwerten den maschinenlesbaren Code aus code nach unit und entfernt code. Damit lassen sich fehlerhafte Testdaten erzeugen, etwa wenn mmol/L nur in unit steht. Gilt für valueQuantity und component.valueQuantity. Ersetzt die lesbare Einheitenangabe; Messwert, Vergleichszeichen und system bleiben erhalten. DAR-Regeln werden anschließend angewendet. Die FHIR-Validierung kann diese Ausgabe beanstanden."
 }
