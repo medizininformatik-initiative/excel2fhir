@@ -234,7 +234,7 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     </div>
   )
 }
-export function ConfigurationEditor({ language }: { language: Language }) {
+export function ConfigurationEditor({ language, onChange }: { language: Language; onChange?: (config: Configuration) => void }) {
   const t: Translator = (key, params) =>
     translate(language, key as TextKey, params)
   const [initial] = useState(() => {
@@ -250,6 +250,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     }
   })
   const [config, setConfig] = useState<Configuration>(initial.config)
+  useEffect(() => { onChange?.(config) }, [config, onChange])
   const [tab, setTab] = useState('resources')
   const [message, setMessage] = useState<Message | null>(
     initial.failed ? { key: 'app.config.restoreFailed' } : null
@@ -451,15 +452,15 @@ export function ConfigurationEditor({ language }: { language: Language }) {
           </p>
         </header>
         {tab === 'resources' && (
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-8">
+          <div className="grid grid-cols-[max-content_minmax(0,1fr)] items-start gap-4">
             <nav
               aria-label={t('app.config.anchors')}
-              className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-y-contain"
+              className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-y-contain [scrollbar-gutter:stable]"
             >
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t('app.config.anchors')}
               </p>
-              <div className="flex flex-col gap-2 pb-16">
+              <div className="flex w-max flex-col items-start gap-2 pb-16">
                 {resources.map((r) => {
                   const status = resourceNavigationStatus(r.id, config.values)
                   const round = `resource.${r.id}.mode` in config.values
@@ -486,7 +487,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                           {description}
                         </span>
                       </span>
-                      <span className="min-w-0 break-words">{t(r.labelKey)}</span>
+                      <span className="whitespace-nowrap">{t(r.labelKey)}</span>
                     </a>
                   )
                 })}

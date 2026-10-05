@@ -570,7 +570,7 @@
         },
         "timeShift.enabled": {
           "title": "Shift clinical dates",
-          "description": "Shift all clinical dates and timestamps, including birth date, together.",
+          "description": "Shift all clinical dates and timestamps, including birth date, together. A nonzero offset requires complete dates. Year-only or month-only values stop the run with a message identifying the affected field.",
           "default": false,
           "type": "boolean"
         },
@@ -597,7 +597,7 @@
         },
         "terminology.versionOutput": {
           "title": "Coding version",
-          "description": "Controls version information for codes mapped during Synthea import. Codes and descriptions stay the same.\n\nCatalogue year: Coding.version contains the year used, e.g. “2025”.\n\nOmit: The version is absent. Since the KDS profiles require it for ICD-10-GM, OPS and ATC, validation reports profile errors.\n\nDAR: A Data Absent Reason explains the missing version. It does not establish that the code belongs to a permitted catalogue year.",
+          "description": "Controls version information for codes mapped during Synthea import. Codes and descriptions stay the same.\n\nCatalogue year: Coding.version contains the year used, e.g. “2025”.\n\nOmit: The version is absent. Since the KDS profiles require it for ICD-10-GM, OPS and ATC, validation reports profile errors.\n\nDAR: A Data Absent Reason explains the missing version. It does not establish that the code belongs to a permitted catalogue year. DAR uses the field-specific version rules in the DAR section; without a selected rule, the version is omitted.",
           "default": "catalogue-year",
           "enum": [
             "catalogue-year",

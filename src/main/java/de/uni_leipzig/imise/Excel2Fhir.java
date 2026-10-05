@@ -39,6 +39,9 @@ public class Excel2Fhir {
     /**  */
     private FHIRValidator validator;
     private final boolean validateOutput;
+    private boolean validationRequested, validationProblems;
+
+    public boolean wasValidationRequested() { return validationRequested; }
     private final ValidationResultType minLogLevel;
 
     private boolean importProblems;
@@ -48,7 +51,7 @@ public class Excel2Fhir {
     public boolean hasImportProblems() { return importProblems; }
 
     public boolean hasValidationProblems() {
-        return validator != null && validator.hasValidationProblems();
+        return validationProblems;
     }
 
     /** Counters for all created resources */
@@ -208,6 +211,8 @@ public class Excel2Fhir {
                 throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
             } finally {
                 importProblems |= converter.hasImportProblems();
+                validationRequested |= converter.wasValidationRequested();
+                validationProblems |= converter.hasValidationProblems();
             }
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {

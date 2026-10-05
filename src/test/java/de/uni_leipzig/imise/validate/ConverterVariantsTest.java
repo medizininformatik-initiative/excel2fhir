@@ -122,12 +122,12 @@ public class ConverterVariantsTest {
         }
     }
 
-    @Test public void versionedConfigurationReportsUnsupportedDefaultsBeforeExcelConversion() throws Exception {
+    @Test public void versionedConfigurationAcceptsDefaultsBeforeExcelConversion() throws Exception {
         var options = ConverterOptions.fromText("CONFIGURATION_VERSION=1\nPATIENT_MODE=neither\n");
         var validation = new ExcelTemplateValidator().validate(
                 Path.of("FHIR_Testdatengenerator_Vorlage.xlsx").toFile(), options);
-        assertTrue(validation.hasErrors());
-        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("OUTPUT_FORMATS")));
+        assertFalse(validation.hasErrors());
+        assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
     }
 
 }

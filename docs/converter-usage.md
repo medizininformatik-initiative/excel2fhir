@@ -106,8 +106,9 @@ checks also apply during CSV processing; see [input checks](contact-input-checks
 
 The web editor exports a versioned `.config` format with descriptions and retained
 inactive selections. The Java reader validates that format through the same entry
-points. Execution currently rejects unsupported effective settings, including
-contact defaults, before publishing FHIR output. See the
+points. Versioned configurations control resource selection, time shifts, encounter
+policies, validation and output. Their format, patient-count and validation values
+take precedence over the corresponding CLI flags. Invalid settings fail preflight. See the
 [shared configuration contract](../web/catalog/options/README.md#properties-export-and-import)
 for the implemented scope and syntax.
 

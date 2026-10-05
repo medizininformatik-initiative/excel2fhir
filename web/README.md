@@ -49,11 +49,12 @@ and can be clicked to insert at the
 cursor, replace selected text, or append when no cursor position is available.
 Actual resource counters and collision checks belong to converter execution.
 
-The editor is a configuration draft for the converter integration in #77.
-**Start conversion** currently uses the existing converter defaults. Its job
-snapshot describes that actual execution. Browser-stored editor configurations
-are separate from execution snapshots. Named server profiles and additional
-Synthea/DIZ workflows are tracked separately.
+With the editor source selected, **Start conversion** submits its configuration
+as versioned Properties. The API validates it with the Java converter before queuing the job.
+Each job keeps its own input, configuration and converter fingerprint. Later
+editor changes apply to subsequent jobs. Invalid drafts disable the start action
+only when the editor source is selected;
+server-side validation errors are displayed without creating a job.
 
 ## Start and use
 
@@ -61,20 +62,26 @@ Synthea/DIZ workflows are tracked separately.
 docker compose -f web/compose.yml up -d --build
 ```
 
-Open <http://localhost:5184>, choose a workbook and the default configuration
-profile, and select **Start conversion**. Select a run to view its status and
+Open <http://localhost:5184>, choose a workbook and a **Configuration source**,
+then select **Start conversion**. **Configuration from workbook** runs all included
+configuration sheets as separate variants, or converter defaults if none exist.
+**Current editor settings** uses the editable draft below. When the workbook is
+selected, the retained editor draft is greyed out; it does not preview workbook
+settings. New browser sessions default to the workbook source; the last selected
+source is saved in the browser. Select a run to view its status and
 recent logs. **Snapshot** downloads the submitted configuration and input and
 converter fingerprints. **Download** provides a ZIP containing FHIR results,
-converter reports, effective options and logs. Conversion uses JSON and NDJSON
-with one patient per JSON bundle;
-FHIR validation is disabled. See [converter results](../docs/converter-usage.md#output).
+converter reports, effective options and logs, including for failed validation
+runs. Formats, patients per output file and FHIR validation follow the submitted
+configuration. Defaults are JSON and NDJSON, one patient per JSON bundle and
+FHIR validation disabled. See [converter results](../docs/converter-usage.md#output).
 
 **Cancel** cancels queued work or terminates the running converter process group.
 Reloading or closing the browser leaves work running. A worker restart marks
 unfinished running jobs as `interrupted`; start a new conversion to retry.
 Queued jobs remain queued and run when the worker is available.
 
-The named `workbench` volume persists SQLite, JSON profiles, immutable per-run
+The named `workbench` volume persists SQLite, immutable per-run
 input/configuration copies, logs and results across container recreation.
 
 ```sh
@@ -84,8 +91,8 @@ docker compose -f web/compose.yml down
 The workbench listens on the local loopback interface. It is intended for one
 local user. Only the web service publishes a port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
-The prototype offers the two bundled inputs and one default profile. Uploads,
-profile editing, Synthea and environment controls are follow-up work.
+The workbench offers the two bundled inputs with workbook or editor configuration.
+Named server profiles, uploads, Synthea and environment controls are tracked separately.
 
 ## Verify
 
@@ -110,15 +117,19 @@ queue and a separate worker with one JVM per conversion. This is the architectur
 for the next workbench increments. The shared converter integration comes next;
 bounded parallel execution follows the shared-state and resource-budget audit.
 
-1. FastAPI copies the selected workbook and Java-derived effective defaults into
-   a UUID job directory, writes the JSON snapshot, then inserts the SQLite job.
+1. FastAPI copies the selected workbook into a UUID job directory and records the
+   selected configuration source. For editor settings, it also saves and validates
+   the submitted configuration with Java. Workbook settings are read by the
+   converter from the saved workbook. It writes the JSON snapshot, then inserts
+   the SQLite job.
    The snapshot includes the converter JAR hash. A queued job fails explicitly
    if its converter image changes before execution.
 2. SQLite WAL and short `BEGIN IMMEDIATE` claims allow independent jobs without
    double claiming. One supervisor currently owns recovery and executes jobs
    sequentially. An exclusive lock prevents competing recovery supervisors.
 3. Each job launches its own JVM with its own working directory and output root.
-   The worker gets two CPUs and 2 GiB RAM; the JVM heap is capped at 1536 MiB.
+   The worker gets two CPUs and 4 GiB RAM; the JVM heap is capped at 3 GiB
+   to load the bundled FHIR validation profiles.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not
    capacity measurements for large generation or validation workloads.
 4. `EncounterConverter` contains mutable static contact pointers, collections of
@@ -134,8 +145,8 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    supervisors need leases/heartbeats and per-owner recovery first. Deterministic
    IDs, seeds, cross-resource validation and variant isolation belong to #84.
 
-Shared option execution follows in #77. Durable profile editing and
-richer job management follow in #78; expanded sources follow in #79. Data Node
+Shared option execution uses the same Java pipeline for Excel, CSV and web.
+Durable profile editing and richer job management are tracked in #78; expanded sources in #79. Data Node
 lifecycle/import controls and TORCH/FDE user workflows follow in #81–#82.
 
 ## Versioned Data Node probe

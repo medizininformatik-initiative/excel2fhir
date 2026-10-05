@@ -65,7 +65,14 @@ public class Csv2Fhir {
     private final CSVFormat csvFormat;
 
     /** The validator to validate all separate Resoruces and then the bundle */
-    private final FHIRValidator validator;
+    private FHIRValidator validator;
+    private final FHIRValidator suppliedValidator;
+    private boolean validationRequested, validationProblems;
+
+    public boolean wasValidationRequested() { return validationRequested; }
+    public boolean hasValidationProblems() {
+        return validationProblems || (validator != null && validator.hasValidationProblems());
+    }
 
     /** The options to convert the current csv file set. */
     private final List<ConverterOptions> allConverterOptions;
@@ -191,6 +198,7 @@ public class Csv2Fhir {
                 .setHeader()
                 .setSkipHeaderRecord(true).get();
         this.validator = validator;
+        this.suppliedValidator = validator;
         try {
             optionSets = selectedOptions == null ? ConverterOptionSet.csv(inputDirectory, outputFileNameBase) : List.of();
         } catch (IOException e) {
@@ -240,6 +248,8 @@ public class Csv2Fhir {
                 Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), outputFileNameBase, validator, set.options());
                 fileSetStatistics.add(converter.convertFiles(patientsPerBundle, outputFileTypes));
                 variantImportProblems |= converter.hasImportProblems();
+                validationRequested |= converter.wasValidationRequested();
+                validationProblems |= converter.hasValidationProblems();
             }
             return fileSetStatistics;
         }
@@ -309,7 +319,19 @@ public class Csv2Fhir {
     private ConverterResultStatistics convertPreparedFiles(Collection<String> pids, int patientsPerBundle,
             OutputFileType... outputFileTypes) throws Exception {
 
+        final int fallbackPatients = patientsPerBundle;
+        final OutputFileType[] fallbackFormats = outputFileTypes;
         for (ConverterOptions converterOptions : allConverterOptions) {
+            patientsPerBundle = converterOptions.patientsPerFile(fallbackPatients);
+            outputFileTypes = converterOptions.outputFormats(fallbackFormats);
+            if (converterOptions.validationEnabled(suppliedValidator != null)) {
+                validationRequested = true;
+                if (validator == null) validator = suppliedValidator != null ? suppliedValidator
+                        : new FHIRValidator(de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType.ERROR);
+            } else {
+                validationProblems |= validationRequested && validator != null && validator.hasValidationProblems();
+                validator = null;
+            }
             AdditionalIdentifiers identifiers = new AdditionalIdentifiers(converterOptions.configuration());
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
@@ -555,6 +577,10 @@ public class Csv2Fhir {
         // Later rows can still complete earlier contacts. Project only after all derivations.
         List<Resource> potentialResources = pendingOutput.stream().map(Map.Entry::getValue)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        long shiftDays = ClinicalTimeShift.days(options);
+        ClinicalTimeShift.apply(potentialResources, shiftDays);
+        if (shiftDays != 0) importReport.timeShifts.add(Map.of("patientId", filterID,
+                "iteration", Integer.toString(options.loopCounter), "days", Long.toString(shiftDays)));
         Map<String, TableIdentifier> sourceTables = new java.util.HashMap<>();
         for (var pending : pendingOutput) sourceTables.put(pending.getValue().fhirType() + "/"
                 + pending.getValue().getIdElement().getIdPart(), pending.getKey());

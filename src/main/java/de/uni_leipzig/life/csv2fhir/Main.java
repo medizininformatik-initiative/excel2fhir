@@ -83,6 +83,7 @@ public class Main implements Callable<Integer> {
         try {
             FHIRValidator validator = validateBundles ? createValidator() : null;
             boolean importProblems = false;
+            boolean validationProblems = false, validationRequested = false;
             for (String prefix : prefixes) {
                 var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
                         : ConverterOptionSet.external(converterOptions);
@@ -96,10 +97,11 @@ public class Main implements Callable<Integer> {
                     Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
                     converter.convertFiles(patientsPerBundle, outputFileTypes);
                     importProblems |= converter.hasImportProblems();
+                    validationProblems |= converter.hasValidationProblems();
+                    validationRequested |= converter.wasValidationRequested();
                 }
             }
-            boolean validationProblems = validator != null && validator.hasValidationProblems();
-            return run.finish(importProblems, validationProblems, validateBundles);
+            return run.finish(importProblems, validationProblems, validationRequested);
         } catch (Exception e) {
             run.fail(e);
             throw e;

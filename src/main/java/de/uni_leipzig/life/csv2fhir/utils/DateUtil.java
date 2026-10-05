@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.utils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,7 +10,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.DateType;
@@ -24,27 +21,11 @@ import ca.uhn.fhir.model.api.TemporalPrecisionEnum;
  */
 public class DateUtil {
 
-    /**  */
-    static List<String> formatStrings = List.of("dd.MM.yyyy HH:mm", "dd.MM.yyyy HH:mm:ss", "yyyy");
-
-    /**
-     * @param date
-     * @return
-     * @throws Exception
-     */
+    /** Parse dates without inventing a month or day for partial ISO dates. */
     public static DateType parseDateType(String date) throws Exception {
-        // return new DateType(
-        // Date.from(parseLocalDate(date)
-        // .atStartOfDay(ZoneId.systemDefault())
-        // .toInstant()),
-        // TemporalPrecisionEnum.DAY);
-        for (String formatString : formatStrings) {
-            try {
-                return new DateType(new SimpleDateFormat(formatString).parse(date));
-            } catch (ParseException e) {
-            }
-        }
-        return null;
+        if (date == null || date.isBlank()) return null;
+        if (date.matches("\\d{4}(-\\d{2}(-\\d{2})?)?")) return new DateType(date);
+        return new DateType(parseLocalDateTime(date).toLocalDate().toString());
     }
 
     /**
@@ -136,7 +117,8 @@ public class DateUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
             return LocalDate.parse(dateTime, formatter);
         } catch (DateTimeParseException e) {
-            throw new Exception();
+            return LocalDate.parse(dateTime, DateTimeFormatter.ofPattern("dd.MM.uuuu")
+                    .withResolverStyle(java.time.format.ResolverStyle.STRICT));
         }
     }
 
@@ -146,6 +128,14 @@ public class DateUtil {
      * @throws Exception
      */
     public static DateTimeType parseDateTimeType(String date) throws Exception {
+        if (date.matches("\\d{4}(-\\d{2}(-\\d{2})?)?")) return new DateTimeType(date);
+        if (!date.contains(":")) return new DateTimeType(parseLocalDate(date).toString());
+        try {
+            java.time.OffsetDateTime.parse(date);
+            return new DateTimeType(date);
+        } catch (DateTimeParseException e) {
+            // Local timestamps use the system zone below.
+        }
         LocalDateTime parsedLocalDateTime = parseLocalDateTime(date);
         ZoneId systemDefaultZoneId = ZoneId.systemDefault();
         Instant instantDate = parsedLocalDateTime.atZone(systemDefaultZoneId).toInstant();

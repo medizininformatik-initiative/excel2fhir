@@ -137,6 +137,9 @@ public final class ContractConfiguration {
             validatePattern(rule.get("PATTERN"));
             config.rules.add(Map.copyOf(rule));
         }
+        if (config.stored("output.formats").isEmpty()) throw invalid("Select at least one output format");
+        if (!config.stored("output.patientsPerFile").canConvertToInt())
+            throw invalid("OUTPUT_PATIENTS_PER_FILE exceeds the Java integer range");
         return config;
     }
 
@@ -249,6 +252,8 @@ public final class ContractConfiguration {
         definitions.forEach((id, option) -> {
             if (directBinding(id)) effective(id).ifPresent(value -> result.put(option.path("binding").get("name").asText(), value.asText()));
         });
+        String version = stored("terminology.versionOutput").asText();
+        result.put("SYNTHEA_VERSION_OUTPUT", version.equals("catalogue-year") ? "Jahr" : "");
         return result;
     }
     private boolean directBinding(String id) {
@@ -265,7 +270,10 @@ public final class ContractConfiguration {
             if (!Set.of("resource.Patient.mode", "resource.Condition.enabled", "contact.diagnoses.enabled",
                     "contact.diagnoses.levels", "contact.diagnoses.roles", "resource.Encounter.enabled",
                     "contact.facility.enabled", "contact.department.enabled", "contact.ward-service.enabled",
-                    "contact.department.partOf", "contact.ward-service.partOf").contains(id)
+                    "contact.department.partOf", "contact.ward-service.partOf",
+                    "contact.procedureDiagnoses.enabled", "contact.procedureDiagnoses.levels",
+                    "terminology.versionOutput", "checks.fhirValidation", "output.formats", "output.patientsPerFile").contains(id)
+                    && !ClinicalTimeShift.supports(id)
                     && !ClinicalEncounterAssignment.supports(id)
                     && !ResourceOutputPolicy.supports(id)
                     && !MedicationTransformations.supports(id)

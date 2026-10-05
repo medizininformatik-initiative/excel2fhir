@@ -44,6 +44,21 @@ public class ConverterOptions {
 
     public ContractConfiguration configuration() { return configuration; }
 
+    public boolean validationEnabled(boolean fallback) {
+        return configuration == null ? fallback : configuration.stored("checks.fhirValidation").asBoolean();
+    }
+
+    public int patientsPerFile(int fallback) {
+        return configuration == null ? fallback : configuration.stored("output.patientsPerFile").asInt();
+    }
+
+    public OutputFileType[] outputFormats(OutputFileType[] fallback) {
+        if (configuration == null) return fallback;
+        List<OutputFileType> formats = new ArrayList<>();
+        configuration.stored("output.formats").forEach(value -> formats.add(OutputFileType.valueOf(value.asText())));
+        return formats.toArray(OutputFileType[]::new);
+    }
+
     public PatientOutputPolicy patientOutputPolicy() {
         return configuration == null ? PatientOutputPolicy.GENERATE_REFERENCE
                 : PatientOutputPolicy.fromValue(configuration.stored("resource.Patient.mode").asText());

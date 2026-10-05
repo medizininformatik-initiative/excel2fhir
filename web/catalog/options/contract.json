@@ -898,7 +898,7 @@
           "equals": true
         },
         {
-          "option": "resource.Condition.enabled",
+          "option": "resource.Procedure.enabled",
           "equals": true
         }
       ],
@@ -936,7 +936,7 @@
           "equals": true
         },
         {
-          "option": "resource.Condition.enabled",
+          "option": "resource.Procedure.enabled",
           "equals": true
         }
       ],

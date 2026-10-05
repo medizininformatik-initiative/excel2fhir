@@ -63,8 +63,7 @@ unresolved contacts and an explicitly entered output timestamp. The generated
 run timestamp is not used for matching. Reference omissions and conflicts appear
 in `encounterReferenceIssues` in the import report.
 
-These projections are shared by JSON and NDJSON output. The complete contract
-defaults remain blocked until the remaining contract execution is implemented.
+These projections are shared by JSON and NDJSON output. Versioned contract defaults execute through the same Excel, CSV and web pipeline.
 
 ## Resource output and medication transformations
 
@@ -96,8 +95,8 @@ location periods follow the actual output end. See [encounter end semantics](../
 original resources and potential medication derivatives before output selection,
 then appends identifiers after DAR. A resource identity and repetition consume
 one count per rule across formats and patient bundles. Collision checks include
-existing identifiers whenever a generated pair is involved. Remaining execution
-options are tracked in #77.
+existing identifiers whenever a generated pair is involved. The workbench validates Properties with `ConfigurationPreflight` and stores them
+unchanged in the immutable job snapshot.
 
 ## Synthea input
 
@@ -145,3 +144,12 @@ for packaging changes. Python checks run with
 adds Python and LibreOffice for import; its `workflow` target also includes the
 pinned Synthea generator. CI runs Java/Python tests, CodeQL, Synthea integration
 checks and Trivy image scans. Release builds depend on the workflow checks.
+
+## Clinical time shifts
+
+`ClinicalTimeShift` shifts the internally derived resource graph once before
+medication transformations, reference assignment and encounter output end rules.
+It stages all replacements before mutation, preserves primitive precision and
+explicit offsets, and excludes resource metadata. `ContactIndex` retains the
+same encounter objects, so clinical events and their candidate periods move
+together. Incomplete dates reject a nonzero shift explicitly.

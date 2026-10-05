@@ -12,6 +12,9 @@ import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Resource;
+import org.hl7.fhir.r4.model.Procedure;
+import org.hl7.fhir.r4.model.Period;
+import org.hl7.fhir.r4.model.DateTimeType;
 
 /** Assigns diagnosis references using original contacts before projecting output. */
 public final class DiagnosisOutputPolicy {
@@ -23,22 +26,27 @@ public final class DiagnosisOutputPolicy {
     public DiagnosisOutputPolicy(ContractConfiguration configuration, ContactIndex contacts,
             List<Resource> resources) {
         this.configuration = configuration;
-        if (configuration == null || !configuration.stored("resource.Condition.enabled").asBoolean()
-                || !configuration.effective("contact.diagnoses.enabled").map(v -> v.asBoolean()).orElse(false)) return;
+        if (configuration == null) return;
         Set<String> roles = selected(configuration, "contact.diagnoses.roles");
-        Set<String> levels = selected(configuration, "contact.diagnoses.levels");
-        Map<String, Condition> conditions = new LinkedHashMap<>();
+        Map<String, Resource> conditions = new LinkedHashMap<>();
         for (Resource resource : resources)
-            if (resource instanceof Condition) conditions.put(resource.getIdElement().getIdPart(), (Condition)resource);
+            if (resource instanceof Condition || resource instanceof Procedure)
+                conditions.put(resource.fhirType() + "/" + resource.getIdElement().getIdPart(), resource);
         Set<String> processed = new HashSet<>();
         for (Resource resource : resources) {
             if (!(resource instanceof Encounter) || !processed.add(resource.getId())) continue;
             Encounter encounter = (Encounter)resource;
             for (DiagnosisComponent diagnosis : encounter.getDiagnosis()) {
-                if (!isCondition(diagnosis) || !diagnosis.hasUse() || diagnosis.getUse().getCoding().stream()
-                        .noneMatch(c -> ROLE_SYSTEM.equals(c.getSystem()) && roles.contains(c.getCode()))) continue;
+                boolean procedure = isProcedure(diagnosis);
+                if (!procedure && !isCondition(diagnosis)) continue;
+                String group = procedure ? "contact.procedureDiagnoses" : "contact.diagnoses";
+                if (!configuration.effective(group + ".enabled").map(v -> v.asBoolean()).orElse(false)) continue;
+                if (!procedure && (!diagnosis.hasUse() || diagnosis.getUse().getCoding().stream()
+                        .noneMatch(c -> ROLE_SYSTEM.equals(c.getSystem()) && roles.contains(c.getCode())))) continue;
+                Set<String> levels = selected(configuration, group + ".levels");
                 String id = diagnosis.getCondition().getReferenceElement().getIdPart();
-                Condition condition = conditions.get(id);
+                String key = (procedure ? "Procedure/" : "Condition/") + id;
+                Resource condition = conditions.get(key);
                 for (ContactIndex.Level level : ContactIndex.Level.values()) {
                     String name = levelName(level);
                     if (!levels.contains(name) || !configuration.effective("contact." + name + ".enabled")
@@ -50,18 +58,19 @@ public final class DiagnosisOutputPolicy {
                     if (level.ordinal() <= source.get().level().ordinal()) {
                         target = contacts.ancestor(source.get().patientId(), encounter.getId(), level);
                     } else {
-                        if (!condition.hasRecordedDate()) {
+                        DateTimeType timestamp = timestamp(condition);
+                        if (timestamp == null || !timestamp.hasValue()) {
                             issue(id, encounter, name, "missing-documentation-time");
                             continue;
                         }
-                        target = contacts.matchDescendant(source.get(), level, condition.getRecordedDateElement());
+                        target = contacts.matchDescendant(source.get(), level, timestamp);
                     }
                     if (target.isEmpty()) { issue(id, encounter, name, "no-matching-contact"); continue; }
                     Map<String, DiagnosisComponent> references = assigned.computeIfAbsent(
-                            target.get().encounter().getId(), key -> new LinkedHashMap<>());
+                            target.get().encounter().getId(), unused -> new LinkedHashMap<>());
                     // A target's own role takes precedence over an automatically transferred role.
-                    if (target.get().encounter().getId().equals(encounter.getId())) references.put(id, diagnosis);
-                    else references.putIfAbsent(id, diagnosis);
+                    if (target.get().encounter().getId().equals(encounter.getId())) references.put(key, diagnosis);
+                    else references.putIfAbsent(key, diagnosis);
                 }
             }
         }
@@ -73,8 +82,7 @@ public final class DiagnosisOutputPolicy {
             return configuration.stored("resource.Condition.enabled").asBoolean() ? source : null;
         if (!(source instanceof Encounter)) return source;
         Encounter output = ((Encounter)source).copy();
-        // Procedure references are configured separately.
-        output.getDiagnosis().removeIf(DiagnosisOutputPolicy::isCondition);
+        output.getDiagnosis().removeIf(d -> isCondition(d) || isProcedure(d));
         assigned.getOrDefault(source.getId(), Map.of()).values().forEach(d -> output.addDiagnosis(d.copy()));
         return output;
     }
@@ -91,6 +99,20 @@ public final class DiagnosisOutputPolicy {
         return "Condition".equals(reference.getType())
                 || "Condition".equals(reference.getReferenceElement().getResourceType())
                 || reference.getResource() instanceof Condition;
+    }
+
+    private static boolean isProcedure(DiagnosisComponent diagnosis) {
+        var reference = diagnosis.getCondition();
+        return "Procedure".equals(reference.getType())
+                || "Procedure".equals(reference.getReferenceElement().getResourceType())
+                || reference.getResource() instanceof Procedure;
+    }
+
+    private static DateTimeType timestamp(Resource resource) {
+        if (resource instanceof Condition) return ((Condition)resource).getRecordedDateElement();
+        var performed = ((Procedure)resource).getPerformed();
+        if (performed instanceof DateTimeType) return (DateTimeType)performed;
+        return performed instanceof Period ? ((Period)performed).getStartElement() : null;
     }
 
     private static Set<String> selected(ContractConfiguration configuration, String id) {

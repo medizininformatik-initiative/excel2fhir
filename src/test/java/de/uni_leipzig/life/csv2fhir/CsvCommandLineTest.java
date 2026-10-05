@@ -266,15 +266,60 @@ public class CsvCommandLineTest {
     }
 
     @Test
-    public void versionedConfigurationFailsBeforeOutputWhenDefaultsAreUnsupported() throws Exception {
+    public void versionedConfigurationExecutesOutputAndTimeSettings() throws Exception {
         Path file = temp.newFile("web.config").toPath();
-        Files.writeString(file, "CONFIGURATION_VERSION=1\nPATIENT_MODE=reference-only\n");
-        assertNotEquals(0, run("--converter-options", file.toString()));
-        assertFalse(Files.exists(output.resolve("fhir")));
-        try (var files = Files.walk(output)) {
-            var report = files.filter(p -> p.toString().endsWith(".import.json")).findFirst().orElseThrow();
-            assertTrue(Files.readString(report).contains("OUTPUT_FORMATS"));
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=NDJSON\n"
+                + "TIME_SHIFT_ENABLED=true\nTIME_SHIFT_BASE_DAYS=1\n");
+        assertEquals(0, run("--converter-options", file.toString()));
+        assertFalse(Files.exists(output.resolve("fhir/case.json")));
+        var bundle = OutputFileType.JSON.getParser().parseResource(Bundle.class,
+                Files.readString(output.resolve("fhir/patients.ndjson")));
+        var patient = (org.hl7.fhir.r4.model.Patient)bundle.getEntryFirstRep().getResource();
+        assertEquals("2000-01-02", patient.getBirthDateElement().getValueAsString());
+    }
+
+    @Test public void configurationValidationSelectionOverridesLegacyCliDefault() throws Exception {
+        Path file = temp.newFile("unvalidated.config").toPath();
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nCHECKS_FHIR_VALIDATION=false\n");
+        FHIRValidator validator = mock(FHIRValidator.class);
+        Main command = new Main() { @Override FHIRValidator createValidator() { return validator; } };
+        assertEquals(0, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(),
+                "--converter-options", file.toString(), "-v"));
+        verifyNoInteractions(validator);
+    }
+    @Test public void versionedConfigurationShiftsBeforeCalendarEndAndReportsActualPolicy() throws Exception {
+        var contact = new LinkedHashMap<String, String>();
+        for (String name : new LinkedHashSet<>(TableIdentifier.Fall.getMandatoryColumnNames())) contact.put(name, "");
+        contact.put("Patient-ID", "p1"); contact.put("Fall-Nr", "1");
+        contact.put("Start", "2026-03-31"); contact.put("Ende", "2026-04-02");
+        contact.put("Einrichtungskontaktklasse", "stationaer");
+        try (var writer = Files.newBufferedWriter(input.resolve("case_Fall.csv"));
+                var csv = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
+            csv.printRecord(contact.keySet()); csv.printRecord(contact.values());
+        }
+        Path file = temp.newFile("shifted.config").toPath();
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=NDJSON\nTIME_SHIFT_ENABLED=true\n"
+                + "TIME_SHIFT_BASE_DAYS=1\nENCOUNTER_INPATIENT_END_POLICY=quarter-end\n");
+        assertEquals(0, run("--converter-options", file.toString()));
+        var bundle = OutputFileType.JSON.getParser().parseResource(Bundle.class,
+                Files.readString(output.resolve("fhir/patients.ndjson")));
+        var encounter = (org.hl7.fhir.r4.model.Encounter)bundle.getEntry().stream().map(e -> e.getResource())
+                .filter(r -> r instanceof org.hl7.fhir.r4.model.Encounter).findFirst().orElseThrow();
+        assertEquals("2026-04-01", encounter.getPeriod().getStartElement().getValueAsString());
+        assertEquals("2026-06-30", encounter.getPeriod().getEndElement().getValueAsString());
+        try (var paths = Files.walk(output.resolve("details/reports"))) {
+            String report = Files.readString(paths.filter(p -> p.toString().endsWith(".import.json")).findFirst().orElseThrow());
+            assertTrue(report.contains("timeShifts")); assertTrue(report.contains("quarter-end"));
         }
     }
 
+    @Test public void nonzeroShiftRejectsPartialBirthDateWithoutPublishingFhir() throws Exception {
+        Path person = input.resolve("case_Person.csv");
+        Files.writeString(person, Files.readString(person).replace("2000-01-01", "2000"));
+        Path file = temp.newFile("partial.config").toPath();
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nTIME_SHIFT_ENABLED=true\nTIME_SHIFT_BASE_DAYS=1\n");
+        assertEquals(1, run("--converter-options", file.toString()));
+        assertFalse(Files.exists(output.resolve("fhir")));
+        assertTrue(Files.readString(output.resolve("status.txt")).contains("complete date"));
+    }
 }
