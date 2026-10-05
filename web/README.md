@@ -56,6 +56,29 @@ editor changes apply to subsequent jobs. Invalid drafts disable the start action
 only when the editor source is selected;
 server-side validation errors are displayed without creating a job.
 
+## Saved configurations
+
+With **Current editor settings** selected, use **Save editor configuration**, the
+first action above the saved configurations, to save an executable editor draft
+under a name. Configurations persist as JSON documents
+in the workbench volume and are available across browser sessions and container
+restarts. Names are unique regardless of letter case.
+
+Select an entry and choose **Load into editor** to edit or run it. Confirming the
+load replaces the current draft. **Replace with editor draft** updates the selected
+saved configuration after confirmation. **Rename** changes its name; **Duplicate**
+creates an independent copy of its saved settings under a new name. **Delete**
+removes the entry from the list while retaining the editor draft and existing runs.
+Deleted documents are retained under `configurations/.trash/` in the volume.
+
+Each update checks the saved revision. If another tab changed the same entry,
+cancel the action and choose the current entry before retrying. The list refreshes
+automatically every five seconds while the page is visible and when returning to
+the page. This keeps changes from other tabs visible without replacing the editor
+draft or an open confirmation.
+Changes to saved configurations never modify the snapshots of existing runs.
+Import and export continue to use the shared versioned configuration format.
+
 ## Start and use
 
 ```sh
@@ -92,7 +115,8 @@ The workbench listens on the local loopback interface. It is intended for one
 local user. Only the web service publishes a port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
 The workbench offers the two bundled inputs with workbook or editor configuration.
-Named server profiles, uploads, Synthea and environment controls are tracked separately.
+Saved configurations are stored in the local workbench volume. Uploads, Synthea
+and environment controls are tracked separately.
 
 ## Verify
 
@@ -146,7 +170,7 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    IDs, seeds, cross-resource validation and variant isolation belong to #84.
 
 Shared option execution uses the same Java pipeline for Excel, CSV and web.
-Durable profile editing and richer job management are tracked in #78; expanded sources in #79. Data Node
+Multi-configuration runs and repeating saved runs are tracked in #78; expanded sources in #79. Data Node
 lifecycle/import controls and TORCH/FDE user workflows follow in #81–#82.
 
 ## Versioned Data Node probe

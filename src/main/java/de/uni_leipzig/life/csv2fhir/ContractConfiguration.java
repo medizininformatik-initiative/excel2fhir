@@ -276,6 +276,7 @@ public final class ContractConfiguration {
                     && !ClinicalTimeShift.supports(id)
                     && !ClinicalEncounterAssignment.supports(id)
                     && !ResourceOutputPolicy.supports(id)
+                    && !ObservationOutputPolicy.supports(id)
                     && !MedicationTransformations.supports(id)
                     && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));

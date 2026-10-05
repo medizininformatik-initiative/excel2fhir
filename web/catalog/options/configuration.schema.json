@@ -96,14 +96,14 @@
           ]
         },
         "resource.Location.existingReference": {
-          "title": "Location: reference existing resource",
-          "description": "Set reference in Encounter.location.location to an existing location. The referenced Location is not included in the output.",
+          "title": "Include resource reference",
+          "description": "Set reference in Encounter.location.location. The referenced Location is omitted from the output and must exist in the target system under the same ID. The converter does not check its existence.",
           "default": true,
           "type": "boolean"
         },
         "resource.Location.description": {
-          "title": "Location references: add identifier and display",
-          "description": "Add identifier and display to Encounter.location.location. If referencing an existing location is also selected, reference, identifier and display appear in the same Reference.",
+          "title": "Include identifier and display",
+          "description": "Set identifier and display in Encounter.location.location, where available. Can be used alone or together with “Include resource reference”.",
           "default": false,
           "type": "boolean"
         },
@@ -125,10 +125,22 @@
           "default": true,
           "type": "boolean"
         },
+        "resource.Observation.laboratory.ucumCodeInUnit": {
+          "title": "Output code in unit instead of code",
+          "description": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+          "default": false,
+          "type": "boolean"
+        },
         "resource.Observation.vitalSigns.enabled": {
           "title": "Generate vital signs observation",
           "description": "Include Observation resources for Vital signs in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
+          "type": "boolean"
+        },
+        "resource.Observation.vitalSigns.ucumCodeInUnit": {
+          "title": "Output code in unit instead of code",
+          "description": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+          "default": false,
           "type": "boolean"
         },
         "resource.Medication.mode": {
@@ -142,14 +154,14 @@
           ]
         },
         "resource.Medication.existingReference": {
-          "title": "Medication: reference existing resource",
-          "description": "Set reference in the medicationReference fields of requests, administrations and statements to an existing medication. The referenced Medication is not included in the output.",
+          "title": "Include resource reference",
+          "description": "Set reference in medicationReference. The referenced Medication is omitted from the output and must exist in the target system under the same ID. The converter does not check its existence.",
           "default": true,
           "type": "boolean"
         },
         "resource.Medication.description": {
-          "title": "Medication references: add identifier and display",
-          "description": "Add identifier and display to the medicationReference fields of requests, administrations and statements. If referencing an existing medication is also selected, reference, identifier and display appear in the same Reference.",
+          "title": "Include identifier and display",
+          "description": "Set identifier and display in medicationReference, where available. Can be used alone or together with “Include resource reference”.",
           "default": false,
           "type": "boolean"
         },

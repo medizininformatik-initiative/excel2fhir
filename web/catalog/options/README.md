@@ -34,7 +34,8 @@ a `dar` object keyed by DAR field ID and an `identifierRules` array. Missing
 values use contract defaults. JSON Schema describes accepted shapes; the Java
 adapter applies defaults and validates clinical dependencies. Unknown keys,
 wrong types, unsupported versions and conflicting duplicate values are errors.
-Profile names identify saved configuration profiles, separately from FHIR profiles.
+Saved configurations contain converter settings; FHIR profiles define resource
+structure and constraints.
 
 Controls remain visible. Disabled selections retain their stored values. The
 effective configuration disables unavailable settings and explains why, without
@@ -377,3 +378,13 @@ importer's version value. With `dar`, configure the required coding-version fiel
 in the DAR section; a field without a selected override stays without an imported
 version. Explicit manually entered workbook versions retain their usual input
 semantics; selected DAR field overrides are applied during Java output projection.
+
+## Observation unit error scenario
+
+For laboratory observations and vital signs, **Output code in unit instead of code** deliberately reproduces a missing machine-readable unit code.
+Each category has an independent switch, disabled by default. For UCUM-coded
+`valueQuantity` and `component.valueQuantity`, the converter replaces `unit` with
+`code` and removes `code`. It retains the numeric value, comparator and `system`.
+Reference ranges, other code systems and quantities without a code are preserved.
+DAR overrides are applied afterwards. FHIR validation may report errors for the
+resulting test data, depending on the applicable profiles.

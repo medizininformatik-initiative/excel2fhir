@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse, PlainTextResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 import store
+import configurations
 
 app = FastAPI(title="Excel2FHIR workbench prototype")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "api", "testserver"])
@@ -88,3 +89,72 @@ def download(job_id: str):
     if not job["download_available"]:
         raise HTTPException(409, "Result archive is not available")
     return FileResponse(folder / "result.zip", filename=f"excel2fhir-{job_id}.zip")
+
+
+# Configuration content uses the same versioned Properties contract as the editor.
+
+
+class ConfigurationCreate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    name: str = Field(min_length=1, max_length=120)
+    configurationProperties: str = Field(min_length=1, max_length=1_000_000)
+
+
+class ConfigurationUpdate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    revision: int = Field(ge=1, strict=True)
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
+
+
+class ConfigurationDuplicate(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    revision: int = Field(ge=1, strict=True)
+    name: str = Field(min_length=1, max_length=120)
+
+
+class ConfigurationDelete(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    revision: int = Field(ge=1, strict=True)
+
+
+def configuration_call(action, *args):
+    try:
+        return action(*args)
+    except FileNotFoundError:
+        raise HTTPException(404, 'Configuration not found')
+    except configurations.Conflict as error:
+        raise HTTPException(409, str(error))
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+
+
+@app.get('/api/configurations')
+def list_configurations():
+    return configurations.summaries()
+
+
+@app.get('/api/configurations/{configuration_id}')
+def get_configuration(configuration_id: str):
+    return configuration_call(configurations.get, configuration_id)
+
+
+@app.post('/api/configurations', status_code=201)
+def create_configuration(request: ConfigurationCreate):
+    return configuration_call(configurations.create, request.name, request.configurationProperties)
+
+
+@app.patch('/api/configurations/{configuration_id}')
+def update_configuration(configuration_id: str, request: ConfigurationUpdate):
+    return configuration_call(configurations.update, configuration_id, request.revision,
+                              request.name, request.configurationProperties)
+
+
+@app.post('/api/configurations/{configuration_id}/duplicate', status_code=201)
+def duplicate_configuration(configuration_id: str, request: ConfigurationDuplicate):
+    return configuration_call(configurations.duplicate, configuration_id, request.revision, request.name)
+
+
+@app.delete('/api/configurations/{configuration_id}', status_code=204)
+def delete_configuration(configuration_id: str, request: ConfigurationDelete):
+    configuration_call(configurations.delete, configuration_id, request.revision)

@@ -604,6 +604,7 @@ public class Csv2Fhir {
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.diagnosisReferenceIssues.add(reported);
         }
+        ObservationOutputPolicy observationOutput = new ObservationOutputPolicy(options.configuration());
         DarOverrides darOverrides = new DarOverrides(options.configuration());
         EncounterOutputPolicy encounterOutput = new EncounterOutputPolicy(options.configuration(), result.contacts());
         for (var pending : pendingOutput) {
@@ -640,6 +641,7 @@ public class Csv2Fhir {
             output = encounterAssignments.output(output);
             output = resourceSelection.output(output);
             output = encounterOutput.output(output);
+            output = observationOutput.output(output);
             output = darOverrides.output(output);
             output = encounterOutput.finish(output);
             output = identifiers.output(output, options.loopCounter);
