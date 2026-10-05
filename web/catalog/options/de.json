@@ -77,7 +77,7 @@
   "app.logs": "Konverterprotokoll",
   "app.outputHint": "Beim Start werden Eingabe und gewählte Konfigurationsquelle für diesen Lauf gespeichert. Laufende Aufträge werden beim Neuladen der Seite fortgesetzt.",
   "app.profile": "Konfigurationsquelle",
-  "app.retry": "Für einen erneuten Versuch eine neue Konvertierung starten.",
+  "app.retry": "Du kannst diesen Lauf mit seiner gespeicherten Eingabe und Konfiguration erneut ausführen.",
   "app.runs": "Läufe",
   "app.selectRun": "Einen Lauf auswählen, um sein Protokoll anzuzeigen.",
   "app.snapshot": "Konfigurationsstand",
@@ -486,5 +486,18 @@
   "option.resource.Observation.laboratory.ucumCodeInUnit.label": "Code in unit statt in code ausgeben",
   "option.resource.Observation.laboratory.ucumCodeInUnit.help": "Verschiebt bei UCUM-codierten Messwerten den maschinenlesbaren Code aus code nach unit und entfernt code. Damit lassen sich fehlerhafte Testdaten erzeugen, etwa wenn mmol/L nur in unit steht. Gilt für valueQuantity und component.valueQuantity. Ersetzt die lesbare Einheitenangabe; Messwert, Vergleichszeichen und system bleiben erhalten. DAR-Regeln werden anschließend angewendet. Die FHIR-Validierung kann diese Ausgabe beanstanden.",
   "option.resource.Observation.vitalSigns.ucumCodeInUnit.label": "Code in unit statt in code ausgeben",
-  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "Verschiebt bei UCUM-codierten Messwerten den maschinenlesbaren Code aus code nach unit und entfernt code. Damit lassen sich fehlerhafte Testdaten erzeugen, etwa wenn mmol/L nur in unit steht. Gilt für valueQuantity und component.valueQuantity. Ersetzt die lesbare Einheitenangabe; Messwert, Vergleichszeichen und system bleiben erhalten. DAR-Regeln werden anschließend angewendet. Die FHIR-Validierung kann diese Ausgabe beanstanden."
+  "option.resource.Observation.vitalSigns.ucumCodeInUnit.help": "Verschiebt bei UCUM-codierten Messwerten den maschinenlesbaren Code aus code nach unit und entfernt code. Damit lassen sich fehlerhafte Testdaten erzeugen, etwa wenn mmol/L nur in unit steht. Gilt für valueQuantity und component.valueQuantity. Ersetzt die lesbare Einheitenangabe; Messwert, Vergleichszeichen und system bleiben erhalten. DAR-Regeln werden anschließend angewendet. Die FHIR-Validierung kann diese Ausgabe beanstanden.",
+  "app.runConfigurations": "Konfigurationen für diesen Start",
+  "app.runConfigurationsHint": "Wähle eine oder mehrere gespeicherte Konfigurationen. Für jede wird ein eigener Lauf mit derselben Eingabe und getrennten Ergebnissen angelegt. Die Läufe werden nacheinander ausgeführt.",
+  "app.loadingConfigurations": "Konfigurationen werden geladen…",
+  "app.noRunConfigurations": "Es sind noch keine Konfigurationen gespeichert. Wähle „Aktuelle Einstellungen im Editor“, um eine Konfiguration zu speichern.",
+  "app.runConfigurationsMissing": "Eine ausgewählte Konfiguration wurde gelöscht. Entferne fehlende Einträge vor dem Start.",
+  "app.removeMissingSelections": "Fehlende Einträge entfernen",
+  "app.startConfigurations": "Läufe starten ({count})",
+  "app.savedConfigurationHint": "Für diese Läufe gelten die oben ausgewählten gespeicherten Konfigurationen. Der ausgegraute Editor zeigt weiterhin deinen Entwurf.",
+  "app.converterDefaults": "Konverterdefaults",
+  "app.repeatRun": "Lauf erneut ausführen",
+  "app.repeatRunHint": "Erstellt einen neuen Lauf mit der gespeicherten Eingabe und den damaligen Einstellungen dieses Laufs. Verwendet die aktuell installierte Konverterversion; deren Version wird im neuen Konfigurationsstand festgehalten.",
+  "app.runGroup": "Gemeinsamer Start",
+  "app.repeatedFrom": "Wiederholung von"
 }

@@ -33,7 +33,7 @@ public final class ObservationOutputPolicy {
     private static void moveCode(Type value) {
         if (!(value instanceof Quantity)) return;
         Quantity quantity = (Quantity)value;
-        if (!"http://unitsofmeasure.org".equals(quantity.getSystem()) || !quantity.hasCode()) return;
+        if (!"http://unitsofmeasure.org".equals(quantity.getSystem()) || !quantity.getCodeElement().hasValue()) return;
         quantity.setUnit(quantity.getCode());
         quantity.setCodeElement(null);
     }
