@@ -16,6 +16,10 @@ public class WorkflowOptions {
         for (var key : ConverterOptions.BooleanOption.values()) values.put(key.name(), Boolean.toString(options.is(key)));
         for (var key : ConverterOptions.IntOption.values()) values.put(key.name(), Integer.toString(options.getValue(key)));
         for (var key : ConverterOptions.StringOption.values()) values.put(key.name(), options.getValue(key));
+        if (options.configuration() != null) {
+            values.put("REFERENCE_CONDITION_ENCOUNTER", options.configuration()
+                    .effective("reference.Condition.encounter").map(value -> value.asText()).orElse("none"));
+        }
         Map<String, List<String>> patients = new LinkedHashMap<>();
         if (errors.isEmpty() && input.has("patients")) {
             int count = options.getValue(ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_COUNT);
