@@ -88,4 +88,15 @@ public class ObservationOutputPolicyTest {
         assertEquals("Cel", source.getValueQuantity().getCode());
     }
 
+    @Test public void absentCodeExtensionsArePreservedWhenNoCodeValueExists() {
+        Observation source = observation("laboratory");
+        Quantity value = source.getValueQuantity();
+        value.setCodeElement(new CodeType());
+        value.getCodeElement().addExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason", new CodeType("unknown"));
+        value.setUnitElement(new StringType());
+        value.getUnitElement().addExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason", new CodeType("unknown"));
+        Observation output = (Observation)policy("OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT=true\n").output(source);
+        assertTrue(value.equalsDeep(output.getValueQuantity()));
+    }
+
 }
