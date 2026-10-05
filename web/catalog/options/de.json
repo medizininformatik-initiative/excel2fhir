@@ -460,7 +460,7 @@
   "app.config.resourceStatus.parentDisabled": "Inaktiv, weil die Kontakterzeugung ausgeschaltet ist.",
   "app.error.configuration": "Konfiguration konnte nicht übernommen werden: {detail}",
   "app.workbookConfiguration": "Konfiguration aus der Eingabe",
-  "app.workbookConfigurationHint": "Für diesen Lauf gelten die Konfigurationen aus der Eingabe: Optionsblätter bei Excel oder Optionsdateien bei CSV. Enthaltene Konfigurationen werden als getrennte Varianten ausgeführt; ohne Konfiguration gelten die Konverterdefaults. Der ausgegraute Editor zeigt weiterhin deinen Entwurf.",
+  "app.workbookConfigurationHint": "Für diesen Lauf gelten die Konfigurationen aus der Eingabe: Optionsblätter bei Excel oder Optionsdateien bei CSV. Enthaltene Konfigurationen werden als getrennte Varianten ausgeführt; ohne Konfiguration gelten die Konverterdefaults. Der ausgegraute Editor zeigt weiterhin deinen Entwurf. Für Synthea-Eingaben gelten die Standardeinstellungen des Imports.",
   "app.saved.title": "Gespeicherte Konfigurationen",
   "app.saved.hint": "Wähle eine gespeicherte Konfiguration aus, um sie in den Editor zu laden, durch die Einstellungen im Editor zu ersetzen, umzubenennen, zu duplizieren oder zu löschen.",
   "app.saved.selection": "Gespeicherte Konfiguration",
@@ -502,10 +502,13 @@
   "app.repeatedFrom": "Wiederholung von",
   "app.uploadWorkbook": "Eingabe hochladen",
   "app.inspectingWorkbook": "Eingabe wird geprüft…",
-  "app.uploadWorkbookLimit": "Excel (.xlsx) oder CSV-Dateien als ZIP, maximal 64 MiB. CSV-Dateien müssen direkt im ZIP liegen. Die Originaldatei bleibt unverändert.",
+  "app.uploadWorkbookLimit": "Excel (.xlsx), CSV- oder Synthea-ZIP, Synthea-JSON · maximal 64 MiB. Im ZIP liegen die Dateien direkt nebeneinander. Die Originaldatei bleibt unverändert.",
   "app.uploadWorkbookFailed": "Die Eingabe konnte nicht hochgeladen werden.",
   "app.inputListFailed": "Gespeicherte Eingaben konnten nicht geladen werden.",
-  "app.workbookStructureChecked": "Geprüft · {count} Tabellen",
+  "app.workbookStructureChecked": "Geprüft · {count} Tabellen oder Dateien",
   "app.workbookInspectionHint": "Excel: Tabellenstruktur und Spaltenüberschriften werden geprüft. CSV: Zusätzlich werden Dateigruppen, Zeilenstruktur und Patientenzuordnungen mit dem gemeinsamen Konverter geprüft. Die Zeilenzahlen enthalten keine Kopfzeile. Weitere fachliche Prüfungen erfolgen beim Lauf.",
-  "app.inputRows": "{count} Zeilen mit Inhalt"
+  "app.inputRows": "{count} Zeilen mit Inhalt",
+  "app.syntheaInspectionHint": "Die Prüfung zählt Ressourcen und Patienten in den JSON-Bundles. Der Lauf übernimmt Synthea-R4-Daten über die Excel-Vorlage und erstellt Berichte über die Übernahme und nicht abbildbare Inhalte. Bundles ohne Patienten werden übersprungen.",
+  "app.syntheaInputPatients": "{count} Patienten · {skipped} Bundles ohne Patienten",
+  "app.inputResources": "{count} Ressourcen"
 }

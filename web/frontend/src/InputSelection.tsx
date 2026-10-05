@@ -3,7 +3,7 @@ import { Upload } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { translate, type Language } from './i18n'
 
-type Input = { id: string; name: string; size: number; inspection: { sheets: { name: string; rows: number }[] } }
+type Input = { id: string; name: string; size: number; inspection: { patients?: number; bundlesWithoutPatient?: number; sheets: { name: string; rows: number }[] } }
 
 export function InputSelection({ language, source, onChange, onBusy }: {
   language: Language; source: string; onChange: (source: string) => void; onBusy: (busy: boolean) => void
@@ -35,7 +35,7 @@ export function InputSelection({ language, source, onChange, onBusy }: {
     if (!file) return
     setUploading(true); onBusy(true); setError(null)
     try {
-      if (!/\.(xlsx|zip)$/i.test(file.name) || file.size > 64 * 1024 * 1024) {
+      if (!/\.(xlsx|zip|json)$/i.test(file.name) || file.size > 64 * 1024 * 1024) {
         setError(t('app.uploadWorkbookLimit')); return
       }
       const response = await fetch('/api/inputs?filename=' + encodeURIComponent(file.name), {
@@ -62,14 +62,15 @@ export function InputSelection({ language, source, onChange, onBusy }: {
       </select>
     </label>
     <Button className="mt-2" variant="outline" disabled={uploading} onClick={() => fileInput.current?.click()}><Upload size={16}/>{t(uploading ? 'app.inspectingWorkbook' : 'app.uploadWorkbook')}</Button>
-    <input ref={fileInput} hidden type="file" accept=".xlsx,.zip" aria-label={t('app.uploadWorkbook')} onChange={e => void upload(e.target.files?.[0])}/>
+    <input ref={fileInput} hidden type="file" accept=".xlsx,.zip,.json" aria-label={t('app.uploadWorkbook')} onChange={e => void upload(e.target.files?.[0])}/>
     <p className="mt-2 text-xs text-slate-500">{t('app.uploadWorkbookLimit')}</p>
     {failed && <p role="alert" className="mt-2 text-sm text-red-700">{t('app.inputListFailed')}</p>}
     {error && <p role="alert" className="mt-2 break-words text-sm text-red-700">{error}</p>}
     {selected && <details className="mt-2 text-sm text-slate-600">
       <summary className="cursor-pointer">{t('app.workbookStructureChecked', { count: selected.inspection.sheets.length })}</summary>
-      <p className="mt-2 text-xs">{t('app.workbookInspectionHint')}</p>
-      <ul className="mt-2 space-y-1">{selected.inspection.sheets.map(sheet => <li key={sheet.name} className="break-words">{sheet.name}: {t('app.inputRows', { count: sheet.rows })}</li>)}</ul>
+      <p className="mt-2 text-xs">{t(selected.inspection.patients === undefined ? 'app.workbookInspectionHint' : 'app.syntheaInspectionHint')}</p>
+      {selected.inspection.patients !== undefined && <p className="mt-2">{t('app.syntheaInputPatients', { count: selected.inspection.patients, skipped: selected.inspection.bundlesWithoutPatient ?? 0 })}</p>}
+      <ul className="mt-2 space-y-1">{selected.inspection.sheets.map(sheet => <li key={sheet.name} className="break-words">{sheet.name}: {t(selected.inspection.patients === undefined ? 'app.inputRows' : 'app.inputResources', { count: sheet.rows })}</li>)}</ul>
     </details>}
   </div>
 }

@@ -460,7 +460,7 @@
   "app.config.resourceStatus.parentDisabled": "Inactive because encounter generation is disabled.",
   "app.error.configuration": "The configuration could not be accepted: {detail}",
   "app.workbookConfiguration": "Configuration from input",
-  "app.workbookConfigurationHint": "This run uses the configurations contained in the input: options sheets for Excel or options files for CSV. Included configurations run as separate variants; inputs without a configuration use converter defaults. The disabled editor continues to show your draft.",
+  "app.workbookConfigurationHint": "This run uses the configurations contained in the input: options sheets for Excel or options files for CSV. Included configurations run as separate variants; inputs without a configuration use converter defaults. The disabled editor continues to show your draft. Synthea inputs use the importer defaults.",
   "app.saved.title": "Saved configurations",
   "app.saved.hint": "Select a saved configuration to load it into the editor, replace it with the editor settings, rename it, duplicate it or delete it.",
   "app.saved.selection": "Saved configuration",
@@ -502,10 +502,13 @@
   "app.repeatedFrom": "Repeated from",
   "app.uploadWorkbook": "Upload input",
   "app.inspectingWorkbook": "Inspecting input…",
-  "app.uploadWorkbookLimit": "Excel (.xlsx) or CSV files as ZIP, up to 64 MiB. CSV files must be directly at the ZIP root. The original file is stored unchanged.",
+  "app.uploadWorkbookLimit": "Excel (.xlsx), CSV or Synthea ZIP, Synthea JSON · up to 64 MiB. ZIP files must be at the archive root. The original file stays unchanged.",
   "app.uploadWorkbookFailed": "The input could not be uploaded.",
   "app.inputListFailed": "Saved inputs could not be loaded.",
-  "app.workbookStructureChecked": "Inspected · {count} tables",
+  "app.workbookStructureChecked": "Inspected · {count} tables or files",
   "app.workbookInspectionHint": "Excel: checks sheet structure and column headings. CSV: also checks file groups, record structure and patient assignments using the shared converter. Row counts exclude headers. Further clinical checks run during conversion.",
-  "app.inputRows": "{count} nonempty rows"
+  "app.inputRows": "{count} nonempty rows",
+  "app.syntheaInspectionHint": "Inspection counts resources and patients in the JSON bundles. The run imports Synthea R4 data through the Excel template and reports imported and unsupported content. Bundles without patients are skipped.",
+  "app.syntheaInputPatients": "{count} patients · {skipped} bundles without patients",
+  "app.inputResources": "{count} resources"
 }

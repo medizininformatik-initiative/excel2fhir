@@ -4,6 +4,7 @@ services:
     build:
       context: ..
       dockerfile: web/backend/Dockerfile
+      target: api
     volumes:
       - workbench:/data
     mem_limit: 512m
@@ -13,6 +14,7 @@ services:
     build:
       context: ..
       dockerfile: web/backend/Dockerfile
+      target: worker
     command: [python, worker.py]
     init: true
     volumes:

@@ -139,6 +139,9 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             config.update(saved_configuration)
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
                 'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+    if input_kind.startswith('synthea'):
+        import synthea_runtime
+        snapshot['syntheaImportSha256'] = synthea_runtime.fingerprint()
     if source_name:
         snapshot['sourceName'] = source_name
     if batch_id:
@@ -177,7 +180,8 @@ def repeat(job_id, request_id):
             raise ValueError('The saved configuration has changed')
         prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
                     input_path=folder / filename, saved_configuration=config if text is not None else None,
-                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256']},
+                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256'],
+                                   **({'syntheaImportSha256': snapshot['syntheaImportSha256']} if 'syntheaImportSha256' in snapshot else {})},
                     source_name=snapshot.get('sourceName'), input_kind=input_kind)
     return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 

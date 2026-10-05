@@ -4,6 +4,8 @@ import json
 import os
 import signal
 import subprocess
+import sys
+import synthea_runtime
 import time
 import zipfile
 
@@ -47,7 +49,20 @@ def execute(job_id):
         input_path = folder / inputs.input_filename(kind)
         if store.digest(input_path) != snapshot["inputSha256"]:
             raise RuntimeError("Input snapshot has changed")
-        if kind == 'csv':
+        if kind.startswith('synthea'):
+            if synthea_runtime.fingerprint() != snapshot['syntheaImportSha256']:
+                raise RuntimeError('Synthea importer changed after submission; start a new run')
+            source = input_path
+            if kind == 'synthea-zip':
+                source = folder / 'input-synthea'
+                inputs.extract_archive(input_path, source, '.json')
+            command = [sys.executable, str(synthea_runtime.ROOT / 'scripts/run_synthea_cases.py'),
+                       '-i' if kind == 'synthea-zip' else '-f', str(source),
+                       '-r', ','.join(snapshot.get('formats', ['JSON', 'NDJSON'])),
+                       '-p', str(snapshot.get('patientsPerFile', 1))]
+            if snapshot.get('validation', False):
+                command.append('-v')
+        elif kind == 'csv':
             expanded = folder / 'input-csv'
             inputs.extract_csv(input_path, expanded)
             command.extend(['-cp', str(store.APP / 'excel2fhir.jar'), 'de.uni_leipzig.life.csv2fhir.Main', '-i', str(expanded)])
