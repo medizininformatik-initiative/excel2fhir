@@ -1,3 +1,4 @@
+import { SavedConfigurations } from './SavedConfigurations'
 import { exportPropertiesConfiguration } from './configuration-properties'
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, Download, Upload, RotateCcw, Check } from 'lucide-react'
@@ -333,10 +334,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
       <div className="p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-teal-700">
-              {t('app.config.draft')}
-            </p>
-            <h2 className="mt-1 text-xl font-semibold">
+            <h2 className="text-xl font-semibold">
               {t('app.config.title')}
             </h2>
           </div>
@@ -347,7 +345,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
           {t('app.config.integrationHint')}
         </p>
-        <div className="mt-5 flex flex-wrap gap-2">
+        <SavedConfigurations editorActions={<>
           {issues.length > 0 ? (
             <Button variant="outline" disabled>
               <Download size={15} />
@@ -385,7 +383,12 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
             hidden
             onChange={(e) => void load(e.target.files?.[0])}
           />
-        </div>
+        </>} language={language} configuration={config} valid={issues.length === 0} onLoad={next => {
+          setConfig(next)
+          setDarCodes(Object.fromEntries(Object.entries(next.dar).flatMap(([id, value]) => value.mode === 'overwrite' ? [[id, value.code]] : [])))
+          setDirty(true)
+          setMessage(null)
+        }}/>
         {message && (
           <p role="status" className="mt-4 text-sm">
             {t(message.key, message.params)}
@@ -402,6 +405,9 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
           </div>
         )}
       </div>
+      <h3 className="px-6 pb-3 text-xs font-semibold uppercase tracking-widest text-teal-700">
+        {t('app.config.editor')}
+      </h3>
       <div
         role="tablist"
         aria-label={t('app.config.title')}
@@ -460,7 +466,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t('app.config.anchors')}
               </p>
-              <div className="flex w-max flex-col items-start gap-2 pb-16">
+              <div className="flex w-max flex-col items-stretch gap-2 pb-16">
                 {resources.map((r) => {
                   const status = resourceNavigationStatus(r.id, config.values)
                   const round = `resource.${r.id}.mode` in config.values

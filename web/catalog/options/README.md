@@ -34,7 +34,8 @@ a `dar` object keyed by DAR field ID and an `identifierRules` array. Missing
 values use contract defaults. JSON Schema describes accepted shapes; the Java
 adapter applies defaults and validates clinical dependencies. Unknown keys,
 wrong types, unsupported versions and conflicting duplicate values are errors.
-Profile names identify saved configuration profiles, separately from FHIR profiles.
+Saved configurations contain converter settings; FHIR profiles define resource
+structure and constraints.
 
 Controls remain visible. Disabled selections retain their stored values. The
 effective configuration disables unavailable settings and explains why, without
