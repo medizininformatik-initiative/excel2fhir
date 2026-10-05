@@ -61,10 +61,7 @@ public class Main implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    @Override
-    public Integer call() throws Exception {
-        if (patientsPerBundle < 1)
-            throw new IllegalArgumentException("-p must be positive.");
+    static List<String> inputPrefixes(File inputDirectory) {
         File[] persons = inputDirectory.listFiles(f -> f.isFile() && f.getName().endsWith("Person.csv"));
         if (persons == null || persons.length == 0) {
             throw new IllegalArgumentException("No CSV data sets (*Person.csv) in " + inputDirectory);
@@ -77,6 +74,14 @@ public class Main implements Callable<Integer> {
         if (prefixes.stream().map(p -> p.replaceFirst("[-_]$", "")).distinct().count() != prefixes.size()) {
             throw new IllegalArgumentException("Ambiguous CSV prefixes: " + prefixes);
         }
+        return prefixes;
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        if (patientsPerBundle < 1)
+            throw new IllegalArgumentException("-p must be positive.");
+        List<String> prefixes = inputPrefixes(inputDirectory);
         WorkflowRun run = new WorkflowRun(outputDirectory, null, "csv-to-fhir");
         FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
                 FileLogger.LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER);

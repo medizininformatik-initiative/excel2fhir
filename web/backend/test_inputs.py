@@ -28,7 +28,7 @@ class InputTests(QueueFixture):
 
     def test_upload_is_persistent_and_preserves_original_bytes_and_name(self):
         item = self.upload()
-        path, name = inputs.resolve(item['id'])
+        path, name, _ = inputs.resolve(item['id'])
         self.assertEqual('Eigene Fälle.xlsx', name)
         self.assertEqual(b'exact original workbook bytes', path.read_bytes())
         self.assertEqual(item, self.client.get('/api/inputs').json()[0])
@@ -67,7 +67,7 @@ class InputTests(QueueFixture):
                 self.assertEqual(item['sha256'], saved['inputSha256'])
                 self.assertEqual(item['name'], saved['sourceName'])
                 self.assertEqual(item['name'], store.get(job)['source_name'])
-            path, _ = inputs.resolve(item['id'])
+            path, _, _ = inputs.resolve(item['id'])
             path.chmod(0o644); path.write_bytes(b'changed original')
             with self.assertRaises(ValueError):
                 store.create(item['id'], 'workbook')
@@ -81,3 +81,31 @@ class InputTests(QueueFixture):
             with self.assertRaises(ValueError):
                 store.create(source, 'workbook')
         self.assertEqual([], store.jobs())
+
+    def archive(self, files):
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            for name, value in files:
+                archive.writestr(name, value)
+        return stream.getvalue()
+
+    def test_csv_archives_reject_path_traversal_duplicates_and_non_csv_members(self):
+        for files in [[('../outside.csv', 'data')], [('folder/Person.csv', 'data')],
+                      [('A.csv', 'data'), ('a.csv', 'data')], [('script.py', 'data')]]:
+            response = self.client.post('/api/inputs?filename=cases.zip', content=self.archive(files))
+            self.assertEqual(422, response.status_code, response.text)
+        self.assertEqual([], inputs.summaries())
+        self.assertFalse((store.ROOT / 'outside.csv').exists())
+
+    def test_csv_inputs_keep_archive_bytes_across_submission_and_repeat(self):
+        data = self.archive([('Case_Person.csv', 'Patient-ID\np1\n')])
+        item = self.upload('Cases.zip', data)
+        path, _, kind = inputs.resolve(item['id'])
+        self.assertEqual('csv', kind)
+        job = store.create(item['id'], 'workbook')
+        snapshot = json.loads((store.ROOT / 'jobs' / job / 'snapshot.json').read_text())
+        self.assertEqual('csv', snapshot['inputKind'])
+        self.assertEqual(data, (store.ROOT / 'jobs' / job / 'input.zip').read_bytes())
+        store.cancel(job)
+        repeated = store.repeat(job, str(uuid4()))
+        self.assertEqual(data, (store.ROOT / 'jobs' / repeated / 'input.zip').read_bytes())

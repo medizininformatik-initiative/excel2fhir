@@ -4,7 +4,7 @@ import { Download, Play, Square, Activity } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
-import { WorkbookInput } from './WorkbookInput'
+import { InputSelection } from './InputSelection'
 import { SavedConfigurationSelection, type ConfigurationSelection } from './SavedConfigurationSelection'
 import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
@@ -136,7 +136,7 @@ function App() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-end gap-5">
-        <WorkbookInput language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
+        <InputSelection language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
         <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select className="rounded-lg border border-slate-300 p-2.5" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
         <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t('app.start')}</Button>
       </div>{configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t('app.outputHint')}</p>
