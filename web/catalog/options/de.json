@@ -549,5 +549,20 @@
   "app.generation.invalid": "Bitte Zahlenbereiche, Seeds und Zeitpunkte prüfen. Das Bezugsdatum muss vor oder am Simulationsende liegen; das Ende darf nicht in der Zukunft liegen.",
   "app.generation.requested": "Angefordert: {count} Patienten",
   "app.generation.actual": "Erzeugt: {generated} · importiert: {imported} · fehlgeschlagen: {failed}",
-  "app.generation.start": "Generierung starten"
+  "app.generation.start": "Generierung starten",
+  "app.datasets.title": "Datensätze und Berichte",
+  "app.datasets.failed": "Die Ergebnisübersicht konnte nicht geladen werden.",
+  "app.datasets.incomplete": "Dieser Lauf ist fehlgeschlagen. Vorhandene Datensätze und Berichte dienen der Prüfung; sie bestätigen keinen erfolgreichen Import.",
+  "app.datasets.download": "Datensatz herunterladen",
+  "app.datasets.counts": "{patients} Patienten · {resources} eindeutige Ressourcen",
+  "app.datasets.countHint": "Gezählte Formate: {formats}. Wiederholte Ressourcen-IDs: {repeated}. Ressourcen ohne ID: {missing}. Die Zählung ist keine FHIR-Validierung.",
+  "app.datasets.resources": "Ressourcenmengen",
+  "app.datasets.reports": "Prüf- und Projektionsberichte",
+  "app.datasets.reportCounts": "Importhinweise: {issues} · ausgelassene Inhalte: {omissions} · fehlgeschlagene Fälle: {failures} · Endableitungen: {derivations} · Ausgabeentscheidungen: {selections} · Validierung: {errors} Fehler, {warnings} Warnungen",
+  "app.datasets.files": "Ergebnisdateien ({count})",
+  "app.datasets.fileHint": "Dateien werden direkt heruntergeladen. Das ZIP des gesamten Laufs enthält alle Ergebnisse und Berichte; Datensatz-ZIPs enthalten die FHIR-Dateien einer Konfiguration.",
+  "app.datasets.search": "Ergebnisdateien suchen",
+  "app.datasets.moreFiles": "Die ersten 200 Treffer werden angezeigt. Mit der Suche kannst du die Auswahl eingrenzen.",
+  "app.datasets.pending": "Datensätze werden erfasst …",
+  "app.datasets.searchRuns": "Läufe nach Quelle, Konfiguration oder Status suchen"
 }

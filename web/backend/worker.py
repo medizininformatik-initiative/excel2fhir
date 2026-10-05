@@ -7,6 +7,7 @@ import subprocess
 import sys
 import synthea_runtime
 import generation
+import datasets
 import time
 import zipfile
 
@@ -97,12 +98,16 @@ def execute(job_id):
                 'generatedPatients': len(generated), 'importedPatients': len(summary.get('results', [])),
                 'failedPatients': len(summary.get('failures', []))}))
         if state in {"succeeded", "failed"}:
+            datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():
                         archive.write(path, path.relative_to(folder))
                 if (folder / "generation-result.json").exists():
                     archive.write(folder / "generation-result.json", "generation-result.json")
+                archive.write(folder / "datasets.json", "datasets.json")
+                for path in folder.glob("dataset-*.log"):
+                    archive.write(path, path.name)
                 archive.write(folder / "snapshot.json", "snapshot.json")
                 archive.write(folder / "converter.log", "converter.log")
             (folder / "result.tmp").rename(folder / "result.zip")
@@ -111,6 +116,8 @@ def execute(job_id):
         elif store.get(job_id)["cancel"]:
             state = "cancelled"
         store.finish(job_id, state, process.returncode)
+    except datasets.CancelledInspection:
+        store.finish(job_id, "interrupted" if stopping else "cancelled")
     except Exception as error:
         if process:
             terminate(process)
@@ -133,6 +140,7 @@ def main():
             if job_id:
                 execute(job_id)
             else:
+                datasets.backfill(lambda: stopping)
                 time.sleep(0.5)
 
 
