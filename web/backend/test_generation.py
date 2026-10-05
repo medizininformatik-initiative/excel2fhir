@@ -71,3 +71,51 @@ class GenerationTests(QueueFixture):
         self.assertNotIn('-c', args)
         with self.assertRaises(ValueError):
             store.create('starter', 'workbook', generation_settings={})
+
+    def test_native_output_ignores_kds_defaults_and_repeats_without_importer(self):
+        with patch.object(synthea_runtime, 'fingerprint', side_effect=AssertionError('Importer must not be used')):
+            job = store.create('synthea-generation', 'default', generation_settings={'outputMode': 'synthea'})
+            folder = store.ROOT / 'jobs' / job
+            snapshot = json.loads((folder / 'snapshot.json').read_text())
+            self.assertEqual('synthea', snapshot['profile']['id'])
+            self.assertNotIn('syntheaImportSha256', snapshot)
+            self.assertFalse((folder / 'default.config').exists())
+            store.cancel(job)
+            repeated = store.repeat(job, str(uuid4()))
+            self.assertEqual((folder / 'generation.json').read_bytes(),
+                             (store.ROOT / 'jobs' / repeated / 'generation.json').read_bytes())
+            self.assertEqual('synthea', store.get(repeated)['configuration']['id'])
+        with self.assertRaisesRegex(ValueError, 'does not use a KDS configuration'):
+            store.create('synthea-generation', 'default', 'CONFIGURATION_VERSION=1\n', generation_settings={'outputMode': 'synthea'})
+
+    def test_native_worker_exports_original_resources_and_counts_only_patients(self):
+        import datasets
+        jar = self.root / 'runtime/target/synthea.jar'
+        jar.parent.mkdir(parents=True)
+        jar.write_bytes(b'generator')
+        catalogue = {**CATALOG, 'sha256': store.digest(jar)}
+        with patch.object(generation, 'catalogue', return_value=catalogue), patch.object(synthea_runtime, 'ROOT', jar.parent.parent):
+            job = store.create('synthea-generation', 'workbook', generation_settings={'outputMode': 'synthea'})
+            store.claim()
+            folder = store.ROOT / 'jobs' / job
+            def launch(command, **kwargs):
+                self.assertEqual(['java', '-Xmx4g'], command[:2])
+                self.assertIn(str(jar), command)
+                self.assertNotIn('--converter-options', command)
+                self.assertIn('--exporter.practitioner.fhir.export=true', command)
+                fhir = folder / 'output/run-synthea/fhir'
+                fhir.mkdir()
+                for name, resource in [('patient', {'resourceType': 'Patient', 'id': 'p', 'name': [{'family': 'Original'}]}),
+                                       ('clinician', {'resourceType': 'Practitioner', 'id': 'c'})]:
+                    (fhir / (name + '.json')).write_text(json.dumps({'resourceType': 'Bundle', 'entry': [{'resource': resource}]}))
+                process = Mock(returncode=0)
+                process.poll.return_value = 0
+                return process
+            with patch.object(worker.subprocess, 'Popen', side_effect=launch), patch.object(datasets, 'inspect', return_value={'uniquePatients': 1}):
+                worker.execute(job)
+            self.assertEqual('succeeded', store.get(job)['state'], (folder / 'converter.log').read_text())
+            self.assertEqual({'generatedPatients': 1, 'importedPatients': 0, 'failedPatients': 0}, store.get(job)['generation_result'])
+            import zipfile
+            with zipfile.ZipFile(folder / 'dataset-0.zip') as archive:
+                self.assertEqual({'patient.json', 'clinician.json'}, set(archive.namelist()))
+                self.assertIn('Original', archive.read('patient.json').decode())

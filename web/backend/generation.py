@@ -14,6 +14,7 @@ import synthea_runtime
 
 class Settings(BaseModel):
     model_config = ConfigDict(extra='forbid')
+    outputMode: Literal['kds', 'synthea'] = 'kds'
     population: int = Field(default=1, ge=1, le=1000, strict=True)
     minAge: int = Field(default=30, ge=0, le=140, strict=True)
     maxAge: int = Field(default=80, ge=0, le=140, strict=True)
@@ -61,10 +62,21 @@ def catalogue():
         for row in csv.DictReader(io.StringIO(archive.read('geography/demographics.csv').decode('utf-8-sig'))):
             locations.setdefault(row['STNAME'], set()).add(row['NAME'])
         def modules(prefix):
-            return [{'id': name.removeprefix(prefix).removesuffix('.json') if prefix == 'modules/' else name.removeprefix(prefix),
-                     'name': json.loads(archive.read(name)).get('name', name)}
-                    for name in sorted(archive.namelist()) if name.startswith(prefix) and name.endswith('.json')
-                    and '/' not in name.removeprefix(prefix)]
+            result = []
+            for name in sorted(set(archive.namelist())):
+                if not name.startswith(prefix) or not name.endswith('.json') or '/' in name.removeprefix(prefix):
+                    continue
+                module = json.loads(archive.read(name))
+                examples = {}
+                for state in module.get('states', {}).values():
+                    kind = state.get('type')
+                    if kind in {'ConditionOnset', 'Procedure', 'MedicationOrder', 'Observation', 'Encounter'}:
+                        labels = [str(code.get('display') or code.get('code', '')) for code in state.get('codes', [])]
+                        examples.setdefault(kind, set()).update(filter(None, labels))
+                result.append({'id': name.removeprefix(prefix).removesuffix('.json') if prefix == 'modules/' else name.removeprefix(prefix),
+                               'name': module.get('name', name),
+                               'examples': {kind: sorted(labels)[:5] for kind, labels in examples.items() if labels}})
+            return result
         return {'revision': revision, 'sha256': store.digest(root / 'target/synthea.jar'),
                 'locations': {state: sorted(cities) for state, cities in sorted(locations.items())},
                 'modules': modules('modules/'), 'keepModules': modules('keep_modules/'),
@@ -108,3 +120,22 @@ def arguments(value):
     if settings.city:
         result.append(settings.city)
     return result
+
+
+def native_command(settings, destination):
+    """Run the pinned generator directly; retain its FHIR resources without projection."""
+    return ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(synthea_runtime.ROOT / 'target/synthea.jar'),
+            *arguments(settings), '--exporter.baseDirectory=' + str(destination),
+            '--exporter.fhir.export=true', '--exporter.fhir_stu3.export=false',
+            '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',
+            '--exporter.use_uuid_filenames=true', '--exporter.hospital.fhir.export=true',
+            '--exporter.practitioner.fhir.export=true', '--exporter.csv.export=false', '--exporter.ccda.export=false']
+
+
+def patient_count(paths):
+    # Hospital/practitioner bundles are also present in the unconverted output.
+    total = 0
+    for path in paths:
+        resource = json.loads(path.read_text())
+        total += sum(entry.get('resource', {}).get('resourceType') == 'Patient' for entry in resource.get('entry', []))
+    return total

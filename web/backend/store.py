@@ -130,7 +130,13 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         shutil.copyfile(input_path, directory / filename)
     else:
         (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
-    if profile == 'workbook':
+    native = input_kind == 'synthea-generation' and json.loads((directory / filename).read_text()).get('outputMode') == 'synthea'
+    if native:
+        if configuration_properties is not None or saved_configuration:
+            raise ValueError('Synthea FHIR output does not use a KDS configuration')
+        execution = {'formats': ['JSON'], 'validation': False}
+        config = {'id': 'synthea', 'name': 'Synthea FHIR'}
+    elif profile == 'workbook':
         execution = {}
         config = {'id': 'workbook', 'name': 'Input configurations'}
     else:
@@ -151,7 +157,8 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
                 'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
     if input_kind.startswith('synthea'):
         import synthea_runtime
-        snapshot['syntheaImportSha256'] = synthea_runtime.fingerprint()
+        if not native:
+            snapshot['syntheaImportSha256'] = synthea_runtime.fingerprint()
         if input_kind == 'synthea-generation':
             import generation
             generation.normalize(json.loads((directory / filename).read_text()))
@@ -193,7 +200,7 @@ def repeat(job_id, request_id):
         if digest(folder / filename) != snapshot['inputSha256']:
             raise ValueError('The saved input has changed')
         config = snapshot['profile']
-        text = None if config['id'] == 'workbook' else config['optionsProperties']
+        text = None if config['id'] in {'workbook', 'synthea'} else config['optionsProperties']
         if text is not None and (folder / 'default.config').read_text() != text:
             raise ValueError('The saved configuration has changed')
         prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
