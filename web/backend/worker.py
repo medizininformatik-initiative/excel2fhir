@@ -51,8 +51,9 @@ def execute(job_id):
         input_path = folder / inputs.input_filename(kind)
         if store.digest(input_path) != snapshot["inputSha256"]:
             raise RuntimeError("Input snapshot has changed")
+        native = kind == 'synthea-generation' and snapshot.get('generation', {}).get('outputMode') == 'synthea'
         if kind.startswith('synthea'):
-            if synthea_runtime.fingerprint() != snapshot['syntheaImportSha256']:
+            if not native and synthea_runtime.fingerprint() != snapshot['syntheaImportSha256']:
                 raise RuntimeError('Synthea importer changed after submission; start a new run')
             if kind == 'synthea-generation' and store.digest(synthea_runtime.ROOT / 'target/synthea.jar') != snapshot['syntheaGeneratorSha256']:
                 raise RuntimeError('Synthea generator changed after submission; start a new run')
@@ -76,12 +77,16 @@ def execute(job_id):
         else:
             command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-f', str(input_path)])
         command.extend(['-o', str(folder / 'output')])
-        if snapshot["profile"]["id"] != "workbook":
+        if snapshot["profile"]["id"] not in {"workbook", "synthea"}:
             if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
                 raise RuntimeError("Configuration snapshot has changed")
             command.extend(["--converter-options", str(folder / "default.config")])
         if kind == 'synthea-generation':
             command += ['--', *generation.arguments(json.loads(input_path.read_text()))]
+        if native:
+            destination = folder / 'output/run-synthea'
+            destination.mkdir(parents=True)
+            command = generation.native_command(snapshot['generation'], destination)
         with (folder / "converter.log").open("w") as log:
             process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
@@ -92,10 +97,12 @@ def execute(job_id):
         state = "interrupted" if stopping else "cancelled" if store.get(job_id)["cancel"] else "succeeded" if process.returncode == 0 else "failed"
         if kind == 'synthea-generation' and state in {'succeeded', 'failed'}:
             generated = list((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
+            if native:
+                generated = list((folder / 'output/run-synthea/fhir').glob('*.json'))
             summaries = list((folder / 'output').glob('*/details/reports/summary.json'))
             summary = json.loads(summaries[0].read_text()) if summaries else {}
             (folder / 'generation-result.json').write_text(json.dumps({
-                'generatedPatients': len(generated), 'importedPatients': len(summary.get('results', [])),
+                'generatedPatients': generation.patient_count(generated), 'importedPatients': len(summary.get('results', [])),
                 'failedPatients': len(summary.get('failures', []))}))
         if state in {"succeeded", "failed"}:
             datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))

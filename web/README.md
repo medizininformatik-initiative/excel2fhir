@@ -124,6 +124,22 @@ from the pinned generator JAR. With no module selection, all modules run; core
 Synthea modules always run. Clinical import requires diagnoses, so narrowly
 selected modules or history may generate patients that cannot be imported.
 
+Each generator control has an info button explaining its effect on original Synthea
+data and on the KDS projection. Disease/care modules determine which processes
+are simulated, rather than guaranteeing a diagnosis in every patient. Additional
+patient-selection rules retain matching simulated patients; their criteria may
+not remain visible after history filtering or KDS projection. Selection rules
+have descriptive names and show their actual criteria.
+
+Choose **Synthea FHIR – original data** to generate FHIR R4 JSON without Excel
+or KDS conversion. The dataset download retains Synthea patient identities,
+US addresses, organizations and clinicians. KDS configuration controls are
+inactive for this output. The run records its generator settings and supports
+repeat, cancellation, resource inspection and downloads. No KDS validation or
+clinical projection is performed. The displayed patient count excludes auxiliary
+organization and clinician bundles.
+
+Choose **KDS FHIR – convert Synthea data** to use the clinical import pipeline.
 Choose input configuration for importer defaults or the editor/saved configurations
 for KDS variants. Each selected configuration receives a separate generation and
 conversion run with identical saved generator settings. Seeds, dates, settings,

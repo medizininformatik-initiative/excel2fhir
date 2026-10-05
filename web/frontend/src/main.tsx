@@ -72,7 +72,8 @@ function App() {
   useEffect(() => { localStorage.setItem('configurationSource', configurationSource) }, [configurationSource])
   const [configuration, setConfiguration] = useState<Configuration | null>(null)
   const configurationReady = configurationSource === 'workbook' || (configurationSource === 'saved' ? runConfigurations.length > 0 : (configuration !== null && problems(configuration).length === 0))
-  const canStart = configurationReady && (source !== 'synthea-generation' || generation !== null)
+  const nativeOutput = source === 'synthea-generation' && generation?.outputMode === 'synthea'
+  const canStart = (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
   const generationPayload = source === 'synthea-generation' ? { generation } : {}
   const [logs, setLogs] = useState<string | null>(null)
   const [error, setError] = useState<Message | null>(null)
@@ -106,7 +107,9 @@ function App() {
     if (!canStart) return
     setBusy(true); setError(null)
     try {
-      const next = configurationSource === 'saved'
+      const next = nativeOutput
+        ? [await submitRuns<Job>('/jobs', { source, profile: 'workbook', ...generationPayload })]
+        : configurationSource === 'saved'
         ? await submitRuns<Job[]>('/job-batches', { source, configurations: runConfigurations, ...generationPayload })
         : [await submitRuns<Job>('/jobs', configurationSource === 'workbook'
             ? { source, profile: 'workbook', ...generationPayload }
@@ -125,7 +128,7 @@ function App() {
   function configurationName(job: Job) {
     const config = job.configuration
     return !config ? '' : config.id === 'workbook' ? t('app.workbookConfiguration')
-      : config.id === 'editor' ? t('app.defaults') : config.id === 'default' ? t('app.converterDefaults') : config.name
+      : config.id === 'synthea' ? t('app.generation.nativeOutput') : config.id === 'editor' ? t('app.defaults') : config.id === 'default' ? t('app.converterDefaults') : config.name
   }
   async function cancel() {
     try { await request(`/jobs/${selected}/cancel`, { method: 'POST' }) } catch (e) { setError(errorMessage(e)) }
@@ -143,15 +146,15 @@ function App() {
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-end gap-5">
         <InputSelection language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
-        <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select className="rounded-lg border border-slate-300 p-2.5" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
-        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
+        <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select disabled={nativeOutput} className="rounded-lg border border-slate-300 p-2.5 disabled:bg-slate-100 disabled:text-slate-400" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
+        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{!nativeOutput && configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
       </div>{source === 'synthea-generation' && <GenerationSettings language={language} onChange={setGeneration}/>}
-      {configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t('app.outputHint')}</p>
+      {!nativeOutput && configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
     </section>
-    {configurationSource === 'workbook' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.workbookConfigurationHint')}</p>}
-    {configurationSource === 'saved' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.savedConfigurationHint')}</p>}
-    <fieldset disabled={configurationSource !== 'editor'} className={`min-w-0 border-0 p-0 ${configurationSource !== 'editor' ? 'opacity-50' : ''}`}>
-      <div inert={configurationSource !== 'editor'}>
+    {!nativeOutput && configurationSource === 'workbook' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.workbookConfigurationHint')}</p>}
+    {!nativeOutput && configurationSource === 'saved' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.savedConfigurationHint')}</p>}
+    <fieldset disabled={(nativeOutput || configurationSource !== 'editor')} className={`min-w-0 border-0 p-0 ${(nativeOutput || configurationSource !== 'editor') ? 'opacity-50' : ''}`}>
+      <div inert={(nativeOutput || configurationSource !== 'editor')}>
         <ConfigurationEditor language={language} onChange={setConfiguration}/>
       </div>
     </fieldset>
@@ -164,7 +167,7 @@ function App() {
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><a href={`/api/jobs/${job.id}/snapshot`}>{t('app.snapshot')}</a></Button>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(job.id)}>{t('app.repeatRun')}</Button>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}</div>}</div>
         {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
-        {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t('app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
+        {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
         {job && <p className="mb-3 break-words text-sm">{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
         {repeatConfirmation === job?.id && <div className="mb-4 rounded-lg border border-slate-200 p-3">
           <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
