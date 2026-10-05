@@ -569,5 +569,7 @@
   "app.generation.kdsOutput": "KDS-FHIR – Synthea-Daten umwandeln",
   "app.generation.nativeOutput": "Synthea-FHIR – ursprüngliche Daten",
   "app.generation.nativeHint": "Erzeugt ursprüngliche Synthea-FHIR-R4-Daten als JSON. Die KDS-Konfiguration ist dafür nicht anwendbar.",
-  "app.generation.nativeActual": "{generated} Patienten erzeugt"
+  "app.generation.nativeActual": "{generated} Patienten erzeugt",
+  "app.generation.selectAllModules": "Alle anwählen",
+  "app.generation.clearModules": "Alle abwählen"
 }

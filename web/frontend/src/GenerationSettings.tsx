@@ -76,8 +76,12 @@ export function GenerationSettings({ language, onChange }: { language: Language;
       <p className="mt-4 text-sm text-slate-600">{t('app.generation.selectionHint')}</p>
       <fieldset className="mt-5"><legend className="font-medium">{t('app.generation.modules')}{info('modules')}</legend>
         <p className="mt-2 text-sm text-slate-600">{t('app.generation.modulesHint')}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => update('modules', catalogue.modules.map(module => module.id))}>{t('app.generation.selectAllModules')}</button>
+          <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => update('modules', [])}>{t('app.generation.clearModules')}</button>
+        </div>
         <input className={inputClass} aria-label={t('app.generation.moduleSearch')} placeholder={t('app.generation.moduleSearch')} value={moduleSearch} onChange={e => setModuleSearch(e.target.value)}/>
-        <div className="mt-2 grid max-h-64 gap-2 overflow-auto rounded-lg border p-3 sm:grid-cols-2">{catalogue.modules.filter(module => (module.name + module.id).toLowerCase().includes(moduleSearch.toLowerCase())).map(module => <label key={module.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.modules.includes(module.id)} onChange={e => update('modules', e.target.checked ? [...value.modules, module.id] : value.modules.filter(id => id !== module.id))}/>{module.name}{info('modules', moduleHelp(language, module))}</label>)}</div>
+        <div className="mt-2 grid max-h-64 gap-2 overflow-auto rounded-lg border p-3 sm:grid-cols-2">{catalogue.modules.filter(module => (module.name + module.id).toLowerCase().includes(moduleSearch.toLowerCase())).map(module => <label key={module.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.modules.includes(module.id)} onChange={e => update('modules', e.target.checked ? [...value.modules, module.id] : value.modules.filter(id => id !== module.id))}/>{module.name}{moduleHelp(language, module) && info('modules', moduleHelp(language, module))}</label>)}</div>
       </fieldset>
     </details>
     {!valid && <p role="alert" className="mt-4 text-sm text-red-700">{t('app.generation.invalid')}</p>}

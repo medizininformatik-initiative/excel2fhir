@@ -1,4 +1,5 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 import { tooltipPosition } from './tooltip-position'
 import { Info } from 'lucide-react'
 import type { Message } from './i18n'
@@ -26,7 +27,7 @@ export function Help({ text, t }: { text: string; t: Translator }) {
       const origin = anchor.current.getBoundingClientRect()
       const size = tooltip.current.getBoundingClientRect()
       const next = tooltipPosition(origin, size, bounds)
-      setPosition({ left: next.left - origin.left, top: next.top - origin.top,
+      setPosition({ left: next.left, top: next.top,
         maxWidth: Math.max(0, bounds.width - 24), maxHeight: Math.max(0, Math.min(bounds.height * 0.6, bounds.height - 24)) })
     }
     update()
@@ -75,16 +76,16 @@ export function Help({ text, t }: { text: string; t: Translator }) {
       >
         <Info size={16} />
       </button>
-      {open && (
+      {open && createPortal(
         <span
           id={id}
           ref={tooltip}
           style={position}
           role="tooltip"
-          className="absolute left-0 top-full z-30 w-96 max-w-[calc(100vw-3rem)] max-h-[60vh] overflow-y-auto whitespace-pre-line break-words rounded-lg bg-slate-900 p-3 text-sm font-normal leading-relaxed text-white shadow-lg"
+          className="fixed left-0 top-0 z-50 w-96 max-w-[calc(100vw-3rem)] max-h-[60vh] overflow-y-auto whitespace-pre-line break-words rounded-lg bg-slate-900 p-3 text-sm font-normal leading-relaxed text-white shadow-lg"
         >
           {text}
-        </span>
+        </span>, document.body
       )}
     </span>
   )
