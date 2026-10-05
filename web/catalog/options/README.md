@@ -163,9 +163,12 @@ supplied encounters are not moved to a different level. Selecting no encounter
 reference omits the field in every strategy.
 
 Matching requires the same patient and selected contact level. Start and end
-boundaries are inclusive; a missing end is open. The latest matching start wins,
-then original input row order. Preserve that order during processing. If a
-timestamp candidate finds no contact, try the next candidate. Missing matches
+boundaries are inclusive; a missing internal end is open. Among ambulatory and
+inpatient contacts, a matching inpatient contact takes priority, including at a
+later timestamp candidate. Ambulatory contacts provide the fallback. Within each
+class search, timestamp candidates retain their order; the latest matching start
+wins, then original input row order. Other encounter classes retain their existing
+matching behavior. Deselected contacts are excluded from automatic targets. Missing matches
 omit the reference and appear in the report. Contact levels are not substituted.
 
 Immunization uses `occurrenceDateTime`. DiagnosticReport tries
@@ -186,6 +189,52 @@ references, unresolved supplied DocumentReference contacts, omitted contact
 targets and temporal conflicts, including resource identity and source row.
 DocumentReference matching uses explicitly entered `Ausgabezeitpunkt`; its
 automatically generated run timestamp and filesystem timestamps are excluded.
+
+### Encounter classes and output end rules
+
+`ENCOUNTER_AMBULATORY_ENABLED` and `ENCOUNTER_INPATIENT_ENABLED` select AMB and IMP
+output independently across facility, department and ward/service levels.
+Internal contacts remain available for derivations and stable resource identities.
+
+Each class has `END_POLICY` and `END_APPLICATION` settings, for example
+`ENCOUNTER_INPATIENT_END_POLICY = start`. Policies are:
+
+| Value | Output end |
+| --- | --- |
+| `preserve` | Keep the input or internally derived end. |
+| `open` | Remove the end. |
+| `quarter-end` | Last day of the start date's quarter. |
+| `year-end` | Last day of the start date's year. |
+| `start` | Copy the start, including its precision. |
+| `start-plus-second` | Add one second to the start. |
+
+`END_APPLICATION = always` applies the policy to every selected contact;
+`missing-input-end` applies it when the original row had no end value, including
+a DAR-only end. An internally derived end does not prevent that application.
+
+Calendar rules preserve date-only precision. For timestamps they use 23:59:59,
+with nines at the existing fractional precision, and preserve the explicit UTC
+offset. An offset does not identify a regional daylight-saving timezone.
+`start-plus-second` uses UTC midnight for a complete date without a time; existing
+timestamps retain their offset and fractional precision. Calendar calculations
+and second arithmetic require a complete start date; missing or partial values
+produce a diagnostic naming the contact, class and level. `start` can copy a
+partial date. The bundled KDS Encounter constraints impose no positive minimum
+duration for `start`.
+
+End policies operate on output copies after internal derivations and reference
+matching. They can intentionally produce child periods outside parent periods.
+DAR is applied next: an active class-specific rule overrides the common Encounter
+rule; `unchanged` inherits it. The final actual end value determines `finished`
+versus `in-progress`, and location periods and statuses mirror that result.
+The import report records end-policy applications in `contactEndDerivations`.
+Whole-day time-shift execution remains part of the pending converter integration;
+its preflight guard remains active.
+
+Identifier rules accept `Encounter.ambulatory` and `Encounter.inpatient` selectors
+alongside `Encounter`. A rule matching both the common type and its class generates
+one identifier. Pattern and hash expansion use `Encounter` as the resource type;
+counters are shared per rule and reserved before output selection.
 
 ## Diagnosis references
 

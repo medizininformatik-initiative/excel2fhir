@@ -110,7 +110,7 @@ public class ContractConfigurationTest {
             }
         }
     }
-    @Test public void classSpecificEncounterSettingsAreParsedButExecutionIsGuarded() {
+    @Test public void classSpecificEncounterSettingsAreSupported() {
         var defaults = ContractConfiguration.parse(VERSION);
         assertFalse(defaults.unsupportedSettings().stream().anyMatch(e -> e.contains("#97")));
         assertTrue(defaults.effective("resource.Encounter.ambulatory.endApplication").isEmpty());
@@ -119,7 +119,7 @@ public class ContractConfigurationTest {
                 + "IDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
                 + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Encounter.ambulatory\n"
                 + "IDENTIFIER_RULE_1_SYSTEM=urn:test\nIDENTIFIER_RULE_1_PATTERN={resourceType}\n");
-        assertEquals(3, active.unsupportedSettings().stream().filter(e -> e.contains("#97")).count());
+        assertEquals(0, active.unsupportedSettings().stream().filter(e -> e.contains("#97")).count());
         var inactive = ContractConfiguration.parse(VERSION + "ENCOUNTER_ENABLED=false\n"
                 + "ENCOUNTER_AMBULATORY_END_POLICY=open\nDAR_ENCOUNTER_AMBULATORY_PERIOD_END=unknown\n");
         assertFalse(inactive.unsupportedSettings().stream().anyMatch(e -> e.contains("#97")));

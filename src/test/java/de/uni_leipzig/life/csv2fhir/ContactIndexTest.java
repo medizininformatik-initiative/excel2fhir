@@ -63,4 +63,23 @@ public class ContactIndexTest {
         contact(index, "p1", "missing-start", WARD_SERVICE, 5, null, null, false);
         assertNull(match(index, "p1", WARD_SERVICE, "2026-05-03T00:00:00Z"));
     }
+    @Test public void inpatientWinsAcrossTimestampsAndAmbulatoryRemainsFallback() {
+        var index = new ContactIndex();
+        var ambulatory = contact(index, "p1", "amb", FACILITY, 1, "2026-05-01", null, false);
+        ambulatory.getClass_().setCode("AMB");
+        var inpatient = contact(index, "p1", "imp", FACILITY, 2, "2026-04-01", "2026-04-30", false);
+        inpatient.getClass_().setCode("IMP");
+        assertEquals("imp", match(index, "p1", FACILITY, "2026-05-15", "2026-04-15"));
+        assertEquals("amb", match(index, "p1", FACILITY, "2026-05-15"));
+        assertEquals("amb", index.match("p1", FACILITY, List.of(new DateTimeType("2026-05-15"),
+                new DateTimeType("2026-04-15")), entry -> !entry.encounter().getId().equals("imp"))
+                .orElseThrow().encounter().getId());
+        inpatient.getPeriod().setEndElement(null);
+        var later = contact(index, "p1", "imp-later", FACILITY, 3, "2026-04-10", null, false);
+        later.getClass_().setCode("IMP");
+        assertEquals("imp-later", match(index, "p1", FACILITY, "2026-05-15"));
+        var other = contact(index, "p1", "other", FACILITY, 4, "2026-05-10", null, false);
+        other.getClass_().setCode("VR");
+        assertEquals("other", match(index, "p1", FACILITY, "2026-05-15"));
+    }
 }

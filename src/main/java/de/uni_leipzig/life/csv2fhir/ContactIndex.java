@@ -20,9 +20,10 @@ public final class ContactIndex {
         private final Level level;
         private final long inputRow;
         private final boolean secondary;
+        private final boolean inputEndMissing;
 
         private Entry(Encounter encounter, String patientId, String facilityId, Level level,
-                String parentId, long inputRow, boolean secondary) {
+                String parentId, long inputRow, boolean secondary, boolean inputEndMissing) {
             this.encounter = encounter;
             this.patientId = patientId;
             this.facilityId = facilityId;
@@ -30,6 +31,7 @@ public final class ContactIndex {
             this.parentId = parentId;
             this.inputRow = inputRow;
             this.secondary = secondary;
+            this.inputEndMissing = inputEndMissing;
         }
         public Encounter encounter() { return encounter; }
         public String patientId() { return patientId; }
@@ -38,14 +40,21 @@ public final class ContactIndex {
         public Level level() { return level; }
         public long inputRow() { return inputRow; }
         public boolean secondary() { return secondary; }
+        public boolean inputEndMissing() { return inputEndMissing; }
     }
 
     private final Map<String, Map<String, Entry>> byPatient = new LinkedHashMap<>();
 
     public void add(Encounter encounter, String patientId, String facilityId, Level level,
             String parentId, long inputRow, boolean secondary) {
+        add(encounter, patientId, facilityId, level, parentId, inputRow, secondary,
+                !encounter.getPeriod().getEndElement().hasValue());
+    }
+
+    public void add(Encounter encounter, String patientId, String facilityId, Level level,
+            String parentId, long inputRow, boolean secondary, boolean inputEndMissing) {
         byPatient.computeIfAbsent(patientId, key -> new LinkedHashMap<>()).put(encounter.getId(),
-                new Entry(encounter, patientId, facilityId, level, parentId, inputRow, secondary));
+                new Entry(encounter, patientId, facilityId, level, parentId, inputRow, secondary, inputEndMissing));
     }
 
     public List<Entry> entries(String patientId) {
@@ -95,7 +104,18 @@ public final class ContactIndex {
                         .map(parent -> parent.encounter.getId().equals(source.encounter.getId())).orElse(false));
     }
 
-    private Optional<Entry> match(String patientId, Level level, List<DateTimeType> candidates,
+    public Optional<Entry> match(String patientId, Level level, List<DateTimeType> candidates,
+            java.util.function.Predicate<Entry> eligible) {
+        // Preserve timestamp order within each pass; inpatient matches precede ambulatory fallback.
+        Optional<Entry> original = matchCandidates(patientId, level, candidates, eligible);
+        if (original.isEmpty() || !"AMB".equals(original.get().encounter.getClass_().getCode())) return original;
+        Optional<Entry> preferred = matchCandidates(patientId, level, candidates,
+                eligible.and(entry -> "IMP".equals(entry.encounter.getClass_().getCode())));
+        if (preferred.isPresent()) return preferred;
+        return original;
+    }
+
+    private Optional<Entry> matchCandidates(String patientId, Level level, List<DateTimeType> candidates,
             java.util.function.Predicate<Entry> eligible) {
         for (DateTimeType candidate : candidates) {
             if (candidate == null || !candidate.hasValue()) continue;

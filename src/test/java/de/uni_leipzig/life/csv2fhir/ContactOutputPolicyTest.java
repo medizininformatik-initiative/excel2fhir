@@ -60,4 +60,13 @@ public class ContactOutputPolicyTest {
         var condition = new Condition();
         assertSame(condition, p.output(condition));
     }
+    @Test public void classSelectionUsesActualClassAcrossAllLevels() {
+        for (var level : ContactIndex.Level.values()) {
+            var encounter = contact("e" + level, level, null);
+            var p = policy("ENCOUNTER_INPATIENT_ENABLED=false\n");
+            encounter.getClass_().setCode("IMP"); assertNull(p.output(encounter));
+            encounter.getClass_().setCode("AMB"); assertNotNull(p.output(encounter));
+            encounter.getClass_().setCode("PRENC"); assertNotNull(p.output(encounter));
+        }
+    }
 }

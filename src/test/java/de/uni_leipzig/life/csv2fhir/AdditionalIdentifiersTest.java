@@ -76,4 +76,20 @@ public class AdditionalIdentifiersTest {
             assertEquals("3",((Patient)ids.output(p,0)).getIdentifierFirstRep().getValue());
         }
     }
+    @Test public void encounterSelectorsShareCountsAndTechnicalTypeWithoutDuplicateAllocation() throws Exception {
+        String settings = settings("{count}-{resourceType}").replace(
+                "Patient,Observation,MedicationAdministration,MedicationStatement", "Encounter,Encounter.ambulatory,Encounter.inpatient");
+        var amb = new Encounter(); amb.setId("amb"); amb.getClass_().setCode("AMB");
+        var imp = new Encounter(); imp.setId("imp"); imp.getClass_().setCode("IMP");
+        var context = context(settings, amb, imp);
+        var ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(amb, imp), context, 0);
+        assertEquals("2-Encounter", ((Encounter)ids.output(imp, 0)).getIdentifierFirstRep().getValue());
+        assertEquals("1-Encounter", ((Encounter)ids.output(amb, 0)).getIdentifierFirstRep().getValue());
+        var scoped = context(settings.replace("Encounter,Encounter.ambulatory,Encounter.inpatient", "Encounter.inpatient"), amb, imp);
+        ids = new AdditionalIdentifiers(scoped.getConverterOptions().configuration());
+        ids.reserve(List.of(amb, imp), scoped, 0);
+        assertFalse(((Encounter)ids.output(amb, 0)).hasIdentifier());
+        assertEquals("1-Encounter", ((Encounter)ids.output(imp, 0)).getIdentifierFirstRep().getValue());
+    }
 }

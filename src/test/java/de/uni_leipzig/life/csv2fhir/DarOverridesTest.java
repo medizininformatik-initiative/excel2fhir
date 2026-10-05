@@ -104,4 +104,21 @@ public class DarOverridesTest {
         reason(((MedicationStatement)apply(statement,"DAR_MEDICATION_STATEMENT_EFFECTIVE_X=unknown\n")).getEffectiveDateTimeType(),"unknown");
     }
 
+    @Test public void scopedEncounterRulesWorkWithoutCommonOverrideAndStayWithinClass() {
+        var encounter = new Encounter(); encounter.getClass_().setCode("AMB");
+        encounter.getPeriod().setStartElement(new DateTimeType("2026-05-01"));
+        encounter.addExtension().setUrl("http://fhir.de/StructureDefinition/Aufnahmegrund")
+                .addExtension("VierteStelle", new Coding("urn:admission", "1", null));
+        String settings = "DAR_ENCOUNTER_AMBULATORY_PERIOD_START=unknown\n"
+                + "DAR_ENCOUNTER_AMBULATORY_ADMISSION_REASON_FOURTH_DIGIT=unknown\n";
+        var out = (Encounter)apply(encounter, settings);
+        assertFalse(out.getPeriod().getStartElement().hasValue());
+        reason(out.getPeriod().getStartElement(), "unknown");
+        var coding = (Coding)out.getExtensionByUrl("http://fhir.de/StructureDefinition/Aufnahmegrund")
+                .getExtensionByUrl("VierteStelle").getValue();
+        reason(coding.getCodeElement(), "unknown"); assertEquals("urn:admission", coding.getSystem());
+        encounter.getClass_().setCode("IMP");
+        out = (Encounter)apply(encounter, settings);
+        assertEquals("2026-05-01", out.getPeriod().getStartElement().getValueAsString());
+    }
 }

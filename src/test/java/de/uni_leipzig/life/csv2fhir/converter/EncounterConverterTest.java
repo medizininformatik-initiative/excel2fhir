@@ -309,4 +309,20 @@ public class EncounterConverterTest {
             assertFalse(encounter.getIdentifierFirstRep().getSystemElement().hasExtension());
         }
     }
+    @Test public void outputEndPolicyRetainsOriginalMissingEndAfterInternalDerivation() throws Exception {
+        var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY + OP);
+        var config = de.uni_leipzig.life.csv2fhir.ContractConfiguration.parse("CONFIGURATION_VERSION=1\n"
+                + "ENCOUNTER_INPATIENT_END_POLICY=year-end\nENCOUNTER_INPATIENT_END_APPLICATION=missing-input-end\n");
+        var policy = new de.uni_leipzig.life.csv2fhir.EncounterOutputPolicy(config, result.contacts());
+        var operation = getEncounters(result, EncounterLevel3.class).get(1);
+        var parent = getEncounters(result, EncounterLevel1.class).get(0);
+        assertEquals(true, result.contacts().get(operation).orElseThrow().inputEndMissing());
+        assertEquals(false, result.contacts().get(parent).orElseThrow().inputEndMissing());
+        var output = (Encounter)policy.finish(policy.output(operation));
+        assertEquals("2026-12-31T23:59:59Z", output.getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-03T12:00:00Z", operation.getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-05T12:00:00Z", ((Encounter)policy.output(parent)).getPeriod().getEndElement().getValueAsString());
+        assertEquals(Encounter.EncounterStatus.FINISHED, output.getStatus());
+        assertEquals(Encounter.EncounterLocationStatus.COMPLETED, output.getLocationFirstRep().getStatus());
+    }
 }

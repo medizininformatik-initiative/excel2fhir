@@ -579,6 +579,7 @@ public class Csv2Fhir {
             importReport.diagnosisReferenceIssues.add(reported);
         }
         DarOverrides darOverrides = new DarOverrides(options.configuration());
+        EncounterOutputPolicy encounterOutput = new EncounterOutputPolicy(options.configuration(), result.contacts());
         for (var pending : pendingOutput) {
             Resource resource = pending.getValue();
             if (!resourceSelection.emits(resource)) {
@@ -612,7 +613,9 @@ public class Csv2Fhir {
             }
             output = encounterAssignments.output(output);
             output = resourceSelection.output(output);
+            output = encounterOutput.output(output);
             output = darOverrides.output(output);
+            output = encounterOutput.finish(output);
             output = identifiers.output(output, options.loopCounter);
             addEntry(bundle, output);
             addEntry(ndjsonBundle, output);
@@ -620,6 +623,11 @@ public class Csv2Fhir {
             importReport.tables.get(pending.getKey().name()).returnedResources++;
         }
         importReport.contactEndDerivations.addAll(result.contactEndDerivations);
+        for (var change : encounterOutput.changes()) {
+            var reported = new java.util.LinkedHashMap<>(change);
+            reported.put("iteration", Integer.toString(options.loopCounter));
+            importReport.contactEndDerivations.add(reported);
+        }
         for (var issue : encounterAssignments.issues()) {
             var reported = new java.util.LinkedHashMap<>(issue);
             reported.put("iteration", Integer.toString(options.loopCounter));

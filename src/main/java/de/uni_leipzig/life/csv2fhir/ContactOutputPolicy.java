@@ -23,6 +23,8 @@ public final class ContactOutputPolicy {
     public boolean emits(Resource source) {
         if (configuration == null || !(source instanceof Encounter)) return true;
         if (!enabled("resource.Encounter.enabled")) return false;
+        String scope = EncounterOutputPolicy.scope((Encounter)source);
+        if (scope != null && !enabled("resource.Encounter." + scope + ".enabled")) return false;
         return contacts.get((Encounter)source).map(entry -> generic
                 ? entry.level() == ContactIndex.Level.FACILITY
                 : enabled("contact." + name(entry.level()) + ".enabled")).orElse(false);
