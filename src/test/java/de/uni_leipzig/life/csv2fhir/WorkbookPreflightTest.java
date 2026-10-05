@@ -12,7 +12,7 @@ public class WorkbookPreflightTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
 
     @Test public void readsStarterStructureAndRowsWithoutChangingBytes() throws Exception {
-        Path input = Path.of("input/FHIR_Testdatengenerator_Vorlage.xlsx");
+        Path input = Path.of("FHIR_Testdatengenerator_Vorlage.xlsx");
         byte[] original = Files.readAllBytes(input);
         var report = WorkbookPreflight.inspect(input);
         assertTrue(report.toString(), report.get("valid").asBoolean());
