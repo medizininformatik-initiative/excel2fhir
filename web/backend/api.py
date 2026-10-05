@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field
 import store
 import configurations
 import inputs
+import generation
+from generation import Settings as GenerationSettings
 from starlette.concurrency import run_in_threadpool
 
 app = FastAPI(title="Excel2FHIR workbench prototype")
@@ -27,6 +29,7 @@ async def local_mutations(request: Request, call_next):
 class JobRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requestId: UUID | None = None
+    generation: GenerationSettings | None = None
     source: str = "starter"
     profile: str = "default"
     configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
@@ -56,7 +59,8 @@ def jobs():
 @app.post("/api/jobs", status_code=201)
 def create(request: JobRequest):
     try:
-        job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None)
+        job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None,
+                              request.generation.model_dump(mode='json') if request.generation else None)
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
     except ValueError as error:
@@ -176,6 +180,7 @@ class SavedSelection(BaseModel):
 class BatchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     requestId: UUID
+    generation: GenerationSettings | None = None
     source: str = 'starter'
     configurations: list[SavedSelection] = Field(min_length=1, max_length=100)
 
@@ -188,7 +193,8 @@ class RepeatRequest(BaseModel):
 @app.post('/api/job-batches', status_code=201)
 def start_batch(request: BatchRequest):
     selections = [{'id': str(item.id), 'revision': item.revision} for item in request.configurations]
-    ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId))
+    ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId),
+                             request.generation.model_dump(mode='json') if request.generation else None)
     return [store.get(job_id) for job_id in ids]
 
 
@@ -219,3 +225,8 @@ async def upload_input(request: Request, filename: str):
             return await run_in_threadpool(inputs.publish, directory, name)
     except ValueError as error:
         raise HTTPException(422, str(error))
+
+
+@app.get('/api/generation-catalogue')
+def generation_catalogue():
+    return generation.catalogue()

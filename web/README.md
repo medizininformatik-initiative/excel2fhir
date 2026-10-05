@@ -109,6 +109,36 @@ variants. Each snapshot also fingerprints the import scripts, template and
 mappings. Repeating uses the saved source with the current importer and records
 the original importer fingerprint.
 
+## Generate Synthea inputs
+
+Choose **Generate Synthea data** in the input selector. Set the requested population,
+age range, sex, patient and clinician seeds, age reference date, simulation end,
+US state/city and exported history. Zero history years exports the full history.
+The supplied example uses one patient, ages 30–80, Massachusetts, seeds `20260912`
+and 12 September 2026 for both dates, matching the standalone workflow.
+
+Advanced settings provide living/deceased selection, the bundled patient-selection
+modules, an optional single-person seed, simulation timestep, attempt limit,
+veteran population and disease/care modules. Module and location choices come
+from the pinned generator JAR. With no module selection, all modules run; core
+Synthea modules always run. Clinical import requires diagnoses, so narrowly
+selected modules or history may generate patients that cannot be imported.
+
+Choose input configuration for importer defaults or the editor/saved configurations
+for KDS variants. Each selected configuration receives a separate generation and
+conversion run with identical saved generator settings. Seeds, dates, settings,
+generator revision and hashes are recorded. Repeats preserve these settings and
+use the installed generator/importer, recording their original version hashes.
+Runs show requested, actually exported and successfully imported source-patient
+counts separately. Extra deceased patients can increase the exported count.
+
+The web workflow accepts 1–1000 requested patients per run and up to 10,000
+attempts per patient slot. It uses two Synthea threads, a 4 GiB generator heap
+and a 6 GiB worker container; jobs run sequentially. Generated FHIR, editable
+workbooks, original Synthea bundles, workflow reports and logs are included in
+the download. See the [Synthea workflow](../docs/synthea-workflow.md) for output
+layout and seed semantics.
+
 ## Run saved configurations and repeat runs
 
 Choose **Saved configurations** as the configuration source and select one or
@@ -164,7 +194,7 @@ through SQLite and persistent files. Neither service receives the Docker socket.
 The workbench offers the two bundled inputs and uploaded workbooks, CSV archives and Synthea bundles with embedded,
 editor or saved configurations.
 Saved configurations and uploaded inputs are stored in the local workbench volume.
-Synthea generation and environment controls are tracked separately.
+Environment controls are tracked separately.
 
 ## Verify
 
@@ -204,7 +234,7 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    the API uses a smaller Java/Python image. Both use the same converter build
    and import assets. Input inspection runs serially with a 256 MiB JVM or Python
    address-space budget and a 60-second timeout.
-   The worker gets two CPUs and 4 GiB RAM; the JVM heap is capped at 3 GiB
+   The worker gets two CPUs and 6 GiB RAM; the JVM heap is capped at 3 GiB
    to load the bundled FHIR validation profiles.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not
    capacity measurements for large generation or validation workloads.

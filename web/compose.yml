@@ -19,7 +19,7 @@ services:
     init: true
     volumes:
       - workbench:/data
-    mem_limit: 4g
+    mem_limit: 6g
     cpus: 2
     stop_grace_period: 15s
     restart: unless-stopped

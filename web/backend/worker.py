@@ -6,6 +6,7 @@ import signal
 import subprocess
 import sys
 import synthea_runtime
+import generation
 import time
 import zipfile
 
@@ -52,12 +53,17 @@ def execute(job_id):
         if kind.startswith('synthea'):
             if synthea_runtime.fingerprint() != snapshot['syntheaImportSha256']:
                 raise RuntimeError('Synthea importer changed after submission; start a new run')
+            if kind == 'synthea-generation' and store.digest(synthea_runtime.ROOT / 'target/synthea.jar') != snapshot['syntheaGeneratorSha256']:
+                raise RuntimeError('Synthea generator changed after submission; start a new run')
             source = input_path
             if kind == 'synthea-zip':
                 source = folder / 'input-synthea'
                 inputs.extract_archive(input_path, source, '.json')
-            command = [sys.executable, str(synthea_runtime.ROOT / 'scripts/run_synthea_cases.py'),
-                       '-i' if kind == 'synthea-zip' else '-f', str(source),
+            command = ([sys.executable, str(synthea_runtime.ROOT / 'scripts/run_synthea_workflow.py')]
+                       if kind == 'synthea-generation' else
+                       [sys.executable, str(synthea_runtime.ROOT / 'scripts/run_synthea_cases.py'),
+                        '-i' if kind == 'synthea-zip' else '-f', str(source)])
+            command += [
                        '-r', ','.join(snapshot.get('formats', ['JSON', 'NDJSON'])),
                        '-p', str(snapshot.get('patientsPerFile', 1))]
             if snapshot.get('validation', False):
@@ -73,6 +79,8 @@ def execute(job_id):
             if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
                 raise RuntimeError("Configuration snapshot has changed")
             command.extend(["--converter-options", str(folder / "default.config")])
+        if kind == 'synthea-generation':
+            command += ['--', *generation.arguments(json.loads(input_path.read_text()))]
         with (folder / "converter.log").open("w") as log:
             process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
@@ -81,11 +89,20 @@ def execute(job_id):
                     break
                 time.sleep(0.2)
         state = "interrupted" if stopping else "cancelled" if store.get(job_id)["cancel"] else "succeeded" if process.returncode == 0 else "failed"
+        if kind == 'synthea-generation' and state in {'succeeded', 'failed'}:
+            generated = list((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
+            summaries = list((folder / 'output').glob('*/details/reports/summary.json'))
+            summary = json.loads(summaries[0].read_text()) if summaries else {}
+            (folder / 'generation-result.json').write_text(json.dumps({
+                'generatedPatients': len(generated), 'importedPatients': len(summary.get('results', [])),
+                'failedPatients': len(summary.get('failures', []))}))
         if state in {"succeeded", "failed"}:
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():
                         archive.write(path, path.relative_to(folder))
+                if (folder / "generation-result.json").exists():
+                    archive.write(folder / "generation-result.json", "generation-result.json")
                 archive.write(folder / "snapshot.json", "snapshot.json")
                 archive.write(folder / "converter.log", "converter.log")
             (folder / "result.tmp").rename(folder / "result.zip")
