@@ -13,7 +13,9 @@ public final class DarOverrides {
     public DarOverrides(ContractConfiguration configuration) {
         overrides = configuration == null ? java.util.Map.of() : configuration.darOverrides();
         if (!overrides.isEmpty()) for (JsonNode field : configuration.darFields())
-            if (overrides.containsKey(field.path("id").asText())) fields.add(field);
+            if (overrides.containsKey(field.path("id").asText()) || overrides.keySet().stream()
+                    .anyMatch(id -> id.replace("Encounter.ambulatory.", "Encounter.")
+                            .replace("Encounter.inpatient.", "Encounter.").equals(field.path("id").asText()))) fields.add(field);
     }
 
     public Resource output(Resource source) {
@@ -22,6 +24,9 @@ public final class DarOverrides {
         for (JsonNode field : fields) {
             String id = field.path("id").asText();
             String code = overrides.get(id);
+            if (source instanceof Encounter && EncounterOutputPolicy.scope((Encounter)source) != null)
+                code = overrides.getOrDefault(id.replace("Encounter.", "Encounter."
+                        + EncounterOutputPolicy.scope((Encounter)source) + "."), code);
             if (code == null || !field.path("resourceType").asText().equals(source.fhirType())) continue;
             if (source instanceof Observation) {
                 boolean vital = ((Observation)source).getCategory().stream().flatMap(c -> c.getCoding().stream())

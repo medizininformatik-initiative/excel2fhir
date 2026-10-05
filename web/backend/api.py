@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 import store
 
 app = FastAPI(title="Excel2FHIR workbench prototype")
@@ -25,6 +25,7 @@ class JobRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     source: str = "starter"
     profile: str = "default"
+    configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
 
 
 def directory(job_id):
@@ -40,7 +41,7 @@ def directory(job_id):
 
 @app.get("/api/catalog")
 def catalog():
-    return {"sources": list(store.SOURCES), "profiles": ["default"]}
+    return {"sources": list(store.SOURCES), "profiles": ["default", "workbook"]}
 
 
 @app.get("/api/jobs")
@@ -51,7 +52,7 @@ def jobs():
 @app.post("/api/jobs", status_code=201)
 def create(request: JobRequest):
     try:
-        job_id = store.create(request.source, request.profile)
+        job_id = store.create(request.source, request.profile, request.configurationProperties)
     except ValueError as error:
         raise HTTPException(422, str(error))
     return store.get(job_id)
@@ -84,6 +85,6 @@ def snapshot(job_id: str):
 @app.get("/api/jobs/{job_id}/download")
 def download(job_id: str):
     folder, job = directory(job_id)
-    if job["state"] != "succeeded" or not (folder / "result.zip").exists():
-        raise HTTPException(409, "Successful result is not available")
+    if not job["download_available"]:
+        raise HTTPException(409, "Result archive is not available")
     return FileResponse(folder / "result.zip", filename=f"excel2fhir-{job_id}.zip")

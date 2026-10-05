@@ -83,6 +83,7 @@ public class DiagnosisOutputPolicyTest {
         var root = contact("root", FACILITY, null, 1, null, null);
         var c = diagnosis(root, "a", "CC", null);
         root.addDiagnosis().setCondition(new Reference("Procedure/p"));
+        var procedure = new Procedure(); procedure.setId("p"); resources.add(procedure);
         var p = policy("CONDITION_ENABLED=false\n");
         assertNull(p.output(c));
         assertEquals(List.of("Procedure/p"), refs(p, root));
@@ -97,5 +98,19 @@ public class DiagnosisOutputPolicyTest {
         p = policy("CONTACT_DIAGNOSES_ROLES=\n");
         assertTrue(refs(p, root).isEmpty());
         assertTrue(p.issues().isEmpty());
+    }
+    @Test public void proceduresUseSelectedDescendantLevelAndOwnEnablement() {
+        var root = contact("root", FACILITY, null, 1, "2026-01-01", null);
+        var department = contact("department", DEPARTMENT, "root", 2, "2026-01-01", null);
+        var wrong = contact("wrong", DEPARTMENT, "other-root", 3, "2026-01-02", null);
+        var procedure = new Procedure(); procedure.setId("p");
+        procedure.setPerformed(new Period().setStartElement(new DateTimeType("2026-01-03")));
+        resources.add(procedure); root.addDiagnosis().setCondition(new Reference("Procedure/p"));
+        var p = policy("CONDITION_ENABLED=false\nCONTACT_PROCEDURE_DIAGNOSES_LEVELS=department\n");
+        assertEquals(List.of("Procedure/p"), refs(p, department));
+        assertTrue(refs(p, root).isEmpty()); assertTrue(refs(p, wrong).isEmpty());
+        p = policy("PROCEDURE_ENABLED=false\nCONTACT_PROCEDURE_DIAGNOSES_LEVELS=department\n");
+        assertTrue(refs(p, department).isEmpty());
+        assertTrue(refs(p, root).isEmpty());
     }
 }

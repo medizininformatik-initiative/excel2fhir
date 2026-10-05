@@ -160,6 +160,8 @@ public class EncounterConverter extends Converter {
     }
 
     @Override protected List<Resource> convertInternal() throws Exception {
+        var inputEnd = ClinicalValues.date(value(Ende));
+        boolean inputEndMissing = inputEnd == null || !inputEnd.hasValue();
         List<Resource> resources = convertContacts();
         for (Resource resource : resources) {
             if (!(resource instanceof Encounter)) continue;
@@ -170,7 +172,7 @@ public class EncounterConverter extends Converter {
             String kind = level == Level.WARD_SERVICE ? value(ContactColumn.Kontaktart) : null;
             result.contacts().add(encounter, getPatientId(), state.previousEncounterLevel1.getId(), level,
                     encounter.hasPartOf() ? encounter.getPartOf().getReferenceElement().getIdPart() : null,
-                    inputRecord.getRecordNumber(), SECONDARY_KINDS.contains(kind == null ? "" : kind));
+                    inputRecord.getRecordNumber(), SECONDARY_KINDS.contains(kind == null ? "" : kind), inputEndMissing);
         }
         return resources;
     }

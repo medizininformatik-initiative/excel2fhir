@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import sqlite3
+import subprocess
 import time
 import uuid
 
@@ -33,26 +34,50 @@ def digest(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def create(source, profile):
-    if source not in SOURCES or profile != "default":
+def validate_configuration(path):
+    metadata = path.with_suffix(".validated.json")
+    try:
+        result = subprocess.run(["java", "-Xmx256m", "-cp", str(APP / "excel2fhir.jar"),
+                                 "de.uni_leipzig.life.csv2fhir.ConfigurationPreflight", str(path), str(metadata)],
+                                capture_output=True, text=True, timeout=30)
+        if result.returncode:
+            raise ValueError(result.stderr.strip() or "Configuration validation failed")
+        return json.loads(metadata.read_text())
+    except subprocess.TimeoutExpired as error:
+        raise ValueError("Configuration validation timed out") from error
+    finally:
+        metadata.unlink(missing_ok=True)
+
+
+def create(source, profile, configuration_properties=None):
+    if source not in SOURCES or profile not in {"default", "workbook"}:
         raise ValueError("Unknown input or configuration profile")
+    if profile == "workbook" and configuration_properties is not None:
+        raise ValueError("Workbook configuration cannot be combined with editor settings")
     job_id = str(uuid.uuid4())
     directory = ROOT / "jobs" / job_id
     directory.mkdir(parents=True)
     try:
         shutil.copyfile(APP / SOURCES[source], directory / "input.xlsx")
-        shutil.copyfile(APP / "defaults.config", directory / "default.config")
-        config = {"id": "default", "name": "Existing converter defaults", "optionsProperties": (directory / "default.config").read_text()}
-        (ROOT / "profiles").mkdir(exist_ok=True)
-        # Atomically refresh the bundled profile after an image upgrade.
-        profile_path = ROOT / "profiles/default.json"
-        temporary_profile = ROOT / "profiles" / f"{job_id}.tmp"
-        temporary_profile.write_text(json.dumps(config, indent=2))
-        temporary_profile.replace(profile_path)
-        snapshot = {"schemaVersion": 1, "source": source, "profile": config, "inputSha256": digest(directory / "input.xlsx"), "converterSha256": digest(APP / "excel2fhir.jar"), "formats": ["JSON", "NDJSON"], "validation": False}
+        if profile == "workbook":
+            execution = {}
+        elif configuration_properties is None:
+            shutil.copyfile(APP / "defaults.config", directory / "default.config")
+            execution = {"formats": ["JSON", "NDJSON"], "validation": False, "patientsPerFile": 1}
+        else:
+            if not isinstance(configuration_properties, str) or not 1 <= len(configuration_properties) <= 1_000_000:
+                raise ValueError("Invalid configuration size")
+            (directory / "default.config").write_text(configuration_properties)
+            execution = validate_configuration(directory / "default.config")
+        config = {"id": "default" if configuration_properties is None else "editor",
+                  "name": "Converter defaults" if configuration_properties is None else "Submitted configuration",
+                  "optionsProperties": (directory / "default.config").read_text()} if profile != "workbook" else {
+                      "id": "workbook", "name": "Workbook configurations"}
+        snapshot = {"schemaVersion": 1, "source": source, "profile": config, "inputSha256": digest(directory / "input.xlsx"), "converterSha256": digest(APP / "excel2fhir.jar"), **execution}
         (directory / "snapshot.json").write_text(json.dumps(snapshot, indent=2))
         for name in ("input.xlsx", "default.config", "snapshot.json"):
-            (directory / name).chmod(0o444)
+            if (directory / name).exists():
+                (directory / name).chmod(0o444)
         with connect() as db:
             db.execute("INSERT INTO jobs(id,state,created) VALUES (?, 'queued', ?)", (job_id, time.time()))
     except Exception:
@@ -63,13 +88,19 @@ def create(source, profile):
 
 def jobs():
     with connect() as db:
-        return [dict(row) for row in db.execute("SELECT * FROM jobs ORDER BY created DESC")]
+        return [job_result(row) for row in db.execute("SELECT * FROM jobs ORDER BY created DESC")]
+
+
+def job_result(row):
+    job = dict(row)
+    job["download_available"] = job["state"] in {"succeeded", "failed"} and (ROOT / "jobs" / job["id"] / "result.zip").is_file()
+    return job
 
 
 def get(job_id):
     with connect() as db:
         row = db.execute("SELECT * FROM jobs WHERE id=?", (job_id,)).fetchone()
-    return dict(row) if row else None
+    return job_result(row) if row else None
 
 
 def cancel(job_id):

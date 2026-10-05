@@ -36,7 +36,7 @@ def terminate(process):
 
 def execute(job_id):
     folder = store.ROOT / "jobs" / job_id
-    command = ["java", "-Xmx1536m", "-jar", str(store.APP / "excel2fhir.jar"), "-f", str(folder / "input.xlsx"), "--converter-options", str(folder / "default.config"), "-o", str(folder / "output")]
+    command = ["java", "-Xmx3g", "-jar", str(store.APP / "excel2fhir.jar"), "-f", str(folder / "input.xlsx"), "-o", str(folder / "output")]
     process = None
     try:
         snapshot = json.loads((folder / "snapshot.json").read_text())
@@ -44,8 +44,10 @@ def execute(job_id):
             raise RuntimeError("Converter image changed after submission; start a new run")
         if store.digest(folder / "input.xlsx") != snapshot["inputSha256"]:
             raise RuntimeError("Input snapshot has changed")
-        if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
-            raise RuntimeError("Configuration snapshot has changed")
+        if snapshot["profile"]["id"] != "workbook":
+            if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
+                raise RuntimeError("Configuration snapshot has changed")
+            command.extend(["--converter-options", str(folder / "default.config")])
         with (folder / "converter.log").open("w") as log:
             process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
@@ -54,7 +56,7 @@ def execute(job_id):
                     break
                 time.sleep(0.2)
         state = "interrupted" if stopping else "cancelled" if store.get(job_id)["cancel"] else "succeeded" if process.returncode == 0 else "failed"
-        if state == "succeeded":
+        if state in {"succeeded", "failed"}:
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():

@@ -118,4 +118,25 @@ public class ClinicalEncounterAssignmentTest {
         doc.getContext().addEncounter(new Reference("Encounter/old")); context(r, doc, true, "old");
         assertFalse(((DocumentReference)policy(r).output(doc)).hasContext());
     }
+    @Test public void outputEndRulesDoNotChangeMatchingAndExplicitReferencesKeepAmbulatoryContact() throws Exception {
+        var r = result("ENCOUNTER_INPATIENT_END_POLICY=start\n");
+        var amb = contact(r, "p", "amb", DEPARTMENT, "2026-05-02", null);
+        amb.getClass_().setCode("AMB");
+        var imp = contact(r, "p", "imp", DEPARTMENT, "2026-05-01", "2026-05-20");
+        imp.getClass_().setCode("IMP");
+        var ends = new EncounterOutputPolicy(r.getConverterOptions().configuration(), r.contacts());
+        assertEquals("2026-05-01", ((Encounter)ends.output(imp)).getPeriod().getEndElement().getValueAsString());
+        var observation = new Observation(); observation.setId("o");
+        observation.setEffective(new DateTimeType("2026-05-10")); context(r, observation, false);
+        assertEquals("Encounter/imp", ((Observation)policy(r).output(observation)).getEncounter().getReference());
+        var document = new DocumentReference(); document.setId("d");
+        document.setDateElement(new InstantType("2026-05-10T00:00:00Z")); context(r, document, true, "amb");
+        assertEquals("Encounter/amb", ((DocumentReference)policy(r).output(document)).getContext().getEncounterFirstRep().getReference());
+        var disabled = result("ENCOUNTER_INPATIENT_ENABLED=false\n");
+        var disabledImp = contact(disabled, "p", "imp", DEPARTMENT, "2026-05-01", null);
+        disabledImp.getClass_().setCode("IMP");
+        var enabledAmb = contact(disabled, "p", "amb", DEPARTMENT, "2026-05-02", null);
+        enabledAmb.getClass_().setCode("AMB"); context(disabled, observation, false);
+        assertEquals("Encounter/amb", ((Observation)policy(disabled).output(observation)).getEncounter().getReference());
+    }
 }

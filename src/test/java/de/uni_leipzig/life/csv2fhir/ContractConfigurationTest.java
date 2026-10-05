@@ -38,9 +38,9 @@ public class ContractConfigurationTest {
         assertEquals("generate-reference", second.stored("resource.Patient.mode").asText());
     }
 
-    @Test public void unsupportedDefaultsAreReportedAndDarIsSupported() {
+    @Test public void defaultsAreExecutableAndDarIsSupported() {
         var options = ConverterOptions.fromText(VERSION);
-        assertTrue(options.getErrors().stream().anyMatch(e -> e.contains("OUTPUT_FORMATS")));
+        assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
         assertFalse(options.getErrors().stream().anyMatch(e -> e.contains("REFERENCE_CONDITION_ENCOUNTER")));
         assertFalse(options.getErrors().stream().anyMatch(e -> e.contains("CONTACT_DEPARTMENT_PART_OF")));
         var config = ContractConfiguration.parse(VERSION + "PATIENT_MODE=neither\n# DAR_PATIENT_NAME_FAMILY=masked\n");
@@ -110,7 +110,7 @@ public class ContractConfigurationTest {
             }
         }
     }
-    @Test public void classSpecificEncounterSettingsAreParsedButExecutionIsGuarded() {
+    @Test public void classSpecificEncounterSettingsAreSupported() {
         var defaults = ContractConfiguration.parse(VERSION);
         assertFalse(defaults.unsupportedSettings().stream().anyMatch(e -> e.contains("#97")));
         assertTrue(defaults.effective("resource.Encounter.ambulatory.endApplication").isEmpty());
@@ -119,9 +119,22 @@ public class ContractConfigurationTest {
                 + "IDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
                 + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Encounter.ambulatory\n"
                 + "IDENTIFIER_RULE_1_SYSTEM=urn:test\nIDENTIFIER_RULE_1_PATTERN={resourceType}\n");
-        assertEquals(3, active.unsupportedSettings().stream().filter(e -> e.contains("#97")).count());
+        assertEquals(0, active.unsupportedSettings().stream().filter(e -> e.contains("#97")).count());
         var inactive = ContractConfiguration.parse(VERSION + "ENCOUNTER_ENABLED=false\n"
                 + "ENCOUNTER_AMBULATORY_END_POLICY=open\nDAR_ENCOUNTER_AMBULATORY_PERIOD_END=unknown\n");
         assertFalse(inactive.unsupportedSettings().stream().anyMatch(e -> e.contains("#97")));
+    }
+    @Test public void preflightReportsEffectiveRunSettingsAndRejectsUnusableOutput() {
+        var metadata = ConfigurationPreflight.validate(VERSION + "OUTPUT_FORMATS=XML\nOUTPUT_PATIENTS_PER_FILE=12\nCHECKS_FHIR_VALIDATION=true\n");
+        assertEquals("XML", metadata.get("formats").get(0).asText());
+        assertEquals(12, metadata.get("patientsPerFile").asInt());
+        assertTrue(metadata.get("validation").asBoolean());
+        assertThrows(IllegalArgumentException.class, () -> ConfigurationPreflight.validate(VERSION + "OUTPUT_FORMATS=\n"));
+        assertThrows(IllegalArgumentException.class, () -> ConfigurationPreflight.validate(VERSION + "OUTPUT_PATIENTS_PER_FILE=2147483648\n"));
+        for (String mode : List.of("omit", "dar")) {
+            var options = ConverterOptions.fromText(VERSION + "TERMINOLOGY_VERSION_OUTPUT=" + mode + "\n");
+            assertTrue(options.getErrors().isEmpty());
+            assertEquals("", options.getValue(ConverterOptions.StringOption.SYNTHEA_VERSION_OUTPUT));
+        }
     }
 }

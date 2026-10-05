@@ -31,7 +31,7 @@ public final class AdditionalIdentifiers {
             if (allocated.containsKey(identity)) continue;
             List<Long> counts = new ArrayList<>();
             for (Map<String, String> rule : rules) {
-                if (!rule.get("ENABLED").equals("true") || !Arrays.asList(rule.get("RESOURCES").split(",")).contains(resource.fhirType())) continue;
+                if (!rule.get("ENABLED").equals("true") || !selects(rule, resource)) continue;
                 long count = Math.addExact(counters.getOrDefault(rule.get("ID"), 0L), 1);
                 counters.put(rule.get("ID"), count);
                 counts.add(count);
@@ -53,7 +53,7 @@ public final class AdditionalIdentifiers {
         for (Identifier identifier : existing) register(identifier, identity, "existing identifier");
         int index = 0;
         for (Map<String, String> rule : rules) {
-            if (!rule.get("ENABLED").equals("true") || !Arrays.asList(rule.get("RESOURCES").split(",")).contains(resource.fhirType())) continue;
+            if (!rule.get("ENABLED").equals("true") || !selects(rule, resource)) continue;
             Identifier identifier = new Identifier().setSystem(rule.get("SYSTEM")).setValue(expand(rule.get("PATTERN"),
                     generated.get(index++), patientIds.get(identity), resource, iteration, rule.get("ID")));
             register(identifier, identity, rule.get("ID"));
@@ -63,6 +63,12 @@ public final class AdditionalIdentifiers {
             }
         }
         return output;
+    }
+    private static boolean selects(Map<String, String> rule, Resource resource) {
+        var selectors = Arrays.asList(rule.get("RESOURCES").split(","));
+        if (selectors.contains(resource.fhirType())) return true;
+        return resource instanceof Encounter && EncounterOutputPolicy.scope((Encounter)resource) != null
+                && selectors.contains("Encounter." + EncounterOutputPolicy.scope((Encounter)resource));
     }
     private void register(Identifier identifier, String identity, String rule) {
         if (!identifier.hasSystem() || !identifier.hasValue()) return;

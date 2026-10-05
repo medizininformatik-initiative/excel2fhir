@@ -137,6 +137,9 @@ public final class ContractConfiguration {
             validatePattern(rule.get("PATTERN"));
             config.rules.add(Map.copyOf(rule));
         }
+        if (config.stored("output.formats").isEmpty()) throw invalid("Select at least one output format");
+        if (!config.stored("output.patientsPerFile").canConvertToInt())
+            throw invalid("OUTPUT_PATIENTS_PER_FILE exceeds the Java integer range");
         return config;
     }
 
@@ -249,6 +252,8 @@ public final class ContractConfiguration {
         definitions.forEach((id, option) -> {
             if (directBinding(id)) effective(id).ifPresent(value -> result.put(option.path("binding").get("name").asText(), value.asText()));
         });
+        String version = stored("terminology.versionOutput").asText();
+        result.put("SYNTHEA_VERSION_OUTPUT", version.equals("catalogue-year") ? "Jahr" : "");
         return result;
     }
     private boolean directBinding(String id) {
@@ -256,38 +261,25 @@ public final class ContractConfiguration {
         return binding.path("kind").asText().equals("java-property") && !binding.has("values") && !binding.has("semantics");
     }
 
-    private boolean encounterScopeEnabled(String resource) {
-        return effective("resource." + resource + ".enabled").map(JsonNode::asBoolean).orElse(false);
-    }
-
     public List<String> unsupportedSettings() {
         List<String> errors = new ArrayList<>();
         definitions.forEach((id, option) -> {
             if (id.startsWith("resource.Encounter.ambulatory.") || id.startsWith("resource.Encounter.inpatient.")) {
-                if (effective(id).isPresent() && ((id.endsWith(".enabled") && !values.get(id).asBoolean())
-                        || (id.endsWith(".endPolicy") && !values.get(id).asText().equals("preserve"))))
-                    errors.add("Not implemented (issue #97): " + option.get("propertyName").asText());
                 return;
             }
             if (!Set.of("resource.Patient.mode", "resource.Condition.enabled", "contact.diagnoses.enabled",
                     "contact.diagnoses.levels", "contact.diagnoses.roles", "resource.Encounter.enabled",
                     "contact.facility.enabled", "contact.department.enabled", "contact.ward-service.enabled",
-                    "contact.department.partOf", "contact.ward-service.partOf").contains(id)
+                    "contact.department.partOf", "contact.ward-service.partOf",
+                    "contact.procedureDiagnoses.enabled", "contact.procedureDiagnoses.levels",
+                    "terminology.versionOutput", "checks.fhirValidation", "output.formats", "output.patientsPerFile").contains(id)
+                    && !ClinicalTimeShift.supports(id)
                     && !ClinicalEncounterAssignment.supports(id)
                     && !ResourceOutputPolicy.supports(id)
                     && !MedicationTransformations.supports(id)
                     && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));
         });
-        dar.forEach((id, code) -> {
-            for (JsonNode scope : CONTRACT.path("dar").path("scopedFields"))
-                if (scope.path("id").asText().equals(id) && encounterScopeEnabled(scope.path("resourceId").asText()))
-                    errors.add("Class-specific DAR not implemented (issue #97): " + id);
-        });
-        for (Map<String, String> rule : rules) if (Boolean.parseBoolean(rule.get("ENABLED")))
-            for (String resource : rule.get("RESOURCES").split(","))
-                if (resource.startsWith("Encounter.") && encounterScopeEnabled(resource))
-                    errors.add("Class-specific identifiers not implemented (issue #97): " + resource);
         return List.copyOf(errors);
     }
 }

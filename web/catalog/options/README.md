@@ -115,15 +115,14 @@ without substituting another choice.
 
 The shared Java reader accepts this format from external files, CSV option files
 and Excel option sheets. It validates stored values and determines effective
-selections from the same contract. Existing directly equivalent Java properties
-are mapped; other effective settings produce explicit preflight errors, including
-unsupported defaults. The complete default configuration is therefore not yet
-executable. Resource output modes, diagnosis reference assignment, medication transformations,
-DAR overrides, additional identifiers, contact output levels and hierarchy, and clinical encounter assignment are
-implemented as output projections after input derivations. Internal patient
-identity, contact history and resource IDs are preserved. Remaining execution
-semantics are tracked in #77. The current web
-Start conversion action still uses the existing converter defaults.
+selections from the same contract. Directly equivalent Java properties are mapped to existing converter options.
+Resource selection, diagnosis/procedure references, medication transformations,
+DAR, identifiers and encounter rules use the shared Java execution pipeline.
+Versioned configuration controls output formats, patients per file and FHIR
+validation for Excel, CSV and web runs; these values replace the corresponding
+legacy CLI defaults and flags. The API uses the same Java preflight as file-based
+configuration input. The web start action submits the current editor settings.
+
 
 `propertiesFormat.darProperties` maps each DAR field ID to its uppercase name.
 Each value is `unchanged` or an allowed field-specific DAR code. Missing DAR values
@@ -163,9 +162,12 @@ supplied encounters are not moved to a different level. Selecting no encounter
 reference omits the field in every strategy.
 
 Matching requires the same patient and selected contact level. Start and end
-boundaries are inclusive; a missing end is open. The latest matching start wins,
-then original input row order. Preserve that order during processing. If a
-timestamp candidate finds no contact, try the next candidate. Missing matches
+boundaries are inclusive; a missing internal end is open. Among ambulatory and
+inpatient contacts, a matching inpatient contact takes priority, including at a
+later timestamp candidate. Ambulatory contacts provide the fallback. Within each
+class search, timestamp candidates retain their order; the latest matching start
+wins, then original input row order. Other encounter classes retain their existing
+matching behavior. Deselected contacts are excluded from automatic targets. Missing matches
 omit the reference and appear in the report. Contact levels are not substituted.
 
 Immunization uses `occurrenceDateTime`. DiagnosticReport tries
@@ -186,6 +188,57 @@ references, unresolved supplied DocumentReference contacts, omitted contact
 targets and temporal conflicts, including resource identity and source row.
 DocumentReference matching uses explicitly entered `Ausgabezeitpunkt`; its
 automatically generated run timestamp and filesystem timestamps are excluded.
+
+### Encounter classes and output end rules
+
+`ENCOUNTER_AMBULATORY_ENABLED` and `ENCOUNTER_INPATIENT_ENABLED` select AMB and IMP
+output independently across facility, department and ward/service levels.
+Internal contacts remain available for derivations and stable resource identities.
+
+Each class has `END_POLICY` and `END_APPLICATION` settings, for example
+`ENCOUNTER_INPATIENT_END_POLICY = start`. Policies are:
+
+| Value | Output end |
+| --- | --- |
+| `preserve` | Keep the input or internally derived end. |
+| `open` | Remove the end. |
+| `quarter-end` | Last day of the start date's quarter. |
+| `year-end` | Last day of the start date's year. |
+| `start` | Copy the start, including its precision. |
+| `start-plus-second` | Add one second to the start. |
+
+`END_APPLICATION = always` applies the policy to every selected contact;
+`missing-input-end` applies it when the original row had no end value, including
+a DAR-only end. An internally derived end does not prevent that application.
+
+Calendar rules preserve date-only precision. For timestamps they use 23:59:59,
+with nines at the existing fractional precision, and preserve the explicit UTC
+offset. An offset does not identify a regional daylight-saving timezone.
+`start-plus-second` uses UTC midnight for a complete date without a time; existing
+timestamps retain their offset and fractional precision. Calendar calculations
+and second arithmetic require a complete start date; missing or partial values
+produce a diagnostic naming the contact, class and level. `start` can copy a
+partial date. The bundled KDS Encounter constraints impose no positive minimum
+duration for `start`.
+
+End policies operate on output copies after internal derivations and reference
+matching. They can intentionally produce child periods outside parent periods.
+DAR is applied next: an active class-specific rule overrides the common Encounter
+rule; `unchanged` inherits it. The final actual end value determines `finished`
+versus `in-progress`, and location periods and statuses mirror that result.
+The import report records end-policy applications in `contactEndDerivations`.
+Clinical date/time values, including birth date, shift by base days plus the
+zero-based repetition index times repetition days before matching and end rules.
+A shared primitive shifts once; resource metadata timestamps stay unchanged.
+Date-only precision, time of day, fractions and explicit offsets are preserved.
+A nonzero shift requires complete dates and reports partial dates without inventing
+a month or day. `timeShifts` in the import report records the offset per patient
+and repetition. Calendar end rules use the shifted contact start.
+
+Identifier rules accept `Encounter.ambulatory` and `Encounter.inpatient` selectors
+alongside `Encounter`. A rule matching both the common type and its class generates
+one identifier. Pattern and hash expansion use `Encounter` as the resource type;
+counters are shared per rule and reserved before output selection.
 
 ## Diagnosis references
 
@@ -211,8 +264,8 @@ Existing references take precedence; a Condition is not added twice to a target.
 Procedure references in the diagnosis list are handled separately. Conditions
 remain standalone resources and are never duplicated by contact assignment.
 
-The Java diagnosis projection is implemented, while execution of the complete
-editor configuration remains blocked by other unsupported contract settings.
+Procedure references use their own enablement and selected contact levels.
+Downward assignment uses the performed start within the original case hierarchy.
 
 ## DAR and transformations
 
@@ -302,8 +355,7 @@ The editor provides shared contact settings plus ambulatory (`AMB`) and inpatien
 derivation, leave open, quarter end, year end, start, or start plus one second.
 Policies apply to all three contact levels, either always or only when the
 original input end is missing. Internally derived ends do not change that test.
-The editor saves and exports these settings; converter execution is tracked in
-issue #97. Java preflight reports effective class-specific settings as unsupported.
+The editor saves and exports these settings for the shared Java converter.
 
 DAR provides common contact rules and class-specific overrides. An unchanged
 class-specific field inherits the common rule. Additional identifiers can select
@@ -314,5 +366,14 @@ The configuration contract specifies output-end changes after temporal assignmen
 followed by DAR and status alignment. Matching uses the original/internal periods,
 with inpatient candidates preferred and ambulatory candidates as fallback.
 Calendar policies use the shifted start. Start plus one second uses midnight only
-when the full start date has no time. Runtime implementation and profile checks
-remain part of issue #97.
+when the full start date has no time. See [output end rules](#encounter-classes-and-output-end-rules)
+for precision, incomplete-date handling and bundled profile constraints.
+
+## Terminology version output
+
+The Synthea version setting controls mapped coding versions: `catalogue-year`
+passes the selected catalogue year through, while `omit` and `dar` omit the
+importer's version value. With `dar`, configure the required coding-version fields
+in the DAR section; a field without a selected override stays without an imported
+version. Explicit manually entered workbook versions retain their usual input
+semantics; selected DAR field overrides are applied during Java output projection.

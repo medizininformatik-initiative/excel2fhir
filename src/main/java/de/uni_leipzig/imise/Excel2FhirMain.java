@@ -118,7 +118,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                 converter.convertAllExcelInDir(inputDirectory, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             }
-            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), validateBundles);
+            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), converter.wasValidationRequested());
         } catch (Exception e) {
             run.fail(e);
             LOG.error(e.getMessage(), e);

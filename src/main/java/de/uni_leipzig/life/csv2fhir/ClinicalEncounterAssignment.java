@@ -72,8 +72,8 @@ public final class ClinicalEncounterAssignment {
             if (strategy.equals("explicit-only")) return output;
         }
         if (times.isEmpty()) { issue(source, level, "missing-timestamp"); return output; }
-        var target = input.contacts().match(context.patientId(), ContactOutputPolicy.level(level), times)
-                .filter(entry -> contacts.emits(entry.encounter()));
+        var target = input.contacts().match(context.patientId(), ContactOutputPolicy.level(level), times,
+                entry -> contacts.emits(entry.encounter()));
         if (target.isPresent()) setReferences(output, List.of(reference(target.get())));
         else issue(source, level, "no-matching-contact");
         return output;

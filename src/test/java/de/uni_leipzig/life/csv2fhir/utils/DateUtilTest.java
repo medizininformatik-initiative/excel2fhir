@@ -42,4 +42,17 @@ public class DateUtilTest {
         assertEquals(minute, calendar.get(Calendar.MINUTE));
         assertEquals(second, calendar.get(Calendar.SECOND));
     }
+    @Test public void dateParsingRetainsPartialAndFullInputPrecision() throws Exception {
+        for (String value : java.util.List.of("1951", "1951-07", "1951-07-23")) {
+            assertEquals(value, DateUtil.parseDateType(value).getValueAsString());
+            assertEquals(value, DateUtil.parseDateTimeType(value).getValueAsString());
+        }
+        assertEquals("1951-07-23", DateUtil.parseDateType("23.07.1951 00:00").getValueAsString());
+        assertEquals("1951-07-23", DateUtil.parseDateTimeType("23.07.1951").getValueAsString());
+    }
+
+    @Test public void explicitOffsetAndFractionSurviveParsing() throws Exception {
+        String value = "2026-03-31T23:15:16.123+02:00";
+        assertEquals(value, DateUtil.parseDateTimeType(value).getValueAsString());
+    }
 }
