@@ -82,7 +82,8 @@ Import and export continue to use the shared versioned configuration format.
 ## Uploaded inputs
 
 Use **Upload input** beside the input selector to add an `.xlsx` workbook using
-the supported template or a `.zip` containing CSV input groups. CSV files must
+the supported template, a `.zip` containing CSV input groups, or Synthea R4 patient
+bundles as `.json` or a ZIP of JSON files. CSV files must
 be directly at the archive root; use the converter’s table names and group prefixes.
 Each group needs its `Person.csv`. CSV column, row and patient-assignment checks
 use the same parser as conversion. Uploads are limited to 64 MiB (256 MiB expanded). The
@@ -95,7 +96,18 @@ configuration.
 Uploaded inputs support embedded settings, the editor draft and multiple saved
 configurations. Each run receives its own copy and SHA-256 checksum; repeating a
 run uses that saved copy. Filenames are display labels, not filesystem paths.
-CSV archives retain their original bytes; each run extracts its own input directory.
+ZIP archives retain their original bytes; each run extracts its own input directory.
+
+Synthea inspection counts patients and resources, rejects duplicate patient IDs
+and identifies bundles without patients. The import skips those bundles. Each
+patient bundle must contain one Patient with an ID. The worker runs the existing
+Synthea-to-Excel-to-FHIR pipeline using LibreOffice, the bundled template and
+German mappings. Results include the generated workbooks, source comparison,
+projection-loss reports and effective configuration. Choose input configuration
+for importer defaults, or the editor/saved configurations for independent KDS
+variants. Each snapshot also fingerprints the import scripts, template and
+mappings. Repeating uses the saved source with the current importer and records
+the original importer fingerprint.
 
 ## Run saved configurations and repeat runs
 
@@ -149,10 +161,10 @@ docker compose -f web/compose.yml down
 The workbench listens on the local loopback interface. It is intended for one
 local user. Only the web service publishes a port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
-The workbench offers the two bundled inputs and uploaded workbooks and CSV archives with embedded,
+The workbench offers the two bundled inputs and uploaded workbooks, CSV archives and Synthea bundles with embedded,
 editor or saved configurations.
 Saved configurations and uploaded inputs are stored in the local workbench volume.
-Synthea and environment controls are tracked separately.
+Synthea generation and environment controls are tracked separately.
 
 ## Verify
 
@@ -173,7 +185,7 @@ this project's worker container to check recovery.
 ## Architecture and resource boundaries
 
 The verified prototype uses the selected React/FastAPI stack, a persistent SQLite
-queue and a separate worker with one JVM per conversion. This is the architecture
+queue and a separate worker with one conversion process tree per run. This is the architecture
 for the next workbench increments. The shared converter integration comes next;
 bounded parallel execution follows the shared-state and resource-budget audit.
 
@@ -187,7 +199,11 @@ bounded parallel execution follows the shared-state and resource-budget audit.
 2. SQLite WAL and short `BEGIN IMMEDIATE` claims allow independent jobs without
    double claiming. One supervisor currently owns recovery and executes jobs
    sequentially. An exclusive lock prevents competing recovery supervisors.
-3. Each job launches its own JVM with its own working directory and output root.
+3. Each job launches its own process tree with its own working directory and output root.
+   The worker includes LibreOffice for the existing Synthea import pipeline;
+   the API uses a smaller Java/Python image. Both use the same converter build
+   and import assets. Input inspection runs serially with a 256 MiB JVM or Python
+   address-space budget and a 60-second timeout.
    The worker gets two CPUs and 4 GiB RAM; the JVM heap is capped at 3 GiB
    to load the bundled FHIR validation profiles.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not

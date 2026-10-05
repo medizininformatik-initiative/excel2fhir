@@ -80,6 +80,15 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
+  workbench-inputs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build workbench worker
+      run: docker build -f web/backend/Dockerfile --target worker -t excel2fhir-workbench:ci .
+    - name: Import Synthea sources and repeat immutable runs
+      run: docker run --rm -i --memory=4g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_inputs.py
+
   security-scan:
     runs-on: ubuntu-latest
 

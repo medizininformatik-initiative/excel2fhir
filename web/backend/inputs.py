@@ -6,6 +6,7 @@ import shutil
 import stat
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 import unicodedata
@@ -20,8 +21,8 @@ MAX_UNCOMPRESSED = 256 * 1024 * 1024
 
 def checked_name(name):
     name = unicodedata.normalize('NFC', name.strip())
-    if not name.lower().endswith(('.xlsx', '.zip')) or len(name) > 200 or any(c in name for c in '/\\'):
-        raise ValueError('Choose an .xlsx workbook or CSV .zip archive with a filename of at most 200 characters')
+    if not name.lower().endswith(('.xlsx', '.zip', '.json')) or len(name) > 200 or any(c in name for c in '/\\'):
+        raise ValueError('Choose an .xlsx workbook, CSV .zip archive or Synthea .json / .zip input with a filename of at most 200 characters')
     if any(unicodedata.category(c).startswith('C') for c in name):
         raise ValueError('The filename contains control characters')
     return name
@@ -37,13 +38,13 @@ def incoming():
 
 def input_filename(kind):
     try:
-        return {'workbook': 'input.xlsx', 'csv': 'input.zip'}[kind]
+        return {'workbook': 'input.xlsx', 'csv': 'input.zip', 'synthea': 'input.json', 'synthea-zip': 'input.zip'}[kind]
     except KeyError as error:
         raise ValueError('Unknown input kind') from error
 
 
 def kind_for_name(name):
-    return 'csv' if name.lower().endswith('.zip') else 'workbook'
+    return 'csv' if name.lower().endswith('.zip') else 'synthea' if name.lower().endswith('.json') else 'workbook'
 
 
 def zip_entries(archive):
@@ -55,19 +56,19 @@ def zip_entries(archive):
     return entries
 
 
-def extract_csv(path, destination):
+def extract_archive(path, destination, suffix):
     destination.mkdir()
     with zipfile.ZipFile(path) as archive:
         entries = zip_entries(archive)
         names = set()
         for entry in entries:
             name = entry.filename
-            if (not name.endswith('.csv') or '/' in name or '\\' in name or len(name) > 200
+            if (not name.endswith(suffix) or '/' in name or '\\' in name or len(name) > 200
                     or any(unicodedata.category(c).startswith('C') for c in name)
                     or stat.S_ISLNK(entry.external_attr >> 16)):
-                raise ValueError('CSV archives must contain only .csv files directly at the archive root')
+                raise ValueError(f'Archives must contain only {suffix} files directly at the archive root')
             if name.casefold() in names:
-                raise ValueError('CSV archive contains duplicate filenames')
+                raise ValueError('Archive contains duplicate filenames')
             names.add(name.casefold())
         total = 0
         for entry in entries:
@@ -75,36 +76,47 @@ def extract_csv(path, destination):
                 while chunk := source.read(65536):
                     total += len(chunk)
                     if total > MAX_UNCOMPRESSED:
-                        raise ValueError('The expanded CSV input exceeds 256 MiB')
+                        raise ValueError('The expanded input exceeds 256 MiB')
                     output.write(chunk)
 
 
+def extract_csv(path, destination):
+    extract_archive(path, destination, '.csv')
+
+
 def inspect(path):
-    csv = path.suffix == '.zip'
-    expanded = path.parent / 'inspection-csv'
+    archive_input = path.suffix == '.zip'
+    kind = kind_for_name(path.name)
+    expanded = path.parent / 'inspection-input'
     report = path.with_suffix('.inspection.json')
     try:
-        if csv:
-            extract_csv(path, expanded)
-        else:
+        if archive_input:
+            with zipfile.ZipFile(path) as archive:
+                entries = zip_entries(archive)
+                kind = 'synthea-zip' if entries and all(e.filename.endswith('.json') for e in entries) else 'csv'
+            extract_archive(path, expanded, '.csv' if kind == 'csv' else '.json')
+        elif kind == 'workbook':
             with zipfile.ZipFile(path) as archive:
                 zip_entries(archive)
                 if not {'[Content_Types].xml', 'xl/workbook.xml'}.issubset(archive.namelist()):
                     raise ValueError('The file is not an Excel workbook')
         with (store.ROOT / 'inputs' / '.inspection.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            checked = subprocess.run(['java', '-Xmx256m', '-cp', str(store.APP / 'excel2fhir.jar'),
-                                      'de.uni_leipzig.life.csv2fhir.' + ('CsvInputPreflight' if csv else 'WorkbookPreflight'),
-                                      str(expanded if csv else path), str(report)],
+            command = ([sys.executable, str(Path(__file__).with_name('synthea_input.py'))]
+                       if kind.startswith('synthea') else
+                       ['java', '-Xmx256m', '-cp', str(store.APP / 'excel2fhir.jar'),
+                        'de.uni_leipzig.life.csv2fhir.' + ('CsvInputPreflight' if kind == 'csv' else 'WorkbookPreflight')])
+            checked = subprocess.run([*command, str(expanded if archive_input else path), str(report)],
                                      capture_output=True, text=True, timeout=60)
         if checked.returncode:
-            raise ValueError('The input could not be inspected. Check that it uses the supported template or CSV schema.')
+            raise ValueError('The input could not be inspected. Check that it uses the supported template, CSV schema or Synthea R4 bundle structure.')
         result = json.loads(report.read_text())
         if not result['valid']:
             raise ValueError('Input structure is invalid: ' + '; '.join(result['issues']))
+        result['kind'] = kind
         return result
     except zipfile.BadZipFile as error:
-        raise ValueError('The file is not a readable .xlsx workbook or CSV .zip archive') from error
+        raise ValueError('The file is not a readable .xlsx workbook or .zip archive') from error
     except subprocess.TimeoutExpired as error:
         raise ValueError('Input inspection exceeded 60 seconds') from error
     finally:
@@ -120,6 +132,7 @@ def publish(directory, name):
     if not 0 < path.stat().st_size <= MAX_UPLOAD:
         raise ValueError('The input must be between 1 byte and 64 MiB')
     report = inspect(path)
+    kind = report.get('kind', kind)
     identifier = str(uuid4())
     item = {'id': 'upload:' + identifier, 'name': name, 'kind': kind, 'created': time.time(), 'size': path.stat().st_size,
             'sha256': store.digest(path), 'inspection': report}

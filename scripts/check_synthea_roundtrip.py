@@ -13,6 +13,37 @@ from check_movements import check_movements
 from german_demographics import check_patient
 
 
+def configured_condition_reference(condition, resources, level):
+    """Check the chosen contact level against the emitted, separately checked hierarchy."""
+    if level == 'none' or not condition.get('recordedDate'):
+        return ''
+    time = datetime.fromisoformat(condition['recordedDate'].replace('Z', '+00:00'))
+    codes = {'facility': 'einrichtungskontakt', 'department': 'abteilungskontakt',
+             'ward-service': 'versorgungsstellenkontakt'}
+    candidates = []
+    for resource in resources:
+        if resource['resourceType'] != 'Encounter':
+            continue
+        types = {coding.get('code') for value in resource.get('type', []) for coding in value.get('coding', [])}
+        if codes[level] not in types or (level == 'ward-service' and types.intersection({'operation', 'ub', 'konsil'})):
+            continue
+        period = resource.get('period', {})
+        if not period.get('start'):
+            continue
+        start = datetime.fromisoformat(period['start'].replace('Z', '+00:00'))
+        end = datetime.fromisoformat(period['end'].replace('Z', '+00:00')) if period.get('end') else None
+        if start <= time and (end is None or time <= end):
+            candidates.append((start, resource))
+    if not candidates:
+        return ''
+    latest = max(candidates, key=lambda item: item[0])
+    if latest[1].get('class', {}).get('code') == 'AMB':
+        inpatients = [item for item in candidates if item[1].get('class', {}).get('code') == 'IMP']
+        if inpatients:
+            latest = max(inpatients, key=lambda item: item[0])
+    return 'Encounter/' + latest[1]['id']
+
+
 def check(source, target, report):
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
@@ -44,9 +75,13 @@ def check(source, target, report):
             assert expected_codings[0]['system'] == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm', 'ICD-10-GM must be first'
         codings = tuple(sorted(coding_signature(emitted(c, mode) if original else c) for c in expected_codings))
         encounter = r.get('encounter',{}).get('reference','')
-        if original and report.get('converterOptions', {}).get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'true') == 'false':
+        options = report.get('converterOptions', {})
+        configured_level = options.get('REFERENCE_CONDITION_ENCOUNTER')
+        if original and configured_level is not None:
+            encounter = configured_condition_reference(r, dst, configured_level)
+        elif original and options.get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'true') == 'false':
             encounter = ''
-        if original and encounter:
+        if original and encounter and configured_level is None:
             encounter = 'Encounter/'+pid+'-E-'+report['encounterNumbers'][source_ids[encounter]]
         statuses = tuple(tuple(c['code']for c in r.get(field,{}).get('coding',[]))for field in ['clinicalStatus','verificationStatus'])
         if original and 'verificationStatusChange' in decision:
@@ -121,7 +156,7 @@ def check_configured(source, target, report, options, patient_ids):
         result = {'copies': copies, 'conditions': sum(c['conditions'] for c in copies),
                   'encounters': sum(c['encounters'] for c in copies)}
     result['outputPatients'] = patient_ids
-    if options.get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER') == 'false':
+    if options.get('REFERENCE_CONDITION_ENCOUNTER') == 'none' or ('REFERENCE_CONDITION_ENCOUNTER' not in options and options.get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER') == 'false'):
         result['sourceDiagnosisValuesAndReferences'] = 'values checked; encounter references omitted by explicit converter option'
     return result
 
