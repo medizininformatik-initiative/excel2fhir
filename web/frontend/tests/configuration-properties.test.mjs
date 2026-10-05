@@ -90,3 +90,20 @@ test('diagnosis exports omit the retired inheritance switch and preserve inactiv
   config.values['resource.Condition.enabled'] = false
   assert.match(exported(config), /^# CONTACT_DIAGNOSES_ROLES = /m)
 })
+
+test('encounter policies, scoped DAR and identifier selectors roundtrip in both languages', () => {
+  const config = defaults()
+  config.values['resource.Encounter.ambulatory.endPolicy'] = 'quarter-end'
+  config.values['resource.Encounter.ambulatory.endApplication'] = 'missing-input-end'
+  config.dar['Encounter.ambulatory.period.end'] = {mode: 'overwrite', code: 'unknown'}
+  config.identifierRules = [{...rule, resources: ['Encounter.ambulatory', 'Encounter.inpatient']}]
+  for (const language of ['de', 'en']) {
+    assert.deepEqual(importConfiguration(exported(config, language)), config)
+    config.values['resource.Encounter.ambulatory.enabled'] = false
+    const text = exported(config, language)
+    assert.match(text, /^# ENCOUNTER_AMBULATORY_END_POLICY = quarter-end$/m)
+    assert.match(text, /^# DAR_ENCOUNTER_AMBULATORY_PERIOD_END = unknown$/m)
+    assert.deepEqual(importConfiguration(text), config)
+    config.values['resource.Encounter.ambulatory.enabled'] = true
+  }
+})

@@ -55,7 +55,6 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     lines.push(`${inactive ? '# ' : ''}${key} = ${encode(value)}`)
   comment(t('app.config.fileTitle'))
   comment(t('app.config.fileUsage'))
-  comment(t('app.config.filePending'))
   assignment(contract.propertiesFormat.versionProperty, contract.propertiesFormat.version)
   for (const option of options) {
     lines.push('')
@@ -69,6 +68,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     const inactive = !optionEnabled(option.id, config.values) || unmetDependencies(choiceDeps, config.values).length > 0
     if (inactive) {
       comment(t('app.config.fileInactive'))
+      if (option.id.endsWith('.endApplication') && config.values[option.id.replace('.endApplication', '.endPolicy')] === 'preserve') comment(t('app.config.endApplicationInactive'))
       // Include all prerequisites: an immediate prerequisite can itself be inactive.
       const deps = [...(option.enabledWhen ?? []), ...(choiceDeps ?? [])]
       const labels = deps.map(d => {

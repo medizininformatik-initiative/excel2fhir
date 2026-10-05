@@ -62,12 +62,12 @@ class ContractConsistencyTest(unittest.TestCase):
             binding = option.get('binding', {})
             if binding.get('kind') == 'java-property' and 'values' not in binding:
                 self.assertEqual(option['propertyName'], binding['name'])
-        catalogue = json.loads((ROOT / self.contract['dar']['catalogue']).read_text())
+        catalogue = {'fields': generator.expanded_fields(self.contract)}
         self.assertEqual(set(self.contract['propertiesFormat']['darProperties']),
                          {f['id'] for f in catalogue['fields']})
 
     def test_dar_schema_uses_exact_catalogue_choices(self):
-        catalogue = json.loads((ROOT / self.contract['dar']['catalogue']).read_text())
+        catalogue = {'fields': generator.expanded_fields(self.contract)}
         schema = generator.generate()['properties']['dar']['properties']
         self.assertEqual(set(schema), {field['id'] for field in catalogue['fields']})
         for field in catalogue['fields']:

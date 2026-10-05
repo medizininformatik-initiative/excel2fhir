@@ -11,12 +11,27 @@ import {
   darResource,
   optionEnabled,
   resourceEnabled,
+  resourceNavigationStatus,
   unmetDependencies,
   importConfiguration,
+  restoreBrowserDraft,
   problems,
   patternTokens,
   previewIdentifier
 } from '../src/configuration.ts'
+
+test('browser drafts retain incomplete edits while executable imports reject them', () => {
+  const config = defaults()
+  config.values['output.patientsPerFile'] = null
+  config.identifierRules.push({
+    id: 'fb3fb97a-367b-4628-ad48-44f958f9f191',
+    enabled: true, resources: [], system: '', pattern: '{unfinished'
+  })
+  const text = JSON.stringify(config)
+  assert.deepEqual(restoreBrowserDraft(text), config)
+  assert.throws(() => importConfiguration(text))
+  assert.throws(() => restoreBrowserDraft('{"schemaVersion":2}'))
+})
 
 test('defaults cover every option and survive a configuration roundtrip', () => {
   const config = defaults()
@@ -260,4 +275,43 @@ test('diagnosis roles depend on Conditions; saved inheritance flags are retired'
   const restored = importConfiguration(JSON.stringify(config))
   assert.equal('contact.inheritDiagnoses' in restored.values, false)
   assert.equal(restored.values['resource.Condition.enabled'], false)
+})
+
+test('encounter classes keep common settings and disable inactive end scopes', async () => {
+  const config = defaults()
+  for (const scope of ['ambulatory', 'inpatient']) {
+    const prefix = `resource.Encounter.${scope}`
+    assert.equal(optionEnabled(`${prefix}.endApplication`, config.values), false)
+    config.values[`${prefix}.endPolicy`] = 'open'
+    assert.equal(optionEnabled(`${prefix}.endApplication`, config.values), true)
+    assert.equal(resourceEnabled(`Encounter.${scope}`, config.values), true)
+    assert.ok(darFields.some(f => darResource(f) === `Encounter.${scope}`))
+    config.values['resource.Encounter.enabled'] = false
+    assert.equal(resourceEnabled(`Encounter.${scope}`, config.values), false)
+    config.values['resource.Encounter.enabled'] = true
+  }
+  const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true, resources: ['Encounter'], system: 'urn:test', pattern: '{resourceType}-{hash}' }
+  assert.equal(await previewIdentifier({...rule, resources: ['Encounter.ambulatory']}), await previewIdentifier(rule))
+  config.dar['Encounter.ambulatory.period.end'] = {mode: 'overwrite', code: ''}
+  assert.deepEqual(restoreBrowserDraft(JSON.stringify(config)), config)
+  assert.throws(() => importConfiguration(JSON.stringify(config)))
+})
+
+test('navigation status uses effective resource selections without mutating them', () => {
+  const config = defaults()
+  for (const resource of ['Patient', 'Location', 'Medication']) {
+    assert.equal(resourceNavigationStatus(resource, config.values), 'generated')
+    config.values[`resource.${resource}.mode`] = 'reference-only'
+    assert.equal(resourceNavigationStatus(resource, config.values), 'referenced')
+    config.values[`resource.${resource}.mode`] = 'neither'
+    assert.equal(resourceNavigationStatus(resource, config.values), 'disabled')
+  }
+  config.values['resource.Observation.laboratory.enabled'] = false
+  assert.equal(resourceNavigationStatus('Observation.laboratory', config.values), 'disabled')
+  assert.equal(resourceNavigationStatus('Observation.vitalSigns', config.values), 'generated')
+  config.values['resource.Encounter.enabled'] = false
+  assert.equal(resourceNavigationStatus('Encounter.inpatient', config.values), 'parentDisabled')
+  assert.equal(config.values['resource.Encounter.inpatient.enabled'], true)
+  config.values['resource.Encounter.enabled'] = true
+  assert.equal(resourceNavigationStatus('Encounter.inpatient', config.values), 'generated')
 })

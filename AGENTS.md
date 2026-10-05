@@ -11,6 +11,10 @@
 - Assume familiarity with Git, Docker and spreadsheet editors. Focus documentation on project-specific input, commands and results; omit generic setup and first-build explanations.
 - Omit repository checkout instructions. Branch-specific links in user documentation must use `main`.
 
+## User interface copy
+
+- Describe controls and actual behavior in the interface and configuration exports. Keep ticket numbers, implementation progress and planned integration work in tickets or project notes, never in user-facing copy.
+
 ## Build and Validation
 
 - Use Maven for local validation.

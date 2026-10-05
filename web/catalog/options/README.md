@@ -294,3 +294,25 @@ java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindi
 Keep implementation and acceptance in #76/#77 distinct from this definition.
 Parallelism and environment selection are execution settings outside the clinical
 option contract.
+
+## Encounter class configuration
+
+The editor provides shared contact settings plus ambulatory (`AMB`) and inpatient
+(`IMP`) groups. Each group selects output and an end policy: preserve input and
+derivation, leave open, quarter end, year end, start, or start plus one second.
+Policies apply to all three contact levels, either always or only when the
+original input end is missing. Internally derived ends do not change that test.
+The editor saves and exports these settings; converter execution is tracked in
+issue #97. Java preflight reports effective class-specific settings as unsupported.
+
+DAR provides common contact rules and class-specific overrides. An unchanged
+class-specific field inherits the common rule. Additional identifiers can select
+all Encounter classes or either class separately; both use `Encounter` for the
+resource-type pattern token and the shared resource counter.
+
+The configuration contract specifies output-end changes after temporal assignment,
+followed by DAR and status alignment. Matching uses the original/internal periods,
+with inpatient candidates preferred and ambulatory candidates as fallback.
+Calendar policies use the shifted start. Start plus one second uses midnight only
+when the full start date has no time. Runtime implementation and profile checks
+remain part of issue #97.

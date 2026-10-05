@@ -24,10 +24,66 @@
           ]
         },
         "resource.Encounter.enabled": {
-          "title": "Generate contact",
-          "description": "Include Encounter resources for Contact in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "title": "Generate encounter",
+          "description": "Include Encounter resources in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
+        },
+        "resource.Encounter.ambulatory.enabled": {
+          "title": "Generate ambulatory encounters",
+          "description": "Select encounters with Encounter.class.code = AMB on all selected encounter levels. Shared encounter settings still apply. Other encounter classes are unchanged.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Encounter.ambulatory.endPolicy": {
+          "title": "Encounter end",
+          "description": "Applies to facility, department and ward/service encounters of this class. All calculations and assignments use original or internally derived periods first. The output end is adjusted afterwards. DAR takes precedence; the final status follows the output end. Resulting inconsistencies between parent and child periods are allowed as test data. Quarter/year end use the start after time shifting. Start + 1 second uses midnight as the calculation basis for a date without a time; otherwise date precision is preserved.",
+          "default": "preserve",
+          "enum": [
+            "preserve",
+            "open",
+            "quarter-end",
+            "year-end",
+            "start",
+            "start-plus-second"
+          ]
+        },
+        "resource.Encounter.ambulatory.endApplication": {
+          "title": "Apply end rule",
+          "description": "Always: replaces an end supplied in the input as well. Only when the input end is missing: checks the original table value. An internally derived end does not prevent the rule. This choice has no effect when preserving input and derivations.",
+          "default": "always",
+          "enum": [
+            "always",
+            "missing-input-end"
+          ]
+        },
+        "resource.Encounter.inpatient.enabled": {
+          "title": "Generate inpatient encounters",
+          "description": "Select encounters with Encounter.class.code = IMP on all selected encounter levels. Shared encounter settings still apply. Other encounter classes are unchanged.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Encounter.inpatient.endPolicy": {
+          "title": "Encounter end",
+          "description": "Applies to facility, department and ward/service encounters of this class. All calculations and assignments use original or internally derived periods first. The output end is adjusted afterwards. DAR takes precedence; the final status follows the output end. Resulting inconsistencies between parent and child periods are allowed as test data. Quarter/year end use the start after time shifting. Start + 1 second uses midnight as the calculation basis for a date without a time; otherwise date precision is preserved.",
+          "default": "preserve",
+          "enum": [
+            "preserve",
+            "open",
+            "quarter-end",
+            "year-end",
+            "start",
+            "start-plus-second"
+          ]
+        },
+        "resource.Encounter.inpatient.endApplication": {
+          "title": "Apply end rule",
+          "description": "Always: replaces an end supplied in the input as well. Only when the input end is missing: checks the original table value. An internally derived end does not prevent the rule. This choice has no effect when preserving input and derivations.",
+          "default": "always",
+          "enum": [
+            "always",
+            "missing-input-end"
+          ]
         },
         "resource.Location.mode": {
           "title": "Location: output and references",
@@ -70,7 +126,7 @@
           "type": "boolean"
         },
         "resource.Observation.vitalSigns.enabled": {
-          "title": "Generate vital signs",
+          "title": "Generate vital signs observation",
           "description": "Include Observation resources for Vital signs in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
@@ -134,8 +190,8 @@
           "type": "boolean"
         },
         "resource.DocumentReference.enabled": {
-          "title": "Generate DocumentReference",
-          "description": "Include DocumentReference resources for DocumentReference in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "title": "Generate document reference",
+          "description": "Include DocumentReference resources for document references in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
           "default": true,
           "type": "boolean"
         },
@@ -146,25 +202,25 @@
           "type": "boolean"
         },
         "contact.facility.enabled": {
-          "title": "Generate facility contacts",
+          "title": "Generate facility encounters",
           "description": "Output facility encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.department.enabled": {
-          "title": "Generate department contacts",
+          "title": "Generate department encounters",
           "description": "Output department encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.ward-service.enabled": {
-          "title": "Generate ward-service contacts",
+          "title": "Generate ward-service encounters",
           "description": "Output ward/service encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
           "default": true,
           "type": "boolean"
         },
         "contact.department.partOf": {
-          "title": "Department contact: is part of (partOf)",
+          "title": "Department encounter: is part of (partOf)",
           "description": "Set Encounter.partOf on the department encounter to its facility encounter. “None” omits the reference.",
           "default": "facility",
           "enum": [
@@ -173,7 +229,7 @@
           ]
         },
         "contact.ward-service.partOf": {
-          "title": "Ward/service contact: is part of (partOf)",
+          "title": "Ward/service encounter: is part of (partOf)",
           "description": "Set Encounter.partOf on the ward/service encounter to the selected parent department or facility encounter. “None” omits the reference.",
           "default": "department",
           "enum": [
@@ -183,14 +239,14 @@
           ]
         },
         "contact.diagnoses.enabled": {
-          "title": "Diagnosis references on contacts",
-          "description": "Add references to generated Conditions on contacts, retaining the selected diagnosis roles from the input. Available when Conditions are output.",
+          "title": "Diagnosis references on encounters",
+          "description": "Add references to generated Conditions on encounters, retaining the selected diagnosis roles from the input. Available when Conditions are output.",
           "default": true,
           "type": "boolean"
         },
         "contact.diagnoses.roles": {
           "title": "Diagnosis roles",
-          "description": "Select the input diagnosis roles whose Conditions are referenced on contacts. The role is recorded in Encounter.diagnosis.use.coding.code (code system: http://terminology.hl7.org/CodeSystem/diagnosis-role). The same selection applies to all automatically assigned diagnosis references.",
+          "description": "Select the input diagnosis roles whose Conditions are referenced on encounters. The role is recorded in Encounter.diagnosis.use.coding.code (code system: http://terminology.hl7.org/CodeSystem/diagnosis-role). The same selection applies to all automatically assigned diagnosis references.",
           "default": [
             "CC",
             "CM",
@@ -215,8 +271,8 @@
           }
         },
         "contact.diagnoses.levels": {
-          "title": "Diagnosis references: contact levels",
-          "description": "Select the contact levels for diagnosis references. Assignment follows the original contact hierarchy: upward to the corresponding ancestor, downward by documentation time (Condition.recordedDate) to at most one matching contact per selected level. The latest start wins, then the earliest input row. Missing timestamps or matching contacts are recorded in the report.",
+          "title": "Diagnosis references: encounter levels",
+          "description": "Select the encounter levels for diagnosis references. Assignment follows the original encounter hierarchy: upward to the corresponding ancestor, downward by documentation time (Condition.recordedDate) to at most one matching encounter per selected level. The latest start wins, then the earliest input row. Missing timestamps or matching encounters are recorded in the report.",
           "default": [
             "facility"
           ],
@@ -237,8 +293,8 @@
           "type": "boolean"
         },
         "contact.procedureDiagnoses.levels": {
-          "title": "Procedures as diagnosis references: contact levels",
-          "description": "Choose the contact levels where procedures are referenced in Encounter.diagnosis.condition. Facility contacts are selected by default.",
+          "title": "Procedures as diagnosis references: encounter levels",
+          "description": "Choose the encounter levels where procedures are referenced in Encounter.diagnosis.condition. Facility encounters are selected by default.",
           "default": [
             "facility"
           ],
@@ -253,7 +309,7 @@
           }
         },
         "reference.Condition.encounter": {
-          "title": "Diagnosis: contact assignment",
+          "title": "Diagnosis: encounter assignment",
           "description": "Set Condition.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -264,7 +320,7 @@
           ]
         },
         "reference.Procedure.encounter": {
-          "title": "Procedure: contact assignment",
+          "title": "Procedure: encounter assignment",
           "description": "Set Procedure.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -275,7 +331,7 @@
           ]
         },
         "reference.Observation.laboratory.encounter": {
-          "title": "Laboratory observation: contact assignment",
+          "title": "Laboratory observation: encounter assignment",
           "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -286,7 +342,7 @@
           ]
         },
         "reference.Observation.vitalSigns.encounter": {
-          "title": "Vital signs: contact assignment",
+          "title": "Vital signs observation: encounter assignment",
           "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -297,7 +353,7 @@
           ]
         },
         "reference.MedicationRequest.encounter": {
-          "title": "Medication request: contact assignment",
+          "title": "Medication request: encounter assignment",
           "description": "Set MedicationRequest.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -308,7 +364,7 @@
           ]
         },
         "reference.MedicationAdministration.encounter": {
-          "title": "Medication administration: contact assignment",
+          "title": "Medication administration: encounter assignment",
           "description": "Set MedicationAdministration.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -319,7 +375,7 @@
           ]
         },
         "reference.MedicationStatement.encounter": {
-          "title": "Medication statement: contact assignment",
+          "title": "Medication statement: encounter assignment",
           "description": "Set MedicationStatement.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -330,7 +386,7 @@
           ]
         },
         "reference.Immunization.encounter": {
-          "title": "Immunization: contact assignment",
+          "title": "Immunization: encounter assignment",
           "description": "Set Immunization.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -341,7 +397,7 @@
           ]
         },
         "reference.DiagnosticReport.encounter": {
-          "title": "Diagnostic report: contact assignment",
+          "title": "Diagnostic report: encounter assignment",
           "description": "Set DiagnosticReport.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -352,7 +408,7 @@
           ]
         },
         "reference.CarePlan.encounter": {
-          "title": "Care plan: contact assignment",
+          "title": "Care plan: encounter assignment",
           "description": "Set CarePlan.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
           "default": "department",
           "enum": [
@@ -363,7 +419,7 @@
           ]
         },
         "reference.DocumentReference.encounter": {
-          "title": "DocumentReference: contact assignment",
+          "title": "Document reference: encounter assignment",
           "description": "Choose the encounter level for automatic matching in DocumentReference.context.encounter: facility, department or ward/service. The strategy below determines whether missing or all assignments are derived from the document timestamp. Supplied encounters are not reassigned to another level in the first two strategies. “None” omits all encounter references.",
           "default": "department",
           "enum": [
@@ -374,7 +430,7 @@
           ]
         },
         "reference.DocumentReference.assignmentStrategy": {
-          "title": "DocumentReference: encounter assignment strategy",
+          "title": "Document reference: encounter assignment strategy",
           "description": "Supplied only: Retain supplied encounters. Without an input encounter, leave the reference absent.\n\nDerive missing: Retain supplied encounters and use timestamp matching only when none is supplied. This is the default.\n\nAlways derive: Recompute encounters from timestamps, replacing supplied encounters. Without a usable timestamp or matching encounter, omit even supplied references and report the reason.\n\nIn the first two modes, retain temporally conflicting encounters and report the conflict. Encounters are identified by the combination of patient ID and case number. If this combination is absent from the input, the nonexistent encounter is reported.",
           "default": "fill-missing",
           "enum": [
@@ -384,7 +440,7 @@
           ]
         },
         "medication.requestTreatment": {
-          "title": "MedicationRequest treatment",
+          "title": "Medication request treatment",
           "description": "Retain: Output the MedicationRequest.\n\nReplace with MedicationAdministration: Output a MedicationAdministration instead.\n\nReplace with MedicationStatement: Output a MedicationStatement instead. The target resource must itself be enabled.\n\nThe processing selected for MedicationAdministration or MedicationStatement then applies. Each of these resources is retained, supplemented or replaced once.",
           "default": "retain",
           "enum": [
@@ -394,7 +450,7 @@
           ]
         },
         "medication.MedicationAdministration.treatment": {
-          "title": "Process MedicationAdministration",
+          "title": "Process medication administration",
           "description": "Retain: Output the MedicationAdministration.\n\nAdd: Also output a MedicationStatement with its own ID, retaining the MedicationAdministration.\n\nReplace: Output a MedicationStatement instead of the MedicationAdministration.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
           "default": "retain",
           "enum": [
@@ -404,7 +460,7 @@
           ]
         },
         "medication.MedicationStatement.treatment": {
-          "title": "Process MedicationStatement",
+          "title": "Process medication statement",
           "description": "Retain: Output the MedicationStatement.\n\nAdd: Also output a MedicationAdministration with its own ID, retaining the MedicationStatement.\n\nReplace: Output a MedicationAdministration instead of the MedicationStatement.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
           "default": "retain",
           "enum": [
@@ -447,67 +503,67 @@
           "minimum": 0
         },
         "ids.start.CONSENT": {
-          "title": "Consent: first counter",
+          "title": "Consent",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.CONDITION": {
-          "title": "Diagnosis: first counter",
+          "title": "Diagnosis",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_2": {
-          "title": "Department contact: first counter",
+          "title": "Department encounter",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.ENCOUNTER_LEVEL_3": {
-          "title": "Ward/service contact: first counter",
+          "title": "Ward/service encounter",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_REQUEST": {
-          "title": "Medication request: first counter",
+          "title": "Medication request",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_ADMINISTRATION": {
-          "title": "Medication administration: first counter",
+          "title": "Medication administration",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.MEDICATION_STATEMENT": {
-          "title": "Medication statement: first counter",
+          "title": "Medication statement",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_LABORATORY": {
-          "title": "Laboratory observation: first counter",
+          "title": "Laboratory observation",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.OBSERVATION_VITAL_SIGNS": {
-          "title": "Vital signs: first counter",
+          "title": "Vital signs observation",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.PROCEDURE": {
-          "title": "Procedure: first counter",
+          "title": "Procedure",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
         },
         "ids.start.DOCUMENT_REFERENCE": {
-          "title": "DocumentReference: first counter",
+          "title": "Document reference",
           "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
           "default": 1,
           "type": "integer"
@@ -3600,6 +3656,244 @@
               "additionalProperties": false
             }
           ]
+        },
+        "Encounter.ambulatory.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.ambulatory.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.ambulatory.admissionReasonFourthDigit": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.admissionReasonFourthDigit": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
         }
       },
       "additionalProperties": false,
@@ -3638,6 +3932,8 @@
                 "DiagnosticReport",
                 "DocumentReference",
                 "Encounter",
+                "Encounter.ambulatory",
+                "Encounter.inpatient",
                 "Immunization",
                 "Location",
                 "Medication",

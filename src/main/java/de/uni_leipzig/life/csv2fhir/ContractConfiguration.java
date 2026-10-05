@@ -97,7 +97,10 @@ public final class ContractConfiguration {
             } else if (darNames.containsKey(name)) {
                 String id = darNames.get(name);
                 JsonNode field = null;
-                for (JsonNode candidate : DAR.get("fields")) if (candidate.get("id").asText().equals(id)) field = candidate;
+                String source = id;
+                for (JsonNode scope : CONTRACT.path("dar").path("scopedFields"))
+                    if (scope.path("id").asText().equals(id)) source = scope.path("source").asText();
+                for (JsonNode candidate : DAR.get("fields")) if (candidate.get("id").asText().equals(source)) field = candidate;
                 if (!value.equals("unchanged")) {
                     if (field == null || !contains(field.get("allowedCodes"), TextNode.valueOf(value)))
                         throw invalid("Invalid DAR code: " + name);
@@ -126,7 +129,7 @@ public final class ContractConfiguration {
             for (String resource : rule.get("RESOURCES").split(",", -1)) {
                 boolean eligible = false;
                 for (JsonNode candidate : CONTRACT.get("resources")) {
-                    if (candidate.path("identifierEligible").asBoolean() && candidate.get("resourceType").asText().equals(resource)) eligible = true;
+                    if (candidate.path("identifierEligible").asBoolean() && candidate.path("identifierSelector").asText(candidate.get("resourceType").asText()).equals(resource)) eligible = true;
                 }
                 if (!eligible || !types.add(resource)) throw invalid("Invalid identifier resource: " + resource);
             }
@@ -221,6 +224,7 @@ public final class ContractConfiguration {
     private boolean enabled(String id, Set<String> visiting) {
         if (!visiting.add(id)) throw new IllegalStateException("Cyclic configuration dependency: " + id);
         boolean enabled = dependencies(definitions.get(id).path("enabledWhen"), visiting);
+        if (id.endsWith(".endApplication") && values.get(id.replace(".endApplication", ".endPolicy")).asText().equals("preserve")) enabled = false;
         visiting.remove(id);
         return enabled;
     }
@@ -252,9 +256,19 @@ public final class ContractConfiguration {
         return binding.path("kind").asText().equals("java-property") && !binding.has("values") && !binding.has("semantics");
     }
 
+    private boolean encounterScopeEnabled(String resource) {
+        return effective("resource." + resource + ".enabled").map(JsonNode::asBoolean).orElse(false);
+    }
+
     public List<String> unsupportedSettings() {
         List<String> errors = new ArrayList<>();
         definitions.forEach((id, option) -> {
+            if (id.startsWith("resource.Encounter.ambulatory.") || id.startsWith("resource.Encounter.inpatient.")) {
+                if (effective(id).isPresent() && ((id.endsWith(".enabled") && !values.get(id).asBoolean())
+                        || (id.endsWith(".endPolicy") && !values.get(id).asText().equals("preserve"))))
+                    errors.add("Not implemented (issue #97): " + option.get("propertyName").asText());
+                return;
+            }
             if (!Set.of("resource.Patient.mode", "resource.Condition.enabled", "contact.diagnoses.enabled",
                     "contact.diagnoses.levels", "contact.diagnoses.roles", "resource.Encounter.enabled",
                     "contact.facility.enabled", "contact.department.enabled", "contact.ward-service.enabled",
@@ -265,6 +279,15 @@ public final class ContractConfiguration {
                     && !directBinding(id) && effective(id).isPresent())
                 errors.add("Not implemented for configuration version 1: " + option.get("propertyName").asText() + " = " + values.get(id));
         });
+        dar.forEach((id, code) -> {
+            for (JsonNode scope : CONTRACT.path("dar").path("scopedFields"))
+                if (scope.path("id").asText().equals(id) && encounterScopeEnabled(scope.path("resourceId").asText()))
+                    errors.add("Class-specific DAR not implemented (issue #97): " + id);
+        });
+        for (Map<String, String> rule : rules) if (Boolean.parseBoolean(rule.get("ENABLED")))
+            for (String resource : rule.get("RESOURCES").split(","))
+                if (resource.startsWith("Encounter.") && encounterScopeEnabled(resource))
+                    errors.add("Class-specific identifiers not implemented (issue #97): " + resource);
         return List.copyOf(errors);
     }
 }
