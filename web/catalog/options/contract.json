@@ -70,6 +70,24 @@
       "labelKey": "resource.Encounter.label"
     },
     {
+      "id": "Encounter.inpatient",
+      "resourceType": "Encounter",
+      "group": "contacts",
+      "identifierEligible": true,
+      "identifierSelector": "Encounter.inpatient",
+      "classCode": "IMP",
+      "labelKey": "resource.Encounter.inpatient.label"
+    },
+    {
+      "id": "Encounter.ambulatory",
+      "resourceType": "Encounter",
+      "group": "contacts",
+      "identifierEligible": true,
+      "identifierSelector": "Encounter.ambulatory",
+      "classCode": "AMB",
+      "labelKey": "resource.Encounter.ambulatory.label"
+    },
+    {
       "id": "Location",
       "resourceType": "Location",
       "group": "contacts",
@@ -187,7 +205,8 @@
         "generate-reference": "choice.generate-reference",
         "reference-only": "choice.reference-only",
         "neither": "choice.neither"
-      }
+      },
+      "propertyName": "PATIENT_MODE"
     },
     {
       "id": "resource.Encounter.enabled",
@@ -197,7 +216,178 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Encounter.enabled.label",
-      "helpKey": "option.resource.Encounter.enabled.help"
+      "helpKey": "option.resource.Encounter.enabled.help",
+      "propertyName": "ENCOUNTER_ENABLED"
+    },
+    {
+      "id": "resource.Encounter.ambulatory.enabled",
+      "section": "resources",
+      "type": "boolean",
+      "default": true,
+      "status": "agreed",
+      "control": "checkbox",
+      "labelKey": "option.resource.Encounter.ambulatory.enabled.label",
+      "helpKey": "option.resource.Encounter.ambulatory.enabled.help",
+      "propertyName": "ENCOUNTER_AMBULATORY_ENABLED",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "resource.Encounter.ambulatory.endPolicy",
+      "section": "resources",
+      "type": "enum",
+      "default": "preserve",
+      "status": "agreed",
+      "control": "select",
+      "labelKey": "option.resource.Encounter.ambulatory.endPolicy.label",
+      "helpKey": "option.resource.Encounter.ambulatory.endPolicy.help",
+      "propertyName": "ENCOUNTER_AMBULATORY_END_POLICY",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.ambulatory.enabled",
+          "equals": true
+        }
+      ],
+      "choices": [
+        "preserve",
+        "open",
+        "quarter-end",
+        "year-end",
+        "start",
+        "start-plus-second"
+      ],
+      "choiceLabelKeys": {
+        "preserve": "choice.encounter.preserve",
+        "open": "choice.encounter.open",
+        "quarter-end": "choice.encounter.quarter-end",
+        "year-end": "choice.encounter.year-end",
+        "start": "choice.encounter.start",
+        "start-plus-second": "choice.encounter.start-plus-second"
+      },
+      "fhirPath": "Encounter.period.end"
+    },
+    {
+      "id": "resource.Encounter.ambulatory.endApplication",
+      "section": "resources",
+      "type": "enum",
+      "default": "always",
+      "status": "agreed",
+      "control": "radio",
+      "labelKey": "option.resource.Encounter.ambulatory.endApplication.label",
+      "helpKey": "option.resource.Encounter.ambulatory.endApplication.help",
+      "propertyName": "ENCOUNTER_AMBULATORY_END_APPLICATION",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.ambulatory.enabled",
+          "equals": true
+        }
+      ],
+      "choices": [
+        "always",
+        "missing-input-end"
+      ],
+      "choiceLabelKeys": {
+        "always": "choice.encounter.always",
+        "missing-input-end": "choice.encounter.missing-input-end"
+      },
+      "fhirPath": "Encounter.period.end"
+    },
+    {
+      "id": "resource.Encounter.inpatient.enabled",
+      "section": "resources",
+      "type": "boolean",
+      "default": true,
+      "status": "agreed",
+      "control": "checkbox",
+      "labelKey": "option.resource.Encounter.inpatient.enabled.label",
+      "helpKey": "option.resource.Encounter.inpatient.enabled.help",
+      "propertyName": "ENCOUNTER_INPATIENT_ENABLED",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ]
+    },
+    {
+      "id": "resource.Encounter.inpatient.endPolicy",
+      "section": "resources",
+      "type": "enum",
+      "default": "preserve",
+      "status": "agreed",
+      "control": "select",
+      "labelKey": "option.resource.Encounter.inpatient.endPolicy.label",
+      "helpKey": "option.resource.Encounter.inpatient.endPolicy.help",
+      "propertyName": "ENCOUNTER_INPATIENT_END_POLICY",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.inpatient.enabled",
+          "equals": true
+        }
+      ],
+      "choices": [
+        "preserve",
+        "open",
+        "quarter-end",
+        "year-end",
+        "start",
+        "start-plus-second"
+      ],
+      "choiceLabelKeys": {
+        "preserve": "choice.encounter.preserve",
+        "open": "choice.encounter.open",
+        "quarter-end": "choice.encounter.quarter-end",
+        "year-end": "choice.encounter.year-end",
+        "start": "choice.encounter.start",
+        "start-plus-second": "choice.encounter.start-plus-second"
+      },
+      "fhirPath": "Encounter.period.end"
+    },
+    {
+      "id": "resource.Encounter.inpatient.endApplication",
+      "section": "resources",
+      "type": "enum",
+      "default": "always",
+      "status": "agreed",
+      "control": "radio",
+      "labelKey": "option.resource.Encounter.inpatient.endApplication.label",
+      "helpKey": "option.resource.Encounter.inpatient.endApplication.help",
+      "propertyName": "ENCOUNTER_INPATIENT_END_APPLICATION",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        },
+        {
+          "option": "resource.Encounter.inpatient.enabled",
+          "equals": true
+        }
+      ],
+      "choices": [
+        "always",
+        "missing-input-end"
+      ],
+      "choiceLabelKeys": {
+        "always": "choice.encounter.always",
+        "missing-input-end": "choice.encounter.missing-input-end"
+      },
+      "fhirPath": "Encounter.period.end"
     },
     {
       "id": "resource.Location.mode",
@@ -217,7 +407,8 @@
         "generate-reference": "choice.generate-reference",
         "reference-only": "choice.reference-only",
         "neither": "choice.neither"
-      }
+      },
+      "propertyName": "LOCATION_MODE"
     },
     {
       "id": "resource.Location.existingReference",
@@ -234,7 +425,8 @@
       ],
       "labelKey": "option.resource.Location.existingReference.label",
       "helpKey": "option.resource.Location.existingReference.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "LOCATION_EXISTING_REFERENCE"
     },
     {
       "id": "resource.Location.description",
@@ -251,7 +443,8 @@
       ],
       "labelKey": "option.resource.Location.description.label",
       "helpKey": "option.resource.Location.description.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "LOCATION_DESCRIPTION"
     },
     {
       "id": "resource.Condition.enabled",
@@ -261,7 +454,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Condition.enabled.label",
-      "helpKey": "option.resource.Condition.enabled.help"
+      "helpKey": "option.resource.Condition.enabled.help",
+      "propertyName": "CONDITION_ENABLED"
     },
     {
       "id": "resource.Procedure.enabled",
@@ -271,7 +465,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Procedure.enabled.label",
-      "helpKey": "option.resource.Procedure.enabled.help"
+      "helpKey": "option.resource.Procedure.enabled.help",
+      "propertyName": "PROCEDURE_ENABLED"
     },
     {
       "id": "resource.Observation.laboratory.enabled",
@@ -281,7 +476,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Observation.laboratory.enabled.label",
-      "helpKey": "option.resource.Observation.laboratory.enabled.help"
+      "helpKey": "option.resource.Observation.laboratory.enabled.help",
+      "propertyName": "OBSERVATION_LABORATORY_ENABLED"
     },
     {
       "id": "resource.Observation.vitalSigns.enabled",
@@ -291,7 +487,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Observation.vitalSigns.enabled.label",
-      "helpKey": "option.resource.Observation.vitalSigns.enabled.help"
+      "helpKey": "option.resource.Observation.vitalSigns.enabled.help",
+      "propertyName": "OBSERVATION_VITAL_SIGNS_ENABLED"
     },
     {
       "id": "resource.Medication.mode",
@@ -311,7 +508,8 @@
         "generate-reference": "choice.generate-reference",
         "reference-only": "choice.reference-only",
         "neither": "choice.neither"
-      }
+      },
+      "propertyName": "MEDICATION_MODE"
     },
     {
       "id": "resource.Medication.existingReference",
@@ -328,7 +526,8 @@
       ],
       "labelKey": "option.resource.Medication.existingReference.label",
       "helpKey": "option.resource.Medication.existingReference.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "MEDICATION_EXISTING_REFERENCE"
     },
     {
       "id": "resource.Medication.description",
@@ -345,7 +544,8 @@
       ],
       "labelKey": "option.resource.Medication.description.label",
       "helpKey": "option.resource.Medication.description.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "MEDICATION_DESCRIPTION"
     },
     {
       "id": "resource.MedicationRequest.enabled",
@@ -355,7 +555,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.MedicationRequest.enabled.label",
-      "helpKey": "option.resource.MedicationRequest.enabled.help"
+      "helpKey": "option.resource.MedicationRequest.enabled.help",
+      "propertyName": "MEDICATION_REQUEST_ENABLED"
     },
     {
       "id": "resource.MedicationAdministration.enabled",
@@ -365,7 +566,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.MedicationAdministration.enabled.label",
-      "helpKey": "option.resource.MedicationAdministration.enabled.help"
+      "helpKey": "option.resource.MedicationAdministration.enabled.help",
+      "propertyName": "MEDICATION_ADMINISTRATION_ENABLED"
     },
     {
       "id": "resource.MedicationStatement.enabled",
@@ -375,7 +577,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.MedicationStatement.enabled.label",
-      "helpKey": "option.resource.MedicationStatement.enabled.help"
+      "helpKey": "option.resource.MedicationStatement.enabled.help",
+      "propertyName": "MEDICATION_STATEMENT_ENABLED"
     },
     {
       "id": "resource.Immunization.enabled",
@@ -385,7 +588,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Immunization.enabled.label",
-      "helpKey": "option.resource.Immunization.enabled.help"
+      "helpKey": "option.resource.Immunization.enabled.help",
+      "propertyName": "IMMUNIZATION_ENABLED"
     },
     {
       "id": "resource.DiagnosticReport.enabled",
@@ -395,7 +599,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.DiagnosticReport.enabled.label",
-      "helpKey": "option.resource.DiagnosticReport.enabled.help"
+      "helpKey": "option.resource.DiagnosticReport.enabled.help",
+      "propertyName": "DIAGNOSTIC_REPORT_ENABLED"
     },
     {
       "id": "resource.CarePlan.enabled",
@@ -405,7 +610,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.CarePlan.enabled.label",
-      "helpKey": "option.resource.CarePlan.enabled.help"
+      "helpKey": "option.resource.CarePlan.enabled.help",
+      "propertyName": "CARE_PLAN_ENABLED"
     },
     {
       "id": "resource.DocumentReference.enabled",
@@ -415,7 +621,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.DocumentReference.enabled.label",
-      "helpKey": "option.resource.DocumentReference.enabled.help"
+      "helpKey": "option.resource.DocumentReference.enabled.help",
+      "propertyName": "DOCUMENT_REFERENCE_ENABLED"
     },
     {
       "id": "resource.Consent.enabled",
@@ -425,7 +632,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.resource.Consent.enabled.label",
-      "helpKey": "option.resource.Consent.enabled.help"
+      "helpKey": "option.resource.Consent.enabled.help",
+      "propertyName": "CONSENT_ENABLED"
     },
     {
       "id": "contact.facility.enabled",
@@ -442,7 +650,8 @@
       ],
       "labelKey": "option.contact.facility.enabled.label",
       "helpKey": "option.contact.facility.enabled.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_FACILITY_ENABLED"
     },
     {
       "id": "contact.department.enabled",
@@ -459,7 +668,8 @@
       ],
       "labelKey": "option.contact.department.enabled.label",
       "helpKey": "option.contact.department.enabled.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_DEPARTMENT_ENABLED"
     },
     {
       "id": "contact.ward-service.enabled",
@@ -476,7 +686,8 @@
       ],
       "labelKey": "option.contact.ward-service.enabled.label",
       "helpKey": "option.contact.ward-service.enabled.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_WARD_SERVICE_ENABLED"
     },
     {
       "id": "contact.department.partOf",
@@ -514,7 +725,8 @@
         "none": "choice.none"
       },
       "disabledReasonKey": "disabled.requiresSelection",
-      "choiceDisabledReasonKey": "disabled.requiresSelection"
+      "choiceDisabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_DEPARTMENT_PART_OF"
     },
     {
       "id": "contact.ward-service.partOf",
@@ -560,7 +772,8 @@
         "none": "choice.none"
       },
       "disabledReasonKey": "disabled.requiresSelection",
-      "choiceDisabledReasonKey": "disabled.requiresSelection"
+      "choiceDisabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_WARD_SERVICE_PART_OF"
     },
     {
       "id": "contact.diagnoses.enabled",
@@ -586,7 +799,53 @@
       },
       "labelKey": "option.contact.diagnoses.enabled.label",
       "helpKey": "option.contact.diagnoses.enabled.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION"
+    },
+    {
+      "id": "contact.diagnoses.roles",
+      "section": "resources",
+      "type": "set",
+      "default": [
+        "CC",
+        "CM",
+        "AD",
+        "DD",
+        "pre-op",
+        "post-op",
+        "billing"
+      ],
+      "status": "agreed",
+      "control": "multiselect",
+      "choices": [
+        "CC",
+        "CM",
+        "AD",
+        "DD",
+        "pre-op",
+        "post-op",
+        "billing"
+      ],
+      "enabledWhen": [
+        {
+          "option": "contact.diagnoses.enabled",
+          "equals": true
+        }
+      ],
+      "labelKey": "option.contact.diagnoses.roles.label",
+      "helpKey": "option.contact.diagnoses.roles.help",
+      "fhirPath": "Encounter.diagnosis.use.coding.code",
+      "choiceLabelKeys": {
+        "CC": "choice.diagnosisRole.CC",
+        "CM": "choice.diagnosisRole.CM",
+        "AD": "choice.diagnosisRole.AD",
+        "DD": "choice.diagnosisRole.DD",
+        "pre-op": "choice.diagnosisRole.pre-op",
+        "post-op": "choice.diagnosisRole.post-op",
+        "billing": "choice.diagnosisRole.billing"
+      },
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_DIAGNOSES_ROLES"
     },
     {
       "id": "contact.diagnoses.levels",
@@ -623,7 +882,8 @@
         "department": "choice.department",
         "ward-service": "choice.ward-service"
       },
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_DIAGNOSES_LEVELS"
     },
     {
       "id": "contact.procedureDiagnoses.enabled",
@@ -649,7 +909,8 @@
       },
       "labelKey": "option.contact.procedureDiagnoses.enabled.label",
       "helpKey": "option.contact.procedureDiagnoses.enabled.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION"
     },
     {
       "id": "contact.procedureDiagnoses.levels",
@@ -686,28 +947,8 @@
         "department": "choice.department",
         "ward-service": "choice.ward-service"
       },
-      "disabledReasonKey": "disabled.requiresSelection"
-    },
-    {
-      "id": "contact.inheritDiagnoses",
-      "section": "resources",
-      "type": "boolean",
-      "default": false,
-      "status": "agreed",
-      "control": "checkbox",
-      "enabledWhen": [
-        {
-          "option": "resource.Encounter.enabled",
-          "equals": true
-        }
-      ],
-      "binding": {
-        "kind": "java-property",
-        "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER"
-      },
-      "labelKey": "option.contact.inheritDiagnoses.label",
-      "helpKey": "option.contact.inheritDiagnoses.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "CONTACT_PROCEDURE_DIAGNOSES_LEVELS"
     },
     {
       "id": "reference.Condition.encounter",
@@ -771,7 +1012,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "Condition.encounter"
+      "fhirPath": "Condition.encounter",
+      "propertyName": "REFERENCE_CONDITION_ENCOUNTER"
     },
     {
       "id": "reference.Procedure.encounter",
@@ -835,7 +1077,8 @@
           "selected-level": true
         },
         "semantics": "Contact-level assignment requires #77."
-      }
+      },
+      "propertyName": "REFERENCE_PROCEDURE_ENCOUNTER"
     },
     {
       "id": "reference.Observation.laboratory.encounter",
@@ -890,7 +1133,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "Observation.encounter"
+      "fhirPath": "Observation.encounter",
+      "propertyName": "REFERENCE_OBSERVATION_LABORATORY_ENCOUNTER"
     },
     {
       "id": "reference.Observation.vitalSigns.encounter",
@@ -945,7 +1189,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "Observation.encounter"
+      "fhirPath": "Observation.encounter",
+      "propertyName": "REFERENCE_OBSERVATION_VITAL_SIGNS_ENCOUNTER"
     },
     {
       "id": "reference.MedicationRequest.encounter",
@@ -1000,7 +1245,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "MedicationRequest.encounter"
+      "fhirPath": "MedicationRequest.encounter",
+      "propertyName": "REFERENCE_MEDICATION_REQUEST_ENCOUNTER"
     },
     {
       "id": "reference.MedicationAdministration.encounter",
@@ -1055,7 +1301,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "MedicationAdministration.context"
+      "fhirPath": "MedicationAdministration.context",
+      "propertyName": "REFERENCE_MEDICATION_ADMINISTRATION_ENCOUNTER"
     },
     {
       "id": "reference.MedicationStatement.encounter",
@@ -1110,7 +1357,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "MedicationStatement.context"
+      "fhirPath": "MedicationStatement.context",
+      "propertyName": "REFERENCE_MEDICATION_STATEMENT_ENCOUNTER"
     },
     {
       "id": "reference.Immunization.encounter",
@@ -1165,7 +1413,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "Immunization.encounter"
+      "fhirPath": "Immunization.encounter",
+      "propertyName": "REFERENCE_IMMUNIZATION_ENCOUNTER"
     },
     {
       "id": "reference.DiagnosticReport.encounter",
@@ -1220,7 +1469,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "DiagnosticReport.encounter"
+      "fhirPath": "DiagnosticReport.encounter",
+      "propertyName": "REFERENCE_DIAGNOSTIC_REPORT_ENCOUNTER"
     },
     {
       "id": "reference.CarePlan.encounter",
@@ -1275,7 +1525,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "CarePlan.encounter"
+      "fhirPath": "CarePlan.encounter",
+      "propertyName": "REFERENCE_CARE_PLAN_ENCOUNTER"
     },
     {
       "id": "reference.DocumentReference.encounter",
@@ -1330,7 +1581,8 @@
       },
       "disabledReasonKey": "disabled.requiresSelection",
       "choiceDisabledReasonKey": "disabled.requiresSelection",
-      "fhirPath": "DocumentReference.context.encounter"
+      "fhirPath": "DocumentReference.context.encounter",
+      "propertyName": "REFERENCE_DOCUMENT_REFERENCE_ENCOUNTER"
     },
     {
       "id": "reference.DocumentReference.assignmentStrategy",
@@ -1361,7 +1613,8 @@
         "explicit-only": "choice.contact-explicit-only",
         "fill-missing": "choice.contact-fill-missing",
         "timestamp-only": "choice.contact-timestamp-only"
-      }
+      },
+      "propertyName": "REFERENCE_DOCUMENT_REFERENCE_ASSIGNMENT_STRATEGY"
     },
     {
       "id": "medication.requestTreatment",
@@ -1403,7 +1656,8 @@
         "replace-statement": "choice.replace-statement"
       },
       "disabledReasonKey": "disabled.requiresSelection",
-      "choiceDisabledReasonKey": "disabled.requiresSelection"
+      "choiceDisabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "MEDICATION_REQUEST_TREATMENT"
     },
     {
       "id": "medication.MedicationAdministration.treatment",
@@ -1445,7 +1699,8 @@
         "add-statement": "choice.add-statement",
         "replace-statement": "choice.replace-statement"
       },
-      "choiceDisabledReasonKey": "disabled.requiresSelection"
+      "choiceDisabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "MEDICATION_ADMINISTRATION_TREATMENT"
     },
     {
       "id": "medication.MedicationStatement.treatment",
@@ -1487,7 +1742,8 @@
         "add-administration": "choice.add-administration",
         "replace-administration": "choice.replace-administration"
       },
-      "choiceDisabledReasonKey": "disabled.requiresSelection"
+      "choiceDisabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "MEDICATION_STATEMENT_TREATMENT"
     },
     {
       "id": "ids.patient.prefix",
@@ -1501,7 +1757,8 @@
         "name": "PID_PREFIX"
       },
       "labelKey": "option.ids.patient.prefix.label",
-      "helpKey": "option.ids.patient.prefix.help"
+      "helpKey": "option.ids.patient.prefix.help",
+      "propertyName": "PID_PREFIX"
     },
     {
       "id": "ids.patient.suffix",
@@ -1515,7 +1772,8 @@
         "name": "PID_SUFFIX"
       },
       "labelKey": "option.ids.patient.suffix.label",
-      "helpKey": "option.ids.patient.suffix.help"
+      "helpKey": "option.ids.patient.suffix.help",
+      "propertyName": "PID_SUFFIX"
     },
     {
       "id": "ids.patient.initialOffset",
@@ -1530,7 +1788,8 @@
       },
       "minimum": 0,
       "labelKey": "option.ids.patient.initialOffset.label",
-      "helpKey": "option.ids.patient.initialOffset.help"
+      "helpKey": "option.ids.patient.initialOffset.help",
+      "propertyName": "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET"
     },
     {
       "id": "ids.patient.iterationOffset",
@@ -1545,7 +1804,8 @@
       },
       "minimum": 0,
       "labelKey": "option.ids.patient.iterationOffset.label",
-      "helpKey": "option.ids.patient.iterationOffset.help"
+      "helpKey": "option.ids.patient.iterationOffset.help",
+      "propertyName": "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET"
     },
     {
       "id": "ids.patient.additionalRepetitions",
@@ -1560,7 +1820,8 @@
       },
       "minimum": 0,
       "labelKey": "option.ids.patient.additionalRepetitions.label",
-      "helpKey": "option.ids.patient.additionalRepetitions.help"
+      "helpKey": "option.ids.patient.additionalRepetitions.help",
+      "propertyName": "PID_LAST_NUMBER_INCREASE_LOOP_COUNT"
     },
     {
       "id": "ids.start.CONSENT",
@@ -1574,7 +1835,8 @@
         "name": "START_ID_CONSENT"
       },
       "labelKey": "option.ids.start.CONSENT.label",
-      "helpKey": "option.ids.start.CONSENT.help"
+      "helpKey": "option.ids.start.CONSENT.help",
+      "propertyName": "START_ID_CONSENT"
     },
     {
       "id": "ids.start.CONDITION",
@@ -1588,7 +1850,8 @@
         "name": "START_ID_CONDITION"
       },
       "labelKey": "option.ids.start.CONDITION.label",
-      "helpKey": "option.ids.start.CONDITION.help"
+      "helpKey": "option.ids.start.CONDITION.help",
+      "propertyName": "START_ID_CONDITION"
     },
     {
       "id": "ids.start.ENCOUNTER_LEVEL_2",
@@ -1602,7 +1865,8 @@
         "name": "START_ID_ENCOUNTER_LEVEL_2"
       },
       "labelKey": "option.ids.start.ENCOUNTER_LEVEL_2.label",
-      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_2.help"
+      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_2.help",
+      "propertyName": "START_ID_ENCOUNTER_LEVEL_2"
     },
     {
       "id": "ids.start.ENCOUNTER_LEVEL_3",
@@ -1616,7 +1880,8 @@
         "name": "START_ID_ENCOUNTER_LEVEL_3"
       },
       "labelKey": "option.ids.start.ENCOUNTER_LEVEL_3.label",
-      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_3.help"
+      "helpKey": "option.ids.start.ENCOUNTER_LEVEL_3.help",
+      "propertyName": "START_ID_ENCOUNTER_LEVEL_3"
     },
     {
       "id": "ids.start.MEDICATION_REQUEST",
@@ -1630,7 +1895,8 @@
         "name": "START_ID_MEDICATION_REQUEST"
       },
       "labelKey": "option.ids.start.MEDICATION_REQUEST.label",
-      "helpKey": "option.ids.start.MEDICATION_REQUEST.help"
+      "helpKey": "option.ids.start.MEDICATION_REQUEST.help",
+      "propertyName": "START_ID_MEDICATION_REQUEST"
     },
     {
       "id": "ids.start.MEDICATION_ADMINISTRATION",
@@ -1644,7 +1910,8 @@
         "name": "START_ID_MEDICATION_ADMINISTRATION"
       },
       "labelKey": "option.ids.start.MEDICATION_ADMINISTRATION.label",
-      "helpKey": "option.ids.start.MEDICATION_ADMINISTRATION.help"
+      "helpKey": "option.ids.start.MEDICATION_ADMINISTRATION.help",
+      "propertyName": "START_ID_MEDICATION_ADMINISTRATION"
     },
     {
       "id": "ids.start.MEDICATION_STATEMENT",
@@ -1658,7 +1925,8 @@
         "name": "START_ID_MEDICATION_STATEMENT"
       },
       "labelKey": "option.ids.start.MEDICATION_STATEMENT.label",
-      "helpKey": "option.ids.start.MEDICATION_STATEMENT.help"
+      "helpKey": "option.ids.start.MEDICATION_STATEMENT.help",
+      "propertyName": "START_ID_MEDICATION_STATEMENT"
     },
     {
       "id": "ids.start.OBSERVATION_LABORATORY",
@@ -1672,7 +1940,8 @@
         "name": "START_ID_OBSERVATION_LABORATORY"
       },
       "labelKey": "option.ids.start.OBSERVATION_LABORATORY.label",
-      "helpKey": "option.ids.start.OBSERVATION_LABORATORY.help"
+      "helpKey": "option.ids.start.OBSERVATION_LABORATORY.help",
+      "propertyName": "START_ID_OBSERVATION_LABORATORY"
     },
     {
       "id": "ids.start.OBSERVATION_VITAL_SIGNS",
@@ -1686,7 +1955,8 @@
         "name": "START_ID_OBSERVATION_VITAL_SIGNS"
       },
       "labelKey": "option.ids.start.OBSERVATION_VITAL_SIGNS.label",
-      "helpKey": "option.ids.start.OBSERVATION_VITAL_SIGNS.help"
+      "helpKey": "option.ids.start.OBSERVATION_VITAL_SIGNS.help",
+      "propertyName": "START_ID_OBSERVATION_VITAL_SIGNS"
     },
     {
       "id": "ids.start.PROCEDURE",
@@ -1700,7 +1970,8 @@
         "name": "START_ID_PROCEDURE"
       },
       "labelKey": "option.ids.start.PROCEDURE.label",
-      "helpKey": "option.ids.start.PROCEDURE.help"
+      "helpKey": "option.ids.start.PROCEDURE.help",
+      "propertyName": "START_ID_PROCEDURE"
     },
     {
       "id": "ids.start.DOCUMENT_REFERENCE",
@@ -1714,7 +1985,8 @@
         "name": "START_ID_DOCUMENT_REFERENCE"
       },
       "labelKey": "option.ids.start.DOCUMENT_REFERENCE.label",
-      "helpKey": "option.ids.start.DOCUMENT_REFERENCE.help"
+      "helpKey": "option.ids.start.DOCUMENT_REFERENCE.help",
+      "propertyName": "START_ID_DOCUMENT_REFERENCE"
     },
     {
       "id": "timeShift.enabled",
@@ -1724,7 +1996,8 @@
       "status": "agreed",
       "control": "checkbox",
       "labelKey": "option.timeShift.enabled.label",
-      "helpKey": "option.timeShift.enabled.help"
+      "helpKey": "option.timeShift.enabled.help",
+      "propertyName": "TIME_SHIFT_ENABLED"
     },
     {
       "id": "timeShift.baseDays",
@@ -1741,7 +2014,8 @@
       ],
       "labelKey": "option.timeShift.baseDays.label",
       "helpKey": "option.timeShift.baseDays.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "TIME_SHIFT_BASE_DAYS"
     },
     {
       "id": "timeShift.iterationDays",
@@ -1758,7 +2032,8 @@
       ],
       "labelKey": "option.timeShift.iterationDays.label",
       "helpKey": "option.timeShift.iterationDays.help",
-      "disabledReasonKey": "disabled.requiresSelection"
+      "disabledReasonKey": "disabled.requiresSelection",
+      "propertyName": "TIME_SHIFT_ITERATION_DAYS"
     },
     {
       "id": "terminology.syntheaYear",
@@ -1780,7 +2055,8 @@
       "choiceLabelKeys": {
         "2025": "choice.2025",
         "2026": "choice.2026"
-      }
+      },
+      "propertyName": "SYNTHEA_MAPPING_YEAR"
     },
     {
       "id": "terminology.versionOutput",
@@ -1809,7 +2085,8 @@
         "catalogue-year": "choice.catalogue-year",
         "omit": "choice.omit",
         "dar": "choice.dar"
-      }
+      },
+      "propertyName": "TERMINOLOGY_VERSION_OUTPUT"
     },
     {
       "id": "checks.inputConsistency",
@@ -1823,7 +2100,8 @@
         "name": "CHECK_INPUT_CONSISTENCY"
       },
       "labelKey": "option.checks.inputConsistency.label",
-      "helpKey": "option.checks.inputConsistency.help"
+      "helpKey": "option.checks.inputConsistency.help",
+      "propertyName": "CHECK_INPUT_CONSISTENCY"
     },
     {
       "id": "checks.fhirValidation",
@@ -1837,7 +2115,8 @@
         "name": "--validate-bundles"
       },
       "labelKey": "option.checks.fhirValidation.label",
-      "helpKey": "option.checks.fhirValidation.help"
+      "helpKey": "option.checks.fhirValidation.help",
+      "propertyName": "CHECKS_FHIR_VALIDATION"
     },
     {
       "id": "output.formats",
@@ -1870,7 +2149,8 @@
         "JSONGZIP": "choice.JSONGZIP",
         "JSONBZ2": "choice.JSONBZ2",
         "ZIPJSON": "choice.ZIPJSON"
-      }
+      },
+      "propertyName": "OUTPUT_FORMATS"
     },
     {
       "id": "output.patientsPerFile",
@@ -1885,7 +2165,8 @@
       },
       "minimum": 1,
       "labelKey": "option.output.patientsPerFile.label",
-      "helpKey": "option.output.patientsPerFile.help"
+      "helpKey": "option.output.patientsPerFile.help",
+      "propertyName": "OUTPUT_PATIENTS_PER_FILE"
     }
   ],
   "dar": {
@@ -1926,6 +2207,44 @@
     "disabledReasonKeys": [
       "disabled.darMode",
       "disabled.profileConstraint"
+    ],
+    "scopedFields": [
+      {
+        "id": "Encounter.ambulatory.period.start",
+        "source": "Encounter.period.start",
+        "resourceId": "Encounter.ambulatory",
+        "labelKey": "dar.field.Encounter.ambulatory.period.start.label"
+      },
+      {
+        "id": "Encounter.ambulatory.period.end",
+        "source": "Encounter.period.end",
+        "resourceId": "Encounter.ambulatory",
+        "labelKey": "dar.field.Encounter.ambulatory.period.end.label"
+      },
+      {
+        "id": "Encounter.ambulatory.admissionReasonFourthDigit",
+        "source": "Encounter.admissionReasonFourthDigit",
+        "resourceId": "Encounter.ambulatory",
+        "labelKey": "dar.field.Encounter.ambulatory.admissionReasonFourthDigit.label"
+      },
+      {
+        "id": "Encounter.inpatient.period.start",
+        "source": "Encounter.period.start",
+        "resourceId": "Encounter.inpatient",
+        "labelKey": "dar.field.Encounter.inpatient.period.start.label"
+      },
+      {
+        "id": "Encounter.inpatient.period.end",
+        "source": "Encounter.period.end",
+        "resourceId": "Encounter.inpatient",
+        "labelKey": "dar.field.Encounter.inpatient.period.end.label"
+      },
+      {
+        "id": "Encounter.inpatient.admissionReasonFourthDigit",
+        "source": "Encounter.admissionReasonFourthDigit",
+        "resourceId": "Encounter.inpatient",
+        "labelKey": "dar.field.Encounter.inpatient.admissionReasonFourthDigit.label"
+      }
     ]
   },
   "contactAssignment": {
@@ -2097,5 +2416,127 @@
       "missingDarCode": "config.error.missingDarCode"
     }
   },
-  "openDecisions": []
+  "openDecisions": [],
+  "propertiesFormat": {
+    "version": 1,
+    "versionProperty": "CONFIGURATION_VERSION",
+    "encoding": "UTF-8",
+    "inactiveAssignmentPrefix": "# ",
+    "darProperties": {
+      "Patient.name.family": "DAR_PATIENT_NAME_FAMILY",
+      "Patient.name.given": "DAR_PATIENT_NAME_GIVEN",
+      "Patient.birthDate": "DAR_PATIENT_BIRTH_DATE",
+      "Patient.gender": "DAR_PATIENT_GENDER",
+      "Patient.deceased[x]": "DAR_PATIENT_DECEASED_X",
+      "Patient.address.line": "DAR_PATIENT_ADDRESS_LINE",
+      "Patient.address.postalCode": "DAR_PATIENT_ADDRESS_POSTAL_CODE",
+      "Patient.address.city": "DAR_PATIENT_ADDRESS_CITY",
+      "Patient.address.state": "DAR_PATIENT_ADDRESS_STATE",
+      "Patient.address.country": "DAR_PATIENT_ADDRESS_COUNTRY",
+      "Encounter.period.start": "DAR_ENCOUNTER_PERIOD_START",
+      "Encounter.period.end": "DAR_ENCOUNTER_PERIOD_END",
+      "Condition.recordedDate": "DAR_CONDITION_RECORDED_DATE",
+      "Condition.onset[x]": "DAR_CONDITION_ONSET_X",
+      "Condition.abatement[x]": "DAR_CONDITION_ABATEMENT_X",
+      "Procedure.performed[x]": "DAR_PROCEDURE_PERFORMED_X",
+      "MedicationRequest.authoredOn": "DAR_MEDICATION_REQUEST_AUTHORED_ON",
+      "MedicationAdministration.effective[x]": "DAR_MEDICATION_ADMINISTRATION_EFFECTIVE_X",
+      "MedicationStatement.effective[x]": "DAR_MEDICATION_STATEMENT_EFFECTIVE_X",
+      "MedicationStatement.dateAsserted": "DAR_MEDICATION_STATEMENT_DATE_ASSERTED",
+      "Immunization.occurrence[x]": "DAR_IMMUNIZATION_OCCURRENCE_X",
+      "DiagnosticReport.effective[x]": "DAR_DIAGNOSTIC_REPORT_EFFECTIVE_X",
+      "DiagnosticReport.issued": "DAR_DIAGNOSTIC_REPORT_ISSUED",
+      "CarePlan.period.start": "DAR_CARE_PLAN_PERIOD_START",
+      "CarePlan.period.end": "DAR_CARE_PLAN_PERIOD_END",
+      "DocumentReference.date": "DAR_DOCUMENT_REFERENCE_DATE",
+      "DocumentReference.content.attachment.creation": "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_CREATION",
+      "Consent.dateTime": "DAR_CONSENT_DATE_TIME",
+      "Consent.provision.period.start": "DAR_CONSENT_PROVISION_PERIOD_START",
+      "Consent.provision.period.end": "DAR_CONSENT_PROVISION_PERIOD_END",
+      "Laboratory.effective[x]": "DAR_LABORATORY_EFFECTIVE_X",
+      "Laboratory.issued": "DAR_LABORATORY_ISSUED",
+      "Laboratory.value[x].numeric-measurement": "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT",
+      "Laboratory.value[x].measurement": "DAR_LABORATORY_VALUE_X_MEASUREMENT",
+      "Laboratory.component.value[x].numeric-measurement": "DAR_LABORATORY_COMPONENT_VALUE_X_NUMERIC_MEASUREMENT",
+      "Laboratory.component.value[x].measurement": "DAR_LABORATORY_COMPONENT_VALUE_X_MEASUREMENT",
+      "VitalSigns.effective[x]": "DAR_VITAL_SIGNS_EFFECTIVE_X",
+      "VitalSigns.issued": "DAR_VITAL_SIGNS_ISSUED",
+      "VitalSigns.value[x].numeric-measurement": "DAR_VITAL_SIGNS_VALUE_X_NUMERIC_MEASUREMENT",
+      "VitalSigns.value[x].measurement": "DAR_VITAL_SIGNS_VALUE_X_MEASUREMENT",
+      "VitalSigns.component.value[x].numeric-measurement": "DAR_VITAL_SIGNS_COMPONENT_VALUE_X_NUMERIC_MEASUREMENT",
+      "VitalSigns.component.value[x].measurement": "DAR_VITAL_SIGNS_COMPONENT_VALUE_X_MEASUREMENT",
+      "Condition.code.coding.code": "DAR_CONDITION_CODE_CODING_CODE",
+      "Condition.code.coding.version": "DAR_CONDITION_CODE_CODING_VERSION",
+      "Procedure.code.coding.code": "DAR_PROCEDURE_CODE_CODING_CODE",
+      "Procedure.code.coding.version": "DAR_PROCEDURE_CODE_CODING_VERSION",
+      "Laboratory.code.coding.code": "DAR_LABORATORY_CODE_CODING_CODE",
+      "Laboratory.code.coding.version": "DAR_LABORATORY_CODE_CODING_VERSION",
+      "VitalSigns.code.coding.code": "DAR_VITAL_SIGNS_CODE_CODING_CODE",
+      "VitalSigns.code.coding.version": "DAR_VITAL_SIGNS_CODE_CODING_VERSION",
+      "Medication.code.coding.code": "DAR_MEDICATION_CODE_CODING_CODE",
+      "Medication.code.coding.version": "DAR_MEDICATION_CODE_CODING_VERSION",
+      "Immunization.vaccineCode.coding.code": "DAR_IMMUNIZATION_VACCINE_CODE_CODING_CODE",
+      "Immunization.vaccineCode.coding.version": "DAR_IMMUNIZATION_VACCINE_CODE_CODING_VERSION",
+      "DiagnosticReport.code.coding.code": "DAR_DIAGNOSTIC_REPORT_CODE_CODING_CODE",
+      "DiagnosticReport.code.coding.version": "DAR_DIAGNOSTIC_REPORT_CODE_CODING_VERSION",
+      "Condition.clinicalStatus": "DAR_CONDITION_CLINICAL_STATUS",
+      "Condition.verificationStatus": "DAR_CONDITION_VERIFICATION_STATUS",
+      "Medication.form": "DAR_MEDICATION_FORM",
+      "Medication.ingredient.item[x]": "DAR_MEDICATION_INGREDIENT_ITEM_X",
+      "CarePlan.description": "DAR_CARE_PLAN_DESCRIPTION",
+      "DiagnosticReport.conclusion": "DAR_DIAGNOSTIC_REPORT_CONCLUSION",
+      "Location.name": "DAR_LOCATION_NAME",
+      "DocumentReference.content.attachment.title": "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_TITLE",
+      "MedicationRequest.dosageInstruction.doseAndRate.dose[x]": "DAR_MEDICATION_REQUEST_DOSAGE_INSTRUCTION_DOSE_AND_RATE_DOSE_X",
+      "MedicationStatement.dosage.doseAndRate.dose[x]": "DAR_MEDICATION_STATEMENT_DOSAGE_DOSE_AND_RATE_DOSE_X",
+      "MedicationAdministration.dosage.dose": "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE",
+      "DocumentReference.content.attachment.data": "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA",
+      "Encounter.admissionReasonFourthDigit": "DAR_ENCOUNTER_ADMISSION_REASON_FOURTH_DIGIT",
+      "Laboratory.component.code.coding.code": "DAR_LABORATORY_COMPONENT_CODE_CODING_CODE",
+      "Laboratory.component.code.coding.version": "DAR_LABORATORY_COMPONENT_CODE_CODING_VERSION",
+      "VitalSigns.component.code.coding.code": "DAR_VITAL_SIGNS_COMPONENT_CODE_CODING_CODE",
+      "VitalSigns.component.code.coding.version": "DAR_VITAL_SIGNS_COMPONENT_CODE_CODING_VERSION",
+      "Encounter.ambulatory.period.start": "DAR_ENCOUNTER_AMBULATORY_PERIOD_START",
+      "Encounter.ambulatory.period.end": "DAR_ENCOUNTER_AMBULATORY_PERIOD_END",
+      "Encounter.ambulatory.admissionReasonFourthDigit": "DAR_ENCOUNTER_AMBULATORY_ADMISSION_REASON_FOURTH_DIGIT",
+      "Encounter.inpatient.period.start": "DAR_ENCOUNTER_INPATIENT_PERIOD_START",
+      "Encounter.inpatient.period.end": "DAR_ENCOUNTER_INPATIENT_PERIOD_END",
+      "Encounter.inpatient.admissionReasonFourthDigit": "DAR_ENCOUNTER_INPATIENT_ADMISSION_REASON_FOURTH_DIGIT"
+    },
+    "identifierPrefix": "IDENTIFIER_RULE_"
+  },
+  "encounterClasses": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+    "scopes": {
+      "ambulatory": "AMB",
+      "inpatient": "IMP"
+    },
+    "otherClasses": "preserve existing behavior; no new class mapping",
+    "endOrder": [
+      "input derivations and time shift",
+      "reference assignment using original/internal periods",
+      "class end policy",
+      "common DAR then class DAR",
+      "status from final end value"
+    ],
+    "missingEndBasis": "original input, before internal derivation",
+    "endLevels": [
+      "facility",
+      "department",
+      "ward-service"
+    ],
+    "allowTransformedHierarchyConflicts": true,
+    "assignmentPriority": [
+      "matching inpatient encounters",
+      "matching ambulatory encounters"
+    ],
+    "assignmentTieBreak": "latest start not after event timestamp, then input row",
+    "runtime": "pending #97"
+  },
+  "legacyOnlyJavaProperties": [
+    {
+      "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER",
+      "reason": "Unversioned input only; versioned configuration assigns diagnosis references automatically using selected roles, levels and temporal matching."
+    }
+  ]
 }

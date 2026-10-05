@@ -1,3 +1,4 @@
+import { parsePropertiesConfiguration } from './configuration-properties.ts'
 import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
 import contractData from '../../catalog/options/contract.json' with { type: 'json' }
@@ -8,6 +9,7 @@ export type Value = string | number | boolean | string[] | null
 export type Dependency = { option: string; equals: string | number | boolean }
 export type Option = {
   id: string
+  propertyName: string
   section: string
   type: string
   control: string
@@ -23,6 +25,7 @@ export type Option = {
 }
 export type DarField = {
   id: string
+  targets: string[]
   resourceType: string
   semanticGroup: string
   allowedCodes: string[]
@@ -47,18 +50,42 @@ export type Configuration = {
 export type Problem = { key: string; params?: Record<string, string | number> }
 export const contract = contractData
 export const options = contract.options as Option[]
-export const darFields = catalogueData.fields as DarField[]
+const baseDarFields = catalogueData.fields as DarField[]
+export const darFields: DarField[] = [...baseDarFields, ...contract.dar.scopedFields.map((scope) => ({
+  ...baseDarFields.find((field) => field.id === scope.source)!, id: scope.id
+}))]
 export const identifierResources = [
   ...new Set(
     contract.resources
       .filter((r) => r.identifierEligible)
-      .map((r) => r.resourceType)
+      .map((r) => r.identifierSelector ?? r.resourceType)
   )
-].sort()
+].sort((a, b) => {
+  const order = ['Encounter', 'Encounter.inpatient', 'Encounter.ambulatory']
+  return order.includes(a) && order.includes(b) ? order.indexOf(a) - order.indexOf(b) : a.localeCompare(b)
+})
 const byId = new Map(options.map((o) => [o.id, o]))
 const ajv = new Ajv2020({ allErrors: true, strict: false })
 addFormats(ajv)
 const validateSchema = ajv.compile(schema)
+// Browser drafts retain incomplete edits; executable imports use the strict schema.
+const draftSchema = structuredClone(schema)
+for (const option of options) {
+  if (option.type === 'integer') {
+    Object.assign(draftSchema.properties.values.properties[option.id as keyof typeof draftSchema.properties.values.properties], {
+      type: ['number', 'null'], minimum: undefined
+    })
+  }
+}
+const draftRule = draftSchema.properties.identifierRules.items.properties
+draftRule.system.minLength = 0
+draftRule.pattern.minLength = 0
+draftRule.resources.minItems = 0
+for (const field of Object.values(draftSchema.properties.dar.properties)) {
+  const codes = field.oneOf[1].properties?.code?.enum
+  if (codes) codes.push('')
+}
+const validateDraft = ajv.compile(draftSchema)
 export function defaults(): Configuration {
   return {
     schemaVersion: 1,
@@ -86,6 +113,7 @@ export function optionEnabled(
   const option = byId.get(id)
   if (!option || visiting.has(id)) return false
   const next = new Set(visiting).add(id)
+  if (id.endsWith('.endApplication') && values[id.replace('.endApplication', '.endPolicy')] === 'preserve') return false
   return (option.enabledWhen ?? []).every(
     (d) =>
       values[d.option] === d.equals && optionEnabled(d.option, values, next)
@@ -103,6 +131,7 @@ export function resourceEnabled(
   resource: string,
   values: Configuration['values']
 ): boolean {
+  if (resource.startsWith('Encounter.')) return values['resource.Encounter.enabled'] === true && values[`resource.${resource}.enabled`] === true
   if (['Patient', 'Location', 'Medication'].includes(resource))
     return values[`resource.${resource}.mode`] === 'generate-reference'
   const names =
@@ -114,6 +143,13 @@ export function resourceEnabled(
           ? ['Observation.laboratory', 'Observation.vitalSigns']
           : [resource]
   return names.some((name) => values[`resource.${name}.enabled`] === true)
+}
+// Navigation reflects effective settings without changing stored selections.
+export function resourceNavigationStatus(resource: string, values: Configuration['values']): 'generated' | 'referenced' | 'disabled' | 'parentDisabled' {
+  if (resource.startsWith('Encounter.') && values['resource.Encounter.enabled'] !== true) return 'parentDisabled'
+  const mode = values[`resource.${resource}.mode`]
+  if (mode === 'reference-only') return 'referenced'
+  return resourceEnabled(resource, values) ? 'generated' : 'disabled'
 }
 // Validate raw JSON first, then reject duplicate members before JSON.parse can discard them.
 export function parseUniqueJson(text: string): unknown {
@@ -181,7 +217,8 @@ export function patternTokens(pattern: string): Token[] {
   return tokens
 }
 export async function previewIdentifier(rule: Rule): Promise<string> {
-  const resourceType = rule.resources[0] ?? 'Patient'
+  const selector = rule.resources[0] ?? 'Patient'
+  const resourceType = contract.resources.find((r) => (r.identifierSelector ?? r.resourceType) === selector)?.resourceType ?? selector
   const context = [rule.id.toLowerCase(), resourceType, 'example-1', '0']
   const encoder = new TextEncoder()
   const input = context
@@ -237,7 +274,15 @@ export function problems(input: unknown): Problem[] {
   return issues
 }
 export function importConfiguration(text: string): Configuration {
-  const parsed = parseUniqueJson(text)
+  return readConfiguration(text, false)
+}
+export function restoreBrowserDraft(text: string): Configuration {
+  return readConfiguration(text, true)
+}
+function readConfiguration(text: string, draft: boolean): Configuration {
+  const parsed = text.trimStart().startsWith('{')
+    ? parseUniqueJson(text)
+    : parsePropertiesConfiguration(text)
   // Preserve saved drafts from the editor that included a duplicate procedure control.
   // The remaining Procedure assignment is authoritative.
   if (parsed && typeof parsed === 'object' && 'values' in parsed) {
@@ -252,6 +297,10 @@ export function importConfiguration(text: string): Configuration {
       values['resource.MedicationRequest.enabled'] = false
     }
     if (values && typeof values === 'object') {
+      if ('contact.inheritDiagnoses' in values) {
+        if (typeof values['contact.inheritDiagnoses'] !== 'boolean') throw new Error('invalid')
+        delete values['contact.inheritDiagnoses']
+      }
       const oldContactKey = 'reference.DocumentReference.knownInputContact'
       if (oldContactKey in values) {
         if (typeof values[oldContactKey] !== 'boolean') throw new Error('invalid')
@@ -274,7 +323,7 @@ export function importConfiguration(text: string): Configuration {
       }
     }
   }
-  if (problems(parsed).length) throw new Error('invalid')
+  if (draft ? !validateDraft(parsed) : problems(parsed).length > 0) throw new Error('invalid')
   return normalize(parsed as Configuration)
 }
 
@@ -282,7 +331,7 @@ export function resourceOptions(id: string): Option[] {
   return options.filter(
     (o) =>
       o.section === 'resources' &&
-      (o.id.startsWith(`resource.${id}.`) ||
+      ((o.id.startsWith(`resource.${id}.`) && (id !== 'Encounter' || !/^resource\.Encounter\.(ambulatory|inpatient)\./.test(o.id))) ||
         o.id.startsWith(`reference.${id}.`) ||
         (id === 'Encounter' && o.id.startsWith('contact.')) ||
         (id === 'MedicationRequest' &&
@@ -292,6 +341,8 @@ export function resourceOptions(id: string): Option[] {
 }
 
 export function darResource(field: DarField): string {
+  const scope = contract.dar.scopedFields.find((scope) => scope.id === field.id)
+  if (scope) return scope.resourceId
   if (field.id.startsWith('Laboratory.')) return 'Laboratory'
   if (field.id.startsWith('VitalSigns.')) return 'VitalSigns'
   return field.resourceType

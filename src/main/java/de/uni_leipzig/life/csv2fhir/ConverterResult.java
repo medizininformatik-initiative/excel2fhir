@@ -28,12 +28,43 @@ import com.google.common.collect.Multimap;
 
 import de.uni_leipzig.imise.utils.Alphabetical;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption;
+import de.uni_leipzig.life.csv2fhir.converter.ContactConversionState;
 
 /**
  * @author AXS (29.11.2021)
  */
 public class ConverterResult {
     public final List<Map<String, String>> contactEndDerivations = new ArrayList<>();
+    private final ContactConversionState contactState =
+            new ContactConversionState();
+    private final ContactIndex contacts = new ContactIndex();
+
+    public ContactConversionState contactState() { return contactState; }
+    public ContactIndex contacts() { return contacts; }
+
+    public static final class InputContext {
+        private final String patientId;
+        private final List<String> encounterIds;
+        private final long inputRow;
+        private final boolean explicitDocumentTimestamp;
+        public InputContext(String patientId, List<String> encounterIds, long inputRow, boolean explicitDocumentTimestamp) {
+            this.patientId = patientId;
+            this.encounterIds = List.copyOf(encounterIds);
+            this.inputRow = inputRow;
+            this.explicitDocumentTimestamp = explicitDocumentTimestamp;
+        }
+        public String patientId() { return patientId; }
+        public List<String> encounterIds() { return encounterIds; }
+        public long inputRow() { return inputRow; }
+        public boolean explicitDocumentTimestamp() { return explicitDocumentTimestamp; }
+    }
+    private final Map<String, InputContext> inputContexts = new HashMap<>();
+    public void recordInput(Resource resource, InputContext context) {
+        inputContexts.put(resource.fhirType() + "/" + resource.getIdElement().getIdPart(), context);
+    }
+    public InputContext inputContext(Resource resource) {
+        return inputContexts.get(resource.fhirType() + "/" + resource.getIdElement().getIdPart());
+    }
 
     /**
      * The options which contains the idStart values.

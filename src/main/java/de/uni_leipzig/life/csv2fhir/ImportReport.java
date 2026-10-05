@@ -14,6 +14,10 @@ public final class ImportReport {
     public final Map<String, Table> tables = new LinkedHashMap<>();
     public final List<Issue> issues = new ArrayList<>();
     public final List<Map<String, String>> contactEndDerivations = new ArrayList<>();
+    public final List<Map<String, String>> outputSelections = new ArrayList<>();
+    public final List<Map<String, String>> diagnosisReferenceIssues = new ArrayList<>();
+    public final List<Map<String, String>> encounterReferenceIssues = new ArrayList<>();
+    public final List<Map<String, String>> medicationTransformations = new ArrayList<>();
 
     public static final class Table {
         public String file;

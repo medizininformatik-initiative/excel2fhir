@@ -37,10 +37,18 @@ class CheckJavaBindings {
         for (var key : ConverterOptions.BooleanOption.values()) expected.add(key.name());
         for (var key : ConverterOptions.IntOption.values()) expected.add(key.name());
         for (var key : ConverterOptions.StringOption.values()) expected.add(key.name());
+        Set<String> legacyOnly = new HashSet<>();
+        for (JsonNode entry : contract.path("legacyOnlyJavaProperties")) {
+            String name = entry.path("name").asText();
+            if (!expected.contains(name) || bindings.contains(name) || !legacyOnly.add(name)
+                    || entry.path("reason").asText().isBlank())
+                throw new AssertionError("Invalid legacy-only Java option: " + name);
+        }
+        expected.removeAll(legacyOnly);
         if (!expected.equals(bindings)) {
             expected.removeAll(bindings);
             throw new AssertionError("Missing Java options: " + expected);
         }
-        System.out.println("All " + bindings.size() + " existing Java options covered.");
+        System.out.println("All " + bindings.size() + " versioned Java options covered; " + legacyOnly.size() + " legacy-only options documented.");
     }
 }

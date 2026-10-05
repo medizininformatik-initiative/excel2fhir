@@ -6,12 +6,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
+def expanded_fields(contract):
+    fields = json.loads((ROOT / contract['dar']['catalogue']).read_text())['fields']
+    base = {f['id']: f for f in fields}
+    return fields + [{**base[scope['source']], 'id': scope['id']} for scope in contract['dar'].get('scopedFields', [])]
+
+
 def generate():
     contract = json.loads((ROOT / 'contract.json').read_text())
     # Schema annotations remain stable English metadata; interface language
     # never changes accepted values or generated FHIR content.
     texts = json.loads((ROOT / 'en.json').read_text())
-    fields = json.loads((ROOT / contract['dar']['catalogue']).read_text())['fields']
+    fields = expanded_fields(contract)
     options = {}
     for option in contract['options']:
         definition = {
@@ -42,7 +48,7 @@ def generate():
                  'additionalProperties': False},
             ]
         }
-    eligible = sorted({r['resourceType'] for r in contract['resources']
+    eligible = sorted({r.get('identifierSelector', r['resourceType']) for r in contract['resources']
                        if r['identifierEligible']})
     return {
         '$schema': 'https://json-schema.org/draft/2020-12/schema',

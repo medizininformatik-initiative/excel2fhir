@@ -30,6 +30,70 @@ flowchart LR
 
 [Converter usage](converter-usage.md) defines the common input and output contract.
 
+## Contact reconstruction and matching
+
+Each `ConverterResult` owns its `ContactConversionState` and `ContactIndex`.
+Contact reconstruction can interleave independent conversions without sharing the
+current facility, department, primary stay or derived-end bookkeeping. IDs are
+allocated from the resources of that conversion result.
+
+The input index records patient identity, facility case, contact level, original
+parent, source row and whether a care-location contact is secondary. It retains
+live input encounters so end times completed by later rows are available to
+matching. Output copies can omit patient references or change `partOf` without
+changing this input hierarchy. An Encounter without `partOf` is not sufficient
+evidence for a facility contact; explicit contact-level coding is preserved when
+FHIR resources are copied or serialized.
+
+The matching API requires the same patient and requested level, includes both
+period boundaries, and treats a missing end as open. It chooses the latest start
+and then the earliest input row. Timestamp candidates are tried in order until a
+match is found. Operation, consultation and examination/treatment contacts are
+excluded from automatic care-location targets. Input case lookup uses patient ID
+and case number together.
+
+`ContactOutputPolicy` selects emitted contact levels and derives `partOf` from
+that index. When all levels are deselected, the facility case is emitted as a
+general Encounter without its KDS contact-level coding or profile claim.
+`ClinicalEncounterAssignment` uses per-resource input context captured by the
+converter, retaining patient identity after patient references are removed.
+It applies the configured clinical timestamp candidates and contact level.
+DocumentReference strategies distinguish supplied contacts, missing contacts,
+unresolved contacts and an explicitly entered output timestamp. The generated
+run timestamp is not used for matching. Reference omissions and conflicts appear
+in `encounterReferenceIssues` in the import report.
+
+These projections are shared by JSON and NDJSON output. The complete contract
+defaults remain blocked until the remaining contract execution is implemented.
+
+## Resource output and medication transformations
+
+`MedicationTransformations` replaces requests first and then applies the selected
+administration/statement actions to one snapshot. Derived IDs use the source
+resource identity, destination type and transformation stage. Input context is
+copied to the derived resource; original resources remain unchanged.
+
+`ResourceOutputPolicy` controls boolean resource selections and Medication/Location
+output modes after derivations. Reference-only descriptions use internal resources
+without emitting them. References to known deselected or replaced internal targets
+are removed. Absolute external references are preserved. Output accounting counts
+resources after projection, consistently for JSON and NDJSON.
+
+The import report includes resource omissions and medication transformations with
+unmapped fields and missing target facts. `DarOverrides` then applies the bundled
+field catalogue to output copies. It preserves coding discriminators, replaces
+measurement values with `dataAbsentReason`, and clears attachment size/hash with
+the bytes. Missing scalar choices use the converter’s dateTime representation;
+repeated parents are never synthesized. Narrative requirements and incompatible
+Condition status/end combinations fail explicitly.
+
+`AdditionalIdentifiers` has one instance per option set. It allocates counts over
+original resources and potential medication derivatives before output selection,
+then appends identifiers after DAR. A resource identity and repetition consume
+one count per rule across formats and patient bundles. Collision checks include
+existing identifiers whenever a generated pair is involved. Remaining execution
+options are tracked in #77.
+
 ## Synthea input
 
 The Python importer projects Synthea R4 bundles into copies of the Excel template.

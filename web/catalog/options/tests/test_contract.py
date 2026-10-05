@@ -51,8 +51,23 @@ class ContractConsistencyTest(unittest.TestCase):
         for node in graph:
             visit(node, [])
 
+    def test_properties_names_are_unique_and_stable_bindings_match(self):
+        names = [o['propertyName'] for o in self.options.values()]
+        names += list(self.contract['propertiesFormat']['darProperties'].values())
+        names += [self.contract['propertiesFormat']['versionProperty']]
+        self.assertEqual(len(names), len(set(names)))
+        for name in names:
+            self.assertRegex(name, r'^[A-Z][A-Z0-9_]*$')
+        for option in self.options.values():
+            binding = option.get('binding', {})
+            if binding.get('kind') == 'java-property' and 'values' not in binding:
+                self.assertEqual(option['propertyName'], binding['name'])
+        catalogue = {'fields': generator.expanded_fields(self.contract)}
+        self.assertEqual(set(self.contract['propertiesFormat']['darProperties']),
+                         {f['id'] for f in catalogue['fields']})
+
     def test_dar_schema_uses_exact_catalogue_choices(self):
-        catalogue = json.loads((ROOT / self.contract['dar']['catalogue']).read_text())
+        catalogue = {'fields': generator.expanded_fields(self.contract)}
         schema = generator.generate()['properties']['dar']['properties']
         self.assertEqual(set(schema), {field['id'] for field in catalogue['fields']})
         for field in catalogue['fields']:

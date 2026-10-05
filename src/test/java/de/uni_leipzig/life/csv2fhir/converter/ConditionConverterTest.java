@@ -85,9 +85,15 @@ public class ConditionConverterTest {
         try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
                 .setNullString("").get().parse(new StringReader(csv.toString()))) {
             ConverterOptions options = new ConverterOptions("");
+            ConverterResult result = new ConverterResult(options);
             ConditionConverter converter = new ConditionConverter(parser.getRecords().get(0), null,
-                    new ConverterResult(options), null, options);
-            var resources = converter.convertInternal();
+                    result, null, options);
+            var resources = converter.convert();
+            var context = result.inputContext(resources.get(0));
+            assertEquals("PID1", context.patientId());
+            assertEquals(1, context.encounterIds().size());
+            assertEquals(1, context.inputRow());
+            assertFalse(context.explicitDocumentTimestamp());
             assertEquals(1, resources.size());
             return (Condition) resources.get(0);
         }

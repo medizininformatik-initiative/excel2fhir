@@ -310,6 +310,7 @@ public class Csv2Fhir {
             OutputFileType... outputFileTypes) throws Exception {
 
         for (ConverterOptions converterOptions : allConverterOptions) {
+            AdditionalIdentifiers identifiers = new AdditionalIdentifiers(converterOptions.configuration());
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
 
@@ -364,7 +365,7 @@ public class Csv2Fhir {
                     Stopwatch stopwatch = Stopwatch.createStarted();
                     String filter = isNullOrEmpty(pid) ? null : pid.toUpperCase();
                     ConverterResult bundlesWithCSVData = fillBundlesWithCSVData(bundle, singlePatientBundle, filter,
-                            converterOptions);
+                            converterOptions, identifiers);
                     ConverterResultStatistics singleBundleStatistics = bundlesWithCSVData.getStatistics();
                     if (bundle != null) {
                         BundlePostProcessor.convert(bundle, converterOptions);
@@ -524,10 +525,14 @@ public class Csv2Fhir {
      * @throws Exception
      */
     private ConverterResult fillBundlesWithCSVData(Bundle bundle, Bundle ndjsonBundle, String filterID,
-            ConverterOptions options) throws Exception {
+            ConverterOptions options, AdditionalIdentifiers identifiers) throws Exception {
         LOG.info("Start parsing CSV files for Patient-ID " + filterID + "...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         ConverterResult result = new ConverterResult(options);
+        ConverterResult outputResult = new ConverterResult(options);
+        ContactOutputPolicy contacts = new ContactOutputPolicy(options.configuration(), result.contacts());
+        ClinicalEncounterAssignment encounterAssignments = new ClinicalEncounterAssignment(result, contacts);
+        List<Map.Entry<TableIdentifier, Resource>> pendingOutput = new ArrayList<>();
         for (TableIdentifier table : TableIdentifier.values()) {
             List<CSVRecord> records = tableIdentifierToParsedRecords.get(table);
             if (records == null) continue;
@@ -537,11 +542,9 @@ public class Csv2Fhir {
                 if (pid == null || !pid.equalsIgnoreCase(filterID)) continue;
                 try {
                     List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
-                    for (Resource resource : resources) {
-                        addEntry(bundle, resource);
-                        addEntry(ndjsonBundle, resource);
-                    }
-                    importReport.success(table, record.getRecordNumber(), resources.size());
+                    for (Resource resource : resources) pendingOutput.add(Map.entry(table, resource));
+                    // Count emitted resources after all output selections have been applied.
+                    importReport.success(table, record.getRecordNumber(), 0);
                 } catch (Exception e) {
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
                     LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
@@ -549,9 +552,81 @@ public class Csv2Fhir {
                 }
             }
         }
+        // Later rows can still complete earlier contacts. Project only after all derivations.
+        List<Resource> potentialResources = pendingOutput.stream().map(Map.Entry::getValue)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        Map<String, TableIdentifier> sourceTables = new java.util.HashMap<>();
+        for (var pending : pendingOutput) sourceTables.put(pending.getValue().fhirType() + "/"
+                + pending.getValue().getIdElement().getIdPart(), pending.getKey());
+        MedicationTransformations transformations = new MedicationTransformations(result);
+        if (identifiers.enabled()) identifiers.reserve(transformations.potentialResources(potentialResources), result, options.loopCounter);
+        List<Resource> transformed = transformations.apply(potentialResources);
+        pendingOutput = transformed.stream().map(resource -> Map.entry(sourceTables.getOrDefault(
+                resource.fhirType() + "/" + resource.getIdElement().getIdPart(), TableIdentifier.Medikation), resource))
+                .collect(java.util.stream.Collectors.toList());
+        if (transformed != potentialResources) potentialResources.addAll(transformed);
+        for (var change : transformations.changes()) {
+            var reported = new java.util.LinkedHashMap<>(change);
+            reported.put("iteration", Integer.toString(options.loopCounter));
+            importReport.medicationTransformations.add(reported);
+        }
+        ResourceOutputPolicy resourceSelection = new ResourceOutputPolicy(options.configuration(), potentialResources, transformations.replaced());
+        DiagnosisOutputPolicy diagnoses = new DiagnosisOutputPolicy(options.configuration(), result.contacts(),
+                pendingOutput.stream().map(Map.Entry::getValue).collect(java.util.stream.Collectors.toList()));
+        for (var issue : diagnoses.issues()) {
+            var reported = new java.util.LinkedHashMap<>(issue);
+            reported.put("iteration", Integer.toString(options.loopCounter));
+            importReport.diagnosisReferenceIssues.add(reported);
+        }
+        DarOverrides darOverrides = new DarOverrides(options.configuration());
+        for (var pending : pendingOutput) {
+            Resource resource = pending.getValue();
+            if (!resourceSelection.emits(resource)) {
+                importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", "omit-resource", "reason", "resource-output-selection",
+                        "iteration", Integer.toString(options.loopCounter)));
+                continue;
+            }
+            Resource output = options.patientOutputPolicy().output(resource);
+            if (output != resource) {
+                importReport.outputSelections.add(Map.of(
+                        "resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", output == null ? "omit-resource" : "omit-patient-reference",
+                        "reason", "PATIENT_MODE=" + options.configuration().stored("resource.Patient.mode").asText(),
+                        "iteration", Integer.toString(options.loopCounter)));
+            }
+            if (output != null) {
+                output = diagnoses.output(output);
+                if (output == null) importReport.outputSelections.add(Map.of(
+                        "resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", "omit-resource", "reason", "CONDITION_ENABLED=false",
+                        "iteration", Integer.toString(options.loopCounter)));
+            }
+            if (output == null) continue;
+            output = contacts.output(output);
+            if (output == null) {
+                importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                        "action", "omit-resource", "reason", "contact-output-selection",
+                        "iteration", Integer.toString(options.loopCounter)));
+                continue;
+            }
+            output = encounterAssignments.output(output);
+            output = resourceSelection.output(output);
+            output = darOverrides.output(output);
+            output = identifiers.output(output, options.loopCounter);
+            addEntry(bundle, output);
+            addEntry(ndjsonBundle, output);
+            outputResult.add(pending.getKey(), output);
+            importReport.tables.get(pending.getKey().name()).returnedResources++;
+        }
         importReport.contactEndDerivations.addAll(result.contactEndDerivations);
+        for (var issue : encounterAssignments.issues()) {
+            var reported = new java.util.LinkedHashMap<>(issue);
+            reported.put("iteration", Integer.toString(options.loopCounter));
+            importReport.encounterReferenceIssues.add(reported);
+        }
         LOG.info("Finished parsing CSV files for Patient-ID " + filterID + " in " + stopwatch.stop());
-        return result;
+        return outputResult;
     }
 
     /**

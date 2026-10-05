@@ -15,7 +15,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Resource;
-import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
@@ -34,7 +33,6 @@ public class EncounterConverterTest {
     public void unicodeDepartmentsProduceCodedServiceTypes() throws Exception {
         String[][] departments = {{"Hämatologie und Onkologie", "0500"}, {"Pädiatrie", "1000"}};
         for (String[] department : departments) {
-            EncounterConverter.resetStateForTesting();
             ConverterResult result = convertRecords(CONTACT_HEADER + ROOT_CONTACT
                     + PRIMARY.replace("Allgemeine Chirurgie", department[0]));
             var coding = getEncounters(result, EncounterLevel2.class).get(0)
@@ -127,11 +125,6 @@ public class EncounterConverterTest {
         assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("OP,OP-Saal 1",",")));
     }
 
-    @Before
-    public void resetEncounterState() {
-        EncounterConverter.resetStateForTesting();
-    }
-
     @Test
     public void representsEmergencySeparatelyFromAmbulatoryClass() throws Exception {
         ConverterResult result = convertRecords(
@@ -220,6 +213,61 @@ public class EncounterConverterTest {
             try { convertRecords(csv); } catch (IllegalArgumentException e) { failed = true; }
             assertEquals(csv, failed, rejected);
         }
+    }
+
+    @Test public void interleavedConversionsKeepTheirOwnPrimaryAndDerivedEnds() throws Exception {
+        var a = createRecords(CONTACT_HEADER + ROOT_CONTACT
+                + PRIMARY.replace("2026-05-03T12:00:00Z", "") + OP
+                + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-03T12:00:00Z")
+                         .replace("2026-05-03T12:00:00Z,stationaer", "2026-05-05T12:00:00Z,stationaer"));
+        var b = createRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY.replace("Allgemeine Chirurgie", "Innere Medizin") + OP);
+        var first = new ConverterResult(new ConverterOptions(""));
+        var second = new ConverterResult(new ConverterOptions(""));
+        for (int i = 0; i < a.size(); i++) {
+            convertInto(first, a.get(i));
+            if (i < b.size()) convertInto(second, b.get(i));
+        }
+        assertEquals(1, getEncounters(first, EncounterLevel1.class).size());
+        assertEquals(1, getEncounters(second, EncounterLevel1.class).size());
+        assertEquals(3, getEncounters(first, EncounterLevel3.class).size());
+        assertEquals(2, getEncounters(second, EncounterLevel3.class).size());
+        assertEquals(2, first.contactEndDerivations.size());
+        assertEquals(1, second.contactEndDerivations.size());
+        assertEquals("2026-05-03T12:00:00Z", getEncounters(first, EncounterLevel3.class).get(1).getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-03T12:00:00Z", getEncounters(second, EncounterLevel3.class).get(1).getPeriod().getEndElement().getValueAsString());
+        assertFalse(getEncounters(first, EncounterLevel2.class).get(0).getServiceType()
+                .equalsDeep(getEncounters(second, EncounterLevel2.class).get(0).getServiceType()));
+    }
+
+    @Test public void indexKeepsInputHierarchyAndLevelWhenOutputReferencesDisappear() throws Exception {
+        var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY + OP);
+        var contacts = result.contacts().entries("PID1");
+        assertEquals(4, contacts.size());
+        var department = contacts.get(1);
+        var ward = contacts.get(2);
+        var operation = contacts.get(3);
+        assertEquals(2, ward.inputRow());
+        assertFalse(ward.secondary());
+        assertEquals(true, operation.secondary());
+        ward.encounter().setPartOf(null);
+        ward.encounter().setSubject(null);
+        department.encounter().setPartOf(null);
+        assertFalse(EncounterConverter.isLevel1Encounter(department.encounter()));
+        assertFalse(EncounterConverter.isLevel1Encounter(department.encounter().copy()));
+        assertFalse(EncounterConverter.isLevel1Encounter(new Encounter()));
+        assertEquals(department, result.contacts().ancestor("PID1", ward.encounter().getId(),
+                de.uni_leipzig.life.csv2fhir.ContactIndex.Level.DEPARTMENT).orElseThrow());
+        assertEquals(true, EncounterConverter.isLevel1Encounter(contacts.get(0).encounter().copy()));
+        var chosen = result.contacts().match("PID1", de.uni_leipzig.life.csv2fhir.ContactIndex.Level.WARD_SERVICE,
+                List.of(new org.hl7.fhir.r4.model.DateTimeType("2026-05-02T10:00:00Z"))).orElseThrow();
+        assertEquals(ward, chosen);
+        assertEquals(contacts.get(0), result.contacts().resolveInput("PID1", "1").orElseThrow());
+        assertEquals(true, result.contacts().resolveInput("PID2", "1").isEmpty());
+    }
+
+    private static void convertInto(ConverterResult result, CSVRecord record) throws Exception {
+        var converter = new EncounterConverter(record, null, result, null, result.getConverterOptions());
+        for (Resource resource : converter.convertInternal()) result.add(Fall, resource);
     }
 
     private static ConverterResult convertRecords(String csv) throws Exception {

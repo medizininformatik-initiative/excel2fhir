@@ -11,6 +11,8 @@ FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /build
 COPY pom.xml ./
 COPY src ./src
+COPY web/catalog/options/contract.json web/catalog/options/contract.json
+COPY web/catalog/dar/generated/catalog.json web/catalog/dar/generated/catalog.json
 COPY FHIR_Testdatengenerator_Vorlage.xlsx FHIR_Testdatengenerator_Interpolar_Demo.xlsx ./
 RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
     mvn -B test package

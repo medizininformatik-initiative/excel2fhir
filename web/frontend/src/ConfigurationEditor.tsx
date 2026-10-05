@@ -1,5 +1,6 @@
+import { exportPropertiesConfiguration } from './configuration-properties'
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Trash2, Download, Upload, Save, RotateCcw } from 'lucide-react'
+import { Plus, Trash2, Download, Upload, RotateCcw, Check } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { Help } from './Help'
 import { IdentifierPatternControl } from './IdentifierPatternControl'
@@ -12,10 +13,12 @@ import {
   identifierResources,
   defaults,
   importConfiguration,
+  restoreBrowserDraft,
   problems,
   optionEnabled,
   unmetDependencies,
   resourceEnabled,
+  resourceNavigationStatus,
   resourceOptions,
   previewIdentifier,
   type Configuration,
@@ -34,17 +37,46 @@ const groups = [
 const resources = groups.flatMap((group) =>
   contract.resources.filter((r) => r.group === group.id)
 )
+const darGroups = resources.map((resource) => ({
+  ...resource,
+  filter: resource.id === 'Observation.laboratory' ? 'Laboratory'
+    : resource.id === 'Observation.vitalSigns' ? 'VitalSigns' : resource.classCode ? resource.id : resource.resourceType,
+  fields: darFields.filter((field) => darResource(field) === (
+    resource.id === 'Observation.laboratory' ? 'Laboratory'
+      : resource.id === 'Observation.vitalSigns' ? 'VitalSigns' : resource.classCode ? resource.id : resource.resourceType
+  ))
+})).filter((group) => group.fields.length > 0)
+const idGroups = [
+  { prefix: 'ids.patient.', key: 'app.config.group.patientIds' },
+  { prefix: 'ids.start.', key: 'app.config.group.counters' },
+  { prefix: 'timeShift.', key: 'app.config.group.timeShift' }
+]
+const counterResources: Record<string, string> = {
+  CONSENT: 'Consent', CONDITION: 'Condition',
+  ENCOUNTER_LEVEL_2: 'Encounter', ENCOUNTER_LEVEL_3: 'Encounter',
+  MEDICATION_REQUEST: 'MedicationRequest',
+  MEDICATION_ADMINISTRATION: 'MedicationAdministration',
+  MEDICATION_STATEMENT: 'MedicationStatement',
+  OBSERVATION_LABORATORY: 'Observation', OBSERVATION_VITAL_SIGNS: 'Observation',
+  PROCEDURE: 'Procedure', DOCUMENT_REFERENCE: 'DocumentReference'
+}
 type Translator = (key: string, params?: Message['params']) => string
 function OptionControl({
   option,
   config,
   update,
-  t
+  t,
+  compact = false,
+  showHelp = true,
+  fhirPath = option.fhirPath
 }: {
   option: Option
   config: Configuration
   update: (id: string, value: Value) => void
   t: Translator
+  compact?: boolean
+  showHelp?: boolean
+  fhirPath?: string
 }) {
   const enabled = optionEnabled(option.id, config.values)
   const value = config.values[option.id]
@@ -61,7 +93,7 @@ function OptionControl({
     })
   return (
     <div
-      className="option-row border-t border-slate-100 py-4 first:border-t-0"
+      className={compact ? 'option-row min-w-0 py-2' : 'option-row border-t border-slate-100 py-4 first:border-t-0'}
       data-option={option.id}
     >
       <div className={`${option.type === 'boolean' ? '' : 'mb-2'} flex flex-wrap items-center gap-x-2 gap-y-1`}>
@@ -78,14 +110,22 @@ function OptionControl({
           )}
           {t(option.labelKey)}
         </label>
-        {option.fhirPath && (
-          <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600">
-            {t('app.config.fhirResource', { resource: option.fhirPath })}
-          </span>
-        )}
-        <Help text={t(option.helpKey)} t={t} />
+        <span className="inline-flex max-w-full items-center gap-2">
+          {fhirPath && (
+            <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600">
+              {t('app.config.fhirResource', { resource: fhirPath })}
+            </span>
+          )}
+          {showHelp && <Help text={t(option.helpKey)} t={t} />}
+        </span>
       </div>
-      {option.type === 'boolean' ? null : option.type === 'enum' || option.type === 'set' ? (
+      {option.type === 'boolean' ? null : option.control === 'select' ? (
+        <select id={option.id} disabled={!enabled} value={String(value)}
+          onChange={(e) => update(option.id, e.target.value)}
+          className="w-full max-w-sm rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm disabled:bg-slate-100">
+          {option.choices?.map((choice) => <option key={String(choice)} value={String(choice)}>{t(option.choiceLabelKeys![String(choice)])}</option>)}
+        </select>
+      ) : option.type === 'enum' || option.type === 'set' ? (
         <div
           role="group"
           aria-label={t(option.labelKey)}
@@ -161,7 +201,7 @@ function OptionControl({
         />
       )}
       {!enabled && (
-        <p className="mt-2 text-xs text-slate-500">{explain(dependencies)}</p>
+        <p className="mt-2 text-xs text-slate-500">{dependencies.length ? explain(dependencies) : t('app.config.endApplicationInactive')}</p>
       )}
     </div>
   )
@@ -201,11 +241,12 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     try {
       const saved = localStorage.getItem(storageKey)
       return {
-        config: saved ? importConfiguration(saved) : defaults(),
-        failed: false
+        config: saved ? restoreBrowserDraft(saved) : defaults(),
+        failed: false,
+        saved: Boolean(saved)
       }
     } catch {
-      return { config: defaults(), failed: true }
+      return { config: defaults(), failed: true, saved: false }
     }
   })
   const [config, setConfig] = useState<Configuration>(initial.config)
@@ -214,6 +255,28 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     initial.failed ? { key: 'app.config.restoreFailed' } : null
   )
   const [dirty, setDirty] = useState(false)
+  const [saved, setSaved] = useState(initial.saved)
+  const [storageFailed, setStorageFailed] = useState(false)
+  useEffect(() => {
+    if (!dirty) return
+    setStorageFailed(false)
+    const persist = () => {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(config))
+        setDirty(false)
+        setSaved(true)
+        setStorageFailed(false)
+      } catch {
+        setStorageFailed(true)
+      }
+    }
+    const timer = window.setTimeout(persist, 400)
+    window.addEventListener('pagehide', persist)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('pagehide', persist)
+    }
+  }, [config, dirty])
   const [darCodes, setDarCodes] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       Object.entries(config.dar).flatMap(([id, rule]) =>
@@ -239,15 +302,6 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     setDirty(true)
     setMessage(null)
   }
-  function save() {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(config))
-      setDirty(false)
-      setMessage({ key: 'app.config.saved' })
-    } catch {
-      setMessage({ key: 'app.config.storageError' })
-    }
-  }
   async function load(file?: File) {
     if (!file) return
     try {
@@ -268,8 +322,8 @@ export function ConfigurationEditor({ language }: { language: Language }) {
     if (importRef.current) importRef.current.value = ''
   }
   const exportHref =
-    'data:application/json;charset=utf-8,' +
-    encodeURIComponent(JSON.stringify(config, null, 2) + '\n')
+    'data:text/plain;charset=utf-8,' +
+    encodeURIComponent(issues.length ? '' : exportPropertiesConfiguration(config, language))
   return (
     <section
       className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -285,18 +339,14 @@ export function ConfigurationEditor({ language }: { language: Language }) {
               {t('app.config.title')}
             </h2>
           </div>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-            {t(dirty ? 'app.config.unsaved' : 'app.config.ready')}
+          <span role="status" className={`rounded-full px-3 py-1 text-xs ${storageFailed ? 'bg-red-50 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
+            {t(storageFailed ? 'app.config.storageError' : dirty ? 'app.config.saving' : saved ? 'app.config.saved' : 'app.config.ready')}
           </span>
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
           {t('app.config.integrationHint')}
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Button onClick={save} disabled={issues.length > 0}>
-            <Save size={15} />
-            {t('app.config.save')}
-          </Button>
           {issues.length > 0 ? (
             <Button variant="outline" disabled>
               <Download size={15} />
@@ -304,7 +354,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
             </Button>
           ) : (
             <Button asChild variant="outline">
-              <a href={exportHref} download="converter-configuration.json">
+              <a href={exportHref} download="converter-configuration.config">
                 <Download size={15} />
                 {t('app.config.export')}
               </a>
@@ -329,7 +379,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
           <input
             ref={importRef}
             type="file"
-            accept="application/json,.json"
+            accept="text/plain,.config,application/json,.json"
             aria-label={t('app.config.import')}
             hidden
             onChange={(e) => void load(e.target.files?.[0])}
@@ -394,25 +444,52 @@ export function ConfigurationEditor({ language }: { language: Language }) {
         aria-labelledby={`tab-${tab}`}
         className="p-6"
       >
+        <header className="mb-6">
+          <h3 className="mb-3 text-lg font-semibold">{t(`section.${tab}`)}</h3>
+          <p className="max-w-3xl text-sm text-slate-600">
+            {t(({ resources: 'app.config.resourcesIntro', identifiers: 'identifier.help', dar: 'app.config.darHint', ids: 'app.config.idsIntro', terminology: 'app.config.terminologyIntro', output: 'app.config.outputIntro' } as Record<string, string>)[tab])}
+          </p>
+        </header>
         {tab === 'resources' && (
-          <div className="grid items-start gap-8 lg:grid-cols-[180px_1fr]">
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] items-start gap-8">
             <nav
               aria-label={t('app.config.anchors')}
-              className="lg:sticky lg:top-4"
+              className="sticky top-4 max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-y-contain"
             >
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 {t('app.config.anchors')}
               </p>
-              <div className="flex flex-wrap gap-2 lg:flex-col">
-                {resources.map((r) => (
-                  <a
-                    key={r.id}
-                    href={`#resource-${r.id}`}
-                    className="rounded px-2 py-1 text-sm text-teal-800 hover:bg-teal-50"
-                  >
-                    {t(r.labelKey)}
-                  </a>
-                ))}
+              <div className="flex flex-col gap-2 pb-16">
+                {resources.map((r) => {
+                  const status = resourceNavigationStatus(r.id, config.values)
+                  const round = `resource.${r.id}.mode` in config.values
+                  const active = status === 'generated' || status === 'referenced'
+                  const modeOption = options.find((option) => option.id === `resource.${r.id}.mode`)
+                  const selectedLabel = modeOption?.choiceLabelKeys?.[String(config.values[modeOption.id])]
+                  const description = t(selectedLabel ?? {
+                    generated: 'app.config.resourceStatus.generated',
+                    referenced: 'app.config.resourceStatus.referenced',
+                    disabled: 'app.config.resourceStatus.disabled',
+                    parentDisabled: 'app.config.resourceStatus.parentDisabled'
+                  }[status])
+                  return (
+                    <a key={r.id} href={`#resource-${r.id}`}
+                      aria-describedby={`resource-status-${r.id}`}
+                      className="group relative flex items-center gap-2 rounded px-2 py-1 text-sm text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700">
+                      <span className="group/status relative h-2.5 w-2.5 shrink-0">
+                        <span aria-hidden="true" className={`flex h-2.5 w-2.5 items-center justify-center border ${round ? 'rounded-full' : 'rounded-sm'} ${status === 'generated' ? 'border-teal-700 bg-teal-700' : status === 'referenced' ? 'border-teal-700' : 'border-slate-400 bg-slate-100'}`}>
+                          {round && status === 'referenced' && <span className="h-1 w-1 rounded-full bg-teal-700" />}
+                          {!round && active && <Check className="h-2 w-2 text-white" strokeWidth={3} />}
+                        </span>
+                        <span role="tooltip" id={`resource-status-${r.id}`}
+                          className="pointer-events-none absolute left-0 top-full z-20 hidden w-36 rounded bg-slate-800 px-3 py-2 text-xs text-white shadow-lg group-hover/status:block group-focus-visible:block">
+                          {description}
+                        </span>
+                      </span>
+                      <span className="min-w-0 break-words">{t(r.labelKey)}</span>
+                    </a>
+                  )
+                })}
               </div>
             </nav>
             <div>
@@ -435,10 +512,15 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                       {t(r.labelKey)}
                       <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600">
                         {t('app.config.fhirResource', { resource: r.resourceType })}
-                        {r.id === 'Observation.vitalSigns' && ` · ${t('app.config.category')}: vital-signs (Vital Signs)`}
+                        {r.classCode && ` · ${t('app.config.encounterClass', { code: r.classCode })}`}
+                        {r.id === 'Observation.vitalSigns' && ` · ${t('app.config.category')}: vital-signs`}
                         {r.id === 'Observation.laboratory' && ` · ${t('app.config.category')}: laboratory`}
                       </span>
                     </h3>
+                    {r.id === 'Encounter' && <p className="mb-4 text-sm text-slate-600">{t('app.config.encounterCommon')}</p>}
+                    {r.classCode && <>
+                      <p className="mb-2 text-sm text-slate-600">{t('app.config.encounterEndSummary')}</p>
+                    </>}
                     {resourceOptions(r.id).map((option) => (
                       <OptionControl
                         key={option.id}
@@ -454,7 +536,38 @@ export function ConfigurationEditor({ language }: { language: Language }) {
             </div>
           </div>
         )}
-        {['ids', 'terminology', 'output'].includes(tab) && (
+        {tab === 'ids' && (
+          <div className="space-y-5">
+            {idGroups.map((group) => (
+              <section key={group.prefix} className="rounded-xl border border-slate-200 p-5" aria-label={t(group.key)}>
+                <div className="mb-3 flex items-center gap-2">
+                  <h3 className="text-base font-semibold text-teal-800">{t(group.key)}</h3>
+                  {group.prefix === 'ids.start.' && <Help text={t('option.ids.start.CONSENT.help')} t={t} />}
+                </div>
+                <div className={`grid gap-x-8 gap-y-2 md:grid-cols-2 ${group.prefix === 'ids.start.' ? 'xl:grid-cols-3' : ''}`}>
+                  {options.filter((o) => o.id.startsWith(group.prefix)).map((option) => (
+                    <div key={option.id} className={option.id === 'timeShift.enabled' || option.id === 'ids.patient.additionalRepetitions' ? 'md:col-span-2' : 'min-w-0'}>
+                      <OptionControl
+                        option={option}
+                        config={config}
+                        update={update}
+                        t={t}
+                        compact
+                        showHelp={group.prefix !== 'ids.start.'}
+                        fhirPath={option.id === 'ids.start.OBSERVATION_LABORATORY'
+                          ? `Observation · ${t('app.config.category')}: laboratory`
+                          : option.id === 'ids.start.OBSERVATION_VITAL_SIGNS'
+                            ? `Observation · ${t('app.config.category')}: vital-signs`
+                            : counterResources[option.id.replace('ids.start.', '')]}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+        {['terminology', 'output'].includes(tab) && (
           <div className="max-w-3xl">
             {tab === 'terminology' && (
               <p className="mb-4 rounded-lg bg-teal-50 p-4 text-sm">
@@ -476,10 +589,6 @@ export function ConfigurationEditor({ language }: { language: Language }) {
         )}
         {tab === 'dar' && (
           <>
-            <h3 className="mb-3 text-lg font-semibold">{t('section.dar')}</h3>
-            <p className="mb-4 text-sm text-slate-600">
-              {t('app.config.darHint')}
-            </p>
             <label className="mb-5 flex max-w-sm flex-col gap-2 text-sm">
               {t('app.config.filter')}
               <select
@@ -488,26 +597,25 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                 className="rounded-lg border border-slate-300 p-2"
               >
                 <option value="all">{t('app.config.allResources')}</option>
-                {[...new Set(darFields.map(darResource))].map((r) => (
-                  <option key={r} value={r}>
-                    {r === 'Laboratory'
-                      ? t('resource.Observation.laboratory.label')
-                      : r === 'VitalSigns'
-                        ? t('resource.Observation.vitalSigns.label')
-                        : t(`resource.${r}.label`)}
+                {darGroups.map((group) => (
+                  <option key={group.id} value={group.filter}>
+                    {t(group.labelKey)}
                   </option>
                 ))}
               </select>
             </label>
-            <div className="space-y-3">
-              {darFields
-                .filter(
-                  (f) => darFilter === 'all' || darResource(f) === darFilter
-                )
-                .map((field) => {
+            <div className="space-y-6">
+              {darGroups.filter((group) => darFilter === 'all' || group.filter === darFilter).map((group) => (
+                <section key={group.id} className="rounded-xl border border-slate-200 p-5" aria-labelledby={`dar-group-${group.id}`}>
+                  <h3 id={`dar-group-${group.id}`} className="mb-3 text-lg font-semibold text-teal-800">
+                    {t(group.labelKey)}
+                  </h3>
+                  {group.classCode && <p className="mb-3 text-xs text-slate-600">{t('app.config.encounterClass', { code: group.classCode })}</p>}
+                  {(group.id === 'Encounter' || group.classCode) && <p className="mb-4 text-sm text-slate-600">{t(group.classCode ? 'app.config.encounterDarScoped' : 'app.config.encounterDarCommon')}</p>}
+                  {group.fields.map((field) => {
                   const current = config.dar[field.id] ?? { mode: 'unchanged' }
                   const enabled = resourceEnabled(
-                    field.resourceType,
+                    darResource(field),
                     config.values
                   )
                   const code =
@@ -532,16 +640,20 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                   return (
                     <div
                       key={field.id}
-                      className="rounded-xl border border-slate-200 p-4"
+                      className="border-t border-slate-100 py-4"
                     >
-                      <div className="mb-3 flex items-center gap-1">
-                        <h3 className="text-sm font-medium">
-                          {t(`dar.field.${field.id}.label`)}
-                        </h3>
-                        <Help
-                          text={t(`dar.help.${field.semanticGroup}`)}
-                          t={t}
-                        />
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <h4 className="text-sm font-medium">
+                          {t(`dar.field.${field.id}.label`).replace(/^[^:]+:\s*/, '')}
+                        </h4>
+                        {field.targets.map((path) => (
+                          <span
+                            key={path}
+                            className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-normal text-slate-600"
+                          >
+                            {t('app.config.fhirResource', { resource: path })}
+                          </span>
+                        ))}
                       </div>
                       <div className="flex flex-wrap gap-4">
                         <label className="flex items-center gap-2 text-sm">
@@ -600,19 +712,14 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                       )}
                     </div>
                   )
-                })}
+                  })}
+                </section>
+              ))}
             </div>
           </>
         )}
         {tab === 'identifiers' && (
           <>
-            <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <p className="text-sm font-medium">{t('section.identifiers')}</p>
-              <Help text={t('identifier.help')} t={t} />
-            </div>
-            <p className="mb-4 text-xs text-slate-500">
-              {t('app.config.hashSecurity')}
-            </p>
             <Button
               variant="outline"
               onClick={() => {
@@ -703,7 +810,7 @@ export function ConfigurationEditor({ language }: { language: Language }) {
                           }
                           className="accent-teal-700"
                         />
-                        {resource === 'Observation'
+                        {resource === 'Encounter' ? t('app.config.encounterAll') : resource === 'Observation'
                           ? t('app.config.observation')
                           : t(`resource.${resource}.label`)}
                       </label>

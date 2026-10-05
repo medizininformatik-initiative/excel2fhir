@@ -40,6 +40,14 @@ public class ConverterOptions {
     private final ResourceMapper options = ResourceMapper.of("Converter_Options.config");
 
     private final List<String> errors = new ArrayList<>();
+    private ContractConfiguration configuration;
+
+    public ContractConfiguration configuration() { return configuration; }
+
+    public PatientOutputPolicy patientOutputPolicy() {
+        return configuration == null ? PatientOutputPolicy.GENERATE_REFERENCE
+                : PatientOutputPolicy.fromValue(configuration.stored("resource.Patient.mode").asText());
+    }
 
     /** Cache for the boolean values */
     private final Map<BooleanOption, Boolean> booleanValues = new HashMap<>();
@@ -86,6 +94,23 @@ public class ConverterOptions {
     }
 
     private void readValues(String text) {
+        if (ContractConfiguration.isContractText(text)) {
+            // A complete contract configuration replaces workflow/workbook defaults.
+            options.clear();
+            try {
+                configuration = ContractConfiguration.parse(text);
+                readLegacyValues("", configuration.javaProperties());
+                errors.addAll(configuration.unsupportedSettings());
+            } catch (IllegalArgumentException e) {
+                errors.add("Invalid configuration: " + e.getMessage());
+            }
+            return;
+        }
+        readLegacyValues(text, Map.of());
+    }
+
+    private void readLegacyValues(String text, Map<String, String> defaults) {
+        options.putAll(defaults);
         Properties values = new Properties() {
             @Override public synchronized Object put(Object key, Object value) {
                 Object previous = super.put(key, value);

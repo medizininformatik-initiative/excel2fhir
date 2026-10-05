@@ -111,6 +111,11 @@ public final class ConverterOptionSet {
     public void snapshot(Path directory) throws IOException {
         Files.createDirectories(directory);
         ConverterOptions options = options();
+        if (ContractConfiguration.isContractText(text)) {
+            // Preserve version, all selections and inactive comments, not just legacy bindings.
+            Files.writeString(directory.resolve("converter-options.config"), text);
+            return;
+        }
         Properties values = new Properties();
         for (var key : ConverterOptions.BooleanOption.values()) values.setProperty(key.name(), Boolean.toString(options.is(key)));
         for (var key : ConverterOptions.IntOption.values()) values.setProperty(key.name(), Integer.toString(options.getValue(key)));

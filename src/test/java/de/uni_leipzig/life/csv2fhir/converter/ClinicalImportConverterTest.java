@@ -9,6 +9,21 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void inputContextDistinguishesExplicitDocumentTimeFromGeneratedRunTime() throws Exception {
+        var options = ConverterOptions.fromText("PID_PREFIX=prefix-\n");
+        var result = new ConverterResult(options);
+        for (boolean explicit : List.of(false, true)) {
+            var values = new HashMap<>(Map.of("Dokumenttext", "Example document"));
+            if (explicit) values.put("Ausgabezeitpunkt", "2026-05-02T00:00:00Z");
+            var resource = new DocumentReferenceConverter(row(values, DocumentReferenceConverter.DocumentReference_Columns.values()),
+                    null, result, null, options).convert().get(0);
+            assertTrue(((DocumentReference)resource).hasDate());
+            var context = result.inputContext(resource);
+            assertEquals("prefix-patient", context.patientId());
+            assertEquals(explicit, context.explicitDocumentTimestamp());
+            assertEquals(1, context.encounterIds().size());
+        }
+    }
     @Test public void annualVersionInputsSerializeTextAbsenceAndOmissionForEveryAnnualResource() throws Exception {
         var options = new ConverterOptions("");
         var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();

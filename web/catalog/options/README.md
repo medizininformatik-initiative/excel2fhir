@@ -48,7 +48,6 @@ reference target becomes ineffective while its selection is retained.
   "values": {
     "resource.Patient.mode": "reference-only",
     "reference.Condition.encounter": "department",
-    "contact.inheritDiagnoses": false,
     "checks.fhirValidation": true,
     "output.formats": ["JSON", "NDJSON"]
   },
@@ -61,8 +60,87 @@ Resource selection controls all output. IDs use the stable potential-resource
 sequence, so deselecting a resource does not renumber the retained resources.
 Reference-only modes can refer to existing external resources. Medication and
 Location can combine an external reference with descriptive identifier/display
-information in the same Reference. Clinical timestamps are shifted together in
+information in the same Reference. Descriptions use the existing resource
+identifier, or its generated ID when no identifier exists, plus the available
+product text or location name. Known references to deselected internal resources
+are removed; absolute external references are retained. Clinical timestamps are shifted together in
 whole days, including birth date.
+
+## Properties export and import
+
+The editor exports `converter-configuration.config` as UTF-8 Properties text.
+Descriptions, choice explanations, defaults and inactivity reasons use the selected
+interface language. Names and values are language independent. The contract's
+`propertyName` on each option is its stable uppercase export name. Existing Java
+property names are reused where value semantics match; level selectors and other
+expanded controls have their own names. The version line is required:
+
+```properties
+CONFIGURATION_VERSION = 1
+
+# Patient output and references
+# generate-reference: generate the Patient and references to it.
+# reference-only: retain references to an existing Patient.
+# neither: omit the Patient and references to it.
+PATIENT_MODE = generate-reference
+
+MEDICATION_ADMINISTRATION_ENABLED = false
+
+# Inactive because MedicationAdministration output is disabled.
+# MEDICATION_ADMINISTRATION_TREATMENT = add-statement
+```
+
+One physical text line corresponds to one row in column A of an options sheet.
+Comments are wrapped into separate lines. Strings use Java Properties escapes for
+backslashes, line breaks, tabs and leading spaces; literal Unicode is retained.
+Booleans use `true`/`false`, integers use decimal notation, enums use the contract's
+technical values and sets use comma-separated values (an empty set has an empty
+right-hand side). Strings are unquoted. All options and all DAR fields are exported,
+including defaults. Missing options use contract defaults.
+
+When a control or its selected choice is unavailable, its assignment is prefixed
+with `# `. Explicit effective `false` and `none` values remain active assignments.
+The web importer reads recognized uppercase assignments in comments as stored
+selections and reevaluates dependencies. Ordinary prose comments are ignored.
+Duplicate assignments, including active/commented duplicates, are rejected;
+edit the existing assignment rather than adding a second one. Unknown assignment
+names, malformed values and unsupported versions also fail import.
+
+A plain Java Properties reader ignores commented assignments. The shared
+configuration adapter must also restore recognized commented selections before
+evaluating dependencies, just as the web importer does. Otherwise an unavailable
+selected contact level could fall back to a different, available default level.
+Missing assignments use defaults; stored unavailable selections become ineffective
+without substituting another choice.
+
+The shared Java reader accepts this format from external files, CSV option files
+and Excel option sheets. It validates stored values and determines effective
+selections from the same contract. Existing directly equivalent Java properties
+are mapped; other effective settings produce explicit preflight errors, including
+unsupported defaults. The complete default configuration is therefore not yet
+executable. Resource output modes, diagnosis reference assignment, medication transformations,
+DAR overrides, additional identifiers, contact output levels and hierarchy, and clinical encounter assignment are
+implemented as output projections after input derivations. Internal patient
+identity, contact history and resource IDs are preserved. Remaining execution
+semantics are tracked in #77. The current web
+Start conversion action still uses the existing converter defaults.
+
+`propertiesFormat.darProperties` maps each DAR field ID to its uppercase name.
+Each value is `unchanged` or an allowed field-specific DAR code. Missing DAR values
+mean `unchanged`; import represents unchanged fields by their absence in the draft.
+DAR assignments for resources not selected for output are commented out. The
+export includes the field descriptions, allowed codes and clinical conditions.
+
+Identifier rules use consecutive blocks starting at `IDENTIFIER_RULE_1_` with
+`ID`, `ENABLED`, `RESOURCES`, `SYSTEM` and `PATTERN` assignments. `ID` preserves the
+rule UUID; numbering preserves rule order. All five fields are required for each
+block. Resources are comma-separated FHIR resource types. Rules that are disabled
+or have no output resource selected retain their settings in commented assignments;
+an explicit `ENABLED = false` remains active. Identifier patterns use the syntax
+below and Properties escaping for literal backslashes and line breaks.
+
+Import validates the entire draft before replacing the editor contents. JSON is
+also accepted for saved drafts; browser persistence uses the configuration object.
 
 ## Contacts and references
 
@@ -102,6 +180,40 @@ contacts remain excluded as ward/service clinical reference targets.
 The department target and facility diagnosis defaults are project conventions;
 generic Encounter targets in profile snapshots do not enforce these levels.
 
+Java output projection applies these contact selections to JSON and NDJSON.
+`encounterReferenceIssues` in the import report identifies omitted automatic
+references, unresolved supplied DocumentReference contacts, omitted contact
+targets and temporal conflicts, including resource identity and source row.
+DocumentReference matching uses explicitly entered `Ausgabezeitpunkt`; its
+automatically generated run timestamp and filesystem timestamps are excluded.
+
+## Diagnosis references
+
+Conditions are standalone resources. Disabling Condition output also disables
+Condition diagnosis references and parent diagnosis inheritance. Stored inactive
+selections remain available and are commented in the Properties export.
+
+`CONTACT_DIAGNOSES_ROLES` selects codes from
+`http://terminology.hl7.org/CodeSystem/diagnosis-role`, recorded in
+`Encounter.diagnosis.use.coding.code`: CC, CM, AD, DD, pre-op, post-op and billing.
+The role belongs to the contact association. All roles are selected by default.
+Selected contact levels determine the targets automatically. An input contact
+already at the target level keeps its reference. Assignment upward follows the
+original parent hierarchy. Assignment downward uses `Condition.recordedDate`
+(documentation time) to select at most one descendant per selected level, within
+the original contact branch and patient case. Matching uses inclusive boundaries,
+the latest contact start and then the earliest input row. Missing documentation
+times and unmatched targets are recorded in `diagnosisReferenceIssues` in the
+import report, with Condition ID, source contact, target level and iteration.
+There is no fallback to another contact branch or level.
+
+Existing references take precedence; a Condition is not added twice to a target.
+Procedure references in the diagnosis list are handled separately. Conditions
+remain standalone resources and are never duplicated by contact assignment.
+
+The Java diagnosis projection is implemented, while execution of the complete
+editor configuration remains blocked by other unsupported contract settings.
+
 ## DAR and transformations
 
 DAR field IDs, clinical code choices, representations and conditional constraints
@@ -124,19 +236,42 @@ MedicationStatement each offer one action: retain, additionally create the other
 type, or replace with the other type. The latter two require the target resource
 to be enabled. These actions run once on a snapshot after request replacement;
 resources created during this pass are not transformed again. Both directions
-can be configured without recursive conversions. New resources receive distinct IDs. Missing medication facts are omitted. Active
-DAR overrides are applied after these derivations.
+can be configured without recursive conversions. Derived IDs are deterministic
+and distinct from the original resources and from the opposite transformation.
+Source patient identity and input contact context remain available to assignment.
+Replacement removes references to the replaced internal source.
+
+Transformations retain medication, subject, contact, notes, reasons and security
+labels where available. An administration's effective time and actual dosage can
+be carried to a statement. A statement's effective time can be carried to an
+administration, but its regimen does not become an individual administered dose.
+Request dosage instructions can be retained as a statement regimen. A request's
+status and authored time do not establish administration or intake status and
+time; planned request dosage is not copied as an administered dose. Shared event
+status codes are retained where their meanings agree. Other status values and
+unmapped fields are omitted and listed in the report. Modifier extensions without
+a semantic mapping prevent transformation.
+
+`medicationTransformations` in the import report records source, target, action,
+unmapped fields and missing target facts. Required facts can remain absent;
+FHIR validation reports these rather than the converter inventing them. Active
+DAR overrides are applied after derivations and contact assignment, including
+to derived medication resources.
 
 Additional identifiers append to existing identifiers. Each rule has a stable
 identity and one counter across eligible resources and repetitions, unaffected
-by output selection. The same logical resource serialized in several formats is
+by output selection. Counts are reserved for original resources followed by
+potential request and event derivatives, including stored actions whose output
+dependencies are inactive. Omitted resources can therefore leave gaps. Shared
+resources use their first occurrence’s patient context. The same logical resource serialized in several formats is
 counted once. Duplicate system/value pairs across distinct logical resources or
 repetitions fail with the rule and conflicting resource identities. Deterministic
 hash identifiers do not guarantee secure pseudonymization. Hashes use the first 32 lowercase hexadecimal characters of SHA-256 with
 collision checking. Patterns combine literal text with `{count}`, `{count:08}`, `{patientId}`,
 `{resourceId}`, `{resourceType}`, `{iteration}` and `{hash}`. The shared counter
 starts at 1; the repetition index starts at 0. Padding sets a minimum width, not
-a maximum. `{{` and `}}` insert literal braces. Unknown tokens, unmatched braces
+a maximum. The Java runtime rejects padding above 1,000,000 characters with
+a rule-specific error. `{{` and `}}` insert literal braces. Unknown tokens, unmatched braces
 and malformed padding are errors; patterns do not evaluate expressions.
 
 ## Checks
@@ -159,3 +294,25 @@ java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindi
 Keep implementation and acceptance in #76/#77 distinct from this definition.
 Parallelism and environment selection are execution settings outside the clinical
 option contract.
+
+## Encounter class configuration
+
+The editor provides shared contact settings plus ambulatory (`AMB`) and inpatient
+(`IMP`) groups. Each group selects output and an end policy: preserve input and
+derivation, leave open, quarter end, year end, start, or start plus one second.
+Policies apply to all three contact levels, either always or only when the
+original input end is missing. Internally derived ends do not change that test.
+The editor saves and exports these settings; converter execution is tracked in
+issue #97. Java preflight reports effective class-specific settings as unsupported.
+
+DAR provides common contact rules and class-specific overrides. An unchanged
+class-specific field inherits the common rule. Additional identifiers can select
+all Encounter classes or either class separately; both use `Encounter` for the
+resource-type pattern token and the shared resource counter.
+
+The configuration contract specifies output-end changes after temporal assignment,
+followed by DAR and status alignment. Matching uses the original/internal periods,
+with inpatient candidates preferred and ambulatory candidates as fallback.
+Calendar policies use the shifted start. Start plus one second uses midnight only
+when the full start date has no time. Runtime implementation and profile checks
+remain part of issue #97.

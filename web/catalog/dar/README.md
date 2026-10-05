@@ -1,8 +1,9 @@
 # DAR field catalogue
 
 `web/catalog/dar/generated/catalog.json` describes the Data Absent Reason
-choices for supported converter fields. It is a generated design contract for the
-configuration editor; conversion does not yet apply these catalogue rules.
+choices for supported converter fields. It is the shared contract for the
+configuration editor and Java output overrides. `DarOverrides` applies selected
+rules after resource derivations and contact assignment, before serialization.
 
 ## Sources and derivation
 
@@ -60,8 +61,12 @@ handling of the corresponding URL, size and hash.
 `applyTo` describes the intended occurrence scope. Existing coding occurrences are
 updated without synthesizing new coding systems or repeated items. Missing scalar
 fields and choices need a known concrete type before an override can create them;
-this is part of the future transformation implementation, not implied by profile
-cardinality alone.
+the runtime uses the converter’s dateTime representation for missing scalar
+choices. Repeated parents are not synthesized. Observation measurement variants
+are selected from the original value type; an absent value has no inferable
+variant and remains unchanged. `as-text` requires nonempty resource narrative;
+the user remains responsible for its clinical content. Incompatible Condition
+status/abatement overrides stop conversion with an import-report error.
 
 ## Adding a field or changing the code selection
 
@@ -92,8 +97,8 @@ and exercises representative primitive DAR and Observation absence representatio
 with the existing bundled-package validator. It also checks incompatible
 Observation value/absence and Condition status/end combinations. These tests do
 not certify every field/code combination; each extension of the catalogue needs
-appropriate new fixtures. The editor and conversion integration remain separate
-implementation work.
+appropriate new fixtures. `DarOverridesTest` additionally checks runtime replacement, source preservation,
+coding discriminators, narrative requirements, choice types and attachment metadata.
 
 ## Verification commands
 
@@ -106,6 +111,6 @@ mvn clean test package
 java --class-path target/excel2fhir.jar web/catalog/dar/tests/ValidateDarCatalog.java
 ```
 
-The JSON is a GUI module asset, not a converter JAR resource. The Java probe uses
+The JSON is bundled as a converter JAR resource and used by the editor. The Java probe uses
 the built converter JAR and its existing validator without adding GUI tests to
 the converter source tree.

@@ -36,6 +36,14 @@ planned work streams; this checklist does not change their status.
 - [ ] Cover Patient, Encounter, Location, Condition, Procedure, laboratory and vital-signs Observation, Medication/Request/Administration/Statement, Immunization, DiagnosticReport, CarePlan, DocumentReference and Consent supported by the converter.
 - [ ] Use the bundled 2026 profile baseline. Treat package/profile versions separately from terminology years; use a profile only when the emitted resource claims it.
 
+## Final UI text and tab layout review — #76 / #77
+
+- [x] Use the Data Absent Reason tab as the layout reference for every configuration tab: start with a heading, followed by a short, permanently visible explanation of what users can configure on that page.
+- [x] Apply this consistently to additional identifiers, IDs, repetitions, time shifting, terminology/versions and all other configuration tabs.
+- [x] Move the page-level explanation beside the additional-identifiers info icon into the visible introductory text. Page introductions must be readable without hovering or opening a tooltip; field-specific help can remain separate.
+- [x] Remove the deterministic-hash/pseudonymization warning from the additional-identifiers page. Explain the identifier controls in the context of generating test data.
+- [x] Review both German and English tab introductions for consistent placement, concise wording and purpose.
+
 ## Contacts and clinical references — #75 / #77
 
 - [ ] Enable all three contact levels by default; use ward/service -> department -> facility as the default hierarchy.
@@ -75,7 +83,6 @@ planned work streams; this checklist does not change their status.
 - [ ] Automatically incorporate stable rule identity, resource type, resource ID and repetition index into hash input using unambiguous encoding.
 - [ ] Check uniqueness of system/value pairs across generated resources/repetitions and report collisions. Account for repeated serialization of the same logical resource into different formats.
 - [x] Finalize identifier patterns: `{count}`, `{count:08}`, `{patientId}`, `{resourceId}`, `{resourceType}`, `{iteration}`, `{hash}`, literal text and escaped braces. Counter starts at 1; hash uses the first 32 lowercase hexadecimal SHA-256 characters with collision checking.
-- [ ] Explain that a deterministic hash identifier is not a secure pseudonymization guarantee.
 
 ## Checks, output and integration
 

@@ -265,4 +265,16 @@ public class CsvCommandLineTest {
         }
     }
 
+    @Test
+    public void versionedConfigurationFailsBeforeOutputWhenDefaultsAreUnsupported() throws Exception {
+        Path file = temp.newFile("web.config").toPath();
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nPATIENT_MODE=reference-only\n");
+        assertNotEquals(0, run("--converter-options", file.toString()));
+        assertFalse(Files.exists(output.resolve("fhir")));
+        try (var files = Files.walk(output)) {
+            var report = files.filter(p -> p.toString().endsWith(".import.json")).findFirst().orElseThrow();
+            assertTrue(Files.readString(report).contains("OUTPUT_FORMATS"));
+        }
+    }
+
 }
