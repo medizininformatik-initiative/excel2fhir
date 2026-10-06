@@ -10,7 +10,9 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 /** Export one existing representation per folder for upload preparation only. */
 public final class DatasetUploadExport {
-    private static final ObjectMapper JSON = new ObjectMapper().enable(com.fasterxml.jackson.databind.DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+    private static final ObjectMapper JSON = com.fasterxml.jackson.databind.json.JsonMapper.builder()
+        .enable(com.fasterxml.jackson.databind.DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+        .disable(com.fasterxml.jackson.databind.cfg.JsonNodeFeature.STRIP_TRAILING_BIGDECIMAL_ZEROES).build();
 
     private static void json(InputStream input, BufferedWriter output) throws Exception {
         try (var parser = JSON.getFactory().createParser(input).disable(JsonParser.Feature.AUTO_CLOSE_SOURCE)) {
@@ -30,7 +32,7 @@ public final class DatasetUploadExport {
                 try (var input = Files.newInputStream(path)) {
                     if (name.endsWith(".xml")) {
                         var context = FhirContext.forR4Cached();
-                        var resource = context.newXmlParser().parseResource(input);
+                        var resource = context.newXmlParser().setParserErrorHandler(new ca.uhn.fhir.parser.StrictErrorHandler()).parseResource(input);
                         output.write(context.newJsonParser().encodeResourceToString(resource));
                         output.newLine();
                     } else if (name.endsWith(".json.gz")) {

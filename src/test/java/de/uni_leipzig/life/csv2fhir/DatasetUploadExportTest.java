@@ -17,12 +17,12 @@ public class DatasetUploadExportTest {
         Files.writeString(root.resolve("one.json"), PATIENT);
         Files.writeString(root.resolve("all.ndjson"), PATIENT + "\n" + PATIENT);
         Path nested = Files.createDirectory(root.resolve("nested"));
-        Files.writeString(nested.resolve("observation.ndjson"), "{\"resourceType\":\"Observation\",\"id\":\"two\",\"valueQuantity\":{\"value\":0.1234567890123456789}}\n");
+        Files.writeString(nested.resolve("observation.ndjson"), "{\"resourceType\":\"Observation\",\"id\":\"two\",\"valueQuantity\":{\"value\":0.123456789012345678900}}\n");
         Path output = temporary.newFile().toPath();
         DatasetUploadExport.export(root, output);
         var lines = Files.readAllLines(output);
         assertEquals(2, lines.size());
-        assertTrue(lines.stream().anyMatch(line -> line.contains("0.1234567890123456789")));
+        assertTrue(lines.stream().anyMatch(line -> line.contains("0.123456789012345678900")));
     }
 
     @Test public void readsXmlAndCompressedFormats() throws Exception {
