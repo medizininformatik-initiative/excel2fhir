@@ -17,6 +17,13 @@ public class WorkflowOptions {
         for (var key : ConverterOptions.IntOption.values()) values.put(key.name(), Integer.toString(options.getValue(key)));
         for (var key : ConverterOptions.StringOption.values()) values.put(key.name(), options.getValue(key));
         if (options.configuration() != null) {
+            for (String scope : List.of("ambulatory", "inpatient")) {
+                String prefix = "resource.Encounter." + scope;
+                values.put("ENCOUNTER_" + scope.toUpperCase(Locale.ROOT) + "_END_POLICY",
+                        options.configuration().effective(prefix + ".endPolicy").map(value -> value.asText()).orElse("preserve"));
+                values.put("ENCOUNTER_" + scope.toUpperCase(Locale.ROOT) + "_END_APPLICATION",
+                        options.configuration().effective(prefix + ".endApplication").map(value -> value.asText()).orElse("always"));
+            }
             values.put("REFERENCE_CONDITION_ENCOUNTER", options.configuration()
                     .effective("reference.Condition.encounter").map(value -> value.asText()).orElse("none"));
         }
