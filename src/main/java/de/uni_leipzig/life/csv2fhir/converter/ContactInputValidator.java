@@ -54,8 +54,6 @@ public final class ContactInputValidator {
         List<Issue> issues = new ArrayList<>();
         Date start = date(input, "Start", true, issues);
         Date end = date(input, "Ende", false, issues);
-        if (start != null && end != null && end.before(start))
-            issue(issues, input, "Start/Ende", "Encounter end precedes its start");
         String kind = input.get("Kontaktart");
         String department = input.get("Fachabteilung");
         boolean places = input.get("Station") != null || input.get("Zimmer") != null || input.get("Bett") != null;

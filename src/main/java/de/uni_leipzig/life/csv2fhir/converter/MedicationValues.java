@@ -56,14 +56,6 @@ public final class MedicationValues {
             try { ClinicalValues.date(get.apply(key)); }
             catch (Exception e) { errors.add(key + ": invalid date or Data Absent Reason"); }
         }
-        try {
-            var start = ClinicalValues.date(get.apply("Beginn"));
-            var end = ClinicalValues.date(get.apply("Ende"));
-            if (start != null && end != null && start.hasValue() && end.hasValue()
-                    && start.getPrecision() == end.getPrecision() && start.getValue().after(end.getValue())) {
-                errors.add("End precedes start");
-            }
-        } catch (Exception e) { /* Individual date errors are reported above. */ }
         checkCode(get, "Präparatcode", "Präparatcodesystem", PRODUCT_SYSTEMS, errors);
         checkCode(get, "Wirkstoffcode", "Wirkstoffcodesystem", INGREDIENT_SYSTEMS, errors);
         String ingredients = get.apply("Wirkstoffcode");

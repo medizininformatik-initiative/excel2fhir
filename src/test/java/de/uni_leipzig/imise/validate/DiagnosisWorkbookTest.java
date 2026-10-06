@@ -13,13 +13,34 @@ import org.junit.Test;
 
 public class DiagnosisWorkbookTest {
     @Test
+    public void reversedDiagnosisDatesPassInputConsistencyChecks() throws Exception {
+        var file = java.nio.file.Files.createTempFile("reversed-diagnosis-", ".xlsx");
+        try {
+            try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                    var book = new XSSFWorkbook(input)) {
+                var sheet = book.getSheet("Diagnose");
+                for (var cell : sheet.getRow(0)) {
+                    String name = cell.getStringCellValue();
+                    if (name.equals("Beginn") || name.equals("Ende"))
+                        sheet.getRow(1).getCell(cell.getColumnIndex(), org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                                .setCellValue(name.equals("Beginn") ? "2026-05-05" : "2026-05-01");
+                }
+                try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+            }
+            var result = new ExcelTemplateValidator().validate(file.toFile(),
+                    de.uni_leipzig.life.csv2fhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"));
+            assertFalse(result.getIssues().toString(), result.hasErrors());
+        } finally { java.nio.file.Files.deleteIfExists(file); }
+    }
+
+    @Test
     public void contactPreflightCollectsIndependentRowsAndOtherSheets() throws Exception {
         java.nio.file.Path file = java.nio.file.Files.createTempFile("contact-input-errors-", ".xlsx");
         try {
             try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
                     var book = new XSSFWorkbook(input)) {
                 var fall = book.getSheet("Fall");
-                fall.getRow(1).getCell(2).setCellValue("2026-01-03");
+                fall.getRow(1).getCell(2).setCellValue("unlesbar");
                 fall.getRow(1).getCell(3).setCellValue("2026-01-01");
                 fall.getRow(4).getCell(2).setCellValue("unlesbar");
                 // Another sheet must still be checked, not hidden by Fall errors.

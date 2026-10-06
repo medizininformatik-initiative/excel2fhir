@@ -12,7 +12,7 @@ ward. Secondary contacts can overlap their primary stay and each other.
 
 | Field or relationship | Rule |
 | --- | --- |
-| Start and end | Start must be readable. A supplied end must be readable and at or after start. |
+| Start and end | Start must be readable. A supplied end must be readable. End-before-start values are preserved for FHIR validation. |
 | Parent period | A child starts within the parent's period and ends by its known end. |
 | Primary stays | Enter them in chronological order with distinct, non-overlapping periods. |
 | Secondary contact | Place it after its primary care-location stay and before the next primary stay. |

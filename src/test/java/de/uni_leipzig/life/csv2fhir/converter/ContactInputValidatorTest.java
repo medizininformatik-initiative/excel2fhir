@@ -18,9 +18,13 @@ public class ContactInputValidatorTest {
         issues.addAll(check.accept(row(3,"p","1","2026-01-02","","","OP","Operation")));
         issues.addAll(check.accept(row(4,"p","1","2026-01-03","2026-01-02","","","")));
         issues.addAll(check.accept(row(5,"q","1","2026-01-02","2026-01-01","","","")));
-        assertEquals(5, issues.size());
+        assertEquals(3, issues.size());
         assertTrue(issues.stream().noneMatch(i -> i.row()==3));
         assertTrue(issues.get(0).message().contains("Dependent encounter assignments"));
+    }
+    @Test public void reversedPeriodIsAcceptedForFhirValidation() {
+        var check = new ContactInputValidator();
+        assertTrue(check.accept(row(2,"p","1","2026-01-03","2026-01-01","","","")).isEmpty());
     }
     @Test public void missingOrInvalidStartIsReportedBeforeComparingStays() {
         for (String start : List.of("", "not-a-date")) {

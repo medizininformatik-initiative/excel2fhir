@@ -29,6 +29,17 @@ public class EncounterConverterTest {
     private static final String PRIMARY = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,Normalstationär\n";
     private static final String OP = "PID1,1,2026-05-02T09:00:00Z,,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,Operation\n";
 
+    @Test public void reversedPeriodIsPreservedInOutput() throws Exception {
+        var result = convertRecords(CONTACT_HEADER
+                + "PID1,1,2026-05-05T12:00:00Z,2026-05-01T08:00:00Z,stationaer,,,,,,\n");
+        var contact = getEncounters(result, EncounterLevel1.class).get(0);
+        assertEquals("2026-05-05T12:00:00Z", contact.getPeriod().getStartElement().getValueAsString());
+        assertEquals("2026-05-01T08:00:00Z", contact.getPeriod().getEndElement().getValueAsString());
+        String json = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser().encodeResourceToString(contact);
+        org.junit.Assert.assertTrue(json.contains("2026-05-05T12:00:00Z"));
+        org.junit.Assert.assertTrue(json.contains("2026-05-01T08:00:00Z"));
+    }
+
     @Test
     public void unicodeDepartmentsProduceCodedServiceTypes() throws Exception {
         String[][] departments = {{"Hämatologie und Onkologie", "0500"}, {"Pädiatrie", "1000"}};

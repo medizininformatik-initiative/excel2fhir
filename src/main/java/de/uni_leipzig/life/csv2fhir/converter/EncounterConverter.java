@@ -191,7 +191,6 @@ public class EncounterConverter extends Converter {
         if (kind != null && !hasPlaces) throw new IllegalArgumentException("Kontaktart requires at least Station, Zimmer or Bett");
         Period p = new Period().setStartElement(ClinicalValues.date(value(Start))).setEndElement(ClinicalValues.date(value(Ende)));
         if (!p.hasStart() || !p.getStartElement().hasValue()) throw new IllegalArgumentException("Encounter start is required");
-        if (p.hasEnd() && p.getEnd().before(p.getStart())) throw new IllegalArgumentException("Encounter end precedes its start");
         String rootId = getEncounterId();
         boolean newRoot = state.previousEncounterLevel1 == null || !state.previousEncounterLevel1.getSubject().getReference().equals(getPatientReference().getReference())
                 || (!isNullOrEmpty(rootId) && !rootId.equals(state.previousEncounterLevel1.getId()));

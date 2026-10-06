@@ -15,7 +15,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.Date;
 
@@ -186,25 +185,23 @@ public class ExcelTemplateValidator {
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
         for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan")) {
-            validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"), List.of());
+            validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"));
         }
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
-                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"), List.of(new DateRangeColumns("Beginn", "Ende")));
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
-                List.of("Durchführungsbeginn"), List.of());
+                List.of("Durchführungsbeginn"));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Laborbefund",
-                List.of("Zeitstempel (Abnahme)"), List.of());
+                List.of("Zeitstempel (Abnahme)"));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Klinische Dokumentation",
-                List.of("Zeitstempel"), List.of());
-        validateReferenceTable(workbook, result, patientIds, encounterIds, "DocumentReference", List.of(), List.of());
+                List.of("Zeitstempel"));
+        validateReferenceTable(workbook, result, patientIds, encounterIds, "DocumentReference", List.of());
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Medikation",
-                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"),
-                List.of(new DateRangeColumns("Beginn", "Ende")));
+                List.of("Dokumentationszeitpunkt", "Beginn", "Ende"));
     }
 
     private void validateReferenceTable(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
-            Set<String> encounterIds, String sheetName, List<String> dateTimeColumns,
-            List<DateRangeColumns> dateRangeColumns) {
+            Set<String> encounterIds, String sheetName, List<String> dateTimeColumns) {
         XSSFSheet sheet = workbook.getSheet(sheetName);
         if (sheet == null) {
             return;
@@ -267,15 +264,8 @@ public class ExcelTemplateValidator {
                     add(result, ERROR, sheetName, rowIndex + 1, idColumn, "Duplicate entry ID for this patient");
                 }
             }
-            Map<String, DateTimeType> parsedDateTimes = new HashMap<>();
             for (String columnName : dateTimeColumns) {
-                parsedDateTimes.put(columnName, validateDateTime(sheet, row, columns, columnName, result, false));
-            }
-            for (DateRangeColumns rangeColumns : dateRangeColumns) {
-                validateDateRange(result, sheetName, rowIndex + 1,
-                        rangeColumns.startColumn + "/" + rangeColumns.endColumn,
-                        parsedDateTimes.get(rangeColumns.startColumn), parsedDateTimes.get(rangeColumns.endColumn),
-                        null);
+                validateDateTime(sheet, row, columns, columnName, result, false);
             }
         }
     }
@@ -383,18 +373,6 @@ public class ExcelTemplateValidator {
         if (isBlank(get(row, columns, columnName))) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
                     columnName + " is required when input consistency checks are enabled");
-        }
-    }
-
-    private void validateDateRange(TemplateValidationResult result, String sheetName, int rowNumber, String columnName,
-            DateTimeType start, DateTimeType end, Severity equalSeverity) {
-        if (start == null || end == null) {
-            return;
-        }
-        if (end.getValue().before(start.getValue())) {
-            add(result, ERROR, sheetName, rowNumber, columnName, "End must be after start");
-        } else if (equalSeverity != null && end.getValue().equals(start.getValue())) {
-            add(result, equalSeverity, sheetName, rowNumber, columnName, "End should be after start");
         }
     }
 
@@ -537,14 +515,4 @@ public class ExcelTemplateValidator {
         return headers;
     }
 
-    private static class DateRangeColumns {
-
-        private final String startColumn;
-        private final String endColumn;
-
-        private DateRangeColumns(String startColumn, String endColumn) {
-            this.startColumn = Objects.requireNonNull(startColumn);
-            this.endColumn = Objects.requireNonNull(endColumn);
-        }
-    }
 }

@@ -61,10 +61,23 @@ public class ImportReportTest {
         Files.delete(input.resolve("case_Person.csv"));
         assertTrue(run().hasImportProblems());
     }
+    @Test public void reversedContactPeriodIsWrittenWithoutImportError() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1")));
+        table(TableIdentifier.Fall, List.of(Map.of("Patient-ID", "p1", "Fall-Nr", "1",
+                "Start", "2026-01-02", "Ende", "2026-01-01", "Einrichtungskontaktklasse", "stationaer")));
+        assertFalse(run().getImportReport().hasErrors());
+        var bundle = JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
+        var contact = bundle.getAsJsonArray("entry").asList().stream()
+                .map(e -> e.getAsJsonObject().getAsJsonObject("resource"))
+                .filter(r -> r.get("resourceType").getAsString().equals("Encounter")).findFirst().orElseThrow();
+        assertEquals("2026-01-02", contact.getAsJsonObject("period").get("start").getAsString());
+        assertEquals("2026-01-01", contact.getAsJsonObject("period").get("end").getAsString());
+    }
+
     @Test public void contactErrorsAcrossPatientsAreReportedBeforeAnyConversion() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1"), patient("p2")));
         table(TableIdentifier.Fall, List.of(
-                Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "2026-01-02", "Ende", "2026-01-01", "Einrichtungskontaktklasse", "stationaer"),
+                Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "unreadable", "Ende", "2026-01-01", "Einrichtungskontaktklasse", "stationaer"),
                 Map.of("Patient-ID", "p2", "Fall-Nr", "1", "Start", "2026-01-01", "Ende", "2026-01-03", "Einrichtungskontaktklasse", "stationaer"),
                 Map.of("Patient-ID", "p2", "Fall-Nr", "1", "Start", "2026-01-02", "Station", "OP", "Kontaktart", "Operation")));
         var report = run().getImportReport();

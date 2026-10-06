@@ -9,6 +9,19 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void medicationPeriodMayEndBeforeItStarts() throws Exception {
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatbezeichnung", "Test",
+                "Wirkstoffcode", "Unbekannt", "Wirkstoffcodesystem", "UNII",
+                "Beginn", "2026-05-05", "Ende", "2026-05-01"));
+        assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+        var options = new ConverterOptions("");
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        var period = ((MedicationAdministration)resources.get(1)).getEffectivePeriod();
+        assertEquals("2026-05-05", period.getStartElement().getValueAsString());
+        assertEquals("2026-05-01", period.getEndElement().getValueAsString());
+    }
+
     @Test public void inputContextDistinguishesExplicitDocumentTimeFromGeneratedRunTime() throws Exception {
         var options = ConverterOptions.fromText("PID_PREFIX=prefix-\n");
         var result = new ConverterResult(options);
@@ -318,7 +331,7 @@ public class ClinicalImportConverterTest {
         assertFalse(MedicationValues.errors(values::get).isEmpty());
         values.put("Status", "completed");
         values.put("Ende", "2025-12-31");
-        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
         values.remove("Ende"); values.put("Beginn", "!dar:unknown");
         assertTrue(MedicationValues.errors(values::get).isEmpty());
         ConverterOptions options = new ConverterOptions("");
