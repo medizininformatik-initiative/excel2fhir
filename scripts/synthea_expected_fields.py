@@ -83,7 +83,7 @@ def expected_fields(source, report):
     for row in rows['Medikation']:
         codes = []
         if row[4]: codes.append(coding(row[4], row[5]))
-        if row[6]: codes.append(coding(row[6], 'ATC', row[7]))
+        if row[6] or row[7]: codes.append(coding(row[6], 'ATC', row[7]))
         r = add('Medication', product_id(row), code={'coding': codes})
         if row[8]: r['form'] = {'text': row[8]}
         r['ingredient'] = [{'itemCodeableConcept': {'coding': [coding(code.strip(), row[10])]}} for code in row[9].split(';')]

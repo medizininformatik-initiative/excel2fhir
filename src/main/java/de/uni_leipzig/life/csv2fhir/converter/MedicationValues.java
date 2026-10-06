@@ -64,12 +64,10 @@ public final class MedicationValues {
             }
         }
         String atc = get.apply("ATC-Code"), version = get.apply("ATC-Version");
-        if (atc == null && version != null) errors.add("ATC-Version requires ATC-Code");
         try { DiagnosisValues.absentReason(atc); }
         catch (RuntimeException e) { errors.add("ATC-Code: invalid Data Absent Reason"); }
         try { DiagnosisValues.absentReason(version); }
         catch (RuntimeException e) { errors.add("ATC-Version: invalid Data Absent Reason"); }
-        if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {
             String number = get.apply(key);
             if (number == null) continue;

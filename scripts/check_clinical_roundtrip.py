@@ -114,7 +114,7 @@ def check_clinical(source, target, report):
     def product_row(row):
         codings = []
         if row[4]: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row[5]), 'code': row[4]}))
-        if row[6]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
+        if row[6] or row[7]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
         return row[3], tuple(codings), row[8]
     expected_products = {product_id(row): product_row(row) for row in rows['Medikation']} if selected({'resourceType': 'Medication'}, options) else {}
     actual_products = {r['id']: (r['code'].get('text', ''),

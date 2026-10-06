@@ -20,6 +20,7 @@ ISO 3166-2 codes.
 - `Präparatbezeichnung`, `Präparatcode` and `Präparatcodesystem` identify the product.
 - `ATC-Code` provides the classification. `ATC-Version` accepts edition text, a
   readable DAR selection or an empty cell for omission; see [version handling](terminology-versions.md).
+  A version without an ATC code is retained in a coding with system and version.
 - `Wirkstoffcode` and `Wirkstoffcodesystem` identify ingredients. Separate multiple
   ingredients with semicolons; all use the selected system. Supported systems are
   ASK, UNII, SNOMED CT and RxNorm. Each ingredient becomes a separate FHIR entry.
@@ -41,7 +42,9 @@ For requests and statements, a complete dose, unit and integer daily frequency
 produce structured dosage. Free text or partial instructions preserve all
 provided facts in `Dosage.text`. Administrations keep dose structured and daily
 frequency as text; a missing dose unit receives DAR `unknown`. Text-only
-administration dosage is emitted as supplied. Profile requirements, code validity
+administration dosage is emitted as supplied. A dose unit without a dose value is
+retained as a structured quantity with the value omitted for all medication types.
+Profile requirements, code validity
 and clinical plausibility are left to optional FHIR validation.
 
 Medication IDs include product details, ATC version, form and ingredient system;

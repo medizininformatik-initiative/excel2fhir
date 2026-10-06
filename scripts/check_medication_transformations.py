@@ -43,7 +43,7 @@ def quantity(value, unit):
     labels, synonyms = ucum_tables()
     code = unit if unit in labels else synonyms.get(unit, unit)
     result = {'system': 'http://unitsofmeasure.org'}
-    primitive(result, 'value', value if str(value).startswith('!dar:') else float(Decimal(str(value))))
+    if value: primitive(result, 'value', value if str(value).startswith('!dar:') else float(Decimal(str(value))))
     primitive(result, 'code', code or '!dar:unknown')
     primitive(result, 'unit', labels.get(code) or '!dar:unknown')
     return result
@@ -75,16 +75,17 @@ def baseline_medications(rows, options, pid):
             if suffix == 'MS': primitive(resource, 'dateAsserted', row[13])
         dose = {}
         if suffix == 'MA':
-            if row[16]: dose['dose'] = quantity(row[16], row[17])
+            if row[16] or row[17]: dose['dose'] = quantity(row[16], row[17])
             if row[19] or row[18] or (row[16] and not row[17]): dose['text'] = dose_text(row)
             if dose: resource['dosage'] = dose
         else:
             frequency = Decimal(row[18]) if row[18] else None
-            integral = frequency is not None and frequency == int(frequency) and frequency <= 2147483647
+            integral = frequency is not None and frequency == int(frequency) and -2147483648 <= frequency <= 2147483647
             if not row[19] and row[16] and row[17] and integral:
                 dose = {'doseAndRate': [{'doseQuantity': quantity(row[16], row[17])}],
                         'timing': {'repeat': {'frequency': int(frequency), 'period': 1, 'periodUnit': 'd'}}}
             elif dose_text(row): dose = {'text': dose_text(row)}
+            if not row[16] and row[17]: dose['doseAndRate'] = [{'doseQuantity': quantity(row[16], row[17])}]
             if dose: resource['dosageInstruction' if suffix == 'MR' else 'dosage'] = [dose]
         result.append(resource)
     return result

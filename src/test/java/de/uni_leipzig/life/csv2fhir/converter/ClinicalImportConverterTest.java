@@ -9,6 +9,40 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void unitWithoutDoseAndAtcVersionWithoutCodeArePreserved() throws Exception {
+        for (String type : List.of("Verordnung", "Verabreichung", "Medikationsaussage")) {
+            for (String version : List.of("2026", "!dar:unknown")) {
+                var values = new HashMap<>(Map.of("Medikationstyp", type, "ATC-Version", version,
+                        "Dosiereinheit", "mg", "Dosierungstext", "Supplied text"));
+                assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+                var options = new ConverterOptions("");
+                var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                        null, new ConverterResult(options), null, options).convertInternal();
+                var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();
+                var medication = (Medication)parser.parseResource(parser.encodeResourceToString(resources.get(0)));
+                var coding = medication.getCode().getCodingFirstRep();
+                assertEquals("http://fhir.de/CodeSystem/bfarm/atc", coding.getSystem());
+                assertFalse(coding.hasCodeElement());
+                if (version.equals("2026")) assertEquals("2026", coding.getVersion());
+                else assertEquals("unknown", coding.getVersionElement().getExtensionFirstRep().getValue().primitiveValue());
+                var event = parser.parseResource(parser.encodeResourceToString(resources.get(1)));
+                Quantity dose;
+                if (event instanceof MedicationAdministration) {
+                    dose = ((MedicationAdministration)event).getDosage().getDose();
+                    assertEquals("Supplied text", ((MedicationAdministration)event).getDosage().getText());
+                } else {
+                    var dosage = event instanceof MedicationRequest ? ((MedicationRequest)event).getDosageInstructionFirstRep()
+                            : ((MedicationStatement)event).getDosageFirstRep();
+                    dose = dosage.getDoseAndRateFirstRep().getDoseQuantity();
+                    assertEquals("Supplied text", dosage.getText());
+                }
+                assertFalse(dose.hasValueElement());
+                assertEquals("mg", dose.getCode());
+                assertEquals("http://unitsofmeasure.org", dose.getSystem());
+            }
+        }
+    }
+
     @Test public void duplicateDiagnosisSystemsArePreserved() throws Exception {
         var options = new ConverterOptions("");
         var condition = (Condition)new ConditionConverter(row(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
