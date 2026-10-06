@@ -65,8 +65,10 @@ the runtime uses the converter’s dateTime representation for missing scalar
 choices. Repeated parents are not synthesized. Observation measurement variants
 are selected from the original value type; an absent value has no inferable
 variant and remains unchanged. `as-text` requires nonempty resource narrative;
-the user remains responsible for its clinical content. Incompatible Condition
-status/abatement overrides stop conversion with an import-report error.
+the user remains responsible for its clinical content. Condition DAR overrides are
+applied even when the resulting status/abatement combination violates `con-4` or
+`con-5`. Roundtrip comparisons verify the requested replacement; enable FHIR
+validation to check the generated resources against these constraints.
 
 ## Adding a field or changing the code selection
 

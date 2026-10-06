@@ -27,12 +27,6 @@ def checked_original_dar(source, target, report):
         assert resource['id'] in baseline, 'No independent DAR expectation: ' + resource['id']
         original = baseline[resource['id']]
         output_period = deepcopy(resource.get('period'))
-        if resource['resourceType'] == 'Condition':
-            clinical = {c.get('code') for c in resource.get('clinicalStatus', {}).get('coding', []) if c.get('system') == 'http://terminology.hl7.org/CodeSystem/condition-clinical'}
-            abated = any(k.lstrip('_').startswith('abatement') and bool(v) for k, v in resource.items())
-            assert not abated or clinical.intersection({'inactive', 'resolved', 'remission'}), 'Condition DAR violates con-4'
-            entered = any(c.get('code') == 'entered-in-error' and c.get('system') == 'http://terminology.hl7.org/CodeSystem/condition-ver-status' for c in resource.get('verificationStatus', {}).get('coding', []))
-            assert not entered or not resource.get('clinicalStatus'), 'Condition DAR violates con-5'
         for field in fields:
             if field['resourceType'] != resource['resourceType']: continue
             identifier = field['id']

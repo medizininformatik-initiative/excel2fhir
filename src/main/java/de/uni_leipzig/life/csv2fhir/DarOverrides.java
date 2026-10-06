@@ -68,16 +68,6 @@ public final class DarOverrides {
                 }
             }
         }
-        if (output instanceof Condition && overrides.keySet().stream().anyMatch(id -> id.startsWith("Condition."))) {
-            Condition c = (Condition)output;
-            boolean enteredInError = c.getVerificationStatus().getCoding().stream().anyMatch(v ->
-                    "http://terminology.hl7.org/CodeSystem/condition-ver-status".equals(v.getSystem()) && "entered-in-error".equals(v.getCode()));
-            boolean ended = c.getClinicalStatus().getCoding().stream().anyMatch(v ->
-                    "http://terminology.hl7.org/CodeSystem/condition-clinical".equals(v.getSystem())
-                    && java.util.Set.of("inactive", "remission", "resolved").contains(v.getCode()));
-            if ((c.hasAbatement() && !ended) || (enteredInError && c.hasClinicalStatus()))
-                throw new IllegalArgumentException("DAR Condition override conflicts with clinical status, abatement or entered-in-error: " + source.getId());
-        }
         return output;
     }
 

@@ -138,11 +138,23 @@ class DarChecks(unittest.TestCase):
         restore_path({}, target, ['code', 'coding', 'version'], field, 'unknown')
         self.assertEqual({}, target)
 
-    def test_condition_guards_are_preserved(self):
-        target = {'entry': [{'resource': {'resourceType': 'Condition', 'id': 'c', 'clinicalStatus': absent(), 'abatementDateTime': '2026-01-01'}}]}
-        report = {'converterOptions': {'DAR_CONDITION_CLINICAL_STATUS': 'unknown'}}
-        with patch('check_dar.expected_fields', return_value={'c': {}}):
-            with self.assertRaisesRegex(AssertionError, 'con-4'): checked_original_dar({}, target, report)
+    def test_condition_dar_checks_requested_output_independently_of_fhir_validity(self):
+        clinical = {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/condition-clinical', 'code': 'active'}]}
+        cases = [
+            ({'clinicalStatus': clinical, 'abatementDateTime': '2026-01-01'},
+             {'clinicalStatus': absent(), 'abatementDateTime': '2026-01-01'}, 'DAR_CONDITION_CLINICAL_STATUS'),
+            ({'clinicalStatus': clinical}, {'clinicalStatus': clinical, '_abatementDateTime': absent()}, 'DAR_CONDITION_ABATEMENT_X'),
+            ({'verificationStatus': {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/condition-ver-status', 'code': 'entered-in-error'}]}},
+             {'clinicalStatus': absent(), 'verificationStatus': {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/condition-ver-status', 'code': 'entered-in-error'}]}}, 'DAR_CONDITION_CLINICAL_STATUS'),
+        ]
+        for original, actual, option in cases:
+            with self.subTest(option=option, original=original):
+                before = {'resourceType': 'Condition', 'id': 'c', **original}
+                target = {'entry': [{'resource': {'resourceType': 'Condition', 'id': 'c', **actual}}]}
+                report = {'converterOptions': {option: 'unknown'}}
+                with patch('check_dar.expected_fields', return_value={'c': before}):
+                    result = checked_original_dar({}, target, report)
+                    self.assertEqual(before, result['entry'][0]['resource'])
 
     def test_valid_condition_status_dar_without_abatement_is_checked(self):
         before = {'resourceType': 'Condition', 'id': 'c', 'clinicalStatus': {'coding': [

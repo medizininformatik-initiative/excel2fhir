@@ -55,14 +55,11 @@ public class DarOverridesTest {
         assertFalse(attachment.getDataElement().hasValue()); assertFalse(attachment.hasHash()); assertFalse(attachment.hasSize());
         reason(attachment.getDataElement(),"masked"); assertEquals("https://example.org/document",attachment.getUrl());
     }
-    @Test public void rejectsAsTextWithoutNarrativeAndConflictingConditionStatus() {
+    @Test public void rejectsAsTextWithoutNarrative() {
         Condition c = new Condition(); c.getCode().addCoding().setCode("A");
         assertThrows(IllegalArgumentException.class, () -> apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n"));
         c.getText().setStatus(Narrative.NarrativeStatus.GENERATED).setDivAsString("<div xmlns=\"http://www.w3.org/1999/xhtml\">Diagnosis A</div>");
         reason(((Condition)apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n")).getCode().getCodingFirstRep().getCodeElement(),"as-text");
-        c.setAbatement(new DateTimeType("2020-01-01"));
-        assertThrows(IllegalArgumentException.class, () -> apply(c,"DAR_CONDITION_CLINICAL_STATUS=unknown\n"));
-        assertTrue(c.hasAbatement());
     }
     @Test public void createsNestedScalarWithoutInventingRepeatedParents() {
         Encounter out = (Encounter)apply(new Encounter(),"DAR_ENCOUNTER_PERIOD_END=unknown\n");
@@ -75,12 +72,29 @@ public class DarOverridesTest {
         Coding coding = (Coding)out.getExtension().get(0).getExtension().get(0).getValue();
         assertEquals("urn:system",coding.getSystem()); reason(coding.getCodeElement(),"unknown");
     }
-    @Test public void refusesIncompatibleNewAbatementAndUnsupportedChoiceTypes() {
+    @Test public void appliesConditionDarEvenWhenStatusAndAbatementConflict() {
         Condition c = new Condition();
         c.getClinicalStatus().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/condition-clinical").setCode("active");
-        assertThrows(IllegalArgumentException.class, () -> apply(c, "DAR_CONDITION_ABATEMENT_X=unknown\n"));
+        Condition active = (Condition)apply(c, "DAR_CONDITION_ABATEMENT_X=unknown\n");
+        reason(active.getAbatementDateTimeType(), "unknown");
+        assertEquals("active", active.getClinicalStatus().getCodingFirstRep().getCode());
+        assertFalse(c.hasAbatement());
         c.getClinicalStatus().getCodingFirstRep().setCode("resolved");
         reason(((Condition)apply(c, "DAR_CONDITION_ABATEMENT_X=unknown\n")).getAbatementDateTimeType(), "unknown");
+        c.setAbatement(new DateTimeType("2020-01-01"));
+        Condition ended = (Condition)apply(c, "DAR_CONDITION_CLINICAL_STATUS=unknown\n");
+        reason(ended.getClinicalStatus(), "unknown");
+        assertFalse(ended.getClinicalStatus().hasCoding());
+        assertEquals("2020-01-01", ended.getAbatementDateTimeType().getValueAsString());
+        c.getVerificationStatus().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/condition-ver-status").setCode("entered-in-error");
+        Condition erroneous = (Condition)apply(c, "DAR_CONDITION_CLINICAL_STATUS=unknown\n");
+        reason(erroneous.getClinicalStatus(), "unknown");
+        assertEquals("entered-in-error", erroneous.getVerificationStatus().getCodingFirstRep().getCode());
+        String json = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser().encodeResourceToString(erroneous);
+        assertTrue(json.contains("abatementDateTime"));
+        assertTrue(json.contains("entered-in-error"));
+    }
+    @Test public void refusesUnsupportedChoiceTypes() {
         Patient p = new Patient(); p.setDeceased(new BooleanType(false));
         assertThrows(IllegalArgumentException.class, () -> apply(p, "DAR_PATIENT_DECEASED_X=unknown\n"));
     }
