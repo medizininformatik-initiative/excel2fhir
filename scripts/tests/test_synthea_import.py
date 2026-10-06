@@ -74,6 +74,7 @@ class ImportTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         target['entry'][2]['resource']['encounter']['reference'] = 'Encounter/p-E-1'
         encounter['extension'] = [{

@@ -63,12 +63,12 @@ def checked_original_periods(source, target, report):
         if policy == 'preserve':
             continue
         level = next((c['code'] for t in r.get('type', []) for c in t.get('coding', []) if c.get('system') == 'http://fhir.de/CodeSystem/Kontaktebene'), 'einrichtungskontakt')
-        root = r
-        while root.get('partOf', {}).get('reference'):
-            root = encounters[root['partOf']['reference'].removeprefix('Encounter/')]
+        roots = [pid + '-E-' + number for number in report['encounterNumbers'].values()]
+        root_id = next((root for root in roots if r['id'] == root
+                        or r['id'].startswith((root + '-A-', root + '-V-'))), None)
         period = r.get('period', {})
         kind = next((c['code'] for t in r.get('type', []) for c in t.get('coding', []) if c.get('system') == 'http://fhir.de/CodeSystem/kontaktart-de'), '') if level == 'versorgungsstellenkontakt' else ''
-        key = (root['id'], level, instant(period.get('start')), kind)
+        key = (root_id, level, instant(period.get('start')), kind)
         assert key in periods, {'unmatchedContactPeriod': key}
         original_end, missing = periods[key]
         wanted = expected_end(period.get('start'), original_end, policy,

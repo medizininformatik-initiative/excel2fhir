@@ -17,15 +17,25 @@ public class WorkflowOptions {
         for (var key : ConverterOptions.IntOption.values()) values.put(key.name(), Integer.toString(options.getValue(key)));
         for (var key : ConverterOptions.StringOption.values()) values.put(key.name(), options.getValue(key));
         if (options.configuration() != null) {
-            for (String scope : List.of("ambulatory", "inpatient")) {
-                String prefix = "resource.Encounter." + scope;
-                values.put("ENCOUNTER_" + scope.toUpperCase(Locale.ROOT) + "_END_POLICY",
-                        options.configuration().effective(prefix + ".endPolicy").map(value -> value.asText()).orElse("preserve"));
-                values.put("ENCOUNTER_" + scope.toUpperCase(Locale.ROOT) + "_END_APPLICATION",
-                        options.configuration().effective(prefix + ".endApplication").map(value -> value.asText()).orElse("always"));
+            // Use the packaged contract so the checker receives the same effective
+            // selection and reference settings as the converter, including dependencies.
+            try (var stream = WorkflowOptions.class.getResourceAsStream("/configuration/options/contract.json")) {
+                JsonObject contract = JsonParser.parseString(new String(stream.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
+                for (var entry : contract.getAsJsonArray("options")) {
+                    JsonObject definition = entry.getAsJsonObject();
+                    String id = definition.get("id").getAsString();
+                    if (!id.startsWith("resource.") && !id.startsWith("contact.") && !id.startsWith("reference.")) continue;
+                    String fallback = definition.get("type").getAsString().equals("boolean") ? "false"
+                            : id.endsWith(".endPolicy") ? "preserve" : id.endsWith(".endApplication") ? "always" : "none";
+                    String value = options.configuration().effective(id).map(node -> {
+                        if (!node.isArray()) return node.asText();
+                        List<String> members = new ArrayList<>();
+                        node.forEach(member -> members.add(member.asText()));
+                        return String.join(",", members);
+                    }).orElse(fallback);
+                    values.put(definition.get("propertyName").getAsString(), value);
+                }
             }
-            values.put("REFERENCE_CONDITION_ENCOUNTER", options.configuration()
-                    .effective("reference.Condition.encounter").map(value -> value.asText()).orElse("none"));
         }
         Map<String, List<String>> patients = new LinkedHashMap<>();
         if (errors.isEmpty() && input.has("patients")) {

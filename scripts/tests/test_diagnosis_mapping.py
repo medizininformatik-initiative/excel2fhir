@@ -174,6 +174,7 @@ class MappingTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         encounter['extension'] = [{'url': 'http://fhir.de/StructureDefinition/Aufnahmegrund',
             'extension': [{'url': 'VierteStelle', 'valueCoding': {
@@ -202,6 +203,7 @@ class MappingTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         encounter['extension'] = [{'url': 'http://fhir.de/StructureDefinition/Aufnahmegrund',
             'extension': [{'url': 'VierteStelle', 'valueCoding': {
