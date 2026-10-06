@@ -12,6 +12,15 @@ The local workbench converts the bundled starter or INTERPOLAR demo workbook
 with the existing converter defaults. It uses React, TypeScript, Vite, Tailwind
 CSS and a shadcn/ui Button, with FastAPI and a separate Python worker.
 
+The workbench has three tabs: **Generate & convert**, **Runs**, and
+**Provide & use data**. Starting a run successfully opens **Runs** and selects
+that run. Tab changes preserve the current settings and dataset selection.
+A completed run offers **Load into FHIR servers**, which opens the upload tab
+with its available datasets selected. That tab also checks Data Portal and
+TORCH availability and provides links or expandable Compose startup commands.
+The Data Portal supports feasibility queries and cohort selection; the TORCH
+link opens its API health status, with extraction instructions linked separately.
+
 ## Configuration editor
 
 The configuration editor provides a continuous resource page with section links

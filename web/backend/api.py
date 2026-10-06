@@ -9,6 +9,7 @@ import store
 import configurations
 import inputs
 import datasets
+import service_status
 import fhir_uploads
 import generation
 from generation import Settings as GenerationSettings
@@ -277,6 +278,11 @@ class UploadRequest(BaseModel):
     requestId: UUID
     target: str
     datasets: list[str] = Field(min_length=1, max_length=100)
+
+
+@app.get('/api/services')
+def services():
+    return service_status.services()
 
 
 @app.get('/api/fhir-targets')

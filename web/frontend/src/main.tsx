@@ -5,6 +5,7 @@ import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
 import { ListExpansion } from './ListExpansion'
+import { ServiceLinks } from './ServiceLinks'
 import { FhirUploads } from './FhirUploads'
 import { DatasetResults } from './DatasetResults'
 import { GenerationSettings, type Generation } from './GenerationSettings'
@@ -59,6 +60,9 @@ function stateKey(state: string): TextKey {
   }
 }
 function App() {
+  const [activeTab, setActiveTab] = useState<'generate' | 'runs' | 'services'>('generate')
+  const [uploadSelection, setUploadSelection] = useState<{ ids: string[] } | null>(null)
+  function openUpload(ids: string[]) { setUploadSelection({ ids }); setActiveTab('services') }
   const [language, setLanguage] = useState<Language>(initialLanguage)
   const t = (key: TextKey, params?: Message['params']) => translate(language, key, params)
   const locale = language === 'de' ? 'de-DE' : 'en-GB'
@@ -118,7 +122,7 @@ function App() {
         : [await submitRuns<Job>('/jobs', configurationSource === 'workbook'
             ? { source, profile: 'workbook', ...generationPayload }
             : { source, profile: 'default', configurationProperties: exportPropertiesConfiguration(configuration!, language), ...generationPayload })]
-      setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id)
+      setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   async function repeat() {
@@ -126,7 +130,7 @@ function App() {
     setBusy(true); setError(null)
     try {
       const next = await submitRuns<Job>(`/jobs/${repeatConfirmation}/repeat`, {})
-      setJobs(old => [next, ...old.filter(job => job.id !== next.id)]); select(next.id)
+      setJobs(old => [next, ...old.filter(job => job.id !== next.id)]); select(next.id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   function configurationName(job: Job) {
@@ -147,6 +151,14 @@ function App() {
       <div><p className="text-xs font-semibold uppercase tracking-widest text-teal-800">{t('app.subtitle')}</p><h1 className="mt-1 text-3xl font-semibold tracking-tight">{t('app.title')}</h1></div>
       <label className="ml-auto flex flex-col gap-1 text-sm">{t('app.language')}<select className="rounded-lg border border-slate-300 bg-white p-2" value={language} onChange={e => setLanguage(e.target.value as Language)}><option value="de">{t('app.language.de')}</option><option value="en">{t('app.language.en')}</option></select></label>
     </header>
+    <div role="tablist" aria-label={t('app.navigation')} className="mb-6 flex flex-wrap gap-2">
+      {(['generate', 'runs', 'services'] as const).map((tab, index, tabs) => <button key={tab} type="button" role="tab" id={`main-tab-${tab}`} aria-controls={`main-panel-${tab}`} aria-selected={activeTab === tab} tabIndex={activeTab === tab ? 0 : -1} onClick={() => setActiveTab(tab)} onKeyDown={event => {
+        const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
+        if (next !== null) { event.preventDefault(); setActiveTab(tabs[next]); document.getElementById(`main-tab-${tabs[next]}`)?.focus() }
+      }} className={`rounded-lg border px-4 py-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-teal-600 ${activeTab === tab ? 'border-teal-800 bg-teal-800 text-white' : 'border-slate-300 bg-white text-slate-700'}`}>{t(tab === 'generate' ? 'app.tabs.generate' : tab === 'runs' ? 'app.runs' : 'app.tabs.services')}</button>)}
+    </div>
+    {alert && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-4 text-red-800">{t(alert.key, alert.params)}</p>}
+    <div role="tabpanel" id="main-panel-generate" aria-labelledby="main-tab-generate" hidden={activeTab !== 'generate'}>
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-end gap-5">
@@ -164,8 +176,12 @@ function App() {
         <ConfigurationEditor language={language} onChange={setConfiguration}/>
       </div>
     </fieldset>
-    {alert && <p role="alert" className="mt-4 rounded-lg bg-red-50 p-4 text-red-800">{t(alert.key, alert.params)}</p>}
-    <FhirUploads language={language}/>
+    </div>
+    <div role="tabpanel" id="main-panel-services" aria-labelledby="main-tab-services" hidden={activeTab !== 'services'}>
+      <FhirUploads language={language} requestedSelection={uploadSelection}/>
+      <ServiceLinks language={language}/>
+    </div>
+    <div role="tabpanel" id="main-panel-runs" aria-labelledby="main-tab-runs" hidden={activeTab !== 'runs'}>
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => { setRunSearch(e.target.value); setRunLimit(10) }}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
@@ -180,9 +196,10 @@ function App() {
           <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
           <div className="mt-3 flex gap-2"><Button disabled={busy} onClick={() => void repeat()}>{t('app.repeatRun')}</Button><Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(null)}>{t('app.saved.cancel')}</Button></div>
         </div>}
-        {job && <DatasetResults context={{ datasetName: job.dataset_name, source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
+        {job && <DatasetResults onUpload={openUpload} context={{ datasetName: job.dataset_name, source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
         <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
       </section>
+    </div>
     </div>
   </main>
 }

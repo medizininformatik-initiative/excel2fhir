@@ -8,7 +8,7 @@ type Target = { id: string; name: string; address: string; available: boolean }
 type Dataset = DatasetContext & { id: string; name: string; state: string; created: number; sourceName?: string; source?: string; size?: number; error?: string }
 type Upload = { id: string; state: string; created: number; descriptor: { target: Target; datasets: { id: string; name: string }[] }; result?: { resource?: string; resources?: number; bundles?: number; mayHaveWritten?: boolean } }
 const stateKeys: Record<string, TextKey> = { queued: 'app.upload.queued', preparing: 'app.upload.preparing', uploading: 'app.upload.uploading', succeeded: 'app.upload.succeeded', conflict: 'app.upload.conflict', failed: 'app.upload.failed', interrupted: 'app.upload.interrupted', cancelled: 'app.upload.cancelled' }
-export function FhirUploads({ language }: { language: Language }) {
+export function FhirUploads({ language, requestedSelection }: { language: Language; requestedSelection?: { ids: string[] } | null }) {
   const t = (key: TextKey, params?: Record<string, string | number>) => translate(language, key, params)
   const [targets, setTargets] = useState<Target[]>([])
   const [datasets, setDatasets] = useState<Dataset[]>([])
@@ -23,6 +23,9 @@ export function FhirUploads({ language }: { language: Language }) {
   const [error, setError] = useState(false)
   const [connectionFailed, setConnectionFailed] = useState(false)
   const [request, setRequest] = useState<{ id: string; key: string } | null>(null)
+  useEffect(() => {
+    if (requestedSelection) { setSelection(requestedSelection.ids); setSearch(''); setSelectedOnly(true); setDatasetLimit(10) }
+  }, [requestedSelection])
   async function refresh() {
     const responses = await Promise.all(['/api/fhir-targets', '/api/datasets', '/api/fhir-uploads'].map(url => fetch(url)))
     if (responses.some(response => !response.ok)) throw new Error()
@@ -76,11 +79,11 @@ export function FhirUploads({ language }: { language: Language }) {
     <fieldset disabled={pending} className="space-y-2"><legend className="mb-2 font-medium">{t('app.upload.target')}</legend>
       {targets.map(server => <div key={server.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"><label className="flex items-center gap-2"><input className="h-4 w-4 shrink-0 accent-teal-700" type="radio" name="fhir-target" value={server.id} checked={target === server.id} disabled={!server.available} onChange={() => setTarget(server.id)}/><span>{server.name}</span></label><span>·</span><a className="break-all text-teal-800 underline" href={server.address} target="_blank" rel="noreferrer">{server.address}</a><span>· {t(server.available ? 'app.upload.ready' : 'app.upload.offline')}</span></div>)}
     </fieldset>
-    {targets.length > 0 && !targets.some(server => server.available) && <div className="rounded-lg bg-slate-50 p-3 text-sm">
+    {targets.some(server => !server.available) && <div className="rounded-lg bg-slate-50 p-3 text-sm">
       <p>{t('app.upload.startHint')}</p>
       <details className="mt-2"><summary className="cursor-pointer font-medium">{t('app.upload.startServers')}</summary>
         <p className="mt-2">{t('app.upload.commandsHint')}</p>
-        {['blaze', 'hapi'].map(server => <div key={server} className="mt-3 space-y-2"><p className="font-medium">{t('app.upload.startServer', { server: server === 'blaze' ? 'Blaze' : 'HAPI' })}</p><div className="flex flex-wrap items-center gap-2"><code className="break-all">docker compose -f web/compose.yml --profile {server} up -d {server}</code><Button type="button" variant="outline" onClick={() => void copyCommand(server)}>{t('app.upload.copy')}</Button></div></div>)}
+        {targets.filter(server => !server.available).map(({ id: server }) => <div key={server} className="mt-3 space-y-2"><p className="font-medium">{t('app.upload.startServer', { server: server === 'blaze' ? 'Blaze' : 'HAPI' })}</p><div className="flex flex-wrap items-center gap-2"><code className="break-all">docker compose -f web/compose.yml --profile {server} up -d {server}</code><Button type="button" variant="outline" onClick={() => void copyCommand(server)}>{t('app.upload.copy')}</Button></div></div>)}
         <p role="status" className="mt-2">{copyStatus && t(copyStatus as TextKey)}</p>
       </details>
     </div>}
