@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ListExpansion } from './ListExpansion'
 import { Button } from './components/ui/button'
 import { translate, type Language, type TextKey } from './i18n'
 
@@ -11,6 +12,7 @@ export function FhirUploads({ language }: { language: Language }) {
   const [targets, setTargets] = useState<Target[]>([])
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [uploads, setUploads] = useState<Upload[]>([])
+  const [datasetLimit, setDatasetLimit] = useState<number | null>(10)
   const [selection, setSelection] = useState<string[]>([])
   const [target, setTarget] = useState('')
   const [pending, setPending] = useState(false)
@@ -56,7 +58,7 @@ export function FhirUploads({ language }: { language: Language }) {
       if (!response.ok) throw new Error()
     } catch { setError(true) }
   }
-  const eligible = datasets.filter(dataset => dataset.state === 'succeeded' && !dataset.error && dataset.size !== undefined)
+  const eligible = datasets.filter(dataset => dataset.state === 'succeeded' && !dataset.error && dataset.size !== undefined).sort((a, b) => b.created - a.created)
   return <section className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
     <h2 className="text-lg font-semibold">{t('app.upload.title')}</h2>
     <p className="text-sm text-slate-600">{t('app.upload.hint')}</p>
@@ -66,7 +68,8 @@ export function FhirUploads({ language }: { language: Language }) {
     </fieldset>
     <fieldset disabled={pending} className="space-y-2"><legend className="mb-2 font-medium">{t('app.upload.datasets')}</legend>
       {eligible.length === 0 && <p className="text-sm text-slate-500">{t('app.upload.empty')}</p>}
-      <div className="max-h-64 space-y-2 overflow-auto">{eligible.map(dataset => <label key={dataset.id} className="flex items-start gap-2 text-sm"><input type="checkbox" checked={selection.includes(dataset.id)} onChange={e => setSelection(previous => e.target.checked ? [...previous, dataset.id] : previous.filter(id => id !== dataset.id))}/><span>{dataset.name} · {dataset.source === 'starter' ? t('app.starter') : dataset.source === 'demo' ? t('app.demo') : dataset.source === 'synthea-generation' ? t('app.generation.title') : dataset.sourceName || dataset.source} · {new Date(dataset.created * 1000).toLocaleString(language === 'de' ? 'de-DE' : 'en-GB')} <span className="text-xs text-slate-500">({dataset.id.slice(0, 8)})</span></span></label>)}</div>
+      <div className="space-y-2">{eligible.slice(0, datasetLimit ?? eligible.length).map(dataset => <label key={dataset.id} className="flex items-start gap-2 text-sm"><input type="checkbox" checked={selection.includes(dataset.id)} onChange={e => setSelection(previous => e.target.checked ? [...previous, dataset.id] : previous.filter(id => id !== dataset.id))}/><span>{dataset.name} · {dataset.source === 'starter' ? t('app.starter') : dataset.source === 'demo' ? t('app.demo') : dataset.source === 'synthea-generation' ? t('app.generation.title') : dataset.sourceName || dataset.source} · {new Date(dataset.created * 1000).toLocaleString(language === 'de' ? 'de-DE' : 'en-GB')} <span className="text-xs text-slate-500">({dataset.id.slice(0, 8)})</span></span></label>)}</div>
+      <ListExpansion language={language} total={eligible.length} limit={datasetLimit} onChange={setDatasetLimit} countKey="app.list.datasetsCount"/>
     </fieldset>
     <Button disabled={pending || !selection.length || !targets.some(server => server.id === target && server.available)} onClick={() => void submit()}>{t(pending ? 'app.upload.submitting' : 'app.upload.start', { count: selection.length })}</Button>
     {uploads.length > 0 && <div className="space-y-3"><h3 className="font-medium">{t('app.upload.history')}</h3>{uploads.map(upload => <article key={upload.id} className="rounded-lg border p-3 text-sm">

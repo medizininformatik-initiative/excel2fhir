@@ -1,4 +1,9 @@
 {
+  "app.list.runsCount": "{shown} of {total} runs",
+  "app.list.datasetsCount": "{shown} of {total} datasets",
+  "app.list.more": "Show ten more",
+  "app.list.all": "Show all",
+  "app.list.less": "Show fewer",
   "app.config.resourcesIntro": "Choose the resources and encounter levels to include in the output. Configure how resources reference each other and which medication resources are additionally generated or replaced.",
   "app.config.idsIntro": "Configure patient IDs, initial resource counters and the number of additional repetitions. With suitable ID offsets, you can output the same input dataset repeatedly, creating resources with distinct IDs each time. Use time shifting to move clinical dates and times together by whole days.",
   "app.config.terminologyIntro": "Choose the catalogue year for Synthea code mapping and configure how terminology versions appear in the output.",

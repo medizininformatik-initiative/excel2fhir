@@ -1,4 +1,9 @@
 {
+  "app.list.runsCount": "{shown} von {total} Läufen",
+  "app.list.datasetsCount": "{shown} von {total} Datensätzen",
+  "app.list.more": "Weitere zehn anzeigen",
+  "app.list.all": "Alle anzeigen",
+  "app.list.less": "Weniger anzeigen",
   "app.config.resourcesIntro": "Wählen Sie die Ressourcen und Kontaktebenen für die Ausgabe aus. Legen Sie fest, wie Ressourcen miteinander verknüpft werden und welche Medikationsressourcen zusätzlich erzeugt oder ersetzt werden.",
   "app.config.idsIntro": "Legen Sie Patienten-IDs, Startwerte der Ressourcenzähler und die Anzahl zusätzlicher Wiederholungen fest. Mit passenden ID-Versätzen können Sie denselben Eingabedatensatz mehrfach ausgeben und dabei Ressourcen mit jeweils eigenen IDs erzeugen. Mit der Zeitverschiebung verschieben Sie klinische Datums- und Zeitangaben gemeinsam um ganze Tage.",
   "app.config.terminologyIntro": "Wählen Sie das Katalogjahr für die Synthea-Codezuordnung und legen Sie fest, wie Terminologieversionen in der Ausgabe angegeben werden.",
