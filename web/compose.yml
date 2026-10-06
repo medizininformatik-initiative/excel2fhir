@@ -334,7 +334,7 @@ services:
       PROJECT_IDENTIFIER_SYSTEM_OBFUSCATED_REPORT: http://medizininformatik-initiative.de/sid/project-identifier
       PROJECT_IDENTIFIER_VALUE_OBFUSCATED_REPORT: fdpg-data-availability-report-obfuscated
     volumes: !override
-      - ./integration/measure.json:/app/measure.json:ro
+      - ./integration/availability-measure.json:/app/measure.json:ro
       - fde-output:/app/output
     mem_limit: 1024m
     cpus: 1

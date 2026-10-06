@@ -4,14 +4,36 @@ Use Docker Compose 2.24.4 or newer. A **Compose profile** selects services;
 a **configuration** controls dataset generation; a **FHIR profile** specifies
 resource constraints.
 
-```sh
-# Workbench and dataset generation (http://localhost:5184)
-docker compose -f web/compose.yml up -d --build
-# Independent FHIR servers, selectable together
-docker compose -f web/compose.yml --profile blaze --profile hapi up -d --build
-# Local Data Portal with the shared Blaze; HAPI can also remain selected
-docker compose -f web/compose.yml --profile data-portal --profile hapi up -d --build
-```
+Choose a startup option in the [main README](../../README.md#start-with-docker),
+ordered from the complete Data Portal setup to generation only.
+
+## Resource sizing
+
+The [startup budgets](../../README.md#system-requirements) are planning
+recommendations for a dedicated Docker environment and small datasets. They are
+not benchmarked minimums. CPU and disk recommendations allow for building images,
+initialization and retained results; no minimum CPU/disk threshold has been measured.
+
+The configured container memory ceilings total 6.625 GiB for the workbench,
+7.875 GiB with Blaze, and 8.875 GiB with HAPI and its database. The complete portal
+selection is about 20 GiB including the worker, TORCH and transient initializer,
+updater and evaluator containers. The RAM budgets round these ceilings upward
+with operating headroom. Limits are allocation ceilings, not measured consumption.
+
+The workbench and individual FHIR services have run in an 8 GiB Docker VM.
+Portal queries, TORCH extraction and evaluation have been exercised in separate
+stages. A complete portal, generation and extraction running concurrently has
+not been validated at a minimum memory allocation. Concurrent startup alongside
+other workloads exhausted that 8 GiB VM. Do not use 8 GiB as a full-portal budget.
+The portal backend uses a 2 GiB Java heap within a 3 GiB container; its PostgreSQL
+container allows 1 GiB for the ontology migration.
+
+Allocate the recommended RAM to Docker itself on Docker Desktop, with additional
+host RAM for the OS and applications. Account for other containers separately.
+Keep free space in Docker's disk image as well as on its host filesystem; retained
+runs, build cache and database growth can exceed the starting disk budget.
+
+## Service addresses
 
 | Service | Local address | Persistent storage |
 | --- | --- | --- |
@@ -27,6 +49,8 @@ between these Compose profiles preserves its resources. HAPI has a separate
 database and port. All volume names are scoped to the Compose project. The
 services bind published ports to loopback. The application uses HTTP to reach
 services; service lifecycle is controlled through Compose.
+
+## Stopping services
 
 Generation produces datasets. Loading a dataset into a chosen FHIR server is a
 separate, explicit operation. Keep variants with overlapping resource IDs in
@@ -87,7 +111,13 @@ against Blaze after loading data:
 docker compose -f web/compose.yml run --rm fhir-data-evaluator
 ```
 
-Its bundled Measure counts Patients. Reports are uploaded to Blaze and persist in its data volume. FDE measures data
+Its bundled Measure counts distinct Patients by gender using the ontology's
+`patient-gender` stratifier and continuous-variable measure score. The updater
+maps that score to the Patient gender catalogue entry and rounds down to its
+availability buckets (0, 10, 100, 1,000, ...). For example, 12 Patients produce
+catalogue availability 10; fewer than 10 produce 0. Reports are uploaded to Blaze
+and persist in its data volume. This small Measure covers Patient gender;
+additional catalogue criteria require corresponding measures. FDE measures data
 availability; FHIR profile validation is a separate operation. The availability
 updater reads FDE reports and updates catalogue availability in Elasticsearch.
 Its explicit invocation is:
@@ -123,6 +153,9 @@ upstream release supports the selected ontology layout.
 
 `python3 web/integration/test_compose_profiles.py` checks all eight Compose-profile
 combinations, loopback bindings, volume isolation and pinned upstream files.
+The [availability integration check](../integration/AVAILABILITY.md) verifies
+real FDE reports, the complete ontology, byte-identical repeated updates and
+the expected catalogue value read back from Elasticsearch in separate stages.
 For a running local portal containing synthetic female Patients:
 
 ```sh
@@ -139,6 +172,4 @@ The first ontology import and database migration can take several minutes.
 Inspect `docker compose -f web/compose.yml logs init-elasticsearch dataportal-backend`
 and check `https://localhost:5192/backend/api/v6/actuator/health` with the generated
 CA certificate before running the portal probe. Plan Docker memory for both the
-selected services and existing workloads; the full portal plus HAPI and generation
-needs more memory than the workbench alone. Individual JVM/container limits are
-listed in the Compose file.
+selected services and existing workloads using the resource budgets above.
