@@ -1,0 +1,29 @@
+{
+  "repository": "https://github.com/medizininformatik-initiative/dataportal",
+  "commit": "ce654d58f02be004625234504af0315c33d8b294",
+  "files": {
+    "data-node/fhir-server/docker-compose.yml": "3e1b00edc7d2f05bbe424d660aeb0c8df560cd6e1e3d8ed1ff4d14f7bb41c7c4",
+    "data-node/fhir-server/custom-search-parameters.json": "69117438d1bb262318d929d7c21a879733ecd81a5422672db6169d126e0c73bd",
+    "data-node/torch/docker-compose.yml": "73cb727acfb43987401ec4017f0b1af108a4e99347bd720aded8f59e85a54dbf",
+    "data-node/torch/torch.nginx.conf": "9165674fe8db2b80ca4424ef3dd897f10d5623d938c0a6b2ef8c04f2d1136a7c",
+    "data-node/fhir-data-evaluator/docker-compose.yml": "f12238a2a31e20614f0ad58ef5a8c690dcb2e791aae8de7d4a1531210b662488",
+    "data-portal/keycloak/init/dataportal-realm.json": "63618f7d699a47d1841caa6b6e361775ad1da864f14a2d3c0c9d0c7606cd4f82",
+    "data-portal/proxy/context-paths.nginx.conf": "971ca620348b3a840df35e079dfdf22a5671ce16d044f0be11a3d0963c0ca0db",
+    "data-portal/backend/docker-compose.yml": "d4a989671afaee7dbcc1c4bc94e841cdb0945da75dca2fc6c648ca68e1031f0d",
+    "data-portal/gui/docker-compose.yml": "1d97a2ad1d6628a2d85a2a030d8699b81f414c3d0f0e173050f0bc89a31f4455",
+    "data-portal/keycloak/docker-compose.yml": "b45739b5aa4be4ba8627ad509548c16eb09c08475c155a0321478b46104a9dce",
+    "data-portal/proxy/docker-compose.yml": "affe3cd459ff5ec2c064ef843ff379c00d0b22baa8158b9deb99ed895ad4a2c1",
+    "data-portal/availability-updater/docker-compose.yml": "1e9ce508c9270a341efbfeaa306968ac649e9235eb8461f3852c01432bda3847",
+    "data-node/torch/queries/example-crtdl.json": "da308af5f2a8d9774b107c13abc359ef4eb261ec159831a8c62709b0aec2d75b"
+  },
+  "patches": {
+    "data-portal/keycloak/docker-compose.yml": {
+      "upstreamSha256": "0003fe52fb72360048d2cf57e112a38bb057f5becd3fc13fd45fbd9e516f66d2",
+      "reason": "Use the declared Keycloak database variables in the PostgreSQL health check."
+    },
+    "data-portal/proxy/context-paths.nginx.conf": {
+      "upstreamSha256": "bb30c5d022ff3eed8203099bf911c2efe2f9a0883d0cfc0bb8a442e52b0569b7",
+      "reason": "Forward the backend prefix for reachable Location URLs; omit host-wide HSTS so the local HTTPS portal does not upgrade unrelated localhost HTTP services."
+    }
+  }
+}

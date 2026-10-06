@@ -34,5 +34,317 @@ services:
     mem_limit: 128m
     cpus: 1
     restart: unless-stopped
+  blaze:
+    extends:
+      file: deployment/upstream/data-node/fhir-server/docker-compose.yml
+      service: fhir-server
+    profiles: [blaze, data-portal]
+    env_file: !override []
+    ports: !override ['127.0.0.1:5190:8080']
+    extra_hosts: !override []
+    environment:
+      BASE_URL: http://blaze:8080
+      JAVA_TOOL_OPTIONS: -Xmx768m
+      DB_BLOCK_CACHE_SIZE: 128
+      DB_SEARCH_PARAM_BUNDLE: /app/custom-search-parameters.json
+      ENFORCE_REFERENTIAL_INTEGRITY: ${BLAZE_ENFORCE_REFERENTIAL_INTEGRITY:-true}
+      LOG_LEVEL: info
+    volumes: !override
+      - blaze-data:/app/data
+      - ./deployment/upstream/data-node/fhir-server/custom-search-parameters.json:/app/custom-search-parameters.json:ro
+    mem_limit: 1280m
+    cpus: 1
+  hapi:
+    image: hapiproject/hapi:v8.12.0-2
+    profiles: [hapi]
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx1536m
+      SPRING_DATASOURCE_URL: jdbc:postgresql://hapi-db:5432/hapi
+      SPRING_DATASOURCE_USERNAME: hapi
+      SPRING_DATASOURCE_PASSWORD: local-hapi
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+      HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_SEARCH_ENABLED: 'false'
+    ports: ['127.0.0.1:5191:8080']
+    depends_on:
+      hapi-db:
+        condition: service_healthy
+    mem_limit: 2g
+    cpus: 2
+    restart: unless-stopped
+  hapi-db:
+    image: postgres:16-alpine
+    profiles: [hapi]
+    environment:
+      POSTGRES_USER: hapi
+      POSTGRES_PASSWORD: local-hapi
+      POSTGRES_DB: hapi
+    volumes: [hapi-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U hapi -d hapi']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 256m
+    restart: unless-stopped
+  portal-init:
+    profiles: [data-portal]
+    build: ./deployment/portal-init
+    volumes:
+      - portal-setup:/setup
+      - ./deployment/upstream/data-portal/keycloak/init/dataportal-realm.json:/upstream/realm.json:ro
+    mem_limit: 128m
+    restart: 'no'
+  dataportal-postgres:
+    extends:
+      file: deployment/upstream/data-portal/backend/docker-compose.yml
+      service: dataportal-postgres
+    profiles: [data-portal]
+    ports: !override []
+    environment:
+      POSTGRES_USER: dataportaluser
+      POSTGRES_PASSWORD: dataportalpw
+      POSTGRES_DB: dataportal
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U dataportaluser -d dataportal']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    mem_limit: 1g
+  dataportal-elastic:
+    extends:
+      file: deployment/upstream/data-portal/backend/docker-compose.yml
+      service: dataportal-elastic
+    profiles: [data-portal]
+    ports: !override []
+    mem_limit: 1536m
+    restart: unless-stopped
+  init-elasticsearch:
+    extends:
+      file: deployment/upstream/data-portal/backend/docker-compose.yml
+      service: init-elasticsearch
+    profiles: [data-portal]
+    mem_limit: 512m
+  dataportal-backend:
+    extends:
+      file: deployment/upstream/data-portal/backend/docker-compose.yml
+      service: dataportal-backend
+    profiles: [data-portal]
+    env_file: !override []
+    ports: !override []
+    extra_hosts: !override []
+    volumes: !override []
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx2g
+      ALLOWED_ORIGINS: https://localhost:5192
+      API_BASE_URL: https://localhost:5192/backend
+      DATABASE_HOST: dataportal-postgres
+      DATABASE_PORT: '5432'
+      DATABASE_DBNAME: dataportal
+      DATABASE_USER: dataportaluser
+      DATABASE_PASSWORD: dataportalpw
+      KEYCLOAK_BASE_URL_ISSUER: https://localhost:5192/auth
+      KEYCLOAK_BASE_URL_JWK: http://auth:8080/auth
+      KEYCLOAK_REALM: dataportal
+      KEYCLOAK_ALLOWED_ROLE: DataportalUser
+      KEYCLOAK_POWER_ROLE: DataportalPowerUser
+      KEYCLOAK_ADMIN_ROLE: DataportalAdmin
+      ELASTIC_SEARCH_ENABLED: 'true'
+      ELASTIC_SEARCH_HOST: dataportal-elastic
+      CQL_TRANSLATE_ENABLED: 'true'
+      FHIR_TRANSLATE_ENABLED: 'false'
+      BROKER_CLIENT_MOCK_ENABLED: 'false'
+      BROKER_CLIENT_DIRECT_ENABLED: 'true'
+      BROKER_CLIENT_DIRECT_USE_CQL: 'true'
+      BROKER_CLIENT_DIRECT_AUTH_OAUTH_ISSUER_URL: ''
+      BROKER_CLIENT_DSF_ENABLED: 'false'
+      CQL_SERVER_BASE_URL: http://blaze:8080/fhir
+      PRIVACY_THRESHOLD_SITES: '1'
+      PRIVACY_THRESHOLD_RESULTS: '0'
+      PRIVACY_THRESHOLD_SITES_RESULT: '0'
+    depends_on:
+      dataportal-postgres:
+        condition: service_healthy
+      blaze:
+        condition: service_healthy
+      auth:
+        condition: service_started
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, 'http://127.0.0.1:8090/api/v6/actuator/health']
+      start_period: 180s
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    mem_limit: 3g
+    cpus: 2
+  dataportal-ui:
+    extends:
+      file: deployment/upstream/data-portal/gui/docker-compose.yml
+      service: dataportal-ui
+    profiles: [data-portal]
+    volumes: !override
+      - ./deployment/portal-config.json:/usr/share/nginx/html/assets/config/config.deploy.json:ro
+    mem_limit: 128m
+  auth-db:
+    extends:
+      file: deployment/upstream/data-portal/keycloak/docker-compose.yml
+      service: auth-db
+    profiles: [data-portal]
+    environment:
+      POSTGRES_DB: keycloakdb
+      POSTGRES_USER: keycloakdbuser
+      POSTGRES_PASSWORD: keycloakdbpw
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U keycloakdbuser -d keycloakdb']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    mem_limit: 256m
+  auth:
+    extends:
+      file: deployment/upstream/data-portal/keycloak/docker-compose.yml
+      service: auth
+    profiles: [data-portal]
+    env_file: !override []
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://auth-db:5432/keycloakdb
+      KC_DB_USERNAME: keycloakdbuser
+      KC_DB_PASSWORD: keycloakdbpw
+      KC_HOSTNAME: https://localhost:5192/auth
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HTTP_ENABLED: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: 'true'
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx512m
+    volumes: !override
+      - portal-setup:/opt/keycloak/data/import:ro
+    depends_on: !override
+      auth-db:
+        condition: service_healthy
+      portal-init:
+        condition: service_completed_successfully
+    mem_limit: 768m
+  dataportal-nginx:
+    extends:
+      file: deployment/upstream/data-portal/proxy/docker-compose.yml
+      service: dataportal-nginx
+    profiles: [data-portal]
+    ports: !override ['127.0.0.1:5192:8443']
+    volumes: !override
+      - portal-setup:/etc/nginx/certs:ro
+      - ./deployment/upstream/data-portal/proxy/context-paths.nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      portal-init:
+        condition: service_completed_successfully
+      dataportal-ui:
+        condition: service_started
+      dataportal-backend:
+        condition: service_started
+      auth:
+        condition: service_started
+    mem_limit: 128m
+  availability-updater:
+    extends:
+      file: deployment/upstream/data-portal/availability-updater/docker-compose.yml
+      service: availability-updater
+    image: excel2fhir-availability-updater:0.4.1-layout-fix
+    build:
+      context: deployment/availability-updater
+    pull_policy: build
+    profiles: [data-portal]
+    env_file: !override []
+    extra_hosts: !override []
+    volumes: !override []
+    environment:
+      ONTO_REPO: https://github.com/medizininformatik-initiative/fhir-ontology-generator/releases/download
+      ONTO_GIT_TAG: v5.0.0
+      UPDATE_ONTOLOGY: 'true'
+      ONTOLOGY_DIR: /opt/availability-updater/elastic_ontology
+      AVAILABILITY_MASTER_IDENT: fdpg-data-availability-report
+      AVAILABILITY_INPUT_DIR: /opt/availability-updater/availability_input
+      AVAILABILITY_OUTPUT_DIR: /opt/availability-updater/availability_output
+      AVAILABILITY_REPORT_SERVER_BASE_URL: http://blaze:8080/fhir
+      ES_BASE_URL: http://dataportal-elastic:9200
+      ES_INDEX: ontology
+      MIN_N_REPORTS: '1'
+      USE_OAUTH2: 'false'
+      USE_BASIC_AUTH: 'false'
+    depends_on:
+      init-elasticsearch:
+        condition: service_completed_successfully
+      blaze:
+        condition: service_healthy
+    mem_limit: 512m
+  torch:
+    extends:
+      file: deployment/upstream/data-node/torch/docker-compose.yml
+      service: torch
+    profiles: [data-portal]
+    env_file: !override []
+    extra_hosts: !override []
+    ports: !override ['127.0.0.1:5193:8080']
+    volumes: !override [torch-data:/app/output]
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx2048m
+      TORCH_BASE_URL: http://localhost:5193
+      TORCH_OUTPUT_FILE_SERVER_URL: http://localhost:5194
+      TORCH_FHIR_URL: http://blaze:8080/fhir
+      TORCH_FHIR_OAUTH_ISSUER_URI: ''
+      TORCH_USE_CQL: 'true'
+      TORCH_FHIR_DISABLE_ASYNC: 'true'
+      TORCH_MAXCONCURRENCY: '1'
+      TORCH_BATCHSIZE: '10'
+    depends_on:
+      blaze:
+        condition: service_healthy
+    mem_limit: 3g
+    cpus: 1
+  torch-nginx:
+    extends:
+      file: deployment/upstream/data-node/torch/docker-compose.yml
+      service: torch-nginx
+    profiles: [data-portal]
+    ports: !override ['127.0.0.1:5194:8080']
+    volumes: !override
+      - torch-data:/app/output:ro
+      - ./deployment/upstream/data-node/torch/torch.nginx.conf:/etc/nginx/nginx.conf:ro
+    mem_limit: 64m
+  fhir-data-evaluator:
+    extends:
+      file: deployment/upstream/data-node/fhir-data-evaluator/docker-compose.yml
+      service: fhir-data-evaluator
+    profiles: [data-portal]
+    env_file: !override []
+    extra_hosts: !override []
+    scale: 0
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx768m
+      FHIR_SOURCE_SERVER: http://blaze:8080/fhir
+      FHIR_REPORT_SERVER: http://blaze:8080/fhir
+      FHIR_SOURCE_OAUTH_ISSUER_URI: ''
+      FHIR_REPORT_OAUTH_ISSUER_URI: ''
+      SEND_REPORT_TO_SERVER: 'true'
+      CREATE_OBFUSCATED_REPORT: 'true'
+      AUTHOR_IDENTIFIER_SYSTEM: http://dsf.dev/sid/organization-identifier
+      AUTHOR_IDENTIFIER_VALUE: local-workbench
+      PROJECT_IDENTIFIER_SYSTEM: http://medizininformatik-initiative.de/sid/project-identifier
+      PROJECT_IDENTIFIER_VALUE: fdpg-data-availability-report
+      PROJECT_IDENTIFIER_SYSTEM_OBFUSCATED_REPORT: http://medizininformatik-initiative.de/sid/project-identifier
+      PROJECT_IDENTIFIER_VALUE_OBFUSCATED_REPORT: fdpg-data-availability-report-obfuscated
+    volumes: !override
+      - ./integration/availability-measure.json:/app/measure.json:ro
+      - fde-output:/app/output
+    mem_limit: 1024m
+    cpus: 1
 volumes:
   workbench:
+  blaze-data:
+  hapi-data:
+  portal-setup:
+  dataportal-postgres-data:
+  dataportal-elastic-data:
+  dataportal-auth-db:
+  torch-data:
+  fde-output:
