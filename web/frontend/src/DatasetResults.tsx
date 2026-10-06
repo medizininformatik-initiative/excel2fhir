@@ -1,3 +1,4 @@
+import { datasetLabel, type DatasetContext } from './dataset-label'
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import { Button } from './components/ui/button'
@@ -7,7 +8,7 @@ type Report = { validationErrors: number; validationWarnings: number; status: st
 type Artifact = { id: string; path: string; size: number; report?: Report | null }
 type Dataset = { id: string; name: string; error?: string; size?: number; inspection?: { patients: number; uniqueResources: number; resourceInstances: number; repeatedIds: number; missingIds: number; resourceCounts: Record<string, number>; inspectedFormats: string[] } }
 type Manifest = { pending?: boolean; error?: string; datasets: Dataset[]; artifacts: Artifact[] }
-export function DatasetResults({ jobId, state, language }: { jobId: string; state: string; language: Language }) {
+export function DatasetResults({ jobId, state, language, context, onUpload }: { jobId: string; state: string; language: Language; context: DatasetContext; onUpload: (ids: string[]) => void }) {
   const t = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(language, key, params)
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [failed, setFailed] = useState(false)
@@ -38,9 +39,10 @@ export function DatasetResults({ jobId, state, language }: { jobId: string; stat
   const download = (file: Artifact) => <a className="break-all text-teal-800 underline" href={`/api/jobs/${jobId}/artifacts/${file.id}`}>{file.path}</a>
   return <div className="mb-6 space-y-4">
     <h3 className="font-semibold">{t('app.datasets.title')}</h3>
+    {state === 'succeeded' && manifest.datasets.some(dataset => dataset.size !== undefined && !dataset.error) && <Button variant="outline" onClick={() => onUpload(manifest.datasets.filter(dataset => dataset.size !== undefined && !dataset.error).map(dataset => dataset.id))}>{t('app.upload.open')}</Button>}
     {state === 'failed' && <p className="text-sm text-amber-800">{t('app.datasets.incomplete')}</p>}
     {manifest.datasets.map(dataset => <section key={dataset.id} className="rounded-xl border border-slate-200 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3"><h4 className="font-semibold">{dataset.name}</h4>{dataset.size !== undefined && <Button variant="outline" asChild><a href={`/api/datasets/${dataset.id}/download`}><Download size={14}/>{t('app.datasets.download')}</a></Button>}</div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h4 className="font-semibold">{datasetLabel({ ...dataset, ...context }, language)}</h4>{dataset.size !== undefined && <Button variant="outline" asChild><a href={`/api/datasets/${dataset.id}/download`}><Download size={14}/>{t('app.datasets.download')}</a></Button>}</div>
       {dataset.error && <p role="alert" className="mt-2 text-sm text-red-700">{dataset.error}</p>}
       {dataset.inspection && <>
         <p className="mt-2 text-sm">{t('app.datasets.counts', { patients: dataset.inspection.patients, resources: dataset.inspection.uniqueResources })}</p>

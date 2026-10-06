@@ -9,6 +9,8 @@ import store
 import configurations
 import inputs
 import datasets
+import service_status
+import fhir_uploads
 import generation
 from generation import Settings as GenerationSettings
 from starlette.concurrency import run_in_threadpool
@@ -30,6 +32,7 @@ async def local_mutations(request: Request, call_next):
 class JobRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requestId: UUID | None = None
+    datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = "starter"
     profile: str = "default"
@@ -61,7 +64,7 @@ def jobs():
 def create(request: JobRequest):
     try:
         job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None,
-                              request.generation.model_dump(mode='json') if request.generation else None)
+                              request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
     except ValueError as error:
@@ -181,6 +184,7 @@ class SavedSelection(BaseModel):
 class BatchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     requestId: UUID
+    datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = 'starter'
     configurations: list[SavedSelection] = Field(min_length=1, max_length=100)
@@ -195,7 +199,7 @@ class RepeatRequest(BaseModel):
 def start_batch(request: BatchRequest):
     selections = [{'id': str(item.id), 'revision': item.revision} for item in request.configurations]
     ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId),
-                             request.generation.model_dump(mode='json') if request.generation else None)
+                             request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
     return [store.get(job_id) for job_id in ids]
 
 
@@ -254,7 +258,7 @@ def artifact_download(job_id: str, artifact_id: str):
 @app.get('/api/datasets')
 def list_datasets():
     return [{**item, 'jobId': job['id'], 'state': job['state'], 'created': job['created'],
-             'source': job.get('source'), 'sourceName': job.get('source_name'), 'configuration': job.get('configuration')}
+             'datasetName': job.get('dataset_name'), 'source': job.get('source'), 'sourceName': job.get('source_name'), 'configuration': job.get('configuration')}
             for job in store.jobs() if job['state'] in {'succeeded', 'failed'} for item in datasets.get(job['id'])['datasets']]
 
 
@@ -267,3 +271,41 @@ def dataset_download(dataset_id: str):
         return FileResponse(path, filename='dataset-' + dataset_id + '.zip')
     except FileNotFoundError as error:
         raise HTTPException(404, str(error))
+
+
+class UploadRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: UUID
+    target: str
+    datasets: list[str] = Field(min_length=1, max_length=100)
+
+
+@app.get('/api/services')
+def services():
+    return service_status.services()
+
+
+@app.get('/api/fhir-targets')
+def fhir_targets():
+    return fhir_uploads.targets()
+
+
+@app.get('/api/fhir-uploads')
+def fhir_upload_history():
+    return fhir_uploads.history()
+
+
+@app.post('/api/fhir-uploads', status_code=202)
+def fhir_upload(request: UploadRequest):
+    return configuration_call(fhir_uploads.create, str(request.requestId), request.target, request.datasets)
+
+
+@app.post('/api/fhir-uploads/{upload_id}/cancel', status_code=202)
+def cancel_fhir_upload(upload_id: UUID):
+    configuration_call(fhir_uploads.cancel, str(upload_id))
+    return fhir_uploads.get(str(upload_id))
+
+
+@app.get('/api/fhir-uploads/{upload_id}/logs', response_class=PlainTextResponse)
+def fhir_upload_logs(upload_id: UUID):
+    return configuration_call(fhir_uploads.logs, str(upload_id))

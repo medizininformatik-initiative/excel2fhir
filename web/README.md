@@ -12,6 +12,15 @@ The local workbench converts the bundled starter or INTERPOLAR demo workbook
 with the existing converter defaults. It uses React, TypeScript, Vite, Tailwind
 CSS and a shadcn/ui Button, with FastAPI and a separate Python worker.
 
+The workbench has three tabs: **Generate & convert**, **Runs**, and
+**Provide & use data**. Starting a run successfully opens **Runs** and selects
+that run. Tab changes preserve the current settings and dataset selection.
+A completed run offers **Load into FHIR servers**, which opens the upload tab
+with its available datasets selected. That tab also checks Data Portal and
+TORCH availability and provides links or expandable Compose startup commands.
+The Data Portal supports feasibility queries and cohort selection; the TORCH
+link opens its API health status, with extraction instructions linked separately.
+
 ## Configuration editor
 
 The configuration editor provides a continuous resource page with section links
@@ -195,6 +204,44 @@ JVM has a 512 MiB heap and a five-minute timeout; an inspection failure remains
 visible without changing the converter outcome. Run search filters by source,
 configuration name, run ID or status. **Repeat run** reuses the original input
 and settings; existing datasets remain available independently of a new run.
+
+Before starting a run, optionally enter a **Dataset name**. The name appears before
+the source and configuration in dataset lists and is searchable in the run history.
+An empty field uses the automatic label. Runs started together share the entered
+name and retain their configuration labels; repeating a run preserves its name.
+The name is display metadata and does not change generated FHIR content or resource IDs.
+
+## Load datasets into a FHIR server
+
+In **Load datasets into FHIR servers**, select an available Blaze or HAPI target
+and one or more datasets from successful runs. The displayed address identifies
+the target. Start **Load datasets** to queue the action; generation jobs and
+uploads share the worker and run one at a time.
+
+The worker checks the entire selection before transferring any data. Different
+contents under the same resource type and ID within that selection stop the
+upload and identify the conflict. Select compatible datasets or load them in
+separate actions. Each later action updates existing resources with the same
+IDs; resources absent from the selection remain on the server.
+
+Each action retains the selected dataset checksums, run snapshots, target,
+preparation result and upload log. Status distinguishes waiting, checking,
+uploading, success, conflicts, failure and interruption. **Cancel** stops further
+work. An interrupted or failed transfer can leave already uploaded transactions
+on the server; it is not rolled back. Select the datasets again to explicitly
+start another action. Reloading the browser does not cancel an upload.
+
+The worker uses pinned `blazectl 1.5.1`, with two concurrent transactions for
+Blaze and one for HAPI. It prepares PUT transactions preserving resource IDs and
+FHIR resources, selects one representation per output directory in the same
+order as dataset inspection, and supports JSON, NDJSON, compressed JSON and XML.
+Original dataset files and archives remain unchanged. Missing resource IDs are
+reported before upload. FHIR server rules, including Blaze referential integrity,
+apply to each transaction; failures are retained in the log.
+
+Start the desired services using the [main README](../README.md#start-with-docker).
+The workbench checks FHIR R4 transaction support through the fixed Compose
+endpoints; server lifecycle remains controlled by Docker Compose.
 
 ## Start and use
 

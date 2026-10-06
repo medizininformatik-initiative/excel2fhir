@@ -45,6 +45,8 @@ def configured_condition_reference(condition, resources, level):
 
 
 def check(source, target, report):
+    from check_encounter_policies import checked_original_periods
+    target = checked_original_periods(source, target, report)
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
     source_ids = {e.get('fullUrl'):e['resource'].get('id')for e in source['entry']}

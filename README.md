@@ -67,8 +67,9 @@ configuration and start generation. Inspect the results and download a dataset
 or the complete run archive. See the [workbench guide](web/README.md) for saved
 configurations, Synthea generation and reports.
 
-Generation saves downloadable datasets. Loading a dataset into a FHIR server is
-a separate operation; see [local services](web/deployment/README.md).
+Generation saves downloadable datasets. Select datasets and a target in
+**Load datasets into FHIR servers** to load them explicitly; see the
+[upload guide](web/README.md#load-datasets-into-a-fhir-server).
 Service data and workbench runs persist in Docker volumes. Selecting fewer
 profiles does not stop services already running; see
 [stopping services](web/deployment/README.md#stopping-services).

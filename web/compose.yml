@@ -249,10 +249,7 @@ services:
     extends:
       file: deployment/upstream/data-portal/availability-updater/docker-compose.yml
       service: availability-updater
-    image: excel2fhir-availability-updater:0.4.1-layout-fix
-    build:
-      context: deployment/availability-updater
-    pull_policy: build
+    image: ghcr.io/medizininformatik-initiative/dataportal-availability-updater:0.4.2
     profiles: [data-portal]
     env_file: !override []
     extra_hosts: !override []

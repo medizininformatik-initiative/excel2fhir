@@ -31,8 +31,13 @@ jobs:
       - name: Check Compose profile combinations
         run: python3 web/integration/test_compose_profiles.py
 
-      - name: Build and test availability updater correction
-        run: docker compose -f web/compose.yml build availability-updater
+      - name: Test official availability updater
+        run: >-
+          docker run --rm --network none --memory=512m
+          --entrypoint python
+          -v "$PWD/web/integration/test_availability_layout.py:/test_layout.py:ro"
+          ghcr.io/medizininformatik-initiative/dataportal-availability-updater:0.4.2
+          /test_layout.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -93,6 +98,18 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build workbench worker
       run: docker build -f web/backend/Dockerfile --target worker -t excel2fhir-workbench:ci .
+    - name: Verify blazectl uploads on Blaze and HAPI
+      run: |
+        trap 'docker compose -f web/compose.yml stop blaze hapi hapi-db' EXIT
+        docker compose -f web/compose.yml up -d --wait --wait-timeout 180 blaze
+        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py blaze
+        docker compose -f web/compose.yml stop blaze
+        docker compose -f web/compose.yml up -d hapi-db hapi
+        for attempt in $(seq 1 90); do
+          if curl --fail --silent http://localhost:5191/fhir/metadata >/dev/null; then break; fi
+          sleep 2
+        done
+        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py hapi
     - name: Generate Synthea sources and compare repeated clinical histories
       run: docker run --rm -i --memory=6g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_generation.py
     - name: Import Synthea sources and repeat immutable runs

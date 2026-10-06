@@ -1,6 +1,6 @@
 """Verify real FDE -> ontology -> Elasticsearch in two memory-bounded stages.
 
-Run inside the derived updater image with this script mounted read-only.
+Run inside the official updater image with this script mounted read-only.
 collect WORKDIR ONTOLOGY_DIR EXPECTED_COUNT uses the local Compose Blaze.
 publish WORKDIR uses the local Compose Elasticsearch after Blaze is stopped.
 Requires an isolated test Blaze and an ontology index with zero availability.

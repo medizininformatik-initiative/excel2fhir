@@ -17,6 +17,17 @@ COPY web/backend/ExportDefaults.java .
 RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked mvn -B -DskipTests package
 RUN java -cp target/excel2fhir.jar ExportDefaults.java /defaults
 
+FROM debian:bookworm-slim AS blazectl
+ARG TARGETARCH
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && case "$TARGETARCH" in \
+      amd64) checksum=716fd5cba59ccceeb34b90be66465de05da28de92ccd55d793ab1e8c68d6ac54 ;; \
+      arm64) checksum=840b6364414e9f79a439a7512df4c55f747e6a87d446d2ebb77cfb7d238fcfc5 ;; \
+      *) exit 1 ;; esac \
+    && curl -fsSL "https://github.com/samply/blazectl/releases/download/v1.5.1/blazectl-1.5.1-linux-${TARGETARCH}.tar.gz" -o /tmp/blazectl.tar.gz \
+    && echo "$checksum  /tmp/blazectl.tar.gz" | sha256sum -c - \
+    && mkdir /blazectl && tar -xzf /tmp/blazectl.tar.gz -C /blazectl
+
 FROM scratch AS runtime-files
 COPY --from=synthea-build /synthea/build/libs/synthea-with-dependencies.jar /synthea/target/synthea.jar
 COPY --from=synthea-build /synthea-version.txt /synthea/target/synthea-revision.txt
@@ -42,6 +53,8 @@ COPY web/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY web/backend/*.py .
 COPY --from=runtime-files / /
+COPY --from=blazectl /blazectl/blazectl /usr/local/bin/blazectl
+COPY third-party/blazectl/LICENSE /usr/share/doc/blazectl/LICENSE
 RUN useradd --create-home --uid 10001 workbench && mkdir /data && chown workbench /data
 USER workbench
 CMD ["python", "worker.py"]
