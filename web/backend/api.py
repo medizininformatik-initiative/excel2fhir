@@ -31,6 +31,7 @@ async def local_mutations(request: Request, call_next):
 class JobRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     requestId: UUID | None = None
+    datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = "starter"
     profile: str = "default"
@@ -62,7 +63,7 @@ def jobs():
 def create(request: JobRequest):
     try:
         job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None,
-                              request.generation.model_dump(mode='json') if request.generation else None)
+                              request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
     except ValueError as error:
@@ -182,6 +183,7 @@ class SavedSelection(BaseModel):
 class BatchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     requestId: UUID
+    datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = 'starter'
     configurations: list[SavedSelection] = Field(min_length=1, max_length=100)
@@ -196,7 +198,7 @@ class RepeatRequest(BaseModel):
 def start_batch(request: BatchRequest):
     selections = [{'id': str(item.id), 'revision': item.revision} for item in request.configurations]
     ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId),
-                             request.generation.model_dump(mode='json') if request.generation else None)
+                             request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
     return [store.get(job_id) for job_id in ids]
 
 
@@ -255,7 +257,7 @@ def artifact_download(job_id: str, artifact_id: str):
 @app.get('/api/datasets')
 def list_datasets():
     return [{**item, 'jobId': job['id'], 'state': job['state'], 'created': job['created'],
-             'source': job.get('source'), 'sourceName': job.get('source_name'), 'configuration': job.get('configuration')}
+             'datasetName': job.get('dataset_name'), 'source': job.get('source'), 'sourceName': job.get('source_name'), 'configuration': job.get('configuration')}
             for job in store.jobs() if job['state'] in {'succeeded', 'failed'} for item in datasets.get(job['id'])['datasets']]
 
 

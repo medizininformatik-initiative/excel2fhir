@@ -1,4 +1,6 @@
 {
+  "app.datasetName": "Datensatzname (optional)",
+  "app.datasetNameHint": "Automatische Bezeichnung",
   "app.upload.startHint": "Zum Hochladen muss Blaze oder HAPI laufen.",
   "app.upload.startServers": "Server starten",
   "app.upload.commandsHint": "Führe einen der folgenden Befehle im Projektverzeichnis aus. Sobald der Server bereit ist, kannst du ihn hier auswählen.",

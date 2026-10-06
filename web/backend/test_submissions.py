@@ -21,6 +21,31 @@ class SubmissionTests(QueueFixture):
         self.validate = validation.start()
         self.addCleanup(validation.stop)
 
+    def test_dataset_name_is_metadata_and_survives_retry_batch_and_repeat(self):
+        request = {'requestId': str(uuid4()), 'source': 'starter', 'profile': 'default', 'datasetName': '  Meine Testdaten ä  '}
+        response = self.client.post('/api/jobs', json=request)
+        self.assertEqual(201, response.status_code, response.text)
+        named = response.json()
+        self.assertEqual('Meine Testdaten ä', named['dataset_name'])
+        self.assertEqual(named['id'], self.client.post('/api/jobs', json=request).json()['id'])
+        self.assertEqual(409, self.client.post('/api/jobs', json={**request, 'datasetName': 'Other'}).status_code)
+        plain = self.client.post('/api/jobs', json={'source': 'starter', 'profile': 'default'}).json()
+        named_snapshot = self.snapshot(named)
+        self.assertEqual('Meine Testdaten ä', named_snapshot.pop('datasetName'))
+        self.assertEqual(self.snapshot(plain), named_snapshot)
+        for filename in ('input.xlsx', 'default.config'):
+            self.assertEqual((store.ROOT / 'jobs' / plain['id'] / filename).read_bytes(),
+                             (store.ROOT / 'jobs' / named['id'] / filename).read_bytes())
+        store.finish(named['id'], 'succeeded', 0)
+        repeated = self.client.post(f"/api/jobs/{named['id']}/repeat", json={'requestId': str(uuid4())}).json()
+        self.assertEqual('Meine Testdaten ä', repeated['dataset_name'])
+        batch = self.client.post('/api/job-batches', json={**self.batch(), 'datasetName': 'Batch'}).json()
+        self.assertEqual(['Batch', 'Batch'], [job['dataset_name'] for job in batch])
+        blank = self.client.post('/api/jobs', json={'datasetName': '   '}).json()
+        self.assertIsNone(blank['dataset_name'])
+        self.assertNotIn('datasetName', self.snapshot(blank))
+        self.assertEqual(422, self.client.post('/api/jobs', json={'datasetName': 'x' * 201}).status_code)
+
     def batch(self):
         items = [configurations.create(name, TEXT + f'TIME_SHIFT_BASE_DAYS={index}\n')
                  for index, name in enumerate(['First', 'Second'])]

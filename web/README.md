@@ -196,6 +196,12 @@ visible without changing the converter outcome. Run search filters by source,
 configuration name, run ID or status. **Repeat run** reuses the original input
 and settings; existing datasets remain available independently of a new run.
 
+Before starting a run, optionally enter a **Dataset name**. The name appears before
+the source and configuration in dataset lists and is searchable in the run history.
+An empty field uses the automatic label. Runs started together share the entered
+name and retain their configuration labels; repeating a run preserves its name.
+The name is display metadata and does not change generated FHIR content or resource IDs.
+
 ## Load datasets into a FHIR server
 
 In **Load datasets into FHIR servers**, select an available Blaze or HAPI target

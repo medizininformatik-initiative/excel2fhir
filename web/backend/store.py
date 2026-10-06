@@ -103,7 +103,7 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook', generation_settings=None):
+                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None):
     specification = None
     if input_path is None and source == 'synthea-generation':
         import generation
@@ -166,6 +166,8 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             snapshot['syntheaGeneratorSha256'] = generation.catalogue()['sha256']
             snapshot['syntheaRevision'] = generation.catalogue()['revision']
             snapshot['generation'] = json.loads((directory / filename).read_text())
+    if dataset_name:
+        snapshot['datasetName'] = dataset_name
     if source_name:
         snapshot['sourceName'] = source_name
     if batch_id:
@@ -178,12 +180,23 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             (directory / name).chmod(0o444)
 
 
-def create(source, profile, configuration_properties=None, request_id=None, generation_settings=None):
+def normalize_dataset_name(value):
+    if value is None:
+        return None
+    if not isinstance(value, str) or len(value) > 200:
+        raise ValueError('Dataset name must be at most 200 characters')
+    return value.strip() or None
+
+
+def create(source, profile, configuration_properties=None, request_id=None, generation_settings=None, dataset_name=None):
+    dataset_name = normalize_dataset_name(dataset_name)
     descriptor = {'kind': 'single', 'source': source, 'profile': profile, 'configuration': configuration_properties}
     if generation_settings is not None:
         descriptor['generation'] = generation_settings
+    if dataset_name:
+        descriptor['datasetName'] = dataset_name
     return submit(descriptor, request_id,
-                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings))[0]
+                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name))[0]
 
 
 def repeat(job_id, request_id):
@@ -208,7 +221,7 @@ def repeat(job_id, request_id):
                     input_path=folder / filename, saved_configuration=config if text is not None else None,
                     repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256'],
                                    **{key: snapshot[key] for key in ('syntheaImportSha256', 'syntheaGeneratorSha256', 'syntheaRevision') if key in snapshot}},
-                    source_name=snapshot.get('sourceName'), input_kind=input_kind)
+                    source_name=snapshot.get('sourceName'), input_kind=input_kind, dataset_name=snapshot.get('datasetName'))
     return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
 
 
@@ -224,7 +237,7 @@ def job_result(row):
     if snapshot_path.is_file():
         snapshot = json.loads(snapshot_path.read_text())
         config = snapshot['profile']
-        job.update(source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
+        job.update(dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
         result = snapshot_path.parent / 'generation-result.json'

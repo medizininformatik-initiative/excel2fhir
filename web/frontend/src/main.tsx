@@ -14,7 +14,7 @@ import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
 import { exportPropertiesConfiguration } from './configuration-properties'
 
-type Job = { id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
+type Job = { dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -66,6 +66,7 @@ function App() {
   const [runLimit, setRunLimit] = useState<number | null>(10)
   const [jobs, setJobs] = useState<Job[]>([])
   const [selected, setSelected] = useState<string | null>(localStorage.getItem('selectedJob'))
+  const [datasetName, setDatasetName] = useState('')
   const [source, setSource] = useState('starter')
   const [generation, setGeneration] = useState<Generation | null>(null)
   const [uploadingInput, setUploadingInput] = useState(false)
@@ -77,7 +78,7 @@ function App() {
   const configurationReady = configurationSource === 'workbook' || (configurationSource === 'saved' ? runConfigurations.length > 0 : (configuration !== null && problems(configuration).length === 0))
   const nativeOutput = source === 'synthea-generation' && generation?.outputMode === 'synthea'
   const canStart = (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
-  const generationPayload = source === 'synthea-generation' ? { generation } : {}
+  const generationPayload = { ...(source === 'synthea-generation' ? { generation } : {}), datasetName: datasetName.trim() || undefined }
   const [logs, setLogs] = useState<string | null>(null)
   const [error, setError] = useState<Message | null>(null)
   const [connectionError, setConnectionError] = useState<Message | null>(null)
@@ -136,7 +137,7 @@ function App() {
   async function cancel() {
     try { await request(`/jobs/${selected}/cancel`, { method: 'POST' }) } catch (e) { setError(errorMessage(e)) }
   }
-  const filteredJobs = jobs.filter(j => [j.id, configurationName(j), j.source_name ?? j.source ?? '', t(stateKey(j.state))].join(' ').toLowerCase().includes(runSearch.toLowerCase())).sort((a, b) => b.created - a.created)
+  const filteredJobs = jobs.filter(j => [j.id, j.dataset_name ?? '', configurationName(j), j.source_name ?? j.source ?? '', t(stateKey(j.state))].join(' ').toLowerCase().includes(runSearch.toLowerCase())).sort((a, b) => b.created - a.created)
   const alert = error || connectionError
   // This is the API's queue placeholder, not converter-produced log content.
   const logText = !selected ? t('app.selectRun') : logs === null || logs === 'Waiting for worker…' ? t('app.waiting') : logs
@@ -151,6 +152,7 @@ function App() {
       <div className="mt-6 flex flex-wrap items-end gap-5">
         <InputSelection language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
         <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select disabled={nativeOutput} className="rounded-lg border border-slate-300 p-2.5 disabled:bg-slate-100 disabled:text-slate-400" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
+        <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
         <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{!nativeOutput && configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
       </div>{source === 'synthea-generation' && <GenerationSettings language={language} onChange={setGeneration}/>}
       {!nativeOutput && configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
@@ -167,18 +169,18 @@ function App() {
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => { setRunSearch(e.target.value); setRunLimit(10) }}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
+        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{j.dataset_name && <strong className="block">{j.dataset_name}</strong>}{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
       </div><ListExpansion language={language} total={filteredJobs.length} limit={runLimit} onChange={setRunLimit} countKey="app.list.runsCount"/></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><a href={`/api/jobs/${job.id}/snapshot`}>{t('app.snapshot')}</a></Button>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(job.id)}>{t('app.repeatRun')}</Button>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}</div>}</div>
         {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
         {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
-        {job && <p className="mb-3 break-words text-sm">{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
+        {job && <p className="mb-3 break-words text-sm">{job.dataset_name && <strong>{job.dataset_name} · </strong>}{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
         {repeatConfirmation === job?.id && <div className="mb-4 rounded-lg border border-slate-200 p-3">
           <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
           <div className="mt-3 flex gap-2"><Button disabled={busy} onClick={() => void repeat()}>{t('app.repeatRun')}</Button><Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(null)}>{t('app.saved.cancel')}</Button></div>
         </div>}
-        {job && <DatasetResults context={{ source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
+        {job && <DatasetResults context={{ datasetName: job.dataset_name, source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
         <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
       </section>
     </div>
