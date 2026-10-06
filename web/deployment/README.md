@@ -140,14 +140,10 @@ portal origin and creates the local account. HAPI uses the
 [8.12.0-2 starter](https://github.com/hapifhir/hapi-fhir-jpaserver-starter/tree/image/v8.12.0-2)
 with its documented PostgreSQL configuration.
 
-The availability updater is built locally from upstream image `0.4.1`. The
-correction in `availability-updater/patch.py` reads ontology documents from
-`elastic/content/`, supports the older `elastic/` layout, processes files in
-sorted order, and fails clearly when no ontology nodes are found. The build
-checks the upstream source SHA-256 and runs regression tests before applying
-the correction. See [upstream issue #28](https://github.com/medizininformatik-initiative/dataportal-availibility-updater/issues/28).
-Review this correction when updating the base image and remove it when the
-upstream release supports the selected ontology layout.
+The availability updater uses the official upstream image `0.4.2`. It loads
+ontology documents recursively under `elastic/`, including `elastic/content/`,
+fails clearly when no ontology nodes are found, and skips empty update files.
+See the [upstream release](https://github.com/medizininformatik-initiative/dataportal-availibility-updater/releases/tag/v0.4.2).
 
 ## Verification
 

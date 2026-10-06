@@ -31,8 +31,13 @@ jobs:
       - name: Check Compose profile combinations
         run: python3 web/integration/test_compose_profiles.py
 
-      - name: Build and test availability updater correction
-        run: docker compose -f web/compose.yml build availability-updater
+      - name: Test official availability updater
+        run: >-
+          docker run --rm --network none --memory=512m
+          --entrypoint python
+          -v "$PWD/web/integration/test_availability_layout.py:/test_layout.py:ro"
+          ghcr.io/medizininformatik-initiative/dataportal-availability-updater:0.4.2
+          /test_layout.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3

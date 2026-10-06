@@ -1,8 +1,8 @@
 # Availability integration check
 
-`smoke_availability.py` verifies FDE reports, the corrected ontology loader,
+`smoke_availability.py` verifies FDE reports, the upstream ontology loader,
 repeatable update bytes, Elasticsearch bulk item responses and the final
-catalogue value. It runs inside the derived updater image, which supplies the
+catalogue value. It runs inside the official updater image `0.4.2`, which supplies the
 upstream Python modules and dependencies.
 
 Use an isolated test Blaze with at least ten synthetic Patients with a gender,
@@ -16,8 +16,9 @@ Run FDE with `web/integration/availability-measure.json`, as configured in
 (`availability.zip`), with local identity metadata and only the `patient-gender`
 stratifier. The independent Data Node probe uses `measure.json` for basic counts.
 
-Mount the following into a container built from
-`web/deployment/availability-updater`, on the test Compose network:
+Mount the following into a container using
+`ghcr.io/medizininformatik-initiative/dataportal-availability-updater:0.4.2`,
+on the test Compose network:
 
 - This script as `/probe.py`, read-only.
 - A writable, empty evidence directory as `/check`.
@@ -54,3 +55,9 @@ completion; delete only the Patients, reports and references created for the tes
 The staged test covers real FDE → Blaze report retrieval → full ontology mapping
 → Elasticsearch publication. It does not measure simultaneous full-stack memory
 or prove determinism of the entire generation pipeline.
+
+The upstream loader traverses ontology files in filesystem order. Repeated
+checks against the same extracted ontology test that specific layout; they do
+not establish byte-identical update files across independently extracted trees.
+Compare filenames and hashes first, and use per-node update comparisons only
+to diagnose differences, not as a substitute for the byte comparison.
