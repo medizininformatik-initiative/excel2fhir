@@ -178,7 +178,7 @@ function App() {
           <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
           <div className="mt-3 flex gap-2"><Button disabled={busy} onClick={() => void repeat()}>{t('app.repeatRun')}</Button><Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(null)}>{t('app.saved.cancel')}</Button></div>
         </div>}
-        {job && <DatasetResults jobId={job.id} state={job.state} language={language}/>}
+        {job && <DatasetResults context={{ source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
         <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
       </section>
     </div>
