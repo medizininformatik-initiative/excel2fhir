@@ -30,6 +30,9 @@ class ComposeProfilesTest(unittest.TestCase):
                                          'auth', 'auth-db', 'dataportal-nginx', 'availability-updater',
                                          'torch', 'torch-nginx', 'fhir-data-evaluator'])
                         self.assertEqual(0, services['fhir-data-evaluator']['scale'])
+                        self.assertEqual('excel2fhir-availability-updater:0.4.1-layout-fix',
+                                         services['availability-updater']['image'])
+                        self.assertEqual('build', services['availability-updater']['pull_policy'])
                         self.assertEqual('http://blaze:8080/fhir', services['dataportal-backend']['environment']['CQL_SERVER_BASE_URL'])
                     self.assertEqual(expected, set(services))
                     published = []
