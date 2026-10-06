@@ -89,8 +89,8 @@ docker compose -f web/compose.yml run --rm fhir-data-evaluator
 
 Its bundled Measure counts Patients. Reports are uploaded to Blaze and persist in its data volume. FDE measures data
 availability; FHIR profile validation is a separate operation. The availability updater reads FDE reports for Elasticsearch. The pinned
-updater 0.4.1 currently expects an `elastic/` subdirectory, while ontology v5.0.0
-ships a flat archive. Its availability import therefore fails with an empty
+updater 0.4.1 searches directly inside `elastic/`, while ontology v5.0.0
+places the ontology documents inside `elastic/content/`. Its availability import therefore fails with an empty
 ontology; feasibility queries and FDE evaluation work independently. Its explicit
 invocation is:
 
