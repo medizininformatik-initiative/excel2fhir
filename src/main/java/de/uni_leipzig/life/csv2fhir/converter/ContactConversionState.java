@@ -10,7 +10,7 @@ import org.hl7.fhir.r4.model.Encounter;
 /** Mutable input reconstruction state owned by one ConverterResult. */
 public final class ContactConversionState {
     Encounter primaryContact;
-    boolean primaryEndDerived, facilityBound;
+    boolean primaryEndDerived, facilityBound, departmentBound;
     final List<Encounter> secondaryContacts = new ArrayList<>();
     final Map<Encounter, Map<String, String>> derivedEnds = new IdentityHashMap<>();
     Encounter previousEncounterLevel1;

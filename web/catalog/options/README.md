@@ -225,8 +225,8 @@ duration for `start`.
 End policies operate on output copies after internal derivations and reference
 matching. They can intentionally produce child periods outside parent periods.
 DAR is applied next: an active class-specific rule overrides the common Encounter
-rule; `unchanged` inherits it. The final actual end value determines `finished`
-versus `in-progress`, and location periods and statuses mirror that result.
+rule; `unchanged` inherits it. End policies determine `finished` versus `in-progress`
+before DAR. DAR preserves those statuses and mirrors the final period to locations.
 The import report records end-policy applications in `contactEndDerivations`.
 Clinical date/time values, including birth date, shift by base days plus the
 zero-based repetition index times repetition days before matching and end rules.
@@ -364,7 +364,7 @@ all Encounter classes or either class separately; both use `Encounter` for the
 resource-type pattern token and the shared resource counter.
 
 The configuration contract specifies output-end changes after temporal assignment,
-followed by DAR and status alignment. Matching uses the original/internal periods,
+with status alignment before DAR and period mirroring afterwards. Matching uses the original/internal periods,
 with inpatient candidates preferred and ambulatory candidates as fallback.
 Calendar policies use the shifted start. Start plus one second uses midnight only
 when the full start date has no time. See [output end rules](#encounter-classes-and-output-end-rules)

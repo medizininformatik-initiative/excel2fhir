@@ -47,6 +47,10 @@ public final class EncounterOutputPolicy {
             throw new IllegalArgumentException("Encounter " + encounter.getId() + " (" + encounter.getClass_().getCode()
                     + ", " + ContactOutputPolicy.name(entry.level()) + "): " + e.getMessage(), e);
         }
+        boolean ended = output.getPeriod().getEndElement().hasValue();
+        output.setStatus(ended ? Encounter.EncounterStatus.FINISHED : Encounter.EncounterStatus.INPROGRESS);
+        for (var location : output.getLocation())
+            location.setStatus(ended ? Encounter.EncounterLocationStatus.COMPLETED : Encounter.EncounterLocationStatus.ACTIVE);
         changes.add(Map.of("encounter", encounter.getId(), "class", encounter.getClass_().getCode(),
                 "level", ContactOutputPolicy.name(entry.level()), "policy", policy,
                 "inputEndMissing", Boolean.toString(entry.inputEndMissing()),
@@ -95,16 +99,11 @@ public final class EncounterOutputPolicy {
         return new DateTimeType(date + "T23:59:59" + fraction + timestamp.getOffset().getId());
     }
 
-    /** Synchronize the actual output value after DAR, including mirrored location periods. */
+    /** Mirror the DAR-adjusted period without changing the pre-DAR clinical status. */
     public Resource finish(Resource source) {
         if (configuration == null || !(source instanceof Encounter)) return source;
         Encounter output = ((Encounter)source).copy();
-        boolean ended = output.getPeriod().getEndElement().hasValue();
-        output.setStatus(ended ? Encounter.EncounterStatus.FINISHED : Encounter.EncounterStatus.INPROGRESS);
-        for (var location : output.getLocation()) {
-            location.setPeriod(output.getPeriod().copy());
-            location.setStatus(ended ? Encounter.EncounterLocationStatus.COMPLETED : Encounter.EncounterLocationStatus.ACTIVE);
-        }
+        for (var location : output.getLocation()) location.setPeriod(output.getPeriod().copy());
         return output;
     }
 }

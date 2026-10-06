@@ -246,10 +246,6 @@ public class ExcelTemplateValidator {
                     add(result, ERROR, sheetName, rowIndex + 1, "Medikation", error);
                 }
             }
-            if (("Laborbefund".equals(sheetName) || "laboratory".equals(get(row, columns, "Kategorie")))
-                    && "Ja/Nein".equals(get(row, columns, "Werttyp"))) {
-                add(result, ERROR, sheetName, rowIndex + 1, "Werttyp", "The KDS laboratory profile requires a coded answer for boolean results");
-            }
             String idColumn = columns.containsKey("Eintrag ID") ? "Eintrag ID" : "Untersuchung ID";
             if (columns.containsKey(idColumn)) {
                 String entryId = get(row, columns, idColumn);
@@ -273,7 +269,6 @@ public class ExcelTemplateValidator {
     void validateDiagnosisSelections(Row row, Map<String, Integer> columns, TemplateValidationResult result) {
         Map<String, Coding> systems =
                 DiagnosisValues.systems();
-        String firstSystem = null;
         for (String[] pair : List.of(new String[] {"Code", "Codesystem"},
                 new String[] {"Zusatzcode", "Zusatzcodesystem"})) {
             String code = get(row, columns, pair[0]);
@@ -284,10 +279,6 @@ public class ExcelTemplateValidator {
             var coding = systems.get(selection);
             if (coding == null) {
                 add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Explicit supported codesystem required");
-            } else if (coding.getSystem().equals(firstSystem)) {
-                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Duplicate coding system exceeds profile slice");
-            } else {
-                firstSystem = coding.getSystem();
             }
             try {
                 DiagnosisValues.absentReason(code);

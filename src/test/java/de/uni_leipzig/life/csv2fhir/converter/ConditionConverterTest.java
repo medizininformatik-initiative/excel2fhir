@@ -62,12 +62,12 @@ public class ConditionConverterTest {
     }
 
     @Test
-    public void requiresSystemAndRejectsUnknownSelections() {
+    public void requiresSystemAndRejectsUnknownSelections() throws Exception {
         assertThrows(Exception.class, () -> convert(Map.of("Code", "00123")));
         assertThrows(Exception.class, () -> convert(Map.of("Klinischer Status", "made-up")));
         assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:made-up")));
-        assertThrows(Exception.class, () -> convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
-                "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")));
+        assertEquals(2, convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
+                "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).getCode().getCoding().size());
     }
 
     private Condition convert(Map<String, String> input) throws Exception {

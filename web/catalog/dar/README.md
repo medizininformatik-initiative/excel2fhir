@@ -64,8 +64,8 @@ fields and choices need a known concrete type before an override can create them
 the runtime uses the converter’s dateTime representation for missing scalar
 choices. Repeated parents are not synthesized. Observation measurement variants
 are selected from the original value type; an absent value has no inferable
-variant and remains unchanged. `as-text` requires nonempty resource narrative;
-the user remains responsible for its clinical content. Condition DAR overrides are
+variant and remains unchanged. `as-text` is applied even without resource narrative;
+the user controls the intended content, including deliberately invalid test data. Condition DAR overrides are
 applied even when the resulting status/abatement combination violates `con-4` or
 `con-5`. Roundtrip comparisons verify the requested replacement; enable FHIR
 validation to check the generated resources against these constraints.
@@ -100,7 +100,7 @@ with the existing bundled-package validator. It also checks incompatible
 Observation value/absence and Condition status/end combinations. These tests do
 not certify every field/code combination; each extension of the catalogue needs
 appropriate new fixtures. `DarOverridesTest` additionally checks runtime replacement, source preservation,
-coding discriminators, narrative requirements, choice types and attachment metadata.
+coding discriminators, narrative-independent replacement, choice types and attachment metadata.
 
 ## Verification commands
 

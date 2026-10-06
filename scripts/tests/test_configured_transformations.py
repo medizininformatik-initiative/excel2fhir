@@ -138,6 +138,28 @@ class DarChecks(unittest.TestCase):
         restore_path({}, target, ['code', 'coding', 'version'], field, 'unknown')
         self.assertEqual({}, target)
 
+    def test_as_text_replacement_does_not_require_narrative(self):
+        before = {'resourceType': 'Condition', 'id': 'c', 'code': {'coding': [{'system': 'urn:test', 'code': 'a'}]}}
+        target = {'entry': [{'resource': {'resourceType': 'Condition', 'id': 'c',
+            'code': {'coding': [{'system': 'urn:test', '_code': absent('as-text')}]}}}]}
+        report = {'converterOptions': {'DAR_CONDITION_CODE_CODING_CODE': 'as-text'}}
+        with patch('check_dar.expected_fields', return_value={'c': before}):
+            self.assertEqual(before, checked_original_dar({}, target, report)['entry'][0]['resource'])
+
+    def test_end_dar_preserves_pre_dar_status_and_mirrors_period(self):
+        before = {'resourceType': 'Encounter', 'id': 'e', 'period': {'start': '2026-01-01', 'end': '2026-01-02'}}
+        period = {'start': '2026-01-01', '_end': absent()}
+        target = {'entry': [{'resource': {'resourceType': 'Encounter', 'id': 'e', 'status': 'finished',
+            'period': period, 'location': [{'status': 'completed', 'period': copy.deepcopy(period)}]}}]}
+        report = {'converterOptions': {'DAR_ENCOUNTER_PERIOD_END': 'unknown'}}
+        with patch('check_dar.expected_fields', return_value={'e': before}):
+            restored = checked_original_dar({}, target, report)['entry'][0]['resource']
+            self.assertEqual(before['period'], restored['period'])
+            self.assertEqual('finished', restored['status'])
+            target['entry'][0]['resource']['status'] = 'in-progress'
+            with self.assertRaisesRegex(AssertionError, 'DAR contact status'):
+                checked_original_dar({}, target, report)
+
     def test_condition_dar_checks_requested_output_independently_of_fhir_validity(self):
         clinical = {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/condition-clinical', 'code': 'active'}]}
         cases = [

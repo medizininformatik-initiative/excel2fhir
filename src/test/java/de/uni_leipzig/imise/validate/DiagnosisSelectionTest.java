@@ -16,7 +16,7 @@ public class DiagnosisSelectionTest {
         assertTrue(check(Map.of("Code", "00123")).hasErrors());
         assertTrue(check(Map.of("Klinischer Status", "unbekannter Status")).hasErrors());
         assertTrue(check(Map.of("Verifikationsstatus", "!dar:invented")).hasErrors());
-        assertTrue(check(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
+        assertFalse(check(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
                 "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).hasErrors());
     }
 

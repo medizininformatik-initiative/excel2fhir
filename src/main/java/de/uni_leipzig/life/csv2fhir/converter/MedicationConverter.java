@@ -94,7 +94,7 @@ public class MedicationConverter extends Converter {
         code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(c.getSystem(), 2)));
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
-        for (String ingredient : value("Wirkstoffcode").split(";")) {
+        if (value("Wirkstoffcode") != null) for (String ingredient : value("Wirkstoffcode").split(";")) {
             r.addIngredient().setItem(ClinicalValues.concept(ingredient.trim(), value("Wirkstoffcodesystem"), null));
         }
         return r;
@@ -131,7 +131,8 @@ public class MedicationConverter extends Converter {
         Dosage d = new Dosage();
         String frequency = value("Dosen pro Tag");
         boolean integral = frequency != null && parseDecimal(frequency).stripTrailingZeros().scale() <= 0
-                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MAX_VALUE)) <= 0;
+                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MAX_VALUE)) <= 0
+                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MIN_VALUE)) >= 0;
         if (value("Dosierungstext") == null && value("Einzeldosis") != null && value("Dosiereinheit") != null && integral) {
             d.addDoseAndRate().setDose(quantity());
             d.getTiming().getRepeat().setFrequency(parseDecimal(frequency).intValueExact()).setPeriod(1).setPeriodUnit(Timing.UnitsOfTime.D);

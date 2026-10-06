@@ -98,12 +98,6 @@ public class EncounterConverter extends Converter {
     private void closePrimary(org.hl7.fhir.r4.model.DateTimeType boundary) {
         if (state.primaryContact == null) return;
         if (!state.primaryContact.getPeriod().hasEnd() || state.primaryEndDerived) {
-            for (Encounter secondary : state.secondaryContacts) {
-                if (secondary.getPeriod().getStart().after(boundary.getValue())
-                        || (!state.derivedEnds.containsKey(secondary) && secondary.getPeriod().hasEnd()
-                            && secondary.getPeriod().getEnd().after(boundary.getValue())))
-                    throw new IllegalArgumentException("The secondary encounter falls outside the primary stay");
-            }
             state.primaryContact.getPeriod().setEndElement(boundary.copy());
             period(state.primaryContact, state.primaryContact.getPeriod());
             if (state.derivedEnds.containsKey(state.primaryContact)) {
@@ -152,13 +146,6 @@ public class EncounterConverter extends Converter {
         period(encounter, encounter.getPeriod());
     }
 
-    private static void inside(Period child, Period parent) {
-        if ((parent.hasStart() && child.getStart().before(parent.getStart()))
-                || (parent.hasEnd() && (child.getStart().compareTo(parent.getEnd()) >= 0
-                    || (child.hasEnd() && child.getEnd().after(parent.getEnd())))))
-            throw new IllegalArgumentException("The encounter period falls outside its parent stay");
-    }
-
     @Override protected List<Resource> convertInternal() throws Exception {
         var inputEnd = ClinicalValues.date(value(Ende));
         boolean inputEndMissing = inputEnd == null || !inputEnd.hasValue();
@@ -196,7 +183,6 @@ public class EncounterConverter extends Converter {
                 || (!isNullOrEmpty(rootId) && !rootId.equals(state.previousEncounterLevel1.getId()));
         if (newRoot && (secondary || isNullOrEmpty(rootId))) throw new IllegalArgumentException("The facility encounter must precede its stays");
         if (!newRoot) {
-            if (state.facilityBound) inside(p, state.previousEncounterLevel1.getPeriod());
             if (value(Einrichtungskontaktklasse) != null
                     && !Objects.equals(getEncounterLevel1Class().getCode(), state.previousEncounterLevel1.getClass_().getCode()))
                 throw new IllegalArgumentException("Conflicting facility encounter classes within the same case");
@@ -204,9 +190,7 @@ public class EncounterConverter extends Converter {
         }
         if (secondary) {
             if (state.primaryContact == null) throw new IllegalArgumentException("A secondary encounter requires a preceding primary location encounter");
-            inside(p, state.primaryContact.getPeriod());
             Encounter parent = state.previousEncounterLevel2 != null ? state.previousEncounterLevel2 : state.previousEncounterLevel1;
-            if (state.previousEncounterLevel2 != null) inside(p, state.previousEncounterLevel2.getPeriod());
             String id = state.previousEncounterLevel1.getId() + ResourceIdSuffix.ENCOUNTER_LEVEL_3
                     + result.getNextId(Fall, EncounterLevel3.class, START_ID_ENCOUNTER_LEVEL_3);
             Encounter contact = newContact(new EncounterLevel3(), id, parent, p, kind);
@@ -218,9 +202,6 @@ public class EncounterConverter extends Converter {
             return resources;
         }
         if (!newRoot && state.primaryContact != null && (hasPlaces || department != null)) {
-            if (p.getStart().before(state.primaryContact.getPeriod().getStart())
-                    || (!state.primaryEndDerived && state.primaryContact.getPeriod().hasEnd() && p.getStart().before(state.primaryContact.getPeriod().getEnd())))
-                throw new IllegalArgumentException("Primary stays overlap or are out of order; encounter assignment is ambiguous");
             closePrimary(p.getStartElement());
         }
         List<Resource> resources = new ArrayList<>();
@@ -238,7 +219,7 @@ public class EncounterConverter extends Converter {
             updateParentPeriodAndStatus(state.previousEncounterLevel1, p);
         }
         if (department != null && !department.equals(state.previousDepartmentName)) {
-            if (state.previousEncounterLevel2 != null) {
+            if (state.previousEncounterLevel2 != null && !state.departmentBound) {
                 state.previousEncounterLevel2.getPeriod().setEndElement(p.getStartElement().copy());
                 period(state.previousEncounterLevel2, state.previousEncounterLevel2.getPeriod());
             }
@@ -247,8 +228,9 @@ public class EncounterConverter extends Converter {
             state.previousEncounterLevel2 = newContact(new EncounterLevel2(), id, state.previousEncounterLevel1, p, null);
             state.previousEncounterLevel2.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
             state.previousDepartmentName = department;
+            state.departmentBound = !hasPlaces && p.hasEnd();
             resources.add(state.previousEncounterLevel2);
-        } else if (state.previousEncounterLevel2 != null && hasPlaces) {
+        } else if (state.previousEncounterLevel2 != null && hasPlaces && !state.departmentBound) {
             updateParentPeriodAndStatus(state.previousEncounterLevel2, p);
         }
         if (hasPlaces) {
@@ -258,7 +240,7 @@ public class EncounterConverter extends Converter {
                     state.previousEncounterLevel2 != null ? state.previousEncounterLevel2 : state.previousEncounterLevel1, p, kind);
             state.primaryEndDerived = !p.hasEnd();
             if (state.primaryEndDerived) derivedEnd(state.primaryContact, state.previousEncounterLevel1);
-            updateParentPeriodAndStatus(state.previousEncounterLevel2, state.primaryContact.getPeriod());
+            if (!state.departmentBound) updateParentPeriodAndStatus(state.previousEncounterLevel2, state.primaryContact.getPeriod());
             resources.add(state.primaryContact);
             locations(state.primaryContact, department, resources);
         } else if (department != null) state.primaryContact = null;

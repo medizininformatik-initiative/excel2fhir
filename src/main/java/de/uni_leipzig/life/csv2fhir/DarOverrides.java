@@ -49,7 +49,6 @@ public final class DarOverrides {
                 targets = targets(output, path.split("\\."), 0, field);
             }
             if (targets.isEmpty()) continue;
-            requireNarrative(output, code, id);
             for (Base target : targets) {
                 if (field.has("supportedChoices")) {
                     boolean supported = false;
@@ -112,26 +111,17 @@ public final class DarOverrides {
 
     private static void observation(Observation source, Observation output, JsonNode field, String code) {
         boolean numeric = field.path("semanticGroup").asText().equals("numeric-measurement");
-        String id = field.path("id").asText();
         if (field.path("field").asText().startsWith("component.")) {
             for (int i = 0; i < source.getComponent().size(); i++) {
                 Type value = source.getComponent().get(i).getValue();
                 if (value == null || (value instanceof Quantity) != numeric) continue;
-                requireNarrative(output, code, id);
                 output.getComponent().get(i).setValue(null).setDataAbsentReason(reason(code));
             }
         } else if (source.hasValue() && (source.getValue() instanceof Quantity) == numeric) {
-            requireNarrative(output, code, id);
             output.setValue(null).setDataAbsentReason(reason(code));
         }
     }
     private static CodeableConcept reason(String code) {
         return new CodeableConcept().addCoding(new Coding("http://terminology.hl7.org/CodeSystem/data-absent-reason", code, null));
-    }
-    private static void requireNarrative(Resource resource, String code, String field) {
-        if (code.equals("as-text") && (!(resource instanceof DomainResource) || !((DomainResource)resource).hasText()
-                || !((DomainResource)resource).getText().hasDiv()
-                || ((DomainResource)resource).getText().getDiv().allText().isBlank()))
-            throw new IllegalArgumentException("DAR as-text requires resource narrative: " + field + " on " + resource.getId());
     }
 }

@@ -55,9 +55,9 @@ public class DarOverridesTest {
         assertFalse(attachment.getDataElement().hasValue()); assertFalse(attachment.hasHash()); assertFalse(attachment.hasSize());
         reason(attachment.getDataElement(),"masked"); assertEquals("https://example.org/document",attachment.getUrl());
     }
-    @Test public void rejectsAsTextWithoutNarrative() {
+    @Test public void appliesAsTextWithoutRequiringNarrative() {
         Condition c = new Condition(); c.getCode().addCoding().setCode("A");
-        assertThrows(IllegalArgumentException.class, () -> apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n"));
+        reason(((Condition)apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n")).getCode().getCodingFirstRep().getCodeElement(),"as-text");
         c.getText().setStatus(Narrative.NarrativeStatus.GENERATED).setDivAsString("<div xmlns=\"http://www.w3.org/1999/xhtml\">Diagnosis A</div>");
         reason(((Condition)apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n")).getCode().getCodingFirstRep().getCodeElement(),"as-text");
     }

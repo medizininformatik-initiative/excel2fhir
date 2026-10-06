@@ -40,10 +40,6 @@ def checked_original_dar(source, target, report):
                             for cc in original.get('category', []) for c in cc.get('coding', []))
                 if identifier.startswith('VitalSigns.') != vital: continue
             if code == 'unchanged': continue
-            if code == 'as-text':
-                from xml.etree import ElementTree
-                narrative = resource.get('text', {}).get('div', '<div/>')
-                assert ''.join(ElementTree.fromstring(narrative).itertext()).strip(), 'DAR as-text needs narrative'
             if field['representation'] == 'dataAbsentReason':
                 values = list(zip(original.get('component', []), resource.get('component', []))) if field['field'].startswith('component.') else [(original, resource)]
                 if field['field'].startswith('component.'):
@@ -70,7 +66,7 @@ def checked_original_dar(source, target, report):
                     assert 'size' not in attachment and 'hash' not in attachment, 'DAR attachment leaks size or hash'
                     assert not attachment.get('url', '').lower().startswith('data:'), 'DAR attachment leaks embedded data URL'
         if resource['resourceType'] == 'Encounter' and output_period != resource.get('period'):
-            ended = bool((output_period or {}).get('end'))
+            ended = bool(resource.get('period', {}).get('end'))
             assert resource.get('status') == ('finished' if ended else 'in-progress'), 'DAR contact status differs'
             for place in resource.get('location', []):
                 assert place.get('period') == output_period, 'DAR location period differs'

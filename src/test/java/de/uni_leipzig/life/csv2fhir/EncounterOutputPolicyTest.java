@@ -8,6 +8,18 @@ public class EncounterOutputPolicyTest {
     private String end(String start, String policy) {
         return EncounterOutputPolicy.end(new DateTimeType(start), policy).getValueAsString();
     }
+    @Test public void darPreservesExistingEncounterAndLocationStatus() {
+        var config = ContractConfiguration.parse("CONFIGURATION_VERSION=1\nDAR_ENCOUNTER_PERIOD_END=unknown\n");
+        var e = new Encounter().setStatus(Encounter.EncounterStatus.CANCELLED);
+        e.getPeriod().setStartElement(new DateTimeType("2026-05-01")).setEndElement(new DateTimeType("2026-05-03"));
+        e.addLocation().setStatus(Encounter.EncounterLocationStatus.RESERVED);
+        var policy = new EncounterOutputPolicy(config, new ContactIndex());
+        var out = (Encounter)policy.finish(new DarOverrides(config).output(policy.output(e)));
+        assertEquals(Encounter.EncounterStatus.CANCELLED, out.getStatus());
+        assertEquals(Encounter.EncounterLocationStatus.RESERVED, out.getLocationFirstRep().getStatus());
+        assertFalse(out.getPeriod().getEndElement().hasValue());
+        assertTrue(out.getPeriod().equalsDeep(out.getLocationFirstRep().getPeriod()));
+    }
     @Test public void calendarEndsPreserveDatePrecisionAndExplicitOffsets() {
         assertEquals("2024-03-31", end("2024-02-29", "quarter-end"));
         assertEquals("2026-12-31", end("2026-12-31", "year-end"));
@@ -42,8 +54,8 @@ public class EncounterOutputPolicyTest {
             out = (Encounter)policy.finish(new DarOverrides(config).output(out));
             assertFalse(out.getPeriod().getEndElement().hasValue());
             assertEquals("masked", ((CodeType)out.getPeriod().getEndElement().getExtensionByUrl(DarOverrides.URL).getValue()).getValue());
-            assertEquals(Encounter.EncounterStatus.INPROGRESS, out.getStatus());
-            assertEquals(Encounter.EncounterLocationStatus.ACTIVE, out.getLocationFirstRep().getStatus());
+            assertEquals(Encounter.EncounterStatus.FINISHED, out.getStatus());
+            assertEquals(Encounter.EncounterLocationStatus.COMPLETED, out.getLocationFirstRep().getStatus());
             assertTrue(out.getPeriod().equalsDeep(out.getLocationFirstRep().getPeriod()));
             assertEquals("2026-05-20", encounter.getPeriod().getEndElement().getValueAsString());
             assertEquals(1, policy.changes().size());

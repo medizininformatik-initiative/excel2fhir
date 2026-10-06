@@ -47,11 +47,11 @@ public class ContactInputValidatorTest {
                 row(6,"p","1","2026-01-03","","","Bett 2","")))
             assertTrue(check.accept(input).isEmpty());
     }
-    @Test public void transferCannotCutOffAnExplicitSecondaryEnd() {
+    @Test public void transferAcceptsExplicitSecondaryEndOutsidePrimary() {
         var check = new ContactInputValidator();
         assertTrue(check.accept(row(2,"p","1","2026-01-01","","Innere Medizin","S1","")).isEmpty());
         assertTrue(check.accept(row(3,"p","1","2026-01-02","2026-01-04","","OP","Operation")).isEmpty());
-        assertEquals(1,check.accept(row(4,"p","1","2026-01-03","","","S2","")).size());
+        assertTrue(check.accept(row(4,"p","1","2026-01-03","","","S2","")).isEmpty());
         // A new case restores independent sequence checking.
         assertTrue(check.accept(row(5,"p","2","2026-02-01","2026-02-04","","","")).isEmpty());
         assertEquals(1,check.accept(row(6,"p","2","2026-02-02","","","OP","Operation")).size());

@@ -13,15 +13,17 @@ ward. Secondary contacts can overlap their primary stay and each other.
 | Field or relationship | Rule |
 | --- | --- |
 | Start and end | Start must be readable. A supplied end must be readable. End-before-start values are preserved for FHIR validation. |
-| Parent period | A child starts within the parent's period and ends by its known end. |
-| Primary stays | Enter them in chronological order with distinct, non-overlapping periods. |
+| Parent period | Children retain their row-based parent even when their periods extend outside it. |
+| Primary stays | Row order determines the primary stay for following secondary contacts. Overlapping periods are accepted. |
 | Secondary contact | Place it after its primary care-location stay and before the next primary stay. |
 | Contact type | Use a supported value and supply at least one ward, room or bed. |
 | Contact class | Use the same facility-contact class throughout a case. |
 | Admission reason | Enter it on the facility row with an explicit case number. |
 | Patient and case | Each contact must resolve to a known patient and case. |
 
-A single contact can have equal start and end, subject to its parent's period.
+Explicit facility and department boundaries are preserved. Temporal matching selects
+the latest-starting eligible contact and then the earliest input row for equal starts.
+A single contact can have equal start and end.
 A location contact can use a room or bed alone and can link directly to the facility
 when a department is absent. Ends remain open when the derivation rules have no
 known boundary. Class/type combinations are accepted independently of clinical

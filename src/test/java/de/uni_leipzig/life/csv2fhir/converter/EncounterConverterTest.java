@@ -29,6 +29,34 @@ public class EncounterConverterTest {
     private static final String PRIMARY = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,Normalstationär\n";
     private static final String OP = "PID1,1,2026-05-02T09:00:00Z,,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,Operation\n";
 
+    @Test public void overlappingContactsUseLatestStartThenEarliestInputRow() throws Exception {
+        var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY
+                + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-02T08:00:00Z")
+                + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-02T08:00:00Z"));
+        var stays = getEncounters(result, EncounterLevel3.class);
+        assertEquals(3, stays.size());
+        assertEquals("2026-05-03T12:00:00Z", stays.get(0).getPeriod().getEndElement().getValueAsString());
+        var entry = result.contacts().get(stays.get(0)).orElseThrow();
+        var matched = result.contacts().match(entry.patientId(), de.uni_leipzig.life.csv2fhir.ContactIndex.Level.WARD_SERVICE,
+                List.of(new org.hl7.fhir.r4.model.DateTimeType("2026-05-02T10:00:00Z"))).orElseThrow();
+        assertEquals(stays.get(1).getId(), matched.encounter().getId());
+    }
+    @Test public void outlyingChildrenKeepExplicitParentAndSecondaryEnds() throws Exception {
+        var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY
+                + OP.replace("09:00:00Z,,", "09:00:00Z,2026-05-07T11:00:00Z,"));
+        assertEquals("2026-05-05T12:00:00Z", getEncounters(result, EncounterLevel1.class).get(0).getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-07T11:00:00Z", getEncounters(result, EncounterLevel3.class).get(1).getPeriod().getEndElement().getValueAsString());
+        result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY.replace("2026-05-03T12:00:00Z", "")
+                + OP.replace("09:00:00Z,,", "09:00:00Z,2026-05-07T11:00:00Z,")
+                + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-03T12:00:00Z"));
+        assertEquals("2026-05-03T12:00:00Z", getEncounters(result, EncounterLevel3.class).get(0).getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-07T11:00:00Z", getEncounters(result, EncounterLevel3.class).get(1).getPeriod().getEndElement().getValueAsString());
+        result = convertRecords(CONTACT_HEADER + ROOT_CONTACT
+                + PRIMARY.replace("C1,Zimmer 101,Bett 1,,Normalstationär", ",,,,")
+                + PRIMARY.replace("2026-05-03T12:00:00Z", "2026-05-07T12:00:00Z"));
+        assertEquals("2026-05-03T12:00:00Z", getEncounters(result, EncounterLevel2.class).get(0).getPeriod().getEndElement().getValueAsString());
+        assertEquals("2026-05-07T12:00:00Z", getEncounters(result, EncounterLevel3.class).get(0).getPeriod().getEndElement().getValueAsString());
+    }
     @Test public void reversedPeriodIsPreservedInOutput() throws Exception {
         var result = convertRecords(CONTACT_HEADER
                 + "PID1,1,2026-05-05T12:00:00Z,2026-05-01T08:00:00Z,stationaer,,,,,,\n");
@@ -128,11 +156,8 @@ public class EncounterConverterTest {
         }
     }
 
-    @Test public void invalidOrAmbiguousAssignmentsAreRejected() {
+    @Test public void missingParentsAndUnmappedContactKindsAreRejected() {
         assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+OP));
-        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+PRIMARY));
-        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("2026-05-02","2026-05-04")));
-        assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("09:00:00Z,,","09:00:00Z,2026-05-04T11:00:00Z,")));
         assertThrows(IllegalArgumentException.class,()->convertRecords(CONTACT_HEADER+ROOT_CONTACT+PRIMARY+OP.replace("OP,OP-Saal 1",",")));
     }
 

@@ -1,6 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,9 +48,6 @@ public final class MedicationValues {
         if (ADMINISTRATION.equals(type) && get.apply("Dokumentationszeitpunkt") != null) {
             errors.add("Verabreichung: specify the administration time in Beginn and leave Dokumentationszeitpunkt empty");
         }
-        if ((ADMINISTRATION.equals(type) || STATEMENT.equals(type)) && get.apply("Beginn") == null) {
-            errors.add("Beginn is required; select Unbekannt for an unknown timestamp");
-        }
         for (String key : List.of("Dokumentationszeitpunkt", "Beginn", "Ende")) {
             try { ClinicalValues.date(get.apply(key)); }
             catch (Exception e) { errors.add(key + ": invalid date or Data Absent Reason"); }
@@ -60,19 +56,12 @@ public final class MedicationValues {
         checkCode(get, "Wirkstoffcode", "Wirkstoffcodesystem", INGREDIENT_SYSTEMS, errors);
         String ingredients = get.apply("Wirkstoffcode");
         if (ingredients != null && !DiagnosisValues.isAbsent(ingredients)) {
-            var seen = new java.util.HashSet<String>();
             for (String ingredient : ingredients.split(";", -1)) {
                 String code = ingredient.trim();
-                if (code.isEmpty() || DiagnosisValues.isAbsent(code) || !seen.add(code)) {
-                    errors.add("Wirkstoffcode: separate distinct, nonempty codes with semicolons");
-                } else if ("UNII".equals(get.apply("Wirkstoffcodesystem")) && !code.matches("[A-Z0-9]{10}")) {
-                    errors.add("UNII must contain ten uppercase letters or digits");
+                if (code.isEmpty()) {
+                    errors.add("Wirkstoffcode: separate nonempty codes with semicolons");
                 }
             }
-        }
-        if (get.apply("Wirkstoffcode") == null) errors.add("Wirkstoffcode is required; for an unknown code, select Unbekannt and specify the code system");
-        if (get.apply("Präparatcode") == null && get.apply("ATC-Code") == null && get.apply("Präparatbezeichnung") == null) {
-            errors.add("At least one of Präparatcode, ATC-Code or Präparatbezeichnung is required");
         }
         String atc = get.apply("ATC-Code"), version = get.apply("ATC-Version");
         if (atc == null && version != null) errors.add("ATC-Version requires ATC-Code");
@@ -80,18 +69,13 @@ public final class MedicationValues {
         catch (RuntimeException e) { errors.add("ATC-Code: invalid Data Absent Reason"); }
         try { DiagnosisValues.absentReason(version); }
         catch (RuntimeException e) { errors.add("ATC-Version: invalid Data Absent Reason"); }
-        if (ADMINISTRATION.equals(type) && get.apply("Einzeldosis") == null
-                && (get.apply("Dosierungstext") != null || get.apply("Dosen pro Tag") != null)) {
-            errors.add("Administration dosage requires Einzeldosis; select Unbekannt for an unknown dose (FHIR mad-1)");
-        }
         if (get.apply("Dosiereinheit") != null && get.apply("Einzeldosis") == null) errors.add("Dosiereinheit ohne Einzeldosis");
         for (String key : List.of("Einzeldosis", "Dosen pro Tag")) {
             String number = get.apply(key);
             if (number == null) continue;
             try {
                 if ("Einzeldosis".equals(key) && DiagnosisValues.absentReason(number) != null) continue;
-                BigDecimal n = de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal(number);
-                if (n.signum() < 0 || ("Dosen pro Tag".equals(key) && n.signum() == 0)) errors.add(key + ": invalid quantity");
+                de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal(number);
             } catch (Exception e) { errors.add(key + ": a number is required"); }
         }
         return errors;
@@ -106,8 +90,7 @@ public final class MedicationValues {
             return;
         }
         try {
-            var absent = DiagnosisValues.absentReason(code);
-            if ("PZN".equals(system) && absent == null && !code.matches("[0-9]{8}")) errors.add("PZN must contain eight digits");
+            DiagnosisValues.absentReason(code);
         } catch (RuntimeException e) { errors.add(column + ": invalid Data Absent Reason"); }
     }
 }
