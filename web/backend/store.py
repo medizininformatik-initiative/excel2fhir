@@ -28,6 +28,7 @@ def connect():
             db.row_factory = sqlite3.Row
             db.execute('PRAGMA journal_mode=WAL')
             db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, cancel INTEGER NOT NULL DEFAULT 0, exit_code INTEGER)")
+            db.execute("CREATE TABLE IF NOT EXISTS uploads (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, descriptor TEXT NOT NULL, result TEXT, cancel INTEGER NOT NULL DEFAULT 0)")
             db.execute("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, jobs TEXT NOT NULL)")
         with db:
             yield db

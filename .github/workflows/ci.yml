@@ -93,6 +93,18 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build workbench worker
       run: docker build -f web/backend/Dockerfile --target worker -t excel2fhir-workbench:ci .
+    - name: Verify blazectl uploads on Blaze and HAPI
+      run: |
+        trap 'docker compose -f web/compose.yml stop blaze hapi hapi-db' EXIT
+        docker compose -f web/compose.yml up -d --wait --wait-timeout 180 blaze
+        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py blaze
+        docker compose -f web/compose.yml stop blaze
+        docker compose -f web/compose.yml up -d hapi-db hapi
+        for attempt in $(seq 1 90); do
+          if curl --fail --silent http://localhost:5191/fhir/metadata >/dev/null; then break; fi
+          sleep 2
+        done
+        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py hapi
     - name: Generate Synthea sources and compare repeated clinical histories
       run: docker run --rm -i --memory=6g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_generation.py
     - name: Import Synthea sources and repeat immutable runs

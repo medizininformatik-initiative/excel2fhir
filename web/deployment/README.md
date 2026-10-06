@@ -53,7 +53,7 @@ services; service lifecycle is controlled through Compose.
 ## Stopping services
 
 Generation produces datasets. Loading a dataset into a chosen FHIR server is a
-separate, explicit operation. Keep variants with overlapping resource IDs in
+separate, explicit operation in the [workbench](../README.md#load-datasets-into-a-fhir-server). Keep variants with overlapping resource IDs in
 separate targets. Stopping services retains their volumes. To stop one server:
 
 ```sh

@@ -196,6 +196,38 @@ visible without changing the converter outcome. Run search filters by source,
 configuration name, run ID or status. **Repeat run** reuses the original input
 and settings; existing datasets remain available independently of a new run.
 
+## Load datasets into a FHIR server
+
+In **Load datasets into FHIR servers**, select an available Blaze or HAPI target
+and one or more datasets from successful runs. The displayed address identifies
+the target. Start **Load datasets** to queue the action; generation jobs and
+uploads share the worker and run one at a time.
+
+The worker checks the entire selection before transferring any data. Different
+contents under the same resource type and ID within that selection stop the
+upload and identify the conflict. Select compatible datasets or load them in
+separate actions. Each later action updates existing resources with the same
+IDs; resources absent from the selection remain on the server.
+
+Each action retains the selected dataset checksums, run snapshots, target,
+preparation result and upload log. Status distinguishes waiting, checking,
+uploading, success, conflicts, failure and interruption. **Cancel** stops further
+work. An interrupted or failed transfer can leave already uploaded transactions
+on the server; it is not rolled back. Select the datasets again to explicitly
+start another action. Reloading the browser does not cancel an upload.
+
+The worker uses pinned `blazectl 1.5.1`, with two concurrent transactions for
+Blaze and one for HAPI. It prepares PUT transactions preserving resource IDs and
+FHIR resources, selects one representation per output directory in the same
+order as dataset inspection, and supports JSON, NDJSON, compressed JSON and XML.
+Original dataset files and archives remain unchanged. Missing resource IDs are
+reported before upload. FHIR server rules, including Blaze referential integrity,
+apply to each transaction; failures are retained in the log.
+
+Start the desired services using the [main README](../README.md#start-with-docker).
+The workbench checks FHIR R4 transaction support through the fixed Compose
+endpoints; server lifecycle remains controlled by Docker Compose.
+
 ## Start and use
 
 ```sh

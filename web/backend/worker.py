@@ -8,6 +8,7 @@ import sys
 import synthea_runtime
 import generation
 import datasets
+import fhir_uploads
 import time
 import zipfile
 
@@ -140,12 +141,15 @@ def main():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         with store.connect() as db:
             db.execute("UPDATE jobs SET state='interrupted' WHERE state='running'")
+        fhir_uploads.recover()
         signal.signal(signal.SIGTERM, stop)
         signal.signal(signal.SIGINT, stop)
         while not stopping:
             job_id = store.claim()
             if job_id:
                 execute(job_id)
+            elif upload_id := fhir_uploads.claim():
+                fhir_uploads.execute(upload_id, lambda: stopping, terminate)
             else:
                 datasets.backfill(lambda: stopping)
                 time.sleep(0.5)

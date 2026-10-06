@@ -109,8 +109,8 @@ public final class DatasetInspection {
         }
     }
 
-    public static ObjectNode inspect(Path root) throws Exception {
-        var scan = new DatasetInspection();
+    static List<Path> selectedFiles(Path root) throws Exception {
+        List<Path> selectedFiles = new ArrayList<>();
         Map<Path, List<Path>> folders = new TreeMap<>();
         try (var paths = Files.walk(root)) {
             for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
@@ -122,9 +122,18 @@ public final class DatasetInspection {
             for (String suffix : SUFFIXES) {
                 var selected = folder.stream().filter(path -> path.toString().endsWith(suffix)).toList();
                 if (selected.isEmpty()) continue;
-                for (Path path : selected) scan.file(path, suffix);
+                selectedFiles.addAll(selected);
                 break;
             }
+        }
+        return selectedFiles;
+    }
+
+    public static ObjectNode inspect(Path root) throws Exception {
+        var scan = new DatasetInspection();
+        for (Path path : selectedFiles(root)) {
+            String suffix = SUFFIXES.stream().filter(value -> path.toString().endsWith(value)).findFirst().orElseThrow();
+            scan.file(path, suffix);
         }
         var result = JSON.createObjectNode();
         var counts = result.putObject("resourceCounts");

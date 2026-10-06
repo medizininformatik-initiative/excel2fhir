@@ -9,6 +9,7 @@ import store
 import configurations
 import inputs
 import datasets
+import fhir_uploads
 import generation
 from generation import Settings as GenerationSettings
 from starlette.concurrency import run_in_threadpool
@@ -267,3 +268,36 @@ def dataset_download(dataset_id: str):
         return FileResponse(path, filename='dataset-' + dataset_id + '.zip')
     except FileNotFoundError as error:
         raise HTTPException(404, str(error))
+
+
+class UploadRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    requestId: UUID
+    target: str
+    datasets: list[str] = Field(min_length=1, max_length=100)
+
+
+@app.get('/api/fhir-targets')
+def fhir_targets():
+    return fhir_uploads.targets()
+
+
+@app.get('/api/fhir-uploads')
+def fhir_upload_history():
+    return fhir_uploads.history()
+
+
+@app.post('/api/fhir-uploads', status_code=202)
+def fhir_upload(request: UploadRequest):
+    return configuration_call(fhir_uploads.create, str(request.requestId), request.target, request.datasets)
+
+
+@app.post('/api/fhir-uploads/{upload_id}/cancel', status_code=202)
+def cancel_fhir_upload(upload_id: UUID):
+    configuration_call(fhir_uploads.cancel, str(upload_id))
+    return fhir_uploads.get(str(upload_id))
+
+
+@app.get('/api/fhir-uploads/{upload_id}/logs', response_class=PlainTextResponse)
+def fhir_upload_logs(upload_id: UUID):
+    return configuration_call(fhir_uploads.logs, str(upload_id))
