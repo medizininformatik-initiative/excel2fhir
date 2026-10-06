@@ -1,5 +1,5 @@
 """Verify product reference identity and descriptive output from input rows."""
-from check_output_selection import descriptive_reference, named_id, enabled
+from check_output_selection import descriptive_reference, named_id
 
 
 def product_id(row):
@@ -9,19 +9,17 @@ def product_id(row):
 
 
 def check_medication_references(rows, resources, options, pid):
-    types = {'Verordnung': ('MedicationRequest', 'MR', 'MEDICATION_REQUEST'),
-             'Verabreichung': ('MedicationAdministration', 'MA', 'MEDICATION_ADMINISTRATION'),
-             'Medikationsaussage': ('MedicationStatement', 'MS', 'MEDICATION_STATEMENT')}
-    counts, expected = {}, {}
-    for row in rows:
-        kind, suffix, key = types[row[2]]
-        number = counts.get(kind, int(options.get('START_ID_' + key, 1)))
-        counts[kind] = number + 1
-        identifier = pid + ('-E-' + row[1] if row[1] else '') + '-' + suffix + '-' + str(number)
-        if enabled(options, key + '_ENABLED'):
-            expected[identifier] = descriptive_reference('Medication', product_id(row), row[3], options)
-    actual = {r['id']: r for r in resources if r['resourceType'] in {t[0] for t in types.values()}}
+    from check_medication_transformations import transformed_medications
+    expected = {r['id']: r for r in transformed_medications(rows, options, pid)}
+    actual = {r['id']: r for r in resources if r['resourceType'] in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement')}
     assert actual.keys() == expected.keys(), 'Medication event identities differ'
     for identifier, resource in actual.items():
-        assert resource.get('medicationReference', {}) == expected[identifier], 'Medication reference differs: ' + identifier
-        assert 'medicationCodeableConcept' not in resource, 'Unexpected medication representation'
+        wanted = expected[identifier]
+        product = wanted['medicationReference']['reference'].removeprefix('Medication/')
+        label = next(row[3] for row in rows if product_id(row) == product)
+        reference = descriptive_reference('Medication', product, label, options)
+        if reference: wanted['medicationReference'] = reference
+        else: wanted.pop('medicationReference')
+        # Metadata and patient/contact assignments have their own checks. All clinical event facts are compared here.
+        facts = {k: v for k, v in resource.items() if k not in ('meta', 'identifier', 'subject', 'context', 'encounter')}
+        assert facts == wanted, {'medicationEvent': identifier, 'expected': wanted, 'actual': facts}

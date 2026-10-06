@@ -34,7 +34,12 @@ def check_clinical(source, target, report):
     dst = [e['resource'] for e in target['entry']]
     options = report.get('converterOptions', {})
     imports = [r for r in expected['clinicalImports'] if selected(src[r['sourceId']], options)]
-    wanted = Counter(r['resourceType'] for r in imports)
+    from check_medication_transformations import transformed_medications
+    medication_rows = rows['Medikation']
+    localize_rows({'Medikation': medication_rows})
+    medication_events = transformed_medications(medication_rows, options, report.get('outputPatient', pid.replace('_', '-')))
+    wanted = Counter(r['resourceType'] for r in imports if r['resourceType'] not in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'))
+    wanted.update(r['resourceType'] for r in medication_events)
     excluded = {'Patient','Encounter','Condition','Medication'}
     if 'movements' in report: excluded.add('Location')
     actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
@@ -106,7 +111,6 @@ def check_clinical(source, target, report):
         for r in dst if r['resourceType'] == 'Immunization'), 'Vaccine coding, description or event changed'
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
     product_systems = {**SYSTEMS, PZN: 'PZN'}
-    localize_rows({'Medikation': rows['Medikation']})
     def product_row(row):
         codings = []
         if row[4]: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row[5]), 'code': row[4]}))

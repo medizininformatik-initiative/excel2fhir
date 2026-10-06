@@ -18,14 +18,16 @@ public class WorkflowOptions {
         for (var key : ConverterOptions.StringOption.values()) values.put(key.name(), options.getValue(key));
         if (options.configuration() != null) {
             // Use the packaged contract so the checker receives the same effective
-            // selection and reference settings as the converter, including dependencies.
+            // transformation settings as the converter, including dependencies.
             try (var stream = WorkflowOptions.class.getResourceAsStream("/configuration/options/contract.json")) {
                 JsonObject contract = JsonParser.parseString(new String(stream.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
                 for (var entry : contract.getAsJsonArray("options")) {
                     JsonObject definition = entry.getAsJsonObject();
                     String id = definition.get("id").getAsString();
-                    if (!id.startsWith("resource.") && !id.startsWith("contact.") && !id.startsWith("reference.")) continue;
+                    if (!id.startsWith("resource.") && !id.startsWith("contact.") && !id.startsWith("reference.")
+                            && !id.startsWith("timeShift.") && !id.startsWith("medication.")) continue;
                     String fallback = definition.get("type").getAsString().equals("boolean") ? "false"
+                            : id.startsWith("medication.") ? "retain" : id.startsWith("timeShift.") ? "0"
                             : id.endsWith(".endPolicy") ? "preserve" : id.endsWith(".endApplication") ? "always" : "none";
                     String value = options.configuration().effective(id).map(node -> {
                         if (!node.isArray()) return node.asText();
@@ -34,6 +36,10 @@ public class WorkflowOptions {
                         return String.join(",", members);
                     }).orElse(fallback);
                     values.put(definition.get("propertyName").getAsString(), value);
+                }
+                var overrides = options.configuration().darOverrides();
+                for (var entry : contract.getAsJsonObject("propertiesFormat").getAsJsonObject("darProperties").entrySet()) {
+                    if (overrides.containsKey(entry.getKey())) values.put(entry.getValue().getAsString(), overrides.get(entry.getKey()));
                 }
             }
         }

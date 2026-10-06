@@ -32,8 +32,10 @@ def expected_end(start, end, policy, application, missing):
 
 
 def checked_original_periods(source, target, report):
+    from check_time_shift import shift_days, shift_date
+    days = shift_days(report)
     options = report.get('converterOptions', {})
-    if all(options.get(f'ENCOUNTER_{scope}_END_POLICY', 'preserve') == 'preserve' for scope in ('AMBULATORY', 'INPATIENT')):
+    if not days and all(options.get(f'ENCOUNTER_{scope}_END_POLICY', 'preserve') == 'preserve' for scope in ('AMBULATORY', 'INPATIENT')):
         return target
     pid = report.get('outputPatient', report['sourcePatient'].replace('_', '-'))
     periods = {}
@@ -60,7 +62,7 @@ def checked_original_periods(source, target, report):
     for r in encounters.values():
         scope = {'AMB': 'AMBULATORY', 'IMP': 'INPATIENT'}.get(r.get('class', {}).get('code'))
         policy = options.get(f'ENCOUNTER_{scope}_END_POLICY', 'preserve')
-        if policy == 'preserve':
+        if policy == 'preserve' and not days:
             continue
         level = next((c['code'] for t in r.get('type', []) for c in t.get('coding', []) if c.get('system') == 'http://fhir.de/CodeSystem/Kontaktebene'), 'einrichtungskontakt')
         roots = [pid + '-E-' + number for number in report['encounterNumbers'].values()]
@@ -68,16 +70,18 @@ def checked_original_periods(source, target, report):
                         or r['id'].startswith((root + '-A-', root + '-V-'))), None)
         period = r.get('period', {})
         kind = next((c['code'] for t in r.get('type', []) for c in t.get('coding', []) if c.get('system') == 'http://fhir.de/CodeSystem/kontaktart-de'), '') if level == 'versorgungsstellenkontakt' else ''
-        key = (root_id, level, instant(period.get('start')), kind)
+        original_start = shift_date(period.get('start'), -days)
+        key = (root_id, level, instant(original_start), kind)
         assert key in periods, {'unmatchedContactPeriod': key}
         original_end, missing = periods[key]
-        wanted = expected_end(period.get('start'), original_end, policy,
+        wanted = expected_end(period.get('start'), shift_date(original_end, days), policy,
                               options.get(f'ENCOUNTER_{scope}_END_APPLICATION', 'always'), missing)
         assert instant(period.get('end')) == instant(wanted), {'encounter': r['id'], 'policy': policy, 'expectedEnd': wanted, 'actualEnd': period.get('end')}
         assert r.get('status') == ('finished' if wanted else 'in-progress'), 'Contact status differs from configured end'
         for location in r.get('location', []):
             assert location.get('period') == period, 'Location period differs from configured contact period'
             assert location.get('status') == ('completed' if wanted else 'active'), 'Location status differs from configured end'
+        period['start'] = original_start
         if original_end:
             period['end'] = original_end
         else:

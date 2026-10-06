@@ -219,7 +219,8 @@ public final class ContractConfiguration {
     }
 
     List<Map<String, String>> identifierRules() { return List.copyOf(rules); }
-    Map<String, String> darOverrides() { return Map.copyOf(dar); }
+    /** Immutable DAR selections for independent workflow checks. */
+    public Map<String, String> darOverrides() { return Map.copyOf(dar); }
     JsonNode darFields() { return DAR.get("fields").deepCopy(); }
 
     public JsonNode stored(String id) { return values.get(id).deepCopy(); }

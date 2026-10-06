@@ -38,16 +38,8 @@ def check_clinical_references(source, resources, report, medication_rows, docume
     documents = {}
     for number, row in enumerate(document_rows, int(options.get('START_ID_DOCUMENT_REFERENCE', 1))):
         documents[pid + ('-E-' + row[1] if row[1] else '') + '-DR-' + str(number)] = row
-    medications = {}
-    counters = {}
-    types = {'Verordnung': ('MEDICATION_REQUEST', 'MR'), 'Verabreichung': ('MEDICATION_ADMINISTRATION', 'MA'),
-             'Medikationsaussage': ('MEDICATION_STATEMENT', 'MS')}
-    for row in medication_rows:
-        key, suffix = types[row[2]]
-        number = counters.get(key, int(options.get('START_ID_' + key, 1)))
-        counters[key] = number + 1
-        identifier = pid + ('-E-' + row[1] if row[1] else '') + '-' + suffix + '-' + str(number)
-        medications[identifier] = row[13] if suffix == 'MR' else row[14]
+    from check_medication_transformations import transformed_medications
+    medications = {r['id']: r for r in transformed_medications(medication_rows, options, pid)}
     for resource in resources:
         kind = resource['resourceType']
         key = 'REFERENCE_' + resource_key(resource) + '_ENCOUNTER'
@@ -62,7 +54,8 @@ def check_clinical_references(source, resources, report, medication_rows, docume
         elif kind == 'Immunization':
             times = [resource.get('occurrenceDateTime')]
         elif kind.startswith('Medication'):
-            times = [medications[resource['id']]]
+            expected = medications[resource['id']]
+            times = [expected.get('authoredOn') or expected.get('effectiveDateTime') or expected.get('effectivePeriod', {}).get('start')]
         elif kind in ('CarePlan', 'DiagnosticReport'):
             original = events[resource['id']]
             if kind == 'DiagnosticReport':

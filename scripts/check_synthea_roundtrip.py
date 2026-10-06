@@ -17,8 +17,12 @@ from check_clinical_references import matching_contact
 
 
 def check(source, target, report):
+    from check_dar import checked_original_dar
+    target = checked_original_dar(source, target, report)
     from check_encounter_policies import checked_original_periods
     target = checked_original_periods(source, target, report)
+    from check_time_shift import checked_original_times
+    target = checked_original_times(source, target, report)
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
     source_ids = {e.get('fullUrl'):e['resource'].get('id')for e in source['entry']}
@@ -104,9 +108,11 @@ def check(source, target, report):
     source_encounters = sum(c['level'] == 'facility' and contact_selected(c, options) for c in expected_contacts.values())
     assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=len(patients),Encounter=source_encounters+movement_check['contacts'],Condition=sum(original.values()))
     clinical = check_clinical(source, target, report)
+    if patients:
+        demographic_check['identity'] = 'configured synthetic identity verified'
+        demographic_check['clinicalFacts'] = 'verified against configured output settings'
     return {'demographics':demographic_check,'movements':movement_check,'clinical':clinical,'conditions':sum(original.values()),'excludedConditions':len(excluded),'encounters':len(encounters),
-            'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
-                if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
+            'sourceDiagnosisValuesAndReferences': 'verified against configured mapping and output settings',
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),
             'additionalIcd10GmCodings':sum(d['target'] is not None for d in decisions),
             'mappingDecisions':dict(Counter(d['status'] for d in decisions)),
@@ -120,6 +126,12 @@ def check_configured(source, target, report, options, patient_ids):
     assert Counter(actual) == Counter(wanted_patients), 'Configured patient copies differ'
     keys = [(e['resource']['resourceType'], e['resource']['id']) for e in target['entry']]
     assert len(keys) == len(set(keys)), 'Duplicate output resource identity'
+    derived_owners = {}
+    if options.get('PATIENT_MODE') == 'neither' and any(e['resource']['id'].startswith('derived-') for e in target['entry']):
+        from synthea_to_excel import prepare
+        from check_medication_transformations import transformed_medications
+        rows, _ = prepare(source, options)
+        derived_owners = {r['id']: pid for pid in patient_ids for r in transformed_medications(rows['Medikation'], options, pid)}
     shared = {'Medication', 'Location'}
     groups = {pid: [] for pid in patient_ids}
     for entry in target['entry']:
@@ -133,14 +145,15 @@ def check_configured(source, target, report, options, patient_ids):
             reference = resource.get('subject', resource.get('patient', {})).get('reference', '')
             if options.get('PATIENT_MODE') == 'neither':
                 assert not reference, 'Patient reference emitted in neither mode'
-                pid = patient_owner(resource, patient_ids, source)
+                pid = derived_owners.get(resource['id'])
+                if pid is None: pid = patient_owner(resource, patient_ids, source)
             else:
                 assert reference.startswith('Patient/'), 'Resource has no patient attribution: ' + resource['resourceType']
                 pid = reference.removeprefix('Patient/')
         assert pid in groups, 'Unexpected patient attribution: ' + pid
         groups[pid].append(entry)
-    copies = [check(source, {'entry': groups[pid]}, dict(report, outputPatient=pid, converterOptions=options))
-              for pid in patient_ids]
+    copies = [check(source, {'entry': groups[pid]}, dict(report, outputPatient=pid, converterOptions=options, iteration=iteration))
+              for iteration, pid in enumerate(patient_ids)]
     if len(copies) == 1:
         result = copies[0]
     else:

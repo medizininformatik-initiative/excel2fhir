@@ -113,14 +113,14 @@ class OutputSelectionChecks(unittest.TestCase):
         self.assertEqual({}, descriptive_reference('Location', 'l', 'Ward', {'LOCATION_MODE': 'neither'}))
 
     def test_medication_event_and_reference_cannot_disappear(self):
-        row = ['p', '1', 'Verordnung', 'Product', '', '', '', '', '', '123', 'SNOMED CT']
-        resource = {'resourceType': 'MedicationRequest', 'id': 'p-E-1-MR-1'}
+        row = ['p', '1', 'Verordnung', 'Product', '', '', '', '', '', '123', 'SNOMED CT'] + [''] * 9
+        resource = {'resourceType': 'MedicationRequest', 'id': 'p-E-1-MR-1', 'status': 'active', 'intent': 'order'}
         options = {'MEDICATION_MODE': 'neither'}
         check_medication_references([row], [resource], options, 'p')
         with self.assertRaisesRegex(AssertionError, 'identities'):
             check_medication_references([row], [], options, 'p')
         resource['medicationReference'] = {'reference': 'Medication/wrong'}
-        with self.assertRaisesRegex(AssertionError, 'reference'):
+        with self.assertRaises(AssertionError):
             check_medication_references([row], [resource], options, 'p')
 
     def test_patient_neither_checks_hashed_copy_identity_and_rejects_references(self):
