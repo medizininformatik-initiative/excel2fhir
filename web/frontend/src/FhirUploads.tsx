@@ -15,6 +15,7 @@ export function FhirUploads({ language }: { language: Language }) {
   const [target, setTarget] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState(false)
+  const [connectionFailed, setConnectionFailed] = useState(false)
   const [request, setRequest] = useState<{ id: string; key: string } | null>(null)
   async function refresh() {
     const responses = await Promise.all(['/api/fhir-targets', '/api/datasets', '/api/fhir-uploads'].map(url => fetch(url)))
@@ -28,8 +29,8 @@ export function FhirUploads({ language }: { language: Language }) {
     async function poll() {
       try {
         const data = await refresh()
-        if (active) { setTargets(data.nextTargets); setDatasets(data.nextDatasets); setUploads(data.nextUploads) }
-      } catch { if (active) setError(true) }
+        if (active) { setTargets(data.nextTargets); setDatasets(data.nextDatasets); setUploads(data.nextUploads); setConnectionFailed(false) }
+      } catch { if (active) setConnectionFailed(true) }
       if (active) timer = setTimeout(() => void poll(), 5000)
     }
     void poll()
@@ -59,7 +60,7 @@ export function FhirUploads({ language }: { language: Language }) {
   return <section className="mt-8 space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
     <h2 className="text-lg font-semibold">{t('app.upload.title')}</h2>
     <p className="text-sm text-slate-600">{t('app.upload.hint')}</p>
-    {error && <p role="alert" className="text-sm text-red-700">{t('app.upload.error')}</p>}
+    {(error || connectionFailed) && <p role="alert" className="text-sm text-red-700">{t('app.upload.error')}</p>}
     <fieldset disabled={pending} className="space-y-2"><legend className="mb-2 font-medium">{t('app.upload.target')}</legend>
       {targets.map(server => <label key={server.id} className="flex items-start gap-2 text-sm"><input type="radio" name="fhir-target" value={server.id} checked={target === server.id} disabled={!server.available} onChange={() => setTarget(server.id)}/><span>{server.name} · {server.address} · {t(server.available ? 'app.upload.ready' : 'app.upload.offline')}</span></label>)}
     </fieldset>
