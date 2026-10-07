@@ -62,6 +62,7 @@ export const identifierResources = [
     contract.resources
       .filter((r) => r.identifierEligible)
       .map((r) => r.identifierSelector ?? r.resourceType)
+      .concat(contract.identifierScopes.map(s => s.selector))
   )
 ].sort((a, b) => {
   const order = ['Encounter', 'Encounter.inpatient', 'Encounter.ambulatory']
@@ -221,7 +222,7 @@ export function patternTokens(pattern: string): Token[] {
 }
 export async function previewIdentifier(rule: Rule): Promise<string> {
   const selector = rule.resources[0] ?? 'Patient'
-  const resourceType = contract.resources.find((r) => (r.identifierSelector ?? r.resourceType) === selector)?.resourceType ?? selector
+  const resourceType = contract.resources.find((r) => (r.identifierSelector ?? r.resourceType) === selector)?.resourceType ?? contract.identifierScopes.find(s => s.selector === selector)?.resourceType ?? selector
   const context = [rule.id.toLowerCase(), resourceType, 'example-1', '0']
   const encoder = new TextEncoder()
   const input = context

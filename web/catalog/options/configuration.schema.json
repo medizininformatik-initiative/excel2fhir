@@ -4200,6 +4200,9 @@
                 "Encounter",
                 "Encounter.ambulatory",
                 "Encounter.inpatient",
+                "Encounter.inpatient.department",
+                "Encounter.inpatient.facility",
+                "Encounter.inpatient.ward-service",
                 "Immunization",
                 "Location",
                 "Medication",
@@ -4207,6 +4210,8 @@
                 "MedicationRequest",
                 "MedicationStatement",
                 "Observation",
+                "Observation.laboratory",
+                "Observation.vitalSigns",
                 "Patient",
                 "Procedure"
               ]

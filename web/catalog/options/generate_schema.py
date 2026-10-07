@@ -50,7 +50,7 @@ def generate():
             ]
         }
     eligible = sorted({r.get('identifierSelector', r['resourceType']) for r in contract['resources']
-                       if r['identifierEligible']})
+                       if r['identifierEligible']} | {s['selector'] for s in contract['identifierScopes']})
     return {
         '$schema': 'https://json-schema.org/draft/2020-12/schema',
         'title': 'Converter configuration',

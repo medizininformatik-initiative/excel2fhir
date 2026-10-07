@@ -2620,5 +2620,47 @@
       "name": "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER",
       "reason": "Unversioned input only; versioned configuration assigns diagnosis references automatically using selected roles, levels and temporal matching."
     }
+  ],
+  "identifierScopes": [
+    {
+      "selector": "Encounter.inpatient.facility",
+      "resourceType": "Encounter",
+      "labelKey": "resource.Encounter.inpatient.label",
+      "classCode": "IMP",
+      "level": "facility",
+      "category": ""
+    },
+    {
+      "selector": "Encounter.inpatient.department",
+      "resourceType": "Encounter",
+      "labelKey": "resource.Encounter.inpatient.label",
+      "classCode": "IMP",
+      "level": "department",
+      "category": ""
+    },
+    {
+      "selector": "Encounter.inpatient.ward-service",
+      "resourceType": "Encounter",
+      "labelKey": "resource.Encounter.inpatient.label",
+      "classCode": "IMP",
+      "level": "ward-service",
+      "category": ""
+    },
+    {
+      "selector": "Observation.laboratory",
+      "resourceType": "Observation",
+      "labelKey": "resource.Observation.laboratory.label",
+      "classCode": "",
+      "level": "",
+      "category": "laboratory"
+    },
+    {
+      "selector": "Observation.vitalSigns",
+      "resourceType": "Observation",
+      "labelKey": "resource.Observation.vitalSigns.label",
+      "classCode": "",
+      "level": "",
+      "category": "vital-signs"
+    }
   ]
 }

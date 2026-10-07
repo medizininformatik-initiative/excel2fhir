@@ -53,6 +53,10 @@ codes display the applicable narrative or procedure condition. Identifier rules
 retain their UUID when edited or imported and provide deterministic sample
 previews. The preview uses counter 1 and repetition 0 with example resource and
 patient IDs, and caps displayed counter padding at 256 characters. The identifier system shows an example placeholder while empty and unfocused.
+Resource choices show their FHIR resource type. Identifier rules can target inpatient
+facility, department or ward/service encounters separately, and distinguish laboratory
+observations from vital signs. Selecting a broader group includes its subgroups; a rule
+adds only one identifier per matching resource even when selections overlap.
 Pattern tokens use compact buttons with explanations on hover or keyboard focus,
 and can be clicked to insert at the
 cursor, replace selected text, or append when no cursor position is available.

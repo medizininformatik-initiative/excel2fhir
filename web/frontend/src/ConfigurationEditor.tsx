@@ -12,7 +12,6 @@ import {
   options,
   darFields,
   darResource,
-  identifierResources,
   defaults,
   importConfiguration,
   restoreBrowserDraft,
@@ -39,6 +38,15 @@ const groups = [
 const resources = groups.flatMap((group) =>
   contract.resources.filter((r) => r.group === group.id)
 )
+const identifierChoices = [...new Map(resources.filter(r => r.identifierEligible).map(r => [
+  r.identifierSelector ?? r.resourceType, r
+])).entries()].flatMap(([selector, r]) => [
+  { selector, resourceType: r.resourceType, labelKey: selector === 'Encounter' ? 'app.config.encounterAll'
+    : selector === 'Observation' ? 'app.config.observation' : r.labelKey,
+    classCode: 'classCode' in r ? r.classCode : '', level: '', category: '' },
+  ...contract.identifierScopes.filter(scope => selector === 'Encounter.inpatient'
+    ? scope.selector.startsWith(selector + '.') : selector === 'Observation' && scope.resourceType === selector)
+])
 const darGroups = resources.map((resource) => ({
   ...resource,
   filter: resource.id === 'Observation.laboratory' ? 'Laboratory'
@@ -802,8 +810,10 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   <legend className="mb-2 text-sm font-medium">
                     {t('identifier.resources')}
                   </legend>
-                  <div className="flex flex-wrap gap-x-5 gap-y-2">
-                    {identifierResources.map((resource) => (
+                  <div className="grid gap-2 lg:grid-cols-2">
+                    {identifierChoices.map((choice) => {
+                      const resource = choice.selector
+                      return (
                       <label
                         key={resource}
                         className="flex items-center gap-2 text-sm"
@@ -820,11 +830,16 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                           }
                           className="accent-teal-700"
                         />
-                        {resource === 'Encounter' ? t('app.config.encounterAll') : resource === 'Observation'
-                          ? t('app.config.observation')
-                          : t(`resource.${resource}.label`)}
+                        <span className="flex flex-wrap items-center gap-1">
+                          <span>{t(choice.labelKey)}{choice.level && ` · ${t('choice.' + choice.level)}`}</span>
+                          <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                            {t('app.config.fhirResource', { resource: choice.resourceType })}
+                            {choice.classCode && ` · ${t('app.config.encounterClass', { code: choice.classCode })}`}
+                            {choice.category && ` · ${t('app.config.category')}: ${choice.category}`}
+                          </span>
+                        </span>
                       </label>
-                    ))}
+                    )})}
                   </div>
                 </fieldset>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -845,6 +860,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     t={t}
                   />
                 </div>
+                <RulePreview rule={rule} t={t} />
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <label className="flex min-w-0 flex-col gap-2 text-sm">{t('identifier.use')}
                     <select className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
@@ -869,7 +885,6 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   })}
                   <Button variant="outline" onClick={() => updateRule(rule.id, { typeCodings: [...(rule.typeCodings ?? []), { system: 'http://terminology.hl7.org/CodeSystem/v2-0203', code: '', display: '' }] })}>{t('identifier.addType')}</Button>
                 </div>
-                <RulePreview rule={rule} t={t} />
               </section>
             ))}
           </>

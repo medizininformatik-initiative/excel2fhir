@@ -151,6 +151,8 @@ public final class ContractConfiguration {
                 for (JsonNode candidate : CONTRACT.get("resources")) {
                     if (candidate.path("identifierEligible").asBoolean() && candidate.path("identifierSelector").asText(candidate.get("resourceType").asText()).equals(resource)) eligible = true;
                 }
+                for (JsonNode scope : CONTRACT.path("identifierScopes"))
+                    if (scope.path("selector").asText().equals(resource)) eligible = true;
                 if (!eligible || !types.add(resource)) throw invalid("Invalid identifier resource: " + resource);
             }
             if (rule.get("SYSTEM").isEmpty() || rule.get("PATTERN").isEmpty()) throw invalid("Empty identifier system or pattern");

@@ -291,7 +291,18 @@ test('encounter classes keep common settings and disable inactive end scopes', a
     config.values['resource.Encounter.enabled'] = true
   }
   const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true, resources: ['Encounter'], system: 'urn:test', pattern: '{resourceType}-{hash}' }
-  assert.equal(await previewIdentifier({...rule, resources: ['Encounter.ambulatory']}), await previewIdentifier(rule))
+  for (const selector of ['Encounter.ambulatory', 'Encounter.inpatient.facility', 'Encounter.inpatient.department', 'Encounter.inpatient.ward-service']) {
+    const scoped = {...rule, resources: [selector]}
+    config.identifierRules = [scoped]
+    assert.deepEqual(importConfiguration(JSON.stringify(config)).identifierRules, [scoped])
+    assert.equal(await previewIdentifier(scoped), await previewIdentifier(rule))
+  }
+  for (const selector of ['Observation.laboratory', 'Observation.vitalSigns']) {
+    const scoped = {...rule, resources: [selector]}
+    config.identifierRules = [scoped]
+    assert.deepEqual(importConfiguration(JSON.stringify(config)).identifierRules, [scoped])
+    assert.equal(await previewIdentifier(scoped), await previewIdentifier({...rule, resources: ['Observation']}))
+  }
   config.dar['Encounter.ambulatory.period.end'] = {mode: 'overwrite', code: ''}
   assert.deepEqual(restoreBrowserDraft(JSON.stringify(config)), config)
   assert.throws(() => importConfiguration(JSON.stringify(config)))
