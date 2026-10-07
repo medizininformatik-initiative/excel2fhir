@@ -37,7 +37,7 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "ACSN",
-      "display": "ACSN"
+      "display": "Accession ID"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -57,7 +57,7 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "BRN",
-      "display": "BRN"
+      "display": "Breed Registry Number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -67,7 +67,7 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "DL",
-      "display": "DL"
+      "display": "Driver's license number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
@@ -77,17 +77,17 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "DR",
-      "display": "DR"
+      "display": "Donor Registration Number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "EN",
-      "display": "EN"
+      "display": "Employer number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "FILL",
-      "display": "FILL"
+      "display": "Filler Identifier"
     },
     {
       "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
@@ -97,7 +97,7 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "JHN",
-      "display": "JHN"
+      "display": "Jurisdictional health number"
     },
     {
       "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
@@ -117,27 +117,27 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "MCN",
-      "display": "MCN"
+      "display": "Microchip Number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "MD",
-      "display": "MD"
+      "display": "Medical License number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "MR",
-      "display": "MR"
+      "display": "Medical record number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "NIIP",
-      "display": "NIIP"
+      "display": "National Insurance Payor Identifier (Payor)"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "OBI",
-      "display": "OBI"
+      "display": "Observation Instance Identifier"
     },
     {
       "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
@@ -147,17 +147,17 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "PLAC",
-      "display": "PLAC"
+      "display": "Placer Identifier"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "PPN",
-      "display": "PPN"
+      "display": "Passport number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "PRN",
-      "display": "PRN"
+      "display": "Provider number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
@@ -172,27 +172,27 @@
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "SB",
-      "display": "SB"
+      "display": "Social Beneficiary Identifier"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "SNO",
-      "display": "SNO"
+      "display": "Serial Number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "TAX",
-      "display": "TAX"
+      "display": "Tax ID number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "UDI",
-      "display": "UDI"
+      "display": "Universal Device Identifier"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
       "code": "VN",
-      "display": "VN"
+      "display": "Visit number"
     },
     {
       "system": "http://terminology.hl7.org/CodeSystem/v2-0203",

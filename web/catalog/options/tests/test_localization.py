@@ -50,6 +50,9 @@ class LocalizationTest(unittest.TestCase):
         for source in (ROOT / '../../frontend/src').rglob('*.ts*'):
             required.update(re.findall(r"['\"]((?:app|identifier|dar)\.[\w.]+)['\"]", source.read_text()))
         required.update('identifier.coding.' + field for field in ('system', 'code', 'display'))
+        required.discard('identifier.typeLabel.')
+        bindings = json.loads((ROOT / 'identifier-bindings.json').read_text())
+        required.update('identifier.typeLabel.' + item['code'] for item in bindings['types'])
         languages = {lang: read_unique(ROOT / filename)
                      for lang, filename in contract['ui']['localization']['files'].items()}
         self.assertEqual(set(languages), set(contract['ui']['localization']['languages']))

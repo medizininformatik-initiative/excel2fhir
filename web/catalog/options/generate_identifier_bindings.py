@@ -2,7 +2,7 @@
 from pathlib import Path
 import tarfile,json
 resources={}
-for p in (Path(__file__).resolve().parents[3] / 'src/main/resources/fhir').glob('*.tgz'):
+for p in sorted((Path(__file__).resolve().parents[3] / 'src/main/resources/fhir').glob('*.tgz')):
  with tarfile.open(p) as t:
   for m in t:
    if not m.name.endswith('.json') or not any(x in m.name for x in ('ValueSet-','CodeSystem-','StructureDefinition-')):continue
@@ -34,7 +34,9 @@ def expand(url,seen=None):
    cs=resources.get(system,{})
    concepts=inc.get('concept',list(flatten(cs.get('concept',[]))))
    if not concepts:raise ValueError('Missing concepts '+system)
-   for c in concepts:out.append({'system':system,'code':c['code'],'display':c.get('display',c['code'])})
+   for c in concepts:
+    display = c.get('display') or next((v.get('display') for v in flatten(cs.get('concept', [])) if v['code'] == c['code']), None)
+    out.append({'system':system,'code':c['code'],'display':display or c['code']})
  return out
 codes={}
 for url in sorted(urls):

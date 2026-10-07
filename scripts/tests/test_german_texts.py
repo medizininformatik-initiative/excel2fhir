@@ -47,6 +47,22 @@ class GermanTextsTest(unittest.TestCase):
             if '\nDo not take milk' in t['original']:
                 self.assertEqual(t['de'].count('\n'), 1)
 
+    def test_official_loinc_names_keep_code_scoped_provenance(self):
+        tr = GermanTexts()
+        entries = {e['code']: e for e in tr.data['entries'] if e['system'] == 'http://loinc.org'}
+        official = [e for e in entries.values() if e.get('loinc')]
+        self.assertEqual(len(official), 173)
+        for entry in official:
+            self.assertEqual(entry['loinc']['version'], '2.83')
+            self.assertTrue(all(t['source'] == 'loinc-de-DE' for t in entry['translations']))
+        self.assertEqual(tr.text('Hemoglobin [Mass/volume] in Blood', system='LOINC', code='718-7'),
+                         'Hämoglobin [Masse/Volumen] in Blut')
+        self.assertEqual(tr.text('No', system='LOINC', code='LA32-8'), 'Nein')
+        report = tr.report()
+        self.assertEqual(report['loinc']['translatedCodes'], 173)
+        self.assertEqual(len(report['loinc']['codesWithoutOfficialTranslation']), 273)
+        self.assertEqual(report['loincNotice']['conditionsUrl'], 'https://loinc.org/license')
+
     def test_unknown_code_and_new_note_content_are_reported(self):
         tr = GermanTexts()
         self.assertEqual(tr.text('Yes', system='CVX', code='LA33-6'), 'Yes')

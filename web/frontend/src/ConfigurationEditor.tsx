@@ -828,15 +828,15 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   </div>
                 </fieldset>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm">
-                    {t('identifier.system')}
+                  <label className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center">{t('identifier.system')}</span>
                     <input
                       placeholder="https://example.org/fhir/sid/test-id"
                       value={rule.system}
                       onChange={(e) =>
                         updateRule(rule.id, { system: e.target.value })
                       }
-                      className="rounded-lg border border-slate-300 p-2 placeholder:text-slate-400 focus:placeholder:text-transparent"
+                      className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2 placeholder:text-slate-400 focus:placeholder:text-transparent"
                     />
                   </label>
                   <IdentifierPatternControl
@@ -846,13 +846,13 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   />
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm">{t('identifier.use')}
-                    <select className="rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
+                  <label className="flex min-w-0 flex-col gap-2 text-sm">{t('identifier.use')}
+                    <select className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
                       <option value="">{t('identifier.unspecified')}</option>
                       {identifierBindings.use.map(value => <option key={value.code} value={value.code}>{value.code} — {value.display}</option>)}
                     </select>
                   </label>
-                  <label className="flex flex-col gap-2 text-sm">{t('identifier.type_text')}<input className="rounded-lg border border-slate-300 p-2" value={rule.typeText ?? ''} onChange={e => updateRule(rule.id, { typeText: e.target.value })}/></label>
+                  <label className="flex min-w-0 flex-col gap-2 text-sm">{t('identifier.type_text')}<input className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.typeText ?? ''} onChange={e => updateRule(rule.id, { typeText: e.target.value })}/></label>
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center gap-2"><h4 className="text-sm font-medium">{t('identifier.type_codings')}</h4><Help text={t('identifier.typeHelp')} t={t}/></div>
@@ -861,9 +861,9 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     return <div key={codingIndex} className="space-y-2 rounded-lg border p-3">
                       <select aria-label={t('identifier.chooseType')} className="w-full rounded-lg border border-slate-300 p-2 text-sm" value={identifierBindings.types.some(item => item.system === coding.system && item.code === coding.code) ? `${coding.system}|${coding.code}` : ''} onChange={e => { const value = identifierBindings.types.find(item => `${item.system}|${item.code}` === e.target.value); if (value) updateCoding({ ...value }) }}>
                         <option value="">{t('identifier.chooseType')}</option>
-                        {identifierBindings.types.map(item => <option key={`${item.system}|${item.code}`} value={`${item.system}|${item.code}`}>{item.code} — {item.display}</option>)}
+                        {identifierBindings.types.map(item => <option key={`${item.system}|${item.code}`} value={`${item.system}|${item.code}`}>{item.code} — {t('identifier.typeLabel.' + item.code)}</option>)}
                       </select>
-                      <div className="grid gap-3 md:grid-cols-3">{(['system', 'code', 'display'] as const).map(field => <label key={field} className="flex flex-col gap-1 text-sm">{t(`identifier.coding.${field}`)}<input className="rounded-lg border border-slate-300 p-2" value={coding[field] ?? ''} onChange={e => updateCoding({ ...coding, [field]: e.target.value })}/></label>)}</div>
+                      <div className="grid gap-3 md:grid-cols-3">{(['system', 'code', 'display'] as const).map(field => <label key={field} className="flex min-w-0 flex-col gap-1 text-sm">{t(`identifier.coding.${field}`)}<input className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={coding[field] ?? ''} onChange={e => updateCoding({ ...coding, [field]: e.target.value })}/></label>)}</div>
                       <Button variant="outline" onClick={() => updateRule(rule.id, { typeCodings: rule.typeCodings!.filter((_, i) => i !== codingIndex) })}>{t('app.config.remove')}</Button>
                     </div>
                   })}

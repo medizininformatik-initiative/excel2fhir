@@ -47,9 +47,9 @@ export function IdentifierPatternControl({
     onChange(next.value)
   }
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex flex-col gap-2 text-sm">
-        <span className="flex items-center gap-1">
+        <span className="flex min-h-7 items-center gap-1">
           <label htmlFor={tooltipId + '-pattern'}>
             {t('identifier.pattern')}
           </label>
@@ -73,7 +73,7 @@ export function IdentifierPatternControl({
               end: e.currentTarget.selectionEnd ?? value.length
             }
           }}
-          className="w-full rounded-lg border border-slate-300 p-2 font-mono"
+          className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2 font-mono"
         />
       </div>
       <div
