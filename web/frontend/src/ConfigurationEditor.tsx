@@ -856,15 +856,11 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   </label>
                   <IdentifierPatternControl
                     value={rule.pattern}
+                    countStart={rule.countStart ?? 1}
+                    onCountStartChange={(countStart) => updateRule(rule.id, { countStart })}
                     onChange={(pattern) => updateRule(rule.id, { pattern })}
                     t={t}
                   />
-                </div>
-                <div className="mt-4 flex max-w-xs flex-col gap-2 text-sm">
-                  <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-count-start-${rule.id}`}>{t('identifier.count_start')}</label><Help text={t('identifier.countStartHelp')} t={t}/></span>
-                  <input id={`identifier-count-start-${rule.id}`} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1}
-                    value={rule.countStart ?? 1} onChange={e => updateRule(rule.id, { countStart: Number(e.target.value) })}
-                    className="h-10 w-full rounded-lg border border-slate-300 p-2"/>
                 </div>
                 <RulePreview rule={rule} t={t} />
                 <div className="mt-4 grid gap-4 md:grid-cols-2">

@@ -16,10 +16,14 @@ const tokens: { value: string; key: string; label?: string }[] = [
 ]
 export function IdentifierPatternControl({
   value,
+  countStart,
+  onCountStartChange,
   onChange,
   t
 }: {
   value: string
+  countStart: number
+  onCountStartChange: (value: number) => void
   onChange: (value: string) => void
   t: (key: string, params?: Message['params']) => string
 }) {
@@ -78,8 +82,9 @@ export function IdentifierPatternControl({
           className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2 font-mono"
         />
       </div>
+      <div className="mt-2 flex flex-wrap items-start gap-3">
       <div
-        className="relative mt-2 flex flex-wrap gap-1.5"
+        className="relative flex min-w-0 flex-1 basis-64 flex-wrap gap-1.5"
         role="group"
         aria-label={t('app.config.patternTokens')}
       >
@@ -120,6 +125,14 @@ export function IdentifierPatternControl({
             </code>
           </button>
         ))}
+      </div>
+        <div className="flex w-24 shrink-0 flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1"><label htmlFor={tooltipId + '-count-start'}>{t('identifier.count_start')}</label>
+          <Help text={t('identifier.countStartHelp')} t={t}/></span>
+          <input id={tooltipId + '-count-start'} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1}
+            value={countStart} onChange={e => onCountStartChange(Number(e.target.value))}
+            className="h-8 w-24 rounded-md border border-slate-300 px-2"/>
+        </div>
       </div>
     </div>
   )

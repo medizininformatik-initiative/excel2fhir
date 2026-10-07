@@ -70,7 +70,7 @@
   "app.config.on": "enabled",
   "app.config.patternInstructions": "Enter literal text and combine it with tokens. Click to insert at the cursor; selected text is replaced. Without a cursor position, the token is appended.",
   "app.config.patternTokens": "Value pattern tokens",
-  "app.config.previewHint": "Example: patient patient-1, resource example-1, counter 1, iteration 0. The preview does not replace converter collision checks. Very large counter widths are capped at 256 characters here.",
+  "app.config.previewHint": "Example using the first selected resource type, patient ID patient-1, resource ID example-1 and repetition index 0. The counter uses the configured start value. The converter checks for duplicate identifiers when generating data. The preview displays at most 256 digits for a zero-padded counter.",
   "app.config.previewInvalid": "Preview unavailable: check the pattern.",
   "app.config.previewLabel": "Sample preview",
   "app.config.ready": "Defaults · Changes are saved automatically",
