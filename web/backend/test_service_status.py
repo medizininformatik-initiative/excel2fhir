@@ -16,15 +16,12 @@ class ServiceStatusTests(unittest.TestCase):
             self.assertFalse(service_status.reachable('http://torch:8080/actuator/health', health=True))
 
     def test_portal_requires_backend_ui_auth_and_proxy(self):
-        for checks in ([False], [True, False], [True, True, False]):
-            with patch.object(service_status, 'reachable', side_effect=checks), patch.object(service_status.socket, 'create_connection') as connect:
+        for checks in ([False], [True, False], [True, True, False], [True, True, True, False]):
+            with patch.object(service_status, 'reachable', side_effect=checks):
                 self.assertFalse(service_status.portal())
-                connect.assert_not_called()
-        with patch.object(service_status, 'reachable', return_value=True):
-            with patch.object(service_status.socket, 'create_connection', side_effect=OSError()):
-                self.assertFalse(service_status.portal())
-            with patch.object(service_status.socket, 'create_connection'):
-                self.assertTrue(service_status.portal())
+        with patch.object(service_status, 'reachable', return_value=True) as probe:
+            self.assertTrue(service_status.portal())
+            probe.assert_called_with('http://dataportal-nginx:8080/')
 
     def test_services_report_independent_states(self):
         with patch.object(service_status, 'portal', return_value=False), patch.object(service_status, 'reachable', return_value=True):

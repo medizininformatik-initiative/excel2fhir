@@ -37,13 +37,16 @@ export type Rule = {
   resources: string[]
   system: string
   pattern: string
+  use?: string
+  typeText?: string
+  typeCodings?: { system?: string; code?: string; display?: string }[]
 }
 export type Configuration = {
   schemaVersion: 1
   values: Record<string, Value>
   dar: Record<
     string,
-    { mode: 'unchanged' } | { mode: 'overwrite'; code: string }
+    { mode: 'unchanged' } | { mode: 'overwrite'; code: string; onlyWhenMissing?: boolean }
   >
   identifierRules: Rule[]
 }

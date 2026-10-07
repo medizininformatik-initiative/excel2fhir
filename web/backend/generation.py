@@ -16,7 +16,7 @@ class Settings(BaseModel):
     model_config = ConfigDict(extra='forbid')
     outputMode: Literal['kds', 'synthea'] = 'kds'
     population: int = Field(default=1, ge=1, le=1000, strict=True)
-    minAge: int = Field(default=30, ge=0, le=140, strict=True)
+    minAge: int = Field(default=18, ge=0, le=140, strict=True)
     maxAge: int = Field(default=80, ge=0, le=140, strict=True)
     gender: Literal['', 'F', 'M'] = ''
     patientSeed: str = Field(default='20260912', pattern=r'^-?\d{1,19}$')
@@ -26,9 +26,9 @@ class Settings(BaseModel):
     endDate: date = date(2026, 9, 12)
     state: str = 'Massachusetts'
     city: str = ''
-    yearsOfHistory: int = Field(default=0, ge=0, le=140, strict=True)
+    yearsOfHistory: int = Field(default=5, ge=0, le=140, strict=True)
     patientFilter: Literal['all', 'alive', 'dead'] = 'all'
-    overflow: bool = Field(default=True, strict=True)
+    overflow: bool = Field(default=False, strict=True)
     modules: list[str] = Field(default_factory=list, max_length=500)
     keepModule: str = ''
     timestepDays: int = Field(default=7, ge=1, le=365, strict=True)
@@ -102,7 +102,7 @@ def arguments(value):
               '-r', settings.referenceDate.strftime('%Y%m%d'), '-e', settings.endDate.strftime('%Y%m%d'),
               '-o', str(settings.overflow).lower(),
               f'--exporter.years_of_history={settings.yearsOfHistory}',
-              '--generate.thread_pool_size=2',
+              '--generate.thread_pool_size=1',
               '--generate.only_alive_patients=' + str(settings.patientFilter == 'alive').lower(),
               '--generate.only_dead_patients=' + str(settings.patientFilter == 'dead').lower(),
               f'--generate.timestep={settings.timestepDays * 86400000}',
@@ -124,7 +124,7 @@ def arguments(value):
 
 def native_command(settings, destination):
     """Run the pinned generator directly; retain its FHIR resources without projection."""
-    return ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(synthea_runtime.ROOT / 'target/synthea.jar'),
+    return ['java', '-Xmx1536m', '-Duser.timezone=Europe/Berlin', '-jar', str(synthea_runtime.ROOT / 'target/synthea.jar'),
             *arguments(settings), '--exporter.baseDirectory=' + str(destination),
             '--exporter.fhir.export=true', '--exporter.fhir_stu3.export=false',
             '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',

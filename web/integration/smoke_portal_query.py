@@ -1,22 +1,20 @@
-"""Verify local TLS, login, portal catalogue and a real CQL feasibility query.
+"""Verify local HTTP, login, portal catalogue and a real CQL feasibility query.
 
-Usage: python3 web/integration/smoke_portal_query.py CERTIFICATE LOGIN_JSON
+Usage: python3 web/integration/smoke_portal_query.py LOGIN_JSON
 LOGIN_JSON contains the username/password from portal-init's credentials.txt.
 The local Blaze must contain at least one female Patient. The test creates a
 portal query and compares its count with an independent FHIR search.
 """
 import json
 from pathlib import Path
-import ssl
 import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
-BASE = 'https://localhost:5192'
-context = ssl.create_default_context(cafile=sys.argv[1])
-credentials = json.loads(Path(sys.argv[2]).read_text())
+BASE = 'http://localhost:5192'
+credentials = json.loads(Path(sys.argv[1]).read_text())
 
 
 def request(path, data=None, token=None, content_type='application/json'):
@@ -24,7 +22,7 @@ def request(path, data=None, token=None, content_type='application/json'):
     if token:
         headers['Authorization'] = 'Bearer ' + token
     req = urllib.request.Request(BASE + path, data=data, headers=headers)
-    with urllib.request.urlopen(req, context=context, timeout=60) as response:
+    with urllib.request.urlopen(req, timeout=60) as response:
         body = response.read()
         return response.status, response.headers, json.loads(body) if body else None
 
@@ -81,5 +79,5 @@ for attempt in range(30):
 else:
     raise AssertionError(f'Portal query did not return the expected count: {result}')
 assert result['totalNumberOfPatients'] == expected, result
-print(json.dumps({'tls': 'verified', 'login': 'verified', 'unauthenticatedQuery': 'rejected',
+print(json.dumps({'localHttp': 'verified', 'login': 'verified', 'unauthenticatedQuery': 'rejected',
                   'portalPatients': result['totalNumberOfPatients'], 'fhirPatients': expected}))

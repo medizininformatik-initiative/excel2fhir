@@ -41,19 +41,25 @@ public class ConverterOptions {
 
     private final List<String> errors = new ArrayList<>();
     private ContractConfiguration configuration;
+    private boolean executionFromCommandLine;
+
+    public ConverterOptions withCommandLineExecution() {
+        executionFromCommandLine = true;
+        return this;
+    }
 
     public ContractConfiguration configuration() { return configuration; }
 
     public boolean validationEnabled(boolean fallback) {
-        return configuration == null ? fallback : configuration.stored("checks.fhirValidation").asBoolean();
+        return configuration == null || executionFromCommandLine ? fallback : configuration.stored("checks.fhirValidation").asBoolean();
     }
 
     public int patientsPerFile(int fallback) {
-        return configuration == null ? fallback : configuration.stored("output.patientsPerFile").asInt();
+        return configuration == null || executionFromCommandLine ? fallback : configuration.stored("output.patientsPerFile").asInt();
     }
 
     public OutputFileType[] outputFormats(OutputFileType[] fallback) {
-        if (configuration == null) return fallback;
+        if (configuration == null || executionFromCommandLine) return fallback;
         List<OutputFileType> formats = new ArrayList<>();
         configuration.stored("output.formats").forEach(value -> formats.add(OutputFileType.valueOf(value.asText())));
         return formats.toArray(OutputFileType[]::new);

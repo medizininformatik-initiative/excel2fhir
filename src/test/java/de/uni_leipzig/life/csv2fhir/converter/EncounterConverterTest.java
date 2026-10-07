@@ -29,6 +29,28 @@ public class EncounterConverterTest {
     private static final String PRIMARY = "PID1,1,2026-05-01T08:00:00Z,2026-05-03T12:00:00Z,stationaer,Allgemeine Chirurgie,C1,Zimmer 101,Bett 1,,Normalstationär\n";
     private static final String OP = "PID1,1,2026-05-02T09:00:00Z,,stationaer,Allgemeine Chirurgie,OP,OP-Saal 1,,,Operation\n";
 
+    @Test public void stationOrganizationCanBeContainedReferencedAndCombinedWithLocation() throws Exception {
+        for (String mode : List.of("generate-reference", "reference-only", "contained")) {
+            for (boolean location : List.of(true, false)) {
+                var options = ConverterOptions.fromText("CONFIGURATION_VERSION=1\nENCOUNTER_STATION_SERVICE_PROVIDER="
+                        + mode + "\nENCOUNTER_STATION_LOCATION=" + location + "\n");
+                var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY, options);
+                var stay = getEncounters(result, EncounterLevel3.class).get(0);
+                assertEquals("C1", stay.getServiceProvider().getDisplay());
+                assertEquals(location ? 3 : 2, stay.getLocation().size());
+                if (mode.equals("contained")) {
+                    assertEquals(1, stay.getContained().size());
+                    assertEquals("Organization", stay.getContained().get(0).fhirType());
+                    assertEquals("#" + stay.getContained().get(0).getIdElement().getIdPart(), stay.getServiceProvider().getReference());
+                } else {
+                    assertEquals(0, stay.getContained().size());
+                    org.junit.Assert.assertTrue(stay.getServiceProvider().getReference().startsWith("Organization/"));
+                }
+                assertFalse(getEncounters(result, EncounterLevel1.class).get(0).hasServiceProvider());
+            }
+        }
+    }
+
     @Test public void overlappingContactsUseLatestStartThenEarliestInputRow() throws Exception {
         var result = convertRecords(CONTACT_HEADER + ROOT_CONTACT + PRIMARY
                 + PRIMARY.replace("2026-05-01T08:00:00Z", "2026-05-02T08:00:00Z")
@@ -307,11 +329,13 @@ public class EncounterConverterTest {
     }
 
     private static ConverterResult convertRecords(String csv) throws Exception {
-        ConverterResult result = new ConverterResult(new ConverterOptions(""));
+        return convertRecords(csv, new ConverterOptions(""));
+    }
+    private static ConverterResult convertRecords(String csv, ConverterOptions options) throws Exception {
+        ConverterResult result = new ConverterResult(options);
         String previousPatientId = null;
         for (CSVRecord record : createRecords(csv)) {
-            EncounterConverter converter = new EncounterConverter(record, previousPatientId, result, null,
-                    new ConverterOptions(""));
+            EncounterConverter converter = new EncounterConverter(record, previousPatientId, result, null, options);
             previousPatientId = converter.getPatientId();
             for (Resource resource : converter.convertInternal()) {
                 result.add(Fall, resource);

@@ -103,8 +103,8 @@ unchanged in the immutable job snapshot.
 
 The Python importer projects Synthea R4 bundles into copies of the Excel template.
 LibreOffice/UNO fills existing cells while preserving workbook formatting.
-Generated options sheets contain the shared converter defaults. Selected external
-options files and conversion parameters are passed to Excel2FHIR.
+Generated workbooks contain case data. One external configuration and conversion
+parameters are passed to Excel2FHIR; without a file, shared defaults apply.
 
 | Component | Responsibility |
 | --- | --- |

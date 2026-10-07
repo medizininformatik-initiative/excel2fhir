@@ -5,13 +5,13 @@ import { translate, type Language, type TextKey } from './i18n'
 
 export type Generation = {
   outputMode: 'kds' | 'synthea'; population: number; minAge: number; maxAge: number; gender: string;
-  patientSeed: string; clinicianSeed: string; singlePersonSeed: string;
+  timestampSeeds?: boolean; patientSeed: string; clinicianSeed: string; singlePersonSeed: string;
   referenceDate: string; endDate: string; state: string; city: string;
   yearsOfHistory: number; patientFilter: string; overflow: boolean;
   modules: string[]; keepModule: string; timestepDays: number; maxAttempts: number; veteranPopulation: boolean
 }
 type Catalogue = { revision: string; defaults: Generation; locations: Record<string, string[]>; modules: ModuleDescription[]; keepModules: ModuleDescription[] }
-export function GenerationSettings({ language, onChange }: { language: Language; onChange: (value: Generation | null) => void }) {
+export function GenerationSettings({ language, onChange, initialValue }: { language: Language; onChange: (value: Generation | null) => void; initialValue?: Generation }) {
   const t = (key: TextKey) => translate(language, key)
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null)
   const [value, setValue] = useState<Generation | null>(null)
@@ -26,18 +26,18 @@ export function GenerationSettings({ language, onChange }: { language: Language;
       setCatalogue(next)
       let saved = next.defaults
       try { const stored = JSON.parse(localStorage.getItem('syntheaGeneration') ?? 'null'); if (stored && Object.entries(next.defaults).every(([key, initial]) => stored[key] === undefined || (Array.isArray(initial) ? Array.isArray(stored[key]) && stored[key].every((item: unknown) => typeof item === 'string') : typeof stored[key] === typeof initial))) saved = { ...next.defaults, ...stored } } catch { /* Use the pinned defaults. */ }
-      setValue(saved)
+      setValue(initialValue ? { ...initialValue, timestampSeeds: false } : { ...saved, timestampSeeds: saved.timestampSeeds === true })
     }).catch(() => { if (active) setFailed(true) })
     return () => { active = false; onChange(null) }
-  }, [onChange])
+  }, [onChange, initialValue])
   const seedValid = (seed: string) => /^-?\d{1,19}$/.test(seed) && BigInt(seed) >= -(2n ** 63n) && BigInt(seed) < 2n ** 63n
   const valid = value !== null && catalogue !== null &&
     [value.population, value.minAge, value.maxAge, value.yearsOfHistory, value.timestepDays, value.maxAttempts].every(Number.isInteger) &&
     value.population >= 1 && value.population <= 1000 && value.minAge >= 0 && value.minAge <= value.maxAge && value.maxAge <= 140 &&
     value.yearsOfHistory >= 0 && value.yearsOfHistory <= 140 && value.timestepDays >= 1 && value.timestepDays <= 365 && value.maxAttempts >= 1 && value.maxAttempts <= 10000 &&
     /^\d{4}-\d{2}-\d{2}$/.test(value.referenceDate) && value.referenceDate <= value.endDate && value.endDate <= new Date().toISOString().slice(0, 10) &&
-    [value.patientSeed, value.clinicianSeed].every(seedValid) &&
-    (value.singlePersonSeed === '' || (value.population === 1 && seedValid(value.singlePersonSeed))) &&
+    (value.timestampSeeds || ([value.patientSeed, value.clinicianSeed].every(seedValid) &&
+    (value.singlePersonSeed === '' || (value.population === 1 && seedValid(value.singlePersonSeed))))) &&
     value.state in catalogue.locations && (!value.city || catalogue.locations[value.state].includes(value.city))
   useEffect(() => {
     if (value) { try { localStorage.setItem('syntheaGeneration', JSON.stringify(value)) } catch { /* Submission still works. */ } }
@@ -47,9 +47,12 @@ export function GenerationSettings({ language, onChange }: { language: Language;
   if (!value || !catalogue) return <p className="mt-4 text-sm">{t('app.generation.loading')}</p>
   const update = <K extends keyof Generation>(key: K, next: Generation[K]) => setValue(old => old && ({ ...old, [key]: next }))
   const info = (key: HelpKey, detail?: string) => <Help text={detail ?? generationHelp(language, key)} t={key => t(key as TextKey)}/>
-  const inputClass = 'mt-1 w-full rounded-lg border border-slate-300 bg-white p-2'
+  const inputClass = 'mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-50 disabled:text-neutral-400 disabled:shadow-none'
   const number = (key: keyof Generation, label: TextKey, min: number, max: number) => <label className="text-sm">{t(label)}{info(key as HelpKey)}<input className={inputClass} type="number" min={min} max={max} step="1" value={String(value[key])} onChange={e => update(key, Number(e.target.value))}/></label>
-  const text = (key: keyof Generation, label: TextKey, type = 'text') => <label className="text-sm">{t(label)}{info(key as HelpKey)}<input className={inputClass} type={type} value={String(value[key])} onChange={e => update(key, e.target.value)}/></label>
+  const text = (key: keyof Generation, label: TextKey, type = 'text') => {
+    const disabled = value.timestampSeeds === true && ['patientSeed', 'clinicianSeed', 'singlePersonSeed'].includes(key)
+    return <label className={`text-sm ${disabled ? 'text-neutral-400' : ''}`}>{t(label)}{info(key as HelpKey)}<input className={inputClass} type={type} disabled={disabled} value={String(value[key])} onChange={e => update(key, e.target.value)}/></label>
+  }
   return <section className="mt-6 border-t border-slate-200 pt-5">
     <h3 className="font-semibold">{t('app.generation.title')}</h3>
     <p className="mt-2 text-sm text-slate-600">{t('app.generation.hint')}</p>
@@ -58,6 +61,10 @@ export function GenerationSettings({ language, onChange }: { language: Language;
       {number('population', 'app.generation.population', 1, 1000)}
       {number('minAge', 'app.generation.minAge', 0, 140)}{number('maxAge', 'app.generation.maxAge', 0, 140)}
       <label className="text-sm">{t('app.generation.gender')}{info('gender')}<select className={inputClass} value={value.gender} onChange={e => update('gender', e.target.value)}><option value="">{t('app.generation.anyGender')}</option><option value="F">{t('app.generation.female')}</option><option value="M">{t('app.generation.male')}</option></select></label>
+      <div className="flex items-center gap-1 text-sm sm:col-span-2 lg:col-span-4">
+        <label className="flex items-center gap-2"><input type="checkbox" checked={value.timestampSeeds === true} onChange={e => update('timestampSeeds', e.target.checked)}/>{t('app.generation.timestampSeeds')}</label>
+        <Help text={t('app.generation.timestampSeedsHint')} t={key => t(key as TextKey)}/>
+      </div>
       {text('patientSeed', 'app.generation.patientSeed')}{text('clinicianSeed', 'app.generation.clinicianSeed')}
       {text('referenceDate', 'app.generation.referenceDate', 'date')}{text('endDate', 'app.generation.endDate', 'date')}
       <label className="text-sm">{t('app.generation.state')}{info('state')}<select className={inputClass} value={value.state} onChange={e => setValue({ ...value, state: e.target.value, city: '' })}>{Object.keys(catalogue.locations).map(state => <option key={state}>{state}</option>)}</select></label>

@@ -17,6 +17,24 @@ public class AdditionalIdentifiersTest {
         for (Resource resource : resources) result.recordInput(resource, new ConverterResult.InputContext("effective-patient-2", List.of(), 1, false));
         return result;
     }
+    @Test public void preservesFreelyChosenTypesAcrossResourceKinds() throws Exception {
+        String settings = settings("{count}") + "IDENTIFIER_RULE_1_USE=secondary\n"
+                + "IDENTIFIER_RULE_1_TYPE_TEXT=Test type\n"
+                + "IDENTIFIER_RULE_1_TYPE_CODINGS=[{\"system\":\"http://terminology.hl7.org/CodeSystem/v2-0203\",\"code\":\"VN\"},{\"system\":\"urn:custom\",\"code\":\"deliberately-wrong\",\"display\":\"Example\"}]\n";
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        var context = context(settings, p, o);
+        var ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p, o), context, 0);
+        for (Resource resource : List.of(p, o)) {
+            Resource out = ids.output(resource, 0);
+            Identifier id = out instanceof Patient ? ((Patient)out).getIdentifierFirstRep() : ((Observation)out).getIdentifierFirstRep();
+            assertEquals(Identifier.IdentifierUse.SECONDARY, id.getUse());
+            assertEquals("Test type", id.getType().getText());
+            assertEquals(2, id.getType().getCoding().size());
+            assertEquals("VN", id.getType().getCodingFirstRep().getCode());
+            assertEquals("deliberately-wrong", id.getType().getCoding().get(1).getCode());
+        }
+    }
     @Test public void countsAcrossTypesAndIterationsAndCountsRepeatedSerializationOnce() throws Exception {
         String settings = settings("{count:03}-{patientId}-{resourceType}-{iteration}");
         Patient p = new Patient(); p.setId("p"); p.addIdentifier().setSystem("urn:original").setValue("original");

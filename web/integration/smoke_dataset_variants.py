@@ -1,4 +1,4 @@
-"""Inspect real CSV variants and expose separate persistent dataset archives.
+"""Verify embedded CSV options have no effect on the single configured dataset.
 
 Run after `mvn test package` with web/backend/requirements-test.txt installed.
 """
@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         item = uploaded.json()
         assert item['inspection']['valid']
         assert any(sheet['name'] == 'Person' and sheet['rows'] > 0 for sheet in item['inspection']['sheets'])
-        created = client.post('/api/jobs', json={'source': item['id'], 'profile': 'default',
+        created = client.post('/api/jobs', json={'source': item['id'],
                               'configurationProperties': 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n',
                               'requestId': str(uuid4())})
         assert created.status_code == 201, created.text
@@ -54,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         assert uploaded_csv.status_code == 201, uploaded_csv.text
         csv_item = uploaded_csv.json()
         assert csv_item['kind'] == 'csv'
-        response = client.post('/api/jobs', json={'source': csv_item['id'], 'profile': 'workbook',
+        response = client.post('/api/jobs', json={'source': csv_item['id'], 'configurationProperties': 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON,NDJSON\n',
                               'requestId': str(uuid4())})
         assert response.status_code == 201, response.text
         csv_job = response.json()
@@ -64,12 +64,10 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         assert store.get(csv_job['id'])['state'] == 'succeeded', (csv_folder / 'converter.log').read_text()[-3000:]
         assert (csv_folder / 'input.zip').read_bytes() == data.getvalue()
         manifest = client.get(f"/api/jobs/{csv_job['id']}/artifacts").json()
-        assert len(manifest['datasets']) == 2, manifest
-        one, two = manifest['datasets']
-        assert one['inspection']['resourceCounts'] == two['inspection']['resourceCounts'], (one, two)
+        assert len(manifest['datasets']) == 1, manifest
+        one, = manifest['datasets']
         assert one['inspection']['patients'] == 10, one
         assert one['inspection']['inspectedFormats'] == ['json'], one
-        assert two['inspection']['inspectedFormats'] == ['xml'], two
         for item in manifest['datasets']:
             response = client.get(f"/api/datasets/{item['id']}/download")
             assert response.status_code == 200
@@ -78,5 +76,5 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
                 assert not any('Konvertierungsoptionen_' in name for name in archive.namelist())
         report = next(file for file in manifest['artifacts'] if file['report'])
         assert client.get(f"/api/jobs/{csv_job['id']}/artifacts/{report['id']}").status_code == 200
-        print('PASS: two independent CSV variants, equal JSON/XML resource counts, no double-counted NDJSON and separate dataset downloads')
+        print('PASS: one configured dataset, embedded CSV options ignored, no double-counted NDJSON and dataset download')
 assert (REPO / 'input' / 'FHIR_Testdatengenerator_Vorlage.xlsx').read_bytes() == original

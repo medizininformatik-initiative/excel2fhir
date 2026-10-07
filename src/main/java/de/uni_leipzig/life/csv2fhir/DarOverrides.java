@@ -9,8 +9,10 @@ import org.hl7.fhir.r4.model.*;
 public final class DarOverrides {
     public static final String URL = "http://hl7.org/fhir/StructureDefinition/data-absent-reason";
     private final java.util.Map<String, String> overrides;
+    private final java.util.Set<String> missingOnly;
     private final List<JsonNode> fields = new ArrayList<>();
     public DarOverrides(ContractConfiguration configuration) {
+        missingOnly = configuration == null ? java.util.Set.of() : configuration.darMissingOnly();
         overrides = configuration == null ? java.util.Map.of() : configuration.darOverrides();
         if (!overrides.isEmpty()) for (JsonNode field : configuration.darFields())
             if (overrides.containsKey(field.path("id").asText()) || overrides.keySet().stream()
@@ -23,10 +25,16 @@ public final class DarOverrides {
         Resource output = source.copy();
         for (JsonNode field : fields) {
             String id = field.path("id").asText();
+            String ruleId = id;
             String code = overrides.get(id);
             if (source instanceof Encounter && EncounterOutputPolicy.scope((Encounter)source) != null)
                 code = overrides.getOrDefault(id.replace("Encounter.", "Encounter."
                         + EncounterOutputPolicy.scope((Encounter)source) + "."), code);
+            if (source instanceof Encounter && EncounterOutputPolicy.scope((Encounter)source) != null) {
+                String scoped = id.replace("Encounter.", "Encounter." + EncounterOutputPolicy.scope((Encounter)source) + ".");
+                if (overrides.containsKey(scoped)) ruleId = scoped;
+            }
+            boolean onlyMissing = missingOnly.contains(ruleId);
             if (code == null || !field.path("resourceType").asText().equals(source.fhirType())) continue;
             if (source instanceof Observation) {
                 boolean vital = ((Observation)source).getCategory().stream().flatMap(c -> c.getCoding().stream())
@@ -36,7 +44,7 @@ public final class DarOverrides {
             }
             String path = field.path("field").asText();
             if (field.path("representation").asText().equals("dataAbsentReason")) {
-                observation((Observation)source, (Observation)output, field, code);
+                observation((Observation)source, (Observation)output, field, code, onlyMissing);
                 continue;
             }
             List<Base> targets;
@@ -50,6 +58,7 @@ public final class DarOverrides {
             }
             if (targets.isEmpty()) continue;
             for (Base target : targets) {
+                if (onlyMissing && hasContent(target)) continue;
                 if (field.has("supportedChoices")) {
                     boolean supported = false;
                     for (JsonNode choice : field.get("supportedChoices")) supported |= choice.asText().equals(target.fhirType());
@@ -59,7 +68,7 @@ public final class DarOverrides {
             }
             if (id.equals("DocumentReference.content.attachment.data")) {
                 for (DocumentReference.DocumentReferenceContentComponent content : ((DocumentReference)output).getContent()) {
-                    if (content.getAttachment().hasDataElement()) {
+                    if (content.getAttachment().hasDataElement() && !content.getAttachment().getDataElement().hasValue()) {
                         content.getAttachment().setSizeElement(null).setHashElement(null);
                         if (content.getAttachment().hasUrl() && content.getAttachment().getUrl().regionMatches(true, 0, "data:", 0, 5))
                             content.getAttachment().setUrlElement(null);
@@ -68,6 +77,16 @@ public final class DarOverrides {
             }
         }
         return output;
+    }
+
+    /** Extensions alone (including a converter-created DAR) are not a supplied value. */
+    private static boolean hasContent(Base value) {
+        if (value instanceof PrimitiveType<?>) return ((PrimitiveType<?>)value).hasValue();
+        for (Property property : value.children()) {
+            if (property.getName().equals("extension") || property.getName().equals("id")) continue;
+            for (Base child : property.getValues()) if (hasContent(child)) return true;
+        }
+        return false;
     }
 
     private static List<Base> targets(Base parent, String[] parts, int index, JsonNode field) {
@@ -109,15 +128,20 @@ public final class DarOverrides {
         element.addExtension(URL, new CodeType(code));
     }
 
-    private static void observation(Observation source, Observation output, JsonNode field, String code) {
+    private static void observation(Observation source, Observation output, JsonNode field, String code, boolean onlyMissing) {
         boolean numeric = field.path("semanticGroup").asText().equals("numeric-measurement");
         if (field.path("field").asText().startsWith("component.")) {
             for (int i = 0; i < source.getComponent().size(); i++) {
                 Type value = source.getComponent().get(i).getValue();
-                if (value == null || (value instanceof Quantity) != numeric) continue;
+                if (onlyMissing) {
+                    if (value != null && hasContent(value)) continue;
+                    if (!source.getComponent().get(i).hasDataAbsentReason() && output.getComponent().get(i).hasDataAbsentReason()) continue;
+                } else if (value == null || (value instanceof Quantity) != numeric) continue;
                 output.getComponent().get(i).setValue(null).setDataAbsentReason(reason(code));
             }
-        } else if (source.hasValue() && (source.getValue() instanceof Quantity) == numeric) {
+        } else if (onlyMissing ? (!source.hasValue() || !hasContent(source.getValue()))
+                && (source.hasDataAbsentReason() || !output.hasDataAbsentReason())
+                : source.hasValue() && (source.getValue() instanceof Quantity) == numeric) {
             output.setValue(null).setDataAbsentReason(reason(code));
         }
     }

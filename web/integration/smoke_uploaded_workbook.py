@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         item = uploaded.json()
         assert item['inspection']['valid']
         assert any(sheet['name'] == 'Person' and sheet['rows'] > 0 for sheet in item['inspection']['sheets'])
-        created = client.post('/api/jobs', json={'source': item['id'], 'profile': 'default',
+        created = client.post('/api/jobs', json={'source': item['id'],
                               'configurationProperties': 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n',
                               'requestId': str(uuid4())})
         assert created.status_code == 201, created.text

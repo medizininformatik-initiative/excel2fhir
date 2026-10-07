@@ -1,0 +1,208 @@
+{
+  "valueSets": [
+    "http://fhir.de/ValueSet/identifier-type-de-basis",
+    "http://hl7.org/fhir/ValueSet/identifier-type",
+    "http://hl7.org/fhir/ValueSet/identifier-use",
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-fall/ValueSet/identifier-type-codes",
+    "https://www.medizininformatik-initiative.de/fhir/core/modul-labor/ValueSet/mii-vs-labor-identifier-type-codes"
+  ],
+  "use": [
+    {
+      "system": "http://hl7.org/fhir/identifier-use",
+      "code": "usual",
+      "display": "Usual"
+    },
+    {
+      "system": "http://hl7.org/fhir/identifier-use",
+      "code": "official",
+      "display": "Official"
+    },
+    {
+      "system": "http://hl7.org/fhir/identifier-use",
+      "code": "temp",
+      "display": "Temp"
+    },
+    {
+      "system": "http://hl7.org/fhir/identifier-use",
+      "code": "secondary",
+      "display": "Secondary"
+    },
+    {
+      "system": "http://hl7.org/fhir/identifier-use",
+      "code": "old",
+      "display": "Old"
+    }
+  ],
+  "types": [
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "ACSN",
+      "display": "ACSN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "AN",
+      "display": "Account number"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "ANON",
+      "display": "Anonymous identifier"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+      "code": "ANONYED",
+      "display": "anonymized"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "BRN",
+      "display": "BRN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "BSNR",
+      "display": "Betriebsstätten-Nummer"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "DL",
+      "display": "DL"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "DN",
+      "display": "Doctor number"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "DR",
+      "display": "DR"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "EN",
+      "display": "EN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "FILL",
+      "display": "FILL"
+    },
+    {
+      "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
+      "code": "GKV",
+      "display": "Gesetzliche Krankenversicherung"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "JHN",
+      "display": "JHN"
+    },
+    {
+      "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
+      "code": "KVZ10",
+      "display": "Krankenversichertennummer"
+    },
+    {
+      "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
+      "code": "KZVA",
+      "display": "KZVAbrechnungsnummer"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "LANR",
+      "display": "Lebenslange Arztnummer"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "MCN",
+      "display": "MCN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "MD",
+      "display": "MD"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "MR",
+      "display": "MR"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "NIIP",
+      "display": "NIIP"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "OBI",
+      "display": "OBI"
+    },
+    {
+      "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
+      "code": "PKV",
+      "display": "Private Krankenversicherung"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "PLAC",
+      "display": "PLAC"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "PPN",
+      "display": "PPN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "PRN",
+      "display": "PRN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+      "code": "PSEUDED",
+      "display": "pseudonymized"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "RI",
+      "display": "Resource identifier"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "SB",
+      "display": "SB"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "SNO",
+      "display": "SNO"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "TAX",
+      "display": "TAX"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "UDI",
+      "display": "UDI"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "VN",
+      "display": "VN"
+    },
+    {
+      "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+      "code": "XX",
+      "display": "Organisations-ID"
+    },
+    {
+      "system": "http://fhir.de/CodeSystem/identifier-type-de-basis",
+      "code": "ZANR",
+      "display": "Zahnarztnummer"
+    }
+  ]
+}

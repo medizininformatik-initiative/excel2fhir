@@ -12,6 +12,24 @@ from test_queue import QueueFixture
 
 
 class UploadTests(QueueFixture):
+    def test_server_outcomes_report_partial_success_and_original_diagnostics(self):
+        path = self.root / 'upload.log'
+        path.write_text("""Status Codes     [code:count]             200:4, 409:7
+Non-OK Responses:
+File: /data/transactions/0000.ndjson [Bundle: 9]
+    StatusCode  : 409
+    Severity    : Error
+    Code        : conflict
+    Diagnostics : Referential integrity violated. Resource `Location/missing` doesn't exist.
+""")
+        result = uploads.server_responses(path)
+        self.assertEqual(4, result['acceptedBundles'])
+        self.assertEqual(7, result['rejectedBundles'])
+        self.assertEqual(9, result['serverErrors'][0]['bundle'])
+        self.assertIn('Location/missing', result['serverErrors'][0]['diagnostics'][0])
+        path.write_text('connection refused')
+        self.assertEqual({}, uploads.server_responses(path))
+
     def exported(self, name, resources):
         path = self.root / name
         path.write_text(json.dumps({'resourceType': 'Bundle', 'entry': [
@@ -56,7 +74,7 @@ class UploadTests(QueueFixture):
                 uploads.prepare_transactions([self.exported(str(number) + '.ndjson', resources)], directory / 'transactions')
 
     def publish(self):
-        job = store.create('starter', 'workbook')
+        job = store.create('starter', 'default')
         root = store.ROOT / 'jobs' / job
         data = root / 'output/run-example/fhir'
         data.mkdir(parents=True)

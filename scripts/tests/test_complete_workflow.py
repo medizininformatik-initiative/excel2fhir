@@ -69,7 +69,7 @@ class CompleteWorkflowTest(unittest.TestCase):
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
             workflow.run(self.root / 'output', ['--exporter.years_of_history=7'])
         command = generate.call_args.args[0]
-        self.assertLess(command.index('--exporter.years_of_history=0'),
+        self.assertLess(command.index('--exporter.years_of_history=5'),
                         command.index('--exporter.years_of_history=7'))
 
     @patch.object(workflow.subprocess, 'run')
@@ -122,3 +122,12 @@ class CompleteWorkflowTest(unittest.TestCase):
         self.assertEqual(2, convert.call_args.kwargs['patients_per_bundle'])
         command = generate.call_args.args[0]
         self.assertEqual('7', command[command.index('-p') + 1])
+
+    def test_zero_exit_with_memory_error_never_starts_conversion(self):
+        def generate(*args, **kwargs):
+            kwargs['stdout'].write('java.lang.OutOfMemoryError: Java heap space\n')
+            return Mock(returncode=0)
+        with patch.object(workflow.subprocess, 'run', side_effect=generate), patch.object(workflow, 'convert_cases') as convert:
+            with self.assertRaises(MemoryError):
+                workflow.run(self.root / 'output', [])
+            convert.assert_not_called()

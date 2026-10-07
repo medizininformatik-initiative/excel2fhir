@@ -27,6 +27,7 @@ import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Encounter.EncounterStatus;
 import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Location;
+import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Location.LocationStatus;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
@@ -129,10 +130,27 @@ public class EncounterConverter extends Converter {
         Location parent = null;
         String path = getDIZId() + "|" + Objects.toString(department, "");
         String[] names = {value(Station), value(Zimmer), value(Bett)};
+        var configuration = options.configuration();
+        String providerMode = configuration == null ? "none" : configuration.effective("resource.Encounter.stationServiceProvider")
+                .map(v -> v.asText()).orElse("none");
+        boolean stationLocation = configuration == null || configuration.effective("resource.Encounter.stationLocation")
+                .map(v -> v.asBoolean()).orElse(true);
+        if (names[0] != null && !providerMode.equals("none")) {
+            Organization organization = new Organization();
+            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + names[0]));
+            organization.setName(names[0]).setActive(true);
+            String reference = "Organization/" + organization.getIdElement().getIdPart();
+            if (providerMode.equals("contained")) {
+                encounter.addContained(organization);
+                reference = "#" + organization.getIdElement().getIdPart();
+            } else if (providerMode.equals("generate-reference")) resources.add(organization);
+            encounter.setServiceProvider(new Reference(reference).setDisplay(names[0]));
+        }
         String[] types = {"wa", "ro", "bd"};
         for (int i = 0; i < names.length; i++) {
             if (names[i] == null) continue;
             path += "|" + types[i] + "|" + names[i];
+            if (i == 0 && !stationLocation) continue;
             Location location = new Location();
             location.setId(ClinicalValues.resourceId(getDIZId(), "Location", path));
             location.setName(names[i]).setStatus(LocationStatus.ACTIVE);

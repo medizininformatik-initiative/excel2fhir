@@ -94,8 +94,7 @@ public class ContractConfigurationTest {
                 try (var out = Files.newOutputStream(workbook)) { book.write(out); }
             }
             var sets = List.of(ConverterOptionSet.external(List.of(external.toFile())).get(0),
-                    ConverterOptionSet.csv(root.toFile(), "case_").get(0),
-                    ConverterOptionSet.workbook(workbook.toFile()).get(0));
+                    new ConverterOptionSet("editor", text));
             for (var set : sets) {
                 var options = set.options();
                 assertEquals(PatientOutputPolicy.REFERENCE_ONLY, options.patientOutputPolicy());

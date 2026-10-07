@@ -32,6 +32,21 @@ class ImportTest(unittest.TestCase):
         for value, expected in zip(rows['Fall'][0][2:4], period.values()):
             self.assertEqual(datetime.fromisoformat(value), datetime.fromisoformat(expected))
 
+    def test_historical_offset_seconds_are_rendered_in_utc(self):
+        import os, time
+        from unittest.mock import patch
+        source = bundle()
+        period = {'start': '1888-09-23T18:18:52+00:00', 'end': '1888-09-23T18:33:52+00:00'}
+        source['entry'][1]['resource']['period'] = period
+        try:
+            with patch.dict(os.environ, TZ='Europe/Berlin'):
+                time.tzset()
+                rows, _ = prepare(source)
+                for actual, expected in zip(rows['Fall'][0][2:4], period.values()):
+                    self.assertEqual(expected, actual)
+        finally:
+            time.tzset()
+
     def test_keeps_codes_times_references_and_reports_excluded_resources(self):
         source=bundle();before=copy.deepcopy(source)
         rows,report=prepare(source)

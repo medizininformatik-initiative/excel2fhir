@@ -31,7 +31,10 @@ public class Main implements Callable<Integer> {
     @Option(names = { "-o", "--output-directory" }, description = "Output root for fresh runs. Default: outputGlobal.")
     File outputDirectory;
 
-    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    @Option(names = "--export-default-options", paramLabel = "FILE", description = "Write the default configuration and exit.")
+    File exportDefaultOptions;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter configuration (one per run).")
     List<File> converterOptions = new java.util.ArrayList<>();
 
     @Option(names = { "-r",
@@ -79,6 +82,13 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (converterOptions.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
+        if (exportDefaultOptions != null) {
+            java.nio.file.Files.writeString(exportDefaultOptions.toPath(),
+                    de.uni_leipzig.life.csv2fhir.ContractConfiguration.defaultProperties(),
+                    java.nio.file.StandardOpenOption.CREATE_NEW);
+            return 0;
+        }
         if (patientsPerBundle < 1)
             throw new IllegalArgumentException("-p must be positive.");
         List<String> prefixes = inputPrefixes(inputDirectory);
@@ -90,7 +100,7 @@ public class Main implements Callable<Integer> {
             boolean importProblems = false;
             boolean validationProblems = false, validationRequested = false;
             for (String prefix : prefixes) {
-                var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
+                var sets = converterOptions.isEmpty() ? ConverterOptionSet.defaults()
                         : ConverterOptionSet.external(converterOptions);
                 for (var set : sets) {
                     var destination = sets.size() > 1 ? run.staging.resolve(set.directoryName()) : run.staging;
@@ -98,7 +108,7 @@ public class Main implements Callable<Integer> {
                     Files.createDirectories(destination);
                     var snapshot = run.directory.resolve("details/options").resolve(set.directoryName());
                     if (prefixes.size() > 1) snapshot = snapshot.resolve(prefix + "Person");
-                    set.snapshot(snapshot);
+                    set.snapshot(snapshot, patientsPerBundle, validateBundles, outputFileTypes);
                     Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
                     converter.convertFiles(patientsPerBundle, outputFileTypes);
                     importProblems |= converter.hasImportProblems();

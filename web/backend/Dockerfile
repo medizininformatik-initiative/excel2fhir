@@ -34,6 +34,7 @@ COPY --from=synthea-build /synthea-version.txt /synthea/target/synthea-revision.
 COPY --from=synthea-build /synthea/LICENSE /synthea/NOTICE /synthea/third-party/synthea/
 COPY scripts /synthea/scripts
 COPY src/main/resources/workbook-absent-reasons.json /synthea/src/main/resources/workbook-absent-reasons.json
+COPY src/main/resources/ucum /synthea/src/main/resources/ucum
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /synthea/
 COPY --from=converter /build/target/excel2fhir.jar /synthea/target/excel2fhir.jar
 COPY --from=converter /build/target/excel2fhir.jar /converter/excel2fhir.jar

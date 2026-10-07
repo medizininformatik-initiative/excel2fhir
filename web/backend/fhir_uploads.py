@@ -16,7 +16,7 @@ import datasets
 import store
 
 TARGETS = {
-    'blaze': {'name': 'Blaze', 'url': 'http://blaze:8080/fhir', 'address': 'http://localhost:5190/fhir', 'concurrency': 2},
+    'blaze': {'name': 'Blaze', 'url': 'http://blaze:8080/fhir', 'address': 'http://localhost:5190/fhir', 'concurrency': 1},
     'hapi': {'name': 'HAPI', 'url': 'http://hapi:8080/fhir', 'address': 'http://localhost:5191/fhir', 'concurrency': 1},
 }
 BLAZECTL_VERSION = '1.5.1'
@@ -50,7 +50,47 @@ def get(identifier):
         row = db.execute('SELECT * FROM uploads WHERE id=?', (identifier,)).fetchone()
     if not row:
         raise FileNotFoundError('Upload not found')
-    return {**dict(row), 'descriptor': json.loads(row['descriptor']), 'result': json.loads(row['result']) if row['result'] else None}
+    result = json.loads(row['result']) if row['result'] else None
+    if row['state'] not in {'queued', 'preparing', 'uploading'}:
+        evidence = server_responses(folder(identifier) / 'upload.log')
+        if evidence:
+            result = {**(result or {}), **evidence}
+    return {**dict(row), 'descriptor': json.loads(row['descriptor']), 'result': result}
+
+
+def server_responses(path):
+    """Read blazectl's HTTP summary and original OperationOutcome diagnostics."""
+    if not path.is_file():
+        return {}
+    counts = {}
+    errors = []
+    current = None
+    with path.open(errors='replace') as stream:
+        for raw in stream:
+            line = raw.strip()
+            if line.startswith('Status Codes'):
+                counts = {code: int(count) for code, count in re.findall(r'(\d{3}):(\d+)', line)}
+            match = re.match(r'File: (.*?) \[Bundle: (\d+)\]', line)
+            if match:
+                current = {'file': Path(match[1]).name, 'bundle': int(match[2]), 'diagnostics': []}
+                errors.append(current)
+            elif current is not None:
+                match = re.match(r'(StatusCode|Severity|Code|Diagnostics)\s*:\s*(.*)', line)
+                if match:
+                    key, value = match.groups()
+                    if key == 'Diagnostics':
+                        current['diagnostics'].append(value)
+                    else:
+                        current[{'StatusCode': 'status', 'Severity': 'severity', 'Code': 'code'}[key]] = value
+    result = {}
+    if counts:
+        result.update(statusCounts=counts,
+                      acceptedBundles=sum(count for code, count in counts.items() if 200 <= int(code) < 300),
+                      rejectedBundles=sum(count for code, count in counts.items() if int(code) >= 400),
+                      otherResponses=sum(count for code, count in counts.items() if not 200 <= int(code) < 300 and int(code) < 400))
+    if errors:
+        result['serverErrors'] = errors
+    return result
 
 
 def history():
@@ -81,6 +121,10 @@ def create(identifier, target, selection):
     descriptor = {'target': {'id': target, **TARGETS[target]}, 'datasets': selected,
                   'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'excel2fhir.jar')}
     with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        for item in selected:
+            if db.execute('SELECT id FROM jobs WHERE id=?', (item['jobId'],)).fetchone() is None:
+                raise ValueError('A selected run was deleted')
         db.execute('INSERT OR IGNORE INTO uploads(id,state,created,descriptor) VALUES (?, ?, ?, ?)',
                    (identifier, 'queued', time.time(), json.dumps(descriptor)))
     current = get(identifier)
@@ -205,6 +249,12 @@ def execute(identifier, stopping, terminate):
                     raise TimeoutError('Upload step timed out')
                 time.sleep(0.2)
             if process.returncode:
+                log.flush()
+                text = (root / 'upload.log').read_text(errors='replace')
+                if 'connection refused' in text or ' : EOF' in text:
+                    raise RuntimeError('The connection to the FHIR server failed during upload. The server may have restarted. No complete upload was confirmed; see upload log.')
+                if 'OutOfMemoryError' in text:
+                    raise RuntimeError('The upload failed because memory was exhausted; see upload log.')
                 raise RuntimeError('Command failed; see upload log')
         finally:
             terminate(process)

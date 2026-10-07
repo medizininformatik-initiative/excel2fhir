@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { defaults, importConfiguration, options, darFields } from '../src/configuration.ts'
-import { exportPropertiesConfiguration } from '../src/configuration-properties.ts'
+import { exportPropertiesConfiguration, importRunProperties } from '../src/configuration-properties.ts'
 
 const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true,
   resources: ['Patient'], system: 'urn:example:ä', pattern: '{{id}}-{count:08}-{hash}' }
@@ -106,4 +106,23 @@ test('encounter policies, scoped DAR and identifier selectors roundtrip in both 
     assert.deepEqual(importConfiguration(text), config)
     config.values['resource.Encounter.ambulatory.enabled'] = true
   }
+})
+
+test('stored default-run properties load into the editor with preserved settings', () => {
+  const config = importRunProperties('PID_PREFIX=site-\nSET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER=false\nSET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER=false\nSYNTHEA_VERSION_OUTPUT=Jahr\nADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER=false\n')
+  assert.equal(config.values['ids.patient.prefix'], 'site-')
+  assert.equal(config.values['reference.Condition.encounter'], 'none')
+  assert.equal(config.values['reference.Procedure.encounter'], 'none')
+  assert.equal(config.values['terminology.versionOutput'], 'catalogue-year')
+  assert.deepEqual(importRunProperties(exported(config)), importConfiguration(exported(config)))
+})
+
+test('free identifier codings, use and conditional DAR round-trip in both languages', () => {
+  const config = defaults()
+  config.identifierRules = [{ ...rule, resources: ['Observation', 'Patient'], use: 'secondary', typeText: 'Aufnahme',
+    typeCodings: [{ system: 'http://terminology.hl7.org/CodeSystem/v2-0203', code: 'VN', display: 'Visit number' }, { system: 'urn:test', code: 'wrong', display: 'Eigene Bezeichnung' }] }]
+  config.dar['Patient.birthDate'] = { mode: 'overwrite', code: 'unknown', onlyWhenMissing: true }
+  config.values['resource.Encounter.stationServiceProvider'] = 'contained'
+  config.values['resource.Encounter.stationLocation'] = false
+  for (const lang of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, lang)), config)
 })

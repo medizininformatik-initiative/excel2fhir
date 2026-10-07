@@ -76,9 +76,7 @@ Use a new output filename. The script locates fields by their headings, replaces
 validation links and preserves data and input-sheet layout through LibreOffice/UNO.
 Generated Synthea workbooks extend selection links to their populated rows.
 
-The first options sheet lists all Converter Options with descriptions and defaults.
-Commented settings use those defaults. A regression test compares the documented
-option list with the Java enums.
+Converter settings are supplied separately; see [Converter Options](converter-usage.md#converter-options).
 
 The lists are input aids based on the bundled profiles and converter support.
 Terminology validation is handled by the [FHIR validator](fhir-validation.md).

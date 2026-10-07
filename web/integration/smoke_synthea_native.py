@@ -14,7 +14,7 @@ with tempfile.TemporaryDirectory(prefix='native-generation-workbench-') as direc
     settings = generation.normalize({'outputMode': 'synthea', 'population': 1,
                                      'minAge': 20, 'maxAge': 20, 'patientFilter': 'alive',
                                      'modules': ['appendicitis'], 'yearsOfHistory': 1})
-    job = store.create('synthea-generation', 'workbook', generation_settings=settings)
+    job = store.create('synthea-generation', 'default', generation_settings=settings)
     original = None
     for attempt in range(2):
         assert store.claim() == job
@@ -36,5 +36,6 @@ with tempfile.TemporaryDirectory(prefix='native-generation-workbench-') as direc
             assert patients == original, 'Repeat changed original patient data'
         original = patients
         if attempt == 0:
-            job = store.repeat(job, str(uuid4()))
+            loaded = store.editor_input(job)
+            job = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
     print('PASS: native Synthea generation, original identities and clinicians, dataset download, count and repeat; no Excel/KDS conversion')

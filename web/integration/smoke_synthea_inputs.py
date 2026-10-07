@@ -37,7 +37,8 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     manifest = json.loads((folder / 'datasets.json').read_text())
     assert len(manifest['datasets']) == 1
     assert manifest['datasets'][0]['inspection']['patients'] == 2
-    repeated = store.repeat(job, str(uuid4()))
+    loaded = store.editor_input(job)
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated

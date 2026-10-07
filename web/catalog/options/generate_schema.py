@@ -44,7 +44,8 @@ def generate():
                  'additionalProperties': False},
                 {'type': 'object', 'required': ['mode', 'code'],
                  'properties': {'mode': {'const': 'overwrite'},
-                                'code': {'enum': field['allowedCodes']}},
+                                'code': {'enum': field['allowedCodes']},
+                                'onlyWhenMissing': {'type': 'boolean'}},
                  'additionalProperties': False},
             ]
         }
@@ -73,6 +74,12 @@ def generate():
                                       'minItems': 1, 'items': {'enum': eligible}},
                         'system': {'type': 'string', 'minLength': 1},
                         'pattern': {'type': 'string', 'minLength': 1},
+                        'use': {'enum': ['', 'usual', 'official', 'temp', 'secondary', 'old']},
+                        'typeText': {'type': 'string'},
+                        'typeCodings': {'type': 'array', 'items': {
+                            'type': 'object', 'additionalProperties': False,
+                            'properties': {key: {'type': 'string'} for key in ('system', 'code', 'display')}
+                        }},
                     },
                 },
             },

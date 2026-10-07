@@ -23,7 +23,8 @@ with tempfile.TemporaryDirectory(prefix='generation-workbench-') as directory:
     assert counts['generatedPatients'] >= 1 and counts['importedPatients'] == counts['generatedPatients'] and counts['failedPatients'] == 0, counts
     originals = sorted((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
     assert originals
-    repeated = store.repeat(job, str(uuid4()))
+    loaded = store.editor_input(job)
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated

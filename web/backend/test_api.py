@@ -13,7 +13,7 @@ class ApiTests(QueueFixture):
         self.client = TestClient(app)
 
     def test_submission_snapshot_and_cancel(self):
-        result = self.client.post('/api/jobs', json={'source': 'starter', 'profile': 'default'})
+        result = self.client.post('/api/jobs', json={'source': 'starter'})
         self.assertEqual(201, result.status_code)
         job_id = result.json()['id']
         snapshot = self.client.get(f'/api/jobs/{job_id}/snapshot')
@@ -31,16 +31,10 @@ class ApiTests(QueueFixture):
         self.assertTrue(self.client.get('/api/jobs').json()[0]['download_available'])
         self.assertEqual(b'archive', self.client.get(f'/api/jobs/{job_id}/download').content)
 
-    def test_workbook_source_captures_input_and_rejects_mixed_settings(self):
+    def test_input_configuration_source_is_not_a_start_option(self):
         response = self.client.post('/api/jobs', json={'profile': 'workbook'})
-        self.assertEqual(201, response.status_code)
-        snapshot = self.client.get(f"/api/jobs/{response.json()['id']}/snapshot").json()
-        self.assertEqual('workbook', snapshot['profile']['id'])
-        self.assertEqual(store.digest(store.APP / store.SOURCES['starter']), snapshot['inputSha256'])
-        self.assertNotIn('formats', snapshot)
-        rejected = self.client.post('/api/jobs', json={'profile': 'workbook', 'configurationProperties': 'CONFIGURATION_VERSION=1'})
-        self.assertEqual(422, rejected.status_code)
-        self.assertEqual(1, len(store.jobs()))
+        self.assertEqual(422, response.status_code)
+        self.assertEqual([], store.jobs())
 
     def test_rejects_untrusted_origin_host_and_unknown_input(self):
         self.assertEqual(403, self.client.post('/api/jobs', json={}, headers={'Origin': 'https://other.invalid'}).status_code)

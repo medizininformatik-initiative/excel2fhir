@@ -30,6 +30,9 @@ class ComposeProfilesTest(unittest.TestCase):
                                          'auth', 'auth-db', 'dataportal-nginx', 'availability-updater',
                                          'torch', 'torch-nginx', 'fhir-data-evaluator'])
                         self.assertEqual(0, services['fhir-data-evaluator']['scale'])
+                        self.assertEqual('http://localhost:5192/auth', services['auth']['environment']['KC_HOSTNAME'])
+                        self.assertEqual(8080, services['dataportal-nginx']['ports'][0]['target'])
+                        self.assertEqual('http://localhost:5192', services['dataportal-backend']['environment']['ALLOWED_ORIGINS'])
                         self.assertEqual('ghcr.io/medizininformatik-initiative/dataportal-availability-updater:0.4.2',
                                          services['availability-updater']['image'])
                         self.assertNotIn('build', services['availability-updater'])

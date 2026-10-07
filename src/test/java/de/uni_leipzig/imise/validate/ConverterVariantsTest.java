@@ -24,7 +24,6 @@ public class ConverterVariantsTest {
         Path file = temp.getRoot().toPath().resolve("case.xlsx");
         try (var in = Files.newInputStream(Path.of("FHIR_Testdatengenerator_Vorlage.xlsx"));
                 var book = new XSSFWorkbook(in)) {
-            book.removeSheetAt(book.getSheetIndex("Konvertierungsoptionen"));
             for (String name : List.of("Konvertierungsoptionen_A", "B_Konvertierungsoptionen")) {
                 var sheet = book.createSheet(name);
                 sheet.createRow(0).createCell(0).setCellValue("# comment, with comma");
@@ -37,34 +36,14 @@ public class ConverterVariantsTest {
     }
 
     @Test
-    public void allOptionsSheetsExportAsTextAndProduceSeparateVariants() throws Exception {
-        Path input = workbook();
+    public void embeddedOptionsAreIgnoredAndOneOutputIsProduced() throws Exception {
+        Path file = workbook();
         Path csv = temp.newFolder("csv").toPath();
-        Excel2Csv.splitExcel(input.toFile(), null, csv.toFile());
-        var sets = ConverterOptionSet.csv(csv.toFile(), "case-");
-        assertEquals(2, sets.size());
-        assertTrue(sets.stream().allMatch(s -> s.options().getErrors().isEmpty()));
+        Excel2Csv.splitExcel(file.toFile(), null, csv.toFile());
+        try (var files = Files.list(csv)) { assertFalse(files.anyMatch(p -> p.toString().contains("Konvertierungsoptionen"))); }
         Path output = temp.newFolder("output").toPath();
-        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", input.toString(), "-o", output.toString(), "-p", "1000"));
-        Path run;
-        try (var runs = Files.list(output)) { run = runs.findFirst().orElseThrow(); }
-        for (var set : sets) {
-            Path directory = run.resolve("fhir").resolve(set.directoryName());
-            assertTrue(Files.isRegularFile(directory.resolve("patients.ndjson")));
-            assertTrue(Files.isRegularFile(directory.resolve("case.json")));
-            assertTrue(Files.isRegularFile(run.resolve("details/options/case.xlsx").resolve(set.directoryName()).resolve("converter-options.config")));
-        }
-        var a = Files.readString(run.resolve("fhir/Konvertierungsoptionen_A/case.json"));
-        var b = Files.readString(run.resolve("fhir/B_Konvertierungsoptionen/case.json"));
-        var parser = de.uni_leipzig.life.csv2fhir.OutputFileType.JSON.getParser();
-        var first = parser.parseResource(org.hl7.fhir.r4.model.Bundle.class, a);
-        var second = parser.parseResource(org.hl7.fhir.r4.model.Bundle.class, b);
-        assertTrue(first.getEntry().stream().map(e -> e.getResource())
-                .filter(r -> r instanceof org.hl7.fhir.r4.model.Condition)
-                .anyMatch(r -> ((org.hl7.fhir.r4.model.Condition) r).hasEncounter()));
-        assertFalse(second.getEntry().stream().map(e -> e.getResource())
-                .filter(r -> r instanceof org.hl7.fhir.r4.model.Condition)
-                .anyMatch(r -> ((org.hl7.fhir.r4.model.Condition) r).hasEncounter()));
+        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", file.toString(), "-o", output.toString(), "-p", "1000"));
+        try (var runs = Files.list(output)) { assertTrue(Files.exists(runs.findFirst().orElseThrow().resolve("fhir/case.json"))); }
     }
 
     @Test
@@ -74,7 +53,7 @@ public class ConverterVariantsTest {
             book.getSheet("B_Konvertierungsoptionen").createRow(2).createCell(0).setCellValue("CHECK_INPUT_CONSISTENCY=invalid");
             try (var out = Files.newOutputStream(file)) { book.write(out); }
         }
-        assertTrue(new ExcelTemplateValidator().validate(file.toFile()).hasErrors());
+        assertFalse(new ExcelTemplateValidator().validate(file.toFile()).hasErrors());
         Path options = temp.newFile("DIZ.config").toPath();
         Files.writeString(options, "PID_PREFIX=site-\n");
         Path output = temp.newFolder("external-output").toPath();
@@ -90,7 +69,7 @@ public class ConverterVariantsTest {
     @Test
     public void outputGroupsOnlyMultipleInputsAndVariants() throws Exception {
         for (int inputs : List.of(1, 2)) {
-            for (int variants : List.of(1, 2)) {
+            for (int variants : List.of(1)) {
                 Path root = temp.newFolder("layout-" + inputs + "-" + variants).toPath();
                 Path input = Files.createDirectory(root.resolve("input"));
                 Path output = Files.createDirectory(root.resolve("output"));

@@ -7,7 +7,7 @@ import {
 } from './configuration.ts'
 
 // Keep this grammar compatible with java.util.Properties Reader input. Values
-// occupy one physical line so copying the file into an options sheet is lossless.
+// occupy one physical line for a portable, editable configuration file.
 function escapeValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/\r/g, '\\r')
     .replace(/\t/g, '\\t').replace(/\f/g, '\\f')
@@ -97,6 +97,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     const rule = config.dar[field.id]
     assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties],
       rule?.mode === 'overwrite' ? rule.code : 'unchanged', inactive)
+    if (rule?.mode === 'overwrite' && rule.onlyWhenMissing) assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties] + '_ONLY_WHEN_MISSING', true, inactive)
   }
   for (const [index, rule] of config.identifierRules.entries()) {
     lines.push('')
@@ -105,7 +106,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     const inactive = !rule.enabled || !rule.resources.some(r => resourceEnabled(r, config.values))
     if (inactive) comment(t('app.config.fileRuleInactive'))
     const prefix = `${contract.propertiesFormat.identifierPrefix}${index + 1}_`
-    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern }
+    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
     for (const [name, value] of Object.entries(fields)) {
       comment(t(`identifier.${name.toLowerCase()}`))
       // An explicit false remains executable: it intentionally disables this rule.
@@ -120,6 +121,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
   const byName = new Map(options.map(o => [o.propertyName, o]))
   const darNames = new Map(Object.entries(contract.propertiesFormat.darProperties).map(([id, name]) => [name, id]))
   const rules = new Map<number, Record<string, string>>()
+  const conditions = new Map<string, boolean>()
   const seen = new Set<string>()
   let version = false
   for (const raw of text.replace(/^\uFEFF/, '').split(/\r?\n/)) {
@@ -139,9 +141,10 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       continue
     }
     const option = byName.get(key)
+    const conditionField = key.endsWith('_ONLY_WHEN_MISSING') ? darNames.get(key.slice(0, -18)) : undefined
     const field = darNames.get(key)
-    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN)$/.exec(key)
-    if (!option && !field && !ruleMatch && key !== contract.propertiesFormat.versionProperty)
+    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
+    if (!option && !field && !conditionField && !ruleMatch && key !== contract.propertiesFormat.versionProperty)
       throw new Error(`Unknown property: ${key}`)
     if (seen.has(key)) throw new Error(`Duplicate property: ${key}`)
     seen.add(key)
@@ -152,6 +155,9 @@ export function parsePropertiesConfiguration(text: string): Configuration {
     if (key === contract.propertiesFormat.versionProperty) {
       if (commented || value !== String(contract.propertiesFormat.version)) throw new Error('Unsupported configuration version')
       version = true
+    } else if (conditionField) {
+      if (!['true', 'false'].includes(value)) throw new Error('Invalid DAR condition')
+      conditions.set(conditionField, value === 'true')
     } else if (option) config.values[option.id] = decode(value, option)
     else if (field) {
       if (value !== 'unchanged') config.dar[field] = { mode: 'overwrite', code: value }
@@ -163,13 +169,32 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       rules.set(index, rule)
     }
   }
+  for (const [field, condition] of conditions) {
+    const rule = config.dar[field]
+    if (rule?.mode === 'overwrite') rule.onlyWhenMissing = condition
+  }
   if (!version) throw new Error('Missing configuration version')
   const entries = [...rules.entries()].sort(([a], [b]) => a - b)
   config.identifierRules = entries.map(([index, rule], offset): Rule => {
-    if (index !== offset + 1 || Object.keys(rule).length !== 5 || !['true', 'false'].includes(rule.ENABLED))
+    if (index !== offset + 1 || !['ID', 'ENABLED', 'RESOURCES', 'SYSTEM', 'PATTERN'].every(key => key in rule) || !['true', 'false'].includes(rule.ENABLED))
       throw new Error('Incomplete identifier rule')
-    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN }
+    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
   })
   if (problems(config).length) throw new Error('Invalid configuration')
   return config
+}
+
+/** Read the Properties snapshots written by earlier default-only runs. */
+export function importRunProperties(text: string): Configuration {
+  if (/^CONFIGURATION_VERSION\s*=/m.test(text)) return parsePropertiesConfiguration(text)
+  const converted = text.split(/\r?\n/).map(line => {
+    const match = /^(SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER|SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER)\s*=\s*(true|false)\s*$/.exec(line)
+    if (match) return `${match[1].includes('PROCEDURE') ? 'REFERENCE_PROCEDURE_ENCOUNTER' : 'REFERENCE_CONDITION_ENCOUNTER'}=${match[2] === 'true' ? 'department' : 'none'}`
+    if (/^SYNTHEA_VERSION_OUTPUT\s*=/.test(line)) {
+      const value = line.split('=', 2)[1].trim()
+      if (value === 'Jahr' || value === '') return `TERMINOLOGY_VERSION_OUTPUT=${value ? 'catalogue-year' : 'omit'}`
+    }
+    return line
+  })
+  return parsePropertiesConfiguration('CONFIGURATION_VERSION=1\n' + converted.join('\n'))
 }

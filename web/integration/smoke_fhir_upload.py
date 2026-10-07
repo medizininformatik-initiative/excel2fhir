@@ -28,7 +28,7 @@ def request(path, method='GET'):
 with tempfile.TemporaryDirectory() as directory:
     store.ROOT = Path(directory)
     def dataset(gender):
-        job = store.create('starter', 'workbook')
+        job = store.create('starter', 'default')
         folder = store.ROOT / 'jobs' / job
         data = folder / 'output/run-probe/fhir'
         data.mkdir(parents=True)

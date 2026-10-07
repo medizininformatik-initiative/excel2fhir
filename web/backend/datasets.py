@@ -90,6 +90,13 @@ def report_summary(path):
 
 
 def build(job_id, snapshot, cancelled=lambda: False):
+    with store.run_lock(job_id):
+        if not store.get(job_id):
+            raise CancelledInspection()
+        return build_locked(job_id, snapshot, cancelled)
+
+
+def build_locked(job_id, snapshot, cancelled=lambda: False):
     folder = store.ROOT / 'jobs' / job_id
     root = folder / 'output'
     manifest = {'schemaVersion': 1, 'inspectorSha256': store.digest(store.APP / 'excel2fhir.jar'), 'datasets': [], 'artifacts': []}
@@ -168,5 +175,7 @@ def backfill(cancelled):
         except CancelledInspection:
             return
         except (OSError, ValueError) as error:
+            if not folder.exists():
+                return
             (folder / 'datasets.json').write_text(json.dumps({'datasets': [], 'artifacts': [], 'error': str(error)}))
         return

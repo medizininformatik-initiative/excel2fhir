@@ -52,7 +52,7 @@ public class ExcelTemplateValidator {
 
     public TemplateValidationResult validate(File excelFile) throws IOException {
         TemplateValidationResult result = new TemplateValidationResult();
-        for (var set : de.uni_leipzig.life.csv2fhir.ConverterOptionSet.workbook(excelFile)) {
+        for (var set : de.uni_leipzig.life.csv2fhir.ConverterOptionSet.defaults()) {
             var checked = validate(excelFile, set.options(), set.name());
             if (checked.hasErrors()) return checked;
             result = checked;

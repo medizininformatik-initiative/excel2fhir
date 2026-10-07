@@ -12,7 +12,7 @@ class DatasetTests(QueueFixture):
     def setUp(self):
         super().setUp()
         self.client = TestClient(app)
-        self.job = store.create('starter', 'workbook')
+        self.job = store.create('starter', 'default')
         self.folder = store.ROOT / 'jobs' / self.job
         self.run = self.folder / 'output/run-example'
         for name in ['One', 'Two']:

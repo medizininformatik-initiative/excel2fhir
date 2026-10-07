@@ -6,7 +6,7 @@ import { translate, type Language, type TextKey } from './i18n'
 
 type Target = { id: string; name: string; address: string; available: boolean }
 type Dataset = DatasetContext & { id: string; name: string; state: string; created: number; sourceName?: string; source?: string; size?: number; error?: string }
-type Upload = { id: string; state: string; created: number; descriptor: { target: Target; datasets: { id: string; name: string }[] }; result?: { resource?: string; resources?: number; bundles?: number; mayHaveWritten?: boolean } }
+type Upload = { id: string; state: string; created: number; descriptor: { target: Target; datasets: { id: string; name: string }[] }; result?: { error?: string; acceptedBundles?: number; rejectedBundles?: number; otherResponses?: number; statusCounts?: Record<string, number>; serverErrors?: { file: string; bundle: number; status?: string; code?: string; diagnostics: string[] }[]; resource?: string; resources?: number; bundles?: number; mayHaveWritten?: boolean } }
 const stateKeys: Record<string, TextKey> = { queued: 'app.upload.queued', preparing: 'app.upload.preparing', uploading: 'app.upload.uploading', succeeded: 'app.upload.succeeded', conflict: 'app.upload.conflict', failed: 'app.upload.failed', interrupted: 'app.upload.interrupted', cancelled: 'app.upload.cancelled' }
 export function FhirUploads({ language, requestedSelection }: { language: Language; requestedSelection?: { ids: string[] } | null }) {
   const t = (key: TextKey, params?: Record<string, string | number>) => translate(language, key, params)
@@ -102,6 +102,10 @@ export function FhirUploads({ language, requestedSelection }: { language: Langua
       <p>{upload.descriptor.datasets.map(dataset => `${datasetLabel(datasets.find(item => item.id === dataset.id) ?? dataset, language)} (${dataset.id.slice(0, 8)})`).join(', ')}</p>
       {upload.result?.resource && <p role="alert" className="mt-2 text-amber-800">{t('app.upload.conflictDetail', { resource: upload.result.resource })}</p>}
       {upload.result?.resources !== undefined && <p>{t('app.upload.counts', { resources: upload.result.resources, bundles: upload.result.bundles || 0 })}</p>}
+      {upload.result?.acceptedBundles !== undefined && <p className="mt-2">{t('app.upload.outcomes', { accepted: upload.result.acceptedBundles, rejected: upload.result.rejectedBundles ?? 0 })}</p>}
+      {upload.result?.statusCounts && <p className="text-xs text-slate-500">{Object.entries(upload.result.statusCounts).map(([status, count]) => `HTTP ${status}: ${count}`).join(' · ')}</p>}
+      {upload.result?.error && !upload.result.serverErrors?.length && <p role="alert" className="mt-2 text-red-700">{upload.result.error}</p>}
+      {!!upload.result?.serverErrors?.length && <details open className="mt-2"><summary className="cursor-pointer font-medium">{t('app.upload.reasons')}</summary><ul className="mt-2 space-y-2">{upload.result.serverErrors.map((failure, index) => <li key={index} className="break-words rounded border border-red-200 p-2 text-red-800"><p>{failure.file} · Bundle {failure.bundle} · HTTP {failure.status ?? '?'}</p>{(failure.diagnostics.length ? failure.diagnostics : [failure.code ?? '']).map((diagnostic, i) => <p key={i}>{diagnostic}</p>)}</li>)}</ul></details>}
       {['failed', 'cancelled', 'interrupted'].includes(upload.state) && upload.result?.mayHaveWritten && <p className="text-amber-800">{t('app.upload.partial')}</p>}
       <div className="mt-2 flex items-center gap-3"><a className="text-teal-800 underline" href={`/api/fhir-uploads/${upload.id}/logs`} target="_blank" rel="noreferrer">{t('app.upload.logs')}</a>{['queued', 'preparing', 'uploading'].includes(upload.state) && <Button variant="outline" onClick={() => void cancel(upload.id)}>{t('app.cancel')}</Button>}</div>
     </article>)}</div>}

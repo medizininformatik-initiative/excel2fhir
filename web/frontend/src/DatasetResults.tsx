@@ -6,7 +6,7 @@ import { translate, type Language } from './i18n'
 
 type Report = { validationErrors: number; validationWarnings: number; status: string | null; issues: number; omissions: number; failures: number; derivations: number; selections: number; reasons: Record<string, number> }
 type Artifact = { id: string; path: string; size: number; report?: Report | null }
-type Dataset = { id: string; name: string; error?: string; size?: number; inspection?: { patients: number; uniqueResources: number; resourceInstances: number; repeatedIds: number; missingIds: number; resourceCounts: Record<string, number>; inspectedFormats: string[] } }
+type Dataset = { id: string; name: string; path?: string; error?: string; size?: number; inspection?: { patients: number; uniqueResources: number; resourceInstances: number; repeatedIds: number; missingIds: number; resourceCounts: Record<string, number>; inspectedFormats: string[] } }
 type Manifest = { pending?: boolean; error?: string; datasets: Dataset[]; artifacts: Artifact[] }
 export function DatasetResults({ jobId, state, language, context, onUpload }: { jobId: string; state: string; language: Language; context: DatasetContext; onUpload: (ids: string[]) => void }) {
   const t = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(language, key, params)
@@ -36,6 +36,26 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
   if (manifest?.pending) return <p className="mb-4 text-sm text-slate-500">{t('app.datasets.pending')}</p>
   if (!manifest || (manifest.datasets.length === 0 && manifest.artifacts.length === 0)) return null
   const artifacts = manifest.artifacts.filter(file => file.path.toLowerCase().includes(search.toLowerCase()))
+  const fileGroups = [
+    { id: 'json', label: 'app.datasets.jsonFiles' },
+    { id: 'ndjson', label: 'app.datasets.ndjsonFiles' },
+    { id: 'xml', label: 'app.datasets.xmlFiles' },
+    { id: 'excel', label: 'app.datasets.excelFiles' },
+    { id: 'logs', label: 'app.datasets.logFiles' },
+    { id: 'csv', label: 'app.datasets.csvFiles' },
+    { id: 'other', label: 'app.datasets.otherFiles' },
+  ] as const
+  const groupOf = (file: Artifact) => {
+    const extension = file.path.split('.').pop()?.toLowerCase()
+    if (extension === 'json') return 'json'
+    if (['ndjson', 'jsonl'].includes(extension ?? '')) return 'ndjson'
+    if (extension === 'xml') return 'xml'
+    if (['xlsx', 'xls', 'xlsm'].includes(extension ?? '')) return 'excel'
+    if (extension === 'log' || /(^|\/)logs?\//i.test(file.path)) return 'logs'
+    if (extension === 'csv') return 'csv'
+    return 'other'
+  }
+  const isFhir = (file: Artifact) => manifest.datasets.some(dataset => dataset.path && file.path.startsWith(`${dataset.path}/`))
   const download = (file: Artifact) => <a className="break-all text-teal-800 underline" href={`/api/jobs/${jobId}/artifacts/${file.id}`}>{file.path}</a>
   return <div className="mb-6 space-y-4">
     <h3 className="font-semibold">{t('app.datasets.title')}</h3>
@@ -50,18 +70,27 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
         <details className="mt-3 text-sm"><summary className="cursor-pointer">{t('app.datasets.resources')}</summary><table className="mt-2 w-full"><tbody>{Object.entries(dataset.inspection.resourceCounts).map(([type, count]) => <tr key={type} className="border-t"><th className="py-1 text-left font-normal">{type}</th><td className="text-right">{count}</td></tr>)}</tbody></table></details>
       </>}
     </section>)}
+    <details className="text-sm"><summary className="cursor-pointer font-medium">{t('app.datasets.files', { count: manifest.artifacts.length })}</summary>
+      <p className="mt-2 text-xs text-slate-500">{t('app.datasets.fileHint')}</p>
+      <input className="mt-3 w-full rounded-lg border border-slate-300 p-2" aria-label={t('app.datasets.search')} placeholder={t('app.datasets.search')} value={search} onChange={e => setSearch(e.target.value)}/>
+      <div className="mt-3 space-y-3">{fileGroups.map(group => {
+        const files = artifacts.filter(file => groupOf(file) === group.id)
+        if (group.id === 'json') files.sort((a, b) => Number(isFhir(b)) - Number(isFhir(a)))
+        if (files.length === 0) return null
+        return <details key={group.id} open={group.id === 'json'} className="rounded-lg border border-slate-200 p-3">
+          <summary className="cursor-pointer font-medium">{t(group.label, { count: files.length })}</summary>
+          <ul className="mt-3 max-h-72 space-y-2 overflow-auto">{files.slice(0, 200).map(file => <li key={file.id}>{download(file)} <span className="whitespace-nowrap text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KiB</span></li>)}</ul>
+          {files.length > 200 && <p className="mt-2 text-xs text-slate-500">{t('app.datasets.moreFiles')}</p>}
+        </details>
+      })}</div>
+      {artifacts.length === 0 && <p className="mt-3 text-slate-500">{t('app.datasets.noFiles')}</p>}
+    </details>
     <details className="text-sm"><summary className="cursor-pointer font-medium">{t('app.datasets.reports')}</summary>
       <div className="mt-3 space-y-3">{manifest.artifacts.filter(file => file.report).map(file => <div key={file.id} className="rounded-lg border p-3">
         {download(file)}
         <p className="mt-2">{file.report!.status ? `${file.report!.status} · ` : ''}{t('app.datasets.reportCounts', { issues: file.report!.issues, omissions: file.report!.omissions, failures: file.report!.failures, derivations: file.report!.derivations, selections: file.report!.selections, errors: file.report!.validationErrors, warnings: file.report!.validationWarnings })}</p>
         {Object.keys(file.report!.reasons).length > 0 && <ul className="mt-2 space-y-1 text-slate-600">{Object.entries(file.report!.reasons).map(([reason, count]) => <li key={reason}>{reason}: {count}</li>)}</ul>}
       </div>)}</div>
-    </details>
-    <details className="text-sm"><summary className="cursor-pointer font-medium">{t('app.datasets.files', { count: manifest.artifacts.length })}</summary>
-      <p className="mt-2 text-xs text-slate-500">{t('app.datasets.fileHint')}</p>
-      <input className="mt-3 w-full rounded-lg border border-slate-300 p-2" aria-label={t('app.datasets.search')} placeholder={t('app.datasets.search')} value={search} onChange={e => setSearch(e.target.value)}/>
-      <ul className="mt-3 max-h-72 space-y-2 overflow-auto">{artifacts.slice(0, 200).map(file => <li key={file.id}>{download(file)} <span className="whitespace-nowrap text-xs text-slate-500">{(file.size / 1024).toFixed(1)} KiB</span></li>)}</ul>
-      {artifacts.length > 200 && <p className="mt-2 text-xs text-slate-500">{t('app.datasets.moreFiles')}</p>}
     </details>
   </div>
 }

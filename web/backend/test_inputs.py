@@ -56,12 +56,13 @@ class InputTests(QueueFixture):
             self.assertEqual(422, self.client.post('/api/inputs?filename=test.xlsx', content=stream.getvalue()).status_code)
         self.assertEqual([], inputs.summaries())
 
-    def test_uploaded_source_works_in_multiple_runs_and_repeat_is_independent(self):
+    @patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1})
+    def test_uploaded_source_works_in_multiple_runs_and_repeat_is_independent(self, validate):
         item = self.upload()
         with patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1}):
             configs = [configurations.create(name, TEXT) for name in ['One', 'Two']]
             selection = [{'id': c['id'], 'revision': 1} for c in configs]
-            jobs = configurations.start_jobs(item['id'], selection, str(uuid4()))
+            jobs = [store.create(item['id'], 'default', config['configurationProperties']) for config in configs]
             for job in jobs:
                 saved = json.loads((store.ROOT / 'jobs' / job / 'snapshot.json').read_text())
                 self.assertEqual(item['sha256'], saved['inputSha256'])
@@ -70,16 +71,18 @@ class InputTests(QueueFixture):
             path, _, _ = inputs.resolve(item['id'])
             path.chmod(0o644); path.write_bytes(b'changed original')
             with self.assertRaises(ValueError):
-                store.create(item['id'], 'workbook')
+                store.create(item['id'], 'default')
             store.finish(jobs[0], 'succeeded', 0)
-            repeated = store.repeat(jobs[0], str(uuid4()))
+            with patch.object(inputs, 'inspect', return_value={'sheets': []}):
+                loaded = store.editor_input(jobs[0])
+            repeated = store.create(loaded['source'], 'default', loaded['configurationProperties'])
             self.assertEqual(item['sha256'], store.digest(store.ROOT / 'jobs' / repeated / 'input.xlsx'))
             self.assertEqual(item['name'], store.get(repeated)['source_name'])
 
     def test_source_ids_cannot_select_arbitrary_paths(self):
         for source in ['upload:../../etc/passwd', 'upload:' + str(uuid4())]:
             with self.assertRaises(ValueError):
-                store.create(source, 'workbook')
+                store.create(source, 'default')
         self.assertEqual([], store.jobs())
 
     def archive(self, files):
@@ -97,15 +100,18 @@ class InputTests(QueueFixture):
         self.assertEqual([], inputs.summaries())
         self.assertFalse((store.ROOT / 'outside.csv').exists())
 
-    def test_csv_inputs_keep_archive_bytes_across_submission_and_repeat(self):
+    @patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1})
+    def test_csv_inputs_keep_archive_bytes_across_submission_and_repeat(self, validate):
         data = self.archive([('Case_Person.csv', 'Patient-ID\np1\n')])
         item = self.upload('Cases.zip', data)
         path, _, kind = inputs.resolve(item['id'])
         self.assertEqual('csv', kind)
-        job = store.create(item['id'], 'workbook')
+        job = store.create(item['id'], 'default')
         snapshot = json.loads((store.ROOT / 'jobs' / job / 'snapshot.json').read_text())
         self.assertEqual('csv', snapshot['inputKind'])
         self.assertEqual(data, (store.ROOT / 'jobs' / job / 'input.zip').read_bytes())
         store.cancel(job)
-        repeated = store.repeat(job, str(uuid4()))
+        with patch.object(inputs, 'inspect', return_value={'sheets': [], 'kind': 'csv'}):
+            loaded = store.editor_input(job)
+        repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
         self.assertEqual(data, (store.ROOT / 'jobs' / repeated / 'input.zip').read_bytes())

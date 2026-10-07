@@ -5,15 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.io.StringWriter;
 
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /** An independently selectable converter dialect, using the shared defaults. */
 public final class ConverterOptionSet {
@@ -32,7 +27,8 @@ public final class ConverterOptionSet {
     }
 
     public ConverterOptions options() {
-        return ConverterOptions.fromText(text);
+        return text.isBlank() ? ConverterOptions.fromText(ContractConfiguration.defaultProperties()).withCommandLineExecution()
+                : ConverterOptions.fromText(text);
     }
 
     public static List<ConverterOptionSet> external(List<File> files) throws IOException {
@@ -44,61 +40,13 @@ public final class ConverterOptionSet {
         return checked(result);
     }
 
-    public static List<ConverterOptionSet> workbook(File file) throws IOException {
-        List<ConverterOptionSet> result = new ArrayList<>();
-        try (var input = Files.newInputStream(file.toPath()); var book = new XSSFWorkbook(input)) {
-            var formatter = new DataFormatter(Locale.GERMANY);
-            var evaluator = book.getCreationHelper().createFormulaEvaluator();
-            for (var sheet : book) {
-                if (!isOptionsSheet(sheet.getSheetName())) continue;
-                StringBuilder text = new StringBuilder();
-                for (Row row : sheet) {
-                    var cell = row.getCell(0);
-                    text.append(cell == null ? "" : formatter.formatCellValue(cell, evaluator)).append('\n');
-                }
-                result.add(new ConverterOptionSet(sheet.getSheetName(), text.toString()));
-            }
-        }
-        return checked(result);
-    }
-
-    public static List<ConverterOptionSet> csv(File directory, String prefix) throws IOException {
-        List<ConverterOptionSet> result = new ArrayList<>();
-        File[] files = directory.listFiles(File::isFile);
-        if (files != null) {
-            Arrays.sort(files);
-            String base = prefix.replaceFirst("[-_]$", "");
-            for (File file : files) {
-                String name = file.getName();
-                if (!name.endsWith(".csv")) continue;
-                String stem = name.substring(0, name.length() - 4);
-                String owner = Arrays.stream(files).map(File::getName)
-                        .filter(n -> n.endsWith("Person.csv"))
-                        .map(n -> n.substring(0, n.length() - "Person.csv".length()).replaceFirst("[-_]$", ""))
-                        .filter(n -> matchesDataSet(stem, n))
-                        .max(java.util.Comparator.comparingInt(String::length)).orElse(base);
-                if (!owner.equals(base) || !matchesDataSet(stem, base)) continue;
-                String sheet = stem.substring(base.length()).replaceFirst("^[-_]", "");
-                if (isOptionsSheet(sheet)) result.add(new ConverterOptionSet(sheet, Files.readString(file.toPath())));
-            }
-        }
-        return checked(result);
-    }
-
-    private static boolean matchesDataSet(String stem, String base) {
-        return base.isEmpty() || stem.startsWith(base + "_") || stem.startsWith(base + "-")
-                || stem.startsWith(base + "Konvertierungsoptionen");
+    public static List<ConverterOptionSet> defaults() {
+        return List.of(new ConverterOptionSet("default", ""));
     }
 
     private static List<ConverterOptionSet> checked(List<ConverterOptionSet> sets) {
-        if (sets.isEmpty()) return List.of(new ConverterOptionSet("default", ""));
-        var names = new java.util.HashSet<String>();
-        for (var set : sets) {
-            String name = set.directoryName();
-            if (!names.add(name.toLowerCase(Locale.ROOT)))
-                throw new IllegalArgumentException("Option sets have the same output name: " + name);
-        }
-        return List.copyOf(sets);
+        if (sets.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
+        return sets.isEmpty() ? defaults() : List.copyOf(sets);
     }
 
     public String directoryName() {
@@ -109,6 +57,22 @@ public final class ConverterOptionSet {
     }
 
     public void snapshot(Path directory) throws IOException {
+        snapshot(directory, 1, false, new OutputFileType[] {OutputFileType.JSON, OutputFileType.NDJSON});
+    }
+
+    public void snapshot(Path directory, int patients, boolean validation, OutputFileType[] formats) throws IOException {
+        if (text.isBlank()) {
+            Properties values = new Properties();
+            values.load(new java.io.StringReader(ContractConfiguration.defaultProperties()));
+            values.setProperty("OUTPUT_PATIENTS_PER_FILE", Integer.toString(patients));
+            values.setProperty("CHECKS_FHIR_VALIDATION", Boolean.toString(validation));
+            values.setProperty("OUTPUT_FORMATS", java.util.Arrays.stream(formats).map(Enum::name).collect(java.util.stream.Collectors.joining(",")));
+            Files.createDirectories(directory);
+            var writer = new StringWriter();
+            values.store(writer, "Effective converter configuration");
+            Files.writeString(directory.resolve("converter-options.config"), writer.toString());
+            return;
+        }
         Files.createDirectories(directory);
         ConverterOptions options = options();
         if (ContractConfiguration.isContractText(text)) {

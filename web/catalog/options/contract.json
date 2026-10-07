@@ -2203,6 +2203,52 @@
       "labelKey": "option.output.patientsPerFile.label",
       "helpKey": "option.output.patientsPerFile.help",
       "propertyName": "OUTPUT_PATIENTS_PER_FILE"
+    },
+    {
+      "id": "resource.Encounter.stationServiceProvider",
+      "propertyName": "ENCOUNTER_STATION_SERVICE_PROVIDER",
+      "section": "resources",
+      "type": "enum",
+      "control": "select",
+      "default": "none",
+      "labelKey": "option.stationServiceProvider.label",
+      "helpKey": "option.stationServiceProvider.help",
+      "choices": [
+        "none",
+        "generate-reference",
+        "reference-only",
+        "contained"
+      ],
+      "choiceLabelKeys": {
+        "none": "choice.stationServiceProvider.none",
+        "generate-reference": "choice.stationServiceProvider.generate-reference",
+        "reference-only": "choice.stationServiceProvider.reference-only",
+        "contained": "choice.stationServiceProvider.contained"
+      },
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "fhirPath": "Encounter.serviceProvider"
+    },
+    {
+      "id": "resource.Encounter.stationLocation",
+      "propertyName": "ENCOUNTER_STATION_LOCATION",
+      "section": "resources",
+      "type": "boolean",
+      "control": "checkbox",
+      "default": true,
+      "labelKey": "option.stationLocation.label",
+      "helpKey": "option.stationLocation.help",
+      "enabledWhen": [
+        {
+          "option": "resource.Encounter.enabled",
+          "equals": true
+        }
+      ],
+      "fhirPath": "Encounter.location"
     }
   ],
   "dar": {

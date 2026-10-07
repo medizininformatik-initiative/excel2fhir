@@ -10,7 +10,8 @@ public class WorkflowOptions {
         JsonObject input = JsonParser.parseString(new String(System.in.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
         Map<String, String> defaults = new LinkedHashMap<>();
         input.getAsJsonObject("defaults").entrySet().forEach(e -> defaults.put(e.getKey(), e.getValue().getAsString()));
-        ConverterOptions options = ConverterOptions.fromText(input.get("text").getAsString(), defaults);
+        ConverterOptions options = input.get("text").getAsString().isBlank() ? ConverterOptionSet.defaults().get(0).options()
+                : ConverterOptions.fromText(input.get("text").getAsString(), defaults);
         List<String> errors = new ArrayList<>(options.getErrors());
         Map<String, String> values = new LinkedHashMap<>();
         for (var key : ConverterOptions.BooleanOption.values()) values.put(key.name(), Boolean.toString(options.is(key)));
@@ -67,7 +68,7 @@ public class WorkflowOptions {
             }
         }
         String name = input.has("name") ? new ConverterOptionSet(input.get("name").getAsString(), "").directoryName()
-                : "Konvertierungsoptionen";
+                : "default";
         System.out.println(new Gson().toJson(Map.of("values", values, "patients", patients, "errors", errors, "name", name)));
     }
 }

@@ -33,25 +33,26 @@ class SyntheaInputTests(QueueFixture):
                 archive.writestr(name, data)
         return stream.getvalue()
 
-    def test_real_json_inspection_and_worker_command_use_synthea_pipeline(self):
+    @patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1})
+    def test_real_json_inspection_and_worker_command_use_synthea_pipeline(self, validate):
         response = self.client.post('/api/inputs?filename=patient.json', content=bundle())
         self.assertEqual(201, response.status_code, response.text)
         item = response.json()
         self.assertEqual('synthea', item['kind'])
         self.assertEqual(1, item['inspection']['patients'])
-        job = store.create(item['id'], 'workbook')
+        job = store.create(item['id'], 'default')
         self.assertEqual(job, store.claim())
         process = Mock(returncode=0)
         process.poll.return_value = 0
         with patch.object(worker.subprocess, 'Popen', return_value=process) as launch:
             worker.execute(job)
         self.assertIn(str(synthea_runtime.ROOT / 'scripts/run_synthea_cases.py'), launch.call_args.args[0])
-        self.assertNotIn('--converter-options', launch.call_args.args[0])
+        self.assertIn('--converter-options', launch.call_args.args[0])
         self.assertEqual('succeeded', store.get(job)['state'])
-        repeated = store.repeat(job, str(uuid4()))
+        loaded = store.editor_input(job)
+        repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
         folder = store.ROOT / 'jobs' / repeated
         self.assertEqual(bundle(), (folder / 'input.json').read_bytes())
-        self.assertEqual(synthea_runtime.fingerprint(), json.loads((folder / 'snapshot.json').read_text())['repeatedFrom']['syntheaImportSha256'])
 
     def test_zip_inspection_counts_patients_and_bundles_to_skip(self):
         data = self.archive([('one.json', bundle()), ('two.json', bundle('p2')),
@@ -76,7 +77,7 @@ class SyntheaInputTests(QueueFixture):
 
     def test_importer_change_is_rejected_before_execution(self):
         item = self.client.post('/api/inputs?filename=patient.json', content=bundle()).json()
-        job = store.create(item['id'], 'workbook')
+        job = store.create(item['id'], 'default')
         store.claim()
         with patch.object(synthea_runtime, 'fingerprint', return_value='changed'), patch.object(worker.subprocess, 'Popen') as launch:
             worker.execute(job)

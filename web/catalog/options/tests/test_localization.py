@@ -48,7 +48,8 @@ class LocalizationTest(unittest.TestCase):
             required.add(contract['dar']['codeLabelKeyPattern'].format(code=code['code']))
         # Include keys used by the interface and its error helpers.
         for source in (ROOT / '../../frontend/src').rglob('*.ts*'):
-            required.update(re.findall(r"['\"](app\.[\w.]+)['\"]", source.read_text()))
+            required.update(re.findall(r"['\"]((?:app|identifier|dar)\.[\w.]+)['\"]", source.read_text()))
+        required.update('identifier.coding.' + field for field in ('system', 'code', 'display'))
         languages = {lang: read_unique(ROOT / filename)
                      for lang, filename in contract['ui']['localization']['files'].items()}
         self.assertEqual(set(languages), set(contract['ui']['localization']['languages']))

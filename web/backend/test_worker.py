@@ -12,16 +12,16 @@ from test_queue import QueueFixture
 
 
 class WorkerTests(QueueFixture):
-    def test_workbook_source_runs_without_external_options(self):
-        job = store.create('starter', 'workbook')
+    def test_every_conversion_uses_snapshotted_external_options(self):
+        job = store.create('starter', 'default')
         store.claim()
         process = Mock(returncode=0)
         process.poll.return_value = 0
         with patch.object(worker.subprocess, 'Popen', return_value=process) as launch:
             worker.execute(job)
-        self.assertNotIn('--converter-options', launch.call_args.args[0])
+        self.assertIn('--converter-options', launch.call_args.args[0])
         self.assertEqual('succeeded', store.get(job)['state'])
-        self.assertFalse((store.ROOT / 'jobs' / job / 'default.config').exists())
+        self.assertTrue((store.ROOT / 'jobs' / job / 'default.config').exists())
 
     def test_failed_validation_keeps_downloadable_reports(self):
         job = store.create('starter', 'default')
@@ -73,3 +73,30 @@ class WorkerTests(QueueFixture):
         worker.execute(job)
         self.assertEqual('failed', store.get(job)['state'])
         self.assertIn('Configuration snapshot has changed', (config.parent / 'converter.log').read_text())
+
+    def test_memory_failure_with_zero_exit_is_failed_and_downloadable(self):
+        job = store.create('starter', 'default')
+        store.claim()
+        folder = store.ROOT / 'jobs' / job
+        process = Mock(returncode=0)
+        process.poll.return_value = 0
+        def launch(*args, **kwargs):
+            kwargs['stdout'].write('java.lang.OutOfMemoryError: Java heap space\n')
+            return process
+        with patch.object(worker.subprocess, 'Popen', side_effect=launch):
+            worker.execute(job)
+        self.assertEqual('failed', store.get(job)['state'])
+        self.assertEqual('memory', store.get(job)['failure']['kind'])
+        self.assertNotIn('pending', worker.datasets.get(job))
+        with zipfile.ZipFile(folder / 'result.zip') as archive:
+            self.assertIn('failure.json', archive.namelist())
+
+    def test_kernel_oom_is_distinguished_from_unexplained_kill(self):
+        for counts, expected in [([5, 6], 'memory'), ([5, 5], 'killed')]:
+            job = store.create('starter', 'default')
+            store.claim()
+            process = Mock(returncode=-9)
+            process.poll.return_value = -9
+            with patch.object(worker.subprocess, 'Popen', return_value=process), patch.object(worker.memory_failures, 'oom_kills', side_effect=counts):
+                worker.execute(job)
+            self.assertEqual(expected, store.get(job)['failure']['kind'])

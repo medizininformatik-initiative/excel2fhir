@@ -12,6 +12,23 @@ public class DarOverridesTest {
         assertEquals(code, ((CodeType)element.getExtensionByUrl(DarOverrides.URL).getValue()).getValue());
         assertEquals(1, element.getExtensionsByUrl(DarOverrides.URL).size());
     }
+    @Test public void missingOnlyRetainsInputAndDerivedValuesAndFillsMissingLeaves() {
+        String rule = "DAR_ENCOUNTER_PERIOD_END=unknown\nDAR_ENCOUNTER_PERIOD_END_ONLY_WHEN_MISSING=true\n";
+        Encounter e = new Encounter(); e.getPeriod().setEndElement(new DateTimeType("2026-05-01"));
+        Encounter out = (Encounter)apply(e, rule);
+        assertEquals("2026-05-01", out.getPeriod().getEndElement().getValueAsString());
+        reason(((Encounter)apply(new Encounter(), rule)).getPeriod().getEndElement(), "unknown");
+        e.getClass_().setCode("AMB");
+        out = (Encounter)apply(e, rule + "DAR_ENCOUNTER_AMBULATORY_PERIOD_END=masked\n");
+        reason(out.getPeriod().getEndElement(), "masked");
+        Observation o = new Observation(); o.setValue(new Quantity(5));
+        rule = "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=unknown\nDAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT_ONLY_WHEN_MISSING=true\n";
+        assertTrue(((Observation)apply(o, rule)).hasValue());
+        assertEquals("unknown", ((Observation)apply(new Observation(), rule)).getDataAbsentReason().getCodingFirstRep().getCode());
+        DocumentReference d = new DocumentReference(); d.addContent().getAttachment().setData(new byte[]{1}).setHash(new byte[]{2}).setSize(1);
+        var attachment = ((DocumentReference)apply(d, "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA=masked\nDAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA_ONLY_WHEN_MISSING=true\n")).getContentFirstRep().getAttachment();
+        assertTrue(attachment.hasData()); assertTrue(attachment.hasHash()); assertTrue(attachment.hasSize());
+    }
     @Test public void primitiveOverridesPreserveSourceAndOtherExtensionsAndCreateMissingScalars() {
         Patient p = new Patient(); p.addName().setFamily("Smith").addGiven("Ada").addGiven("Jane");
         p.getNameFirstRep().getFamilyElement().addExtension("urn:other", new StringType("kept"));

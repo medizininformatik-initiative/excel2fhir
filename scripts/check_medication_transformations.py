@@ -45,13 +45,15 @@ def quantity(value, unit):
     result = {'system': 'http://unitsofmeasure.org'}
     if value: primitive(result, 'value', value if str(value).startswith('!dar:') else float(Decimal(str(value))))
     primitive(result, 'code', code or '!dar:unknown')
-    primitive(result, 'unit', labels.get(code) or '!dar:unknown')
+    primitive(result, 'unit', labels.get(code) or code or '!dar:unknown')
     return result
 
 
 def dose_text(row):
     parts = [row[19]] if row[19] else []
-    if row[16]: parts.append('Einzeldosis: ' + row[16] + (' ' + row[17] if row[17] else ' (Einheit unbekannt)'))
+    from workbook_absent import display
+    dose = display('Medikation', 'Einzeldosis', row[16], {})
+    if dose: parts.append('Einzeldosis: ' + dose + (' ' + row[17] if row[17] else ' (Einheit unbekannt)'))
     if row[18]: parts.append('Dosen pro Tag: ' + row[18])
     return '; '.join(parts)
 

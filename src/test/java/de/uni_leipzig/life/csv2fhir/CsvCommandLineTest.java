@@ -73,7 +73,7 @@ public class CsvCommandLineTest {
         args.addAll(java.util.List.of(validation));
         int code = new CommandLine(new Main()).execute(args.toArray(String[]::new));
         try (var runs = Files.list(output)) {
-            output = runs.filter(p -> !before.contains(p)).findFirst().orElseThrow();
+            output = runs.filter(p -> !before.contains(p)).findFirst().orElse(output);
         }
         return code;
     }
@@ -95,7 +95,7 @@ public class CsvCommandLineTest {
     @Test
     public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=treu\n");
-        assertEquals(1, run());
+        assertEquals(1, run("--converter-options", input.resolve("case_Konvertierungsoptionen.csv").toString()));
         assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
         assertFalse(Files.exists(output.resolve("fhir/case.json")));
     }
@@ -176,31 +176,17 @@ public class CsvCommandLineTest {
         assertEquals(false, cli.getCommandSpec().findOption("-v").getValue());
     }
 
-    @Test
-    public void externalDialectsReplaceEmbeddedOptionsAndKeepIdenticalIdsSeparate() throws Exception {
-        Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=invalid\n");
-        Path a = temp.newFile("DIZ-A.config").toPath();
-        Path b = temp.newFile("DIZ-B.config").toPath();
-        Files.writeString(a, "SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER=true\n");
-        Files.writeString(b, "SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER=false\n");
-        assertEquals(0, run("--converter-options", a.toString(), "--converter-options", b.toString()));
-        for (String name : java.util.List.of("DIZ-A", "DIZ-B")) {
-            assertTrue(Files.readString(output.resolve("fhir/" + name + "/case.json")).contains("p1"));
-            assertTrue(Files.exists(output.resolve("fhir/" + name + "/patients.ndjson")));
-            var snapshot = new ConverterOptions(output.resolve("details/options/" + name + "/converter-options.config").toString());
-            assertEquals(name.equals("DIZ-A"), snapshot.is(ConverterOptions.BooleanOption.SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER));
-            assertTrue(snapshot.is(ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY));
-        }
-        assertFalse(Files.exists(output.resolve("fhir/Konvertierungsoptionen")));
+    @Test public void multipleExternalConfigurationsAreRejectedBeforeRun() throws Exception {
+        assertEquals(1, run("--converter-options", "a.config", "--converter-options", "b.config"));
+        try (var files = Files.list(output)) { assertEquals(0, files.count()); }
     }
 
-    @Test
-    public void embeddedDialectsProduceSeparateOutputs() throws Exception {
+    @Test public void embeddedOptionsAreIgnored() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen_A.csv"), "PID_PREFIX=A-\n");
-        Files.writeString(input.resolve("case_B_Konvertierungsoptionen.csv"), "PID_PREFIX=B-\n");
+        Files.writeString(input.resolve("case_Konvertierungsoptionen_B.csv"), "CHECK_INPUT_CONSISTENCY=invalid\n");
         assertEquals(0, run());
-        assertTrue(Files.readString(output.resolve("fhir/Konvertierungsoptionen_A/case_A-.json")).contains("A-p1"));
-        assertTrue(Files.readString(output.resolve("fhir/B_Konvertierungsoptionen/case_B-.json")).contains("B-p1"));
+        assertTrue(Files.readString(output.resolve("fhir/case.json")).contains("p1"));
+        assertFalse(Files.exists(output.resolve("fhir/Konvertierungsoptionen_A")));
     }
 
     @Test
@@ -223,7 +209,7 @@ public class CsvCommandLineTest {
         Files.writeString(input.resolve("case_Konvertierungsoptionen_A.csv"), "");
         Files.writeString(input.resolve("case_Konvertierungsoptionen_B.csv"), "");
         assertEquals(0, run("-p", "1"));
-        for (String name : java.util.List.of("Konvertierungsoptionen_A", "Konvertierungsoptionen_B")) {
+        for (String name : java.util.List.of("")) {
             var directory = output.resolve("fhir/" + name);
             assertEquals(2, Files.readAllLines(directory.resolve("patients.ndjson")).size());
             assertTrue(Files.exists(directory.resolve("case_P1.json")));
@@ -238,12 +224,12 @@ public class CsvCommandLineTest {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "PID_PREFIX=A-\n");
         Files.writeString(input.resolve("case2_Konvertierungsoptionen.csv"), "PID_PREFIX=B-\n");
         assertEquals(0, run());
-        assertTrue(Files.readString(output.resolve("fhir/case_Person/case_A-.json")).contains("A-p1"));
-        assertTrue(Files.readString(output.resolve("fhir/case2_Person/case2_B-.json")).contains("B-p2"));
-        var a = new ConverterOptions(output.resolve("details/options/Konvertierungsoptionen/case_Person/converter-options.config").toString());
-        var b = new ConverterOptions(output.resolve("details/options/Konvertierungsoptionen/case2_Person/converter-options.config").toString());
-        assertEquals("A-p1", a.getFullPID("p1"));
-        assertEquals("B-p2", b.getFullPID("p2"));
+        assertTrue(Files.readString(output.resolve("fhir/case_Person/case.json")).contains("p1"));
+        assertTrue(Files.readString(output.resolve("fhir/case2_Person/case2.json")).contains("p2"));
+        var a = new ConverterOptions(output.resolve("details/options/default/case_Person/converter-options.config").toString());
+        var b = new ConverterOptions(output.resolve("details/options/default/case2_Person/converter-options.config").toString());
+        assertEquals("p1", a.getFullPID("p1"));
+        assertEquals("p2", b.getFullPID("p2"));
     }
 
     @Test
@@ -254,8 +240,8 @@ public class CsvCommandLineTest {
         Path b = temp.newFile("KDS-B.config").toPath();
         Files.writeString(a, "PID_PREFIX=A-\n");
         Files.writeString(b, "PID_PREFIX=B-\n");
-        assertEquals(0, run("--converter-options", a.toString(), "--converter-options", b.toString()));
-        for (String variant : java.util.List.of("KDS-A", "KDS-B")) {
+        assertEquals(0, run("--converter-options", a.toString()));
+        for (String variant : java.util.List.of("")) {
             for (String source : java.util.List.of("case", "case2")) {
                 Path directory = output.resolve("fhir/" + variant + "/" + source + "_Person");
                 var lines = Files.readAllLines(directory.resolve("patients.ndjson"));
@@ -321,5 +307,18 @@ public class CsvCommandLineTest {
         assertEquals(1, run("--converter-options", file.toString()));
         assertFalse(Files.exists(output.resolve("fhir")));
         assertTrue(Files.readString(output.resolve("status.txt")).contains("complete date"));
+    }
+    @Test public void defaultsCanBeExportedWithoutInputAndLoadedAsOneConfiguration() throws Exception {
+        Path file = temp.getRoot().toPath().resolve("defaults.config");
+        assertEquals(0, new CommandLine(new Main()).execute("--export-default-options", file.toString()));
+        var options = ConverterOptions.fromText(Files.readString(file));
+        assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
+        assertNotNull(options.configuration());
+        assertEquals(1, options.patientsPerFile(100));
+        String original = Files.readString(file);
+        assertEquals(1, new CommandLine(new Main()).execute("--export-default-options", file.toString()));
+        assertEquals(original, Files.readString(file));
+        assertEquals(0, run("--converter-options", file.toString()));
+        assertTrue(Files.exists(output.resolve("fhir/patients.ndjson")));
     }
 }

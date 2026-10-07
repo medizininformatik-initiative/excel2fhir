@@ -56,8 +56,13 @@ public final class AdditionalIdentifiers {
             if (!rule.get("ENABLED").equals("true") || !selects(rule, resource)) continue;
             Identifier identifier = new Identifier().setSystem(rule.get("SYSTEM")).setValue(expand(rule.get("PATTERN"),
                     generated.get(index++), patientIds.get(identity), resource, iteration, rule.get("ID")));
+            if (!rule.getOrDefault("USE", "").isEmpty()) identifier.setUse(Identifier.IdentifierUse.fromCode(rule.get("USE")));
+            if (!rule.getOrDefault("TYPE_TEXT", "").isEmpty()) identifier.getType().setText(rule.get("TYPE_TEXT"));
+            for (var coding : ContractConfiguration.identifierTypeCodings(rule))
+                identifier.getType().addCoding(new Coding(coding.path("system").asText(null),
+                        coding.path("code").asText(null), coding.path("display").asText(null)));
             register(identifier, identity, rule.get("ID"));
-            if (existing.stream().noneMatch(e -> Objects.equals(e.getSystem(), identifier.getSystem()) && Objects.equals(e.getValue(), identifier.getValue()))) {
+            if (existing.stream().noneMatch(e -> e.equalsDeep(identifier))) {
                 output.setProperty("identifier", identifier.copy());
                 existing.add(identifier);
             }
