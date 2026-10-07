@@ -3,14 +3,16 @@ import type { Message } from './i18n'
 import { Help } from './Help'
 import { insertPatternToken } from './configuration'
 
-const tokens = [
+const tokens: { value: string; key: string; label?: string }[] = [
   { value: '{count}', key: 'app.config.token.count' },
   { value: '{count:08}', key: 'app.config.token.paddedCount' },
   { value: '{patientId}', key: 'app.config.token.patientId' },
   { value: '{resourceId}', key: 'app.config.token.resourceId' },
   { value: '{resourceType}', key: 'app.config.token.resourceType' },
   { value: '{iteration}', key: 'app.config.token.iteration' },
-  { value: '{hash}', key: 'app.config.token.hash' }
+  { value: '{hash}', key: 'app.config.token.hash' },
+  { value: '{{', label: '{', key: 'app.config.token.openBrace' },
+  { value: '}}', label: '}', key: 'app.config.token.closeBrace' }
 ]
 export function IdentifierPatternControl({
   value,
@@ -114,7 +116,7 @@ export function IdentifierPatternControl({
             className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-left hover:border-teal-600 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700"
           >
             <code className="block text-xs font-semibold text-teal-800">
-              {token.value}
+              {token.label ?? token.value}
             </code>
           </button>
         ))}

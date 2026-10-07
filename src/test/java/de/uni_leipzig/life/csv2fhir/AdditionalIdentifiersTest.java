@@ -17,6 +17,19 @@ public class AdditionalIdentifiersTest {
         for (Resource resource : resources) result.recordInput(resource, new ConverterResult.InputContext("effective-patient-2", List.of(), 1, false));
         return result;
     }
+    @Test public void counterStartAppliesAcrossResourcesAndRepetitions() throws Exception {
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        String config = settings("{count}-{count:08}") + "IDENTIFIER_RULE_1_COUNT_START=500\n";
+        ConverterResult context = context(config, p, o);
+        AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p,o), context, 0);
+        assertEquals("500-00000500", ((Patient)ids.output(p,0)).getIdentifierFirstRep().getValue());
+        assertEquals("501-00000501", ((Observation)ids.output(o,0)).getIdentifierFirstRep().getValue());
+        ids.reserve(List.of(p), context, 1);
+        assertEquals("502-00000502", ((Patient)ids.output(p,1)).getIdentifierFirstRep().getValue());
+        for (String invalid : List.of("0", "-1", "1.5", "9007199254740992", "no", ""))
+            assertThrows("Invalid start: " + invalid, IllegalArgumentException.class, () -> ContractConfiguration.parse(settings("{count}") + "IDENTIFIER_RULE_1_COUNT_START=" + invalid + "\n"));
+    }
     @Test public void selectsContactLevelsAndObservationCategories() throws Exception {
         Encounter facility = new Encounter(); facility.setId("facility"); facility.setClass_(new Coding().setCode("IMP"));
         Encounter department = new Encounter(); department.setId("department"); department.setClass_(new Coding().setCode("IMP"));

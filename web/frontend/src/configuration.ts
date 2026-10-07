@@ -38,6 +38,7 @@ export type Rule = {
   system: string
   pattern: string
   use?: string
+  countStart?: number
   typeText?: string
   typeCodings?: { system?: string; code?: string; display?: string }[]
 }
@@ -135,6 +136,8 @@ export function resourceEnabled(
   resource: string,
   values: Configuration['values']
 ): boolean {
+  const scope = contract.identifierScopes.find(s => s.selector === resource)
+  if (scope?.level) return resourceEnabled('Encounter.inpatient', values) && values[`contact.${scope.level}.enabled`] === true
   if (resource.startsWith('Encounter.')) return values['resource.Encounter.enabled'] === true && values[`resource.${resource}.enabled`] === true
   if (['Patient', 'Location', 'Medication'].includes(resource))
     return values[`resource.${resource}.mode`] === 'generate-reference'
@@ -234,7 +237,7 @@ export async function previewIdentifier(rule: Rule): Promise<string> {
     .join('')
     .slice(0, 32)
   const sample: Record<string, string> = {
-    count: '1',
+    count: String(rule.countStart ?? 1),
     patientId: 'patient-1',
     resourceId: 'example-1',
     resourceType,

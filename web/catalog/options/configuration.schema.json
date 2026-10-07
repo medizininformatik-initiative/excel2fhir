@@ -4225,6 +4225,12 @@
             "type": "string",
             "minLength": 1
           },
+          "countStart": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "default": 1
+          },
           "use": {
             "enum": [
               "",

@@ -106,7 +106,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     const inactive = !rule.enabled || !rule.resources.some(r => resourceEnabled(r, config.values))
     if (inactive) comment(t('app.config.fileRuleInactive'))
     const prefix = `${contract.propertiesFormat.identifierPrefix}${index + 1}_`
-    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
+    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.countStart !== undefined ? { COUNT_START: rule.countStart } : {}), ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
     for (const [name, value] of Object.entries(fields)) {
       comment(t(`identifier.${name.toLowerCase()}`))
       // An explicit false remains executable: it intentionally disables this rule.
@@ -143,7 +143,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
     const option = byName.get(key)
     const conditionField = key.endsWith('_ONLY_WHEN_MISSING') ? darNames.get(key.slice(0, -18)) : undefined
     const field = darNames.get(key)
-    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
+    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
     if (!option && !field && !conditionField && !ruleMatch && key !== contract.propertiesFormat.versionProperty)
       throw new Error(`Unknown property: ${key}`)
     if (seen.has(key)) throw new Error(`Duplicate property: ${key}`)
@@ -178,7 +178,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
   config.identifierRules = entries.map(([index, rule], offset): Rule => {
     if (index !== offset + 1 || !['ID', 'ENABLED', 'RESOURCES', 'SYSTEM', 'PATTERN'].every(key => key in rule) || !['true', 'false'].includes(rule.ENABLED))
       throw new Error('Incomplete identifier rule')
-    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
+    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.COUNT_START !== undefined ? { countStart: decode(rule.COUNT_START, { type: 'integer' } as Option) as number } : {}), ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
   })
   if (problems(config).length) throw new Error('Invalid configuration')
   return config

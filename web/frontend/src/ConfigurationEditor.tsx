@@ -860,15 +860,25 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     t={t}
                   />
                 </div>
+                <div className="mt-4 flex max-w-xs flex-col gap-2 text-sm">
+                  <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-count-start-${rule.id}`}>{t('identifier.count_start')}</label><Help text={t('identifier.countStartHelp')} t={t}/></span>
+                  <input id={`identifier-count-start-${rule.id}`} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1}
+                    value={rule.countStart ?? 1} onChange={e => updateRule(rule.id, { countStart: Number(e.target.value) })}
+                    className="h-10 w-full rounded-lg border border-slate-300 p-2"/>
+                </div>
                 <RulePreview rule={rule} t={t} />
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="flex min-w-0 flex-col gap-2 text-sm">{t('identifier.use')}
-                    <select className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
+                  <div className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-use-${rule.id}`}>{t('identifier.use')}</label><Help text={t('identifier.useHelp')} t={t}/></span>
+                    <select id={`identifier-use-${rule.id}`} className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
                       <option value="">{t('identifier.unspecified')}</option>
                       {identifierBindings.use.map(value => <option key={value.code} value={value.code}>{value.code} — {value.display}</option>)}
                     </select>
-                  </label>
-                  <label className="flex min-w-0 flex-col gap-2 text-sm">{t('identifier.type_text')}<input className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.typeText ?? ''} onChange={e => updateRule(rule.id, { typeText: e.target.value })}/></label>
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-type-text-${rule.id}`}>{t('identifier.type_text')}</label><Help text={t('identifier.typeTextHelp')} t={t}/></span>
+                    <input id={`identifier-type-text-${rule.id}`} className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.typeText ?? ''} onChange={e => updateRule(rule.id, { typeText: e.target.value })}/>
+                  </div>
                 </div>
                 <div className="mt-4 space-y-3">
                   <div className="flex items-center gap-2"><h4 className="text-sm font-medium">{t('identifier.type_codings')}</h4><Help text={t('identifier.typeHelp')} t={t}/></div>

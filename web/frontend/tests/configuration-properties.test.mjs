@@ -126,3 +126,12 @@ test('free identifier codings, use and conditional DAR round-trip in both langua
   config.values['resource.Encounter.stationLocation'] = false
   for (const lang of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, lang)), config)
 })
+
+test('counter start survives properties export for a scoped contact rule', () => {
+  const config = defaults()
+  config.identifierRules = [{ id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true,
+    resources: ['Encounter.inpatient.department'], system: 'urn:test', pattern: '{count:08}', countStart: 500 }]
+  const text = exportPropertiesConfiguration(config, 'de')
+  assert.match(text, /^IDENTIFIER_RULE_1_COUNT_START = 500$/m)
+  assert.deepEqual(importConfiguration(text).identifierRules, config.identifierRules)
+})

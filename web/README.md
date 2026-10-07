@@ -57,6 +57,9 @@ Resource choices show their FHIR resource type. Identifier rules can target inpa
 facility, department or ward/service encounters separately, and distinguish laboratory
 observations from vital signs. Selecting a broader group includes its subgroups; a rule
 adds only one identifier per matching resource even when selections overlap.
+Counter start sets the first `{count}` value for each rule (default: 1), including
+padded forms such as `{count:08}`. Each new run begins at this value. The `{` and `}`
+buttons insert escaped literal braces (`{{` and `}}`) into the pattern.
 Pattern tokens use compact buttons with explanations on hover or keyboard focus,
 and can be clicked to insert at the
 cursor, replace selected text, or append when no cursor position is available.

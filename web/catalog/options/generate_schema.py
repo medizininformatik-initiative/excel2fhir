@@ -74,6 +74,7 @@ def generate():
                                       'minItems': 1, 'items': {'enum': eligible}},
                         'system': {'type': 'string', 'minLength': 1},
                         'pattern': {'type': 'string', 'minLength': 1},
+                        'countStart': {'type': 'integer', 'minimum': 1, 'maximum': 9007199254740991, 'default': 1},
                         'use': {'enum': ['', 'usual', 'official', 'temp', 'secondary', 'old']},
                         'typeText': {'type': 'string'},
                         'typeCodings': {'type': 'array', 'items': {

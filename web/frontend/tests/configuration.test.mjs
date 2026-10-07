@@ -326,3 +326,9 @@ test('navigation status uses effective resource selections without mutating them
   config.values['resource.Encounter.enabled'] = true
   assert.equal(resourceNavigationStatus('Encounter.inpatient', config.values), 'generated')
 })
+
+test('counter preview uses the configured starting value with literal braces', async () => {
+  const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true,
+    resources: ['Patient'], system: 'urn:test', pattern: '{{{count:08}}}-{count}', countStart: 500 }
+  assert.equal(await previewIdentifier(rule), '{00000500}-500')
+})

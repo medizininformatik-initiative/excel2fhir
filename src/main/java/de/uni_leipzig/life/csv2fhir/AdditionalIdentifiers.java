@@ -35,7 +35,7 @@ public final class AdditionalIdentifiers {
             List<Long> counts = new ArrayList<>();
             for (Map<String, String> rule : rules) {
                 if (!rule.get("ENABLED").equals("true") || !selects(rule, resource, contactLevels.get(identity))) continue;
-                long count = Math.addExact(counters.getOrDefault(rule.get("ID"), 0L), 1);
+                long count = Math.addExact(counters.getOrDefault(rule.get("ID"), Long.parseLong(rule.getOrDefault("COUNT_START", "1")) - 1), 1);
                 counters.put(rule.get("ID"), count);
                 counts.add(count);
             }

@@ -27,7 +27,7 @@ public final class ContractConfiguration {
     private static final JsonNode CONTRACT = catalogue("options/contract.json");
     private static final JsonNode DAR = catalogue("dar/generated/catalog.json");
     private static final Pattern ASSIGNMENT = Pattern.compile("([A-Z][A-Z0-9_]*)\\s*=\\s*(.*)");
-    private static final Pattern RULE = Pattern.compile("IDENTIFIER_RULE_([1-9][0-9]*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|USE|TYPE_TEXT|TYPE_CODINGS)");
+    private static final Pattern RULE = Pattern.compile("IDENTIFIER_RULE_([1-9][0-9]*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)");
     private final Map<String, JsonNode> definitions = new LinkedHashMap<>();
     private final Map<String, JsonNode> values = new LinkedHashMap<>();
     private final Map<String, String> dar = new LinkedHashMap<>();
@@ -157,6 +157,11 @@ public final class ContractConfiguration {
             }
             if (rule.get("SYSTEM").isEmpty() || rule.get("PATTERN").isEmpty()) throw invalid("Empty identifier system or pattern");
             validatePattern(rule.get("PATTERN"));
+            String start = rule.getOrDefault("COUNT_START", "1");
+            try {
+                if (!start.matches("[0-9]+") || Long.parseLong(start) < 1 || Long.parseLong(start) > 9007199254740991L)
+                    throw invalid("Invalid identifier counter start: " + start);
+            } catch (NumberFormatException e) { throw invalid("Invalid identifier counter start: " + start); }
             if (rule.containsKey("USE") && !Set.of("", "usual", "official", "temp", "secondary", "old").contains(rule.get("USE")))
                 throw invalid("Invalid Identifier.use: " + rule.get("USE"));
             identifierTypeCodings(rule);

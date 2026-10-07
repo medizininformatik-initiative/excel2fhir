@@ -84,7 +84,7 @@
   "app.config.saved": "Im Browser gespeichert",
   "app.config.storageError": "Speichern fehlgeschlagen: Änderungen bleiben beim Neuladen nicht erhalten.",
   "app.config.title": "Konfiguration",
-  "app.config.token.count": "Fortlaufender Zähler pro Regel, beginnend bei 1.",
+  "app.config.token.count": "Fortlaufender Zähler pro Regel, beginnend beim eingestellten Zählerstart (Standard: 1).",
   "app.config.token.hash": "Deterministischer SHA-256-Ausschnitt mit 32 Hex-Zeichen aus Regel-ID, Ressourcentyp, Ressourcen-ID und Wiederholungsindex.",
   "app.config.token.iteration": "Wiederholungsindex: 0 beim ersten Durchlauf, dann 1, 2, …",
   "app.config.token.paddedCount": "Zähler mit mindestens acht Stellen: 00000001. Die 8 kann durch eine andere Stellenzahl ersetzt werden.",
@@ -259,7 +259,7 @@
   "disabled.profileConstraint": "Aufgrund einer Profilbedingung nicht verfügbar: {condition}.",
   "disabled.requiresSelection": "Verfügbar, wenn {option} ausgewählt ist.",
   "identifier.enabled": "Aktiv",
-  "identifier.help": "Identifier mit festem Text und {count}, {count:08}, {patientId}, {resourceId}, {resourceType}, {iteration}, {hash} ergänzen. Zähler beginnen bei 1; Hashes haben 32 Hex-Zeichen und werden auf Kollisionen geprüft. Literale Klammern als {{ und }} schreiben.",
+  "identifier.help": "Identifier mit festem Text und {count}, {count:08}, {patientId}, {resourceId}, {resourceType}, {iteration}, {hash} ergänzen. Zähler beginnen beim eingestellten Zählerstart (Standard: 1); Hashes haben 32 Hex-Zeichen und werden auf Kollisionen geprüft. Literale Klammern als {{ und }} schreiben.",
   "identifier.id": "Regel-ID",
   "identifier.pattern": "Wertmuster",
   "identifier.resources": "Ressourcentypen",
@@ -691,5 +691,11 @@
   "identifier.typeLabel.UDI": "Eindeutige Medizinproduktkennung",
   "identifier.typeLabel.VN": "Aufnahmenummer",
   "identifier.typeLabel.XX": "Organisationskennung",
-  "identifier.typeLabel.ZANR": "Zahnarztnummer"
+  "identifier.typeLabel.ZANR": "Zahnarztnummer",
+  "identifier.useHelp": "FHIR: <Ressourcentyp>.identifier.use, z. B. Patient.identifier.use oder Encounter.identifier.use. Kennzeichnet die Verwendung jedes durch diese Regel ergänzten Identifiers: usual = üblicher Gebrauch, official = offiziell, temp = vorübergehend, secondary = ergänzend, old = nicht mehr gültig. Bei „Nicht angegeben“ bleibt das Feld leer. Die Auswahl beschreibt den Identifier; sie ändert weder seinen Wert noch die Auswahl der Ressourcen.",
+  "identifier.typeTextHelp": "FHIR: <Ressourcentyp>.identifier.type.text, z. B. Patient.identifier.type.text. Freie, menschenlesbare Beschreibung der Art des Identifiers, etwa „Patientennummer“ oder „Aufnahmenummer“. Sie wird bei jedem durch diese Regel ergänzten Identifier eingetragen. Die Typ-Codierungen darunter stehen in identifier.type.coding; deren Bezeichnung steht in coding.display. Die Typbeschreibung ergänzt diese Codierungen, setzt aber selbst keinen Typ-Code. Ein leeres Feld wird nicht ausgegeben.",
+  "app.config.token.openBrace": "Fügt {{ ins Wertmuster ein. Im fertigen Identifier erscheint eine einzelne öffnende Klammer {.",
+  "app.config.token.closeBrace": "Fügt }} ins Wertmuster ein. Im fertigen Identifier erscheint eine einzelne schließende Klammer }.",
+  "identifier.count_start": "Zählerstart",
+  "identifier.countStartHelp": "Erster Wert für {count} und gepolsterte Varianten wie {count:08}. Der Zähler gilt gemeinsam für alle Ressourcen dieser Regel und zählt pro Ressource weiter, auch über Patienten und Wiederholungen hinweg. Jeder neue Lauf beginnt beim eingestellten Startwert. Ohne Zählerbaustein hat dieser Wert keine Auswirkung. Überschneidungen zwischen verschiedenen Läufen werden nicht automatisch verhindert."
 }
