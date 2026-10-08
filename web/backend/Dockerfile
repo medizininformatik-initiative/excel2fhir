@@ -56,6 +56,7 @@ COPY web/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY web/backend/*.py .
 COPY --from=runtime-files / /
+RUN PYTHONPATH=/synthea/scripts python -c "from check_dar import catalogue; from check_medication_transformations import ucum_tables; catalogue(); ucum_tables()"
 COPY --from=blazectl /blazectl/blazectl /usr/local/bin/blazectl
 COPY third-party/blazectl/LICENSE /usr/share/doc/blazectl/LICENSE
 RUN useradd --create-home --uid 10001 workbench && mkdir /data && chown workbench /data

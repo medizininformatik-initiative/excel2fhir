@@ -31,8 +31,10 @@ COPY scripts ./scripts
 COPY web/catalog/dar/generated/catalog.json ./web/catalog/dar/generated/catalog.json
 COPY web/catalog/options/contract.json ./web/catalog/options/contract.json
 COPY src/main/resources/workbook-absent-reasons.json ./src/main/resources/workbook-absent-reasons.json
+COPY src/main/resources/ucum ./src/main/resources/ucum
 COPY third-party ./third-party
 COPY LICENSE FHIR_Testdatengenerator_Vorlage.xlsx ./
+RUN PYTHONPATH=/app/scripts python3 -c "from check_dar import catalogue; from check_medication_transformations import ucum_tables; catalogue(); ucum_tables()"
 ENTRYPOINT ["python3", "/app/scripts/run_synthea_cases.py"]
 
 # Opt-in build target for the full workflow. The default target below retains
