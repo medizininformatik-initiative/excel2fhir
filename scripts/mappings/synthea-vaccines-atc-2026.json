@@ -1,6 +1,10 @@
 {
+  "targetTerminologyNotice": {
+    "copyright": "Das Wissenschaftliche Institut der AOK (WIdO) ist Urheber der ATC-GM mit DDD, die auf dem vom WHO Collaborating Centre for Drug Statistics Methodology herausgegebenen Werk mit dem Titel „ATC Index with DDDs and Guidelines for ATC Classification and DDD Assignment“ beruht. Die amtliche Veröffentlichung erfolgt durch das Bundesinstitut für Arzneimittel und Medizinprodukte (BfArM).",
+    "conditionsUrl": "https://terminologien.bfarm.de/files/conditions/bfarm.terminologien.atcgm-conditions.xml"
+  },
   "id": "synthea-vaccines-atc-2026-v1",
-  "sourceRegistrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
+  "sourceRegistrySha256": "7474c75fed99ea96d2505ddf3331535ef603f65c6abd182d2d82851a5dbbc700",
   "sources": [
     "https://www2.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx",
     "https://terminologien.bfarm.de/CodeSystem-atcgm-2026.html"

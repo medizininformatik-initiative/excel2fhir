@@ -35,27 +35,17 @@ public final class ContactInputValidator {
         public String field() { return field; }
         public String message() { return message; }
     }
-    private static final class Span {
-        private final Date start, end;
-        Span(Date start, Date end) { this.start = start; this.end = end; }
-        Date start() { return start; }
-        Date end() { return end; }
-    }
     private static final Set<String> SECONDARY = Set.of("Operation", "Untersuchung und Behandlung", "Konsil");
     private static final class State {
-        String number, classification, department;
-        Span facility, primary, departmentPeriod;
-        boolean bounded, derived, invalid;
-        final List<Span> secondary = new ArrayList<>();
+        String number, classification;
+        boolean primary, invalid;
     }
     private final Map<String, State> patients = new HashMap<>();
 
     public List<Issue> accept(Input input) {
         List<Issue> issues = new ArrayList<>();
         Date start = date(input, "Start", true, issues);
-        Date end = date(input, "Ende", false, issues);
-        if (start != null && end != null && end.before(start))
-            issue(issues, input, "Start/Ende", "Encounter end precedes its start");
+        date(input, "Ende", false, issues);
         String kind = input.get("Kontaktart");
         String department = input.get("Fachabteilung");
         boolean places = input.get("Station") != null || input.get("Zimmer") != null || input.get("Bett") != null;
@@ -87,64 +77,27 @@ public final class ContactInputValidator {
         // After a broken row do not guess its hierarchy or produce cascading errors.
         // Independently checkable fields above are still checked on every following row.
         if (state.invalid) return issues;
-        Span span = new Span(start, end);
         String classification = input.get("Einrichtungskontaktklasse");
         String classCode = classification == null ? null : EncounterConverter.ENCOUNTER_LEVEL1_CLASS_RESOURCES.get(classification);
         if (newRoot) {
             state.classification = classCode;
-            state.facility = span;
-            state.bounded = department == null && !places;
         } else {
-            if (state.bounded) inside(input, span, state.facility, issues);
             if (classification != null && !Objects.equals(classCode, state.classification))
                 issue(issues, input, "Einrichtungskontaktklasse", "Conflicting facility encounter classes within the same case");
             if (reason != null)
                 issue(issues, input, AdmissionReasonValues.COLUMN, "Specify Aufnahmegrund in the first case row only");
         }
         if (secondary) {
-            if (state.primary == null)
+            if (!state.primary)
                 issue(issues, input, "Kontaktart", "A secondary encounter requires a preceding primary location encounter");
-            else {
-                inside(input, span, state.primary, issues);
-                if (state.departmentPeriod != null) inside(input, span, state.departmentPeriod, issues);
-            }
             if (!issues.isEmpty()) return invalidate(state, issues);
-            state.secondary.add(span);
             return issues;
         }
-        if (!newRoot && state.primary != null && (places || department != null)) {
-            if (start.before(state.primary.start()) || (!state.derived && state.primary.end() != null && start.before(state.primary.end())))
-                issue(issues, input, "Start/Ende", "Primary stays overlap or are out of order; encounter assignment is ambiguous");
-            if (state.derived || state.primary.end() == null) {
-                if (state.secondary.stream().anyMatch(s -> s.start().after(start) || (s.end() != null && s.end().after(start))))
-                    issue(issues, input, "Start", "The new primary stay would truncate a preceding secondary encounter");
-            }
-            if (!issues.isEmpty()) return invalidate(state, issues);
-            state.secondary.clear();
-        }
-        if (!newRoot && !state.bounded) state.facility = extend(state.facility, span);
-        if (department != null && !department.equals(state.department)) {
-            state.department = department;
-            state.departmentPeriod = span;
-        } else if (state.departmentPeriod != null && places) state.departmentPeriod = extend(state.departmentPeriod, span);
-        if (places) {
-            state.derived = end == null;
-            state.primary = new Span(start, state.derived ? state.facility.end() : end);
-            if (state.departmentPeriod != null) state.departmentPeriod = extend(state.departmentPeriod, state.primary);
-        } else if (department != null) state.primary = null;
+        if (places) state.primary = true;
+        else if (department != null) state.primary = false;
         return issues;
     }
 
-    private static Span extend(Span parent, Span child) {
-        Date end = parent.end();
-        if (end == null || child.end() == null || child.end().after(end)) end = child.end();
-        return new Span(parent.start(), end);
-    }
-    private static void inside(Input input, Span child, Span parent, List<Issue> issues) {
-        if (child.start().before(parent.start()) || (parent.end() != null &&
-                (!child.start().before(parent.end()) || (child.end() != null && child.end().after(parent.end())))))
-            issue(issues, input, "Start/Ende", "The encounter period falls outside its parent stay");
-    }
     private static Date date(Input input, String field, boolean required, List<Issue> issues) {
         String value = input.get(field);
         try {

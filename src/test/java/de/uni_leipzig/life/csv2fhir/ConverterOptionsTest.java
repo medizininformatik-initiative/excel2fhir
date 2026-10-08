@@ -7,6 +7,21 @@ import java.nio.file.Files;
 import java.util.List;
 
 public class ConverterOptionsTest {
+    @Test public void syntheaYearAndVersionPolicyAreValidatedIndependently() {
+        for (int year : List.of(2025, 2026)) {
+            for (String mode : List.of("Jahr", "", "Unbekannt (Data Absent Reason)", "!dar:masked")) {
+                var options = ConverterOptions.fromText("SYNTHEA_MAPPING_YEAR=" + year + "\nSYNTHEA_VERSION_OUTPUT=" + mode);
+                assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
+                assertEquals(year, options.getValue(ConverterOptions.IntOption.SYNTHEA_MAPPING_YEAR));
+                assertEquals(mode, options.getValue(ConverterOptions.StringOption.SYNTHEA_VERSION_OUTPUT));
+            }
+        }
+        for (String text : List.of("SYNTHEA_MAPPING_YEAR=2024", "SYNTHEA_MAPPING_YEAR=2027",
+                "SYNTHEA_MAPPING_YEAR=2025,2026", "SYNTHEA_VERSION_OUTPUT=anything", "SYNTHEA_VERSION_OUTPUT=!dar:invalid")) {
+            assertFalse(text, ConverterOptions.fromText(text).getErrors().isEmpty());
+        }
+    }
+
     @Test public void fileAndWorkbookTextUseTheSameParserAndCollectErrors() throws Exception {
         String text = "# Comment\nCHECK_INPUT_CONSISTENCY=treu\nSTART_ID_CONDITION=abc\n"
                 + "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\n"

@@ -21,7 +21,7 @@ def mapping_metadata():
             'reviewStatus': _TABLE['reviewStatus']}
 
 
-def map_diagnosis(condition):
+def map_diagnosis(condition, year=2026):
     """Return an auditable coding or explicit synthetic-output exclusion decision.
 
     Existing ICD-10-GM always wins. A changed/unknown display or edition is not
@@ -46,7 +46,8 @@ def map_diagnosis(condition):
     if ' '.join(display.split()).casefold() not in accepted_displays:
         result['reason'] = 'Quellbezeichnung fehlt oder weicht von der beurteilten Bezeichnung ab.'
         return result
-    result.update(status=entry['relation'], target=copy.deepcopy(entry['target']), reason=entry['reason'])
+    from terminology_year import target
+    result.update(status=entry['relation'], target=target(entry['target'], year), reason=entry['reason'])
     # Synthea exports confirmed even for concepts explicitly labelled suspected.
     # Only the table's suspicion entries may adjust this; preserve refuted,
     # entered-in-error and all other explicit non-confirmed source statuses.

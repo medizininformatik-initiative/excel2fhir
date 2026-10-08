@@ -10,7 +10,7 @@ describe the same diagnosis. Enter distinct diagnoses in separate rows.
 | A | `Patient-ID` | Patient association. |
 | B | `Fall-Nr` | Case association. |
 | C | `Bezeichner` | `code.text`. |
-| D / E | `Code` / `Codesystem` | Primary coding, including the selected version. |
+| D / E | `Code` / `Codesystem` | Primary coding. |
 | F / G | `Zusatzcode` / `Zusatzcodesystem` | Optional additional coding. |
 | H | `Dokumentationszeitpunkt` | `recordedDate`: first documentation of this entry. |
 | I | `Beginn` | `onsetDateTime`: clinical onset. |
@@ -18,14 +18,15 @@ describe the same diagnosis. Enter distinct diagnoses in separate rows.
 | K | `Klinischer Status` | `clinicalStatus`. |
 | L | `Verifikationsstatus` | `verificationStatus`. |
 | M | `Typ` | Diagnosis role within the case. |
+| N / O | `Version` / `Zusatzversion` | Version text, DAR or omission for the corresponding coding. |
 
 Code values are preserved literally, including leading zeros. Choose a code system
-for each populated code. Additional coding uses a different system, consistent
-with the supported profile slices.
+for each populated code. Additional coding can use the same system; the optional validator checks profile
+slice limits.
 
-The system selection determines the coding version. For example,
-`ICD-10-GM 2026` supplies version `2026`; `SNOMED CT (Version nicht angegeben)`
-supplies an unversioned coding. The event date is an independent field.
+Code system and version are entered separately. Version fields accept text,
+a readable DAR selection or an empty value for omission. The event date is an
+independent field. See [catalogue years and versions](terminology-versions.md).
 
 ## Times and missing values
 

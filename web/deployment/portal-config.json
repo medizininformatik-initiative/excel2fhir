@@ -1,0 +1,11 @@
+{
+  "authBaseUrl": "http://localhost:5192/auth",
+  "authClientId": "dataportal",
+  "authRealm": "dataportal",
+  "backendBaseUrl": "http://localhost:5192/backend",
+  "copyrightOwner": "FDPG+ Team",
+  "copyrightYear": "2026",
+  "email": "info@forschen-fuer-gesundheit.de",
+  "stylesheet": "FDPGTheme",
+  "version": "7.3.1"
+}

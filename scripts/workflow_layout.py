@@ -1,13 +1,41 @@
 """Directory conventions shared by the two Synthea entry points."""
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime
+import os
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pathlib import Path
+
+
+# Capture the system zone before the clinical import selects its workbook zone.
+def system_zone():
+    configured = os.environ.get('TZ')
+    if configured:
+        configured = configured.removeprefix(':')
+        if Path(configured).is_absolute():
+            with Path(configured).open('rb') as source:
+                return ZoneInfo.from_file(source)
+        try:
+            return ZoneInfo(configured)
+        except ZoneInfoNotFoundError:
+            return datetime.now().astimezone().tzinfo
+    try:
+        with Path('/etc/localtime').open('rb') as source:
+            return ZoneInfo.from_file(source)
+    except FileNotFoundError:
+        return datetime.now().astimezone().tzinfo
+
+
+SYSTEM_ZONE = system_zone()
+
+
+def run_time():
+    return datetime.now(SYSTEM_ZONE)
 
 
 def create_run(output, operation):
     root = Path(output).resolve()
     root.mkdir(parents=True, exist_ok=True)
-    name = 'run-' + datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%SZ') + '-' + operation
+    name = 'run-' + run_time().strftime('%Y%m%d_%H-%M-%S') + '-' + operation
     candidate = root / name
     suffix = 2
     while True:

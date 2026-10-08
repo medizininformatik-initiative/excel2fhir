@@ -41,7 +41,7 @@ class ClinicalImportTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC 2026', '2020-01-02', 'completed', 'true'])
+        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC', '2020-01-02', 'completed', 'true'])
         self.assertIn('Poliomyelitis', rows['Impfung'][0][3])
         self.assertEqual(report['vaccineMappings'][0]['source']['code'], '10')
         source['entry'][-1]['resource']['vaccineCode']['coding'][0]['code'] = 'unmapped'
@@ -106,13 +106,15 @@ class ClinicalImportTest(unittest.TestCase):
         source['entry'][-1]['resource']['subject']['reference']='urn:uuid:another-patient'
         with self.assertRaises(ValueError):prepare(source)
 
-    def test_boolean_laboratory_value_is_reported_without_partial_rows(self):
+    def test_boolean_laboratory_value_is_preserved(self):
         source = bundle()
         self.add(source, {'resourceType':'Observation', 'id':'bool-lab', 'status':'final',
             'category':[{'coding':[{'system':'http://terminology.hl7.org/CodeSystem/observation-category', 'code':'laboratory'}]}],
             'code':{'coding':[{'system':'http://loinc.org', 'code':'1234-5'}]}, 'valueBoolean':True})
         rows, report = prepare(source)
-        self.assertEqual(rows['Laborbefund'], [])
-        self.assertTrue(any('boolean results' in str(loss) for loss in report['losses']))
+        self.assertEqual(len(rows['Laborbefund']), 1)
+        self.assertEqual(rows['Laborbefund'][0][7], 'true')
+        self.assertEqual(rows['Laborbefund'][0][10], 'Ja/Nein')
+        self.assertFalse(any('boolean results' in str(loss) for loss in report['losses']))
 
 if __name__=='__main__':unittest.main()

@@ -25,9 +25,8 @@ subdirectory. To select one workbook, append `-f input/MyCase.xlsx` after
 Each invocation creates a fresh run directory:
 
 ```text
-outputGlobal/run-YYYYMMDD-HHmmssZ-excel-to-fhir/
-  fhir/
-    Konvertierungsoptionen/  JSON bundles and patients.ndjson
+outputGlobal/run-YYYYMMDD_HH-mm-ss-excel-to-fhir/
+  fhir/                     JSON bundles and patients.ndjson
   status.txt                Overall result
   details/
     csv/                    Extracted workbook data
@@ -37,12 +36,13 @@ outputGlobal/run-YYYYMMDD-HHmmssZ-excel-to-fhir/
     pending/                Incomplete output for diagnosis
 ```
 
-Run names use UTC and a numeric suffix when needed. Previous runs remain available.
+Run names use local system time and a numeric suffix when needed.
+Previous runs remain available.
 Each KDS variant has its own output directory. Multiple inputs receive additional
 input directories.
 
-JSON bundles contain all patients of an input by default; `-p 1` creates one
-patient per bundle. NDJSON contains one complete patient bundle per line in each
+JSON bundles contain one patient by default; `-p COUNT` sets the maximum
+patients per bundle. NDJSON contains one complete patient bundle per line in each
 input/variant directory. Both representations contain the same patient data.
 
 ## Common options
@@ -52,9 +52,9 @@ input/variant directory. Both representations contain the same patient data.
 | `-f FILE` | Select one workbook. |
 | `-i DIRECTORY` | Select an input directory; default `input/`. Use either `-f` or `-i`. |
 | `-o DIRECTORY` | Output root; default `outputGlobal/`. |
-| `--converter-options FILE` | Select an external options file; repeat for multiple KDS variants. |
+| `--converter-options FILE` | Select one external configuration for this run. |
 | `-r FORMATS` | Comma-separated output formats; default `JSON,NDJSON`. |
-| `-p COUNT` | Maximum patients per bundle; default all patients of an input. |
+| `-p COUNT` | Maximum patients per bundle; default `1`. |
 | `-v` | Enable FHIR profile and terminology validation. |
 
 Formats are `JSON`, `NDJSON`, `XML`, `JSONGZIP`, `JSONBZ2` and `ZIPJSON`.
@@ -62,10 +62,10 @@ NDJSON and ZIPJSON contain individual patient bundles. Use `--help` for logging
 and intermediate-file settings. Relative paths are resolved from the working
 directory. Custom Docker output paths need a writable volume mount.
 
-For example, explicitly select `input/` and generate one patient per JSON bundle:
+For example, explicitly select a workbook:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -i input -p 1
+docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -f input/MyCase.xlsx
 ```
 
 ## Converter Options
@@ -73,41 +73,40 @@ docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -i input
 The data sheets describe the cases. Converter Options determine their FHIR
 representation, including reference directions and patient-ID generation.
 
-Each sheet whose name contains `Konvertierungsoptionen` defines an independent
-KDS variant. For example, `Konvertierungsoptionen_A` and
-`Konvertierungsoptionen_B` generate two variants of the same cases.
-External options files select the variants for an invocation:
+Each invocation uses one configuration. Supply it explicitly:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  --converter-options options/KDS-A.config \
-  --converter-options options/KDS-B.config
+java -jar target/excel2fhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
 ```
 
-Each file contains Properties text, for example:
+Without an external configuration, the converter uses its built-in defaults.
+Export an editable default configuration with either CLI:
 
-```properties
-SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true
-SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false
+```sh
+java -jar target/excel2fhir.jar --export-default-options options.config
 ```
 
-When external files are selected, they supply the run's options sets. Otherwise,
-the converter uses the workbook's options sheets. Missing values use shared
-defaults; an input with no options set uses the `default` variant.
-
-Variant directories use the sheet name or options filename without its extension.
-Spaces and special characters become `_`; names within an input must be unique.
-`details/options/` records every effective setting, including defaults.
+The export creates a new file. Edit it and pass it with `--converter-options`.
+Excel workbooks and CSV inputs contain case data; configuration files are supplied
+separately. Each run records its effective configuration under `details/options/`.
+Run the converter separately for each KDS variant.
 
 `CHECK_INPUT_CONSISTENCY=true` enables the workbook consistency checks. With
 `false`, the workbook precheck covers structure and options. Shared converter
 checks also apply during CSV processing; see [input checks](contact-input-checks.md).
 
+The web editor exports a versioned `.config` format with descriptions and retained
+inactive selections. The Java reader validates that format through the same entry
+points. Versioned configurations control resource selection, time shifts, encounter
+policies, validation and output. Their format, patient-count and validation values
+take precedence over the corresponding CLI flags. Invalid settings fail preflight. See the
+[shared configuration contract](../web/catalog/options/README.md#properties-export-and-import)
+for the implemented scope and syntax.
+
 ## CSV input
 
 CSV tables follow the workbook's columns. A run's `details/csv/` directory provides
-examples. An options file such as `Case_Konvertierungsoptionen_A.csv` contains
-Properties text from the options sheet.
+examples. Supply converter settings separately with `--converter-options`.
 
 Place the CSV files in `input/` and run:
 

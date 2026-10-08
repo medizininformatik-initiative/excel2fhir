@@ -12,6 +12,10 @@ OPS = 'http://fhir.de/CodeSystem/bfarm/ops'
 
 def audit_procedures(source, target, rows, report):
     table = json.loads((MAPS / 'synthea-procedures-ops-2026.json').read_text())
+    from audit_annual_versions import annual_table, expected_signature, coding_signature
+    terminology = report.get('terminology', {})
+    year, mode = terminology.get('mappingYear', '2026'), terminology.get('versionOutput', 'Jahr')
+    table = annual_table(table, year)
     mappings = {e['sourceCode']: e for e in table['entries']}
     medications = {e['source']['code']: e for e in json.loads(
         (MAPS / 'synthea-medications-de-2026.json').read_text())['entries']}
@@ -39,12 +43,25 @@ def audit_procedures(source, target, rows, report):
             continue
         coding = r['code']['coding'][0]
         entry = mappings.get(coding['code'], {})
+        decision = reported[r['id']]
+        if decision.get('status') == 'context-conflict':
+            from audit_contextual_procedures import check_conflict
+            check_conflict(r, decision, index, table)
+            continue
         if (coding.get('system') != SNOMED or coding.get('version') or
                 (coding.get('display') and coding['display'] not in entry.get('sourceDisplays', []))):
             entry = {}
         if entry.get('status') == 'excluded':
             continue
         entry = dict(entry)
+        if entry.get('contextualRule') and decision.get('contextualSelection'):
+            from audit_contextual_procedures import check as check_contextual
+            check_contextual(r, entry, decision, index, reported, table)
+            if decision.get('status') == 'synthetic-contextual':
+                for o in decision['outputs']:
+                    add(r, o['sourceIds'], o['codings'], o['start'], o['end'],
+                        o['label'] if o.get('synthetic') else None)
+                continue
         if entry.get('minimumAge'):
             birth = index[r['subject']['reference']].get('birthDate', '')
             when = begin(r)[:10]
@@ -119,9 +136,12 @@ def audit_procedures(source, target, rows, report):
     matched_rows = set()
     for owner, ids, codes, first, last, label in expected:
         outputs = reported[owner['id']]['outputs']
-        found = [o for o in outputs if o['sourceIds'] == ids and o['codings'] == codes and o['start'] == first and o['end'] == last]
+        found = [o for o in outputs if set(ids).issubset(o['sourceIds']) and o['codings'] == codes and o['start'] == first and o['end'] == last]
         assert len(found) == 1, ('Procedure projection evidence', owner['id'])
         o = found[0]
+        for linked_id in set(o['sourceIds']) - set(ids):
+            assert any(shared['ownerSourceId'] == owner['id'] and shared['code'] == codes[0]['code']
+                       for shared in reported[linked_id].get('sharedOutputs', [])), 'Unexplained shared source'
         row_number = o['row'] - 2
         assert row_number not in matched_rows, 'Duplicate procedure row'
         matched_rows.add(row_number)
@@ -130,8 +150,10 @@ def audit_procedures(source, target, rows, report):
         assert row.get('Zusatzcode', '') == (codes[1]['code'] if len(codes) == 2 else '')
         assert row.get('Durchführungsbeginn', '') == first and row.get('Ende', '') == last
         assert row.get('Status', '') == owner['status']
-        expected_system = 'OPS 2026' if codes[0]['system'] == OPS else 'SNOMED CT (Version nicht angegeben)'
+        expected_system = 'OPS' if codes[0]['system'] == OPS else 'SNOMED CT (Version nicht angegeben)'
         assert row['Codesystem'] == expected_system
+        if codes[0]['system'] == OPS:
+            assert row.get('Version', '') == (year if mode == 'Jahr' else mode)
         assert row.get('Zusatzcodesystem', '') == ('SNOMED CT (Version nicht angegeben)' if len(codes) == 2 else '')
         if label is not None:
             assert row['Prozedurentext'] == label == o['label'], 'Wrong OPS description'
@@ -139,14 +161,14 @@ def audit_procedures(source, target, rows, report):
             label = row.get('Prozedurentext', '')
         assert o['status'] == owner['status']
         # Compare FHIR's normalized instants with the original time window.
-        wanted[(tuple((c['system'], c['code'], c.get('version')) for c in codes), label,
+        wanted[(tuple(expected_signature(c, year, mode) for c in codes), label,
                 owner['status'], parsed(first) if first else None, parsed(last) if last else None)] += 1
     actual = Counter()
     for r in target['entry']:
         r = r['resource']
         if r['resourceType'] != 'Procedure':
             continue
-        cs = tuple((c['system'], c['code'], c.get('version')) for c in r['code']['coding'])
+        cs = tuple(coding_signature(c) for c in r['code']['coding'])
         end = r.get('performedPeriod', {}).get('end')
         actual[(cs, r['code'].get('text', ''), r['status'], parsed(begin(r)) if begin(r) else None,
                 parsed(end) if end else None)] += 1

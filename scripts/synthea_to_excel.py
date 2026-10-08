@@ -4,7 +4,7 @@ Supported clinical resources and synthetic contacts are imported; unhandled sour
 are identified in a separate loss report. Requires LibreOffice, Java and Python 3.
 """
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -34,7 +34,9 @@ VERIFICATION = dict(zip(['unconfirmed','provisional','differential','confirmed',
 CLASSES = {'EMER':'ambulant', 'AMB':'ambulant', 'IMP':'stationaer', 'HH':'home health', 'VR':'virtual', 'SS':'short stay', 'PRENC':'pre-admission'}
 
 
-def prepare(bundle):
+def prepare(bundle, options=None):
+    from terminology_year import settings, version_rows, metadata
+    year, version_mode = settings(options)
     entries = bundle.get('entry', [])
     if bundle.get('resourceType') != 'Bundle':
         raise ValueError('Expected a Synthea FHIR R4 Bundle')
@@ -93,7 +95,12 @@ def prepare(bundle):
         encounter_numbers[r['id']] = nr
         def local_time(value):
             # Keep the offset: the autumn clock change has two distinct local 02:xx hours.
-            return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone().isoformat() if value else ''
+            if not value: return ''
+            local = datetime.fromisoformat(value.replace('Z', '+00:00')).astimezone()
+            # Historical local mean time can have offset seconds, which FHIR cannot encode.
+            if local.utcoffset().total_seconds() % 60:
+                local = local.astimezone(timezone.utc)
+            return local.isoformat()
         period = r.get('period', {})
         rows['Fall'].append([pid,nr,local_time(period.get('start')),local_time(period.get('end')),CLASSES[code],
                              '', '', '', '', 'Notfall' if code == 'EMER' else ''])
@@ -141,7 +148,7 @@ def prepare(bundle):
             for key in c.keys() - {'system','version','code'}:loss(r,'code.coding.'+key,'Bezeichner übernommen, Coding-Metadaten nicht separat darstellbar')
         if len(chosen)>2 or len({c.get('system')for c in coding}) != len(coding):
             raise ValueError('More codings than supported by the diagnosis sheet/profile')
-        decision = map_diagnosis(r)
+        decision = map_diagnosis(r, year)
         diagnosis_mappings.append(decision)
         if decision['status'] == 'excluded':
             loss(r, '$', decision['reason'])
@@ -175,10 +182,10 @@ def prepare(bundle):
         for field in ['subject','encounter']:
             for key in r.get(field,{}).keys() - {'reference'}:loss(r,field+'.'+key,'Generator unterstützt Sachverhalt noch nicht')
     if not source_conditions:raise ValueError('No diagnoses: this package must not emit an administrative shell')
-    clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers)
+    clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers, year)
     rows.update(clinical_rows)
     event_rows, event_report = prepare_events(entries, pid, encounter_numbers,
-        {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'})
+        {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'}, year)
     rows.update(event_rows)
     clinical_report['clinicalImports'].extend(event_report['clinicalImports'])
     clinical_report.update({k: v for k, v in event_report.items() if k not in ('clinicalImports', 'losses')})
@@ -214,7 +221,8 @@ def prepare(bundle):
             row[3:7] = row[5:7] + row[3:5]
         if decision.get('target'):
             row[2] = decision['target']['display']
-    return rows, {**clinical_report, 'germanTexts':translation_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
+    version_rows(rows, year, version_mode)
+    return rows, {'terminology': metadata(year, version_mode), **clinical_report, 'germanTexts':translation_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
                   'diagnosisMapping': mapping_metadata(), 'diagnosisMappings': diagnosis_mappings,
@@ -222,7 +230,7 @@ def prepare(bundle):
                                  'Existing Patient converter inserts DAR for missing address',
                                  'Encounter status is derived from period; source identifiers are regenerated',
                                  'Additional ICD-10-GM mappings are provisional approximations for synthetic test data',
-                                 'Target release 2026 is explicit and independent of historical event dates',
+                                 'Target release ' + year + ' is explicit and independent of historical event dates',
                                  'No KDS conformance or complete SNOMED terminology validation performed']}
 
 
@@ -270,15 +278,6 @@ def write_workbook(rows, output, options=None):
             op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
         if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
-    from converter_options import workflow_defaults, property_line
-    # Record all effective values, including explicit overrides of Synthea defaults.
-    option_sheet = 'Konvertierungsoptionen'
-    for name, value in (workflow_defaults() if options is None else options).items():
-        matches = [cell for cell, text in sheets[option_sheet].items()
-                   if text.lstrip('# ').split('=', 1)[0].strip() == name]
-        if len(matches) != 1:
-            raise ValueError('Missing or duplicate template option: ' + name)
-        put(option_sheet, matches[0], property_line(name, value))
     from clinical_selections import validation_ops
     ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
     apply_workbook_edits(template, ops, output)

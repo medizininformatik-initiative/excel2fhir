@@ -62,12 +62,12 @@ public class ConditionConverterTest {
     }
 
     @Test
-    public void requiresSystemAndRejectsUnknownSelections() {
+    public void requiresSystemAndRejectsUnknownSelections() throws Exception {
         assertThrows(Exception.class, () -> convert(Map.of("Code", "00123")));
         assertThrows(Exception.class, () -> convert(Map.of("Klinischer Status", "made-up")));
         assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:made-up")));
-        assertThrows(Exception.class, () -> convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
-                "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")));
+        assertEquals(2, convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
+                "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).getCode().getCoding().size());
     }
 
     private Condition convert(Map<String, String> input) throws Exception {
@@ -85,9 +85,15 @@ public class ConditionConverterTest {
         try (CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
                 .setNullString("").get().parse(new StringReader(csv.toString()))) {
             ConverterOptions options = new ConverterOptions("");
+            ConverterResult result = new ConverterResult(options);
             ConditionConverter converter = new ConditionConverter(parser.getRecords().get(0), null,
-                    new ConverterResult(options), null, options);
-            var resources = converter.convertInternal();
+                    result, null, options);
+            var resources = converter.convert();
+            var context = result.inputContext(resources.get(0));
+            assertEquals("PID1", context.patientId());
+            assertEquals(1, context.encounterIds().size());
+            assertEquals(1, context.inputRow());
+            assertFalse(context.explicitDocumentTimestamp());
             assertEquals(1, resources.size());
             return (Condition) resources.get(0);
         }

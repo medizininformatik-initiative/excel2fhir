@@ -18,7 +18,7 @@ from check_synthea_roundtrip import check_configured
 from converter_options import resolve_config, selected_configs
 from synthea_to_excel import prepare, write_workbook
 from workbook_xml import read_sheets
-from workflow_layout import create_run, write_status, add_converter_arguments, converter_settings
+from workflow_layout import create_run, write_status, add_converter_arguments, converter_settings, run_time
 from fhir_output import read_output
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +50,7 @@ def environment():
         versions[name] = (result.stdout + result.stderr).strip()
     versions['python'] = sys.version
     files = [TEMPLATE, JAR, *sorted((ROOT / 'scripts').glob('*.py')),
-             ROOT / 'scripts/ReadXmlBundles.java', ROOT / 'scripts/WorkbookUno.java', ROOT / 'scripts/WorkflowOptions.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*'))]
+             ROOT / 'scripts/ReadXmlBundles.java', ROOT / 'scripts/WorkbookUno.java', ROOT / 'scripts/WorkflowOptions.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*')), *sorted((ROOT / 'src/main/resources/ucum').glob('*.map'))]
     return {'versions': versions, 'converterTimezone': 'Europe/Berlin', 'sha256': {
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
@@ -127,6 +127,12 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             pass  # The per-file conversion below records malformed inputs individually.
     selected = selected_configs(option_files, source_patients)
     defaults = resolve_config()['values'] if option_files else selected[0]['values']
+    from terminology_year import settings
+    import_settings = settings(selected[0]['values'])
+    if any(settings(item['values']) != import_settings for item in selected):
+        raise ValueError('One Synthea import uses one mapping year and version output; run differing settings separately')
+    for key in ('SYNTHEA_MAPPING_YEAR', 'SYNTHEA_VERSION_OUTPUT'):
+        defaults[key] = selected[0]['values'].get(key, '2026' if key == 'SYNTHEA_MAPPING_YEAR' else 'Jahr')
     out = create_run(output, 'synthea-import') if directory is None else Path(directory)
     snapshots = []
     for index, config in enumerate(option_files):
@@ -156,12 +162,13 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             saved_source = out / 'details/sources' / source.name
             if not source.is_relative_to(out / 'details/sources'):
                 shutil.copy2(source, saved_source)
-            rows, report = prepare(bundle)
+            rows, report = prepare(bundle, defaults)
             write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
             write_json(case / 'Fall.loss.json', report)
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=defaults)
-            command = ['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin', '-jar', str(JAR),
+            command = ['java', '-Xmx3g' if validate else '-Xmx1g', '-Duser.timezone=Europe/Berlin',
+                       '-Dexcel2fhir.runOffset=' + run_time().strftime('%z'), '-jar', str(JAR),
                        '-f', str(book), '-o', str(case), '-r', ','.join(formats or ['JSON', 'NDJSON']),
                        '-p', str(patients_per_bundle), '-vll', validation_log_level, '-l', log_layout]
             if validate:

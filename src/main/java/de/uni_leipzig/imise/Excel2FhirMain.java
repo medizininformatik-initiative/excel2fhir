@@ -45,7 +45,10 @@ public class Excel2FhirMain implements Callable<Integer> {
             "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Optional CSV root; creates a fresh run subdirectory. Default: details/csv inside the output run.")
     File tempDirectory;
 
-    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    @Option(names = "--export-default-options", paramLabel = "FILE", description = "Write the default configuration and exit.")
+    File exportDefaultOptions;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter configuration (one per run).")
     List<File> converterOptions = new java.util.ArrayList<>();
 
     @Option(names = { "-r",
@@ -53,8 +56,8 @@ public class Excel2FhirMain implements Callable<Integer> {
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
 
     @Option(names = { "-p",
-            "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file.")
-    int patientsPerBundle = Integer.MAX_VALUE;
+            "--patients-count" }, paramLabel = "PATIENTS-COUNT", description = "Maximum number of patients in one file (default: 1).")
+    int patientsPerBundle = 1;
 
     @Option(names = { "-l",
             "--log-layout" }, paramLabel = "LOG-FILE-LAYOUT", description = "The layout of the log content in the logfile.")
@@ -90,6 +93,13 @@ public class Excel2FhirMain implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (converterOptions.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
+        if (exportDefaultOptions != null) {
+            java.nio.file.Files.writeString(exportDefaultOptions.toPath(),
+                    de.uni_leipzig.life.csv2fhir.ContractConfiguration.defaultProperties(),
+                    java.nio.file.StandardOpenOption.CREATE_NEW);
+            return 0;
+        }
         if (patientsPerBundle < 1)
             throw new IllegalArgumentException("-p must be positive.");
         if (inputFile != null && inputDirectory != null) {
@@ -118,7 +128,7 @@ public class Excel2FhirMain implements Callable<Integer> {
                 converter.convertAllExcelInDir(inputDirectory, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             }
-            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), validateBundles);
+            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), converter.wasValidationRequested());
         } catch (Exception e) {
             run.fail(e);
             LOG.error(e.getMessage(), e);

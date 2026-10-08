@@ -18,7 +18,9 @@ ISO 3166-2 codes.
 `Medikation` separates product identity, ATC classification, ingredients and dose:
 
 - `Präparatbezeichnung`, `Präparatcode` and `Präparatcodesystem` identify the product.
-- `ATC-Code` and `ATC-Version` provide the classification and its explicit year.
+- `ATC-Code` provides the classification. `ATC-Version` accepts edition text, a
+  readable DAR selection or an empty cell for omission; see [version handling](terminology-versions.md).
+  A version without an ATC code is retained in a coding with system and version.
 - `Wirkstoffcode` and `Wirkstoffcodesystem` identify ingredients. Separate multiple
   ingredients with semicolons; all use the selected system. Supported systems are
   ASK, UNII, SNOMED CT and RxNorm. Each ingredient becomes a separate FHIR entry.
@@ -27,10 +29,11 @@ ISO 3166-2 codes.
 | Medication type | `Dokumentationszeitpunkt` | `Beginn` / `Ende` |
 | --- | --- | --- |
 | `Verordnung` (request) | Optional `authoredOn` | Leave empty. |
-| `Verabreichung` (administration) | Leave empty. | `effectiveDateTime` or `effectivePeriod`; start required. |
-| `Medikationsaussage` (statement) | Optional `dateAsserted` | `effectiveDateTime` or `effectivePeriod`; start required. |
+| `Verabreichung` (administration) | Leave empty. | `effectiveDateTime` or `effectivePeriod`; empty values are omitted. |
+| `Medikationsaussage` (statement) | Optional `dateAsserted` | `effectiveDateTime` or `effectivePeriod`; empty values are omitted. |
 
-Use an explicit Data Absent Reason for an unknown required time or ingredient.
+Empty times and ingredients are omitted. Use an explicit Data Absent Reason to
+represent why a value is unavailable.
 Unknown ingredients also require their code system. Status choices depend on the
 medication type. The default status is `active` for requests/statements and
 `completed` for administrations. Request intent defaults to `order`.
@@ -38,8 +41,11 @@ medication type. The default status is `active` for requests/statements and
 For requests and statements, a complete dose, unit and integer daily frequency
 produce structured dosage. Free text or partial instructions preserve all
 provided facts in `Dosage.text`. Administrations keep dose structured and daily
-frequency as text; a missing dose unit receives DAR `unknown`. A text-only
-administration dosage requires an explicit unknown dose to satisfy the input rule.
+frequency as text; a missing dose unit receives DAR `unknown`. Text-only
+administration dosage is emitted as supplied. A dose unit without a dose value is
+retained as a structured quantity with the value omitted for all medication types.
+Profile requirements, code validity
+and clinical plausibility are left to optional FHIR validation.
 
 Medication IDs include product details, ATC version, form and ingredient system;
 references use those generated IDs.
@@ -50,8 +56,8 @@ The investigation code identifies what was measured. An additional coding descri
 the same investigation. Result code/system describe a coded answer.
 `Einheit` is the unit label; `Einheitencode` is its UCUM code.
 
-Laboratory rows support number, text, coded answer, components and missing value.
-Clinical documentation also supports Boolean values. Components follow their
+Laboratory and clinical documentation rows support number, text, coded answer,
+Boolean values, components and missing values. Components follow their
 parent row and refer to its `Untersuchung ID` through `Komponente von`.
 A parent and its components form one Observation. Diagnostic reports use those
 investigation IDs for result references.

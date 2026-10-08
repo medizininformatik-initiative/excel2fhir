@@ -32,7 +32,7 @@ class ProcedureMappingTest(unittest.TestCase):
         rows, report = prepare(source)
         self.assertEqual(source, before)
         row = rows['Prozedur'][0]
-        self.assertEqual((row[3], row[5], row[6]), ('5-511.y', 'OPS 2026', '45595009'))
+        self.assertEqual((row[3], row[5], row[6]), ('5-511.y', 'OPS', '45595009'))
         self.assertEqual(row[4], procedure['performedPeriod']['start'])
         self.assertEqual(row[8], procedure['performedPeriod']['end'])
         self.assertEqual('Cholezystektomie: N.n.bez.', row[2])
@@ -85,12 +85,13 @@ class ProcedureMappingTest(unittest.TestCase):
         self.assertEqual(len(rows['Prozedur']), len(outputs))
         self.assertEqual(len(report['clinicalMappings']), len(ENTRIES))
         self.assertEqual({l['id'] for l in report['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'},
-                         {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'})
+                         {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'} |
+                         {'procedure-22523008', 'procedure-90470006', 'procedure-65575008'})
         for row, projected in zip(rows['Prozedur'], outputs):
             self.assertEqual(row[3], projected['codings'][0]['code'])
             self.assertEqual(row[4], '2026-09-01T08:00:00+02:00')
-            self.assertEqual(row[8:10], ['2026-09-01T08:01:00+02:00', 'completed'])
-            if row[5] == 'OPS 2026':
+            self.assertEqual(row[8:10], [projected['end'], 'completed'])
+            if row[5] == 'OPS':
                 self.assertEqual(row[2], projected['codings'][0]['display'])
 
     def test_us_dental_aftercare_uses_international_parent_without_extra_us_coding(self):

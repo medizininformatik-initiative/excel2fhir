@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from procedure_mapping import DATA, select_ops
+from procedure_context import ContextIndex
 
 BERLIN = ZoneInfo('Europe/Berlin')
 
@@ -22,18 +23,28 @@ def date(value):
     return instant(value).astimezone(BERLIN).date()
 
 
-def project(entries):
+def project(entries, year=2026):
     resources = [e.get('resource', {}) for e in entries]
     index = {r['resourceType'] + '/' + r['id']: r for r in resources if r.get('id')}
     index.update({e['fullUrl']: e['resource'] for e in entries if e.get('fullUrl')})
+    context_index = ContextIndex(entries)
+    contexts = {}
     result, blocks = {}, defaultdict(list)
     for r in resources:
         if r.get('resourceType') != 'Procedure':
             continue
+        if not r.get('id'):
+            continue  # The clinical importer reports this unsupported resource.
         coding = (r.get('code', {}).get('coding') or [{}])[0]
         decision = select_ops(coding)
         decision['outputs'] = []
         result[r['id']] = decision
+        ctx = contexts[r['id']] = context_index.context(r)
+        decision['contextEvidence'] = ctx.facts()
+        problem = ctx.contradiction()
+        if problem:
+            decision.update(status='context-conflict', reason=problem, target=None)
+            continue
         if decision.get('minimumAge'):
             patient = index.get(r.get('subject', {}).get('reference'), {})
             birth = patient.get('birthDate', '')
@@ -138,7 +149,9 @@ def project(entries):
             for r in batch:
                 result[r['id']]['chemotherapyBlock'] = copy.deepcopy(facts)
             result[batch[0]['id']]['outputs'].append(projected)
-    return result
+    from contextual_procedures import apply_contextual
+    from terminology_year import procedure_decisions
+    return procedure_decisions(apply_contextual(result, contexts), year)
 
 
 def output(resource, codings, label):

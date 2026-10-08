@@ -40,6 +40,35 @@ public class ConverterOptions {
     private final ResourceMapper options = ResourceMapper.of("Converter_Options.config");
 
     private final List<String> errors = new ArrayList<>();
+    private ContractConfiguration configuration;
+    private boolean executionFromCommandLine;
+
+    public ConverterOptions withCommandLineExecution() {
+        executionFromCommandLine = true;
+        return this;
+    }
+
+    public ContractConfiguration configuration() { return configuration; }
+
+    public boolean validationEnabled(boolean fallback) {
+        return configuration == null || executionFromCommandLine ? fallback : configuration.stored("checks.fhirValidation").asBoolean();
+    }
+
+    public int patientsPerFile(int fallback) {
+        return configuration == null || executionFromCommandLine ? fallback : configuration.stored("output.patientsPerFile").asInt();
+    }
+
+    public OutputFileType[] outputFormats(OutputFileType[] fallback) {
+        if (configuration == null || executionFromCommandLine) return fallback;
+        List<OutputFileType> formats = new ArrayList<>();
+        configuration.stored("output.formats").forEach(value -> formats.add(OutputFileType.valueOf(value.asText())));
+        return formats.toArray(OutputFileType[]::new);
+    }
+
+    public PatientOutputPolicy patientOutputPolicy() {
+        return configuration == null ? PatientOutputPolicy.GENERATE_REFERENCE
+                : PatientOutputPolicy.fromValue(configuration.stored("resource.Patient.mode").asText());
+    }
 
     /** Cache for the boolean values */
     private final Map<BooleanOption, Boolean> booleanValues = new HashMap<>();
@@ -86,6 +115,23 @@ public class ConverterOptions {
     }
 
     private void readValues(String text) {
+        if (ContractConfiguration.isContractText(text)) {
+            // A complete contract configuration replaces workflow/workbook defaults.
+            options.clear();
+            try {
+                configuration = ContractConfiguration.parse(text);
+                readLegacyValues("", configuration.javaProperties());
+                errors.addAll(configuration.unsupportedSettings());
+            } catch (IllegalArgumentException e) {
+                errors.add("Invalid configuration: " + e.getMessage());
+            }
+            return;
+        }
+        readLegacyValues(text, Map.of());
+    }
+
+    private void readLegacyValues(String text, Map<String, String> defaults) {
+        options.putAll(defaults);
         Properties values = new Properties() {
             @Override public synchronized Object put(Object key, Object value) {
                 Object previous = super.put(key, value);
@@ -100,6 +146,15 @@ public class ConverterOptions {
             errors.add("Invalid converter options: " + e.getMessage());
         }
         options.putAll(values);
+        String versionOutput = getValue(StringOption.SYNTHEA_VERSION_OUTPUT);
+        if (!versionOutput.isEmpty() && !versionOutput.equals("Jahr")) {
+            try {
+                if (de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(versionOutput) == null)
+                    errors.add("SYNTHEA_VERSION_OUTPUT: choose Jahr, a Data Absent Reason or an empty value");
+            } catch (RuntimeException e) {
+                errors.add("SYNTHEA_VERSION_OUTPUT: invalid Data Absent Reason");
+            }
+        }
         for (BooleanOption option : BooleanOption.values()) {
             if (options.containsKey(option.name())) {
                 try { booleanValues.put(option, BooleanOption.isTrue(options.get(option.name()))); }
@@ -115,6 +170,8 @@ public class ConverterOptions {
                     int value = parseIntOption(option, options.get(option.name()));
                     if (option.name().startsWith("PID_LAST_NUMBER_") && value < 0)
                         throw new IllegalArgumentException("Value must be at least 0");
+                    if (option == IntOption.SYNTHEA_MAPPING_YEAR && value != 2025 && value != 2026)
+                        throw new IllegalArgumentException("Choose 2025 or 2026");
                     intValues.put(option, value);
                 } catch (IllegalArgumentException e) {
                     errors.add(option + ": " + e.getMessage());
@@ -300,6 +357,9 @@ public class ConverterOptions {
      * Integer Options
      */
     public static enum IntOption {
+        /** German annual target catalogue used by the Synthea import. */
+        SYNTHEA_MAPPING_YEAR(2026),
+
         /**
          * Start index counter for the number that will be added on the first element
          * of this type. The only resource type that will not get such an index counter
@@ -371,6 +431,8 @@ public class ConverterOptions {
      * String options
      */
     public static enum StringOption {
+        /** Synthea version representation: Jahr, a DAR label/token, or omission. */
+        SYNTHEA_VERSION_OUTPUT("Jahr"),
 
         /**
          * This prefix will be added to all patient IDs.</br>

@@ -111,6 +111,8 @@ public class ProcedureConverter extends Converter {
             CodeableConcept code = ClinicalValues.concept(get(Prozedurencode), selection, get(Prozedurentext));
             Coding extra = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
+            if (hasColumn("Version")) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
+            if (hasColumn("Zusatzversion")) CodingVersion.apply(extra, get("Zusatzversion"));
             if (extra != null) code.addCoding(extra);
             return code;
         }
@@ -131,7 +133,9 @@ public class ProcedureConverter extends Converter {
         String explicit = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
         if (explicit != null) return ClinicalValues.coding(explicit, DiagnosisValues.SNOMED);
         String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
-        if (selection != null && !selection.startsWith("OPS ")) return null;
+        Coding selectedSystem = ClinicalValues.systems().get(selection);
+        if (selection != null && (selectedSystem == null
+                || !"http://fhir.de/CodeSystem/bfarm/ops".equals(selectedSystem.getSystem()))) return null;
         String code = get(Prozedurencode);
         String display = null;
         if (code != null && !code.isBlank()) {

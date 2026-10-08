@@ -104,7 +104,9 @@ class GermanTexts:
         return {'id':self.data['id'], 'sha256':hashlib.sha256(PATH.read_bytes()).hexdigest(),
                 'translatedTexts':self.translated,
                 'missing':[{'context':c,'original':s,'occurrences':n} for (c,s),n in sorted(self.missing.items())],
-                'quality':'Project reading texts; editorial and machine-draft provenance in the table; medical review pending',
+                'quality':'Official German LOINC names where available; remaining project reading texts retain editorial or machine-draft provenance',
+                'loinc':self.data.get('sources', {}).get('loinc-de-DE'),
+                'loincNotice':self.data.get('loincNotice'),
                 'scope':'Clinical labels, text values and Synthea note templates; technical enum values remain unchanged'}
 
 

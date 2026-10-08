@@ -44,7 +44,8 @@ def build(archive, checkout):
         entries.append(entry)
     # Keep source facts independent of mapping decisions. Each mapping references
     # this inventory; copying decisions back here creates stale, circular state.
-    return {'id': 'synthea-source-code-registry-v2', 'scope': 'verified archived source inventory excluding module templates; mapping decisions live in the separate mapping tables',
+    return {'snomedNotice': json.loads((Path(__file__).parent / 'terminology-notices.json').read_text())['http://snomed.info/sct'],
+            'id': 'synthea-source-code-registry-v2', 'scope': 'verified archived source inventory excluding module templates; mapping decisions live in the separate mapping tables',
             'inventorySha256': hashlib.sha256((archive / 'inventory-combined.json').read_bytes()).hexdigest(),
             'sourceManifestSha256': hashlib.sha256((archive / 'source-manifest.json').read_bytes()).hexdigest(),
             'verifiedSourceFiles': len(manifest), 'conceptCount': len(entries),

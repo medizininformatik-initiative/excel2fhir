@@ -14,7 +14,8 @@ Semicolon-separated UNII values become separate ingredients. The shared Excel/CS
 converter also accepts manually supplied product and ingredient systems as described
 in the [input contract](template-input-contracts.md#medication).
 
-ATC uses the explicit year 2026. Product evidence includes public BfArM, insurer,
+ATC uses the selected 2025 or 2026 catalogue; [version handling](terminology-versions.md)
+controls its separate FHIR representation. Product evidence includes public BfArM, insurer,
 manufacturer and G-BA documents. URLs, hashes and PDF pages are recorded in the
 table. Ingredient evidence comes from NIH RxNav and FDA UNII sources.
 
@@ -82,6 +83,10 @@ SHA-256 are recorded under `productCatalog`; per-event choices remain under
 `clinicalMappings`.
 
 ## Local data and distribution
+
+For public mapping provenance, notices and outstanding publication questions,
+see [mapping data and publication](mapping-data-publication.md).
+
 
 Output using a local catalog is marked with
 `productDataUsage.containsLocalProductData: true` and

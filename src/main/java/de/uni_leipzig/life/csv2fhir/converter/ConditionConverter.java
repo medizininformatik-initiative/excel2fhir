@@ -93,14 +93,13 @@ public class ConditionConverter extends Converter {
             throw new IllegalArgumentException(systemColumn + " requires an explicit supported selection");
         }
         Coding coding = selection.copy();
+        String versionColumn = codeColumn == Code ? "Version" : "Zusatzversion";
+        if (hasColumn(versionColumn)) CodingVersion.apply(coding, get(versionColumn));
         Extension absent = DiagnosisValues.absentReason(value);
         if (absent == null) {
             coding.setCode(value);
         } else {
             coding.getCodeElement().addExtension(absent);
-        }
-        if (concept.getCoding().stream().anyMatch(c -> c.getSystem().equals(coding.getSystem()))) {
-            throw new IllegalArgumentException("Two codings of the same system exceed the diagnosis profile slice");
         }
         concept.addCoding(coding);
     }

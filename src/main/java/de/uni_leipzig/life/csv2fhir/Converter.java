@@ -157,7 +157,12 @@ public abstract class Converter {
         if (isEmptyCSVRecord()) {
             return EMPTY_RESOURCE_LIST;
         }
-        return convertInternal();
+        var resources = convertInternal();
+        var context = new ConverterResult.InputContext(pid, List.copyOf(encounterIDs), record.getRecordNumber(),
+                de.uni_leipzig.life.csv2fhir.converter.ClinicalValues.get(this,
+                        de.uni_leipzig.life.csv2fhir.converter.ClinicalValues.Column.Ausgabezeitpunkt) != null);
+        for (Resource resource : resources) result.recordInput(resource, context);
+        return resources;
     }
 
     /**
@@ -303,11 +308,15 @@ public abstract class Converter {
     }
 
     /**
-     * Short for <code>record.get(columnIdentifier.toString))</code>
+     * Checks whether the input record maps the named column.
      *
-     * @param columnIdentifier
-     * @return
+     * @param name column name
+     * @return whether the column is mapped
      */
+    public boolean hasColumn(String name) {
+        return record.isMapped(name);
+    }
+
     public String get(Object columnIdentifier) {
         String columnName = Objects.toString(columnIdentifier, null);
         boolean tryCatch = columnIdentifier instanceof TableColumnIdentifier

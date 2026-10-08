@@ -102,7 +102,7 @@ class ProcedureProjectionTest(unittest.TestCase):
         self.procedure(source, 'ct', '418023006')
         rows, report = prepare(source)
         headers = ['Patient-ID', 'Fall-Nr', 'Prozedurentext', 'Prozedurencode', 'Durchführungsbeginn',
-                   'Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie']
+                   'Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie', 'Version', 'Zusatzversion']
         excel = [dict(zip(headers, r)) for r in rows['Prozedur']]
         target = {'entry': [{'resource': {'resourceType': 'Procedure', 'id': f'p{i}',
                     'code': {'coding': o['codings'], 'text': o['label']}, 'status': o['status'],

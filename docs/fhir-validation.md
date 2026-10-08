@@ -37,8 +37,16 @@ server. Absolute and contained references require their own resolution context.
 The [bundled package set](fhir-packages.md) supplies profiles and selected
 terminologies. Complete SNOMED and LOINC checks require the matching terminology
 editions or a terminology service. Known gaps include the international SNOMED
-edition 2025-07-01, historical ICD-10-GM versions and an IPS laboratory ValueSet.
+edition 2025-07-01, UNII 20250702, historical ICD-10-GM/OPS/ATC versions and an IPS
+laboratory ValueSet. Expansion may fail on a historical edition included in a
+ValueSet even when the resource specifies 2026. This is an incomplete binding
+check, not evidence that the resource uses that historical edition.
 Some catalog gaps are reported as warnings by HAPI; inspect the detailed messages.
+
+The [coding-version rules](terminology-versions.md#editing-a-workbook) describe
+required version elements and the medication package's ATC edition restriction.
+An independent catalogue-membership audit complements profile validation but
+does not replace its bindings or terminology checks.
 
 Allow at least 8 GB of Docker memory for validation; large inputs may need more.
 The converter's container permits Java to use half the available memory as heap.
@@ -46,3 +54,6 @@ See [validator performance](validator-performance.md) for large-bundle behavior.
 
 Clinical plausibility and the quality of synthetic mappings are assessed through
 review of the workbook and its source reports.
+
+The [DAR field catalogue](../web/catalog/dar/README.md) documents the generated configuration
+contract, its profile sources, semantic code selections and extension workflow.

@@ -31,15 +31,18 @@ public class Main implements Callable<Integer> {
     @Option(names = { "-o", "--output-directory" }, description = "Output root for fresh runs. Default: outputGlobal.")
     File outputDirectory;
 
-    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    @Option(names = "--export-default-options", paramLabel = "FILE", description = "Write the default configuration and exit.")
+    File exportDefaultOptions;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter configuration (one per run).")
     List<File> converterOptions = new java.util.ArrayList<>();
 
     @Option(names = { "-r",
             "--result-file-format" }, split = ",", description = "Output formats. Default: JSON,NDJSON.")
     OutputFileType[] outputFileTypes = { OutputFileType.JSON, OutputFileType.NDJSON };
 
-    @Option(names = { "-p", "--patients-count" }, description = "Maximum number of patients per JSON bundle.")
-    int patientsPerBundle = Integer.MAX_VALUE;
+    @Option(names = { "-p", "--patients-count" }, description = "Maximum number of patients per output file (default: 1).")
+    int patientsPerBundle = 1;
 
     /**
      *
@@ -61,10 +64,7 @@ public class Main implements Callable<Integer> {
         System.exit(exitCode);
     }
 
-    @Override
-    public Integer call() throws Exception {
-        if (patientsPerBundle < 1)
-            throw new IllegalArgumentException("-p must be positive.");
+    static List<String> inputPrefixes(File inputDirectory) {
         File[] persons = inputDirectory.listFiles(f -> f.isFile() && f.getName().endsWith("Person.csv"));
         if (persons == null || persons.length == 0) {
             throw new IllegalArgumentException("No CSV data sets (*Person.csv) in " + inputDirectory);
@@ -77,14 +77,30 @@ public class Main implements Callable<Integer> {
         if (prefixes.stream().map(p -> p.replaceFirst("[-_]$", "")).distinct().count() != prefixes.size()) {
             throw new IllegalArgumentException("Ambiguous CSV prefixes: " + prefixes);
         }
+        return prefixes;
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        if (converterOptions.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
+        if (exportDefaultOptions != null) {
+            java.nio.file.Files.writeString(exportDefaultOptions.toPath(),
+                    de.uni_leipzig.life.csv2fhir.ContractConfiguration.defaultProperties(),
+                    java.nio.file.StandardOpenOption.CREATE_NEW);
+            return 0;
+        }
+        if (patientsPerBundle < 1)
+            throw new IllegalArgumentException("-p must be positive.");
+        List<String> prefixes = inputPrefixes(inputDirectory);
         WorkflowRun run = new WorkflowRun(outputDirectory, null, "csv-to-fhir");
         FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
                 FileLogger.LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER);
         try {
             FHIRValidator validator = validateBundles ? createValidator() : null;
             boolean importProblems = false;
+            boolean validationProblems = false, validationRequested = false;
             for (String prefix : prefixes) {
-                var sets = converterOptions.isEmpty() ? ConverterOptionSet.csv(inputDirectory, prefix)
+                var sets = converterOptions.isEmpty() ? ConverterOptionSet.defaults()
                         : ConverterOptionSet.external(converterOptions);
                 for (var set : sets) {
                     var destination = sets.size() > 1 ? run.staging.resolve(set.directoryName()) : run.staging;
@@ -92,14 +108,15 @@ public class Main implements Callable<Integer> {
                     Files.createDirectories(destination);
                     var snapshot = run.directory.resolve("details/options").resolve(set.directoryName());
                     if (prefixes.size() > 1) snapshot = snapshot.resolve(prefix + "Person");
-                    set.snapshot(snapshot);
+                    set.snapshot(snapshot, patientsPerBundle, validateBundles, outputFileTypes);
                     Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
                     converter.convertFiles(patientsPerBundle, outputFileTypes);
                     importProblems |= converter.hasImportProblems();
+                    validationProblems |= converter.hasValidationProblems();
+                    validationRequested |= converter.wasValidationRequested();
                 }
             }
-            boolean validationProblems = validator != null && validator.hasValidationProblems();
-            return run.finish(importProblems, validationProblems, validateBundles);
+            return run.finish(importProblems, validationProblems, validationRequested);
         } catch (Exception e) {
             run.fail(e);
             throw e;

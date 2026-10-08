@@ -11,16 +11,20 @@ Clinical code and date fields also accept manual input.
 | Laboratory investigation system | LOINC | AS30 |
 | Clinical investigation and additional coding systems | LOINC, SNOMED CT | AT30:AT31 |
 | Observation answer system | LOINC, SNOMED CT | AU30:AU31 |
-| Procedure systems | SNOMED CT, OPS 2009–2026 | AB30:AB48 |
+| Procedure systems | SNOMED CT, OPS | AB30:AB31 |
 | Medication product system | PZN, SNOMED CT, RxNorm, CVX | AV30:AV33 |
 | Medication ingredient system | ASK, UNII, SNOMED CT, RxNorm | AW30:AW33 |
-| Immunization system | ATC 2026, SNOMED CT, RxNorm, CVX | AY30:AY33 |
+| Immunization system | ATC, SNOMED CT, RxNorm, CVX | AY30:AY33 |
 | Report/document type system | LOINC, SNOMED CT | AZ30:AZ31 |
 | Care plan system | SNOMED CT | BA30 |
 | Laboratory category | laboratory | AD30 |
 | Clinical observation category | vital-signs, survey, social-history, exam, imaging, procedure, therapy, activity | AR30:AR37 |
 
-Diagnosis selections provide SNOMED CT and versioned ICD-10-GM choices. See
+Version fields suggest 2025, 2026 and all 15 DAR labels (`BM30:BM46`), while
+allowing arbitrary text. Synthea selectors use `BN30:BN31` for the year and
+`BO30:BO45` for the output policy. See [version handling](terminology-versions.md).
+
+Diagnosis selections provide SNOMED CT and ICD-10-GM choices. See
 [diagnosis input](diagnosis-workbook.md). ATC classification has separate medication
 columns. The ingredient-code dropdown includes UNII values from the public Synthea
 mapping; semicolon-separated combinations represent several ingredients.
@@ -72,9 +76,7 @@ Use a new output filename. The script locates fields by their headings, replaces
 validation links and preserves data and input-sheet layout through LibreOffice/UNO.
 Generated Synthea workbooks extend selection links to their populated rows.
 
-The first options sheet lists all Converter Options with descriptions and defaults.
-Commented settings use those defaults. A regression test compares the documented
-option list with the Java enums.
+Converter settings are supplied separately; see [Converter Options](converter-usage.md#converter-options).
 
 The lists are input aids based on the bundled profiles and converter support.
 Terminology validation is handled by the [FHIR validator](fhir-validation.md).

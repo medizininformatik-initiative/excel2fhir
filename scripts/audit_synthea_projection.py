@@ -74,6 +74,9 @@ def text_dose(text):
 
 
 def audit(source, workbook, target, report):
+    from audit_annual_versions import expected_version
+    terminology = report.get('terminology', {})
+    year, mode = terminology.get('mappingYear', '2026'), terminology.get('versionOutput', 'Jahr')
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
     sheets = {name: [canonical(name, row) for row in rows(cells)] for name, cells in read_sheets(workbook).items()
@@ -128,7 +131,7 @@ def audit(source, workbook, target, report):
             assert ranks == sorted(ranks)
     for c in all_codes:
         if c['system'] in (ATC, 'http://fhir.de/CodeSystem/bfarm/ops', 'http://fhir.de/CodeSystem/bfarm/icd-10-gm'):
-            assert c.get('version') == '2026', c
+            assert (c.get('version'), c.get('_version')) == expected_version(year, mode), c
     patient = next(r for r in src if r['resourceType'] == 'Patient')
     pid = patient['id'].replace('_', '-')
     index = {r['resourceType']+'/'+r['id']: r for r in src}
@@ -171,7 +174,7 @@ def audit(source, workbook, target, report):
         assert row.get('Ende', '') == end
         codes = []
         if row.get('Präparatcode'): codes.append((PZN, row['Präparatcode'], None))
-        if row.get('ATC-Code'): codes.append((ATC, row['ATC-Code'], '2026'))
+        if row.get('ATC-Code'): codes.append((ATC, row['ATC-Code'], expected_version(year, mode)[0]))
         expected_events[(typ, tuple(codes), row['Präparatbezeichnung'], row.get('Darreichungsform', ''),
                          resource.get('status', ''), moment, end, decimal(quantity.get('value')),
                          volume_unit(quantity.get('code', quantity.get('unit', ''))), frequency)] += 1

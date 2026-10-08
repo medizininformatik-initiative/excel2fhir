@@ -39,6 +39,9 @@ public class Excel2Fhir {
     /**  */
     private FHIRValidator validator;
     private final boolean validateOutput;
+    private boolean validationRequested, validationProblems;
+
+    public boolean wasValidationRequested() { return validationRequested; }
     private final ValidationResultType minLogLevel;
 
     private boolean importProblems;
@@ -48,7 +51,7 @@ public class Excel2Fhir {
     public boolean hasImportProblems() { return importProblems; }
 
     public boolean hasValidationProblems() {
-        return validator != null && validator.hasValidationProblems();
+        return validationProblems;
     }
 
     /** Counters for all created resources */
@@ -181,7 +184,7 @@ public class Excel2Fhir {
             File resultDir,
             int patientsPerBundle, boolean createAndCleanOutputDirectories, String inputName, OutputFileType... outputFileTypes)
             throws IOException {
-        var sets = optionFiles.isEmpty() ? ConverterOptionSet.workbook(sourceExcelFile)
+        var sets = optionFiles.isEmpty() ? ConverterOptionSet.defaults()
                 : ConverterOptionSet.external(optionFiles);
         for (var set : sets) {
             var checked = templateValidator.validate(sourceExcelFile, set.options(), set.name());
@@ -199,7 +202,7 @@ public class Excel2Fhir {
             if (inputName != null) destination = destination.resolve(inputName);
             Files.createDirectories(destination);
             Path snapshots = optionsDirectory == null ? resultDir.toPath().resolve("options") : optionsDirectory;
-            set.snapshot(snapshots.resolve(sourceExcelFile.getName()).resolve(set.directoryName()));
+            set.snapshot(snapshots.resolve(sourceExcelFile.getName()).resolve(set.directoryName()), patientsPerBundle, validateOutput, outputFileTypes);
             Csv2Fhir converter = new Csv2Fhir(tempDir, destination.toFile(), fileBaseName, validator, set.options());
             try {
                 ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
@@ -208,6 +211,8 @@ public class Excel2Fhir {
                 throw new IOException("FHIR conversion failed for " + sourceExcelFile, e);
             } finally {
                 importProblems |= converter.hasImportProblems();
+                validationRequested |= converter.wasValidationRequested();
+                validationProblems |= converter.hasValidationProblems();
             }
         }
         if (!UcumMapper.invalidUcumCodes.isEmpty()) {

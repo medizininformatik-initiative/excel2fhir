@@ -1,0 +1,4269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Converter configuration",
+  "type": "object",
+  "required": [
+    "schemaVersion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "values": {
+      "type": "object",
+      "properties": {
+        "resource.Patient.mode": {
+          "title": "Patient: output and references",
+          "description": "Generate and reference: Output a Patient resource. Resources such as Encounter and Condition reference it through subject.\n\nReference only: Output no Patient; subject fields reference an existing patient.\n\nNeither: Output no Patient and omit patient references.",
+          "default": "generate-reference",
+          "enum": [
+            "generate-reference",
+            "reference-only",
+            "neither"
+          ]
+        },
+        "resource.Encounter.enabled": {
+          "title": "Generate encounter",
+          "description": "Include Encounter resources in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Encounter.ambulatory.enabled": {
+          "title": "Generate ambulatory encounters",
+          "description": "Select encounters with Encounter.class.code = AMB on all selected encounter levels. Shared encounter settings still apply. Other encounter classes are unchanged.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Encounter.ambulatory.endPolicy": {
+          "title": "Encounter end",
+          "description": "Applies to facility, department and ward/service encounters of this class. All calculations and assignments use original or internally derived periods first. The output end is adjusted afterwards. DAR takes precedence; the final status follows the output end. Resulting inconsistencies between parent and child periods are allowed as test data. Quarter/year end use the start after time shifting. Start + 1 second uses midnight as the calculation basis for a date without a time; otherwise date precision is preserved.",
+          "default": "preserve",
+          "enum": [
+            "preserve",
+            "open",
+            "quarter-end",
+            "year-end",
+            "start",
+            "start-plus-second"
+          ]
+        },
+        "resource.Encounter.ambulatory.endApplication": {
+          "title": "Apply end rule",
+          "description": "Always: replaces an end supplied in the input as well. Only when the input end is missing: checks the original table value. An internally derived end does not prevent the rule. This choice has no effect when preserving input and derivations.",
+          "default": "always",
+          "enum": [
+            "always",
+            "missing-input-end"
+          ]
+        },
+        "resource.Encounter.inpatient.enabled": {
+          "title": "Generate inpatient encounters",
+          "description": "Select encounters with Encounter.class.code = IMP on all selected encounter levels. Shared encounter settings still apply. Other encounter classes are unchanged.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Encounter.inpatient.endPolicy": {
+          "title": "Encounter end",
+          "description": "Applies to facility, department and ward/service encounters of this class. All calculations and assignments use original or internally derived periods first. The output end is adjusted afterwards. DAR takes precedence; the final status follows the output end. Resulting inconsistencies between parent and child periods are allowed as test data. Quarter/year end use the start after time shifting. Start + 1 second uses midnight as the calculation basis for a date without a time; otherwise date precision is preserved.",
+          "default": "preserve",
+          "enum": [
+            "preserve",
+            "open",
+            "quarter-end",
+            "year-end",
+            "start",
+            "start-plus-second"
+          ]
+        },
+        "resource.Encounter.inpatient.endApplication": {
+          "title": "Apply end rule",
+          "description": "Always: replaces an end supplied in the input as well. Only when the input end is missing: checks the original table value. An internally derived end does not prevent the rule. This choice has no effect when preserving input and derivations.",
+          "default": "always",
+          "enum": [
+            "always",
+            "missing-input-end"
+          ]
+        },
+        "resource.Location.mode": {
+          "title": "Location: output and references",
+          "description": "Generate and reference: Output Location resources for the locations. Encounters reference them through Encounter.location.location.\n\nReference only: Output no Location. Depending on the selections below, Encounter.location.location contains a reference to an existing location, identifier and display, or both.\n\nNeither: Output no Location and omit location references on encounters.",
+          "default": "generate-reference",
+          "enum": [
+            "generate-reference",
+            "reference-only",
+            "neither"
+          ]
+        },
+        "resource.Location.existingReference": {
+          "title": "Include resource reference",
+          "description": "Set reference in Encounter.location.location. The referenced Location is omitted from the output and must exist in the target system under the same ID. The converter does not check its existence.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Location.description": {
+          "title": "Include identifier and display",
+          "description": "Set identifier and display in Encounter.location.location, where available. Can be used alone or together with “Include resource reference”.",
+          "default": false,
+          "type": "boolean"
+        },
+        "resource.Condition.enabled": {
+          "title": "Generate diagnosis",
+          "description": "Include Condition resources for Diagnosis in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Procedure.enabled": {
+          "title": "Generate procedure",
+          "description": "Include Procedure resources for Procedure in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Observation.laboratory.enabled": {
+          "title": "Generate laboratory observation",
+          "description": "Include Observation resources for Laboratory observation in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Observation.laboratory.ucumCodeInUnit": {
+          "title": "Output code in unit instead of code",
+          "description": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+          "default": false,
+          "type": "boolean"
+        },
+        "resource.Observation.vitalSigns.enabled": {
+          "title": "Generate vital signs observation",
+          "description": "Include Observation resources for Vital signs in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Observation.vitalSigns.ucumCodeInUnit": {
+          "title": "Output code in unit instead of code",
+          "description": "For UCUM-coded measurements, move the machine-readable code from code to unit and remove code. This produces faulty test data, for example when mmol/L appears only in unit. Applies to valueQuantity and component.valueQuantity. Replaces the readable unit text; value, comparator and system are retained. DAR rules are applied afterwards. FHIR validation may report errors for this output.",
+          "default": false,
+          "type": "boolean"
+        },
+        "resource.Medication.mode": {
+          "title": "Medication: output and references",
+          "description": "Generate and reference: Output a Medication. Requests (MedicationRequest), administrations (MedicationAdministration) and statements (MedicationStatement) reference it through medicationReference.\n\nReference only: Output no Medication. Depending on the selections below, medicationReference contains a reference to an existing medication, identifier and display, or both.\n\nNeither: Output no Medication and omit references to it.",
+          "default": "generate-reference",
+          "enum": [
+            "generate-reference",
+            "reference-only",
+            "neither"
+          ]
+        },
+        "resource.Medication.existingReference": {
+          "title": "Include resource reference",
+          "description": "Set reference in medicationReference. The referenced Medication is omitted from the output and must exist in the target system under the same ID. The converter does not check its existence.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Medication.description": {
+          "title": "Include identifier and display",
+          "description": "Set identifier and display in medicationReference, where available. Can be used alone or together with “Include resource reference”.",
+          "default": false,
+          "type": "boolean"
+        },
+        "resource.MedicationRequest.enabled": {
+          "title": "Generate medication request",
+          "description": "Include MedicationRequest resources for Medication request in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.MedicationAdministration.enabled": {
+          "title": "Generate medication administration",
+          "description": "Include MedicationAdministration resources for Medication administration in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.MedicationStatement.enabled": {
+          "title": "Generate medication statement",
+          "description": "Include MedicationStatement resources for Medication statement in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Immunization.enabled": {
+          "title": "Generate immunization",
+          "description": "Include Immunization resources for Immunization in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.DiagnosticReport.enabled": {
+          "title": "Generate diagnostic report",
+          "description": "Include DiagnosticReport resources for Diagnostic report in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.CarePlan.enabled": {
+          "title": "Generate care plan",
+          "description": "Include CarePlan resources for Care plan in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.DocumentReference.enabled": {
+          "title": "Generate document reference",
+          "description": "Include DocumentReference resources for document references in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "resource.Consent.enabled": {
+          "title": "Generate consent",
+          "description": "Include Consent resources for Consent in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.facility.enabled": {
+          "title": "Generate facility encounters",
+          "description": "Output facility encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.department.enabled": {
+          "title": "Generate department encounters",
+          "description": "Output department encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.ward-service.enabled": {
+          "title": "Generate ward-service encounters",
+          "description": "Output ward/service encounters as Encounter resources. When deselected, these encounters are absent from the output; their input data remain available for timestamp matching.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.department.partOf": {
+          "title": "Department encounter: is part of (partOf)",
+          "description": "Set Encounter.partOf on the department encounter to its facility encounter. “None” omits the reference.",
+          "default": "facility",
+          "enum": [
+            "facility",
+            "none"
+          ]
+        },
+        "contact.ward-service.partOf": {
+          "title": "Ward/service encounter: is part of (partOf)",
+          "description": "Set Encounter.partOf on the ward/service encounter to the selected parent department or facility encounter. “None” omits the reference.",
+          "default": "department",
+          "enum": [
+            "department",
+            "facility",
+            "none"
+          ]
+        },
+        "contact.diagnoses.enabled": {
+          "title": "Diagnosis references on encounters",
+          "description": "Add references to generated Conditions on encounters, retaining the selected diagnosis roles from the input. Available when Conditions are output.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.diagnoses.roles": {
+          "title": "Diagnosis roles",
+          "description": "Select the input diagnosis roles whose Conditions are referenced on encounters. The role is recorded in Encounter.diagnosis.use.coding.code (code system: http://terminology.hl7.org/CodeSystem/diagnosis-role). The same selection applies to all automatically assigned diagnosis references.",
+          "default": [
+            "CC",
+            "CM",
+            "AD",
+            "DD",
+            "pre-op",
+            "post-op",
+            "billing"
+          ],
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "CC",
+              "CM",
+              "AD",
+              "DD",
+              "pre-op",
+              "post-op",
+              "billing"
+            ]
+          }
+        },
+        "contact.diagnoses.levels": {
+          "title": "Diagnosis references: encounter levels",
+          "description": "Select the encounter levels for diagnosis references. Assignment follows the original encounter hierarchy: upward to the corresponding ancestor, downward by documentation time (Condition.recordedDate) to at most one matching encounter per selected level. The latest start wins, then the earliest input row. Missing timestamps or matching encounters are recorded in the report.",
+          "default": [
+            "facility"
+          ],
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "facility",
+              "department",
+              "ward-service"
+            ]
+          }
+        },
+        "contact.procedureDiagnoses.enabled": {
+          "title": "Procedures as encounter diagnosis references",
+          "description": "Add references to procedures (Procedure) in Encounter.diagnosis.condition. KDS permits this field to reference both diagnoses (Condition) and procedures. The procedure remains a Procedure resource.",
+          "default": true,
+          "type": "boolean"
+        },
+        "contact.procedureDiagnoses.levels": {
+          "title": "Procedures as diagnosis references: encounter levels",
+          "description": "Choose the encounter levels where procedures are referenced in Encounter.diagnosis.condition. Facility encounters are selected by default.",
+          "default": [
+            "facility"
+          ],
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "facility",
+              "department",
+              "ward-service"
+            ]
+          }
+        },
+        "reference.Condition.encounter": {
+          "title": "Diagnosis: encounter assignment",
+          "description": "Set Condition.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.Procedure.encounter": {
+          "title": "Procedure: encounter assignment",
+          "description": "Set Procedure.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.Observation.laboratory.encounter": {
+          "title": "Laboratory observation: encounter assignment",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.Observation.vitalSigns.encounter": {
+          "title": "Vital signs observation: encounter assignment",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.MedicationRequest.encounter": {
+          "title": "Medication request: encounter assignment",
+          "description": "Set MedicationRequest.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.MedicationAdministration.encounter": {
+          "title": "Medication administration: encounter assignment",
+          "description": "Set MedicationAdministration.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.MedicationStatement.encounter": {
+          "title": "Medication statement: encounter assignment",
+          "description": "Set MedicationStatement.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.Immunization.encounter": {
+          "title": "Immunization: encounter assignment",
+          "description": "Set Immunization.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.DiagnosticReport.encounter": {
+          "title": "Diagnostic report: encounter assignment",
+          "description": "Set DiagnosticReport.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.CarePlan.encounter": {
+          "title": "Care plan: encounter assignment",
+          "description": "Set CarePlan.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.DocumentReference.encounter": {
+          "title": "Document reference: encounter assignment",
+          "description": "Choose the encounter level for automatic matching in DocumentReference.context.encounter: facility, department or ward/service. The strategy below determines whether missing or all assignments are derived from the document timestamp. Supplied encounters are not reassigned to another level in the first two strategies. “None” omits all encounter references.",
+          "default": "department",
+          "enum": [
+            "facility",
+            "department",
+            "ward-service",
+            "none"
+          ]
+        },
+        "reference.DocumentReference.assignmentStrategy": {
+          "title": "Document reference: encounter assignment strategy",
+          "description": "Supplied only: Retain supplied encounters. Without an input encounter, leave the reference absent.\n\nDerive missing: Retain supplied encounters and use timestamp matching only when none is supplied. This is the default.\n\nAlways derive: Recompute encounters from timestamps, replacing supplied encounters. Without a usable timestamp or matching encounter, omit even supplied references and report the reason.\n\nIn the first two modes, retain temporally conflicting encounters and report the conflict. Encounters are identified by the combination of patient ID and case number. If this combination is absent from the input, the nonexistent encounter is reported.",
+          "default": "fill-missing",
+          "enum": [
+            "explicit-only",
+            "fill-missing",
+            "timestamp-only"
+          ]
+        },
+        "medication.requestTreatment": {
+          "title": "Medication request treatment",
+          "description": "Retain: Output the MedicationRequest.\n\nReplace with MedicationAdministration: Output a MedicationAdministration instead.\n\nReplace with MedicationStatement: Output a MedicationStatement instead. The target resource must itself be enabled.\n\nThe processing selected for MedicationAdministration or MedicationStatement then applies. Each of these resources is retained, supplemented or replaced once.",
+          "default": "retain",
+          "enum": [
+            "retain",
+            "replace-administration",
+            "replace-statement"
+          ]
+        },
+        "medication.MedicationAdministration.treatment": {
+          "title": "Process medication administration",
+          "description": "Retain: Output the MedicationAdministration.\n\nAdd: Also output a MedicationStatement with its own ID, retaining the MedicationAdministration.\n\nReplace: Output a MedicationStatement instead of the MedicationAdministration.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
+          "default": "retain",
+          "enum": [
+            "retain",
+            "add-statement",
+            "replace-statement"
+          ]
+        },
+        "medication.MedicationStatement.treatment": {
+          "title": "Process medication statement",
+          "description": "Retain: Output the MedicationStatement.\n\nAdd: Also output a MedicationAdministration with its own ID, retaining the MedicationStatement.\n\nReplace: Output a MedicationAdministration instead of the MedicationStatement.\n\nThe target resource must itself be enabled. Addition and replacement are mutually exclusive. This also applies to resources from replaced MedicationRequests. Resources created in this step are not transformed again.",
+          "default": "retain",
+          "enum": [
+            "retain",
+            "add-administration",
+            "replace-administration"
+          ]
+        },
+        "ids.patient.prefix": {
+          "title": "Patient ID prefix",
+          "description": "Prepend the text to each patient ID. Example: prefix “test-” and ID “0012” produce “test-0012”.",
+          "default": "",
+          "type": "string"
+        },
+        "ids.patient.suffix": {
+          "title": "Patient ID suffix",
+          "description": "Append the text to each patient ID. Example: ID “0012” and suffix “-demo” produce “0012-demo”.",
+          "default": "",
+          "type": "string"
+        },
+        "ids.patient.initialOffset": {
+          "title": "Initial patient-number offset",
+          "description": "Increase the last numeric block of the patient ID by this value before the first pass. Example: “P0012” with offset 100 becomes “P0112”.",
+          "default": 0,
+          "type": "integer",
+          "minimum": 0
+        },
+        "ids.patient.iterationOffset": {
+          "title": "Patient-number offset per repetition",
+          "description": "Increase the last numeric block of the patient ID by this value for each additional repetition. Example with 100: “P0012”, “P0112”, “P0212”. The initial offset is applied as well.",
+          "default": 0,
+          "type": "integer",
+          "minimum": 0
+        },
+        "ids.patient.additionalRepetitions": {
+          "title": "Additional repetitions",
+          "description": "Generate additional passes of the same dataset. 0 means one pass; 2 means three passes in total. Patient IDs change according to the offset per repetition.",
+          "default": 0,
+          "type": "integer",
+          "minimum": 0
+        },
+        "ids.start.CONSENT": {
+          "title": "Consent",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.CONDITION": {
+          "title": "Diagnosis",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.ENCOUNTER_LEVEL_2": {
+          "title": "Department encounter",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.ENCOUNTER_LEVEL_3": {
+          "title": "Ward/service encounter",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.MEDICATION_REQUEST": {
+          "title": "Medication request",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.MEDICATION_ADMINISTRATION": {
+          "title": "Medication administration",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.MEDICATION_STATEMENT": {
+          "title": "Medication statement",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.OBSERVATION_LABORATORY": {
+          "title": "Laboratory observation",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.OBSERVATION_VITAL_SIGNS": {
+          "title": "Vital signs observation",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.PROCEDURE": {
+          "title": "Procedure",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "ids.start.DOCUMENT_REFERENCE": {
+          "title": "Document reference",
+          "description": "Set the first counter value for these resource IDs. With 100, numbering starts at 100. Deselecting resources does not renumber the remaining resources.",
+          "default": 1,
+          "type": "integer"
+        },
+        "timeShift.enabled": {
+          "title": "Shift clinical dates",
+          "description": "Shift all clinical dates and timestamps, including birth date, together. A nonzero offset requires complete dates. Year-only or month-only values stop the run with a message identifying the affected field.",
+          "default": false,
+          "type": "boolean"
+        },
+        "timeShift.baseDays": {
+          "title": "Base shift in whole days",
+          "description": "Shift all clinical dates by this number of whole days. Positive values move dates later; negative values move them earlier. This base offset applies to every pass.",
+          "default": 0,
+          "type": "integer"
+        },
+        "timeShift.iterationDays": {
+          "title": "Additional shift per repetition in whole days",
+          "description": "Add this day offset for each additional repetition. Example: base offset 10 and repetition offset 5 produce shifts of 10, 15 and 20 days in the first three passes.",
+          "default": 0,
+          "type": "integer"
+        },
+        "terminology.syntheaYear": {
+          "title": "Synthea mapping year",
+          "description": "During Synthea import, diagnoses, procedures and medications are mapped to German ICD-10-GM, OPS and ATC codes from this year. Codes and descriptions can differ between 2025 and 2026; clinical dates stay the same. Manually entered workbook values are not remapped by this setting.\n\nWarning: The bundled medication profile permits ATC versions up to 2025. ATC 2026 with its year included therefore violates this profile requirement.",
+          "default": 2026,
+          "enum": [
+            2025,
+            2026
+          ]
+        },
+        "terminology.versionOutput": {
+          "title": "Coding version",
+          "description": "Controls version information for codes mapped during Synthea import. Codes and descriptions stay the same.\n\nCatalogue year: Coding.version contains the year used, e.g. “2025”.\n\nOmit: The version is absent. Since the KDS profiles require it for ICD-10-GM, OPS and ATC, validation reports profile errors.\n\nDAR: A Data Absent Reason explains the missing version. It does not establish that the code belongs to a permitted catalogue year. DAR uses the field-specific version rules in the DAR section; without a selected rule, the version is omitted.",
+          "default": "catalogue-year",
+          "enum": [
+            "catalogue-year",
+            "omit",
+            "dar"
+          ]
+        },
+        "checks.inputConsistency": {
+          "title": "Check input consistency",
+          "description": "Preserve structural and type checks; arbitrary clinical and table DAR code strings reach the optional FHIR validator.",
+          "default": true,
+          "type": "boolean"
+        },
+        "checks.fhirValidation": {
+          "title": "Validate FHIR",
+          "description": "Validate generated FHIR resources against the bundled KDS profiles and terminology requirements. The report lists errors and warnings found.",
+          "default": false,
+          "type": "boolean"
+        },
+        "output.formats": {
+          "title": "Output formats",
+          "description": "JSON writes FHIR Bundles; NDJSON writes one FHIR resource per line. Selecting both outputs the same resources in both formats.",
+          "default": [
+            "JSON",
+            "NDJSON"
+          ],
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "JSON",
+              "NDJSON",
+              "XML",
+              "JSONGZIP",
+              "JSONBZ2",
+              "ZIPJSON"
+            ]
+          }
+        },
+        "output.patientsPerFile": {
+          "title": "Maximum patients per output file",
+          "description": "Limit the number of patients in one JSON Bundle file. With 1, each patient receives a separate Bundle file.",
+          "default": 1,
+          "type": "integer",
+          "minimum": 1
+        },
+        "resource.Encounter.stationServiceProvider": {
+          "title": "Ward as service provider",
+          "description": "Uses the ward of the ward/service encounter as an Organization in Encounter.serviceProvider. Its stable ID is based on facility, department and ward. A contained organization is embedded in the Encounter; an external organization can be generated or only referenced.",
+          "default": "none",
+          "enum": [
+            "none",
+            "generate-reference",
+            "reference-only",
+            "contained"
+          ]
+        },
+        "resource.Encounter.stationLocation": {
+          "title": "Output ward as Location",
+          "description": "Creates the ward Location with physicalType wa. Can be combined with the ward organization. Room and bed can still be represented independently; Location output settings also apply.",
+          "default": true,
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "dar": {
+      "type": "object",
+      "properties": {
+        "Patient.name.family": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.name.given": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.birthDate": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.gender": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.deceased[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.address.line": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.address.postalCode": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.address.city": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.address.state": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Patient.address.country": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.recordedDate": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.onset[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.abatement[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Procedure.performed[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationRequest.authoredOn": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationAdministration.effective[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationStatement.effective[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationStatement.dateAsserted": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Immunization.occurrence[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DiagnosticReport.effective[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DiagnosticReport.issued": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "CarePlan.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "CarePlan.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DocumentReference.date": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DocumentReference.content.attachment.creation": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Consent.dateTime": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Consent.provision.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Consent.provision.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.effective[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.issued": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.value[x].numeric-measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-a-number",
+                    "negative-infinity",
+                    "positive-infinity",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.value[x].measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.component.value[x].numeric-measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-a-number",
+                    "negative-infinity",
+                    "positive-infinity",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.component.value[x].measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.effective[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.issued": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.value[x].numeric-measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-a-number",
+                    "negative-infinity",
+                    "positive-infinity",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.value[x].measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.component.value[x].numeric-measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-a-number",
+                    "negative-infinity",
+                    "positive-infinity",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.component.value[x].measurement": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "as-text",
+                    "not-performed"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Procedure.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Procedure.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Medication.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Medication.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Immunization.vaccineCode.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Immunization.vaccineCode.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DiagnosticReport.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DiagnosticReport.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.clinicalStatus": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Condition.verificationStatus": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Medication.form": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Medication.ingredient.item[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "CarePlan.description": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DiagnosticReport.conclusion": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Location.name": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DocumentReference.content.attachment.title": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "asked-unknown",
+                    "temp-unknown",
+                    "not-asked",
+                    "asked-declined",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationRequest.dosageInstruction.doseAndRate.dose[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable",
+                    "as-text"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationStatement.dosage.doseAndRate.dose[x]": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable",
+                    "as-text"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "MedicationAdministration.dosage.dose": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable",
+                    "as-text"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "DocumentReference.content.attachment.data": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.admissionReasonFourthDigit": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.component.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Laboratory.component.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.component.code.coding.code": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "VitalSigns.component.code.coding.version": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "not-applicable",
+                    "unsupported",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.ambulatory.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.ambulatory.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.ambulatory.admissionReasonFourthDigit": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.period.start": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.period.end": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "temp-unknown",
+                    "masked",
+                    "unsupported",
+                    "error",
+                    "not-permitted",
+                    "not-applicable"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "Encounter.inpatient.admissionReasonFourthDigit": {
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "unchanged"
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "mode",
+                "code"
+              ],
+              "properties": {
+                "mode": {
+                  "const": "overwrite"
+                },
+                "code": {
+                  "enum": [
+                    "unknown",
+                    "masked",
+                    "unsupported",
+                    "as-text",
+                    "error",
+                    "not-permitted"
+                  ]
+                },
+                "onlyWhenMissing": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "default": {}
+    },
+    "identifierRules": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "enabled",
+          "resources",
+          "system",
+          "pattern"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "resources": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "CarePlan",
+                "Condition",
+                "Consent",
+                "DiagnosticReport",
+                "DocumentReference",
+                "Encounter",
+                "Encounter.ambulatory",
+                "Encounter.inpatient",
+                "Encounter.inpatient.department",
+                "Encounter.inpatient.facility",
+                "Encounter.inpatient.ward-service",
+                "Immunization",
+                "Location",
+                "Medication",
+                "MedicationAdministration",
+                "MedicationRequest",
+                "MedicationStatement",
+                "Observation",
+                "Observation.laboratory",
+                "Observation.vitalSigns",
+                "Patient",
+                "Procedure"
+              ]
+            }
+          },
+          "system": {
+            "type": "string",
+            "minLength": 1
+          },
+          "pattern": {
+            "type": "string",
+            "minLength": 1
+          },
+          "countStart": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "default": 1
+          },
+          "use": {
+            "enum": [
+              "",
+              "usual",
+              "official",
+              "temp",
+              "secondary",
+              "old"
+            ]
+          },
+          "typeText": {
+            "type": "string"
+          },
+          "typeCodings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "system": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "display": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

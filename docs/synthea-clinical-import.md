@@ -16,7 +16,7 @@ See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-m
 | Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and UCUM units. |
 | MedicationRequest / MedicationAdministration | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
 | Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
-| Immunization | `Impfung` | ATC 2026 classification, vaccine text, time, status, primary-source flag and patient/case association. |
+| Immunization | `Impfung` | ATC classification for the selected catalogue year, vaccine text, time, status, primary-source flag and patient/case association. |
 | DiagnosticReport | `Befundbericht` | First coding, times, status, resolvable result references and conclusion. |
 | CarePlan | `Behandlungsplan` | Clinical SNOMED category, period, status, intent, description and activity codes. |
 | DocumentReference | `DocumentReference` | First document type, status, date, first contact and embedded UTF-8 text, up to Excel's 32,767-character cell limit. |
@@ -36,7 +36,8 @@ resource-specific tables:
   source concepts, exclusions and provisional statuses.
 - [Medication](medication-product-catalog.md): German ATC, PZN and UNII assignments
   with dose policies and source evidence.
-- `synthea-procedures-ops-2026.json`: OPS assignments, regional splits and therapy blocks.
+- [Procedures](procedure-mapping-maintenance.md): OPS assignments, contextual
+  candidates, source provenance, regional splits and therapy blocks.
 - [German names and addresses](synthea-german-demographics.md) and
   [clinical text](synthea-german-texts.md).
 
@@ -48,7 +49,7 @@ change requires reassessing inventory coverage.
 
 The procedure table covers 429 source concepts: 428 Procedure-State concepts and
 a combined thorax/abdomen/pelvis CT found in generated output. Single-code OPS
-assignments use terminal OPS 2026 descriptions. Source SNOMED concepts are retained
+assignments use terminal descriptions from the [selected OPS catalogue](terminology-versions.md). Source SNOMED concepts are retained
 where appropriate; the report records every synthetic assumption and output row.
 
 Combined CT examinations create one row per body region. Radiochemotherapy creates
@@ -63,11 +64,16 @@ Regional CT rows and radiation fractions retain their source time window. A
 chemotherapy block spans its first through last event. Split rows retain source
 codes and IDs in the report, with their own target coding in Excel.
 
-Other documented assumptions cover dental material, pulmonary function tests,
-the six-minute walk test and cardiopulmonary bypass. A needs assessment can become
-a geriatric assessment when source age supports that rule. Referrals and routine
-services with insufficient OPS evidence retain SNOMED coding. The metabolic-panel
-procedure is recorded as omitted while its laboratory results and reports are retained.
+Contextual rules enrich 261 additional source concepts with compatible OPS
+replacements or separate companion services. Selection is deterministic per source
+event, with guards for age, reproductive context, anatomy, indication and time.
+Conflicting source events are reported and withheld; incompatible enrichments retain
+the source service. The report records rejected candidates, assumptions, selection
+seeds, synthetic periods and shared output links. See
+[procedure mapping behavior and maintenance](procedure-mapping-maintenance.md) for
+precise defaults, coverage interpretation and reproducible source checks.
+The metabolic-panel procedure is recorded as omitted while its laboratory results
+and reports are retained.
 
 The table records sources for these decisions, including the
 [OPS chemotherapy/radiotherapy rules](https://klassifikationen.bfarm.de/ops/kode-suche/htmlops2026/block-8-52...8-54.htm).

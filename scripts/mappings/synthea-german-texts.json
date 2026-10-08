@@ -1,8 +1,12 @@
 {
+  "snomedNotice": {
+    "copyright": "This material includes SNOMED Clinical Terms® (SNOMED CT®). All rights reserved. SNOMED CT® was originally created by The College of American Pathologists. SNOMED and SNOMED CT are registered trademarks of SNOMED International. Implementers of these artefacts must have the appropriate SNOMED CT Affiliate license.",
+    "conditionsUrl": "https://www.snomed.org/get-snomed"
+  },
   "id": "synthea-german-texts-v1",
   "syntheaCommit": "d9d07a6eef91ee5144293b42ab64224d84d124f8",
-  "registrySha256": "84ab40c3150a969a400a48ae8d028d95a43bfea74ca52119d6b176ade062d9b1",
-  "description": "Projektinterne deutsche Lesetexte für synthetische Testdaten; keine amtliche Terminologieübersetzung. Codes bleiben unverändert.",
+  "registrySha256": "7474c75fed99ea96d2505ddf3331535ef603f65c6abd182d2d82851a5dbbc700",
+  "description": "Deutsche Lesetexte für synthetische Testdaten: verfügbare offizielle LOINC-Langbezeichnungen und projektinterne Texte mit Herkunft je Eintrag. Codes bleiben unverändert.",
   "sources": {
     "editorial": "Einmalige redaktionelle Übersetzung/Korrektur für dieses Projekt; fachlicher Nutzerreview ausstehend.",
     "editorial-drug-dictionary": "Einmalig materialisiertes Wörterbuch für Wirkstoffnamen und Darreichungsformen; Zahlen und Produktnamen beibehalten.",
@@ -20,6 +24,293 @@
       "license": "CC0",
       "retrieved": "2026-09-13",
       "use": "Ausgewählte deutsche Labels nach exaktem SNOMED-Code-Abgleich; keine amtliche Terminologieübersetzung."
+    },
+    "loinc-de-DE": {
+      "version": "2.83",
+      "language": "de-DE",
+      "url": "https://loinc.org/translations/de-de",
+      "archive": "Loinc_2.83.zip",
+      "archiveSha256": "077a0718e87d8309ffe3a673f75b836a8e783dc36a646413ef97c71c12eab27e",
+      "file": "AccessoryFiles/LinguisticVariants/deDE15LinguisticVariant.csv",
+      "sha256": "b11b93439c49c7bc8bd48c85d7210d8152de2a17430b212ea1741de89e9abe9b",
+      "field": "LONG_COMMON_NAME",
+      "translatedCodes": 173,
+      "codesWithoutOfficialTranslation": [
+        "10230-1",
+        "10480-2",
+        "18752-6",
+        "19926-5",
+        "21905-5",
+        "21906-3",
+        "21907-1",
+        "21908-9",
+        "21924-6",
+        "24321-2",
+        "24323-8",
+        "24360-0",
+        "2500-7",
+        "28245-9",
+        "32465-7",
+        "32624-9",
+        "33728-7",
+        "33756-8",
+        "33914-3",
+        "34117-2",
+        "34528-0",
+        "38208-5",
+        "38265-5",
+        "44249-1",
+        "44250-9",
+        "44255-8",
+        "44261-6",
+        "44667-4",
+        "44963-7",
+        "46240-8",
+        "46288-7",
+        "50190-8",
+        "51847-2",
+        "51990-0",
+        "54899-0",
+        "55277-8",
+        "55405-5",
+        "55757-9",
+        "55758-7",
+        "56051-6",
+        "56799-0",
+        "57698-3",
+        "59453-1",
+        "59460-6",
+        "59461-4",
+        "59557-9",
+        "59576-9",
+        "61576-5",
+        "62337-1",
+        "63512-8",
+        "63513-6",
+        "63586-2",
+        "65750-2",
+        "66519-0",
+        "66524-0",
+        "66529-9",
+        "66534-9",
+        "67875-5",
+        "68516-4",
+        "68517-2",
+        "68524-8",
+        "69409-1",
+        "69453-9",
+        "69737-5",
+        "69858-9",
+        "69861-3",
+        "70006-2",
+        "70274-6",
+        "71490-7",
+        "71491-5",
+        "71802-3",
+        "71933-6",
+        "71934-4",
+        "71956-7",
+        "71958-3",
+        "71960-9",
+        "71962-5",
+        "71964-1",
+        "71966-6",
+        "71968-2",
+        "71970-8",
+        "71972-4",
+        "71973-2",
+        "71974-0",
+        "71975-7",
+        "71976-5",
+        "71977-3",
+        "71978-1",
+        "71979-9",
+        "71980-7",
+        "72009-4",
+        "72010-2",
+        "72011-0",
+        "72012-8",
+        "72013-6",
+        "72014-4",
+        "72015-1",
+        "72016-9",
+        "72091-2",
+        "72092-0",
+        "72093-8",
+        "72094-6",
+        "72095-3",
+        "72096-1",
+        "72097-9",
+        "72098-7",
+        "72099-5",
+        "72100-1",
+        "72101-9",
+        "72102-7",
+        "72106-8",
+        "72109-2",
+        "72514-3",
+        "74006-8",
+        "75443-2",
+        "75622-1",
+        "75626-2",
+        "75636-1",
+        "75689-0",
+        "75893-8",
+        "76437-3",
+        "76499-3",
+        "76501-6",
+        "76504-0",
+        "76513-1",
+        "76690-7",
+        "77606-2",
+        "79818-1",
+        "79819-9",
+        "79892-6",
+        "79893-4",
+        "80271-0",
+        "80381-7",
+        "81375-8",
+        "82335-1",
+        "82589-3",
+        "82666-9",
+        "82667-7",
+        "8331-1",
+        "84215-3",
+        "85318-4",
+        "85319-2",
+        "85337-4",
+        "85339-0",
+        "85343-2",
+        "85344-0",
+        "85352-3",
+        "86923-0",
+        "86924-8",
+        "87626-8",
+        "87674-8",
+        "88020-3",
+        "88021-1",
+        "88040-1",
+        "88121-9",
+        "88122-7",
+        "88123-5",
+        "88124-3",
+        "88262-1",
+        "89204-2",
+        "89206-7",
+        "89555-7",
+        "89577-1",
+        "91145-3",
+        "91146-1",
+        "91148-7",
+        "92130-4",
+        "92134-6",
+        "92143-7",
+        "93025-5",
+        "93026-3",
+        "93027-1",
+        "93028-9",
+        "93029-7",
+        "93030-5",
+        "93031-3",
+        "93033-9",
+        "93034-7",
+        "93035-4",
+        "93038-8",
+        "93124-6",
+        "93159-2",
+        "93677-3",
+        "95530-2",
+        "95618-5",
+        "96779-4",
+        "96780-2",
+        "96781-0",
+        "96782-8",
+        "96842-0",
+        "97023-6",
+        "97027-7",
+        "98498-9",
+        "98499-7",
+        "99999-0",
+        "99999-1",
+        "99999-10",
+        "99999-11",
+        "99999-2",
+        "99999-3",
+        "99999-4",
+        "99999-5",
+        "99999-6",
+        "99999-7",
+        "99999-8",
+        "99999-9",
+        "LA13038-7",
+        "LA13039-5",
+        "LA13040-3",
+        "LA13863-8",
+        "LA13902-4",
+        "LA13909-9",
+        "LA13914-9",
+        "LA14042-8",
+        "LA14045-1",
+        "LA14072-5",
+        "LA15652-3",
+        "LA17849-3",
+        "LA17956-6",
+        "LA18643-9",
+        "LA18644-7",
+        "LA18645-4",
+        "LA18646-2",
+        "LA18648-8",
+        "LA21567-5",
+        "LA21752-3",
+        "LA21753-1",
+        "LA21754-9",
+        "LA21755-6",
+        "LA27722-0",
+        "LA28404-4",
+        "LA28405-1",
+        "LA28406-9",
+        "LA28407-7",
+        "LA28409-3",
+        "LA28409-8",
+        "LA28410-1",
+        "LA28411-9",
+        "LA30122-8",
+        "LA30124-4",
+        "LA30125-1",
+        "LA30126-9",
+        "LA30127-7",
+        "LA30128-5",
+        "LA30129-3",
+        "LA30130-1",
+        "LA30131-9",
+        "LA30132-7",
+        "LA30133-5",
+        "LA30134-3",
+        "LA30136-8",
+        "LA30137-6",
+        "LA30138-4",
+        "LA30187-1",
+        "LA30188-9",
+        "LA30189-7",
+        "LA30190-5",
+        "LA30191-3",
+        "LA30192-1",
+        "LA30193-9",
+        "LA30194-7",
+        "LA32-8",
+        "LA33-6",
+        "LA4-4",
+        "LA43-5",
+        "LA4457-3",
+        "LA46-8",
+        "LA6156-9",
+        "LA6350-8",
+        "LA6568-5",
+        "X9999-0",
+        "X9999-1",
+        "X9999-2"
+      ],
+      "use": "Official German long common names, unchanged; other entries retain project reading texts."
     }
   },
   "entries": [
@@ -730,11 +1021,17 @@
       "translations": [
         {
           "original": "Globulin [Mass/volume] in Serum by calculation",
-          "de": "Globulin [Masse/Volumen] im Serum durch Berechnung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Globulin [Masse/Volumen] in Serum mittels Berechnung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -742,11 +1039,17 @@
       "translations": [
         {
           "original": "Erythrocytes [#/area] in Urine sediment by Microscopy high power field",
-          "de": "Erythrozyten [Anzahl/Gesichtsfeld] im Urinsediment bei starker mikroskopischer Vergrößerung",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Erythrozyten [#/Fläche] in Urinsediment mittels Lichtmikroskopie, hohe Vergrößerung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -754,11 +1057,17 @@
       "translations": [
         {
           "original": "Bicarbonate [Moles/volume] in Venous blood",
-          "de": "Bicarbonat [Stoffmenge/Volumen] im venösen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bicarbonat [Mol/Volumen] in venösem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -766,11 +1075,17 @@
       "translations": [
         {
           "original": "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma by Lactate to pyruvate reaction",
-          "de": "Lactatdehydrogenase [Enzymatische Aktivität/Volumen] im Serum oder im Plasma durch Lactat zur Pyruvat-Reaktion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Lactatdehydrogenase [Enzymaktivität/Volumen] in Serum oder Plasma mittels Lactat zu Pyruvat-Reaktion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -778,11 +1093,17 @@
       "translations": [
         {
           "original": "Microalbumin/Creatinine [Mass Ratio] in Urine",
-          "de": "Mikroalbumin/Kreatinin [Massenverhältnis] im Urin",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Albumin (Mikroalbumin)/Creatinin [Massenverhältnis] in Urin",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -790,11 +1111,17 @@
       "translations": [
         {
           "original": "Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
-          "de": "Alaninaminotransferase [Enzymatische Aktivität/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Alanin-Aminotransferase [Enzymaktivität/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -802,11 +1129,17 @@
       "translations": [
         {
           "original": "Albumin [Mass/volume] in Serum or Plasma",
-          "de": "Albumin [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Albumin [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -814,11 +1147,17 @@
       "translations": [
         {
           "original": "Calcium [Mass/volume] in Serum or Plasma",
-          "de": "Calcium [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Calcium [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -826,11 +1165,17 @@
       "translations": [
         {
           "original": "Cholesterol in LDL [Mass/volume] in Serum or Plasma by Direct assay",
-          "de": "Cholesterin in LDL [Masse/Volumen] im Serum oder Plasma durch direkte Untersuchung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Cholesterol in LDL [Masse/Volumen] in Serum oder Plasma mittels direktem Test",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -850,11 +1195,17 @@
       "translations": [
         {
           "original": "Magnesium [Mass/volume] in Serum or Plasma",
-          "de": "Magnesium [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Magnesium [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -862,11 +1213,17 @@
       "translations": [
         {
           "original": "Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma",
-          "de": "Aspartataminotransferase [Enzymatische Aktivität/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Aspartat-Aminotransferase [Enzymaktivität/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -874,11 +1231,17 @@
       "translations": [
         {
           "original": "Bicarbonate [Moles/volume] in Arterial blood",
-          "de": "Bicarbonat [Stoffmenge/Volumen] im arteriellen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bicarbonat [Mol/Volumen] in arteriellem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -886,11 +1249,17 @@
       "translations": [
         {
           "original": "Bilirubin.total [Mass/volume] in Serum or Plasma",
-          "de": "Bilirubin insgesamt [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bilirubin.gesamt [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -898,11 +1267,17 @@
       "translations": [
         {
           "original": "C reactive protein [Mass/volume] in Serum or Plasma",
-          "de": "C reaktives Protein [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "C-reaktives Protein [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -922,11 +1297,17 @@
       "translations": [
         {
           "original": "Oxygen/Total gas setting [Volume Fraction] Ventilator",
-          "de": "Eingestellter Sauerstoffanteil am Gesamtgas [Volumenanteil] am Beatmungsgerät",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Sauerstoff/Gesamtgas-Einstellung [Volumenfraktion] des Beatmungsgeräts",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -934,11 +1315,17 @@
       "translations": [
         {
           "original": "Carbon dioxide [Partial pressure] in Arterial blood",
-          "de": "Kohlendioxid [Partialdruck] im arteriellen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kohlenstoffdioxid [Partialdruck] in arteriellem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -946,11 +1333,17 @@
       "translations": [
         {
           "original": "Carbon dioxide [Partial pressure] in Venous blood",
-          "de": "Kohlendioxid [Partialdruck] im venösen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kohlenstoffdioxid [Partialdruck] in venösem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -958,11 +1351,17 @@
       "translations": [
         {
           "original": "Carbon dioxide, total [Moles/volume] in Venous blood",
-          "de": "Kohlendioxid insgesamt [Stoffmenge/Volumen] im venösen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kohlenstoffdioxid, gesamt [Mol/Volumen] in venösem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -970,11 +1369,17 @@
       "translations": [
         {
           "original": "Carbon dioxide, total [Moles/volume] in Serum or Plasma",
-          "de": "Kohlendioxid insgesamt [Stoffmenge/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kohlenstoffdioxid, gesamt [Mol/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -982,11 +1387,17 @@
       "translations": [
         {
           "original": "HIV 1 RNA [#/volume] (viral load) in Serum or Plasma by NAA with probe detection",
-          "de": "HIV-1-RNA [Anzahl/Volumen] (Viruslast) in Serum oder Plasma mittels Nukleinsäureamplifikation mit Sondennachweis",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "HIV-1 RNA [#/Volumen] (Viruslast) in Serum oder Plasma mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -994,11 +1405,17 @@
       "translations": [
         {
           "original": "Protein [Presence] in Urine by Test strip",
-          "de": "Protein [Nachweis] im Urin durch Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Protein [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1006,11 +1423,17 @@
       "translations": [
         {
           "original": "Bilirubin.total [Mass/volume] in Urine by Test strip",
-          "de": "Bilirubin.insgesamt [Masse/Volumen] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bilirubin.gesamt [Masse/Volumen] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1018,11 +1441,17 @@
       "translations": [
         {
           "original": "Carbon dioxide, total [Moles/volume] in Blood",
-          "de": "Kohlendioxid insgesamt [Stoffmenge/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kohlenstoffdioxid, gesamt [Mol/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1030,11 +1459,17 @@
       "translations": [
         {
           "original": "Hematocrit [Volume Fraction] of Blood by calculation",
-          "de": "Hämatokrit [Volumenfraktion] des Blutes durch Berechnung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Hämatokrit [Volumenfraktion] von Blut mittels Berechnung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1042,11 +1477,17 @@
       "translations": [
         {
           "original": "Chloride [Moles/volume] in Blood",
-          "de": "Chlorid [Stoffmenge/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Chlorid [Mol/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1054,11 +1495,17 @@
       "translations": [
         {
           "original": "Chloride [Moles/volume] in Serum or Plasma",
-          "de": "Chlorid [Stoffmenge/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Chlorid [Mol/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1066,11 +1513,17 @@
       "translations": [
         {
           "original": "Cholesterol in HDL [Mass/volume] in Serum or Plasma",
-          "de": "Cholesterin in HDL [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Cholesterol in HDL [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1078,11 +1531,17 @@
       "translations": [
         {
           "original": "Cholesterol [Mass/volume] in Serum or Plasma",
-          "de": "Cholesterin [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Cholesterol [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1090,11 +1549,17 @@
       "translations": [
         {
           "original": "Choriogonadotropin [Presence] in Urine",
-          "de": "Choriogonadotropin [Nachweis] im Urin",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Choriongonadotropin [Nachweis] in Urin",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1102,11 +1567,17 @@
       "translations": [
         {
           "original": "Magnesium [Mass/volume] in Blood",
-          "de": "Magnesium [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Magnesium [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1114,11 +1585,17 @@
       "translations": [
         {
           "original": "Creatine kinase [Enzymatic activity/volume] in Serum or Plasma",
-          "de": "Kreatinkinase [Enzymatische Aktivität/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Creatinkinase [Enzymaktivität/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1126,11 +1603,17 @@
       "translations": [
         {
           "original": "Creatinine [Mass/volume] in Serum or Plasma",
-          "de": "Kreatinin [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Creatinin [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1198,11 +1681,17 @@
       "translations": [
         {
           "original": "Toxoplasma gondii Ab [Presence] in Serum",
-          "de": "Toxoplasma gondii Antikörper [Nachweis] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Toxoplasma gondii Antikörper [Nachweis] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1210,11 +1699,17 @@
       "translations": [
         {
           "original": "Ferritin [Mass/volume] in Serum or Plasma",
-          "de": "Ferritin [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Ferritin [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1222,11 +1717,17 @@
       "translations": [
         {
           "original": "Glucose [Mass/volume] in Blood",
-          "de": "Glucose [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Glucose [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1234,11 +1735,17 @@
       "translations": [
         {
           "original": "Glucose [Mass/volume] in Serum or Plasma",
-          "de": "Glucose [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Glucose [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1246,11 +1753,17 @@
       "translations": [
         {
           "original": "Casts [Presence] in Urine sediment by Light microscopy",
-          "de": "Zylinder [Nachweis] im Urinsediment mittels Lichtmikroskopie",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Zylinder [Nachweis] in Urinsediment mittels Lichtmikroskopie",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1288,11 +1801,17 @@
       "translations": [
         {
           "original": "Gas panel - Arterial blood",
-          "de": "Arterielle Blutgasanalyse",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Blutgasanalyse (Liste) - Arterielles Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1300,11 +1819,17 @@
       "translations": [
         {
           "original": "Gas panel - Venous blood",
-          "de": "Venöse Blutgasanalyse",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Blutgasanalyse (Liste) - Venöses Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1312,11 +1837,17 @@
       "translations": [
         {
           "original": "Urinalysis complete panel - Urine",
-          "de": "Vollständiges Urinuntersuchungsprofil",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Urinstatus+Urinsediment (Liste) - Urin",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1324,11 +1855,17 @@
       "translations": [
         {
           "original": "Urinalysis macro (dipstick) panel - Urine",
-          "de": "Makroskopisches Urinuntersuchungsprofil mit Teststreifen",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Urinanalyse makroskopisch durch Teststreifen (Liste) - Urin",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1348,11 +1885,17 @@
       "translations": [
         {
           "original": "CD3+CD4+ (T4 helper) cells [#/volume] in Blood",
-          "de": "CD3+CD4+ (T4-Helfer) Zellen [Anzahl/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "CD3+CD4+ (T4-Helfer)-Zellen [#/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1360,11 +1903,17 @@
       "translations": [
         {
           "original": "Iron [Mass/volume] in Serum or Plasma",
-          "de": "Eisen [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Eisen [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1384,11 +1933,17 @@
       "translations": [
         {
           "original": "Iron saturation [Mass Fraction] in Serum or Plasma",
-          "de": "Eisensättigung [Massenfraktion] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Eisensättigung [Massenfraktion] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1396,11 +1951,17 @@
       "translations": [
         {
           "original": "Ketones [Presence] in Urine by Test strip",
-          "de": "Ketone [Nachweis] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Ketone [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1408,11 +1969,17 @@
       "translations": [
         {
           "original": "Lactate dehydrogenase [Enzymatic activity/volume] in Serum or Plasma",
-          "de": "Lactatdehydrogenase [Enzymatische Aktivität/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Lactatdehydrogenase [Enzymaktivität/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "DISCOURAGED",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1420,11 +1987,17 @@
       "translations": [
         {
           "original": "Glucose [Presence] in Urine by Test strip",
-          "de": "Glukose [Nachweis] im Urin durch Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Glucose [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1432,11 +2005,17 @@
       "translations": [
         {
           "original": "Triglyceride [Mass/volume] in Serum or Plasma",
-          "de": "Triglycerid [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Triglycerid [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1444,11 +2023,17 @@
       "translations": [
         {
           "original": "Erythrocytes [#/volume] in Blood",
-          "de": "Erythrozyten [Anzahl/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Erythrozyten [#/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1456,11 +2041,17 @@
       "translations": [
         {
           "original": "Leukocytes [#/volume] in Blood",
-          "de": "Leukozyten [Anzahl/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Leukozyten [#/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1468,11 +2059,17 @@
       "translations": [
         {
           "original": "Platelets [#/volume] in Blood",
-          "de": "Thrombozyten [Anzahl/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Thrombozyten [#/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1480,11 +2077,17 @@
       "translations": [
         {
           "original": "Interleukin 6 [Mass/volume] in Serum or Plasma",
-          "de": "Interleukin 6 [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Interleukin-6 [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1492,11 +2095,17 @@
       "translations": [
         {
           "original": "Oxygen [Partial pressure] in Arterial blood",
-          "de": "Sauerstoff [Partialdruck] im arteriellen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Sauerstoff [Partialdruck] in arteriellem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1504,11 +2113,17 @@
       "translations": [
         {
           "original": "Oxygen [Partial pressure] in Venous blood",
-          "de": "Sauerstoff [Partialdruck] im venösen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Sauerstoff [Partialdruck] in venösem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1516,11 +2131,17 @@
       "translations": [
         {
           "original": "Oxygen saturation in Arterial blood",
-          "de": "Sauerstoffsättigung im arteriellen Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Sauerstoffsättigung in arteriellem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1528,11 +2149,17 @@
       "translations": [
         {
           "original": "pH of Arterial blood",
-          "de": "pH-Wert des arteriellen Blutes",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "pH von arteriellem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1540,11 +2167,17 @@
       "translations": [
         {
           "original": "pH of Venous blood",
-          "de": "pH-Wert des venösen Blutes",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "pH von venösem Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1552,11 +2185,17 @@
       "translations": [
         {
           "original": "Phosphate [Mass/volume] in Serum or Plasma",
-          "de": "Phosphat [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Phosphat [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1564,11 +2203,17 @@
       "translations": [
         {
           "original": "Potassium [Moles/volume] in Serum or Plasma",
-          "de": "Kalium [Stoffmenge/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kalium [Mol/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1588,11 +2233,17 @@
       "translations": [
         {
           "original": "Prostate specific Ag [Mass/volume] in Serum or Plasma",
-          "de": "Prostataspezifische Antigen [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Prostataspezifisches Antigen [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1600,11 +2251,17 @@
       "translations": [
         {
           "original": "Protein [Mass/volume] in Serum or Plasma",
-          "de": "Protein [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Protein [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1613,10 +2270,16 @@
         {
           "original": "Body Weight",
           "de": "Körpergewicht",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1624,11 +2287,17 @@
       "translations": [
         {
           "original": "Sodium [Moles/volume] in Blood",
-          "de": "Natrium [Stoffmenge/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Natrium [Mol/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1636,11 +2305,17 @@
       "translations": [
         {
           "original": "Sodium [Moles/volume] in Serum or Plasma",
-          "de": "Natrium [Stoffmenge/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Natrium [Mol/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1648,11 +2323,17 @@
       "translations": [
         {
           "original": "Procedure Narrative",
-          "de": "Prozedurenbericht",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Prozedur oder Maßnahme - Freitext",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1660,11 +2341,17 @@
       "translations": [
         {
           "original": "Thyrotropin [Units/volume] in Serum or Plasma",
-          "de": "Thyrotropin [Einheiten/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Thyreotropin [Einheiten/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1672,11 +2359,17 @@
       "translations": [
         {
           "original": "Thyroxine (T4) free [Mass/volume] in Serum or Plasma",
-          "de": "Thyroxin (T4) frei [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Thyroxin (T4) frei [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1684,11 +2377,17 @@
       "translations": [
         {
           "original": "Erythrocyte [DistWidth] in Blood",
-          "de": "Erythrozyten-Verteilungsbreite im Blut",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Erythrozyten [Verteilungsbreite]",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1696,11 +2395,17 @@
       "translations": [
         {
           "original": "MCV [Entitic mean volume] in Red Blood Cells",
-          "de": "Mittleres Erythrozytenvolumen (MCV)",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Mittleres korpuskuläres Zellvolumen eines Erythrozyten (MCV) [Entitisches mittleres Volumen]",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1708,11 +2413,17 @@
       "translations": [
         {
           "original": "Urea nitrogen [Mass/volume] in Serum or Plasma",
-          "de": "Harnstoffstickstoff [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Harnstoff-Stickstoff [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1720,11 +2431,17 @@
       "translations": [
         {
           "original": "aPTT in Blood by Coagulation assay",
-          "de": "aPTT im Blut durch Gerinnungstest",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "aPTT in Blut mittels Gerinnungstest",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1732,11 +2449,17 @@
       "translations": [
         {
           "original": "Activated clotting time (ACT) of Blood by Coagulation assay",
-          "de": "Aktivierte Gerinnungszeit (ACT) des Blutes mittels Gerinnungstest",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Aktivierte Gerinnungszeit (ACT) von Blut mittels Gerinnungstest",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1745,10 +2468,16 @@
         {
           "original": "Clarity of Urine",
           "de": "Klarheit des Urins",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1756,11 +2485,17 @@
       "translations": [
         {
           "original": "Platelet distribution width [Entitic volume] in Blood by Automated count",
-          "de": "Thrombozytenverteilungsbreite [Entitisches Volumen] im Blut durch automatisierte Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Thrombozyten-Verteilungsbreite [Entitisches Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1780,11 +2515,17 @@
       "translations": [
         {
           "original": "Platelet [Entitic mean volume] in Blood by Automated count",
-          "de": "Thrombozyten [Entitisches mittleres Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Mittleres Thrombozytenvolumen [Entitisches mittleres Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1804,11 +2545,17 @@
       "translations": [
         {
           "original": "Lactate [Moles/volume] in Blood",
-          "de": "Lactat [Stoffmenge/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Lactat [Mol/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1816,11 +2563,17 @@
       "translations": [
         {
           "original": "Anion gap in Serum or Plasma by calculation",
-          "de": "Berechnete Anionenlücke in Serum oder Plasma",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Anionenlücke in Serum oder Plasma mittels Berechnung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1852,11 +2605,17 @@
       "translations": [
         {
           "original": "Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Serum or Plasma",
-          "de": "Natriuretisches Peptid.B Prohormon N-Terminal [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Natriuretisches Peptid.B Prohormon N-Terminal [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1876,11 +2635,17 @@
       "translations": [
         {
           "original": "Procalcitonin [Mass/volume] in Serum or Plasma",
-          "de": "Procalcitonin [Masse/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Procalcitonin [Masse/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1913,10 +2678,16 @@
         {
           "original": "Odor of Urine",
           "de": "Geruch des Urins",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1948,11 +2719,17 @@
       "translations": [
         {
           "original": "Creatinine [Mass/volume] in Blood",
-          "de": "Kreatinin [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Creatinin [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1960,11 +2737,17 @@
       "translations": [
         {
           "original": "Body mass index (BMI) [Ratio]",
-          "de": "Body Mass Index (BMI) [Ratio]",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Body Mass Index (BMI) [Verhältnis]",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -1972,11 +2755,17 @@
       "translations": [
         {
           "original": "Bilirubin.total [Mass/volume] in Blood",
-          "de": "Bilirubin insgesamt [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bilirubin.gesamt [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2042,11 +2831,17 @@
       "translations": [
         {
           "original": "Hematocrit [Volume Fraction] of Blood by Automated count",
-          "de": "Hämatokrit [Volumenfraktion] des Blutes nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Hämatokrit [Volumenfraktion] von Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2054,11 +2849,17 @@
       "translations": [
         {
           "original": "Hemoglobin A1c/Hemoglobin.total in Blood",
-          "de": "Hämoglobin A1c/Hämoglobin insgesamt im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Hämoglobin A1c/Hämoglobin.gesamt in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2090,11 +2891,17 @@
       "translations": [
         {
           "original": "Fibrin D-dimer FEU [Mass/volume] in Platelet poor plasma",
-          "de": "Fibrin-D-Dimer in Fibrinogen-äquivalenten Einheiten [Masse/Volumen] in thrombozytenarmem Plasma",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Fibrin D-Dimer FEU [Masse/Volumen] in thrombozytenarmem Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2102,11 +2909,17 @@
       "translations": [
         {
           "original": "Calcium [Mass/volume] in Blood",
-          "de": "Calcium [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Calcium [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2240,11 +3053,17 @@
       "translations": [
         {
           "original": "Auto Differential panel - Blood",
-          "de": "Automatisiertes Differenzialblutbild",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Automatisiertes Differentialblutbild ohne kleines Blutbild (Liste) - Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "DISCOURAGED",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2253,10 +3072,16 @@
         {
           "original": "Appearance of Urine",
           "de": "Aussehen des Urins",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2264,11 +3089,17 @@
       "translations": [
         {
           "original": "Bacteria [#/area] in Urine sediment by Microscopy high power field",
-          "de": "Bakterien [Anzahl/Gesichtsfeld] im Urinsediment bei starker mikroskopischer Vergrößerung",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Bakterien [#/Fläche] in Urinsediment mittels Lichtmikroskopie, hohe Vergrößerung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2288,11 +3119,17 @@
       "translations": [
         {
           "original": "Bilirubin.total [Presence] in Urine by Test strip",
-          "de": "Bilirubin.insgesamt [Nachweis] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bilirubin.gesamt [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2301,10 +3138,16 @@
         {
           "original": "Color of Urine",
           "de": "Farbe des Urins",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2312,11 +3155,17 @@
       "translations": [
         {
           "original": "Epithelial cells [#/area] in Urine sediment by Microscopy high power field",
-          "de": "Epithelzellen [Anzahl/Gesichtsfeld] im Urinsediment bei starker mikroskopischer Vergrößerung",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Epithelzellen [#/Fläche] in Urinsediment mittels Lichtmikroskopie, hohe Vergrößerung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2324,11 +3173,17 @@
       "translations": [
         {
           "original": "Hemoglobin.gastrointestinal.lower [Presence] in Stool by Immunoassay --1st specimen",
-          "de": "Hämoglobin aus dem unteren Gastrointestinaltrakt [Nachweis] im Stuhl mittels Immunoassay, erste Probe",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Hämoglobin [Nachweis] in Stuhl aus dem unteren Gastrointestinaltrakt mittels Immunoassay --1. Probenmaterial",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2336,11 +3191,17 @@
       "translations": [
         {
           "original": "Glucose [Mass/volume] in Urine by Test strip",
-          "de": "Glukose [Masse/Volumen] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Glucose [Masse/Volumen] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2348,11 +3209,17 @@
       "translations": [
         {
           "original": "Hemoglobin [Presence] in Urine by Test strip",
-          "de": "Hämoglobin [Nachweis] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Hämoglobin [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2360,11 +3227,17 @@
       "translations": [
         {
           "original": "Ketones [Mass/volume] in Urine by Test strip",
-          "de": "Ketone [Masse/Volumen] in Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Ketone [Masse/Volumen] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2372,11 +3245,17 @@
       "translations": [
         {
           "original": "Leukocyte esterase [Presence] in Urine by Test strip",
-          "de": "Leukozytenesterase [Nachweis] im Urin durch Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Leukozytenesterase [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2384,11 +3263,17 @@
       "translations": [
         {
           "original": "Nitrite [Presence] in Urine by Test strip",
-          "de": "Nitrit [Nachweis] im Urin nach Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Nitrit [Nachweis] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2396,11 +3281,17 @@
       "translations": [
         {
           "original": "pH of Urine by Test strip",
-          "de": "pH-Wert des Urins durch Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "pH von Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2408,11 +3299,17 @@
       "translations": [
         {
           "original": "Protein [Mass/volume] in Urine by Test strip",
-          "de": "Protein [Masse/Volumen] im Urin durch Teststreifen",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Protein [Masse/Volumen] in Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2420,11 +3317,17 @@
       "translations": [
         {
           "original": "Specific gravity of Urine by Test strip",
-          "de": "Spezifisches Gewicht des Urins mittels Teststreifen",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Spezifisches Gewicht von Urin mittels Teststreifen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2432,11 +3335,17 @@
       "translations": [
         {
           "original": "Leukocytes [#/area] in Urine sediment by Microscopy high power field",
-          "de": "Leukozyten [Anzahl/Gesichtsfeld] im Urinsediment bei starker mikroskopischer Vergrößerung",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Leukozyten [#/Fläche] in Urinsediment mittels Lichtmikroskopie, hohe Vergrößerung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2444,11 +3353,17 @@
       "translations": [
         {
           "original": "CBC panel - Blood by Automated count",
-          "de": "Automatisiertes Blutbild",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Kleines Blutbild (Liste) - Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2457,10 +3372,16 @@
         {
           "original": "Prothrombin time (PT)",
           "de": "Prothrombinzeit (PT)",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2468,11 +3389,17 @@
       "translations": [
         {
           "original": "Monocytes/Leukocytes in Blood by Automated count",
-          "de": "Monozyten/Leukozyten im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Monozyten/Leukozyten in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2480,11 +3407,17 @@
       "translations": [
         {
           "original": "Oxygen saturation in Arterial blood by Pulse oximetry",
-          "de": "Sauerstoffsättigung im arteriellen Blut durch Pulsoximetrie",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Sauerstoffsättigung in arteriellem Blut mittels Pulsoximetrie",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2552,11 +3485,17 @@
       "translations": [
         {
           "original": "Bacteria identified in Blood by Culture",
-          "de": "Bakterien im Blut durch Kultur identifiziert",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bakterien identifiziert in Blut mittels Kultur",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2564,11 +3503,17 @@
       "translations": [
         {
           "original": "Cladosporium herbarum IgE Ab [Units/volume] in Serum",
-          "de": "Cladosporium herbarum IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Cladosporium herbarum IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2576,11 +3521,17 @@
       "translations": [
         {
           "original": "Codfish IgE Ab [Units/volume] in Serum",
-          "de": "Kabeljau IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Gadus morhua IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2588,11 +3539,17 @@
       "translations": [
         {
           "original": "Common Ragweed IgE Ab [Units/volume] in Serum",
-          "de": "IgE-Antikörper gegen Beifußblättrige Ambrosie [Einheiten/Volumen] im Serum",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Ambrosia elatior IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2600,11 +3557,17 @@
       "translations": [
         {
           "original": "American house dust mite IgE Ab [Units/volume] in Serum",
-          "de": "Amerikanische Hausstaubmilbe IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Dermatophagoides farinae IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2612,11 +3575,17 @@
       "translations": [
         {
           "original": "Egg white IgE Ab [Units/volume] in Serum",
-          "de": "Eiweiß IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Eiweiß IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2636,11 +3605,17 @@
       "translations": [
         {
           "original": "Latex IgE Ab [Units/volume] in Serum",
-          "de": "Latex IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Latex IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2648,11 +3623,17 @@
       "translations": [
         {
           "original": "White oak IgE Ab [Units/volume] in Serum",
-          "de": "Weiße Eiche IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Quercus alba IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2660,11 +3641,17 @@
       "translations": [
         {
           "original": "Peanut IgE Ab [Units/volume] in Serum",
-          "de": "Erdnuss IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Arachis hypogaea IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2684,11 +3671,17 @@
       "translations": [
         {
           "original": "Shrimp IgE Ab [Units/volume] in Serum",
-          "de": "Shrimp IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Pandalus borealis IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2696,11 +3689,17 @@
       "translations": [
         {
           "original": "Soybean IgE Ab [Units/volume] in Serum",
-          "de": "Sojabohnen IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Glycine max IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2708,11 +3707,17 @@
       "translations": [
         {
           "original": "Walnut IgE Ab [Units/volume] in Serum",
-          "de": "Walnuss IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Juglans spp IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2720,11 +3725,17 @@
       "translations": [
         {
           "original": "Wheat IgE Ab [Units/volume] in Serum",
-          "de": "Weizen IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Triticum aestivum IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2732,11 +3743,17 @@
       "translations": [
         {
           "original": "Potassium [Moles/volume] in Blood",
-          "de": "Kalium [Stoffmenge/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kalium [Mol/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2744,17 +3761,23 @@
       "translations": [
         {
           "original": "Urea Nitrogen [Mass/volume] in Blood",
-          "de": "Harnstoff-Stickstoff [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Harnstoff-Stickstoff [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         },
         {
           "original": "Urea nitrogen [Mass/volume] in Blood",
-          "de": "Harnstoffstickstoff [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Harnstoff-Stickstoff [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2762,11 +3785,17 @@
       "translations": [
         {
           "original": "Bacteria identified in Urine by Culture",
-          "de": "Bakterien im Urin durch Kultur identifiziert",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Bakterien identifiziert in Urin mittels Kultur",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2774,11 +3803,17 @@
       "translations": [
         {
           "original": "INR in Platelet poor plasma by Coagulation assay",
-          "de": "INR in thrombozytenarmem Plasma mittels Gerinnungstest",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "International Normalized Ratio (INR) in thrombozytenarmem Plasma mittels Gerinnungstest",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2882,11 +3917,17 @@
       "translations": [
         {
           "original": "Leukocytes [#/volume] in Blood by Automated count",
-          "de": "Leukozyten [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Leukozyten [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2894,11 +3935,17 @@
       "translations": [
         {
           "original": "Alkaline phosphatase [Enzymatic activity/volume] in Serum or Plasma",
-          "de": "Alkalische Phosphatase [Enzymatische Aktivität/Volumen] im Serum oder Plasma",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Alkalische Phosphatase [Enzymaktivität/Volumen] in Serum oder Plasma",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2918,11 +3965,17 @@
       "translations": [
         {
           "original": "Cat dander IgE Ab [Units/volume] in Serum",
-          "de": "IgE-Antikörper gegen Katzenschuppen [Einheiten/Volumen] im Serum",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Katzenschuppen IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2930,11 +3983,17 @@
       "translations": [
         {
           "original": "Honey bee IgE Ab [Units/volume] in Serum",
-          "de": "Honigbiene IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Apis mellifera IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -2993,11 +4052,17 @@
       "translations": [
         {
           "original": "CBC W Differential panel, method unspecified - Blood",
-          "de": "Großes Blutbild, Methode nicht angegeben",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Differentialblutbild, ohne Angabe der Methode (Liste) - Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3039,11 +4104,17 @@
       "translations": [
         {
           "original": "Basophils [#/volume] in Blood by Automated count",
-          "de": "Basophile [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Basophile [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3051,11 +4122,17 @@
       "translations": [
         {
           "original": "Basophils/Leukocytes in Blood by Automated count",
-          "de": "Basophile/Leukozyten im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Basophile/Leukozyten in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3063,11 +4140,17 @@
       "translations": [
         {
           "original": "Eosinophils [#/volume] in Blood by Automated count",
-          "de": "Eosinophile [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Eosinophile [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3075,11 +4158,17 @@
       "translations": [
         {
           "original": "Eosinophils/Leukocytes in Blood by Automated count",
-          "de": "Eosinophile/Leukozyten im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Eosinophile/Leukozyten in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3087,11 +4176,17 @@
       "translations": [
         {
           "original": "Natriuretic peptide.B prohormone N-Terminal [Mass/volume] in Blood by Immunoassay",
-          "de": "Natriuretisches Peptid.B Prohormon N-Terminal [Masse/Volumen] im Blut durch Immunoassay",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Natriuretisches Peptid.B Prohormon N-Terminal [Masse/Volumen] in Blut mittels Immunoassay",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3123,11 +4218,17 @@
       "translations": [
         {
           "original": "Hemoglobin [Mass/volume] in Blood",
-          "de": "Hämoglobin [Masse/Volumen] im Blut",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Hämoglobin [Masse/Volumen] in Blut",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3639,11 +4740,17 @@
       "translations": [
         {
           "original": "Tobacco smoking status",
-          "de": "Status des Tabakrauchens",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Raucherstatus",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3663,11 +4770,17 @@
       "translations": [
         {
           "original": "Cow milk IgE Ab [Units/volume] in Serum",
-          "de": "Kuhmilch IgE Antikörper [Einheiten/Volumen] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kuhmilch IgE-Antikörper [Einheiten/Volumen] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3675,11 +4788,17 @@
       "translations": [
         {
           "original": "Lymphocytes [#/volume] in Blood by Automated count",
-          "de": "Lymphozyten [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Lymphozyten [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3687,11 +4806,17 @@
       "translations": [
         {
           "original": "Lymphocytes/Leukocytes in Blood by Automated count",
-          "de": "Lymphozyten/Leukozyten im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Lymphozyten/Leukozyten in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3711,11 +4836,17 @@
       "translations": [
         {
           "original": "Monocytes [#/volume] in Blood by Automated count",
-          "de": "Monozyten [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Monozyten [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3723,11 +4854,17 @@
       "translations": [
         {
           "original": "Neutrophils [#/volume] in Blood by Automated count",
-          "de": "Neutrophilen [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Neutrophile [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3735,11 +4872,17 @@
       "translations": [
         {
           "original": "Symptom",
-          "de": "Symptome",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Symptom",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3884,11 +5027,17 @@
       "translations": [
         {
           "original": "Neutrophils/Leukocytes in Blood by Automated count",
-          "de": "Neutrophilen/Leukozyten im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Neutrophile/Leukozyten in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3908,11 +5057,17 @@
       "translations": [
         {
           "original": "Platelets [#/volume] in Blood by Automated count",
-          "de": "Thrombozyten [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Thrombozyten [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3920,11 +5075,17 @@
       "translations": [
         {
           "original": "MCH [Entitic mass] by Automated count",
-          "de": "MCH [Entitische Masse] nach automatischer Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Mittleres korpuskuläres Hämoglobin (MCH) [Entitische Masse] mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3932,11 +5093,17 @@
       "translations": [
         {
           "original": "MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count",
-          "de": "MCHC [Entitische Masse/Volumen] in roten Blutzellen nach automatischer Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Mittlere korpuskuläre Hämoglobinkonzentration eines Erythrozyten (MCHC) [Entitische Masse/Volumen] mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3944,11 +5111,17 @@
       "translations": [
         {
           "original": "MCV [Entitic mean volume] in Red Blood Cells by Automated count",
-          "de": "MCV [Entitisches mittleres Volumen] in roten Blutzellen durch Automatisierte Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Mittleres korpuskuläres Zellvolumen eines Erythrozyten (MCV) [Entitisches mittleres Volumen] mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3956,11 +5129,17 @@
       "translations": [
         {
           "original": "Erythrocyte [DistWidth] in Blood by Automated count",
-          "de": "Automatisiert bestimmte Erythrozyten-Verteilungsbreite im Blut",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Erythrozyten [Verteilungsbreite] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3968,11 +5147,17 @@
       "translations": [
         {
           "original": "Erythrocytes [#/volume] in Blood by Automated count",
-          "de": "Erythrozyten [Anzahl/Volumen] im Blut nach automatisierter Zählung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Erythrozyten [#/Volumen] in Blut mittels automatisierter Zählung",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -3980,11 +5165,17 @@
       "translations": [
         {
           "original": "HIV 1 Ab [Presence] in Serum",
-          "de": "HIV 1 Antikörper [Nachweis] im Serum",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "HIV-1 Antikörper [Nachweis] in Serum",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4064,11 +5255,17 @@
       "translations": [
         {
           "original": "Influenza virus A Ag [Presence] in Upper respiratory specimen by Rapid immunoassay",
-          "de": "Grippevirus A Antigen [Nachweis] in der oberen respiratorischen Probe durch Schnellimmunoassay",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Influenza-Virus A Antigen [Nachweis] in Probenmaterial vom oberen Respirationstrakt mittels Immunoassay-Schnelltest",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4076,11 +5273,17 @@
       "translations": [
         {
           "original": "Influenza virus B Ag [Presence] in Upper respiratory specimen by Rapid immunoassay",
-          "de": "Influenzavirus B Antigen [Nachweis] in der oberen respiratorischen Probe durch Schnellimmunoassay",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Influenza-Virus B Antigen [Nachweis] in Probenmaterial vom oberen Respirationstrakt mittels Immunoassay-Schnelltest",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4105,11 +5308,17 @@
       "translations": [
         {
           "original": "Mucus [Presence] in Urine sediment by Light microscopy",
-          "de": "Schleim [Nachweis] im Urinsediment durch Lichtmikroskopie",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Schleim [Nachweis] in Urinsediment mittels Lichtmikroskopie",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4154,10 +5363,16 @@
         {
           "original": "Pregnancy status",
           "de": "Schwangerschaftsstatus",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4165,11 +5380,17 @@
       "translations": [
         {
           "original": "Head Occipital-frontal circumference Percentile",
-          "de": "Kopf Okzipital-Frontumfang Perzentil",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Kopfumfang okzipital-frontal Perzentil",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4178,10 +5399,16 @@
         {
           "original": "Body Height",
           "de": "Körpergröße",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4190,16 +5417,22 @@
         {
           "original": "Body Temperature",
           "de": "Körpertemperatur",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         },
         {
           "original": "Body temperature",
           "de": "Körpertemperatur",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4232,10 +5465,16 @@
         {
           "original": "Diastolic Blood Pressure",
           "de": "Diastolischer Blutdruck",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4244,10 +5483,16 @@
         {
           "original": "Mean blood pressure",
           "de": "Mittlerer Blutdruck",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4256,10 +5501,16 @@
         {
           "original": "Systolic Blood Pressure",
           "de": "Systolischer Blutdruck",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4351,17 +5602,23 @@
       "translations": [
         {
           "original": "Blood Pressure panel with all children optional",
-          "de": "Blutdruckprofil mit ausschließlich optionalen Komponenten",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Blutdruck (Liste) optional mit allen Unterbegriffen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         },
         {
           "original": "Blood pressure panel with all children optional",
-          "de": "Blutdruckprofil mit ausschließlich optionalen Komponenten",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Blutdruck (Liste) optional mit allen Unterbegriffen",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4486,10 +5743,16 @@
         {
           "original": "Heart rate",
           "de": "Herzfrequenz",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4538,11 +5801,17 @@
       "translations": [
         {
           "original": "Troponin I.cardiac [Mass/volume] in Serum or Plasma by High sensitivity method",
-          "de": "Hochsensitives kardiales Troponin I [Masse/Volumen] in Serum oder Plasma",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Troponin I.kardial [Masse/Volumen] in Serum oder Plasma mittels Hochsensitivitätsmethode",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4598,11 +5867,17 @@
       "translations": [
         {
           "original": "Respiratory syncytial virus RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Respiratorische Synzytialvirus-RNA [Nachweis] in Probe des Respiratorischen Systems von NAA mit Sondenerkennung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Respiratorisches Synzytial-Virus RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4622,11 +5897,17 @@
       "translations": [
         {
           "original": "Parainfluenza virus 3 RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Parainfluenzavirus 3 RNA [Nachweis] in Probe des Atemsystems durch NAA mit Sondenerkennung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Parainfluenza-Virus 3 RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4634,11 +5915,17 @@
       "translations": [
         {
           "original": "Parainfluenza virus 2 RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Parainfluenzavirus 2 RNA [Nachweis] in Proben des Atemsystems durch NAA mit Sondendetektion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Parainfluenza-Virus 2 RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4646,11 +5933,17 @@
       "translations": [
         {
           "original": "Parainfluenza virus 1 RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Parainfluenzavirus 1 RNA [Nachweis] in Proben des Atemsystems durch NAA mit Sondendetektion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Parainfluenza-Virus 1 RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4658,11 +5951,17 @@
       "translations": [
         {
           "original": "Influenza virus B RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Influenzavirus B RNA [Nachweis] in Proben des Atemsystems von NAA mit Sondendetektion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Influenza-Virus B RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4670,11 +5969,17 @@
       "translations": [
         {
           "original": "Influenza virus A RNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Influenzavirus A RNA [Nachweis] in Proben des Atemsystems von NAA mit Sondendetektion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Influenza-Virus A RNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4695,10 +6000,16 @@
         {
           "original": "Respiratory rate",
           "de": "Atemfrequenz",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4860,11 +6171,17 @@
       "translations": [
         {
           "original": "Adenovirus A+B+C+D+E DNA [Presence] in Respiratory system specimen by NAA with probe detection",
-          "de": "Adenovirus A+B+C+D+E DNA [Nachweis] in Proben des Atemsystems durch NAA mit Sondendetektion",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "Adenovirus A+B+C+D+E DNA [Nachweis] in Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4872,11 +6189,17 @@
       "translations": [
         {
           "original": "SARS-CoV-2 (COVID-19) RNA panel - Respiratory system specimen by NAA with probe detection",
-          "de": "SARS-CoV-2 (COVID-19) RNA-Panel - Probe des Atemsystems von NAA mit Sondenerkennung",
-          "source": "opus-mt-draft",
-          "review": "pending-medical-review"
+          "de": "SARS-CoV-2 (COVID-19) RNA (Liste) - Probenmaterial vom Respirationstrakt mittels Nukleinsäureamplifikation mit Sondendetektion",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -4929,11 +6252,17 @@
       "translations": [
         {
           "original": "Head Occipital-frontal circumference",
-          "de": "Okzipitofrontaler Kopfumfang",
-          "source": "editorial",
-          "review": "editorially-corrected"
+          "de": "Kopfumfang okzipital-frontal",
+          "source": "loinc-de-DE",
+          "review": "official-translation"
         }
-      ]
+      ],
+      "loinc": {
+        "version": "2.83",
+        "status": "ACTIVE",
+        "externalCopyrightNotice": "",
+        "externalCopyrightLink": ""
+      }
     },
     {
       "system": "http://loinc.org",
@@ -29470,5 +30799,9 @@
     "Patient has a high school education.": "Abschluss der US-amerikanischen Sekundarschule.",
     "Patient has completed some college courses.": "Einzelne Hochschulkurse absolviert.",
     "Patient is a college graduate.": "Hochschulabschluss."
+  },
+  "loincNotice": {
+    "copyright": "This material contains content from LOINC (http://loinc.org). LOINC is copyright © Regenstrief Institute, Inc. and the Logical Observation Identifiers Names and Codes (LOINC) Committee and is available at no cost under the license at http://loinc.org/license. LOINC® is a registered United States trademark of Regenstrief Institute, Inc.",
+    "conditionsUrl": "https://loinc.org/license"
   }
 }

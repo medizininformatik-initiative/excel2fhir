@@ -11,14 +11,8 @@ from synthea_to_excel import write_workbook
 
 
 class ConverterOptionsWorkflowTest(unittest.TestCase):
-    def test_shared_reference_defaults(self):
-        defaults = options.workflow_defaults()
-        self.assertEqual('false', defaults['SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER'])
-        self.assertEqual('true', defaults['SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION'])
-        self.assertEqual('false', defaults['SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER'])
-
-    def test_effective_values_replace_every_template_setting(self):
-        settings = options.workflow_defaults()
+    def test_generated_workbooks_contain_no_converter_settings(self):
+        settings = {}
         settings.update(PID_PREFIX='demo-', START_ID_CONDITION='47',
                         SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER='false')
         with patch('synthea_to_excel.apply_workbook_edits') as apply:
@@ -26,11 +20,7 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
         written = {parts[2]: base64.b64decode(parts[3]).decode()
                    for op in apply.call_args.args[1] if (parts := op.split('\t'))[0] == 'set'
                    and parts[1] == 'Konvertierungsoptionen'}
-        self.assertEqual(len(settings), len(written))
-        self.assertIn('PID_PREFIX = demo-', written.values())
-        self.assertIn('START_ID_CONDITION = 47', written.values())
-        self.assertIn('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = false', written.values())
-        self.assertIn('PID_SUFFIX =', written.values())
+        self.assertEqual({}, written)
 
     @patch('subprocess.run')
     def test_java_parser_failures_are_reported_before_conversion(self, run):
@@ -42,13 +32,6 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
                 options.resolve_config(path)
             payload = json.loads(run.call_args.kwargs['input'])
             self.assertEqual({}, payload['defaults'])
-
-    def test_properties_values_survive_csv_without_quotes_or_literal_newlines(self):
-        line = options.property_line('PID_PREFIX', 'a b,"\\\n')
-        self.assertNotIn('"', line)
-        self.assertNotIn(',', line)
-        self.assertNotIn('\n', line)
-        self.assertIn(r'\u0020', line)
 
     def test_each_requested_copy_is_audited_and_extra_patients_are_rejected(self):
         from check_synthea_roundtrip import check_configured
@@ -70,13 +53,10 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
                 check_configured({}, bundle, {}, {}, ['demo-p1'])
 
     @patch.object(options, 'resolve_config')
-    def test_named_variants_retain_independent_values_and_reject_collisions(self, resolve):
-        resolve.side_effect = [{'name': 'DIZ-A', 'values': {'PID_PREFIX': 'a-'}},
-                               {'name': 'DIZ-B', 'values': {'PID_PREFIX': 'b-'}}]
-        selected = options.selected_configs(['a.config', 'b.config'], ['patient1'])
-        self.assertEqual(['a-', 'b-'], [s['values']['PID_PREFIX'] for s in selected])
-        self.assertEqual(['a.config', 'b.config'], [s['path'] for s in selected])
-        resolve.assert_any_call('b.config', ['patient1'])
-        resolve.side_effect = [{'name': 'same'}, {'name': 'SAME'}]
-        with self.assertRaisesRegex(ValueError, 'the same output name'):
-            options.selected_configs(['first.config', 'second.config'])
+    def test_one_external_configuration_per_run(self, resolve):
+        resolve.return_value = {'name': 'DIZ-A', 'values': {'PID_PREFIX': 'A-'}, 'patients': {}}
+        self.assertEqual('DIZ-A', options.selected_configs(['a.config'])[0]['name'])
+        resolve.reset_mock()
+        with self.assertRaisesRegex(ValueError, 'one converter configuration'):
+            options.selected_configs(['a.config', 'b.config'])
+        resolve.assert_not_called()
