@@ -14,11 +14,11 @@ recommendations for a dedicated Docker environment and small datasets. They are
 not benchmarked minimums. CPU and disk recommendations allow for building images,
 initialization and retained results; no minimum CPU/disk threshold has been measured.
 
-The configured container memory ceilings total 6.625 GiB for the workbench,
-7.875 GiB with Blaze, and 8.875 GiB with HAPI and its database. The complete portal
-selection is about 20 GiB including the worker, TORCH and transient initializer,
-updater and evaluator containers. The RAM budgets round these ceilings upward
-with operating headroom. Limits are allocation ceilings, not measured consumption.
+The workbench container memory ceilings total about 2.8 GiB, or 4.8 GiB with
+Blaze. The full portal package adds the portal backend, Elasticsearch, Keycloak,
+TORCH, databases and initialization services. Plan 24 GiB of Docker memory for
+combined local testing and account for other running projects. These are planning
+budgets, not measured minimums; container limits are ceilings rather than actual usage.
 
 The workbench and individual FHIR services have run in an 8 GiB Docker VM.
 Portal queries, TORCH extraction and evaluation have been exercised in separate
@@ -40,7 +40,7 @@ runs, build cache and database growth can exceed the starting disk budget.
 | Workbench | http://localhost:5184 | `workbench` |
 | Blaze FHIR R4 | http://localhost:5190/fhir | `blaze-data` |
 | HAPI FHIR R4 | http://localhost:5191/fhir | `hapi-data` (PostgreSQL) |
-| Data Portal | https://localhost:5192 | Portal PostgreSQL, Elasticsearch, Keycloak PostgreSQL, TLS/login setup |
+| Data Portal | http://localhost:5192 | Portal PostgreSQL, Elasticsearch, Keycloak PostgreSQL, login setup |
 | TORCH | http://localhost:5193 | `torch-data` |
 | TORCH result files | http://localhost:5194 | `torch-data` (read-only file service) |
 
@@ -75,21 +75,25 @@ shared Blaze used by the portal too. Other FHIR validation rules still apply.
 
 ## Portal login and architecture
 
-The first portal start creates a local TLS certificate and a random password for
-user `workbench`. Trust the certificate for `https://localhost:5192` in the browser.
-Read the login and export the certificate with:
+The local portal uses HTTP on loopback only; no certificate installation is required.
+The first portal start automatically creates the local user `dataportaluser` with
+password `password` and display name **Data Portal User**. No manual account registration is needed. The workbench shows
+the login next to **Open Data Portal**.
+Read the generated username and password with:
 
 ```sh
 docker compose -f web/compose.yml run --rm --no-deps --entrypoint cat portal-init /setup/credentials.txt
-docker compose -f web/compose.yml run --rm --no-deps --entrypoint cat portal-init /setup/cert.pem > portal-cert.pem
 ```
 
-The setup volume retains both across restarts. Keycloak imports the realm only
+The output is JSON: use `username` and `password` on the portal sign-in page.
+The setup volume retains the login across restarts. A full data reset that removes
+both the setup volume and the Keycloak database recreates this default login on the next portal start.
+Keycloak imports the realm only
 when initializing its database. Manage subsequent login changes in Keycloak.
 The local login has the portal's user, power-user and administrator roles.
 
 The Data Portal includes the upstream UI, backend, PostgreSQL, Elasticsearch,
-ontology initializer, Keycloak and its PostgreSQL database, TLS proxy, and
+ontology initializer, Keycloak and its PostgreSQL database, HTTP proxy, and
 availability updater. It connects its direct CQL broker to Blaze. The Data Node
 side provides Blaze and TORCH extraction plus explicit FHIR Data Evaluator runs.
 The ontology initializer downloads ontology version `v5.0.0` on first startup;
@@ -132,7 +136,7 @@ Service definitions extend the selected files under `upstream/`, pinned to
 [Data Portal commit ce654d5](https://github.com/medizininformatik-initiative/dataportal/tree/ce654d58f02be004625234504af0315c33d8b294).
 `upstream/source.json` records source paths, checksums and small corrections
 to the Keycloak database health-check variables and backend proxy prefix.
-The local TLS proxy omits host-wide HSTS to preserve other localhost HTTP services. Overrides in
+The local HTTP proxy omits host-wide HSTS to preserve other localhost HTTP services. Overrides in
 `web/compose.yml` scope volumes, bind loopback ports, bound memory, configure
 local authentication, and connect the portal and extraction services to the
 shared Blaze. The local initializer constrains the upstream OAuth client to the
@@ -155,7 +159,7 @@ the expected catalogue value read back from Elasticsearch in separate stages.
 For a running local portal containing synthetic female Patients:
 
 ```sh
-python3 web/integration/smoke_portal_query.py /absolute/portal-cert.pem /absolute/credentials.json
+python3 web/integration/smoke_portal_query.py /absolute/credentials.json
 python3 web/integration/smoke_torch_profile.py PATIENT_ID
 ```
 
@@ -166,6 +170,5 @@ TORCH output. These probes create a portal query and extraction artifacts.
 
 The first ontology import and database migration can take several minutes.
 Inspect `docker compose -f web/compose.yml logs init-elasticsearch dataportal-backend`
-and check `https://localhost:5192/backend/api/v6/actuator/health` with the generated
-CA certificate before running the portal probe. Plan Docker memory for both the
+and check `http://localhost:5192/backend/api/v6/actuator/health` before running the portal probe. Plan Docker memory for both the
 selected services and existing workloads using the resource budgets above.

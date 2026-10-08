@@ -26,8 +26,7 @@ Each invocation creates a fresh run directory:
 
 ```text
 outputGlobal/run-YYYYMMDD_HH-mm-ss-excel-to-fhir/
-  fhir/
-    Konvertierungsoptionen/  JSON bundles and patients.ndjson
+  fhir/                     JSON bundles and patients.ndjson
   status.txt                Overall result
   details/
     csv/                    Extracted workbook data
@@ -53,7 +52,7 @@ input/variant directory. Both representations contain the same patient data.
 | `-f FILE` | Select one workbook. |
 | `-i DIRECTORY` | Select an input directory; default `input/`. Use either `-f` or `-i`. |
 | `-o DIRECTORY` | Output root; default `outputGlobal/`. |
-| `--converter-options FILE` | Select an external options file; repeat for multiple KDS variants. |
+| `--converter-options FILE` | Select one external configuration for this run. |
 | `-r FORMATS` | Comma-separated output formats; default `JSON,NDJSON`. |
 | `-p COUNT` | Maximum patients per bundle; default `1`. |
 | `-v` | Enable FHIR profile and terminology validation. |
@@ -74,31 +73,23 @@ docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -f input
 The data sheets describe the cases. Converter Options determine their FHIR
 representation, including reference directions and patient-ID generation.
 
-Each sheet whose name contains `Konvertierungsoptionen` defines an independent
-KDS variant. For example, `Konvertierungsoptionen_A` and
-`Konvertierungsoptionen_B` generate two variants of the same cases.
-External options files select the variants for an invocation:
+Each invocation uses one configuration. Supply it explicitly:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir \
-  --converter-options options/KDS-A.config \
-  --converter-options options/KDS-B.config
+java -jar target/excel2fhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
 ```
 
-Each file contains Properties text, for example:
+Without an external configuration, the converter uses its built-in defaults.
+Export an editable default configuration with either CLI:
 
-```properties
-SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER = true
-SET_REFERENCE_FROM_ENCOUNTER_TO_CONDITION = false
+```sh
+java -jar target/excel2fhir.jar --export-default-options options.config
 ```
 
-When external files are selected, they supply the run's options sets. Otherwise,
-the converter uses the workbook's options sheets. Missing values use shared
-defaults; an input with no options set uses the `default` variant.
-
-Variant directories use the sheet name or options filename without its extension.
-Spaces and special characters become `_`; names within an input must be unique.
-`details/options/` records every effective setting, including defaults.
+The export creates a new file. Edit it and pass it with `--converter-options`.
+Excel workbooks and CSV inputs contain case data; configuration files are supplied
+separately. Each run records its effective configuration under `details/options/`.
+Run the converter separately for each KDS variant.
 
 `CHECK_INPUT_CONSISTENCY=true` enables the workbook consistency checks. With
 `false`, the workbook precheck covers structure and options. Shared converter
@@ -115,8 +106,7 @@ for the implemented scope and syntax.
 ## CSV input
 
 CSV tables follow the workbook's columns. A run's `details/csv/` directory provides
-examples. An options file such as `Case_Konvertierungsoptionen_A.csv` contains
-Properties text from the options sheet.
+examples. Supply converter settings separately with `--converter-options`.
 
 Place the CSV files in `input/` and run:
 

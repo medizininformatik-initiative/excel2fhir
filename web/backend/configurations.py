@@ -132,27 +132,3 @@ def delete(configuration_id, revision):
         trash = root / '.trash'
         trash.mkdir(exist_ok=True)
         path_for(root, configuration_id).replace(trash / (item['id'] + '.json'))
-
-
-def start_jobs(source, selections, request_id, generation_settings=None, dataset_name=None):
-    dataset_name = store.normalize_dataset_name(dataset_name)
-    def prepare(prepared):
-        if len({selection['id'] for selection in selections}) != len(selections):
-            raise ValueError('Choose each saved configuration only once')
-        with locked() as root:
-            items = []
-            for selection in selections:
-                item = read(root, selection['id'])
-                check_revision(item, selection['revision'])
-                items.append(item)
-        batch_id = str(uuid4())
-        for item in items:
-            store.prepare_job(prepared, source, 'default', item['configurationProperties'],
-                              saved_configuration={key: item[key] for key in ('id', 'name', 'revision')},
-                              batch_id=batch_id, generation_settings=generation_settings, dataset_name=dataset_name)
-    descriptor = {'kind': 'saved', 'source': source, 'selections': selections}
-    if generation_settings is not None:
-        descriptor['generation'] = generation_settings
-    if dataset_name:
-        descriptor['datasetName'] = dataset_name
-    return store.submit(descriptor, request_id, prepare)

@@ -37,13 +37,17 @@ export type Rule = {
   resources: string[]
   system: string
   pattern: string
+  use?: string
+  countStart?: number
+  typeText?: string
+  typeCodings?: { system?: string; code?: string; display?: string }[]
 }
 export type Configuration = {
   schemaVersion: 1
   values: Record<string, Value>
   dar: Record<
     string,
-    { mode: 'unchanged' } | { mode: 'overwrite'; code: string }
+    { mode: 'unchanged' } | { mode: 'overwrite'; code: string; onlyWhenMissing?: boolean }
   >
   identifierRules: Rule[]
 }
@@ -59,6 +63,7 @@ export const identifierResources = [
     contract.resources
       .filter((r) => r.identifierEligible)
       .map((r) => r.identifierSelector ?? r.resourceType)
+      .concat(contract.identifierScopes.map(s => s.selector))
   )
 ].sort((a, b) => {
   const order = ['Encounter', 'Encounter.inpatient', 'Encounter.ambulatory']
@@ -131,6 +136,8 @@ export function resourceEnabled(
   resource: string,
   values: Configuration['values']
 ): boolean {
+  const scope = contract.identifierScopes.find(s => s.selector === resource)
+  if (scope?.level) return resourceEnabled('Encounter.inpatient', values) && values[`contact.${scope.level}.enabled`] === true
   if (resource.startsWith('Encounter.')) return values['resource.Encounter.enabled'] === true && values[`resource.${resource}.enabled`] === true
   if (['Patient', 'Location', 'Medication'].includes(resource))
     return values[`resource.${resource}.mode`] === 'generate-reference'
@@ -146,6 +153,11 @@ export function resourceEnabled(
 }
 // Navigation reflects effective settings without changing stored selections.
 export function resourceNavigationStatus(resource: string, values: Configuration['values']): 'generated' | 'referenced' | 'disabled' | 'parentDisabled' {
+  if (resource === 'Organization') {
+    if (values['resource.Encounter.enabled'] !== true) return 'parentDisabled'
+    const provider = values['resource.Encounter.stationServiceProvider']
+    return provider === 'reference-only' ? 'referenced' : provider === 'generate-reference' || provider === 'contained' ? 'generated' : 'disabled'
+  }
   if (resource.startsWith('Encounter.') && values['resource.Encounter.enabled'] !== true) return 'parentDisabled'
   const mode = values[`resource.${resource}.mode`]
   if (mode === 'reference-only') return 'referenced'
@@ -218,7 +230,7 @@ export function patternTokens(pattern: string): Token[] {
 }
 export async function previewIdentifier(rule: Rule): Promise<string> {
   const selector = rule.resources[0] ?? 'Patient'
-  const resourceType = contract.resources.find((r) => (r.identifierSelector ?? r.resourceType) === selector)?.resourceType ?? selector
+  const resourceType = contract.resources.find((r) => (r.identifierSelector ?? r.resourceType) === selector)?.resourceType ?? contract.identifierScopes.find(s => s.selector === selector)?.resourceType ?? selector
   const context = [rule.id.toLowerCase(), resourceType, 'example-1', '0']
   const encoder = new TextEncoder()
   const input = context
@@ -230,7 +242,7 @@ export async function previewIdentifier(rule: Rule): Promise<string> {
     .join('')
     .slice(0, 32)
   const sample: Record<string, string> = {
-    count: '1',
+    count: String(rule.countStart ?? 1),
     patientId: 'patient-1',
     resourceId: 'example-1',
     resourceType,

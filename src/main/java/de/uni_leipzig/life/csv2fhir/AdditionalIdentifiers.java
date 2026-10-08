@@ -12,6 +12,7 @@ public final class AdditionalIdentifiers {
     private final Map<String, List<Long>> allocated = new HashMap<>();
     private final Map<String, String> patientIds = new HashMap<>();
     private final Map<String, Set<String>> owners = new HashMap<>();
+    private final Map<String, ContactIndex.Level> contactLevels = new HashMap<>();
     private final Map<String, String> ownerRules = new HashMap<>();
     public AdditionalIdentifiers(ContractConfiguration configuration) {
         rules = configuration == null ? List.of() : configuration.identifierRules().stream()
@@ -29,10 +30,12 @@ public final class AdditionalIdentifiers {
         for (Resource resource : potential) {
             String identity = identity(resource, iteration);
             if (allocated.containsKey(identity)) continue;
+            if (resource instanceof Encounter) context.contacts().get((Encounter)resource)
+                    .ifPresent(entry -> contactLevels.put(identity, entry.level()));
             List<Long> counts = new ArrayList<>();
             for (Map<String, String> rule : rules) {
-                if (!rule.get("ENABLED").equals("true") || !selects(rule, resource)) continue;
-                long count = Math.addExact(counters.getOrDefault(rule.get("ID"), 0L), 1);
+                if (!rule.get("ENABLED").equals("true") || !selects(rule, resource, contactLevels.get(identity))) continue;
+                long count = Math.addExact(counters.getOrDefault(rule.get("ID"), Long.parseLong(rule.getOrDefault("COUNT_START", "1")) - 1), 1);
                 counters.put(rule.get("ID"), count);
                 counts.add(count);
             }
@@ -53,22 +56,35 @@ public final class AdditionalIdentifiers {
         for (Identifier identifier : existing) register(identifier, identity, "existing identifier");
         int index = 0;
         for (Map<String, String> rule : rules) {
-            if (!rule.get("ENABLED").equals("true") || !selects(rule, resource)) continue;
+            if (!rule.get("ENABLED").equals("true") || !selects(rule, resource, contactLevels.get(identity))) continue;
             Identifier identifier = new Identifier().setSystem(rule.get("SYSTEM")).setValue(expand(rule.get("PATTERN"),
                     generated.get(index++), patientIds.get(identity), resource, iteration, rule.get("ID")));
+            if (!rule.getOrDefault("USE", "").isEmpty()) identifier.setUse(Identifier.IdentifierUse.fromCode(rule.get("USE")));
+            if (!rule.getOrDefault("TYPE_TEXT", "").isEmpty()) identifier.getType().setText(rule.get("TYPE_TEXT"));
+            for (var coding : ContractConfiguration.identifierTypeCodings(rule))
+                identifier.getType().addCoding(new Coding(coding.path("system").asText(null),
+                        coding.path("code").asText(null), coding.path("display").asText(null)));
             register(identifier, identity, rule.get("ID"));
-            if (existing.stream().noneMatch(e -> Objects.equals(e.getSystem(), identifier.getSystem()) && Objects.equals(e.getValue(), identifier.getValue()))) {
+            if (existing.stream().noneMatch(e -> e.equalsDeep(identifier))) {
                 output.setProperty("identifier", identifier.copy());
                 existing.add(identifier);
             }
         }
         return output;
     }
-    private static boolean selects(Map<String, String> rule, Resource resource) {
+    private static boolean selects(Map<String, String> rule, Resource resource, ContactIndex.Level level) {
         var selectors = Arrays.asList(rule.get("RESOURCES").split(","));
         if (selectors.contains(resource.fhirType())) return true;
-        return resource instanceof Encounter && EncounterOutputPolicy.scope((Encounter)resource) != null
-                && selectors.contains("Encounter." + EncounterOutputPolicy.scope((Encounter)resource));
+        if (resource instanceof Observation)
+            return selectors.contains(ClinicalEncounterAssignment.optionResource(resource));
+        if (resource instanceof Encounter) {
+            String scope = EncounterOutputPolicy.scope((Encounter)resource);
+            if (scope == null) return false;
+            String selector = "Encounter." + scope;
+            return selectors.contains(selector) || (level != null
+                    && selectors.contains(selector + "." + ContactOutputPolicy.name(level)));
+        }
+        return false;
     }
     private void register(Identifier identifier, String identity, String rule) {
         if (!identifier.hasSystem() || !identifier.hasValue()) return;

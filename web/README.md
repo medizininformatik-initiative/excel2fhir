@@ -16,8 +16,9 @@ The workbench has three tabs: **Generate & convert**, **Runs**, and
 **Provide & use data**. Starting a run successfully opens **Runs** and selects
 that run. Tab changes preserve the current settings and dataset selection.
 A completed run offers **Load into FHIR servers**, which opens the upload tab
-with its available datasets selected. That tab also checks Data Portal and
-TORCH availability and provides links or expandable Compose startup commands.
+with its available datasets selected. That tab provides a shared startup command for the Data Portal package and
+a primary link to the portal. An expandable TORCH section contains its separate
+readiness status and extraction API guide.
 The Data Portal supports feasibility queries and cohort selection; the TORCH
 link opens its API health status, with extraction instructions linked separately.
 
@@ -38,8 +39,7 @@ for subsequent visits; validation determines whether the configuration can be ex
 **Export file** downloads its
 versioned UTF-8 `.config` file with uppercase variable names and comments in the
 selected interface language. Inactive selections are commented out and retained
-when imported again. Each line can be pasted into a separate row in column A of
-a `Konvertierungsoptionen` sheet. **Import file** accepts `.config` and JSON
+when imported again. **Import file** accepts `.config` and JSON
 configurations and validates them before replacing the current draft. See the
 [configuration format](catalog/options/README.md#properties-export-and-import)
 for values, comments, DAR fields and identifier rules. Imports and **Restore defaults**
@@ -47,27 +47,48 @@ are saved automatically. Invalid drafts cannot be exported. Imports reject unkno
 unsupported schema versions, duplicate assignments, JSON members or rule IDs, unsuitable DAR
 codes and invalid identifier patterns.
 
+DAR rules offer three choices: unchanged, add DAR only when missing, or always
+replace. Missing-only rules retain existing values and existing DAR, including
+values derived during conversion. Always-replace rules replace both with the
+selected DAR. Common Encounter rules apply unless an active inpatient or outpatient
+rule overrides them for that field; unchanged in a class-specific rule inherits
+the common rule. Generation follows the selected configuration; optional FHIR
+validation separately evaluates the resulting resources.
+
 DAR replacements require a field-specific code. Resource selection controls their
 availability; existing DAR selections remain stored when unavailable. Conditional
 codes display the applicable narrative or procedure condition. Identifier rules
 retain their UUID when edited or imported and provide deterministic sample
-previews. The preview uses counter 1 and repetition 0 with example resource and
+previews. The preview uses the configured counter start and repetition 0 with example resource and
 patient IDs, and caps displayed counter padding at 256 characters. The identifier system shows an example placeholder while empty and unfocused.
+Resource choices show their FHIR resource type. Identifier rules can target inpatient
+facility, department or ward/service encounters separately, and distinguish laboratory
+observations from vital signs. Selecting a broader group includes its subgroups; a rule
+adds only one identifier per matching resource even when selections overlap.
+Encounter identifiers are created through configured identifier rules. The converter
+does not add an implicit hospital case-number identifier. Resource IDs and
+references are independent of additional identifiers. The Resources navigation
+shows Organization indented below Encounter; its status follows the station
+service-provider setting, and its link opens that setting.
+
+Counter start sets the first `{count}` value for each rule (default: 1), including
+padded forms such as `{count:08}`. Each new run begins at this value. The `{` and `}`
+buttons insert escaped literal braces (`{{` and `}}`) into the pattern.
 Pattern tokens use compact buttons with explanations on hover or keyboard focus,
 and can be clicked to insert at the
 cursor, replace selected text, or append when no cursor position is available.
 Actual resource counters and collision checks belong to converter execution.
 
-With the editor source selected, **Start conversion** submits its configuration
+**Start conversion** submits the current editor configuration
 as versioned Properties. The API validates it with the Java converter before queuing the job.
 Each job keeps its own input, configuration and converter fingerprint. Later
 editor changes apply to subsequent jobs. Invalid drafts disable the start action
-only when the editor source is selected;
+for KDS conversion;
 server-side validation errors are displayed without creating a job.
 
 ## Saved configurations
 
-With **Current editor settings** selected, use **Save editor configuration**, the
+Use **Save editor configuration**, the
 first action above the saved configurations, to save an executable editor draft
 under a name. Configurations persist as JSON documents
 in the workbench volume and are available across browser sessions and container
@@ -102,9 +123,8 @@ inspection lists table names and row counts, excluding each header.
 Clinical consistency checks run during conversion according to the selected
 configuration.
 
-Uploaded inputs support embedded settings, the editor draft and multiple saved
-configurations. Each run receives its own copy and SHA-256 checksum; repeating a
-run uses that saved copy. Filenames are display labels, not filesystem paths.
+Uploaded inputs use the current editor settings. Each run receives its own input
+copy and SHA-256 checksum. Filenames are display labels, not filesystem paths.
 ZIP archives retain their original bytes; each run extracts its own input directory.
 
 Synthea inspection counts patients and resources, rejects duplicate patient IDs
@@ -112,11 +132,9 @@ and identifies bundles without patients. The import skips those bundles. Each
 patient bundle must contain one Patient with an ID. The worker runs the existing
 Synthea-to-Excel-to-FHIR pipeline using LibreOffice, the bundled template and
 German mappings. Results include the generated workbooks, source comparison,
-projection-loss reports and effective configuration. Choose input configuration
-for importer defaults, or the editor/saved configurations for independent KDS
-variants. Each snapshot also fingerprints the import scripts, template and
-mappings. Repeating uses the saved source with the current importer and records
-the original importer fingerprint.
+projection-loss reports and effective configuration. The current editor settings
+control the KDS conversion. Each snapshot also fingerprints the import scripts,
+template and mappings.
 
 ## Generate Synthea inputs
 
@@ -125,6 +143,13 @@ age range, sex, patient and clinician seeds, age reference date, simulation end,
 US state/city and exported history. Zero history years exports the full history.
 The supplied example uses one patient, ages 30–80, Massachusetts, seeds `20260912`
 and 12 September 2026 for both dates, matching the standalone workflow.
+
+Enable **Use the current timestamp as seed** to fill the patient and clinician
+seeds from the Unix timestamp in milliseconds when submitting the run. Manual seed
+fields are disabled while this option is selected; switching it off restores their
+values. An explicitly configured single-person seed also uses that timestamp when
+requesting one patient. The resolved values are saved with the run. Loading a run
+into the editor selects its saved manual seeds, allowing reproducible generation.
 
 Advanced settings provide living/deceased selection, the bundled patient-selection
 modules, an optional single-person seed, simulation timestep, attempt limit,
@@ -143,43 +168,41 @@ have descriptive names and show their actual criteria.
 Choose **Synthea FHIR – original data** to generate FHIR R4 JSON without Excel
 or KDS conversion. The dataset download retains Synthea patient identities,
 US addresses, organizations and clinicians. KDS configuration controls are
-inactive for this output. The run records its generator settings and supports
-repeat, cancellation, resource inspection and downloads. No KDS validation or
+hidden for this output. The run records its generator settings and supports
+loading into the editor, cancellation, resource inspection and downloads. No KDS validation or
 clinical projection is performed. The displayed patient count excludes auxiliary
 organization and clinician bundles.
 
 Choose **KDS FHIR – convert Synthea data** to use the clinical import pipeline.
-Choose input configuration for importer defaults or the editor/saved configurations
-for KDS variants. Each selected configuration receives a separate generation and
-conversion run with identical saved generator settings. Seeds, dates, settings,
-generator revision and hashes are recorded. Repeats preserve these settings and
-use the installed generator/importer, recording their original version hashes.
+The current editor settings apply to the conversion. Seeds, dates, settings,
+generator revision and hashes are recorded.
 Runs show requested, actually exported and successfully imported source-patient
 counts separately. Extra deceased patients can increase the exported count.
 
 The web workflow accepts 1–1000 requested patients per run and up to 10,000
-attempts per patient slot. It uses two Synthea threads, a 4 GiB generator heap
-and a 6 GiB worker container; jobs run sequentially. Generated FHIR, editable
+attempts per patient slot. Generation defaults to ages 18–80, five years of history and disabled overflow.
+It uses one Synthea thread, a 1.5 GiB generator heap, a 1 GiB converter heap
+and a 2200 MiB worker container; jobs run sequentially. Generated FHIR, editable
 workbooks, original Synthea bundles, workflow reports and logs are included in
 the download. See the [Synthea workflow](../docs/synthea-workflow.md) for output
 layout and seed semantics.
 
-## Run saved configurations and repeat runs
+Memory exhaustion appears explicitly in the run details and run list. The worker
+checks Java/Python memory errors and operating-system OOM events, including when
+Synthea exits with code zero. A killed process without OOM evidence is identified
+separately. Partial output may be incomplete; diagnostics are included in the download.
 
-Choose **Saved configurations** as the configuration source and select one or
-more entries. Starting creates one independent run per selected configuration,
-using the same input. Each snapshot records its configuration name,
-revision and settings. The shared submission identifier groups the runs; the
-worker processes them sequentially. A stale or invalid selection prevents the
-entire submission. Repeated delivery of the same submission returns its existing
-runs instead of creating duplicates.
+## Start a run or load a previous run
 
-Each finished, failed, cancelled or interrupted run offers **Repeat run**. It
-copies the original input and settings, even if the saved configuration or
-bundled input has since changed. The new run uses the currently installed
-converter and records both its version hash and the source run's version hash.
-Existing results remain attached to their original runs. Repeating a run does
-not depend on the current editor draft or configuration selection.
+Starting uses the selected input and the current editor settings. A run contains
+one configuration, saved as an immutable snapshot. Retrying a submission after a
+network interruption returns the same run instead of creating a duplicate.
+
+**Load into editor** on a completed, failed, cancelled or interrupted run restores
+its saved input, dataset name, generator settings and configuration for review.
+Loading starts no job. Edit the settings as needed and use the normal start button.
+A new run uses the installed converter and generator; existing results remain
+attached to their original runs.
 
 ## Inspect datasets and reports
 
@@ -202,13 +225,12 @@ The worker records a persistent dataset manifest and archive checksum. It indexe
 finished runs when idle and publishes each manifest atomically. The inspection
 JVM has a 512 MiB heap and a five-minute timeout; an inspection failure remains
 visible without changing the converter outcome. Run search filters by source,
-configuration name, run ID or status. **Repeat run** reuses the original input
-and settings; existing datasets remain available independently of a new run.
+configuration name, run ID or status. **Load into editor** restores the original input
+and settings for review; existing datasets remain available independently of a new run.
 
 Before starting a run, optionally enter a **Dataset name**. The name appears before
 the source and configuration in dataset lists and is searchable in the run history.
-An empty field uses the automatic label. Runs started together share the entered
-name and retain their configuration labels; repeating a run preserves its name.
+An empty field uses the automatic label. Loading a run into the editor restores its name.
 The name is display metadata and does not change generated FHIR content or resource IDs.
 
 ## Load datasets into a FHIR server
@@ -249,13 +271,9 @@ endpoints; server lifecycle remains controlled by Docker Compose.
 docker compose -f web/compose.yml up -d --build
 ```
 
-Open <http://localhost:5184>, choose an input and a **Configuration source**,
-then select **Start conversion**. **Configuration from input** runs included Excel configuration sheets or CSV option
-files as separate variants, or converter defaults if none exist.
-**Current editor settings** uses the editable draft below. When the input configuration source is
-selected, the retained editor draft is greyed out; it does not preview embedded
-settings. New browser sessions default to the workbook source; the last selected
-source is saved in the browser. Select a run to view its status and
+Open <http://localhost:5184>, choose an input, adjust the editor settings and
+select **Start conversion**. Saved configurations and configuration files load
+into the editor for review before starting. Select a run to view its status and
 recent logs. **Snapshot** downloads the submitted configuration and input and
 converter fingerprints. **Download** provides a ZIP containing FHIR results,
 converter reports, effective options and logs, including for failed validation
@@ -279,7 +297,7 @@ The workbench listens on the local loopback interface. It is intended for one
 local user. The web service publishes the workbench port; API and worker communicate
 through SQLite and persistent files. Neither service receives the Docker socket.
 The workbench offers the two bundled inputs and uploaded workbooks, CSV archives and Synthea bundles with embedded,
-editor or saved configurations.
+editor settings.
 Saved configurations and uploaded inputs are stored in the local workbench volume.
 Optional FHIR servers and the local Data Portal are selected with Compose profiles; see
 [local services](deployment/README.md).
@@ -308,10 +326,8 @@ for the next workbench increments. The shared converter integration comes next;
 bounded parallel execution follows the shared-state and resource-budget audit.
 
 1. FastAPI copies the selected input into a UUID job directory and records the
-   selected configuration source. For editor settings, it also saves and validates
-   the submitted configuration with Java. Workbook settings are read by the
-   converter from the saved workbook. It writes the JSON snapshot, then inserts
-   the SQLite job.
+   submitted editor configuration. It validates the configuration with Java,
+   writes the JSON snapshot, then inserts the SQLite job.
    The snapshot includes the converter JAR hash. A queued job fails explicitly
    if its converter image changes before execution.
 2. SQLite WAL and short `BEGIN IMMEDIATE` claims allow independent jobs without
@@ -322,8 +338,10 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    the API uses a smaller Java/Python image. Both use the same converter build
    and import assets. Input inspection runs serially with a 256 MiB JVM or Python
    address-space budget and a 60-second timeout.
-   The worker gets two CPUs and 6 GiB RAM; the JVM heap is capped at 3 GiB
-   to load the bundled FHIR validation profiles.
+   The worker gets two CPUs and a 6 GiB memory ceiling. Synthea uses a 1536 MiB
+   JVM heap; conversion uses a 1 GiB heap without validation and 3 GiB with
+   validation to load the bundled profiles. The ceiling is not reserved memory. Budget Docker VM memory for all
+   simultaneously running services, including the optional portal and FHIR servers.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not
    capacity measurements for large generation or validation workloads.
 4. `EncounterConverter` contains mutable static contact pointers, collections of
@@ -444,3 +462,45 @@ The small FDE Measure uses the structure of the
 See [DAR catalogue maintenance](catalog/dar/README.md) for generation and verification.
 
 See [configuration implementation TODOs](TODO.md) for agreed behavior and remaining work.
+
+
+## Run files and history
+
+Run details list JSON, NDJSON, XML, Excel, logs and other files in separate groups.
+The format selection controls converted FHIR results in `fhir/`. Source bundles,
+configuration snapshots and reports under `details/` remain JSON even when only
+NDJSON output is selected.
+Validation and projection reports appear below the result files. “Download entire
+run” saves the output, logs and `snapshot.json` together. “Load input and settings”
+restores the run input, generator settings and FHIR configuration in the editor
+for editing and starting another run.
+
+Completed, failed, cancelled and interrupted runs can be deleted after confirmation.
+This removes their local input copies, results and logs. Existing FHIR server data
+and upload history are retained. Queued/running jobs and runs used by an active
+upload cannot be deleted. Shared source files in the input library are retained.
+
+Run duration starts when the worker claims a job, excluding queue time, and ends
+after result preparation. It appears in the run list and details, the log, and
+`timing.json` in the run ZIP. Historical runs without recorded timing show no
+estimated duration; an interrupted run with no recorded end time has no final
+duration.
+
+Upload history shows the HTTP response counts and original server diagnostics
+reported by blazectl. Accepted and rejected counts refer to bundles, not patients.
+A partial upload can leave successfully accepted data on the server. The full
+upload log remains available, including for uploads whose local run was deleted.
+
+## Updating the local workbench
+
+Build and update API and worker together whenever converter or import-pipeline
+files change. Both services must contain identical converter and importer assets:
+
+```sh
+docker compose -f web/compose.yml build api worker web
+docker compose -f web/compose.yml up -d --no-deps api worker web
+```
+
+Wait for active runs and uploads to finish before updating. Submitted runs retain
+the converter and importer fingerprints; execution rejects mismatched versions.
+The Synthea comparison uses the bundled DAR and option catalogues.

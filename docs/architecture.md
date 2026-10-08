@@ -83,13 +83,14 @@ unmapped fields and missing target facts. `DarOverrides` then applies the bundle
 field catalogue to output copies. It preserves coding discriminators, replaces
 measurement values with `dataAbsentReason`, and clears attachment size/hash with
 the bytes. Missing scalar choices use the converter’s dateTime representation;
-repeated parents are never synthesized. Narrative requirements and incompatible
-Condition status/end combinations fail explicitly.
+repeated parents are never synthesized. DAR replacements are applied independently
+of narrative availability and Condition status/end validity.
 
 `EncounterOutputPolicy` transforms output ends after internal matching. `ContactIndex`
 retains whether each original row supplied an end value independently of later
-derivations. Class-scoped DAR overrides common Encounter DAR; final status and
-location periods follow the actual output end. See [encounter end semantics](../web/catalog/options/README.md#encounter-classes-and-output-end-rules).
+derivations. End policies update status before DAR. Class-scoped DAR overrides
+common Encounter DAR; location periods mirror the final period while DAR preserves
+the pre-DAR Encounter and location statuses. See [encounter end semantics](../web/catalog/options/README.md#encounter-classes-and-output-end-rules).
 
 `AdditionalIdentifiers` has one instance per option set. It allocates counts over
 original resources and potential medication derivatives before output selection,
@@ -102,8 +103,8 @@ unchanged in the immutable job snapshot.
 
 The Python importer projects Synthea R4 bundles into copies of the Excel template.
 LibreOffice/UNO fills existing cells while preserving workbook formatting.
-Generated options sheets contain the shared converter defaults. Selected external
-options files and conversion parameters are passed to Excel2FHIR.
+Generated workbooks contain case data. One external configuration and conversion
+parameters are passed to Excel2FHIR; without a file, shared defaults apply.
 
 | Component | Responsibility |
 | --- | --- |

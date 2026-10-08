@@ -2,13 +2,17 @@ import sys
 from pathlib import Path
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from check_synthea_roundtrip import configured_condition_reference
+from check_clinical_references import matching_contact
 
 
 def contact(identifier, level, start, end, kind='IMP', secondary=None):
-    return {'resourceType': 'Encounter', 'id': identifier, 'class': {'code': kind},
-            'type': [{'coding': [{'code': level}, {'code': secondary}]}],
-            'period': {'start': start, 'end': end}}
+    levels = {'einrichtungskontakt': 'facility', 'abteilungskontakt': 'department', 'versorgungsstellenkontakt': 'ward-service'}
+    return {'id': identifier, 'level': levels[level], 'start': start, 'end': end, 'cls': kind, 'kind': secondary or ''}
+
+
+def configured_condition_reference(condition, resources, level):
+    return matching_contact({r['id']: r for r in resources}, [condition.get('recordedDate')], level, {})
+
 
 
 class ConfiguredConditionReferenceTests(unittest.TestCase):

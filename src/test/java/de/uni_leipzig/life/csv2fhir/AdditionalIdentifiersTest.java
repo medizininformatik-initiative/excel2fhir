@@ -17,6 +17,72 @@ public class AdditionalIdentifiersTest {
         for (Resource resource : resources) result.recordInput(resource, new ConverterResult.InputContext("effective-patient-2", List.of(), 1, false));
         return result;
     }
+    @Test public void counterStartAppliesAcrossResourcesAndRepetitions() throws Exception {
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        String config = settings("{count}-{count:08}") + "IDENTIFIER_RULE_1_COUNT_START=500\n";
+        ConverterResult context = context(config, p, o);
+        AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p,o), context, 0);
+        assertEquals("500-00000500", ((Patient)ids.output(p,0)).getIdentifierFirstRep().getValue());
+        assertEquals("501-00000501", ((Observation)ids.output(o,0)).getIdentifierFirstRep().getValue());
+        ids.reserve(List.of(p), context, 1);
+        assertEquals("502-00000502", ((Patient)ids.output(p,1)).getIdentifierFirstRep().getValue());
+        for (String invalid : List.of("0", "-1", "1.5", "9007199254740992", "no", ""))
+            assertThrows("Invalid start: " + invalid, IllegalArgumentException.class, () -> ContractConfiguration.parse(settings("{count}") + "IDENTIFIER_RULE_1_COUNT_START=" + invalid + "\n"));
+    }
+    @Test public void selectsContactLevelsAndObservationCategories() throws Exception {
+        Encounter facility = new Encounter(); facility.setId("facility"); facility.setClass_(new Coding().setCode("IMP"));
+        Encounter department = new Encounter(); department.setId("department"); department.setClass_(new Coding().setCode("IMP"));
+        Encounter ward = new Encounter(); ward.setId("ward"); ward.setClass_(new Coding().setCode("IMP"));
+        Encounter ambulatory = new Encounter(); ambulatory.setId("ambulatory"); ambulatory.setClass_(new Coding().setCode("AMB"));
+        Observation lab = new Observation(); lab.setId("lab");
+        lab.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
+        Observation vital = new Observation(); vital.setId("vital");
+        vital.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("vital-signs");
+        List<Resource> resources = List.of(facility, department, ward, ambulatory, lab, vital);
+        var expected = java.util.Map.of("Encounter.inpatient.facility", List.of("facility"),
+                "Encounter.inpatient.department", List.of("department"),
+                "Encounter.inpatient.ward-service", List.of("ward"),
+                "Encounter.inpatient", List.of("facility", "department", "ward"),
+                "Encounter.ambulatory", List.of("ambulatory"),
+                "Encounter", List.of("facility", "department", "ward", "ambulatory"),
+                "Observation.laboratory", List.of("lab"), "Observation.vitalSigns", List.of("vital"),
+                "Observation", List.of("lab", "vital"),
+                "Encounter.inpatient,Encounter.inpatient.department", List.of("facility", "department", "ward"));
+        for (var selection : expected.entrySet()) {
+            String config = settings("{resourceType}-{count}").replace("Patient,Observation,MedicationAdministration,MedicationStatement", selection.getKey());
+            ConverterResult context = context(config, resources.toArray(Resource[]::new));
+            context.contacts().add(facility, "p", "facility", ContactIndex.Level.FACILITY, null, 1, false);
+            context.contacts().add(department, "p", "facility", ContactIndex.Level.DEPARTMENT, "facility", 2, false);
+            context.contacts().add(ward, "p", "facility", ContactIndex.Level.WARD_SERVICE, "department", 3, false);
+            context.contacts().add(ambulatory, "p", "ambulatory", ContactIndex.Level.FACILITY, null, 4, false);
+            AdditionalIdentifiers ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+            ids.reserve(resources, context, 0);
+            for (Resource resource : resources) {
+                Resource output = ids.output(resource.copy(), 0);
+                List<Identifier> identifiers = output instanceof Encounter ? ((Encounter)output).getIdentifier() : ((Observation)output).getIdentifier();
+                assertEquals(selection.getKey() + ": " + resource.getId(), selection.getValue().contains(resource.getId()) ? 1 : 0, identifiers.size());
+            }
+        }
+    }
+    @Test public void preservesFreelyChosenTypesAcrossResourceKinds() throws Exception {
+        String settings = settings("{count}") + "IDENTIFIER_RULE_1_USE=secondary\n"
+                + "IDENTIFIER_RULE_1_TYPE_TEXT=Test type\n"
+                + "IDENTIFIER_RULE_1_TYPE_CODINGS=[{\"system\":\"http://terminology.hl7.org/CodeSystem/v2-0203\",\"code\":\"VN\"},{\"system\":\"urn:custom\",\"code\":\"deliberately-wrong\",\"display\":\"Example\"}]\n";
+        Patient p = new Patient(); p.setId("p"); Observation o = new Observation(); o.setId("o");
+        var context = context(settings, p, o);
+        var ids = new AdditionalIdentifiers(context.getConverterOptions().configuration());
+        ids.reserve(List.of(p, o), context, 0);
+        for (Resource resource : List.of(p, o)) {
+            Resource out = ids.output(resource, 0);
+            Identifier id = out instanceof Patient ? ((Patient)out).getIdentifierFirstRep() : ((Observation)out).getIdentifierFirstRep();
+            assertEquals(Identifier.IdentifierUse.SECONDARY, id.getUse());
+            assertEquals("Test type", id.getType().getText());
+            assertEquals(2, id.getType().getCoding().size());
+            assertEquals("VN", id.getType().getCodingFirstRep().getCode());
+            assertEquals("deliberately-wrong", id.getType().getCoding().get(1).getCode());
+        }
+    }
     @Test public void countsAcrossTypesAndIterationsAndCountsRepeatedSerializationOnce() throws Exception {
         String settings = settings("{count:03}-{patientId}-{resourceType}-{iteration}");
         Patient p = new Patient(); p.setId("p"); p.addIdentifier().setSystem("urn:original").setValue("original");

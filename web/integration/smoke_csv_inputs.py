@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         item = uploaded.json()
         assert item['inspection']['valid']
         assert any(sheet['name'] == 'Person' and sheet['rows'] > 0 for sheet in item['inspection']['sheets'])
-        created = client.post('/api/jobs', json={'source': item['id'], 'profile': 'default',
+        created = client.post('/api/jobs', json={'source': item['id'],
                               'configurationProperties': 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n',
                               'requestId': str(uuid4())})
         assert created.status_code == 201, created.text
@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
         assert uploaded_csv.status_code == 201, uploaded_csv.text
         csv_item = uploaded_csv.json()
         assert csv_item['kind'] == 'csv'
-        response = client.post('/api/jobs', json={'source': csv_item['id'], 'profile': 'default',
+        response = client.post('/api/jobs', json={'source': csv_item['id'],
                               'configurationProperties': 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n',
                               'requestId': str(uuid4())})
         assert response.status_code == 201, response.text
@@ -69,7 +69,8 @@ with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
             assert counts
             return counts
         assert resources(csv_folder) == resources(store.ROOT / 'jobs' / job['id'])
-        repeated = client.post(f"/api/jobs/{csv_job['id']}/repeat", json={'requestId': str(uuid4())})
+        loaded = client.post(f"/api/jobs/{csv_job['id']}/editor").json()
+        repeated = client.post("/api/jobs", json=loaded)
         assert repeated.status_code == 201, repeated.text
         repeat_id = repeated.json()['id']
         assert store.claim() == repeat_id

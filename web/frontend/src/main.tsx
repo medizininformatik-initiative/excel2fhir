@@ -1,3 +1,4 @@
+import { resolveGenerationSeeds } from './generation-seeds'
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { Download, Play, Square, Activity } from 'lucide-react'
@@ -7,15 +8,15 @@ import './index.css'
 import { ListExpansion } from './ListExpansion'
 import { ServiceLinks } from './ServiceLinks'
 import { FhirUploads } from './FhirUploads'
+import { Help } from './Help'
 import { DatasetResults } from './DatasetResults'
 import { GenerationSettings, type Generation } from './GenerationSettings'
 import { InputSelection } from './InputSelection'
-import { SavedConfigurationSelection, type ConfigurationSelection } from './SavedConfigurationSelection'
 import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
-import { exportPropertiesConfiguration } from './configuration-properties'
+import { exportPropertiesConfiguration, importRunProperties } from './configuration-properties'
 
-type Job = { dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
+type Job = { duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -37,14 +38,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try { return await response.json() }
   catch { throw new InterfaceError('app.error.unexpected') }
 }
-async function submitRuns<T>(path: string, payload: object): Promise<T> {
+async function submitRuns<T>(path: string, payload: { generation?: Generation | null; [key: string]: unknown }): Promise<T> {
   const key = 'pendingSubmission:' + path
   const signature = JSON.stringify(payload)
-  let previous: { signature: string; id: string } | null = null
+  let previous: { signature: string; id: string; timestamp?: number } | null = null
   try { previous = JSON.parse(sessionStorage.getItem(key) ?? 'null') } catch { /* Start a fresh submission. */ }
   const id = previous?.signature === signature ? previous.id : crypto.randomUUID()
-  sessionStorage.setItem(key, JSON.stringify({ signature, id }))
-  const result = await request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, requestId: id }) })
+  const timestamp = previous?.signature === signature ? previous.timestamp ?? Date.now() : Date.now()
+  const resolved = payload.generation ? { ...payload, generation: resolveGenerationSeeds(payload.generation, timestamp) } : payload
+  sessionStorage.setItem(key, JSON.stringify({ signature, id, timestamp }))
+  const result = await request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...resolved, requestId: id }) })
   sessionStorage.removeItem(key)
   return result
 }
@@ -74,12 +77,9 @@ function App() {
   const [source, setSource] = useState('starter')
   const [generation, setGeneration] = useState<Generation | null>(null)
   const [uploadingInput, setUploadingInput] = useState(false)
-  const [configurationSource, setConfigurationSource] = useState(() => { const saved = localStorage.getItem('configurationSource'); return saved === 'editor' || saved === 'saved' ? saved : 'workbook' })
-  const [runConfigurations, setRunConfigurations] = useState<ConfigurationSelection[]>([])
-  const [repeatConfirmation, setRepeatConfirmation] = useState<string | null>(null)
-  useEffect(() => { localStorage.setItem('configurationSource', configurationSource) }, [configurationSource])
+  const [editorLoad, setEditorLoad] = useState<{ configuration: Configuration; generation?: Generation; key: number } | null>(null)
   const [configuration, setConfiguration] = useState<Configuration | null>(null)
-  const configurationReady = configurationSource === 'workbook' || (configurationSource === 'saved' ? runConfigurations.length > 0 : (configuration !== null && problems(configuration).length === 0))
+  const configurationReady = configuration !== null && problems(configuration).length === 0
   const nativeOutput = source === 'synthea-generation' && generation?.outputMode === 'synthea'
   const canStart = (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
   const generationPayload = { ...(source === 'synthea-generation' ? { generation } : {}), datasetName: datasetName.trim() || undefined }
@@ -99,7 +99,7 @@ function App() {
       try {
         const next = await request<Job[]>('/jobs')
         if (active) { setJobs(next); setConnectionError(null) }
-        if (selected) {
+        if (selected && next.some(item => item.id === selected)) {
           const response = await fetchResponse(`/jobs/${selected}/logs`)
           const text = await response.text()
           if (active) setLogs(text)
@@ -110,28 +110,42 @@ function App() {
     const timer = setInterval(() => void refresh(), 1500)
     return () => { active = false; clearInterval(timer) }
   }, [selected])
-  function select(id: string) { setRepeatConfirmation(null); setLogs(null); setSelected(id); localStorage.setItem('selectedJob', id) }
+  function select(id: string) { setLogs(null); setSelected(id); localStorage.setItem('selectedJob', id) }
   async function start() {
     if (!canStart) return
     setBusy(true); setError(null)
     try {
-      const next = nativeOutput
-        ? [await submitRuns<Job>('/jobs', { source, profile: 'workbook', ...generationPayload })]
-        : configurationSource === 'saved'
-        ? await submitRuns<Job[]>('/job-batches', { source, configurations: runConfigurations, ...generationPayload })
-        : [await submitRuns<Job>('/jobs', configurationSource === 'workbook'
-            ? { source, profile: 'workbook', ...generationPayload }
-            : { source, profile: 'default', configurationProperties: exportPropertiesConfiguration(configuration!, language), ...generationPayload })]
+      const next = [await submitRuns<Job>('/jobs', {
+        source, ...generationPayload,
+        ...(nativeOutput ? {} : { configurationProperties: exportPropertiesConfiguration(configuration!, language) })
+      })]
       setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
-  async function repeat() {
-    if (!repeatConfirmation) return
+  async function loadRun() {
+    if (!job) return
     setBusy(true); setError(null)
     try {
-      const next = await submitRuns<Job>(`/jobs/${repeatConfirmation}/repeat`, {})
-      setJobs(old => [next, ...old.filter(job => job.id !== next.id)]); select(next.id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
+      const loaded = await request<{ source: string; datasetName: string; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/editor`, { method: 'POST' })
+      const config = importRunProperties(loaded.configurationProperties)
+      setEditorLoad({ configuration: config, generation: loaded.generation, key: Date.now() })
+      setConfiguration(config); setGeneration(loaded.generation ?? null)
+      setSource(loaded.source); setDatasetName(loaded.datasetName); setActiveTab('generate')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
+  }
+  async function deleteRun() {
+    if (!job || !window.confirm(t('app.deleteRunConfirm'))) return
+    setBusy(true); setError(null)
+    try {
+      await fetchResponse(`/jobs/${job.id}`, { method: 'DELETE' })
+      setJobs(old => old.filter(item => item.id !== job.id))
+      setSelected(null); setLogs(null); localStorage.removeItem('selectedJob')
+    } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
+  }
+  function duration(job: Job) {
+    if (job.duration_seconds == null) return null
+    const seconds = Math.floor(job.duration_seconds)
+    return t('app.duration', { time: `${Math.floor(seconds / 3600)}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}` })
   }
   function configurationName(job: Job) {
     const config = job.configuration
@@ -162,20 +176,15 @@ function App() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-end gap-5">
-        <InputSelection language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
-        <label className="flex min-w-0 w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.profile')}<select disabled={nativeOutput} className="rounded-lg border border-slate-300 p-2.5 disabled:bg-slate-100 disabled:text-slate-400" value={configurationSource} onChange={e => setConfigurationSource(e.target.value)}><option value="workbook">{t('app.workbookConfiguration')}</option><option value="editor">{t('app.defaults')}</option><option value="saved">{t('app.saved.title')}</option></select></label>
+        <InputSelection key={editorLoad?.key} language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
         <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
-        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{!nativeOutput && configurationSource === 'saved' ? t('app.startConfigurations', { count: runConfigurations.length }) : t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
-      </div>{source === 'synthea-generation' && <GenerationSettings language={language} onChange={setGeneration}/>}
-      {!nativeOutput && configurationSource === 'saved' && <SavedConfigurationSelection language={language} onChange={setRunConfigurations}/>}<p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
+        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
+      </div>{source === 'synthea-generation' && <GenerationSettings key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration}/>}
+      <p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
     </section>
-    {!nativeOutput && configurationSource === 'workbook' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.workbookConfigurationHint')}</p>}
-    {!nativeOutput && configurationSource === 'saved' && <p className="mt-6 rounded-xl bg-slate-100 p-4 text-sm text-slate-700">{t('app.savedConfigurationHint')}</p>}
-    <fieldset disabled={(nativeOutput || configurationSource !== 'editor')} className={`min-w-0 border-0 p-0 ${(nativeOutput || configurationSource !== 'editor') ? 'opacity-50' : ''}`}>
-      <div inert={(nativeOutput || configurationSource !== 'editor')}>
-        <ConfigurationEditor language={language} onChange={setConfiguration}/>
-      </div>
-    </fieldset>
+    <div hidden={nativeOutput}>
+      <ConfigurationEditor key={editorLoad?.key} initialConfiguration={editorLoad?.configuration} language={language} onChange={setConfiguration}/>
+    </div>
     </div>
     <div role="tabpanel" id="main-panel-services" aria-labelledby="main-tab-services" hidden={activeTab !== 'services'}>
       <FhirUploads language={language} requestedSelection={uploadSelection}/>
@@ -185,17 +194,15 @@ function App() {
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => { setRunSearch(e.target.value); setRunLimit(10) }}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{j.dataset_name && <strong className="block">{j.dataset_name}</strong>}{configurationName(j)}</p>{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
+        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(j.failure?.kind === 'memory' ? 'app.failure.memoryTitle' : stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{j.dataset_name && <strong className="block">{j.dataset_name}</strong>}{configurationName(j)}</p>{duration(j) && <p className="mt-1 text-xs text-slate-500">{duration(j)}</p>}{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
       </div><ListExpansion language={language} total={filteredJobs.length} limit={runLimit} onChange={setRunLimit} countKey="app.list.runsCount"/></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2"><Button asChild variant="outline"><a href={`/api/jobs/${job.id}/snapshot`}>{t('app.snapshot')}</a></Button>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(job.id)}>{t('app.repeatRun')}</Button>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}</div>}</div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2">{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => void loadRun()}>{t('app.loadRun')}</Button>}{!['queued','running'].includes(job.state) && <><Help text={t('app.loadRunHelp')} t={key => t(key as TextKey)}/><Button variant="outline" disabled={busy} onClick={() => void deleteRun()}>{t('app.deleteRun')}</Button></>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}{job.download_available && <Help text={t('app.downloadHelp')} t={key => t(key as TextKey)}/>}</div>}</div>
         {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
+        {job?.failure && <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{t(job.failure.kind === 'memory' ? 'app.failure.memory' : 'app.failure.killed')}</p>}
         {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
         {job && <p className="mb-3 break-words text-sm">{job.dataset_name && <strong>{job.dataset_name} · </strong>}{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
-        {repeatConfirmation === job?.id && <div className="mb-4 rounded-lg border border-slate-200 p-3">
-          <p className="text-sm text-slate-600">{t('app.repeatRunHint')}</p>
-          <div className="mt-3 flex gap-2"><Button disabled={busy} onClick={() => void repeat()}>{t('app.repeatRun')}</Button><Button variant="outline" disabled={busy} onClick={() => setRepeatConfirmation(null)}>{t('app.saved.cancel')}</Button></div>
-        </div>}
+        {job && duration(job) && <p className="mb-4 text-sm">{duration(job)}</p>}
         {job && <DatasetResults onUpload={openUpload} context={{ datasetName: job.dataset_name, source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
         <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
       </section>

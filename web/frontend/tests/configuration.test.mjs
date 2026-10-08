@@ -291,7 +291,18 @@ test('encounter classes keep common settings and disable inactive end scopes', a
     config.values['resource.Encounter.enabled'] = true
   }
   const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true, resources: ['Encounter'], system: 'urn:test', pattern: '{resourceType}-{hash}' }
-  assert.equal(await previewIdentifier({...rule, resources: ['Encounter.ambulatory']}), await previewIdentifier(rule))
+  for (const selector of ['Encounter.ambulatory', 'Encounter.inpatient.facility', 'Encounter.inpatient.department', 'Encounter.inpatient.ward-service']) {
+    const scoped = {...rule, resources: [selector]}
+    config.identifierRules = [scoped]
+    assert.deepEqual(importConfiguration(JSON.stringify(config)).identifierRules, [scoped])
+    assert.equal(await previewIdentifier(scoped), await previewIdentifier(rule))
+  }
+  for (const selector of ['Observation.laboratory', 'Observation.vitalSigns']) {
+    const scoped = {...rule, resources: [selector]}
+    config.identifierRules = [scoped]
+    assert.deepEqual(importConfiguration(JSON.stringify(config)).identifierRules, [scoped])
+    assert.equal(await previewIdentifier(scoped), await previewIdentifier({...rule, resources: ['Observation']}))
+  }
   config.dar['Encounter.ambulatory.period.end'] = {mode: 'overwrite', code: ''}
   assert.deepEqual(restoreBrowserDraft(JSON.stringify(config)), config)
   assert.throws(() => importConfiguration(JSON.stringify(config)))
@@ -314,4 +325,21 @@ test('navigation status uses effective resource selections without mutating them
   assert.equal(config.values['resource.Encounter.inpatient.enabled'], true)
   config.values['resource.Encounter.enabled'] = true
   assert.equal(resourceNavigationStatus('Encounter.inpatient', config.values), 'generated')
+})
+
+test('counter preview uses the configured starting value with literal braces', async () => {
+  const rule = { id: 'a152e771-3d5a-4cb1-9866-35fa6d91fd83', enabled: true,
+    resources: ['Patient'], system: 'urn:test', pattern: '{{{count:08}}}-{count}', countStart: 500 }
+  assert.equal(await previewIdentifier(rule), '{00000500}-500')
+})
+
+test('organization navigation follows the encounter provider setting', () => {
+  const config = defaults()
+  for (const [mode, status] of [['none', 'disabled'], ['generate-reference', 'generated'], ['reference-only', 'referenced'], ['contained', 'generated']]) {
+    config.values['resource.Encounter.stationServiceProvider'] = mode
+    assert.equal(resourceNavigationStatus('Organization', config.values), status)
+    config.values['resource.Encounter.enabled'] = false
+    assert.equal(resourceNavigationStatus('Organization', config.values), 'parentDisabled')
+    config.values['resource.Encounter.enabled'] = true
+  }
 })

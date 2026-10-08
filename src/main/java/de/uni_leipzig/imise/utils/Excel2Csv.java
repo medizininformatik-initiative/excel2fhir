@@ -92,6 +92,7 @@ public class Excel2Csv {
                 Workbook workbook = new XSSFWorkbook(sourceInputStream)) {
             for (Sheet dataSheet : workbook) {
                 String sheetName = dataSheet.getSheetName();
+                if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) continue;
                 if (sheetNamePatterns != null) {
                     if (!matches(sheetName, sheetNamePatterns)) {
                         LOG.info("Skip sheet \"" + sheetName + "\"");
@@ -104,17 +105,6 @@ public class Excel2Csv {
                 try (OutputStream os = new FileOutputStream(new File(csvFile));
                         PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
                     LOG.info("Creating " + csvFile);
-                    // This sheet contains Properties text, not a CSV table. CSV quoting
-                    // would turn comments containing commas into active property keys.
-                    if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) {
-                        var formatter = new org.apache.poi.ss.usermodel.DataFormatter(java.util.Locale.GERMANY);
-                        var evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-                        for (Row row : dataSheet) {
-                            Cell cell = row.getCell(0);
-                            csv.println(cell == null ? "" : formatter.formatCellValue(cell, evaluator));
-                        }
-                        continue;
-                    }
                     // Annahme: Header ist in der ersten Zeile
                     // Annahme: Es gibt nur soviele Spalten wie Header
                     int maxCol = 0;

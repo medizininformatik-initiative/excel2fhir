@@ -35,7 +35,6 @@ class JobRequest(BaseModel):
     datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = "starter"
-    profile: str = "default"
     configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
 
 
@@ -52,7 +51,7 @@ def directory(job_id):
 
 @app.get("/api/catalog")
 def catalog():
-    return {"sources": list(store.SOURCES), "profiles": ["default", "workbook"]}
+    return {"sources": list(store.SOURCES), "profiles": ["default"]}
 
 
 @app.get("/api/jobs")
@@ -63,7 +62,7 @@ def jobs():
 @app.post("/api/jobs", status_code=201)
 def create(request: JobRequest):
     try:
-        job_id = store.create(request.source, request.profile, request.configurationProperties, str(request.requestId) if request.requestId else None,
+        job_id = store.create(request.source, "default", request.configurationProperties, str(request.requestId) if request.requestId else None,
                               request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
@@ -77,6 +76,16 @@ def cancel(job_id: str):
     directory(job_id)
     store.cancel(job_id)
     return store.get(job_id)
+
+
+@app.delete('/api/jobs/{job_id}', status_code=204)
+def delete_job(job_id: UUID):
+    try:
+        store.delete(str(job_id))
+    except FileNotFoundError as error:
+        raise HTTPException(404, str(error))
+    except store.SubmissionConflict as error:
+        raise HTTPException(409, str(error))
 
 
 @app.get("/api/jobs/{job_id}/logs", response_class=PlainTextResponse)
@@ -175,39 +184,10 @@ def delete_configuration(configuration_id: str, request: ConfigurationDelete):
     configuration_call(configurations.delete, configuration_id, request.revision)
 
 
-class SavedSelection(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    id: UUID
-    revision: int = Field(ge=1, strict=True)
-
-
-class BatchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    requestId: UUID
-    datasetName: str | None = Field(default=None, max_length=200)
-    generation: GenerationSettings | None = None
-    source: str = 'starter'
-    configurations: list[SavedSelection] = Field(min_length=1, max_length=100)
-
-
-class RepeatRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
-    requestId: UUID
-
-
-@app.post('/api/job-batches', status_code=201)
-def start_batch(request: BatchRequest):
-    selections = [{'id': str(item.id), 'revision': item.revision} for item in request.configurations]
-    ids = configuration_call(configurations.start_jobs, request.source, selections, str(request.requestId),
-                             request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
-    return [store.get(job_id) for job_id in ids]
-
-
-@app.post('/api/jobs/{job_id}/repeat', status_code=201)
-def repeat_job(job_id: str, request: RepeatRequest):
+@app.post('/api/jobs/{job_id}/editor')
+def load_job_editor(job_id: str):
     directory(job_id)
-    new_id = configuration_call(store.repeat, job_id, str(request.requestId))
-    return store.get(new_id)
+    return configuration_call(store.editor_input, job_id)
 
 
 @app.get('/api/inputs')

@@ -204,11 +204,7 @@ public class Csv2Fhir {
                 .setSkipHeaderRecord(true).get();
         this.validator = validator;
         this.suppliedValidator = validator;
-        try {
-            optionSets = selectedOptions == null ? ConverterOptionSet.csv(inputDirectory, outputFileNameBase) : List.of();
-        } catch (IOException e) {
-            throw new java.io.UncheckedIOException(e);
-        }
+        optionSets = selectedOptions == null ? ConverterOptionSet.defaults() : List.of();
         allConverterOptions = selectedOptions == null ? optionSets.stream().map(ConverterOptionSet::options).toList()
                 : List.of(selectedOptions);
     }
@@ -249,7 +245,7 @@ public class Csv2Fhir {
             for (var set : optionSets) {
                 var destination = outputDirectory.toPath().resolve(set.directoryName());
                 java.nio.file.Files.createDirectories(destination);
-                set.snapshot(outputDirectory.toPath().resolve("options").resolve(set.directoryName()));
+                set.snapshot(outputDirectory.toPath().resolve("options").resolve(set.directoryName()), patientsPerBundle, suppliedValidator != null, outputFileTypes);
                 Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), outputFileNameBase, validator, set.options());
                 fileSetStatistics.add(converter.convertFiles(patientsPerBundle, outputFileTypes));
                 variantImportProblems |= converter.hasImportProblems();

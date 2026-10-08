@@ -7,6 +7,7 @@ import subprocess
 import sys
 import synthea_runtime
 import generation
+import memory_failures
 import datasets
 import fhir_uploads
 import time
@@ -42,10 +43,14 @@ def terminate(process):
 
 def execute(job_id):
     folder = store.ROOT / "jobs" / job_id
-    command = ["java", "-Xmx3g"]
+    command = ["java", "-Xmx1g"]
     process = None
+    memory_before = memory_failures.oom_kills()
+    (folder / "memory-watch.json").write_text(json.dumps({"oomKills": memory_before}))
     try:
         snapshot = json.loads((folder / "snapshot.json").read_text())
+        if snapshot.get('validation', False):
+            command[1] = '-Xmx3g'
         if store.digest(store.APP / "excel2fhir.jar") != snapshot["converterSha256"]:
             raise RuntimeError("Converter image changed after submission; start a new run")
         kind = snapshot.get('inputKind', 'workbook')
@@ -78,7 +83,7 @@ def execute(job_id):
         else:
             command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-f', str(input_path)])
         command.extend(['-o', str(folder / 'output')])
-        if snapshot["profile"]["id"] not in {"workbook", "synthea"}:
+        if snapshot["profile"]["id"] not in {"synthea"}:
             if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
                 raise RuntimeError("Configuration snapshot has changed")
             command.extend(["--converter-options", str(folder / "default.config")])
@@ -96,7 +101,14 @@ def execute(job_id):
                     break
                 time.sleep(0.2)
         state = "interrupted" if stopping else "cancelled" if store.get(job_id)["cancel"] else "succeeded" if process.returncode == 0 else "failed"
-        if kind == 'synthea-generation' and state in {'succeeded', 'failed'}:
+        failure = None
+        if state in {'succeeded', 'failed'}:
+            failure = memory_failures.record(folder, memory_before, process.returncode)
+            if failure:
+                state = 'failed'
+                with (folder / 'converter.log').open('a') as log:
+                    log.write('\n' + failure['evidence'] + '\n')
+        if kind == 'synthea-generation' and state in {'succeeded', 'failed'} and not failure:
             generated = list((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
             if native:
                 generated = list((folder / 'output/run-synthea/fhir').glob('*.json'))
@@ -106,14 +118,17 @@ def execute(job_id):
                 'generatedPatients': generation.patient_count(generated), 'importedPatients': len(summary.get('results', [])),
                 'failedPatients': len(summary.get('failures', []))}))
         if state in {"succeeded", "failed"}:
-            datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))
+            if not failure:
+                datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():
                         archive.write(path, path.relative_to(folder))
                 if (folder / "generation-result.json").exists():
                     archive.write(folder / "generation-result.json", "generation-result.json")
-                archive.write(folder / "datasets.json", "datasets.json")
+                for name in ("datasets.json", "failure.json"):
+                    if (folder / name).exists():
+                        archive.write(folder / name, name)
                 for path in folder.glob("dataset-*.log"):
                     archive.write(path, path.name)
                 archive.write(folder / "snapshot.json", "snapshot.json")
@@ -130,7 +145,8 @@ def execute(job_id):
         if process:
             terminate(process)
         with (folder / "converter.log").open("a") as log:
-            log.write(f"\nWorker error: {error}\n")
+            log.write(f"\n{type(error).__name__}: {error}\n")
+        memory_failures.record(folder, memory_before, process.returncode if process else None)
         store.finish(job_id, "failed")
 
 
@@ -140,7 +156,12 @@ def main():
     with (store.ROOT / "worker.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         with store.connect() as db:
-            db.execute("UPDATE jobs SET state='interrupted' WHERE state='running'")
+            for row in db.execute("SELECT id FROM jobs WHERE state='running'").fetchall():
+                folder = store.ROOT / 'jobs' / row['id']
+                watch = folder / 'memory-watch.json'
+                before = json.loads(watch.read_text()).get('oomKills') if watch.exists() else None
+                failure = memory_failures.record(folder, before)
+                db.execute("UPDATE jobs SET state=? WHERE id=?", ('failed' if failure else 'interrupted', row['id']))
         fhir_uploads.recover()
         signal.signal(signal.SIGTERM, stop)
         signal.signal(signal.SIGINT, stop)

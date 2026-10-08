@@ -11,42 +11,18 @@ from diagnosis_mapping import map_diagnosis, mapping_metadata
 from check_clinical_roundtrip import check_clinical
 from check_movements import check_movements
 from german_demographics import check_patient
-
-
-def configured_condition_reference(condition, resources, level):
-    """Check the chosen contact level against the emitted, separately checked hierarchy."""
-    if level == 'none' or not condition.get('recordedDate'):
-        return ''
-    time = datetime.fromisoformat(condition['recordedDate'].replace('Z', '+00:00'))
-    codes = {'facility': 'einrichtungskontakt', 'department': 'abteilungskontakt',
-             'ward-service': 'versorgungsstellenkontakt'}
-    candidates = []
-    for resource in resources:
-        if resource['resourceType'] != 'Encounter':
-            continue
-        types = {coding.get('code') for value in resource.get('type', []) for coding in value.get('coding', [])}
-        if codes[level] not in types or (level == 'ward-service' and types.intersection({'operation', 'ub', 'konsil'})):
-            continue
-        period = resource.get('period', {})
-        if not period.get('start'):
-            continue
-        start = datetime.fromisoformat(period['start'].replace('Z', '+00:00'))
-        end = datetime.fromisoformat(period['end'].replace('Z', '+00:00')) if period.get('end') else None
-        if start <= time and (end is None or time <= end):
-            candidates.append((start, resource))
-    if not candidates:
-        return ''
-    latest = max(candidates, key=lambda item: item[0])
-    if latest[1].get('class', {}).get('code') == 'AMB':
-        inpatients = [item for item in candidates if item[1].get('class', {}).get('code') == 'IMP']
-        if inpatients:
-            latest = max(inpatients, key=lambda item: item[0])
-    return 'Encounter/' + latest[1]['id']
+from check_output_selection import enabled, selected, patient_owner
+from check_contact_selection import contact_expectations, contact_selected
+from check_clinical_references import matching_contact
 
 
 def check(source, target, report):
+    from check_dar import checked_original_dar
+    target = checked_original_dar(source, target, report)
     from check_encounter_policies import checked_original_periods
     target = checked_original_periods(source, target, report)
+    from check_time_shift import checked_original_times
+    target = checked_original_times(source, target, report)
     src = [e['resource'] for e in source['entry']]
     dst = [e['resource'] for e in target['entry']]
     source_ids = {e.get('fullUrl'):e['resource'].get('id')for e in source['entry']}
@@ -54,8 +30,12 @@ def check(source, target, report):
     target_ids = {r['resourceType']+'/'+r['id'] for r in dst}
     target_ids.update(e.get('fullUrl')for e in target['entry']if e.get('fullUrl'))
     pid = report.get('outputPatient', report['sourcePatient'].replace('_','-'))
-    demographic_check = check_patient(next(r for r in src if r['resourceType']=='Patient'),
-        next(r for r in dst if r['resourceType']=='Patient'), report)
+    options = report.get('converterOptions', {})
+    expected_contacts = contact_expectations(source, report)
+    patients = [r for r in dst if r['resourceType'] == 'Patient']
+    assert len(patients) == int(selected({'resourceType': 'Patient'}, options)), 'Configured patient output differs'
+    demographic_check = (check_patient(next(r for r in src if r['resourceType']=='Patient'), patients[0], report)
+                         if patients else {'output': 'omitted by configured patient mode'})
     assert report['diagnosisMapping'] == mapping_metadata(), 'Use the mapping version that produced this workbook'
     from terminology_year import emitted, signature as coding_signature, metadata as terminology_metadata
     terminology = report.get('terminology', {})
@@ -80,7 +60,7 @@ def check(source, target, report):
         options = report.get('converterOptions', {})
         configured_level = options.get('REFERENCE_CONDITION_ENCOUNTER')
         if original and configured_level is not None:
-            encounter = configured_condition_reference(r, dst, configured_level)
+            encounter = matching_contact(expected_contacts, [r.get('recordedDate')], configured_level, options)
         elif original and options.get('SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER', 'true') == 'false':
             encounter = ''
         if original and encounter and configured_level is None:
@@ -89,9 +69,11 @@ def check(source, target, report):
         if original and 'verificationStatusChange' in decision:
             statuses = (statuses[0], (decision['verificationStatusChange']['to'],))
         return (codings, r.get('recordedDate',''), r.get('onsetDateTime',''),r.get('abatementDateTime',''),encounter,statuses)
-    original=Counter(signature(r,True)for r in src if r['resourceType']=='Condition' and r['id'] not in excluded)
+    original=Counter(signature(r,True)for r in src if r['resourceType']=='Condition' and r['id'] not in excluded and enabled(options, 'CONDITION_ENABLED'))
     converted=Counter(signature(r,False)for r in dst if r['resourceType']=='Condition')
     assert original==converted, {'missing':list((original-converted).elements())[:2], 'extra':list((converted-original).elements())[:2]}
+    if options.get('PATIENT_MODE') == 'reference-only':
+        target_ids.add('Patient/' + pid)
     for r in dst:
         if r['resourceType']=='Patient':continue
         for field in ['subject','patient','encounter','context']:
@@ -100,7 +82,11 @@ def check(source, target, report):
     encounters={r['id']:r for r in dst if r['resourceType']=='Encounter'}
     for r in src:
         if r['resourceType']!='Encounter':continue
-        found=encounters[pid+'-E-'+report['encounterNumbers'][r['id']]]
+        identifier = pid+'-E-'+report['encounterNumbers'][r['id']]
+        if not contact_selected(expected_contacts[identifier], options):
+            assert identifier not in encounters, 'Deselected facility contact was emitted'
+            continue
+        found=encounters[identifier]
         if r['class']['code'] == 'EMER':
             assert found['class']['code'] == 'AMB'
             mapping = [m for m in report['encounterMappings'] if m['sourceId'] == r['id']]
@@ -119,12 +105,14 @@ def check(source, target, report):
                 assert datetime.fromisoformat(found['period'][date].replace('Z','+00:00'))==datetime.fromisoformat(r['period'][date].replace('Z','+00:00')), {
                     'encounter': r['id'], 'field': date, 'source': r['period'][date], 'target': found['period'][date]}
     movement_check = check_movements(source, target, report)
-    source_encounters = sum(r['resourceType'] == 'Encounter' for r in src)
-    assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=1,Encounter=source_encounters+movement_check['contacts'],Condition=sum(original.values()))
+    source_encounters = sum(c['level'] == 'facility' and contact_selected(c, options) for c in expected_contacts.values())
+    assert Counter(r['resourceType']for r in dst if r['resourceType'] in ('Patient','Encounter','Condition'))==Counter(Patient=len(patients),Encounter=source_encounters+movement_check['contacts'],Condition=sum(original.values()))
     clinical = check_clinical(source, target, report)
+    if patients:
+        demographic_check['identity'] = 'configured synthetic identity verified'
+        demographic_check['clinicalFacts'] = 'verified against configured output settings'
     return {'demographics':demographic_check,'movements':movement_check,'clinical':clinical,'conditions':sum(original.values()),'excludedConditions':len(excluded),'encounters':len(encounters),
-            'sourceDiagnosisValuesAndReferences': ('preserved except reported verification status changes'
-                if any('verificationStatusChange' in d for d in decisions) else 'preserved'),
+            'sourceDiagnosisValuesAndReferences': 'verified against configured mapping and output settings',
             'verificationStatusChanges':sum('verificationStatusChange' in d for d in decisions),
             'additionalIcd10GmCodings':sum(d['target'] is not None for d in decisions),
             'mappingDecisions':dict(Counter(d['status'] for d in decisions)),
@@ -134,7 +122,16 @@ def check(source, target, report):
 def check_configured(source, target, report, options, patient_ids):
     """Check each requested patient copy without assuming the default ID scheme."""
     actual = [e['resource']['id'] for e in target['entry'] if e['resource']['resourceType'] == 'Patient']
-    assert Counter(actual) == Counter(patient_ids), 'Configured patient copies differ'
+    wanted_patients = patient_ids if selected({'resourceType': 'Patient'}, options) else []
+    assert Counter(actual) == Counter(wanted_patients), 'Configured patient copies differ'
+    keys = [(e['resource']['resourceType'], e['resource']['id']) for e in target['entry']]
+    assert len(keys) == len(set(keys)), 'Duplicate output resource identity'
+    derived_owners = {}
+    if options.get('PATIENT_MODE') == 'neither' and any(e['resource']['id'].startswith('derived-') for e in target['entry']):
+        from synthea_to_excel import prepare
+        from check_medication_transformations import transformed_medications
+        rows, _ = prepare(source, options)
+        derived_owners = {r['id']: pid for pid in patient_ids for r in transformed_medications(rows['Medikation'], options, pid)}
     shared = {'Medication', 'Location'}
     groups = {pid: [] for pid in patient_ids}
     for entry in target['entry']:
@@ -146,12 +143,17 @@ def check_configured(source, target, report, options, patient_ids):
             pid = resource['id']
         else:
             reference = resource.get('subject', resource.get('patient', {})).get('reference', '')
-            assert reference.startswith('Patient/'), 'Resource has no patient attribution: ' + resource['resourceType']
-            pid = reference.removeprefix('Patient/')
+            if options.get('PATIENT_MODE') == 'neither':
+                assert not reference, 'Patient reference emitted in neither mode'
+                pid = derived_owners.get(resource['id'])
+                if pid is None: pid = patient_owner(resource, patient_ids, source)
+            else:
+                assert reference.startswith('Patient/'), 'Resource has no patient attribution: ' + resource['resourceType']
+                pid = reference.removeprefix('Patient/')
         assert pid in groups, 'Unexpected patient attribution: ' + pid
         groups[pid].append(entry)
-    copies = [check(source, {'entry': groups[pid]}, dict(report, outputPatient=pid, converterOptions=options))
-              for pid in patient_ids]
+    copies = [check(source, {'entry': groups[pid]}, dict(report, outputPatient=pid, converterOptions=options, iteration=iteration))
+              for iteration, pid in enumerate(patient_ids)]
     if len(copies) == 1:
         result = copies[0]
     else:

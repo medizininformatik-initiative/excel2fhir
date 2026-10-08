@@ -23,13 +23,10 @@ SYNTHEA_VERSION_OUTPUT = Jahr
 | A readable DAR label, for example `Unbekannt (Data Absent Reason)` | `_version.extension` contains that Data Absent Reason. |
 | Empty value after `=` | Both `version` and `_version` are omitted. |
 
-All 15 DAR choices from `workbook-absent-reasons.json` are supported. CSV and
-configuration files also accept `!dar:<code>`. The workbook records the effective
-settings in `Konvertierungsoptionen`; its two Synthea selectors use column B and
-produce the Properties text in column A. Clear the version-output selector to
-choose omission. One import uses one year and one version-output policy. KDS
-variants sharing that workbook must agree on both; run differing import settings
-separately.
+All 15 DAR choices from `workbook-absent-reasons.json` are supported. Configuration
+files accept `!dar:<code>`. Select the catalogue year and version-output policy
+in the editor or in the external configuration. One run uses one configuration;
+generated workbooks contain the resulting case data.
 
 The mapping report retains the actual target catalogue year even when the output
 omits the version or uses DAR. `terminology` records the selected year, output

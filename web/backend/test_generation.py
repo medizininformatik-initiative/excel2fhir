@@ -30,13 +30,14 @@ class GenerationTests(QueueFixture):
                          {'keepModule': '/tmp/file'}, {'patientFilter': 'unknown'}, {'unknown': True},
                          {'population': 2, 'singlePersonSeed': '1'}, {'endDate': '2099-01-01'},
                          {'referenceDate': '2026-09-13', 'endDate': '2026-09-12'}]:
-            response = self.client.post('/api/jobs', json={'source': 'synthea-generation', 'profile': 'workbook', 'generation': settings})
+            response = self.client.post('/api/jobs', json={'source': 'synthea-generation', 'generation': settings})
             self.assertEqual(422, response.status_code, response.text)
         self.assertEqual([], store.jobs())
 
-    def test_fixed_settings_are_snapshotted_and_repeat_preserves_them(self):
+    @patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1})
+    def test_fixed_settings_are_snapshotted_and_repeat_preserves_them(self, validate):
         settings = generation.normalize({'patientSeed': '-9223372036854775808', 'modules': ['diabetes']})
-        request = {'source': 'synthea-generation', 'profile': 'workbook', 'generation': settings, 'requestId': str(uuid4())}
+        request = {'source': 'synthea-generation', 'generation': settings, 'requestId': str(uuid4())}
         response = self.client.post('/api/jobs', json=request)
         self.assertEqual(201, response.status_code, response.text)
         job = response.json()['id']
@@ -46,19 +47,17 @@ class GenerationTests(QueueFixture):
         self.assertEqual(settings, snapshot['generation'])
         self.assertEqual('generator', snapshot['syntheaGeneratorSha256'])
         store.cancel(job)
-        repeated = store.repeat(job, str(uuid4()))
+        loaded = store.editor_input(job)
+        repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
         self.assertEqual((folder / 'generation.json').read_bytes(), (store.ROOT / 'jobs' / repeated / 'generation.json').read_bytes())
-        original = json.loads((store.ROOT / 'jobs' / repeated / 'snapshot.json').read_text())['repeatedFrom']
-        self.assertEqual('generator', original['syntheaGeneratorSha256'])
+        self.assertEqual(settings, store.editor_input(repeated)['generation'])
 
-    def test_independent_configurations_share_exact_generation_settings(self):
-        with patch.object(store, 'validate_configuration', return_value={'formats': ['JSON'], 'validation': False, 'patientsPerFile': 1}):
-            items = [configurations.create(name, 'CONFIGURATION_VERSION=1\n') for name in ['One', 'Two']]
-            jobs = configurations.start_jobs('synthea-generation', [{'id': i['id'], 'revision': 1} for i in items], str(uuid4()), {})
-        self.assertEqual(2, len(jobs))
-        snapshots = [json.loads((store.ROOT / 'jobs' / job / 'snapshot.json').read_text()) for job in jobs]
-        self.assertEqual(snapshots[0]['inputSha256'], snapshots[1]['inputSha256'])
-        self.assertNotEqual(snapshots[0]['profile']['id'], snapshots[1]['profile']['id'])
+    def test_loading_generation_does_not_start_a_run(self):
+        job = store.create('synthea-generation', 'default', generation_settings={})
+        loaded = store.editor_input(job)
+        self.assertEqual('synthea-generation', loaded['source'])
+        self.assertEqual(1, len(store.jobs()))
+        self.assertEqual(generation.normalize({}), loaded['generation'])
 
     def test_arguments_keep_paths_and_export_destinations_out_of_user_settings(self):
         values = generation.normalize({'modules': ['diabetes'], 'keepModule': 'keep_diabetes.json',
@@ -70,7 +69,7 @@ class GenerationTests(QueueFixture):
         self.assertEqual(['Massachusetts', 'Boston'], args[-2:])
         self.assertNotIn('-c', args)
         with self.assertRaises(ValueError):
-            store.create('starter', 'workbook', generation_settings={})
+            store.create('starter', 'default', generation_settings={})
 
     def test_native_output_ignores_kds_defaults_and_repeats_without_importer(self):
         with patch.object(synthea_runtime, 'fingerprint', side_effect=AssertionError('Importer must not be used')):
@@ -81,7 +80,8 @@ class GenerationTests(QueueFixture):
             self.assertNotIn('syntheaImportSha256', snapshot)
             self.assertFalse((folder / 'default.config').exists())
             store.cancel(job)
-            repeated = store.repeat(job, str(uuid4()))
+            loaded = store.editor_input(job)
+            repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
             self.assertEqual((folder / 'generation.json').read_bytes(),
                              (store.ROOT / 'jobs' / repeated / 'generation.json').read_bytes())
             self.assertEqual('synthea', store.get(repeated)['configuration']['id'])
@@ -95,11 +95,11 @@ class GenerationTests(QueueFixture):
         jar.write_bytes(b'generator')
         catalogue = {**CATALOG, 'sha256': store.digest(jar)}
         with patch.object(generation, 'catalogue', return_value=catalogue), patch.object(synthea_runtime, 'ROOT', jar.parent.parent):
-            job = store.create('synthea-generation', 'workbook', generation_settings={'outputMode': 'synthea'})
+            job = store.create('synthea-generation', 'default', generation_settings={'outputMode': 'synthea'})
             store.claim()
             folder = store.ROOT / 'jobs' / job
             def launch(command, **kwargs):
-                self.assertEqual(['java', '-Xmx4g'], command[:2])
+                self.assertEqual(['java', '-Xmx1536m'], command[:2])
                 self.assertIn(str(jar), command)
                 self.assertNotIn('--converter-options', command)
                 self.assertIn('--exporter.practitioner.fhir.export=true', command)

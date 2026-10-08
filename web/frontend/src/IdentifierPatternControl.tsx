@@ -3,21 +3,27 @@ import type { Message } from './i18n'
 import { Help } from './Help'
 import { insertPatternToken } from './configuration'
 
-const tokens = [
+const tokens: { value: string; key: string; label?: string }[] = [
   { value: '{count}', key: 'app.config.token.count' },
   { value: '{count:08}', key: 'app.config.token.paddedCount' },
   { value: '{patientId}', key: 'app.config.token.patientId' },
   { value: '{resourceId}', key: 'app.config.token.resourceId' },
   { value: '{resourceType}', key: 'app.config.token.resourceType' },
   { value: '{iteration}', key: 'app.config.token.iteration' },
-  { value: '{hash}', key: 'app.config.token.hash' }
+  { value: '{hash}', key: 'app.config.token.hash' },
+  { value: '{{', label: '{', key: 'app.config.token.openBrace' },
+  { value: '}}', label: '}', key: 'app.config.token.closeBrace' }
 ]
 export function IdentifierPatternControl({
   value,
+  countStart,
+  onCountStartChange,
   onChange,
   t
 }: {
   value: string
+  countStart: number
+  onCountStartChange: (value: number) => void
   onChange: (value: string) => void
   t: (key: string, params?: Message['params']) => string
 }) {
@@ -47,9 +53,9 @@ export function IdentifierPatternControl({
     onChange(next.value)
   }
   return (
-    <div>
+    <div className="min-w-0">
       <div className="flex flex-col gap-2 text-sm">
-        <span className="flex items-center gap-1">
+        <span className="flex min-h-7 items-center gap-1">
           <label htmlFor={tooltipId + '-pattern'}>
             {t('identifier.pattern')}
           </label>
@@ -73,11 +79,12 @@ export function IdentifierPatternControl({
               end: e.currentTarget.selectionEnd ?? value.length
             }
           }}
-          className="w-full rounded-lg border border-slate-300 p-2 font-mono"
+          className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2 font-mono"
         />
       </div>
+      <div className="mt-2 flex flex-wrap items-start gap-3">
       <div
-        className="relative mt-2 flex flex-wrap gap-1.5"
+        className="relative flex min-w-0 flex-1 basis-64 flex-wrap gap-1.5"
         role="group"
         aria-label={t('app.config.patternTokens')}
       >
@@ -114,10 +121,18 @@ export function IdentifierPatternControl({
             className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5 text-left hover:border-teal-600 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700"
           >
             <code className="block text-xs font-semibold text-teal-800">
-              {token.value}
+              {token.label ?? token.value}
             </code>
           </button>
         ))}
+      </div>
+        <div className="flex w-24 shrink-0 flex-col gap-1 text-xs">
+          <span className="flex items-center gap-1"><label htmlFor={tooltipId + '-count-start'}>{t('identifier.count_start')}</label>
+          <Help text={t('identifier.countStartHelp')} t={t}/></span>
+          <input id={tooltipId + '-count-start'} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1}
+            value={countStart} onChange={e => onCountStartChange(Number(e.target.value))}
+            className="h-8 w-24 rounded-md border border-slate-300 px-2"/>
+        </div>
       </div>
     </div>
   )

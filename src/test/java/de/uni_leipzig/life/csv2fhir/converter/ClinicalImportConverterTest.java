@@ -9,6 +9,86 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void unitWithoutDoseAndAtcVersionWithoutCodeArePreserved() throws Exception {
+        for (String type : List.of("Verordnung", "Verabreichung", "Medikationsaussage")) {
+            for (String version : List.of("2026", "!dar:unknown")) {
+                var values = new HashMap<>(Map.of("Medikationstyp", type, "ATC-Version", version,
+                        "Dosiereinheit", "mg", "Dosierungstext", "Supplied text"));
+                assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+                var options = new ConverterOptions("");
+                var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                        null, new ConverterResult(options), null, options).convertInternal();
+                var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();
+                var medication = (Medication)parser.parseResource(parser.encodeResourceToString(resources.get(0)));
+                var coding = medication.getCode().getCodingFirstRep();
+                assertEquals("http://fhir.de/CodeSystem/bfarm/atc", coding.getSystem());
+                assertFalse(coding.hasCodeElement());
+                if (version.equals("2026")) assertEquals("2026", coding.getVersion());
+                else assertEquals("unknown", coding.getVersionElement().getExtensionFirstRep().getValue().primitiveValue());
+                var event = parser.parseResource(parser.encodeResourceToString(resources.get(1)));
+                Quantity dose;
+                if (event instanceof MedicationAdministration) {
+                    dose = ((MedicationAdministration)event).getDosage().getDose();
+                    assertEquals("Supplied text", ((MedicationAdministration)event).getDosage().getText());
+                } else {
+                    var dosage = event instanceof MedicationRequest ? ((MedicationRequest)event).getDosageInstructionFirstRep()
+                            : ((MedicationStatement)event).getDosageFirstRep();
+                    dose = dosage.getDoseAndRateFirstRep().getDoseQuantity();
+                    assertEquals("Supplied text", dosage.getText());
+                }
+                assertFalse(dose.hasValueElement());
+                assertEquals("mg", dose.getCode());
+                assertEquals("http://unitsofmeasure.org", dose.getSystem());
+            }
+        }
+    }
+
+    @Test public void duplicateDiagnosisSystemsArePreserved() throws Exception {
+        var options = new ConverterOptions("");
+        var condition = (Condition)new ConditionConverter(row(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
+                "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2026"), ConditionConverter.Diagnosis_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals(2, condition.getCode().getCoding().size());
+        assertEquals("A01", condition.getCode().getCoding().get(0).getCode());
+        assertEquals("A02", condition.getCode().getCoding().get(1).getCode());
+    }
+    @Test public void medicationProfileViolationsAreEmittedWithoutRepair() throws Exception {
+        var options = new ConverterOptions("");
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatcode", "bad-pzn",
+                "Präparatcodesystem", "PZN", "Wirkstoffcode", "bad-unii", "Wirkstoffcodesystem", "UNII",
+                "Dosierungstext", "Text without dose"));
+        assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        var drug = (Medication)resources.get(0);
+        assertEquals("bad-pzn", drug.getCode().getCodingFirstRep().getCode());
+        assertEquals("bad-unii", drug.getIngredientFirstRep().getItemCodeableConcept().getCodingFirstRep().getCode());
+        var administration = (MedicationAdministration)resources.get(1);
+        assertFalse(administration.hasEffective());
+        assertFalse(administration.getDosage().hasDose());
+        assertEquals("Text without dose", administration.getDosage().getText());
+        values.put("Einzeldosis", "-2");
+        resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        assertEquals("-2", ((MedicationAdministration)resources.get(1)).getDosage().getDose().getValue().toPlainString());
+        values.remove("Wirkstoffcode"); values.remove("Wirkstoffcodesystem");
+        resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        assertFalse(((Medication)resources.get(0)).hasIngredient());
+    }
+    @Test public void medicationPeriodMayEndBeforeItStarts() throws Exception {
+        var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatbezeichnung", "Test",
+                "Wirkstoffcode", "Unbekannt", "Wirkstoffcodesystem", "UNII",
+                "Beginn", "2026-05-05", "Ende", "2026-05-01"));
+        assertTrue(MedicationValues.errors(values::get).toString(), MedicationValues.errors(values::get).isEmpty());
+        var options = new ConverterOptions("");
+        var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                null, new ConverterResult(options), null, options).convertInternal();
+        var period = ((MedicationAdministration)resources.get(1)).getEffectivePeriod();
+        assertEquals("2026-05-05", period.getStartElement().getValueAsString());
+        assertEquals("2026-05-01", period.getEndElement().getValueAsString());
+    }
+
     @Test public void inputContextDistinguishesExplicitDocumentTimeFromGeneratedRunTime() throws Exception {
         var options = ConverterOptions.fromText("PID_PREFIX=prefix-\n");
         var result = new ConverterResult(options);
@@ -88,7 +168,7 @@ public class ClinicalImportConverterTest {
         assertNull(ingredient.getCode());
         assertEquals("unknown", ingredient.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
         values.put("Wirkstoffcode", "R16CO5Y76E; Unbekannt");
-        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
     }
 
     @Test public void combinationIngredientsBecomeSeparateUniiIngredients() throws Exception {
@@ -102,9 +182,14 @@ public class ClinicalImportConverterTest {
         assertEquals("http://fdasis.nlm.nih.gov", medication.getIngredient().get(0).getItemCodeableConcept().getCodingFirstRep().getSystem());
         assertEquals("R16CO5Y76E", medication.getIngredient().get(0).getItemCodeableConcept().getCodingFirstRep().getCode());
         assertEquals("WK2XYI10QM", medication.getIngredient().get(1).getItemCodeableConcept().getCodingFirstRep().getCode());
-        for (String invalid : List.of("R16CO5Y76E;", "R16CO5Y76E; R16CO5Y76E", "invalid", "R16CO5Y76E; !dar:unknown")) {
-            values.put("Wirkstoffcode", invalid);
-            assertFalse(invalid, MedicationValues.errors(values::get).isEmpty());
+        values.put("Wirkstoffcode", "R16CO5Y76E;");
+        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        for (String input : List.of("R16CO5Y76E; R16CO5Y76E", "invalid", "R16CO5Y76E; !dar:unknown")) {
+            values.put("Wirkstoffcode", input);
+            assertTrue(input, MedicationValues.errors(values::get).isEmpty());
+            var out = (Medication)new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal().get(0);
+            assertEquals(input.split(";").length, out.getIngredient().size());
         }
     }
     @Test public void medicationOrdersGermanCodingFirstAndPreservesUnmappedProducts() throws Exception {
@@ -318,7 +403,7 @@ public class ClinicalImportConverterTest {
         assertFalse(MedicationValues.errors(values::get).isEmpty());
         values.put("Status", "completed");
         values.put("Ende", "2025-12-31");
-        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
         values.remove("Ende"); values.put("Beginn", "!dar:unknown");
         assertTrue(MedicationValues.errors(values::get).isEmpty());
         ConverterOptions options = new ConverterOptions("");
@@ -361,12 +446,13 @@ public class ClinicalImportConverterTest {
         assertFalse(atc.getCodeElement().hasValue());
         assertEquals("unknown", atc.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
     }
-    @Test public void laboratoryRejectsBooleanButClinicalDocumentationKeepsIt() throws Exception {
+    @Test public void laboratoryAndClinicalDocumentationKeepBooleanValues() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("LOINC", "1234-5", "Messwert", "true", "Werttyp", "Ja/Nein"));
-        assertThrows(IllegalArgumentException.class, () -> new ObservationLaboratoryConverter(row(values,
+        var laboratory = new ObservationLaboratoryConverter(row(values,
                 ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()), null,
-                new ConverterResult(options), null, options).convertInternal());
+                new ConverterResult(options), null, options).convertInternal();
+        assertTrue(((Observation)laboratory.get(0)).getValueBooleanType().booleanValue());
         values.put("Untersuchungscode", "1234-5"); values.put("Wert", "true");
         var resources = new ObservationVitalSignsConverter(row(values, ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()),
                 null, new ConverterResult(options), null, options).convertInternal();
@@ -383,6 +469,6 @@ public class ClinicalImportConverterTest {
         assertEquals("2", dose.getValue().toPlainString());
         assertEquals("unknown", dose.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
         values.remove("Einzeldosis"); values.put("Dosierungstext", "Gabe ohne Mengenangabe");
-        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
     }
 }

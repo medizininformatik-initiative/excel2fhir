@@ -55,7 +55,7 @@ public class MedicationConverter extends Converter {
             r.setStatus(MedicationAdministration.MedicationAdministrationStatus.fromCode(status == null ? "completed" : status));
             r.setEffective(effective());
             var dose = new MedicationAdministration.MedicationAdministrationDosageComponent();
-            if (value("Einzeldosis") != null) dose.setDose(quantity());
+            if (value("Einzeldosis") != null || value("Dosiereinheit") != null) dose.setDose(quantity());
             // Administration has no daily timing element. Keep the supplied facts in text.
             if (value("Dosierungstext") != null || value("Dosen pro Tag") != null ||
                     (value("Einzeldosis") != null && value("Dosiereinheit") == null)) dose.setText(doseText());
@@ -81,7 +81,7 @@ public class MedicationConverter extends Converter {
         r.setId(getMedicationId());
         r.addIdentifier().setValue(getMedicationId());
         CodeableConcept code = ClinicalValues.concept(value("Präparatcode"), value("Präparatcodesystem"), value("Präparatbezeichnung"));
-        if (value("ATC-Code") != null) {
+        if (value("ATC-Code") != null || value("ATC-Version") != null) {
             Coding atc = CodingVersion.apply(new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc"), value("ATC-Version"));
             Extension absent = DiagnosisValues.absentReason(value("ATC-Code"));
             if (absent == null) atc.setCode(value("ATC-Code")); else atc.getCodeElement().addExtension(absent);
@@ -94,7 +94,7 @@ public class MedicationConverter extends Converter {
         code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(c.getSystem(), 2)));
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
-        for (String ingredient : value("Wirkstoffcode").split(";")) {
+        if (value("Wirkstoffcode") != null) for (String ingredient : value("Wirkstoffcode").split(";")) {
             r.addIngredient().setItem(ClinicalValues.concept(ingredient.trim(), value("Wirkstoffcodesystem"), null));
         }
         return r;
@@ -115,7 +115,8 @@ public class MedicationConverter extends Converter {
     }
     private Quantity quantity() throws Exception {
         Extension absent = DiagnosisValues.absentReason(value("Einzeldosis"));
-        Quantity q = getUcumQuantity(absent == null ? parseDecimal(value("Einzeldosis")) : null, value("Dosiereinheit"), null);
+        Quantity q = getUcumQuantity(absent == null && value("Einzeldosis") != null ? parseDecimal(value("Einzeldosis")) : null, value("Dosiereinheit"), null);
+        if (value("Einzeldosis") == null) q.setValueElement(null);
         if (absent != null) q.getValueElement().setExtension(List.of(absent));
         return q;
     }
@@ -129,9 +130,12 @@ public class MedicationConverter extends Converter {
     }
     private Dosage dosage() throws Exception {
         Dosage d = new Dosage();
+        if (value("Einzeldosis") == null && value("Dosiereinheit") != null)
+            d.addDoseAndRate().setDose(quantity());
         String frequency = value("Dosen pro Tag");
         boolean integral = frequency != null && parseDecimal(frequency).stripTrailingZeros().scale() <= 0
-                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MAX_VALUE)) <= 0;
+                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MAX_VALUE)) <= 0
+                && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MIN_VALUE)) >= 0;
         if (value("Dosierungstext") == null && value("Einzeldosis") != null && value("Dosiereinheit") != null && integral) {
             d.addDoseAndRate().setDose(quantity());
             d.getTiming().getRepeat().setFrequency(parseDecimal(frequency).intValueExact()).setPeriod(1).setPeriodUnit(Timing.UnitsOfTime.D);

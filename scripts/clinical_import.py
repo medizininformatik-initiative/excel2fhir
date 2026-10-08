@@ -147,8 +147,6 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
                 for item, parent in [(r, '')] + [(v, r['id']) for v in r.get('component', [])]:
                     c, sy, text = coding(item['code'])
                     value, unit, kind, vc, vs, ucum = observation_value(item)
-                    if sheet == 'Laborbefund' and kind == 'Ja/Nein':
-                        raise UnsupportedValue('The KDS laboratory profile requires a coded answer for boolean results; a coded answer is required')
                     extra_code, extra_system = '', ''
                     codings = item['code'].get('coding', [])
                     if len(codings) > 1:

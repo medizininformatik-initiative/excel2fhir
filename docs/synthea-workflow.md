@@ -10,10 +10,9 @@ and converted again with the desired KDS variants.
 docker compose -f compose.synthea.yml run --build --rm synthea
 ```
 
-With this command, the supplied Compose settings request one living patient aged
-30–80 in Massachusetts, with their full simulated history through 12 September
-2026. Patient and clinician seeds are both `20260912`. Synthea may also export
-patients who died during generation. Histories can include encounters, diagnoses,
+With this command, the supplied Compose settings request one patient aged
+18–80 in Massachusetts, exporting five years of history through 12 September
+2026. Patient and clinician seeds are both `20260912`. Overflow is disabled; the patient can be living or deceased. Histories can include encounters, diagnoses,
 medications, procedures, observations and immunizations; the simulated life
 course determines which occur.
 
@@ -50,8 +49,8 @@ docker compose -f compose.synthea.yml run --build --rm synthea \
 ```
 
 Explicit arguments replace the Compose command, including its seeds and dates.
-Synthea supplies defaults for omitted arguments; the workflow exports full
-histories unless a history length is specified. To reproduce the supplied sample,
+Synthea supplies defaults for omitted arguments; the workflow defaults to ages 18–80, five years of history, one generator thread
+and disabled overflow. Explicit arguments override these settings. To reproduce the supplied sample,
 use the seeds and dates in [compose.synthea.yml](../compose.synthea.yml).
 
 See Synthea's [command-line reference](https://github.com/synthetichealth/synthea/wiki/Basic-Setup-and-Running#running-synthea)
@@ -69,10 +68,8 @@ choices, workbook fields and reproducible mapping evidence.
 
 Place [converter options](converter-usage.md#common-options) before `--`, for
 example `--converter-options options/KDS-A.config`, `-r XML` or `-v`.
-Repeat `--converter-options` for additional KDS variants. Generated workbooks
-contain the shared converter defaults; external files select the variants for
-the current invocation. Before `--`, `-p` sets patients per bundle; after `--`,
-it sets the Synthea population size.
+Each invocation accepts one configuration. Generated workbooks contain case data.
+Run the workflow separately for each KDS variant.
 
 ## Output
 
@@ -99,7 +96,7 @@ UID/GID so the generated files remain editable by that user.
 ## Edit a generated workbook
 
 Open the workbook, edit its data sheets, then pass its path to Excel2FHIR using
-`-f`. Apply the desired options sheets or external files as described in
+`-f`. Supply one external configuration as described in
 [converter usage](converter-usage.md).
 
 ## Further reading

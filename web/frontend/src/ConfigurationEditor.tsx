@@ -1,3 +1,4 @@
+import identifierBindings from '../../catalog/options/identifier-bindings.json'
 import { SavedConfigurations } from './SavedConfigurations'
 import { exportPropertiesConfiguration } from './configuration-properties'
 import { useEffect, useRef, useState } from 'react'
@@ -11,7 +12,6 @@ import {
   options,
   darFields,
   darResource,
-  identifierResources,
   defaults,
   importConfiguration,
   restoreBrowserDraft,
@@ -38,6 +38,15 @@ const groups = [
 const resources = groups.flatMap((group) =>
   contract.resources.filter((r) => r.group === group.id)
 )
+const identifierChoices = [...new Map(resources.filter(r => r.identifierEligible).map(r => [
+  r.identifierSelector ?? r.resourceType, r
+])).entries()].flatMap(([selector, r]) => [
+  { selector, resourceType: r.resourceType, labelKey: selector === 'Encounter' ? 'app.config.encounterAll'
+    : selector === 'Observation' ? 'app.config.observation' : r.labelKey,
+    classCode: 'classCode' in r ? r.classCode : '', level: '', category: '' },
+  ...contract.identifierScopes.filter(scope => selector === 'Encounter.inpatient'
+    ? scope.selector.startsWith(selector + '.') : selector === 'Observation' && scope.resourceType === selector)
+])
 const darGroups = resources.map((resource) => ({
   ...resource,
   filter: resource.id === 'Observation.laboratory' ? 'Laboratory'
@@ -96,6 +105,7 @@ function OptionControl({
     <div
       className={compact ? 'option-row min-w-0 py-2' : 'option-row border-t border-slate-100 py-4 first:border-t-0'}
       data-option={option.id}
+      id={option.type === 'enum' && option.control !== 'select' ? option.id : undefined}
     >
       <div className={`${option.type === 'boolean' ? '' : 'mb-2'} flex flex-wrap items-center gap-x-2 gap-y-1`}>
         <label htmlFor={option.id} className="flex items-center gap-2 font-medium text-sm">
@@ -235,10 +245,11 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     </div>
   )
 }
-export function ConfigurationEditor({ language, onChange }: { language: Language; onChange?: (config: Configuration) => void }) {
+export function ConfigurationEditor({ language, onChange, initialConfiguration }: { language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
   const t: Translator = (key, params) =>
     translate(language, key as TextKey, params)
   const [initial] = useState(() => {
+    if (initialConfiguration) return { config: initialConfiguration, failed: false, saved: false }
     try {
       const saved = localStorage.getItem(storageKey)
       return {
@@ -256,7 +267,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
   const [message, setMessage] = useState<Message | null>(
     initial.failed ? { key: 'app.config.restoreFailed' } : null
   )
-  const [dirty, setDirty] = useState(false)
+  const [dirty, setDirty] = useState(Boolean(initialConfiguration))
   const [saved, setSaved] = useState(initial.saved)
   const [storageFailed, setStorageFailed] = useState(false)
   useEffect(() => {
@@ -467,12 +478,15 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                 {t('app.config.anchors')}
               </p>
               <div className="flex w-max flex-col items-stretch gap-2 pb-16">
-                {resources.map((r) => {
+                {resources.flatMap(r => [
+                  { id: r.id, labelKey: r.labelKey, organization: false },
+                  ...(r.id === 'Encounter' ? [{ id: 'Organization', labelKey: 'app.config.organization', organization: true }] : [])
+                ]).map((r) => {
                   const status = resourceNavigationStatus(r.id, config.values)
-                  const round = `resource.${r.id}.mode` in config.values
+                  const round = r.organization || `resource.${r.id}.mode` in config.values
                   const active = status === 'generated' || status === 'referenced'
-                  const modeOption = options.find((option) => option.id === `resource.${r.id}.mode`)
-                  const selectedLabel = modeOption?.choiceLabelKeys?.[String(config.values[modeOption.id])]
+                  const modeOption = options.find((option) => option.id === (r.organization ? 'resource.Encounter.stationServiceProvider' : `resource.${r.id}.mode`))
+                  const selectedLabel = status !== 'parentDisabled' ? modeOption?.choiceLabelKeys?.[String(config.values[modeOption.id])] : undefined
                   const description = t(selectedLabel ?? {
                     generated: 'app.config.resourceStatus.generated',
                     referenced: 'app.config.resourceStatus.referenced',
@@ -480,9 +494,9 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                     parentDisabled: 'app.config.resourceStatus.parentDisabled'
                   }[status])
                   return (
-                    <a key={r.id} href={`#resource-${r.id}`}
+                    <a key={r.id} href={r.organization ? '#resource.Encounter.stationServiceProvider' : `#resource-${r.id}`}
                       aria-describedby={`resource-status-${r.id}`}
-                      className="group relative flex items-center gap-2 rounded px-2 py-1 text-sm text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700">
+                      className={`group relative flex items-center gap-2 rounded px-2 py-1 text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700 ${r.organization ? 'ml-5 text-xs' : 'text-sm'}`}>
                       <span className="group/status relative h-2.5 w-2.5 shrink-0">
                         <span aria-hidden="true" className={`flex h-2.5 w-2.5 items-center justify-center border ${round ? 'rounded-full' : 'rounded-sm'} ${status === 'generated' ? 'border-teal-700 bg-teal-700' : status === 'referenced' ? 'border-teal-700' : 'border-slate-400 bg-slate-100'}`}>
                           {round && status === 'referenced' && <span className="h-1 w-1 rounded-full bg-teal-700" />}
@@ -631,14 +645,15 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                       : (darCodes[field.id] ?? '')
                   const set = (
                     mode: 'unchanged' | 'overwrite',
-                    code: string
+                    code: string,
+                    onlyWhenMissing = current.mode === 'overwrite' && (current.onlyWhenMissing ?? false)
                   ) => {
                     setConfig((c) => ({
                       ...c,
                       dar: {
                         ...c.dar,
                         [field.id]:
-                          mode === 'unchanged' ? { mode } : { mode, code }
+                          mode === 'unchanged' ? { mode } : { mode, code, onlyWhenMissing }
                       }
                     }))
                     setDirty(true)
@@ -663,21 +678,18 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-4">
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            disabled={!enabled}
-                            checked={current.mode === 'overwrite'}
-                            onChange={(e) =>
-                              set(
-                                e.target.checked ? 'overwrite' : 'unchanged',
-                                code
-                              )
-                            }
-                            className="accent-teal-700"
-                          />
-                          {t('dar.mode.overwrite')}
-                        </label>
+                        <div role="radiogroup" aria-label={t(`dar.field.${field.id}.label`)} className="flex flex-wrap items-center gap-4">
+                          {(['unchanged', 'missing', 'overwrite'] as const).map(mode => (
+                            <label key={mode} className={`flex items-center gap-2 text-sm ${enabled ? '' : 'text-slate-400'}`}>
+                              <input type="radio" name={`dar-mode-${field.id}`} disabled={!enabled}
+                                checked={mode === 'unchanged' ? current.mode === 'unchanged' : current.mode === 'overwrite' && (mode === 'missing' ? !!current.onlyWhenMissing : !current.onlyWhenMissing)}
+                                onChange={() => set(mode === 'unchanged' ? 'unchanged' : 'overwrite', code, mode === 'missing')}
+                                className="accent-teal-700" />
+                              {t(mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
+                            </label>
+                          ))}
+                          <Help text={t('dar.onlyWhenMissingHelp')} t={t}/>
+                        </div>
                         <select
                           aria-label={t(`dar.field.${field.id}.label`)}
                           value={code}
@@ -689,7 +701,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                             }))
                             set('overwrite', e.target.value)
                           }}
-                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100"
+                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
                         >
                           <option value="">{t('app.config.chooseCode')}</option>
                           {field.allowedCodes.map((c) => (
@@ -699,6 +711,7 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                           ))}
                         </select>
                       </div>
+
                       {!enabled ? (
                         <p className="mt-2 text-xs text-slate-500">
                           {t('app.config.resourceRequired')}
@@ -799,8 +812,10 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                   <legend className="mb-2 text-sm font-medium">
                     {t('identifier.resources')}
                   </legend>
-                  <div className="flex flex-wrap gap-x-5 gap-y-2">
-                    {identifierResources.map((resource) => (
+                  <div className="grid gap-2 lg:grid-cols-2">
+                    {identifierChoices.map((choice) => {
+                      const resource = choice.selector
+                      return (
                       <label
                         key={resource}
                         className="flex items-center gap-2 text-sm"
@@ -817,32 +832,67 @@ export function ConfigurationEditor({ language, onChange }: { language: Language
                           }
                           className="accent-teal-700"
                         />
-                        {resource === 'Encounter' ? t('app.config.encounterAll') : resource === 'Observation'
-                          ? t('app.config.observation')
-                          : t(`resource.${resource}.label`)}
+                        <span className="flex flex-wrap items-center gap-1">
+                          <span>{t(choice.labelKey)}{choice.level && ` · ${t('choice.' + choice.level)}`}</span>
+                          <span className="rounded border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-600">
+                            {t('app.config.fhirResource', { resource: choice.resourceType })}
+                            {choice.classCode && ` · ${t('app.config.encounterClass', { code: choice.classCode })}`}
+                            {choice.category && ` · ${t('app.config.category')}: ${choice.category}`}
+                          </span>
+                        </span>
                       </label>
-                    ))}
+                    )})}
                   </div>
                 </fieldset>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-2 text-sm">
-                    {t('identifier.system')}
+                  <label className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center">{t('identifier.system')}</span>
                     <input
                       placeholder="https://example.org/fhir/sid/test-id"
                       value={rule.system}
                       onChange={(e) =>
                         updateRule(rule.id, { system: e.target.value })
                       }
-                      className="rounded-lg border border-slate-300 p-2 placeholder:text-slate-400 focus:placeholder:text-transparent"
+                      className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2 placeholder:text-slate-400 focus:placeholder:text-transparent"
                     />
                   </label>
                   <IdentifierPatternControl
                     value={rule.pattern}
+                    countStart={rule.countStart ?? 1}
+                    onCountStartChange={(countStart) => updateRule(rule.id, { countStart })}
                     onChange={(pattern) => updateRule(rule.id, { pattern })}
                     t={t}
                   />
                 </div>
                 <RulePreview rule={rule} t={t} />
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-use-${rule.id}`}>{t('identifier.use')}</label><Help text={t('identifier.useHelp')} t={t}/></span>
+                    <select id={`identifier-use-${rule.id}`} className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.use ?? ''} onChange={e => updateRule(rule.id, { use: e.target.value })}>
+                      <option value="">{t('identifier.unspecified')}</option>
+                      {identifierBindings.use.map(value => <option key={value.code} value={value.code}>{value.code} — {value.display}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-2 text-sm">
+                    <span className="flex min-h-7 items-center gap-1"><label htmlFor={`identifier-type-text-${rule.id}`}>{t('identifier.type_text')}</label><Help text={t('identifier.typeTextHelp')} t={t}/></span>
+                    <input id={`identifier-type-text-${rule.id}`} className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={rule.typeText ?? ''} onChange={e => updateRule(rule.id, { typeText: e.target.value })}/>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2"><h4 className="text-sm font-medium">{t('identifier.type_codings')}</h4><Help text={t('identifier.typeHelp')} t={t}/></div>
+                  {(rule.typeCodings ?? []).map((coding, codingIndex) => {
+                    const updateCoding = (value: typeof coding) => updateRule(rule.id, { typeCodings: rule.typeCodings!.map((item, i) => i === codingIndex ? value : item) })
+                    return <div key={codingIndex} className="space-y-2 rounded-lg border p-3">
+                      <select aria-label={t('identifier.chooseType')} className="w-full rounded-lg border border-slate-300 p-2 text-sm" value={identifierBindings.types.some(item => item.system === coding.system && item.code === coding.code) ? `${coding.system}|${coding.code}` : ''} onChange={e => { const value = identifierBindings.types.find(item => `${item.system}|${item.code}` === e.target.value); if (value) updateCoding({ ...value }) }}>
+                        <option value="">{t('identifier.chooseType')}</option>
+                        {identifierBindings.types.map(item => <option key={`${item.system}|${item.code}`} value={`${item.system}|${item.code}`}>{item.code} — {t('identifier.typeLabel.' + item.code)}</option>)}
+                      </select>
+                      <div className="grid gap-3 md:grid-cols-3">{(['system', 'code', 'display'] as const).map(field => <label key={field} className="flex min-w-0 flex-col gap-1 text-sm">{t(`identifier.coding.${field}`)}<input className="h-10 w-full min-w-0 rounded-lg border border-slate-300 p-2" value={coding[field] ?? ''} onChange={e => updateCoding({ ...coding, [field]: e.target.value })}/></label>)}</div>
+                      <Button variant="outline" onClick={() => updateRule(rule.id, { typeCodings: rule.typeCodings!.filter((_, i) => i !== codingIndex) })}>{t('app.config.remove')}</Button>
+                    </div>
+                  })}
+                  <Button variant="outline" onClick={() => updateRule(rule.id, { typeCodings: [...(rule.typeCodings ?? []), { system: 'http://terminology.hl7.org/CodeSystem/v2-0203', code: '', display: '' }] })}>{t('identifier.addType')}</Button>
+                </div>
               </section>
             ))}
           </>

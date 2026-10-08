@@ -1,7 +1,6 @@
 """Read-only probes for fixed local Compose services."""
 from concurrent.futures import ThreadPoolExecutor
 import json
-import socket
 import urllib.request
 
 
@@ -20,11 +19,7 @@ def portal():
         return False
     if not reachable('http://auth:8080/auth/realms/dataportal/.well-known/openid-configuration'):
         return False
-    try:
-        with socket.create_connection(('dataportal-nginx', 8443), timeout=2):
-            return True
-    except OSError:
-        return False
+    return reachable('http://dataportal-nginx:8080/')
 
 
 def services():

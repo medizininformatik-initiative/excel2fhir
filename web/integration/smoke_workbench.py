@@ -23,7 +23,7 @@ def request(path, data=None):
 
 
 def create():
-    return json.loads(request('/jobs', {'source': 'starter', 'profile': 'default'}))['id']
+    return json.loads(request('/jobs', {'source': 'starter'}))['id']
 
 
 def wait(job_id, states, timeout=120):

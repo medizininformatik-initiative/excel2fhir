@@ -4,7 +4,7 @@ Supported clinical resources and synthetic contacts are imported; unhandled sour
 are identified in a separate loss report. Requires LibreOffice, Java and Python 3.
 """
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -95,7 +95,12 @@ def prepare(bundle, options=None):
         encounter_numbers[r['id']] = nr
         def local_time(value):
             # Keep the offset: the autumn clock change has two distinct local 02:xx hours.
-            return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone().isoformat() if value else ''
+            if not value: return ''
+            local = datetime.fromisoformat(value.replace('Z', '+00:00')).astimezone()
+            # Historical local mean time can have offset seconds, which FHIR cannot encode.
+            if local.utcoffset().total_seconds() % 60:
+                local = local.astimezone(timezone.utc)
+            return local.isoformat()
         period = r.get('period', {})
         rows['Fall'].append([pid,nr,local_time(period.get('start')),local_time(period.get('end')),CLASSES[code],
                              '', '', '', '', 'Notfall' if code == 'EMER' else ''])
@@ -273,20 +278,6 @@ def write_workbook(rows, output, options=None):
             op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
         if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
-    from converter_options import workflow_defaults, property_line
-    # Record all effective values, including explicit overrides of Synthea defaults.
-    option_sheet = 'Konvertierungsoptionen'
-    for name, value in (workflow_defaults() if options is None else options).items():
-        matches = [cell for cell, text in sheets[option_sheet].items()
-                   if text.lstrip('# ').split('=', 1)[0].strip() == name]
-        if len(matches) != 1:
-            raise ValueError('Missing or duplicate template option: ' + name)
-        if name in ('SYNTHEA_MAPPING_YEAR', 'SYNTHEA_VERSION_OUTPUT'):
-            from workbook_absent import LABELS
-            shown = LABELS.get(str(value)[5:], value) if str(value).startswith('!dar:') else value
-            put(option_sheet, 'B' + matches[0][1:], shown)
-        else:
-            put(option_sheet, matches[0], property_line(name, value))
     from clinical_selections import validation_ops
     ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
     apply_workbook_edits(template, ops, output)

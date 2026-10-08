@@ -13,7 +13,6 @@ import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounte
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Zimmer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,8 +24,8 @@ import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Encounter.EncounterStatus;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Location;
+import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Location.LocationStatus;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Period;
@@ -98,12 +97,6 @@ public class EncounterConverter extends Converter {
     private void closePrimary(org.hl7.fhir.r4.model.DateTimeType boundary) {
         if (state.primaryContact == null) return;
         if (!state.primaryContact.getPeriod().hasEnd() || state.primaryEndDerived) {
-            for (Encounter secondary : state.secondaryContacts) {
-                if (secondary.getPeriod().getStart().after(boundary.getValue())
-                        || (!state.derivedEnds.containsKey(secondary) && secondary.getPeriod().hasEnd()
-                            && secondary.getPeriod().getEnd().after(boundary.getValue())))
-                    throw new IllegalArgumentException("The secondary encounter falls outside the primary stay");
-            }
             state.primaryContact.getPeriod().setEndElement(boundary.copy());
             period(state.primaryContact, state.primaryContact.getPeriod());
             if (state.derivedEnds.containsKey(state.primaryContact)) {
@@ -119,7 +112,6 @@ public class EncounterConverter extends Converter {
     private Encounter newContact(Encounter encounter, String id, Encounter parent, Period p, String kind) throws Exception {
         encounter.setId(id);
         encounter.setSubject(getPatientReference());
-        encounter.setIdentifier(convertIdentifier(id));
         encounter.setMeta(getMeta());
         encounter.setType(new ArrayList<>(getEncounterType(encounter.getClass())));
         if (parent != null) {
@@ -135,10 +127,27 @@ public class EncounterConverter extends Converter {
         Location parent = null;
         String path = getDIZId() + "|" + Objects.toString(department, "");
         String[] names = {value(Station), value(Zimmer), value(Bett)};
+        var configuration = options.configuration();
+        String providerMode = configuration == null ? "none" : configuration.effective("resource.Encounter.stationServiceProvider")
+                .map(v -> v.asText()).orElse("none");
+        boolean stationLocation = configuration == null || configuration.effective("resource.Encounter.stationLocation")
+                .map(v -> v.asBoolean()).orElse(true);
+        if (names[0] != null && !providerMode.equals("none")) {
+            Organization organization = new Organization();
+            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + names[0]));
+            organization.setName(names[0]).setActive(true);
+            String reference = "Organization/" + organization.getIdElement().getIdPart();
+            if (providerMode.equals("contained")) {
+                encounter.addContained(organization);
+                reference = "#" + organization.getIdElement().getIdPart();
+            } else if (providerMode.equals("generate-reference")) resources.add(organization);
+            encounter.setServiceProvider(new Reference(reference).setDisplay(names[0]));
+        }
         String[] types = {"wa", "ro", "bd"};
         for (int i = 0; i < names.length; i++) {
             if (names[i] == null) continue;
             path += "|" + types[i] + "|" + names[i];
+            if (i == 0 && !stationLocation) continue;
             Location location = new Location();
             location.setId(ClinicalValues.resourceId(getDIZId(), "Location", path));
             location.setName(names[i]).setStatus(LocationStatus.ACTIVE);
@@ -150,13 +159,6 @@ public class EncounterConverter extends Converter {
             parent = location;
         }
         period(encounter, encounter.getPeriod());
-    }
-
-    private static void inside(Period child, Period parent) {
-        if ((parent.hasStart() && child.getStart().before(parent.getStart()))
-                || (parent.hasEnd() && (child.getStart().compareTo(parent.getEnd()) >= 0
-                    || (child.hasEnd() && child.getEnd().after(parent.getEnd())))))
-            throw new IllegalArgumentException("The encounter period falls outside its parent stay");
     }
 
     @Override protected List<Resource> convertInternal() throws Exception {
@@ -191,13 +193,11 @@ public class EncounterConverter extends Converter {
         if (kind != null && !hasPlaces) throw new IllegalArgumentException("Kontaktart requires at least Station, Zimmer or Bett");
         Period p = new Period().setStartElement(ClinicalValues.date(value(Start))).setEndElement(ClinicalValues.date(value(Ende)));
         if (!p.hasStart() || !p.getStartElement().hasValue()) throw new IllegalArgumentException("Encounter start is required");
-        if (p.hasEnd() && p.getEnd().before(p.getStart())) throw new IllegalArgumentException("Encounter end precedes its start");
         String rootId = getEncounterId();
         boolean newRoot = state.previousEncounterLevel1 == null || !state.previousEncounterLevel1.getSubject().getReference().equals(getPatientReference().getReference())
                 || (!isNullOrEmpty(rootId) && !rootId.equals(state.previousEncounterLevel1.getId()));
         if (newRoot && (secondary || isNullOrEmpty(rootId))) throw new IllegalArgumentException("The facility encounter must precede its stays");
         if (!newRoot) {
-            if (state.facilityBound) inside(p, state.previousEncounterLevel1.getPeriod());
             if (value(Einrichtungskontaktklasse) != null
                     && !Objects.equals(getEncounterLevel1Class().getCode(), state.previousEncounterLevel1.getClass_().getCode()))
                 throw new IllegalArgumentException("Conflicting facility encounter classes within the same case");
@@ -205,9 +205,7 @@ public class EncounterConverter extends Converter {
         }
         if (secondary) {
             if (state.primaryContact == null) throw new IllegalArgumentException("A secondary encounter requires a preceding primary location encounter");
-            inside(p, state.primaryContact.getPeriod());
             Encounter parent = state.previousEncounterLevel2 != null ? state.previousEncounterLevel2 : state.previousEncounterLevel1;
-            if (state.previousEncounterLevel2 != null) inside(p, state.previousEncounterLevel2.getPeriod());
             String id = state.previousEncounterLevel1.getId() + ResourceIdSuffix.ENCOUNTER_LEVEL_3
                     + result.getNextId(Fall, EncounterLevel3.class, START_ID_ENCOUNTER_LEVEL_3);
             Encounter contact = newContact(new EncounterLevel3(), id, parent, p, kind);
@@ -219,9 +217,6 @@ public class EncounterConverter extends Converter {
             return resources;
         }
         if (!newRoot && state.primaryContact != null && (hasPlaces || department != null)) {
-            if (p.getStart().before(state.primaryContact.getPeriod().getStart())
-                    || (!state.primaryEndDerived && state.primaryContact.getPeriod().hasEnd() && p.getStart().before(state.primaryContact.getPeriod().getEnd())))
-                throw new IllegalArgumentException("Primary stays overlap or are out of order; encounter assignment is ambiguous");
             closePrimary(p.getStartElement());
         }
         List<Resource> resources = new ArrayList<>();
@@ -239,7 +234,7 @@ public class EncounterConverter extends Converter {
             updateParentPeriodAndStatus(state.previousEncounterLevel1, p);
         }
         if (department != null && !department.equals(state.previousDepartmentName)) {
-            if (state.previousEncounterLevel2 != null) {
+            if (state.previousEncounterLevel2 != null && !state.departmentBound) {
                 state.previousEncounterLevel2.getPeriod().setEndElement(p.getStartElement().copy());
                 period(state.previousEncounterLevel2, state.previousEncounterLevel2.getPeriod());
             }
@@ -248,8 +243,9 @@ public class EncounterConverter extends Converter {
             state.previousEncounterLevel2 = newContact(new EncounterLevel2(), id, state.previousEncounterLevel1, p, null);
             state.previousEncounterLevel2.setServiceType(createCodeableConcept(Fachabteilung, ENCOUNTER_LEVEL2_DEPARTMENT_RESOURCES));
             state.previousDepartmentName = department;
+            state.departmentBound = !hasPlaces && p.hasEnd();
             resources.add(state.previousEncounterLevel2);
-        } else if (state.previousEncounterLevel2 != null && hasPlaces) {
+        } else if (state.previousEncounterLevel2 != null && hasPlaces && !state.departmentBound) {
             updateParentPeriodAndStatus(state.previousEncounterLevel2, p);
         }
         if (hasPlaces) {
@@ -259,14 +255,12 @@ public class EncounterConverter extends Converter {
                     state.previousEncounterLevel2 != null ? state.previousEncounterLevel2 : state.previousEncounterLevel1, p, kind);
             state.primaryEndDerived = !p.hasEnd();
             if (state.primaryEndDerived) derivedEnd(state.primaryContact, state.previousEncounterLevel1);
-            updateParentPeriodAndStatus(state.previousEncounterLevel2, state.primaryContact.getPeriod());
+            if (!state.departmentBound) updateParentPeriodAndStatus(state.previousEncounterLevel2, state.primaryContact.getPeriod());
             resources.add(state.primaryContact);
             locations(state.primaryContact, department, resources);
         } else if (department != null) state.primaryContact = null;
         return resources;
     }
-
-    public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
 
     /**
      * toString() result of these enum values are the names of the columns in the
@@ -358,16 +352,6 @@ public class EncounterConverter extends Converter {
     }
 
     /**
-     * @param id generated Encounter ID
-     * @return
-     * @throws Exception
-     */
-    private List<Identifier> convertIdentifier(String id) throws Exception {
-        String dizID = getDIZId();
-        return createIdentifier(id, dizID);
-    }
-
-    /**
      * @return
      * @throws Exception
      */
@@ -399,28 +383,6 @@ public class EncounterConverter extends Converter {
      */
     protected static Meta getMeta() {
         return new Meta().addProfile(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getProfile());
-    }
-
-    /**
-     * @param encounterID
-     * @param dizID
-     * @return
-     */
-    public static List<Identifier> createIdentifier(String encounterID, String dizID) {
-        Reference reference = new Reference()
-                .setIdentifier(
-                        new Identifier()
-                                .setSystem(
-                                        "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
-                                .setValue(dizID));
-
-        Identifier identifier = new Identifier()
-                .setValue(encounterID)
-                .setSystem(ENCOUNTER_IDENTIFIER_SYSTEM)
-                .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
-                .setAssigner(reference);
-
-        return Collections.singletonList(identifier);
     }
 
     /**

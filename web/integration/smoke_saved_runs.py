@@ -43,10 +43,7 @@ with tempfile.TemporaryDirectory(prefix='saved-runs-') as directory:
     base = 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n'
     normal = configurations.create('Standard', base)
     faulty = configurations.create('Unit only', base + 'OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT=true\nOBSERVATION_VITAL_SIGNS_UCUM_CODE_IN_UNIT=true\n')
-    selected = [{'id': item['id'], 'revision': item['revision']} for item in [normal, faulty]]
-    request_id = str(uuid4())
-    jobs = configurations.start_jobs('starter', selected, request_id)
-    assert jobs == configurations.start_jobs('starter', selected, request_id)
+    jobs = [store.create('starter', 'default', item['configurationProperties']) for item in [normal, faulty]]
     for job_id in jobs:
         assert store.claim() == job_id
         worker.execute(job_id)
@@ -63,7 +60,8 @@ with tempfile.TemporaryDirectory(prefix='saved-runs-') as directory:
     assert coded > 0
     old_snapshot = snapshot(jobs[1])
     configurations.delete(faulty['id'], 1)
-    repeated = store.repeat(jobs[1], str(uuid4()))
+    loaded = store.editor_input(jobs[1])
+    repeated = store.create(loaded['source'], 'default', loaded['configurationProperties'])
     assert store.claim() == repeated
     worker.execute(repeated)
     assert store.get(repeated)['state'] == 'succeeded'
@@ -71,4 +69,4 @@ with tempfile.TemporaryDirectory(prefix='saved-runs-') as directory:
     assert old_snapshot['inputSha256'] == snapshot(repeated)['inputSha256']
     assert second == measurements(repeated)
     assert old_snapshot == snapshot(jobs[1])
-    print(f'PASS: two independent configurations, {len(first)} quantities each, retry deduplication, immutable snapshots, repeat after configuration deletion')
+    print(f'PASS: two independent configurations, {len(first)} quantities each, immutable snapshots, load into editor and resubmit after configuration deletion')

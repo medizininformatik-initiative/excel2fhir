@@ -10,6 +10,7 @@ import sqlite3
 import subprocess
 import time
 import uuid
+import zipfile
 
 ROOT = Path(os.environ.get("WORKBENCH_DATA", "/data"))
 APP = Path(os.environ.get("CONVERTER_HOME", "/converter"))
@@ -29,6 +30,10 @@ def connect():
             db.execute('PRAGMA journal_mode=WAL')
             db.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, cancel INTEGER NOT NULL DEFAULT 0, exit_code INTEGER)")
             db.execute("CREATE TABLE IF NOT EXISTS uploads (id TEXT PRIMARY KEY, state TEXT NOT NULL, created REAL NOT NULL, descriptor TEXT NOT NULL, result TEXT, cancel INTEGER NOT NULL DEFAULT 0)")
+            columns = {row['name'] for row in db.execute('PRAGMA table_info(jobs)')}
+            for column in ('started', 'finished'):
+                if column not in columns:
+                    db.execute(f'ALTER TABLE jobs ADD COLUMN {column} REAL')
             db.execute("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, jobs TEXT NOT NULL)")
         with db:
             yield db
@@ -68,7 +73,10 @@ def submitted(request_id, fingerprint, db):
     if row:
         if row['fingerprint'] != fingerprint:
             raise SubmissionConflict('This submission ID was already used for different settings')
-        return json.loads(row['jobs'])
+        ids = json.loads(row['jobs'])
+        if any(db.execute('SELECT id FROM jobs WHERE id=?', (identifier,)).fetchone() is None for identifier in ids):
+            raise SubmissionConflict('This submission belongs to a deleted run; start a new run')
+        return ids
     return None
 
 
@@ -103,7 +111,7 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                saved_configuration=None, batch_id=None, repeated_from=None, source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None):
+                source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None):
     specification = None
     if input_path is None and source == 'synthea-generation':
         import generation
@@ -117,10 +125,8 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         else:
             from inputs import resolve
             input_path, source_name, input_kind = resolve(source)
-    if profile not in {'default', 'workbook'}:
+    if profile != 'default':
         raise ValueError('Unknown configuration source')
-    if profile == 'workbook' and configuration_properties is not None:
-        raise ValueError('Workbook configuration cannot be combined with editor settings')
     job_id = str(uuid.uuid4())
     directory = ROOT / 'jobs' / job_id
     directory.mkdir(parents=True)
@@ -133,13 +139,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
     native = input_kind == 'synthea-generation' and json.loads((directory / filename).read_text()).get('outputMode') == 'synthea'
     if native:
-        if configuration_properties is not None or saved_configuration:
+        if configuration_properties is not None:
             raise ValueError('Synthea FHIR output does not use a KDS configuration')
         execution = {'formats': ['JSON'], 'validation': False}
         config = {'id': 'synthea', 'name': 'Synthea FHIR'}
-    elif profile == 'workbook':
-        execution = {}
-        config = {'id': 'workbook', 'name': 'Input configurations'}
     else:
         if configuration_properties is None:
             shutil.copyfile(APP / 'defaults.config', directory / 'default.config')
@@ -152,8 +155,6 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         config = {'id': 'default' if configuration_properties is None else 'editor',
                   'name': 'Converter defaults' if configuration_properties is None else 'Submitted configuration',
                   'optionsProperties': (directory / 'default.config').read_text()}
-        if saved_configuration:
-            config.update(saved_configuration)
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
                 'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
     if input_kind.startswith('synthea'):
@@ -170,10 +171,6 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         snapshot['datasetName'] = dataset_name
     if source_name:
         snapshot['sourceName'] = source_name
-    if batch_id:
-        snapshot['batchId'] = batch_id
-    if repeated_from:
-        snapshot['repeatedFrom'] = repeated_from
     (directory / 'snapshot.json').write_text(json.dumps(snapshot, indent=2))
     for name in (filename, 'default.config', 'snapshot.json'):
         if (directory / name).exists():
@@ -199,30 +196,26 @@ def create(source, profile, configuration_properties=None, request_id=None, gene
                   lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name))[0]
 
 
-def repeat(job_id, request_id):
-    def prepare(prepared):
-        original = get(job_id)
-        if not original:
-            raise FileNotFoundError('Run not found')
-        if original['state'] in {'queued', 'running'}:
-            raise SubmissionConflict('Wait until the original run has ended before repeating it')
-        folder = ROOT / 'jobs' / job_id
-        snapshot = json.loads((folder / 'snapshot.json').read_text())
-        from inputs import input_filename
-        input_kind = snapshot.get('inputKind', 'workbook')
-        filename = input_filename(input_kind)
-        if digest(folder / filename) != snapshot['inputSha256']:
-            raise ValueError('The saved input has changed')
-        config = snapshot['profile']
-        text = None if config['id'] in {'workbook', 'synthea'} else config['optionsProperties']
-        if text is not None and (folder / 'default.config').read_text() != text:
-            raise ValueError('The saved configuration has changed')
-        prepare_job(prepared, snapshot['source'], 'workbook' if text is None else 'default', text,
-                    input_path=folder / filename, saved_configuration=config if text is not None else None,
-                    repeated_from={'id': job_id, 'converterSha256': snapshot['converterSha256'],
-                                   **{key: snapshot[key] for key in ('syntheaImportSha256', 'syntheaGeneratorSha256', 'syntheaRevision') if key in snapshot}},
-                    source_name=snapshot.get('sourceName'), input_kind=input_kind, dataset_name=snapshot.get('datasetName'))
-    return submit({'kind': 'repeat', 'job': job_id}, request_id, prepare)[0]
+def editor_input(job_id):
+    import inputs
+    folder = ROOT / 'jobs' / job_id
+    snapshot = json.loads((folder / 'snapshot.json').read_text())
+    kind = snapshot.get('inputKind', 'workbook')
+    path = folder / inputs.input_filename(kind)
+    if digest(path) != snapshot['inputSha256']:
+        raise ValueError('The saved input has changed')
+    source = snapshot['source']
+    if kind != 'synthea-generation':
+        # Reuse the immutable saved bytes, even if the original upload was removed.
+        with inputs.incoming() as incoming:
+            shutil.copyfile(path, incoming / inputs.input_filename(kind))
+            suffix = {'workbook': '.xlsx', 'csv': '.zip', 'synthea': '.json', 'synthea-zip': '.zip'}[kind]
+            name = snapshot.get('sourceName') or ('Run-' + job_id[:8] + suffix)
+            source = inputs.publish(incoming, name)['id']
+    return {'source': source, 'generation': snapshot.get('generation'),
+            'datasetName': snapshot.get('datasetName', ''),
+            'configurationProperties': snapshot['profile'].get('optionsProperties')
+                or (APP / 'defaults.config').read_text()}
 
 
 def jobs():
@@ -232,6 +225,8 @@ def jobs():
 
 def job_result(row):
     job = dict(row)
+    job['duration_seconds'] = (max(0, (job.get('finished') or time.time()) - job['started'])
+                               if job.get('started') is not None and (job.get('finished') is not None or job['state'] == 'running') else None)
     job["download_available"] = job["state"] in {"succeeded", "failed"} and (ROOT / "jobs" / job["id"] / "result.zip").is_file()
     snapshot_path = ROOT / 'jobs' / job['id'] / 'snapshot.json'
     if snapshot_path.is_file():
@@ -243,6 +238,9 @@ def job_result(row):
         result = snapshot_path.parent / 'generation-result.json'
         if job['state'] in {'succeeded', 'failed'} and result.is_file():
             job['generation_result'] = json.loads(result.read_text())
+    failure = ROOT / 'jobs' / job['id'] / 'failure.json'
+    if failure.is_file():
+        job['failure'] = json.loads(failure.read_text())
     return job
 
 
@@ -262,10 +260,54 @@ def claim():
         db.execute("BEGIN IMMEDIATE")
         row = db.execute("SELECT id FROM jobs WHERE state='queued' AND cancel=0 ORDER BY created LIMIT 1").fetchone()
         if row:
-            db.execute("UPDATE jobs SET state='running' WHERE id=?", (row['id'],))
+            db.execute("UPDATE jobs SET state='running',started=? WHERE id=?", (time.time(), row['id']))
             return row['id']
 
 
 def finish(job_id, state, code=None):
+    # Publish terminal state only after timing is saved, so deletion cannot race final writes.
     with connect() as db:
-        db.execute("UPDATE jobs SET state=CASE WHEN cancel=1 AND ?='succeeded' THEN 'cancelled' ELSE ? END,exit_code=? WHERE id=?", (state, state, code, job_id))
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT started FROM jobs WHERE id=?', (job_id,)).fetchone()
+        ended = time.time()
+        if row and row['started'] is not None:
+            timing = {'started': row['started'], 'finished': ended, 'duration_seconds': max(0, ended - row['started'])}
+            folder = ROOT / 'jobs' / job_id
+            (folder / 'timing.json').write_text(json.dumps(timing, indent=2))
+            with (folder / 'converter.log').open('a') as log:
+                log.write(f"\nRun duration: {timing['duration_seconds']:.3f} seconds\n")
+            if (folder / 'result.zip').is_file():
+                with zipfile.ZipFile(folder / 'result.zip', 'a', zipfile.ZIP_DEFLATED) as archive:
+                    if 'timing.json' not in archive.namelist():
+                        archive.write(folder / 'timing.json', 'timing.json')
+        db.execute("UPDATE jobs SET state=CASE WHEN cancel=1 AND ?='succeeded' THEN 'cancelled' ELSE ? END,exit_code=?,finished=? WHERE id=?", (state, state, code, ended, job_id))
+
+
+def delete(job_id):
+    """Remove a completed local run; upload records and server contents are retained."""
+    job_id = str(uuid.UUID(job_id))
+    with run_lock(job_id):
+        with connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT state FROM jobs WHERE id=?', (job_id,)).fetchone()
+            if not row:
+                raise FileNotFoundError('Run not found')
+            if row['state'] in {'queued', 'running'}:
+                raise SubmissionConflict('Cancel the run before deleting it')
+            for upload in db.execute("SELECT descriptor FROM uploads WHERE state IN ('queued','preparing','uploading')"):
+                if any(item['jobId'] == job_id for item in json.loads(upload['descriptor'])['datasets']):
+                    raise SubmissionConflict('An active upload still uses this run')
+            folder = ROOT / 'jobs' / job_id
+            if folder.exists():
+                shutil.rmtree(folder)
+            db.execute('DELETE FROM jobs WHERE id=?', (job_id,))
+            # Keep submission IDs as tombstones: retries must never recreate a deleted run.
+
+
+@contextmanager
+def run_lock(job_id):
+    locks = ROOT / 'locks'
+    locks.mkdir(parents=True, exist_ok=True)
+    with (locks / (str(uuid.UUID(job_id)) + '.lock')).open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield

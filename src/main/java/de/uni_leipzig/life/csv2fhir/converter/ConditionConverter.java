@@ -101,9 +101,6 @@ public class ConditionConverter extends Converter {
         } else {
             coding.getCodeElement().addExtension(absent);
         }
-        if (concept.getCoding().stream().anyMatch(c -> c.getSystem().equals(coding.getSystem()))) {
-            throw new IllegalArgumentException("Two codings of the same system exceed the diagnosis profile slice");
-        }
         concept.addCoding(coding);
     }
 

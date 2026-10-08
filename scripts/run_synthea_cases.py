@@ -50,7 +50,7 @@ def environment():
         versions[name] = (result.stdout + result.stderr).strip()
     versions['python'] = sys.version
     files = [TEMPLATE, JAR, *sorted((ROOT / 'scripts').glob('*.py')),
-             ROOT / 'scripts/ReadXmlBundles.java', ROOT / 'scripts/WorkbookUno.java', ROOT / 'scripts/WorkflowOptions.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*'))]
+             ROOT / 'scripts/ReadXmlBundles.java', ROOT / 'scripts/WorkbookUno.java', ROOT / 'scripts/WorkflowOptions.java', ROOT / 'src/main/resources/workbook-absent-reasons.json', *sorted((ROOT / 'scripts/mappings').glob('*')), *sorted((ROOT / 'src/main/resources/ucum').glob('*.map'))]
     return {'versions': versions, 'converterTimezone': 'Europe/Berlin', 'sha256': {
         str(p.relative_to(ROOT)): sha256(p) for p in files if p.is_file()}}
 
@@ -167,7 +167,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             write_json(case / 'Fall.loss.json', report)
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=defaults)
-            command = ['java', '-XX:MaxRAMPercentage=50', '-Duser.timezone=Europe/Berlin',
+            command = ['java', '-Xmx3g' if validate else '-Xmx1g', '-Duser.timezone=Europe/Berlin',
                        '-Dexcel2fhir.runOffset=' + run_time().strftime('%z'), '-jar', str(JAR),
                        '-f', str(book), '-o', str(case), '-r', ','.join(formats or ['JSON', 'NDJSON']),
                        '-p', str(patients_per_bundle), '-vll', validation_log_level, '-l', log_layout]

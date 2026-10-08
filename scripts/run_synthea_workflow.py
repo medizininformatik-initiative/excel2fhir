@@ -31,8 +31,8 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(config, target)
         snapshots.append(target)
-    command = ['java', '-Xmx4g', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
-               '--exporter.years_of_history=0', *arguments,
+    command = ['java', '-Xmx1536m', '-Duser.timezone=Europe/Berlin', '-jar', str(jar),
+               '--exporter.years_of_history=5', '--generate.thread_pool_size=1', '-a', '18-80', '-o', 'false', *arguments,
                '--exporter.baseDirectory=' + str(directory / 'details/sources/synthea'),
                '--exporter.fhir.export=true', '--exporter.fhir_stu3.export=false',
                '--exporter.fhir_dstu2.export=false', '--exporter.fhir.bulk_data=false',
@@ -47,6 +47,9 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
         print('Synthea is generating patients; see details/logs/synthea.log for progress.', flush=True)
         with (directory / 'details/logs/synthea.log').open('w') as log:
             generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+        with (directory / 'details/logs/synthea.log').open(errors='replace') as log:
+            if any('OutOfMemoryError' in line for line in log):
+                raise MemoryError('Synthea ran out of memory; generated files may be incomplete. See details/logs/synthea.log.')
         if generated.returncode:
             raise RuntimeError('Synthea failed; see details/logs/synthea.log (exit code ' + str(generated.returncode) + ').')
         report['status'] = 'CONVERTING'

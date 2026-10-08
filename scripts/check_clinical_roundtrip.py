@@ -6,6 +6,8 @@ from medication_products import PZN
 from clinical_events import prepare_events, prepare_documents
 from german_texts import GermanTexts, localize_rows
 from german_demographics import identity
+from check_output_selection import selected, enabled
+from check_medication_selection import product_id
 
 
 def check_clinical(source, target, report):
@@ -30,7 +32,14 @@ def check_clinical(source, target, report):
         l['id'] for l in expected['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'}, 'Procedure exclusion report changed'
     src = {r['resource']['id']:r['resource'] for r in entries if 'id' in r.get('resource',{})}
     dst = [e['resource'] for e in target['entry']]
-    wanted = Counter(r['resourceType'] for r in expected['clinicalImports'])
+    options = report.get('converterOptions', {})
+    imports = [r for r in expected['clinicalImports'] if selected(src[r['sourceId']], options)]
+    from check_medication_transformations import transformed_medications
+    medication_rows = rows['Medikation']
+    localize_rows({'Medikation': medication_rows})
+    medication_events = transformed_medications(medication_rows, options, report.get('outputPatient', pid.replace('_', '-')))
+    wanted = Counter(r['resourceType'] for r in imports if r['resourceType'] not in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'))
+    wanted.update(r['resourceType'] for r in medication_events)
     excluded = {'Patient','Encounter','Condition','Medication'}
     if 'movements' in report: excluded.add('Location')
     actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
@@ -66,8 +75,10 @@ def check_clinical(source, target, report):
         codes = mapped['targetCodings'] if mapped else r['code'].get('coding', [])[:2]
         return (tuple((c.get('system'), c.get('code'), c.get('version')) for c in codes),r.get('status'),category,r.get('effectiveDateTime'),r.get('issued'),
                 value(r, source),tuple((code(c['code']),value(c, source))for c in r.get('component',[])))
-    wanted_obs=Counter(obs(src[i['sourceId']], True)for i in expected['clinicalImports'] if i['resourceType']=='Observation')
-    actual_obs=Counter(obs(r)for r in dst if r['resourceType']=='Observation')
+    wanted_obs=Counter(obs(src[i['sourceId']], True)for i in imports if i['resourceType']=='Observation')
+    from check_observation_units import checked_observation_units
+    checked_dst = checked_observation_units(dst, options)
+    actual_obs=Counter(obs(r)for r in checked_dst if r['resourceType']=='Observation')
     assert wanted_obs==actual_obs, {'missingObservations':list((wanted_obs-actual_obs).items())[:2],
                                   'unexpectedObservations':list((actual_obs-wanted_obs).items())[:2]}
     def procedure(r):
@@ -76,7 +87,7 @@ def check_clinical(source, target, report):
                 r.get('performedDateTime', r.get('performedPeriod', {}).get('start', '')),
                 r.get('performedPeriod', {}).get('end', ''))
     wanted_procedures = Counter()
-    for mapping in expected['clinicalMappings']:
+    for mapping in expected['clinicalMappings'] if enabled(options, 'PROCEDURE_ENABLED') else []:
         for projected in mapping.get('outputs', []):
             codes = projected['codings']
             label = projected['label']
@@ -88,7 +99,7 @@ def check_clinical(source, target, report):
     assert wanted_procedures == Counter(procedure(r) for r in dst if r['resourceType'] == 'Procedure'), 'Procedure codes, descriptions, count or event changed'
     assert report.get('vaccineMapping') == event_report['vaccineMapping'], 'Vaccine mapping changed'
     assert report.get('vaccineMappings') == event_report['vaccineMappings'], 'Vaccine decisions changed'
-    vaccine_rows = events['Impfung']
+    vaccine_rows = events['Impfung'] if enabled(options, 'IMMUNIZATION_ENABLED') else []
     def vaccine_row(row):
         systems = {'ATC ' + year: ('http://fhir.de/CodeSystem/bfarm/atc', year)}
         system, version = systems.get(row[5], (next((k for k,v in SYSTEMS.items() if v == row[5]), None), None))
@@ -100,21 +111,21 @@ def check_clinical(source, target, report):
         for r in dst if r['resourceType'] == 'Immunization'), 'Vaccine coding, description or event changed'
     medications={r['id']:r for r in dst if r['resourceType']=='Medication'}
     product_systems = {**SYSTEMS, PZN: 'PZN'}
-    localize_rows({'Medikation': rows['Medikation']})
     def product_row(row):
         codings = []
         if row[4]: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row[5]), 'code': row[4]}))
-        if row[6]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
+        if row[6] or row[7]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
         return row[3], tuple(codings), row[8]
-    expected_products = Counter(set(product_row(row) for row in rows['Medikation']))
-    actual_products = Counter((r['code'].get('text', ''),
+    expected_products = {product_id(row): product_row(row) for row in rows['Medikation']} if selected({'resourceType': 'Medication'}, options) else {}
+    actual_products = {r['id']: (r['code'].get('text', ''),
         tuple(signature(c) for c in r['code'].get('coding', [])),
-        r.get('form', {}).get('text', '')) for r in medications.values())
+        r.get('form', {}).get('text', '')) for r in medications.values()}
     assert actual_products == expected_products, 'Medication definitions, ATC versions or forms lost or merged'
-    for r in dst:
-        if r['resourceType'] in ('MedicationRequest','MedicationAdministration','MedicationStatement'):
-            assert r.get('medicationReference',{}).get('reference','').removeprefix('Medication/') in medications
+    from check_medication_selection import check_medication_references
+    check_medication_references(rows['Medikation'], dst, options, report.get('outputPatient', pid.replace('_', '-')))
     import base64
-    assert Counter(row[4]for row in document_rows)==Counter(
+    assert Counter(row[4]for row in document_rows if enabled(options, 'DOCUMENT_REFERENCE_ENABLED'))==Counter(
         base64.b64decode(r['content'][0]['attachment']['data']).decode('utf-8')for r in dst if r['resourceType']=='DocumentReference'), 'Document text changed'
+    from check_clinical_references import check_clinical_references
+    check_clinical_references(source, dst, report, rows['Medikation'], document_rows)
     return {'counts':dict(wanted),'medicationDefinitions':len(medications),'clinicalProjection':'passed'}

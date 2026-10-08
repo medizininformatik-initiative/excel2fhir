@@ -44,12 +44,13 @@ def generate():
                  'additionalProperties': False},
                 {'type': 'object', 'required': ['mode', 'code'],
                  'properties': {'mode': {'const': 'overwrite'},
-                                'code': {'enum': field['allowedCodes']}},
+                                'code': {'enum': field['allowedCodes']},
+                                'onlyWhenMissing': {'type': 'boolean'}},
                  'additionalProperties': False},
             ]
         }
     eligible = sorted({r.get('identifierSelector', r['resourceType']) for r in contract['resources']
-                       if r['identifierEligible']})
+                       if r['identifierEligible']} | {s['selector'] for s in contract['identifierScopes']})
     return {
         '$schema': 'https://json-schema.org/draft/2020-12/schema',
         'title': 'Converter configuration',
@@ -73,6 +74,13 @@ def generate():
                                       'minItems': 1, 'items': {'enum': eligible}},
                         'system': {'type': 'string', 'minLength': 1},
                         'pattern': {'type': 'string', 'minLength': 1},
+                        'countStart': {'type': 'integer', 'minimum': 1, 'maximum': 9007199254740991, 'default': 1},
+                        'use': {'enum': ['', 'usual', 'official', 'temp', 'secondary', 'old']},
+                        'typeText': {'type': 'string'},
+                        'typeCodings': {'type': 'array', 'items': {
+                            'type': 'object', 'additionalProperties': False,
+                            'properties': {key: {'type': 'string'} for key in ('system', 'code', 'display')}
+                        }},
                     },
                 },
             },
