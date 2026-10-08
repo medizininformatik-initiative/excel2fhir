@@ -125,19 +125,22 @@ public final class ClinicalEncounterAssignment {
     }
     private static void setReferences(Resource resource, List<Reference> references) {
         Reference single = references.isEmpty() ? null : references.get(0);
-        if (resource instanceof Condition) ((Condition)resource).setEncounter(single);
-        else if (resource instanceof Procedure) ((Procedure)resource).setEncounter(single);
-        else if (resource instanceof Observation) ((Observation)resource).setEncounter(single);
-        else if (resource instanceof MedicationRequest) ((MedicationRequest)resource).setEncounter(single);
-        else if (resource instanceof MedicationAdministration) ((MedicationAdministration)resource).setContext(single);
-        else if (resource instanceof MedicationStatement) ((MedicationStatement)resource).setContext(single);
-        else if (resource instanceof Immunization) ((Immunization)resource).setEncounter(single);
-        else if (resource instanceof DiagnosticReport) ((DiagnosticReport)resource).setEncounter(single);
-        else if (resource instanceof CarePlan) ((CarePlan)resource).setEncounter(single);
-        else if (resource instanceof DocumentReference) {
-            var document = (DocumentReference)resource;
-            if (!references.isEmpty() || document.hasContext()) document.getContext().setEncounter(references);
-            if (document.hasContext() && document.getContext().isEmpty()) document.setContext(null);
+        switch (resource.getResourceType()) {
+            case Condition: ((Condition)resource).setEncounter(single); break;
+            case Procedure: ((Procedure)resource).setEncounter(single); break;
+            case Observation: ((Observation)resource).setEncounter(single); break;
+            case MedicationRequest: ((MedicationRequest)resource).setEncounter(single); break;
+            case MedicationAdministration: ((MedicationAdministration)resource).setContext(single); break;
+            case MedicationStatement: ((MedicationStatement)resource).setContext(single); break;
+            case Immunization: ((Immunization)resource).setEncounter(single); break;
+            case DiagnosticReport: ((DiagnosticReport)resource).setEncounter(single); break;
+            case CarePlan: ((CarePlan)resource).setEncounter(single); break;
+            case DocumentReference:
+                var document = (DocumentReference)resource;
+                if (!references.isEmpty() || document.hasContext()) document.getContext().setEncounter(references);
+                if (document.hasContext() && document.getContext().isEmpty()) document.setContext(null);
+                break;
+            default: break;
         }
     }
 }

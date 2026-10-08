@@ -17,6 +17,13 @@ public final class AdditionalIdentifiers {
     public AdditionalIdentifiers(ContractConfiguration configuration) {
         rules = configuration == null ? List.of() : configuration.identifierRules().stream()
                 .filter(rule -> rule.get("ENABLED").equals("true")).collect(java.util.stream.Collectors.toList());
+        for (Map<String, String> rule : rules) {
+            try {
+                counters.put(rule.get("ID"), Long.parseLong(rule.getOrDefault("COUNT_START", "1")) - 1);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid identifier counter start for rule " + rule.get("ID"), e);
+            }
+        }
     }
     boolean enabled() { return !rules.isEmpty(); }
     private static String identity(Resource resource, int iteration) {
@@ -35,7 +42,7 @@ public final class AdditionalIdentifiers {
             List<Long> counts = new ArrayList<>();
             for (Map<String, String> rule : rules) {
                 if (!rule.get("ENABLED").equals("true") || !selects(rule, resource, contactLevels.get(identity))) continue;
-                long count = Math.addExact(counters.getOrDefault(rule.get("ID"), Long.parseLong(rule.getOrDefault("COUNT_START", "1")) - 1), 1);
+                long count = Math.addExact(counters.get(rule.get("ID")), 1);
                 counters.put(rule.get("ID"), count);
                 counts.add(count);
             }

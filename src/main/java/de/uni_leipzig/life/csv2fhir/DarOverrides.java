@@ -12,8 +12,13 @@ public final class DarOverrides {
     private final java.util.Set<String> missingOnly;
     private final List<JsonNode> fields = new ArrayList<>();
     public DarOverrides(ContractConfiguration configuration) {
-        missingOnly = configuration == null ? java.util.Set.of() : configuration.darMissingOnly();
-        overrides = configuration == null ? java.util.Map.of() : configuration.darOverrides();
+        if (configuration == null) {
+            missingOnly = java.util.Set.of();
+            overrides = java.util.Map.of();
+            return;
+        }
+        missingOnly = configuration.darMissingOnly();
+        overrides = configuration.darOverrides();
         if (!overrides.isEmpty()) for (JsonNode field : configuration.darFields())
             if (overrides.containsKey(field.path("id").asText()) || overrides.keySet().stream()
                     .anyMatch(id -> id.replace("Encounter.ambulatory.", "Encounter.")
