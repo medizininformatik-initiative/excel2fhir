@@ -332,3 +332,14 @@ test('counter preview uses the configured starting value with literal braces', a
     resources: ['Patient'], system: 'urn:test', pattern: '{{{count:08}}}-{count}', countStart: 500 }
   assert.equal(await previewIdentifier(rule), '{00000500}-500')
 })
+
+test('organization navigation follows the encounter provider setting', () => {
+  const config = defaults()
+  for (const [mode, status] of [['none', 'disabled'], ['generate-reference', 'generated'], ['reference-only', 'referenced'], ['contained', 'generated']]) {
+    config.values['resource.Encounter.stationServiceProvider'] = mode
+    assert.equal(resourceNavigationStatus('Organization', config.values), status)
+    config.values['resource.Encounter.enabled'] = false
+    assert.equal(resourceNavigationStatus('Organization', config.values), 'parentDisabled')
+    config.values['resource.Encounter.enabled'] = true
+  }
+})

@@ -47,16 +47,30 @@ are saved automatically. Invalid drafts cannot be exported. Imports reject unkno
 unsupported schema versions, duplicate assignments, JSON members or rule IDs, unsuitable DAR
 codes and invalid identifier patterns.
 
+DAR rules offer three choices: unchanged, add DAR only when missing, or always
+replace. Missing-only rules retain existing values and existing DAR, including
+values derived during conversion. Always-replace rules replace both with the
+selected DAR. Common Encounter rules apply unless an active inpatient or outpatient
+rule overrides them for that field; unchanged in a class-specific rule inherits
+the common rule. Generation follows the selected configuration; optional FHIR
+validation separately evaluates the resulting resources.
+
 DAR replacements require a field-specific code. Resource selection controls their
 availability; existing DAR selections remain stored when unavailable. Conditional
 codes display the applicable narrative or procedure condition. Identifier rules
 retain their UUID when edited or imported and provide deterministic sample
-previews. The preview uses counter 1 and repetition 0 with example resource and
+previews. The preview uses the configured counter start and repetition 0 with example resource and
 patient IDs, and caps displayed counter padding at 256 characters. The identifier system shows an example placeholder while empty and unfocused.
 Resource choices show their FHIR resource type. Identifier rules can target inpatient
 facility, department or ward/service encounters separately, and distinguish laboratory
 observations from vital signs. Selecting a broader group includes its subgroups; a rule
 adds only one identifier per matching resource even when selections overlap.
+Encounter identifiers are created through configured identifier rules. The converter
+does not add an implicit hospital case-number identifier. Resource IDs and
+references are independent of additional identifiers. The Resources navigation
+shows Organization indented below Encounter; its status follows the station
+service-provider setting, and its link opens that setting.
+
 Counter start sets the first `{count}` value for each rule (default: 1), including
 padded forms such as `{count:08}`. Each new run begins at this value. The `{` and `}`
 buttons insert escaped literal braces (`{{` and `}}`) into the pattern.
@@ -324,8 +338,9 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    the API uses a smaller Java/Python image. Both use the same converter build
    and import assets. Input inspection runs serially with a 256 MiB JVM or Python
    address-space budget and a 60-second timeout.
-   The worker gets two CPUs and 6 GiB RAM; the JVM heap is capped at 3 GiB
-   to load the bundled FHIR validation profiles.
+   The worker gets two CPUs and 2200 MiB RAM. Synthea uses a 1536 MiB
+   JVM heap; conversion uses a 1 GiB heap. Budget Docker VM memory for all
+   simultaneously running services, including the optional portal and FHIR servers.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not
    capacity measurements for large generation or validation workloads.
 4. `EncounterConverter` contains mutable static contact pointers, collections of
@@ -451,6 +466,9 @@ See [configuration implementation TODOs](TODO.md) for agreed behavior and remain
 ## Run files and history
 
 Run details list JSON, NDJSON, XML, Excel, logs and other files in separate groups.
+The format selection controls converted FHIR results in `fhir/`. Source bundles,
+configuration snapshots and reports under `details/` remain JSON even when only
+NDJSON output is selected.
 Validation and projection reports appear below the result files. “Download entire
 run” saves the output, logs and `snapshot.json` together. “Load input and settings”
 restores the run input, generator settings and FHIR configuration in the editor
@@ -471,3 +489,17 @@ Upload history shows the HTTP response counts and original server diagnostics
 reported by blazectl. Accepted and rejected counts refer to bundles, not patients.
 A partial upload can leave successfully accepted data on the server. The full
 upload log remains available, including for uploads whose local run was deleted.
+
+## Updating the local workbench
+
+Build and update API and worker together whenever converter or import-pipeline
+files change. Both services must contain identical converter and importer assets:
+
+```sh
+docker compose -f web/compose.yml build api worker web
+docker compose -f web/compose.yml up -d --no-deps api worker web
+```
+
+Wait for active runs and uploads to finish before updating. Submitted runs retain
+the converter and importer fingerprints; execution rejects mismatched versions.
+The Synthea comparison uses the bundled DAR and option catalogues.

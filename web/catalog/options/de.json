@@ -42,10 +42,10 @@
   "app.cancelling": "Abbruch läuft…",
   "app.config.addRule": "Identifier-Regel hinzufügen",
   "app.config.allResources": "Alle Ressourcen",
-  "app.config.anchors": "Abschnitte",
+  "app.config.anchors": "Ressourcen",
   "app.config.baseline": "Die KDS-Profilpakete legen Aufbau und Pflichtangaben der FHIR-Ressourcen fest: Basis {base}, Labor {laboratory}, Medikation {medication}, Einwilligung {consent}. Das Katalogjahr darunter wählt dagegen die Ausgabe der deutschen Codekataloge. Eine Auswahl von 2025 wechselt also nicht die KDS-Profilpakete. Welche Katalogjahre zulässig sind, hängt vom jeweiligen Profil ab.",
   "app.config.chooseCode": "Code auswählen …",
-  "app.config.darHint": "DAR-Regeln ersetzen vorhandene Werte nach den Ableitungen durch einen Grund für das Fehlen der Angabe. Jedes Feld bietet dafür passende Codes an. „Als Text“ bedeutet: Die Information fehlt im strukturierten Feld, steht aber im lesbaren Beschreibungstext der FHIR-Ressource. „Nicht durchgeführt“ bedeutet zum Beispiel, dass eine Messung tatsächlich nicht stattgefunden hat – nicht bloß, dass ihr Ergebnis fehlt.",
+  "app.config.darHint": "DAR-Regeln werden nach der Konvertierung und den Ableitungen angewendet. Sie ergänzen einen Grund für fehlende Angaben oder ersetzen vorhandene Werte und DAR, je nach gewähltem Modus. Jedes Feld bietet dafür passende Codes an. „Als Text“ bedeutet: Die Information fehlt im strukturierten Feld, steht aber im lesbaren Beschreibungstext der FHIR-Ressource. „Nicht durchgeführt“ bedeutet zum Beispiel, dass eine Messung tatsächlich nicht stattgefunden hat – nicht bloß, dass ihr Ergebnis fehlt.",
   "app.config.editor": "Konfigurationseditor",
   "app.config.duplicateRule": "Die Regel-ID {id} ist mehrfach vorhanden.",
   "app.config.export": "Datei exportieren",
@@ -648,8 +648,8 @@
   "identifier.coding.system": "Typ-Codesystem",
   "identifier.coding.code": "Typ-Code",
   "identifier.coding.display": "Bezeichnung",
-  "dar.onlyWhenMissing": "Nur wenn kein Wert vorhanden ist",
-  "dar.onlyWhenMissingHelp": "Setzt DAR nur für leere Werte nach der Konvertierung. Vorhandene Werte aus der Eingabe und daraus abgeleitete Werte bleiben erhalten. Ohne Häkchen ersetzt die Regel auch vorhandene Werte.",
+  "dar.onlyWhenMissing": "DAR nur bei fehlendem Wert ergänzen",
+  "dar.onlyWhenMissingHelp": "Bei fehlendem Wert ergänzen: Vorhandene Werte und vorhandene DAR bleiben erhalten. Entscheidend ist der Stand nach der Konvertierung, einschließlich abgeleiteter Werte. Immer ersetzen: Vorhandene Werte und vorhandene DAR werden durch den ausgewählten DAR ersetzt.",
   "option.stationServiceProvider.label": "Station als Leistungserbringer",
   "option.stationServiceProvider.help": "Verwendet die Stationsangabe des Versorgungsstellenkontakts als Organization in Encounter.serviceProvider. Die Organisation erhält eine stabile Ressourcen-ID aus Einrichtung, Fachabteilung und Station. Je nach Auswahl wird die Organisation direkt in den Encounter eingebettet, als eigene Ressource ausgegeben oder über einen Verweis auf eine vorhandene Ressource eingebunden.",
   "option.stationLocation.label": "Station als Location ausgeben",
@@ -697,5 +697,6 @@
   "app.config.token.openBrace": "Fügt {{ ins Wertmuster ein. Im fertigen Identifier erscheint eine einzelne öffnende Klammer {.",
   "app.config.token.closeBrace": "Fügt }} ins Wertmuster ein. Im fertigen Identifier erscheint eine einzelne schließende Klammer }.",
   "identifier.count_start": "Zählerstart",
-  "identifier.countStartHelp": "Erste Zahl für {count} und für Schreibweisen mit führenden Nullen wie {count:08}. Alle ausgewählten Ressourcen dieser Regel teilen sich einen Zähler: Für jede Ressource wird er um 1 erhöht, auch beim Wechsel zum nächsten Patienten oder zur nächsten Wiederholung. Jeder neue Lauf beginnt beim eingestellten Startwert. Enthält das Wertmuster keinen Zählerbaustein, hat die Einstellung keine Wirkung. Dieselben Nummern können in mehreren Läufen erneut vorkommen."
+  "identifier.countStartHelp": "Erste Zahl für {count} und für Schreibweisen mit führenden Nullen wie {count:08}. Alle ausgewählten Ressourcen dieser Regel teilen sich einen Zähler: Für jede Ressource wird er um 1 erhöht, auch beim Wechsel zum nächsten Patienten oder zur nächsten Wiederholung. Jeder neue Lauf beginnt beim eingestellten Startwert. Enthält das Wertmuster keinen Zählerbaustein, hat die Einstellung keine Wirkung. Dieselben Nummern können in mehreren Läufen erneut vorkommen.",
+  "app.config.organization": "Organisation"
 }

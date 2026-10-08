@@ -2209,7 +2209,7 @@
       "propertyName": "ENCOUNTER_STATION_SERVICE_PROVIDER",
       "section": "resources",
       "type": "enum",
-      "control": "select",
+      "control": "radio",
       "default": "none",
       "labelKey": "option.stationServiceProvider.label",
       "helpKey": "option.stationServiceProvider.help",

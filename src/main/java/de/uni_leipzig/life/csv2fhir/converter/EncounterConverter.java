@@ -13,7 +13,6 @@ import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounte
 import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.Encounter_Columns.Zimmer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +24,6 @@ import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.Encounter;
 import org.hl7.fhir.r4.model.Encounter.DiagnosisComponent;
 import org.hl7.fhir.r4.model.Encounter.EncounterStatus;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Location;
 import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Location.LocationStatus;
@@ -114,7 +112,6 @@ public class EncounterConverter extends Converter {
     private Encounter newContact(Encounter encounter, String id, Encounter parent, Period p, String kind) throws Exception {
         encounter.setId(id);
         encounter.setSubject(getPatientReference());
-        encounter.setIdentifier(convertIdentifier(id));
         encounter.setMeta(getMeta());
         encounter.setType(new ArrayList<>(getEncounterType(encounter.getClass())));
         if (parent != null) {
@@ -265,8 +262,6 @@ public class EncounterConverter extends Converter {
         return resources;
     }
 
-    public static final String ENCOUNTER_IDENTIFIER_SYSTEM = "http://www.hospital_xyz_case_id_system.de";
-
     /**
      * toString() result of these enum values are the names of the columns in the
      * correspunding excel sheet.
@@ -357,16 +352,6 @@ public class EncounterConverter extends Converter {
     }
 
     /**
-     * @param id generated Encounter ID
-     * @return
-     * @throws Exception
-     */
-    private List<Identifier> convertIdentifier(String id) throws Exception {
-        String dizID = getDIZId();
-        return createIdentifier(id, dizID);
-    }
-
-    /**
      * @return
      * @throws Exception
      */
@@ -398,28 +383,6 @@ public class EncounterConverter extends Converter {
      */
     protected static Meta getMeta() {
         return new Meta().addProfile(ENCOUNTER_LEVEL1_CLASS_RESOURCES.getProfile());
-    }
-
-    /**
-     * @param encounterID
-     * @param dizID
-     * @return
-     */
-    public static List<Identifier> createIdentifier(String encounterID, String dizID) {
-        Reference reference = new Reference()
-                .setIdentifier(
-                        new Identifier()
-                                .setSystem(
-                                        "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier")
-                                .setValue(dizID));
-
-        Identifier identifier = new Identifier()
-                .setValue(encounterID)
-                .setSystem(ENCOUNTER_IDENTIFIER_SYSTEM)
-                .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "VN"))
-                .setAssigner(reference);
-
-        return Collections.singletonList(identifier);
     }
 
     /**

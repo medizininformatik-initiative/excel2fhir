@@ -29,6 +29,31 @@ public class DarOverridesTest {
         var attachment = ((DocumentReference)apply(d, "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA=masked\nDAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA_ONLY_WHEN_MISSING=true\n")).getContentFirstRep().getAttachment();
         assertTrue(attachment.hasData()); assertTrue(attachment.hasHash()); assertTrue(attachment.hasSize());
     }
+    @Test public void existingReasonsAreRetainedOnlyInMissingMode() {
+        Patient patient = new Patient();
+        patient.getBirthDateElement().addExtension(DarOverrides.URL, new CodeType("masked"));
+        String rule = "DAR_PATIENT_BIRTH_DATE=unknown\n";
+        reason(((Patient)apply(patient, rule + "DAR_PATIENT_BIRTH_DATE_ONLY_WHEN_MISSING=true\n")).getBirthDateElement(), "masked");
+        reason(((Patient)apply(patient, rule)).getBirthDateElement(), "unknown");
+        MedicationAdministration medication = new MedicationAdministration();
+        medication.getDosage().getDose().addExtension(DarOverrides.URL, new CodeType("masked"));
+        rule = "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE=unknown\n";
+        reason(((MedicationAdministration)apply(medication, rule + "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE_ONLY_WHEN_MISSING=true\n")).getDosage().getDose(), "masked");
+        reason(((MedicationAdministration)apply(medication, rule)).getDosage().getDose(), "unknown");
+        Observation observation = new Observation();
+        observation.getDataAbsentReason().addCoding().setCode("masked");
+        observation.addComponent().getDataAbsentReason().addCoding().setCode("masked");
+        rule = "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=unknown\nDAR_LABORATORY_COMPONENT_VALUE_X_NUMERIC_MEASUREMENT=unknown\n";
+        Observation retained = (Observation)apply(observation, rule
+                + "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT_ONLY_WHEN_MISSING=true\n"
+                + "DAR_LABORATORY_COMPONENT_VALUE_X_NUMERIC_MEASUREMENT_ONLY_WHEN_MISSING=true\n");
+        assertEquals("masked", retained.getDataAbsentReason().getCodingFirstRep().getCode());
+        assertEquals("masked", retained.getComponentFirstRep().getDataAbsentReason().getCodingFirstRep().getCode());
+        Observation replaced = (Observation)apply(observation, rule);
+        assertEquals("unknown", replaced.getDataAbsentReason().getCodingFirstRep().getCode());
+        assertEquals("unknown", replaced.getComponentFirstRep().getDataAbsentReason().getCodingFirstRep().getCode());
+        assertEquals("masked", observation.getDataAbsentReason().getCodingFirstRep().getCode());
+    }
     @Test public void primitiveOverridesPreserveSourceAndOtherExtensionsAndCreateMissingScalars() {
         Patient p = new Patient(); p.addName().setFamily("Smith").addGiven("Ada").addGiven("Jane");
         p.getNameFirstRep().getFamilyElement().addExtension("urn:other", new StringType("kept"));

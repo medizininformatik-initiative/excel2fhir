@@ -233,9 +233,9 @@ public class EncounterConverterTest {
         }
         assertEquals("R102",result.get(Fall,org.hl7.fhir.r4.model.Location.class,
                 wardEncounters.get(1).getLocation().get(1).getLocation().getReference().substring(9)).getName());
-        assertEncounterIdentifierSystem(facilityEncounters);
-        assertEncounterIdentifierSystem(departmentEncounters);
-        assertEncounterIdentifierSystem(wardEncounters);
+        assertNoImplicitEncounterIdentifiers(facilityEncounters);
+        assertNoImplicitEncounterIdentifiers(departmentEncounters);
+        assertNoImplicitEncounterIdentifiers(wardEncounters);
     }
 
     @Test
@@ -363,10 +363,9 @@ public class EncounterConverterTest {
         return encounters;
     }
 
-    private static void assertEncounterIdentifierSystem(List<Encounter> encounters) {
+    private static void assertNoImplicitEncounterIdentifiers(List<Encounter> encounters) {
         for (Encounter encounter : encounters) {
-            assertEquals(EncounterConverter.ENCOUNTER_IDENTIFIER_SYSTEM, encounter.getIdentifierFirstRep().getSystem());
-            assertFalse(encounter.getIdentifierFirstRep().getSystemElement().hasExtension());
+            assertFalse(encounter.hasIdentifier());
         }
     }
     @Test public void outputEndPolicyRetainsOriginalMissingEndAfterInternalDerivation() throws Exception {

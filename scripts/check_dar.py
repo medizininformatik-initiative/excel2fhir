@@ -30,23 +30,35 @@ def checked_original_dar(source, target, report):
         for field in fields:
             if field['resourceType'] != resource['resourceType']: continue
             identifier = field['id']
-            code = options.get(properties[identifier], 'unchanged')
+            property_name = properties[identifier]
+            code = options.get(property_name, 'unchanged')
             if resource['resourceType'] == 'Encounter':
                 scope = {'AMB': 'ambulatory', 'IMP': 'inpatient'}.get(resource.get('class', {}).get('code'))
                 scoped = identifier.replace('Encounter.', 'Encounter.' + str(scope) + '.')
-                code = options.get(properties.get(scoped), code)
+                if options.get(properties.get(scoped), 'unchanged') != 'unchanged':
+                    property_name = properties[scoped]
+                    code = options[property_name]
             if resource['resourceType'] == 'Observation':
                 vital = any(c.get('code') == 'vital-signs' and c.get('system') == 'http://terminology.hl7.org/CodeSystem/observation-category'
                             for cc in original.get('category', []) for c in cc.get('coding', []))
                 if identifier.startswith('VitalSigns.') != vital: continue
             if code == 'unchanged': continue
+            only_missing = str(options.get(property_name + '_ONLY_WHEN_MISSING', False)).lower() == 'true'
             if field['representation'] == 'dataAbsentReason':
                 values = list(zip(original.get('component', []), resource.get('component', []))) if field['field'].startswith('component.') else [(original, resource)]
                 if field['field'].startswith('component.'):
                     assert len(original.get('component', [])) == len(resource.get('component', [])), 'DAR component count differs'
                 for before, after in values:
                     keys = [k for k in before if k.startswith('value')]
-                    if not keys: continue
+                    if only_missing and (any(has_content(before[k]) for k in keys) or before.get('dataAbsentReason')):
+                        assert after == before, 'Missing-only DAR changed an existing measurement or DAR'
+                        continue
+                    if not keys:
+                        if before.get('dataAbsentReason') or only_missing:
+                            assert after.get('dataAbsentReason') == {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/data-absent-reason', 'code': code}]}, 'Wrong measurement DAR'
+                            after.pop('dataAbsentReason')
+                            if 'dataAbsentReason' in before: after['dataAbsentReason'] = deepcopy(before['dataAbsentReason'])
+                        continue
                     assert len(keys) == 1
                     key = keys[0]
                     if (key == 'valueQuantity') != (field['semanticGroup'] == 'numeric-measurement'): continue
@@ -59,8 +71,8 @@ def checked_original_dar(source, target, report):
                 path = field['field'].split('.')
                 if identifier == 'Encounter.admissionReasonFourthDigit':
                     path = ['extension:Aufnahmegrund', 'extension:VierteStelle', 'valueCoding', 'code']
-                restore_path(original, resource, path, field, code)
-            if identifier == 'DocumentReference.content.attachment.data':
+                restore_path(original, resource, path, field, code, only_missing)
+            if identifier == 'DocumentReference.content.attachment.data' and not only_missing:
                 for content in resource.get('content', []):
                     attachment = content['attachment']
                     assert 'size' not in attachment and 'hash' not in attachment, 'DAR attachment leaks size or hash'
@@ -77,14 +89,22 @@ def checked_original_dar(source, target, report):
     return result
 
 
-def restore_path(before, after, parts, field, code):
+def has_content(value):
+    if isinstance(value, dict):
+        if any(e.get('url') == DAR for e in value.get('extension', [])): return True
+        return any(has_content(v) for k, v in value.items() if k not in ('extension', 'id'))
+    if isinstance(value, list): return any(has_content(v) for v in value)
+    return value is not None and value != ''
+
+
+def restore_path(before, after, parts, field, code, only_missing=False):
     key, *rest = parts
     if ':' in key:
         name, suffix = key.split(':')
         originals = [e for e in before.get(name, []) if e.get('url', '').rsplit('/', 1)[-1] == suffix]
         actuals = [e for e in after.get(name, []) if e.get('url', '').rsplit('/', 1)[-1] == suffix]
         assert len(originals) == len(actuals), 'DAR extension count differs'
-        for a, b in zip(originals, actuals): restore_path(a, b, rest, field, code)
+        for a, b in zip(originals, actuals): restore_path(a, b, rest, field, code, only_missing)
         return
     if key.endswith('[x]'):
         prefix = key[:-3]
@@ -101,11 +121,14 @@ def restore_path(before, after, parts, field, code):
         if isinstance(value, list):
             actual = after.get(key, [])
             assert len(actual) == len(value), 'DAR repeated element count differs: ' + key
-            for a, b in zip(value, actual): restore_path(a, b, rest, field, code)
+            for a, b in zip(value, actual): restore_path(a, b, rest, field, code, only_missing)
         elif isinstance(value, dict) or field['applyTo'] == 'existing-or-missing-scalar':
             actual = after.get(key, {})
-            restore_path(value or {}, actual, rest, field, code)
+            restore_path(value or {}, actual, rest, field, code, only_missing)
             if not actual: after.pop(key, None)
+        return
+    if only_missing and (has_content(value) or has_content(before.get('_' + key))):
+        assert after.get(key) == value and after.get('_' + key) == before.get('_' + key), 'Missing-only DAR changed an existing value or DAR: ' + key
         return
     repeated = key in ('given', 'line')
     if repeated and value is None: return

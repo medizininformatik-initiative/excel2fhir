@@ -42,10 +42,10 @@
   "app.cancelling": "Cancelling…",
   "app.config.addRule": "Add identifier rule",
   "app.config.allResources": "All resources",
-  "app.config.anchors": "Sections",
+  "app.config.anchors": "Resources",
   "app.config.baseline": "The KDS profile packages define the structure and required fields of FHIR resources: base {base}, laboratory {laboratory}, medication {medication}, consent {consent}. The catalogue year below selects the edition of the German code catalogues. Selecting 2025 therefore does not change the KDS profile packages. Each profile determines which catalogue years are permitted.",
   "app.config.chooseCode": "Choose a code …",
-  "app.config.darHint": "DAR rules replace existing values after derivations with a reason why the information is absent. Each field offers suitable codes. “As text” means the information is missing from the structured field but is present in the human-readable narrative of the FHIR resource. “Not performed” means, for example, that a measurement did not take place, rather than just its result being missing.",
+  "app.config.darHint": "DAR rules apply after conversion and derivations. Depending on the selected mode, they add a reason for missing information or replace existing values and DAR. Each field offers suitable codes. “As text” means the information is missing from the structured field but is present in the human-readable narrative of the FHIR resource. “Not performed” means, for example, that a measurement did not take place, rather than just its result being missing.",
   "app.config.editor": "Configuration editor",
   "app.config.duplicateRule": "Rule ID {id} occurs more than once.",
   "app.config.export": "Export file",
@@ -648,8 +648,8 @@
   "identifier.coding.system": "Type code system",
   "identifier.coding.code": "Type code",
   "identifier.coding.display": "Display",
-  "dar.onlyWhenMissing": "Only when no value is present",
-  "dar.onlyWhenMissingHelp": "Sets DAR only for missing values after conversion. Existing input and derived values are retained. When unchecked, the rule also replaces existing values.",
+  "dar.onlyWhenMissing": "Add DAR only when the value is missing",
+  "dar.onlyWhenMissingHelp": "Add when missing: Retains existing values and existing DAR after conversion, including derived values. Always replace: Replaces existing values and existing DAR with the selected DAR.",
   "option.stationServiceProvider.label": "Ward as service provider",
   "option.stationServiceProvider.help": "Uses the ward of the ward/service encounter as an Organization in Encounter.serviceProvider. Its stable ID is based on facility, department and ward. A contained organization is embedded in the Encounter; an external organization can be generated or only referenced.",
   "option.stationLocation.label": "Output ward as Location",
@@ -697,5 +697,6 @@
   "app.config.token.openBrace": "Inserts {{ into the pattern. The resulting identifier contains a single opening brace {.",
   "app.config.token.closeBrace": "Inserts }} into the pattern. The resulting identifier contains a single closing brace }.",
   "identifier.count_start": "Counter start",
-  "identifier.countStartHelp": "First value for {count} and padded forms such as {count:08}. All resources selected by this rule share one counter, incremented per resource across patients and repetitions. Each new run starts at this value. Without a counter token this setting has no effect. Overlaps between separate runs are not prevented automatically."
+  "identifier.countStartHelp": "First value for {count} and padded forms such as {count:08}. All resources selected by this rule share one counter, incremented per resource across patients and repetitions. Each new run starts at this value. Without a counter token this setting has no effect. Overlaps between separate runs are not prevented automatically.",
+  "app.config.organization": "Organization"
 }

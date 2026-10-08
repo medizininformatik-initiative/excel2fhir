@@ -119,6 +119,18 @@ class DarChecks(unittest.TestCase):
         restore_path({}, target, ['deceased[x]'], self.field('Patient.deceased[x]'), 'unknown')
         self.assertEqual({}, target)
 
+    def test_missing_only_retains_values_and_reasons_and_fills_absence(self):
+        field = self.field('Patient.gender')
+        for before in [{'gender': 'female'}, {'_gender': absent('masked')}]:
+            actual = copy.deepcopy(before)
+            restore_path(before, actual, ['gender'], field, 'unknown', True)
+            self.assertEqual(before, actual)
+            with self.assertRaises(AssertionError):
+                restore_path(before, {'_gender': absent()}, ['gender'], field, 'unknown', True)
+        actual = {'_gender': absent()}
+        restore_path({}, actual, ['gender'], field, 'unknown', True)
+        self.assertEqual({}, actual)
+
     def test_period_dar_clears_all_values_and_rejects_wrong_choice(self):
         before = {'performedPeriod': {'start': '2026-01-01', 'end': '2026-01-02'}}
         field = self.field('Procedure.performed[x]')
@@ -192,8 +204,9 @@ class DarChecks(unittest.TestCase):
     def test_bridge_exports_shift_medication_and_dar_and_respects_dependencies(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'test.config'
-            path.write_text('CONFIGURATION_VERSION=1\nTIME_SHIFT_ENABLED=true\nTIME_SHIFT_BASE_DAYS=10\nTIME_SHIFT_ITERATION_DAYS=-3\nMEDICATION_REQUEST_TREATMENT=replace-statement\nDAR_PATIENT_BIRTH_DATE=masked\n')
+            path.write_text('CONFIGURATION_VERSION=1\nTIME_SHIFT_ENABLED=true\nTIME_SHIFT_BASE_DAYS=10\nTIME_SHIFT_ITERATION_DAYS=-3\nMEDICATION_REQUEST_TREATMENT=replace-statement\nDAR_PATIENT_BIRTH_DATE=masked\nDAR_PATIENT_BIRTH_DATE_ONLY_WHEN_MISSING=true\n')
             values = resolve_config(path)['values']
+            self.assertEqual('true', values['DAR_PATIENT_BIRTH_DATE_ONLY_WHEN_MISSING'])
             self.assertEqual(('10', '-3', 'replace-statement', 'masked'), tuple(values[k] for k in ('TIME_SHIFT_BASE_DAYS', 'TIME_SHIFT_ITERATION_DAYS', 'MEDICATION_REQUEST_TREATMENT', 'DAR_PATIENT_BIRTH_DATE')))
             path.write_text('CONFIGURATION_VERSION=1\nTIME_SHIFT_BASE_DAYS=10\nMEDICATION_REQUEST_TREATMENT=replace-statement\nMEDICATION_STATEMENT_ENABLED=false\n')
             values = resolve_config(path)['values']

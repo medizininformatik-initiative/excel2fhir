@@ -79,8 +79,9 @@ public final class DarOverrides {
         return output;
     }
 
-    /** Extensions alone (including a converter-created DAR) are not a supplied value. */
+    /** A value or an existing DAR is retained by missing-only rules. */
     private static boolean hasContent(Base value) {
+        if (value instanceof Element && ((Element)value).hasExtension(URL)) return true;
         if (value instanceof PrimitiveType<?>) return ((PrimitiveType<?>)value).hasValue();
         for (Property property : value.children()) {
             if (property.getName().equals("extension") || property.getName().equals("id")) continue;
@@ -135,13 +136,13 @@ public final class DarOverrides {
                 Type value = source.getComponent().get(i).getValue();
                 if (onlyMissing) {
                     if (value != null && hasContent(value)) continue;
-                    if (!source.getComponent().get(i).hasDataAbsentReason() && output.getComponent().get(i).hasDataAbsentReason()) continue;
-                } else if (value == null || (value instanceof Quantity) != numeric) continue;
+                    if (output.getComponent().get(i).hasDataAbsentReason()) continue;
+                } else if (value == null ? !source.getComponent().get(i).hasDataAbsentReason() : (value instanceof Quantity) != numeric) continue;
                 output.getComponent().get(i).setValue(null).setDataAbsentReason(reason(code));
             }
         } else if (onlyMissing ? (!source.hasValue() || !hasContent(source.getValue()))
-                && (source.hasDataAbsentReason() || !output.hasDataAbsentReason())
-                : source.hasValue() && (source.getValue() instanceof Quantity) == numeric) {
+                && !output.hasDataAbsentReason()
+                : source.hasValue() ? (source.getValue() instanceof Quantity) == numeric : source.hasDataAbsentReason()) {
             output.setValue(null).setDataAbsentReason(reason(code));
         }
     }

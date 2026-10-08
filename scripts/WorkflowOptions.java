@@ -41,6 +41,8 @@ public class WorkflowOptions {
                 var overrides = options.configuration().darOverrides();
                 for (var entry : contract.getAsJsonObject("propertiesFormat").getAsJsonObject("darProperties").entrySet()) {
                     if (overrides.containsKey(entry.getKey())) values.put(entry.getValue().getAsString(), overrides.get(entry.getKey()));
+                    if (options.configuration().darMissingOnly().contains(entry.getKey()))
+                        values.put(entry.getValue().getAsString() + "_ONLY_WHEN_MISSING", "true");
                 }
             }
         }

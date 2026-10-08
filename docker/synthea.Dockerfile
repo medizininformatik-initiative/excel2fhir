@@ -28,6 +28,8 @@ ENV LANG=C.UTF-8
 WORKDIR /app
 COPY --from=build /build/target/excel2fhir.jar ./target/excel2fhir.jar
 COPY scripts ./scripts
+COPY web/catalog/dar/generated/catalog.json ./web/catalog/dar/generated/catalog.json
+COPY web/catalog/options/contract.json ./web/catalog/options/contract.json
 COPY src/main/resources/workbook-absent-reasons.json ./src/main/resources/workbook-absent-reasons.json
 COPY third-party ./third-party
 COPY LICENSE FHIR_Testdatengenerator_Vorlage.xlsx ./

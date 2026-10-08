@@ -33,6 +33,8 @@ COPY --from=synthea-build /synthea/build/libs/synthea-with-dependencies.jar /syn
 COPY --from=synthea-build /synthea-version.txt /synthea/target/synthea-revision.txt
 COPY --from=synthea-build /synthea/LICENSE /synthea/NOTICE /synthea/third-party/synthea/
 COPY scripts /synthea/scripts
+COPY web/catalog/dar/generated/catalog.json /synthea/web/catalog/dar/generated/catalog.json
+COPY web/catalog/options/contract.json /synthea/web/catalog/options/contract.json
 COPY src/main/resources/workbook-absent-reasons.json /synthea/src/main/resources/workbook-absent-reasons.json
 COPY src/main/resources/ucum /synthea/src/main/resources/ucum
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /synthea/

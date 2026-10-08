@@ -153,6 +153,11 @@ export function resourceEnabled(
 }
 // Navigation reflects effective settings without changing stored selections.
 export function resourceNavigationStatus(resource: string, values: Configuration['values']): 'generated' | 'referenced' | 'disabled' | 'parentDisabled' {
+  if (resource === 'Organization') {
+    if (values['resource.Encounter.enabled'] !== true) return 'parentDisabled'
+    const provider = values['resource.Encounter.stationServiceProvider']
+    return provider === 'reference-only' ? 'referenced' : provider === 'generate-reference' || provider === 'contained' ? 'generated' : 'disabled'
+  }
   if (resource.startsWith('Encounter.') && values['resource.Encounter.enabled'] !== true) return 'parentDisabled'
   const mode = values[`resource.${resource}.mode`]
   if (mode === 'reference-only') return 'referenced'

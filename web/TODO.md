@@ -5,6 +5,36 @@ GUI code, catalogues, tests and documentation live under `web/`. Shared converte
 behavior remains in the Java converter. Existing issue references describe the
 planned work streams; this checklist does not change their status.
 
+## Follow-up work recorded on 2026-10-08
+
+These items are still open. The older implementation checklist below also contains
+historical entries and needs reconciliation against the current code before its
+unchecked boxes are used as a current completion report.
+
+- [ ] Compact upload history: collapsed details, concise visible errors, five recent
+  entries plus all active uploads, load older entries on demand, and remove individual
+  or all completed local upload records/logs without deleting server resources.
+  Proposed behavior still needs final agreement before implementation.
+- [ ] Define and implement reliable repeated patient IDs for Synthea UUIDs; numeric
+  suffix increments can exceed the integer range. Agree on the ID strategy first.
+- [ ] Audit every configuration setting and relevant combination against generated
+  FHIR, including identifiers, contact levels, resource selection and DAR. The
+  specific inpatient facility identifier rule has been verified, not all settings.
+- [ ] Clarify DAR inheritance labels: common Encounter rules and explicit inheritance
+  wording for unchanged inpatient/outpatient overrides. Proposed copy, not implemented.
+- [ ] Measure and improve memory/runtime with generator, portal, Blaze and TORCH;
+  cover larger end-to-end workloads including 1000 patients. Deferred by the user.
+- [ ] Contact BfArM about use and redistribution of derived UNII-to-ASK mappings,
+  then review candidate substance matches, salts, hydrates and mixtures. No contact
+  or mapping adoption yet; avoid a dependency on MMI Pharmindex.
+- [ ] Agree on compatible `mii-data-quality` rules and scope before integration.
+- [ ] Complete a determinism audit across the pipeline, derived resources, formats
+  and versions; distinguish clinical content from run/archive metadata.
+
+Generation must follow input and configuration, including intentionally nonconformant
+test data. Profile/terminology conformance belongs to optional validation, not silent
+correction or additional generator restrictions.
+
 ## DAR and table input — #75 / #77
 
 - [x] Generate a JSON DAR catalogue from local 2026 profiles and maintained semantic field groups.

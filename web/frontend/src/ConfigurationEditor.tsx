@@ -105,6 +105,7 @@ function OptionControl({
     <div
       className={compact ? 'option-row min-w-0 py-2' : 'option-row border-t border-slate-100 py-4 first:border-t-0'}
       data-option={option.id}
+      id={option.type === 'enum' && option.control !== 'select' ? option.id : undefined}
     >
       <div className={`${option.type === 'boolean' ? '' : 'mb-2'} flex flex-wrap items-center gap-x-2 gap-y-1`}>
         <label htmlFor={option.id} className="flex items-center gap-2 font-medium text-sm">
@@ -477,12 +478,15 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                 {t('app.config.anchors')}
               </p>
               <div className="flex w-max flex-col items-stretch gap-2 pb-16">
-                {resources.map((r) => {
+                {resources.flatMap(r => [
+                  { id: r.id, labelKey: r.labelKey, organization: false },
+                  ...(r.id === 'Encounter' ? [{ id: 'Organization', labelKey: 'app.config.organization', organization: true }] : [])
+                ]).map((r) => {
                   const status = resourceNavigationStatus(r.id, config.values)
-                  const round = `resource.${r.id}.mode` in config.values
+                  const round = r.organization || `resource.${r.id}.mode` in config.values
                   const active = status === 'generated' || status === 'referenced'
-                  const modeOption = options.find((option) => option.id === `resource.${r.id}.mode`)
-                  const selectedLabel = modeOption?.choiceLabelKeys?.[String(config.values[modeOption.id])]
+                  const modeOption = options.find((option) => option.id === (r.organization ? 'resource.Encounter.stationServiceProvider' : `resource.${r.id}.mode`))
+                  const selectedLabel = status !== 'parentDisabled' ? modeOption?.choiceLabelKeys?.[String(config.values[modeOption.id])] : undefined
                   const description = t(selectedLabel ?? {
                     generated: 'app.config.resourceStatus.generated',
                     referenced: 'app.config.resourceStatus.referenced',
@@ -490,9 +494,9 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     parentDisabled: 'app.config.resourceStatus.parentDisabled'
                   }[status])
                   return (
-                    <a key={r.id} href={`#resource-${r.id}`}
+                    <a key={r.id} href={r.organization ? '#resource.Encounter.stationServiceProvider' : `#resource-${r.id}`}
                       aria-describedby={`resource-status-${r.id}`}
-                      className="group relative flex items-center gap-2 rounded px-2 py-1 text-sm text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700">
+                      className={`group relative flex items-center gap-2 rounded px-2 py-1 text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700 ${r.organization ? 'ml-5 text-xs' : 'text-sm'}`}>
                       <span className="group/status relative h-2.5 w-2.5 shrink-0">
                         <span aria-hidden="true" className={`flex h-2.5 w-2.5 items-center justify-center border ${round ? 'rounded-full' : 'rounded-sm'} ${status === 'generated' ? 'border-teal-700 bg-teal-700' : status === 'referenced' ? 'border-teal-700' : 'border-slate-400 bg-slate-100'}`}>
                           {round && status === 'referenced' && <span className="h-1 w-1 rounded-full bg-teal-700" />}
@@ -641,14 +645,15 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                       : (darCodes[field.id] ?? '')
                   const set = (
                     mode: 'unchanged' | 'overwrite',
-                    code: string
+                    code: string,
+                    onlyWhenMissing = current.mode === 'overwrite' && (current.onlyWhenMissing ?? false)
                   ) => {
                     setConfig((c) => ({
                       ...c,
                       dar: {
                         ...c.dar,
                         [field.id]:
-                          mode === 'unchanged' ? { mode } : { mode, code, ...(c.dar[field.id]?.mode === 'overwrite' ? { onlyWhenMissing: (c.dar[field.id] as { onlyWhenMissing?: boolean }).onlyWhenMissing ?? false } : {}) }
+                          mode === 'unchanged' ? { mode } : { mode, code, onlyWhenMissing }
                       }
                     }))
                     setDirty(true)
@@ -673,21 +678,18 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-4">
-                        <label className="flex items-center gap-2 text-sm">
-                          <input
-                            type="checkbox"
-                            disabled={!enabled}
-                            checked={current.mode === 'overwrite'}
-                            onChange={(e) =>
-                              set(
-                                e.target.checked ? 'overwrite' : 'unchanged',
-                                code
-                              )
-                            }
-                            className="accent-teal-700"
-                          />
-                          {t('dar.mode.overwrite')}
-                        </label>
+                        <div role="radiogroup" aria-label={t(`dar.field.${field.id}.label`)} className="flex flex-wrap items-center gap-4">
+                          {(['unchanged', 'missing', 'overwrite'] as const).map(mode => (
+                            <label key={mode} className={`flex items-center gap-2 text-sm ${enabled ? '' : 'text-slate-400'}`}>
+                              <input type="radio" name={`dar-mode-${field.id}`} disabled={!enabled}
+                                checked={mode === 'unchanged' ? current.mode === 'unchanged' : current.mode === 'overwrite' && (mode === 'missing' ? !!current.onlyWhenMissing : !current.onlyWhenMissing)}
+                                onChange={() => set(mode === 'unchanged' ? 'unchanged' : 'overwrite', code, mode === 'missing')}
+                                className="accent-teal-700" />
+                              {t(mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
+                            </label>
+                          ))}
+                          <Help text={t('dar.onlyWhenMissingHelp')} t={t}/>
+                        </div>
                         <select
                           aria-label={t(`dar.field.${field.id}.label`)}
                           value={code}
@@ -699,7 +701,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                             }))
                             set('overwrite', e.target.value)
                           }}
-                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100"
+                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
                         >
                           <option value="">{t('app.config.chooseCode')}</option>
                           {field.allowedCodes.map((c) => (
@@ -709,7 +711,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                           ))}
                         </select>
                       </div>
-                      {current.mode === 'overwrite' && <div className="mt-3 flex items-center gap-2"><label className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={!enabled} checked={current.onlyWhenMissing ?? false} onChange={e => { setConfig(c => ({ ...c, dar: { ...c.dar, [field.id]: { ...current, onlyWhenMissing: e.target.checked } } })); setDirty(true); setMessage(null) }}/>{t('dar.onlyWhenMissing')}</label><Help text={t('dar.onlyWhenMissingHelp')} t={t}/></div>}
+
                       {!enabled ? (
                         <p className="mt-2 text-xs text-slate-500">
                           {t('app.config.resourceRequired')}
