@@ -38,7 +38,7 @@ public class DiagnosisOutputPolicyTest {
         var laterRow = contact("later-row", DEPARTMENT, "root", 5, "2026-05-02", null);
         var winner = contact("winner", DEPARTMENT, "root", 4, "2026-05-02", null);
         var ward = contact("ward", WARD_SERVICE, "winner", 6, "2026-05-02", null);
-        var otherRoot = contact("other-root", FACILITY, null, 7, null, null);
+        contact("other-root", FACILITY, null, 7, null, null);
         var wrong = contact("wrong-case", DEPARTMENT, "other-root", 8, "2026-05-03", null);
         diagnosis(root, "a", "CC", "2026-05-03");
         diagnosis(root, "b", "CM", "2026-05-03");
@@ -65,9 +65,9 @@ public class DiagnosisOutputPolicyTest {
         assertTrue(p.issues().isEmpty());
     }
     @Test public void downwardSearchStaysInSourceBranchAndReportsMissingAssignments() {
-        var root = contact("root", FACILITY, null, 1, null, null);
+        contact("root", FACILITY, null, 1, null, null);
         var department = contact("department", DEPARTMENT, "root", 2, null, null);
-        var sibling = contact("sibling", DEPARTMENT, "root", 3, null, null);
+        contact("sibling", DEPARTMENT, "root", 3, null, null);
         var otherWard = contact("other-ward", WARD_SERVICE, "sibling", 4, "2026-05-01", null);
         diagnosis(department, "a", "CC", "2026-05-02");
         diagnosis(department, "b", "CC", null);

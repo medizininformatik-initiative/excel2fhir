@@ -8,11 +8,11 @@ import java.util.List;
 
 public class ConverterOptionsTest {
     @Test public void syntheaYearAndVersionPolicyAreValidatedIndependently() {
-        for (String year : List.of("2025", "2026")) {
+        for (int year : List.of(2025, 2026)) {
             for (String mode : List.of("Jahr", "", "Unbekannt (Data Absent Reason)", "!dar:masked")) {
                 var options = ConverterOptions.fromText("SYNTHEA_MAPPING_YEAR=" + year + "\nSYNTHEA_VERSION_OUTPUT=" + mode);
                 assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
-                assertEquals(Integer.parseInt(year), options.getValue(ConverterOptions.IntOption.SYNTHEA_MAPPING_YEAR));
+                assertEquals(year, options.getValue(ConverterOptions.IntOption.SYNTHEA_MAPPING_YEAR));
                 assertEquals(mode, options.getValue(ConverterOptions.StringOption.SYNTHEA_VERSION_OUTPUT));
             }
         }

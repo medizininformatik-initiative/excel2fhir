@@ -308,10 +308,10 @@ public abstract class Converter {
     }
 
     /**
-     * Short for <code>record.get(columnIdentifier.toString))</code>
+     * Checks whether the input record maps the named column.
      *
-     * @param columnIdentifier
-     * @return
+     * @param name column name
+     * @return whether the column is mapped
      */
     public boolean hasColumn(String name) {
         return record.isMapped(name);

@@ -86,8 +86,8 @@ public final class ContractConfiguration {
         Map<String, String> names = new LinkedHashMap<>();
         config.definitions.forEach((id, option) -> names.put(option.get("propertyName").asText(), id));
         Map<String, String> darNames = new LinkedHashMap<>();
-        CONTRACT.path("propertiesFormat").path("darProperties").fields()
-                .forEachRemaining(e -> darNames.put(e.getValue().asText(), e.getKey()));
+        CONTRACT.path("propertiesFormat").path("darProperties").properties()
+                .forEach(e -> darNames.put(e.getValue().asText(), e.getKey()));
         Map<Integer, Map<String, String>> parsedRules = new TreeMap<>();
         Set<String> seen = new HashSet<>();
         boolean version = false;
@@ -179,9 +179,7 @@ public final class ContractConfiguration {
             if (codings == null || !codings.isArray()) throw invalid("Identifier TYPE_CODINGS must be a JSON array");
             for (JsonNode coding : codings) {
                 if (!coding.isObject()) throw invalid("Identifier coding must be an object");
-                var fields = coding.fields();
-                while (fields.hasNext()) {
-                    var field = fields.next();
+                for (var field : coding.properties()) {
                     if (!Set.of("system", "code", "display").contains(field.getKey()) || !field.getValue().isTextual())
                         throw invalid("Invalid identifier coding field: " + field.getKey());
                 }

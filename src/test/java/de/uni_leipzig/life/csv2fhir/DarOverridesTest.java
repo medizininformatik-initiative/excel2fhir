@@ -12,6 +12,11 @@ public class DarOverridesTest {
         assertEquals(code, ((CodeType)element.getExtensionByUrl(DarOverrides.URL).getValue()).getValue());
         assertEquals(1, element.getExtensionsByUrl(DarOverrides.URL).size());
     }
+    @Test public void absentConfigurationLeavesResourcesUnchanged() {
+        Patient patient = new Patient();
+        patient.setBirthDateElement(new DateType("1980-01-01"));
+        assertSame(patient, new DarOverrides(null).output(patient));
+    }
     @Test public void missingOnlyRetainsInputAndDerivedValuesAndFillsMissingLeaves() {
         String rule = "DAR_ENCOUNTER_PERIOD_END=unknown\nDAR_ENCOUNTER_PERIOD_END_ONLY_WHEN_MISSING=true\n";
         Encounter e = new Encounter(); e.getPeriod().setEndElement(new DateTimeType("2026-05-01"));
