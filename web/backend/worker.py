@@ -49,6 +49,8 @@ def execute(job_id):
     (folder / "memory-watch.json").write_text(json.dumps({"oomKills": memory_before}))
     try:
         snapshot = json.loads((folder / "snapshot.json").read_text())
+        if snapshot.get('validation', False):
+            command[1] = '-Xmx3g'
         if store.digest(store.APP / "excel2fhir.jar") != snapshot["converterSha256"]:
             raise RuntimeError("Converter image changed after submission; start a new run")
         kind = snapshot.get('inputKind', 'workbook')

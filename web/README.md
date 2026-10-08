@@ -338,8 +338,9 @@ bounded parallel execution follows the shared-state and resource-budget audit.
    the API uses a smaller Java/Python image. Both use the same converter build
    and import assets. Input inspection runs serially with a 256 MiB JVM or Python
    address-space budget and a 60-second timeout.
-   The worker gets two CPUs and 2200 MiB RAM. Synthea uses a 1536 MiB
-   JVM heap; conversion uses a 1 GiB heap. Budget Docker VM memory for all
+   The worker gets two CPUs and a 6 GiB memory ceiling. Synthea uses a 1536 MiB
+   JVM heap; conversion uses a 1 GiB heap without validation and 3 GiB with
+   validation to load the bundled profiles. The ceiling is not reserved memory. Budget Docker VM memory for all
    simultaneously running services, including the optional portal and FHIR servers.
    The API gets one CPU and 512 MiB. These are prototype resource bounds, not
    capacity measurements for large generation or validation workloads.

@@ -167,7 +167,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             write_json(case / 'Fall.loss.json', report)
             book = out / 'excel' / ('Fall-' + source.stem + '.xlsx')
             write_workbook(rows, book, options=defaults)
-            command = ['java', '-Xmx1g', '-Duser.timezone=Europe/Berlin',
+            command = ['java', '-Xmx3g' if validate else '-Xmx1g', '-Duser.timezone=Europe/Berlin',
                        '-Dexcel2fhir.runOffset=' + run_time().strftime('%z'), '-jar', str(JAR),
                        '-f', str(book), '-o', str(case), '-r', ','.join(formats or ['JSON', 'NDJSON']),
                        '-p', str(patients_per_bundle), '-vll', validation_log_level, '-l', log_layout]
