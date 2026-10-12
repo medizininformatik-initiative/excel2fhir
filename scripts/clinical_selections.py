@@ -29,6 +29,7 @@ LISTS = {
     'AT': ['Klinische Untersuchungscodes', 'LOINC', SNOMED],
     'AU': ['Codierte Messwertantworten', 'LOINC', SNOMED],
     'AV': ['Medikamentencodes', 'PZN', SNOMED, 'RxNorm', 'CVX'],
+    'BP': ['Einheitencodesystem', 'http://unitsofmeasure.org'],
     'AW': ['Wirkstoffcodes', 'ASK', 'UNII', SNOMED, 'RxNorm'],
     'AY': ['Impfstoffcodes', 'ATC', SNOMED, 'RxNorm', 'CVX'],
     'AZ': ['Befund- und Dokumenttypen', 'LOINC', SNOMED],
@@ -50,10 +51,10 @@ LISTS['BH'] = ['Wirkstoffcodes (UNII; Kombinationen mit Semikolon)'] + ingredien
 
 # Header-based addressing works for both templates and filled cases.
 SELECTIONS = {
-    'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AD'},
-    'Klinische Dokumentation': {'Codesystem': 'AT', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR'},
+    'Laborbefund': {'Werttyp': 'BG', 'Codesystem': 'AS', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AD', 'Einheitencodesystem': 'BP'},
+    'Klinische Dokumentation': {'Codesystem': 'AT', 'Zusatzcodesystem': 'AT', 'Wertcodesystem': 'AU', 'Kategorie': 'AR', 'Einheitencodesystem': 'BP'},
     'Prozedur': {'Codesystem': 'AB', 'Zusatzcodesystem': 'AB'},
-    'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW', 'Wirkstoffcode': 'BH'},
+    'Medikation': {'Präparatcodesystem': 'AV', 'Wirkstoffcodesystem': 'AW', 'Wirkstoffcode': 'BH', 'Dosiereinheitcodesystem': 'BP'},
     'Impfung': {'Codesystem': 'AY', 'Status': 'BB'},
     'Befundbericht': {'Codesystem': 'AZ', 'Status': 'BC'},
     'DocumentReference': {'Dokumentcodesystem': 'AZ'},
@@ -136,11 +137,13 @@ def validation_ops(sheets, row_counts=None):
                 ref = '$Codes.' + ':'.join(re.sub(r'([A-Z]+)([0-9]+)', r'$\1$\2', cell) for cell in (first, end))
             else:
                 ref = f'$Codes.${source}$30:${source}${28 + len(LISTS[source])}'
-            strict = header not in OPEN_FIELDS.get(sheet, {}) and header not in ('Wirkstoffcode', 'Darreichungsform')
+            strict = header not in OPEN_FIELDS.get(sheet, {}) and header not in ('Wirkstoffcode', 'Darreichungsform') and not header.lower().endswith('codesystem')
             ops.append(f'validation\t{sheet}\t{col}2:{col}{last}\t{ref}\t{str(strict).lower()}')
         if sheet == 'Medikation':
-            formula = 'IF($C2="Verordnung";$Codes.$AG$30:$AG$37;IF($C2="Verabreichung";$Codes.$BJ$30:$BJ$36;$Codes.$BI$30:$BI$37))'
-            ops.append(f'validation\t{sheet}\tL2:L{last}\t{formula}\ttrue')
+            kind_col = headers['Medikationstyp']
+            status_col = headers['Status']
+            formula = f'IF(${kind_col}2="Verordnung";$Codes.$AG$30:$AG$37;IF(${kind_col}2="Verabreichung";$Codes.$BJ$30:$BJ$36;$Codes.$BI$30:$BI$37))'
+            ops.append(f'validation\t{sheet}\t{status_col}2:{status_col}{last}\t{formula}\ttrue')
     return ops
 
 

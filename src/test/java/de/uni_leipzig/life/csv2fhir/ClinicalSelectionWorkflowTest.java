@@ -192,4 +192,52 @@ public class ClinicalSelectionWorkflowTest {
         }
     }
 
+    @Test public void customSystemsSurviveMainAdditionalAnswerAndMedicationCodings() throws Exception {
+        String main = "https://example.invalid/custom#v1", extra = "urn:example:extra";
+        table(TableIdentifier.Diagnose, Map.of("Patient-ID", "p1", "Code", "nonsense", "Codesystem", main,
+                "Zusatzcode", "also-wrong", "Zusatzcodesystem", extra, "Version", "custom-version"));
+        table(TableIdentifier.Prozedur, Map.of("Patient-ID", "p1", "Prozedurencode", "nonsense", "Codesystem", main,
+                "Zusatzcode", "also-wrong", "Zusatzcodesystem", extra));
+        table(TableIdentifier.Laborbefund, Map.of("Patient-ID", "p1", "LOINC", "nonsense", "Codesystem", main,
+                "Zusatzcode", "also-wrong", "Zusatzcodesystem", extra, "Werttyp", "Code",
+                "Wertcode", "answer", "Wertcodesystem", "urn:example:answers"));
+        table(TableIdentifier.Klinische_Dokumentation, Map.of("Patient-ID", "p1", "Untersuchungscode", "nonsense", "Codesystem", main,
+                "Zusatzcode", "also-wrong", "Zusatzcodesystem", extra, "Werttyp", "Code",
+                "Wertcode", "answer", "Wertcodesystem", "urn:example:answers"));
+        table(TableIdentifier.Medikation, Map.of("Patient-ID", "p1", "Medikationstyp", "Verordnung",
+                "Präparatcode", "nonsense", "Präparatcodesystem", main, "Wirkstoffcode", "ingredient", "Wirkstoffcodesystem", extra));
+        for (TableIdentifier type : List.of(TableIdentifier.Impfung, TableIdentifier.Befundbericht, TableIdentifier.Behandlungsplan))
+            table(type, Map.of("Patient-ID", "p1", "Eintrag ID", "event", "Code", "nonsense", "Codesystem", main));
+        table(TableIdentifier.DocumentReference, Map.of("Patient-ID", "p1", "Dokumenttext", "text",
+                "Dokumentcode", "nonsense", "Dokumentcodesystem", main));
+        var resources = run("CHECK_INPUT_CONSISTENCY=true\n");
+        Set<String> checked = new HashSet<>();
+        for (Resource resource : resources.values()) {
+            CodeableConcept code = null;
+            if (resource instanceof Condition) code = ((Condition)resource).getCode();
+            if (resource instanceof Procedure) code = ((Procedure)resource).getCode();
+            if (resource instanceof Observation) {
+                code = ((Observation)resource).getCode();
+                assertEquals("urn:example:answers", ((Observation)resource).getValueCodeableConcept().getCodingFirstRep().getSystem());
+            }
+            if (resource instanceof Medication) {
+                code = ((Medication)resource).getCode();
+                assertEquals(extra, ((Medication)resource).getIngredientFirstRep().getItemCodeableConcept().getCodingFirstRep().getSystem());
+            }
+            if (resource instanceof Immunization) code = ((Immunization)resource).getVaccineCode();
+            if (resource instanceof DiagnosticReport) code = ((DiagnosticReport)resource).getCode();
+            if (resource instanceof CarePlan) code = ((CarePlan)resource).getCategoryFirstRep();
+            if (resource instanceof DocumentReference) code = ((DocumentReference)resource).getType();
+            if (code == null) continue;
+            assertEquals(main, code.getCodingFirstRep().getSystem()); assertEquals("nonsense", code.getCodingFirstRep().getCode());
+            if (resource instanceof Condition || resource instanceof Procedure || resource instanceof Observation) {
+                assertEquals(2, code.getCoding().size()); assertEquals(extra, code.getCoding().get(1).getSystem());
+                assertEquals("also-wrong", code.getCoding().get(1).getCode());
+            }
+            if (resource instanceof Condition) assertEquals("custom-version", code.getCodingFirstRep().getVersion());
+            checked.add(resource.fhirType());
+        }
+        assertEquals(Set.of("Condition", "Procedure", "Observation", "Medication", "Immunization", "DiagnosticReport", "CarePlan", "DocumentReference"), checked);
+    }
+
 }

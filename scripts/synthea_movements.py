@@ -1,4 +1,5 @@
 """Reproducible synthetic contacts around unchanged Synthea treatment times."""
+from workbook_records import record
 from datetime import datetime
 import hashlib
 import json
@@ -33,9 +34,9 @@ def enrich(bundle, facility_rows, encounter_numbers):
     reverse = {number: source for source,number in encounter_numbers.items()}
     output, added, skipped, operation_sources, department_decisions = [], [], [], [], []
     for row in facility_rows:
-        pid, number = row[:2]
+        pid, number = [row['Patient-ID'], row['Fall-Nr']]
         source_id = reverse[number]; source = encounters[source_id]
-        root = row[:10] + ['']
+        root = record('Fall', {**row, 'Kontaktart': ''})
         output.append(root)
         rng = random.Random(int.from_bytes(hashlib.sha256(f'{VERSION}|{SEED}|{pid}|{source_id}'.encode()).digest(), 'big'))
         start,end = (dt(source.get('period',{}).get(k)) for k in ('start','end'))
@@ -83,15 +84,15 @@ def enrich(bundle, facility_rows, encounter_numbers):
             if index and rng.random()<.5: bed=3-bed
             elif index: room+=1
             prefix=DEPARTMENTS[department]['wardPrefix']
-            primary=row[:10]+[kind]
-            primary[2:4]=[a.isoformat(),b.isoformat()]
-            primary[5:10]=[department,'Station '+prefix+'1',f'Zimmer {room}',f'Bett {bed}','']
+            primary = record('Fall', {**row, 'Kontaktart': kind})
+            (primary['Start'], primary['Ende'],)=[a.isoformat(),b.isoformat()]
+            (primary['Fachabteilung'], primary['Station'], primary['Zimmer'], primary['Bett'], primary['Aufnahmegrund (4. Stelle)'],)=[department,'Station '+prefix+'1',f'Zimmer {room}',f'Bett {bed}','']
             output.append(primary);added.append(primary)
             for op_start,procedure_id,op_department in windows:
                 if not a <= op_start < b: continue
-                secondary=row[:10]+['Operation']
-                secondary[2:4]=[op_start.isoformat(),'']
-                secondary[5:10]=[op_department,'OP-Bereich',f'OP-Saal {rng.randint(1,6)}','','']
+                secondary = record('Fall', {**row, 'Kontaktart': 'Operation'})
+                (secondary['Start'], secondary['Ende'],)=[op_start.isoformat(),'']
+                (secondary['Fachabteilung'], secondary['Station'], secondary['Zimmer'], secondary['Bett'], secondary['Aufnahmegrund (4. Stelle)'],)=[op_department,'OP-Bereich',f'OP-Saal {rng.randint(1,6)}','','']
                 output.append(secondary);added.append(secondary)
                 operation_sources.append({'row':len(output)+1,'sourceProcedures':[procedure_id],
                     'contactEnd':'derived from primary stay', 'derivedEnd':b.isoformat()})

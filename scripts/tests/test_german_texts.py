@@ -6,6 +6,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from workbook_records import record
 from german_texts import GermanTexts, PATH, catalog, localize_rows
 
 
@@ -85,12 +86,25 @@ class GermanTextsTest(unittest.TestCase):
         self.assertEqual(tr.report()['missing'], [])
 
     def test_only_text_columns_change_and_address_uses_same_identity(self):
-        row = ['p','f','Glucose [Mass/volume] in Blood','2339-0','LOINC','','','83.7','mg/dL',
-               '2026-01-01','Zahl','','','laboratory','final','o','','','mg/dL']
-        original = list(row)
+        row = record('Klinische Dokumentation', {
+            'Patient-ID': 'p',
+            'Fall-Nr': 'f',
+            'Bezeichner': 'Glucose [Mass/volume] in Blood',
+            'Untersuchungscode': '2339-0',
+            'Codesystem': 'LOINC',
+            'Wert': '83.7',
+            'Einheit': 'mg/dL',
+            'Zeitstempel': '2026-01-01',
+            'Werttyp': 'Zahl',
+            'Kategorie': 'laboratory',
+            'Status': 'final',
+            'Untersuchung ID': 'o',
+            'Einheitencode': 'mg/dL',
+        })
+        original = dict(row)
         report = localize_rows({'Klinische Dokumentation':[row]})
-        self.assertNotEqual(row[2], original[2])
-        self.assertEqual(row[:2]+row[3:], original[:2]+original[3:])
+        self.assertNotEqual(row['Bezeichner'], original['Bezeichner'])
+        self.assertEqual({k: v for k, v in row.items() if k != 'Bezeichner'}, {k: v for k, v in original.items() if k != 'Bezeichner'})
         tr = GermanTexts({'line':['Teststraße 12']})
         self.assertEqual(tr.observation_text('American street', 'LOINC','56799-0'), 'Teststraße 12')
         self.assertEqual(report['missing'], [])

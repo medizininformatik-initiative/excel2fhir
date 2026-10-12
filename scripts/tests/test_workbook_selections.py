@@ -47,13 +47,15 @@ class WorkbookSelectionsTest(unittest.TestCase):
                                 self.assertNotEqual('Bezeichner',headers[col])
                             if headers[col] in ('Code','Zusatzcode','Einzeldosis','Wirkstoffcode','Wert','Messwert','Prozedurencode','Version','Zusatzversion','ATC-Version'):
                                 self.assertNotIn(d.get('showErrorMessage'), ('1', 'true'), (name,col))
-                        for col, first, endcol, last in re.findall(r'Codes!\$([A-Z]+)\$(\d+)(?::\$([A-Z]+)\$(\d+))?',formula):
-                            self.assertTrue(all(cells['Codes'].get(col+str(n)) for n in range(int(first),int(last or first)+1)),formula)
-                        if name == 'Medikation' and '$C2=' in formula:
+                        for source_col, first, endcol, last in re.findall(r'Codes!\$([A-Z]+)\$(\d+)(?::\$([A-Z]+)\$(\d+))?',formula):
+                            self.assertTrue(all(cells['Codes'].get(source_col+str(n)) for n in range(int(first),int(last or first)+1)),formula)
+                        if name == 'Medikation' and headers[col] == 'Status':
+                            kind_col = next(c for c, h in headers.items() if h == 'Medikationstyp')
+                            self.assertIn(f'${kind_col}2=', formula)
                             self.assertIn('$BJ$30:$BJ$36',formula)
                             self.assertNotIn('$BH$',formula)
-                            self.assertRegex(d.get('sqref'), r'^L2:L[0-9]+$')
-                            self.assertGreaterEqual(int(d.get('sqref').split(':L')[1]), 1000)
+                            self.assertRegex(d.get('sqref'), rf'^{col}2:{col}[0-9]+$')
+                            self.assertGreaterEqual(int(d.get('sqref').split(':'+col)[1]), 1000)
             self.assertEqual('in-progress',cells['Codes']['BJ30'])
             self.assertEqual('Unbekannt (Data Absent Reason)',cells['Codes']['AA36'])
             self.assertNotIn('Positive Unendlichkeit',[cells['Codes'].get('AA'+str(i)) for i in range(30,42)])

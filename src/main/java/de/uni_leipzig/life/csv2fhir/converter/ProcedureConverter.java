@@ -133,7 +133,7 @@ public class ProcedureConverter extends Converter {
         String explicit = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
         if (explicit != null) return ClinicalValues.coding(explicit, DiagnosisValues.SNOMED);
         String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
-        Coding selectedSystem = ClinicalValues.systems().get(selection);
+        Coding selectedSystem = selection == null ? null : DiagnosisValues.system(selection, ClinicalValues.systems());
         if (selection != null && (selectedSystem == null
                 || !"http://fhir.de/CodeSystem/bfarm/ops".equals(selectedSystem.getSystem()))) return null;
         String code = get(Prozedurencode);

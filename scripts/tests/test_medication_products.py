@@ -53,9 +53,9 @@ class ProductTest(unittest.TestCase):
 
     def test_absent_local_catalog_uses_public_atc_and_removes_rxnorm(self):
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4:8], ['18160187', 'PZN', 'G03AC06', '2026'])
-        self.assertNotIn('PZN-Zuordnung offen', rows['Medikation'][0][3])
-        self.assertTrue(rows['Medikation'][0][3])
+        self.assertEqual([rows['Medikation'][0]['Präparatcode'], rows['Medikation'][0]['Präparatcodesystem'], rows['Medikation'][0]['ATC-Code'], rows['Medikation'][0]['ATC-Version']], ['18160187', 'PZN', 'G03AC06', '2026'])
+        self.assertNotIn('PZN-Zuordnung offen', rows['Medikation'][0]['Präparatbezeichnung'])
+        self.assertTrue(rows['Medikation'][0]['Präparatbezeichnung'])
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
         self.assertEqual(report['productCatalog']['provider'], 'public-source')
 
@@ -67,10 +67,11 @@ class ProductTest(unittest.TestCase):
         local_rows, report = prepare(source)
         self.assertEqual(source, before)
         public, local = public_rows['Medikation'][0], local_rows['Medikation'][0]
-        self.assertEqual([v for i,v in enumerate(public) if i not in (3,8,4,5)],
-                         [v for i,v in enumerate(local) if i not in (3,8,4,5)])
-        self.assertEqual(local[4:6], ['00000000', 'PZN'])
-        self.assertEqual(local[3], 'Erfundenes Adapter-Testpräparat')
+        product_fields = {'Präparatbezeichnung', 'Darreichungsform', 'Präparatcode', 'Präparatcodesystem'}
+        self.assertEqual({k: v for k, v in public.items() if k not in product_fields},
+                         {k: v for k, v in local.items() if k not in product_fields})
+        self.assertEqual([local['Präparatcode'], local['Präparatcodesystem']], ['00000000', 'PZN'])
+        self.assertEqual(local['Präparatbezeichnung'], 'Erfundenes Adapter-Testpräparat')
         decision = next(m for m in report['clinicalMappings'] if m['sourceId'] == 'rx')
         self.assertEqual(decision['source'], SOURCE)
         self.assertEqual(decision['provenance']['source'], 'invented-test-fixture')
@@ -86,7 +87,7 @@ class ProductTest(unittest.TestCase):
         self.assertIsNone(ProductCatalog().select({'system': RXNORM, 'code': 'not-in-inventory'})['target'])
         data = fixture(); data['entries'][0]['doseCompatibility'] = 'unresolved'; self.save(data)
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0][4], '18160187')
+        self.assertEqual(rows['Medikation'][0]['Präparatcode'], '18160187')
         self.assertNotIn('Erfundenes Adapter-Testpräparat', json.dumps(report))
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
 

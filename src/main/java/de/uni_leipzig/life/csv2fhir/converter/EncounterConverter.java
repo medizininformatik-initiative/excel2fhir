@@ -126,32 +126,34 @@ public class EncounterConverter extends Converter {
     private void locations(Encounter encounter, String department, List<Resource> resources) throws Exception {
         Location parent = null;
         String path = getDIZId() + "|" + Objects.toString(department, "");
-        String[] names = {value(Station), value(Zimmer), value(Bett)};
+        String station = value(Station);
         var configuration = options.configuration();
         String providerMode = configuration == null ? "none" : configuration.effective("resource.Encounter.stationServiceProvider")
                 .map(v -> v.asText()).orElse("none");
         boolean stationLocation = configuration == null || configuration.effective("resource.Encounter.stationLocation")
                 .map(v -> v.asBoolean()).orElse(true);
-        if (names[0] != null && !providerMode.equals("none")) {
+        if (station != null && !providerMode.equals("none")) {
             Organization organization = new Organization();
-            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + names[0]));
-            organization.setName(names[0]).setActive(true);
+            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + station));
+            organization.setName(station).setActive(true);
             String reference = "Organization/" + organization.getIdElement().getIdPart();
             if (providerMode.equals("contained")) {
                 encounter.addContained(organization);
                 reference = "#" + organization.getIdElement().getIdPart();
             } else if (providerMode.equals("generate-reference")) resources.add(organization);
-            encounter.setServiceProvider(new Reference(reference).setDisplay(names[0]));
+            encounter.setServiceProvider(new Reference(reference).setDisplay(station));
         }
-        String[] types = {"wa", "ro", "bd"};
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] == null) continue;
-            path += "|" + types[i] + "|" + names[i];
-            if (i == 0 && !stationLocation) continue;
+        var types = Map.of(Station, "wa", Zimmer, "ro", Bett, "bd");
+        for (var field : List.of(Station, Zimmer, Bett)) {
+            String name = value(field);
+            if (name == null) continue;
+            String type = types.get(field);
+            path += "|" + type + "|" + name;
+            if (field == Station && !stationLocation) continue;
             Location location = new Location();
             location.setId(ClinicalValues.resourceId(getDIZId(), "Location", path));
-            location.setName(names[i]).setStatus(LocationStatus.ACTIVE);
-            location.setPhysicalType(new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/location-physical-type", types[i], null)));
+            location.setName(name).setStatus(LocationStatus.ACTIVE);
+            location.setPhysicalType(new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/location-physical-type", type, null)));
             if (parent != null) location.setPartOf(new Reference("Location/" + parent.getId()));
             encounter.addLocation().setLocation(new Reference("Location/" + location.getId()))
                     .setPhysicalType(location.getPhysicalType().copy());

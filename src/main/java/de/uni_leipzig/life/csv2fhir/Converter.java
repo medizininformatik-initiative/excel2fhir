@@ -12,7 +12,6 @@ import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +35,6 @@ import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Factory;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
-import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.Quantity.QuantityComparator;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
@@ -48,7 +45,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.imise.utils.StringUtils;
 import de.uni_leipzig.imise.utils.Sys;
@@ -735,47 +731,6 @@ public abstract class Converter {
      */
     public Period createPeriod(DateTimeType startDate, DateTimeType endDate) {
         return new Period().setStartElement(startDate).setEndElement(endDate);
-    }
-
-    /**
-     * @param value
-     * @param ucumCode
-     * @param comparator
-     * @return
-     * @throws Exception
-     */
-    public static Quantity getUcumQuantity(BigDecimal value, String ucumCode, String comparator) throws Exception {
-        String ucumUnit = null;
-        if (!isBlank(ucumCode)) {
-            ucumCode = UcumMapper.getValidUcumCode(ucumCode);
-            ucumUnit = UcumMapper.getUcumUnit(ucumCode);
-        } else {
-            ucumCode = null;
-        }
-        Quantity quantity = new Quantity().setSystem("http://unitsofmeasure.org");
-        if (value != null) {
-            quantity.setValue(value);
-        } else {
-            quantity.getValueElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(ucumCode)) {
-            quantity.setCode(ucumCode);
-        } else {
-            quantity.getCodeElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(ucumUnit)) {
-            quantity.setUnit(ucumUnit);
-        } else {
-            quantity.getUnitElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(comparator)) {
-            QuantityComparator quantityComparator = QuantityComparator.fromCode(comparator);
-            quantity.setComparator(quantityComparator);
-        }
-        return quantity;
     }
 
     /**

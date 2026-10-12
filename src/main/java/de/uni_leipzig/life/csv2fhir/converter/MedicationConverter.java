@@ -17,7 +17,7 @@ public class MedicationConverter extends Converter {
     public enum Medication_Columns implements TableColumnIdentifier {
         Medikationstyp, Präparatbezeichnung, Präparatcode, Präparatcodesystem,
         ATC_Code, ATC_Version, Darreichungsform, Wirkstoffcode, Wirkstoffcodesystem,
-        Status, Absicht, Dokumentationszeitpunkt, Beginn, Ende, Einzeldosis, Dosiereinheit,
+        Status, Absicht, Dokumentationszeitpunkt, Beginn, Ende, Einzeldosis, Dosiereinheit, Dosiereinheitcodesystem,
         Dosen_pro_Tag, Dosierungstext;
         @Override public String toString() {
             return name().startsWith("ATC_") ? name().replace('_', '-') : name().replace('_', ' ');
@@ -55,7 +55,7 @@ public class MedicationConverter extends Converter {
             r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "completed" : status));
             r.setEffective(effective());
             var dose = new MedicationAdministration.MedicationAdministrationDosageComponent();
-            if (value("Einzeldosis") != null || value("Dosiereinheit") != null) dose.setDose(quantity());
+            if (hasDose()) dose.setDose(quantity());
             // Administration has no daily timing element. Keep the supplied facts in text.
             if (value("Dosierungstext") != null || value("Dosen pro Tag") != null ||
                     (value("Einzeldosis") != null && value("Dosiereinheit") == null)) dose.setText(doseText());
@@ -115,10 +115,16 @@ public class MedicationConverter extends Converter {
     }
     private Quantity quantity() throws Exception {
         Extension absent = DiagnosisValues.absentReason(value("Einzeldosis"));
-        Quantity q = getUcumQuantity(absent == null && value("Einzeldosis") != null ? parseDecimal(value("Einzeldosis")) : null, value("Dosiereinheit"), null);
+        String system = value("Dosiereinheitcodesystem");
+        java.math.BigDecimal amount = absent == null && value("Einzeldosis") != null ? parseDecimal(value("Einzeldosis")) : null;
+        Quantity q = new Quantity().setSystem(system).setValue(amount)
+                .setCode(value("Dosiereinheit")).setUnit(value("Dosiereinheit"));
         if (value("Einzeldosis") == null) q.setValueElement(null);
         if (absent != null) q.getValueElement().setExtension(List.of(absent));
         return q;
+    }
+    private boolean hasDose() {
+        return value("Einzeldosis") != null || value("Dosiereinheit") != null || value("Dosiereinheitcodesystem") != null;
     }
     private String doseText() {
         List<String> facts = new ArrayList<>();
@@ -130,16 +136,16 @@ public class MedicationConverter extends Converter {
     }
     private Dosage dosage() throws Exception {
         Dosage d = new Dosage();
-        if (value("Einzeldosis") == null && value("Dosiereinheit") != null)
-            d.addDoseAndRate().setDose(quantity());
+        if (hasDose()) d.addDoseAndRate().setDose(quantity());
         String frequency = value("Dosen pro Tag");
         boolean integral = frequency != null && parseDecimal(frequency).stripTrailingZeros().scale() <= 0
                 && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MAX_VALUE)) <= 0
                 && parseDecimal(frequency).compareTo(java.math.BigDecimal.valueOf(Integer.MIN_VALUE)) >= 0;
-        if (value("Dosierungstext") == null && value("Einzeldosis") != null && value("Dosiereinheit") != null && integral) {
-            d.addDoseAndRate().setDose(quantity());
+        if (integral) {
             d.getTiming().getRepeat().setFrequency(parseDecimal(frequency).intValueExact()).setPeriod(1).setPeriodUnit(Timing.UnitsOfTime.D);
-        } else if (!doseText().isEmpty()) d.setText(doseText());
+        }
+        if (value("Dosierungstext") != null || (frequency != null && !integral)
+                || (value("Einzeldosis") != null && value("Dosiereinheit") == null)) d.setText(doseText());
         return d;
     }
     private <T extends Resource> String createId(Class<T> resourceType) throws Exception {

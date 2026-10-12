@@ -3,6 +3,7 @@
 Supported clinical resources and synthetic contacts are imported; unhandled source fields
 are identified in a separate loss report. Requires LibreOffice, Java and Python 3.
 """
+from workbook_records import record, ordered_values
 import base64
 from datetime import datetime, timezone
 import hashlib
@@ -69,12 +70,20 @@ def prepare(bundle, options=None):
     demographics = identity(patient)
     name = demographics['name']
     born = datetime.strptime(patient['birthDate'], '%Y-%m-%d').strftime('%d.%m.%Y 00:00')
-    rows['Person'].append([pid, ' '.join(name.get('given', [])), name.get('family',''), born,
-                           {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']]])
     address = demographics['address']
-    rows['Person'][0] += [''] * 6 + [', '.join(address.get('line',[])), address.get('postalCode',''),
-                                    address.get('city',''), address.get('state',''), address.get('country',''),
-                                    patient.get('deceasedDateTime','')]
+    rows['Person'].append(record('Person', {
+        'Patient-ID': pid,
+        'Vorname': ' '.join(name.get('given', [])),
+        'Nachname': name.get('family', ''),
+        'Geburtsdatum': born,
+        'Geschlecht': {'male':'männlich','female':'weiblich','other':'divers','unknown':'unbekannt'}[patient['gender']],
+        'Straße': ', '.join(address.get('line', [])),
+        'Postleitzahl': address.get('postalCode', ''),
+        'Ort': address.get('city', ''),
+        'Bundesland': address.get('state', ''),
+        'Land': address.get('country', ''),
+        'Sterbezeitpunkt': patient.get('deceasedDateTime', ''),
+    }))
     fields(patient, {'name','birthDate','gender','address','deceasedDateTime'})
     for field in ('name','address'):
         loss(patient, field, 'Bewusst durch synthetische deutsche Personendaten ersetzt; Zuordnung unter demographics')
@@ -102,8 +111,14 @@ def prepare(bundle, options=None):
                 local = local.astimezone(timezone.utc)
             return local.isoformat()
         period = r.get('period', {})
-        rows['Fall'].append([pid,nr,local_time(period.get('start')),local_time(period.get('end')),CLASSES[code],
-                             '', '', '', '', 'Notfall' if code == 'EMER' else ''])
+        rows['Fall'].append(record('Fall', {
+            'Patient-ID': pid,
+            'Fall-Nr': nr,
+            'Start': local_time(period.get('start')),
+            'Ende': local_time(period.get('end')),
+            'Einrichtungskontaktklasse': CLASSES[code],
+            'Aufnahmegrund (4. Stelle)': 'Notfall' if code == 'EMER' else '',
+        }))
         if code == 'EMER':
             encounter_mappings.append({'sourceId':r['id'], 'sourceClass':'EMER', 'targetClass':'AMB',
                                       'admissionReasonFourthComponent':'7',
@@ -144,7 +159,7 @@ def prepare(bundle, options=None):
                 selection = 'ICD-10-GM ' + c['version']
             else: raise ValueError('Unsupported coding system/version: ' + str(c))
             if not c.get('code'): raise ValueError('Source coding without code')
-            chosen.append((c['code'],selection))
+            chosen.append({'code': c['code'], 'system': selection})
             for key in c.keys() - {'system','version','code'}:loss(r,'code.coding.'+key,'Bezeichner übernommen, Coding-Metadaten nicht separat darstellbar')
         if len(chosen)>2 or len({c.get('system')for c in coding}) != len(coding):
             raise ValueError('More codings than supported by the diagnosis sheet/profile')
@@ -156,8 +171,8 @@ def prepare(bundle, options=None):
         condition_rows[r['id']] = len(rows['Diagnose']) + 2
         if decision['target'] is not None:
             target = decision['target']
-            chosen.append((target['code'], 'ICD-10-GM ' + target['version']))
-        while len(chosen)<2:chosen.append(('',''))
+            chosen.append({'code': target['code'], 'system': 'ICD-10-GM ' + target['version']})
+        while len(chosen)<2:chosen.append({'code': '', 'system': ''})
         label = r.get('code',{}).get('text') or coding[0].get('display','')
         def status(field, system, mapping):
             cc=r.get(field,{})
@@ -169,10 +184,20 @@ def prepare(bundle, options=None):
         verification = status('verificationStatus','http://terminology.hl7.org/CodeSystem/condition-ver-status',VERIFICATION)
         if 'verificationStatusChange' in decision:
             verification = VERIFICATION[decision['verificationStatusChange']['to']]
-        rows['Diagnose'].append([pid,nr,label,*chosen[0],*chosen[1],r.get('recordedDate',''),
-                                r.get('onsetDateTime',''),r.get('abatementDateTime',''),
-                                status('clinicalStatus','http://terminology.hl7.org/CodeSystem/condition-clinical',CLINICAL),
-                                verification,''])
+        rows['Diagnose'].append(record('Diagnose', {
+            'Patient-ID': pid,
+            'Fall-Nr': nr,
+            'Bezeichner': label,
+            'Code': chosen[0]['code'],
+            'Codesystem': chosen[0]['system'],
+            'Zusatzcode': chosen[1]['code'],
+            'Zusatzcodesystem': chosen[1]['system'],
+            'Dokumentationszeitpunkt': r.get('recordedDate',''),
+            'Beginn': r.get('onsetDateTime',''),
+            'Ende': r.get('abatementDateTime',''),
+            'Klinischer Status': status('clinicalStatus','http://terminology.hl7.org/CodeSystem/condition-clinical',CLINICAL),
+            'Verifikationsstatus': verification,
+        }))
         fields(r, {'subject','encounter','code','recordedDate','onsetDateTime','abatementDateTime','clinicalStatus','verificationStatus'})
         for key in r.get('code',{}).keys() - {'coding','text'}:loss(r,'code.'+key,'Generator unterstützt Sachverhalt noch nicht')
         for field in ['clinicalStatus','verificationStatus']:
@@ -203,24 +228,24 @@ def prepare(bundle, options=None):
     for sheet in ['Laborbefund', 'Klinische Dokumentation']:
         for row in rows[sheet]:
             # These source concepts are main observations, not components.
-            if not row[15] or row[16]: continue
-            mapped = observation_decision(source_observations[row[15]])
+            if not row['Untersuchung ID'] or row['Komponente von']: continue
+            mapped = observation_decision(source_observations[row['Untersuchung ID']])
             if mapped:
-                if sheet == 'Laborbefund':
-                    row[2:6] = [mapped['targetCodings'][0]['code'], 'LOINC', row[2], row[3]]
-                else:
-                    row[3:7] = [mapped['targetCodings'][0]['code'], 'LOINC', row[3], row[4]]
+                code_field = 'LOINC' if sheet == 'Laborbefund' else 'Untersuchungscode'
+                row['Zusatzcode'], row['Zusatzcodesystem'] = row[code_field], row['Codesystem']
+                row[code_field], row['Codesystem'] = mapped['targetCodings'][0]['code'], 'LOINC'
                 observation_mappings.append(mapped)
     clinical_report['observationMapping'] = observation_metadata()
     clinical_report['observationMappings'] = observation_mappings
     for decision in clinical_report['clinicalMappings']:
         for projected in decision.get('outputs', []):
-            rows['Prozedur'][projected['row'] - 2][3] = projected['codings'][0]['code']
+            rows['Prozedur'][projected['row'] - 2]['Prozedurencode'] = projected['codings'][0]['code']
     for row, decision in zip(rows['Diagnose'], (d for d in diagnosis_mappings if d['status'] != 'excluded')):
-        if row[6].startswith('ICD-10-GM '):
-            row[3:7] = row[5:7] + row[3:5]
+        if row['Zusatzcodesystem'].startswith('ICD-10-GM '):
+            row['Code'], row['Codesystem'], row['Zusatzcode'], row['Zusatzcodesystem'] = (
+                row['Zusatzcode'], row['Zusatzcodesystem'], row['Code'], row['Codesystem'])
         if decision.get('target'):
-            row[2] = decision['target']['display']
+            row['Bezeichner'] = decision['target']['display']
     version_rows(rows, year, version_mode)
     return rows, {'terminology': metadata(year, version_mode), **clinical_report, 'germanTexts':translation_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
@@ -249,7 +274,7 @@ def column_number(name):
 
 
 def write_workbook(rows, output, options=None):
-    if any(row[5] == 'PZN' for row in rows.get('Medikation', [])):
+    if any(row['Präparatcodesystem'] == 'PZN' for row in rows.get('Medikation', [])):
         require_external_path(output)
     template = ROOT/'FHIR_Testdatengenerator_Vorlage.xlsx'
     sheets = read_sheets(template)
@@ -266,18 +291,19 @@ def write_workbook(rows, output, options=None):
         data_end = column_name(column_number(hint) - 1)
         op('clear',name,f'A2:{data_end}{last}')
     for name, values in rows.items():
+        headers = [v for cell, v in sorted(sheets[name].items(), key=lambda item: (len(item[0]), item[0]))
+                   if cell.endswith('1') and cell[:-1].isalpha() and v != 'Erklärung/Ausfüllhilfe']
         if len(values) > 1030:
             # Extend the existing input-row formatting, never rebuild the sheet.
             for i in range(1032, len(values) + 2):
-                op('copy', name, f'A2:{column_name(len(values[0]))}2', 'A' + str(i))
+                op('copy', name, f'A2:{column_name(len(headers))}2', 'A' + str(i))
         from workbook_absent import display
-        headers = [sheets[name][column_name(j + 1) + '1'] for j in range(len(values[0]))] if values else []
-        for i,row in enumerate(values,2):
-            record = dict(zip(headers, row))
-            shown = [display(name, header, value, record) for header, value in zip(headers, row)]
+        for i, row in enumerate(values, 2):
+            shown = [display(name, header, value, row)
+                     for header, value in zip(headers, ordered_values(name, row, headers))]
             op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
-        if values:op('text',name,f'A2:{column_name(len(values[0]))}{len(values)+1}')
+        if values:op('text',name,f'A2:{column_name(len(headers))}{len(values)+1}')
     from clinical_selections import validation_ops
     ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
     apply_workbook_edits(template, ops, output)

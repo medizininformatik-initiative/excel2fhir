@@ -1,4 +1,5 @@
 """Additional clinical sheets. Structured details outside these columns are reported."""
+from workbook_records import record, SCHEMAS
 from clinical_import import coding, UnsupportedValue
 import base64
 import hashlib
@@ -6,17 +7,11 @@ from german_demographics import localize_document_identity
 from german_texts import GermanTexts
 from vaccine_mapping import map_vaccine, metadata as vaccine_metadata
 
-COMMON = ['Patient-ID', 'Fall-Nr', 'Eintrag ID', 'Bezeichner', 'Code', 'Codesystem']
-SCHEMAS = {
-    'Impfung': COMMON + ['Zeitpunkt', 'Status', 'Primärquelle'],
-    'Befundbericht': COMMON + ['Zeitpunkt', 'Status', 'Ausgabezeitpunkt', 'Ergebnisse', 'Beschreibung'],
-    'Behandlungsplan': COMMON + ['Zeitpunkt', 'Ende', 'Status', 'Absicht', 'Beschreibung', 'Aktivitätscodes'],
-}
-SHEETS = dict(zip(['Immunization','DiagnosticReport','CarePlan'], SCHEMAS))
+SHEETS = {'Immunization': 'Impfung', 'DiagnosticReport': 'Befundbericht', 'CarePlan': 'Behandlungsplan'}
 
 
 def prepare_events(entries, pid, encounters, imported_observations, year=2026):
-    rows = {s: [] for s in SCHEMAS}; imported, losses, vaccines = [], [], []
+    rows = {s: [] for s in SHEETS.values()}; imported, losses, vaccines = [], [], []
     texts = GermanTexts()
     index = {}
     for entry in entries:
@@ -33,7 +28,7 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
         encounter = r.get('encounter', {}).get('reference')
         if encounter and (encounter not in index or index[encounter]['id'] not in encounters): raise ValueError('Broken encounter '+encounter)
         nr = encounters[index[encounter]['id']] if encounter else ''
-        values = dict(zip(COMMON[:3], [pid,nr,r['id']]))
+        values = {'Patient-ID': pid, 'Fall-Nr': nr, 'Eintrag ID': r['id']}
         handled = {'resourceType','id','subject','patient','encounter'}
         try:
             cc = (r.get('vaccineCode') if typ=='Immunization'
@@ -79,7 +74,7 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
                 values['Aktivitätscodes']=';'.join(activities)
                 if activities:loss('activity','Aktivitätscodes übernommen; Detailstatus als unknown erzeugt, weitere Details fehlen')
                 handled.update(['period','description'])
-            rows[SHEETS[typ]].append([values.get(c,'') for c in SCHEMAS[SHEETS[typ]]])
+            rows[SHEETS[typ]].append(record(SHEETS[typ], values))
             imported.append({'sourceId':r['id'],'resourceType':typ})
             for key in r.keys()-handled:loss(key,'Eigenschaft nicht oder nur teilweise übernommen')
         except (UnsupportedValue, KeyError) as ex:loss('$','Ressource ausgelassen: '+str(ex))
@@ -87,8 +82,6 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
                   'vaccineMapping': vaccine_metadata(), 'vaccineMappings': vaccines,
                   'vaccineTexts': texts.report()}
 
-DOCUMENT_EXTRA = ['Dokumenttext','Status','Ausgabezeitpunkt','Dokumentcode','Dokumentcodesystem','Dokumentbezeichner']
-PERSON_EXTRA = ['Straße','Postleitzahl','Ort','Bundesland','Land','Sterbezeitpunkt']
 
 
 def prepare_documents(entries, pid, encounters):
@@ -121,7 +114,17 @@ def prepare_documents(entries, pid, encounters):
             text, replacements = localize_document_identity(text, patient)
             if not text or len(text)>32767:raise UnsupportedValue('Document is empty or exceeds the Excel cell size limit')
             code,system,label=coding(r.get('type',{}))
-            rows.append([pid,nr,'','ja',text,r.get('status',''),r.get('date',''),code,system,label])
+            rows.append(record('DocumentReference', {
+                'Patient-ID': pid,
+                'Fall-Nr': nr,
+                'Embed': 'ja',
+                'Dokumenttext': text,
+                'Status': r.get('status',''),
+                'Ausgabezeitpunkt': r.get('date',''),
+                'Dokumentcode': code,
+                'Dokumentcodesystem': system,
+                'Dokumentbezeichner': label,
+            }))
             imports.append({'resourceType':'DocumentReference','sourceId':r['id']})
             identity_changes.append({'sourceId':r['id'], 'replacements':replacements,
                 'sourceTextSha256':hashlib.sha256(original.encode()).hexdigest(),

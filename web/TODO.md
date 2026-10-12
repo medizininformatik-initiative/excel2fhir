@@ -60,6 +60,15 @@ correction or additional generator restrictions.
 
 ## Verified implementation
 
+- [x] Accept explicit absolute system URIs alongside suggested system names in
+  clinical input fields, including primary/additional codings, coded answers,
+  medication products and ingredients. Emit custom URIs and free codes unchanged;
+  retain named-system mappings and explicit versions. Excel diagnosis preflight
+  and medication checks accept the same URI form. Template, starter and demo
+  dropdowns allow custom entries; generated workbook lists do likewise. Evidence:
+  `ClinicalSelectionWorkflowTest`, `ConditionConverterTest`, `DiagnosisWorkbookTest`
+  and `test_custom_system_selections.py`. This resolves the agreed custom-system
+  input case; other automatically assigned systems remain individual review items.
 - [x] Audit DiagnosticReport timestamp candidates through CSV output
   (`ContactWorkflowTest`): effective time precedes issued time within a contact
   class, later candidates can match, inpatient candidates precede ambulatory

@@ -67,7 +67,67 @@ public class ClinicalImportConverterTest {
                 }
                 assertFalse(dose.hasValueElement());
                 assertEquals("mg", dose.getCode());
-                assertEquals("http://unitsofmeasure.org", dose.getSystem());
+                assertFalse(dose.hasSystemElement());
+            }
+        }
+    }
+
+    @Test public void medicationDoseSystemsAndTextSurviveJsonForAllEventTypes() throws Exception {
+        for (String type : List.of("Verordnung", "Verabreichung", "Medikationsaussage")) {
+            for (String system : List.of("", "http://unitsofmeasure.org", "https://example.org/units", "UCUM", "eigenes System")) {
+                var values = new HashMap<>(Map.of("Medikationstyp", type, "Einzeldosis", "2",
+                        "Dosiereinheit", "µg", "Dosiereinheitcodesystem", system,
+                        "Dosierungstext", "Nach dem Essen"));
+                var options = new ConverterOptions("");
+                assertTrue(MedicationValues.errors(values::get).isEmpty());
+                var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                        null, new ConverterResult(options), null, options).convertInternal();
+                var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();
+                var event = parser.parseResource(parser.encodeResourceToString(resources.get(1)));
+                Quantity dose;
+                String text;
+                if (event instanceof MedicationAdministration) {
+                    dose = ((MedicationAdministration)event).getDosage().getDose();
+                    text = ((MedicationAdministration)event).getDosage().getText();
+                } else {
+                    Dosage dosage = event instanceof MedicationRequest ? ((MedicationRequest)event).getDosageInstructionFirstRep()
+                            : ((MedicationStatement)event).getDosageFirstRep();
+                    dose = dosage.getDoseAndRateFirstRep().getDoseQuantity();
+                    text = dosage.getText();
+                    assertFalse(dosage.hasTiming());
+                }
+                assertEquals(!system.isEmpty(), dose.hasSystemElement());
+                if (!system.isEmpty()) assertEquals(system, dose.getSystem());
+                assertEquals("2", dose.getValue().toPlainString());
+                assertEquals("µg", dose.getCode());
+                assertTrue(text.contains("Nach dem Essen"));
+            }
+        }
+    }
+
+    @Test public void medicationTimingAndPartialCustomDoseRemainIndependent() throws Exception {
+        var options = new ConverterOptions("");
+        for (String type : List.of("Verordnung", "Medikationsaussage")) {
+            var values = new HashMap<>(Map.of("Medikationstyp", type, "Dosen pro Tag", "3", "Dosierungstext", "Nach dem Essen"));
+            for (boolean customDose : List.of(false, true)) {
+                if (customDose) {
+                    values.put("Dosiereinheitcodesystem", "mein-system");
+                    values.put("Einzeldosis", "!dar:unknown");
+                }
+                var resources = new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                        null, new ConverterResult(options), null, options).convertInternal();
+                Resource event = resources.get(1);
+                Dosage dosage = event instanceof MedicationRequest ? ((MedicationRequest)event).getDosageInstructionFirstRep()
+                        : ((MedicationStatement)event).getDosageFirstRep();
+                assertEquals(3, dosage.getTiming().getRepeat().getFrequency());
+                assertEquals(customDose, dosage.hasDoseAndRate());
+                if (customDose) {
+                    Quantity dose = dosage.getDoseAndRateFirstRep().getDoseQuantity();
+                    assertEquals("mein-system", dose.getSystem());
+                    assertFalse(dose.hasCodeElement());
+                    assertFalse(dose.hasUnitElement());
+                    assertEquals("unknown", dose.getValueElement().getExtensionFirstRep().getValue().primitiveValue());
+                }
             }
         }
     }
@@ -283,6 +343,56 @@ public class ClinicalImportConverterTest {
             return p.getRecords().get(0);
         }
     }
+    @Test public void measurementQuantityFieldsRemainIndependentAndComparatorsWorkWithAnySystem() throws Exception {
+        var options = new ConverterOptions("");
+        for (boolean clinical : List.of(false, true)) {
+            for (String system : List.of("", "http://unitsofmeasure.org", "my units")) {
+                for (String code : List.of("", "µg")) {
+                    for (String raw : List.of("", "5", "<5", "<=5", ">5", ">=5")) {
+                        var values = new HashMap<>(Map.of("Werttyp", "Zahl", "Messwert", raw, "Wert", raw,
+                                "Einheit", "freie Einheit", "Einheitencode", code, "Einheitencodesystem", system));
+                        var result = new ConverterResult(options);
+                        var columns = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()
+                                : ObservationLaboratoryConverter.ObservationLaboratory_Columns.values();
+                        ObservationLaboratoryConverter converter = clinical
+                                ? new ObservationVitalSignsConverter(row(values, columns), null, result, null, options)
+                                : new ObservationLaboratoryConverter(row(values, columns), null, result, null, options);
+                        Observation observation = (Observation)converter.convertInternal().get(0);
+                        var parser = ca.uhn.fhir.context.FhirContext.forR4Cached().newJsonParser();
+                        observation = (Observation)parser.parseResource(parser.encodeResourceToString(observation));
+                        Quantity quantity = observation.getValueQuantity();
+                        assertEquals("freie Einheit", quantity.getUnit());
+                        assertEquals(!code.isEmpty(), quantity.hasCodeElement());
+                        if (!code.isEmpty()) assertEquals(code, quantity.getCode());
+                        assertEquals(!system.isEmpty(), quantity.hasSystemElement());
+                        if (!system.isEmpty()) assertEquals(system, quantity.getSystem());
+                        assertEquals(!raw.isEmpty(), quantity.hasValueElement());
+                        if (!raw.isEmpty()) assertEquals("5", quantity.getValue().toPlainString());
+                        String comparator = raw.replace("5", "");
+                        assertEquals(!comparator.isEmpty(), quantity.hasComparator());
+                        if (!comparator.isEmpty()) assertEquals(comparator, quantity.getComparator().toCode());
+                    }
+                }
+            }
+        }
+    }
+
+    @Test public void numericMeasurementsDoNotInventUnitCodeSystemOrMissingReasons() throws Exception {
+        var options = new ConverterOptions("");
+        for (boolean clinical : List.of(false, true)) {
+            var values = Map.of("Werttyp", "Zahl", "Messwert", "0", "Wert", "0");
+            var columns = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()
+                    : ObservationLaboratoryConverter.ObservationLaboratory_Columns.values();
+            ObservationLaboratoryConverter converter = clinical
+                    ? new ObservationVitalSignsConverter(row(values, columns), null, new ConverterResult(options), null, options)
+                    : new ObservationLaboratoryConverter(row(values, columns), null, new ConverterResult(options), null, options);
+            Quantity quantity = ((Observation)converter.convertInternal().get(0)).getValueQuantity();
+            assertEquals("0", quantity.getValue().toPlainString());
+            assertFalse(quantity.hasSystemElement());
+            assertFalse(quantity.hasCodeElement());
+            assertFalse(quantity.hasUnitElement());
+        }
+    }
     @Test public void procedurePreservesOriginalCodingPeriodAndStatus() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var converter = new ProcedureConverter(row(Map.of("Prozedurencode", "00123", "Codesystem", DiagnosisValues.SNOMED,
@@ -302,10 +412,13 @@ public class ClinicalImportConverterTest {
         Observation o = (Observation)parent.convertInternal().get(0);
         result.add(TableIdentifier.Klinische_Dokumentation, o);
         var component = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "8480-6", "Komponente von", "bp",
-                "Werttyp", "Zahl", "Wert", "120", "Einheit", "mmHg", "Einheitencode", "mm[Hg]"), columns), null, result, null, options);
+                "Werttyp", "Zahl", "Wert", "<120", "Einheit", "mmHg", "Einheitencode", "mm[Hg]",
+                "Einheitencodesystem", "custom-system"), columns), null, result, null, options);
         assertTrue(component.convertInternal().isEmpty());
         assertEquals(1, o.getComponent().size());
         assertEquals("120", o.getComponentFirstRep().getValueQuantity().getValue().toPlainString());
+        assertEquals("custom-system", o.getComponentFirstRep().getValueQuantity().getSystem());
+        assertEquals(Quantity.QuantityComparator.LESS_THAN, o.getComponentFirstRep().getValueQuantity().getComparator());
         assertEquals("vital-signs", o.getCategoryFirstRep().getCodingFirstRep().getCode());
         assertFalse(o.hasMeta()); assertTrue(o.getId().length() <= 64);
         var orphan = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "8480-6", "Komponente von", "missing"), columns), null, result, null, options);
@@ -371,7 +484,7 @@ public class ClinicalImportConverterTest {
         Dosage dosage = request.getDosageInstructionFirstRep();
         assertEquals("Einzeldosis: 2 (Einheit unbekannt)", dosage.getText());
         assertFalse(dosage.hasTiming());
-        assertFalse(dosage.hasDoseAndRate());
+        assertEquals("2", dosage.getDoseAndRateFirstRep().getDoseQuantity().getValue().toPlainString());
         values.put("Dosierungstext", "Nach dem Essen");
         values.put("Dosen pro Tag", "3");
         values.put("Dosiereinheit", "mg");
@@ -379,8 +492,8 @@ public class ClinicalImportConverterTest {
                 new ConverterResult(options), null, options).convertInternal().get(1);
         dosage = request.getDosageInstructionFirstRep();
         assertEquals("Nach dem Essen; Einzeldosis: 2 mg; Dosen pro Tag: 3", dosage.getText());
-        assertFalse(dosage.hasTiming());
-        assertFalse(dosage.hasDoseAndRate());
+        assertEquals(3, dosage.getTiming().getRepeat().getFrequency());
+        assertEquals("2", dosage.getDoseAndRateFirstRep().getDoseQuantity().getValue().toPlainString());
     }
 
     @Test public void germanAddressNameBecomesIsoCodeWithoutChangingWorkbookConvention() throws Exception {
@@ -487,7 +600,7 @@ public class ClinicalImportConverterTest {
                 null, new ConverterResult(options), null, options).convertInternal();
         assertTrue(((Observation)resources.get(0)).getValueBooleanType().booleanValue());
     }
-    @Test public void administrationKeepsDoseWithUnknownUnitToSatisfyMad1() throws Exception {
+    @Test public void administrationKeepsDoseWithoutInventingUnitOrSystem() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Medikationstyp", "Verabreichung", "Präparatcode", "123", "Präparatcodesystem", "RxNorm",
                 "Wirkstoffcode", "!dar:unknown", "Wirkstoffcodesystem", DiagnosisValues.SNOMED,
@@ -496,7 +609,9 @@ public class ClinicalImportConverterTest {
                 new ConverterResult(options), null, options).convertInternal();
         var dose = ((MedicationAdministration)resources.get(1)).getDosage().getDose();
         assertEquals("2", dose.getValue().toPlainString());
-        assertEquals("unknown", dose.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
+        assertFalse(dose.hasCodeElement());
+        assertFalse(dose.hasUnitElement());
+        assertFalse(dose.hasSystemElement());
         values.remove("Einzeldosis"); values.put("Dosierungstext", "Gabe ohne Mengenangabe");
         assertTrue(MedicationValues.errors(values::get).isEmpty());
     }

@@ -88,11 +88,7 @@ public class ConditionConverter extends Converter {
         if (isBlank(value)) {
             return;
         }
-        Coding selection = DiagnosisValues.systems().get(get(systemColumn));
-        if (selection == null) {
-            throw new IllegalArgumentException(systemColumn + " requires an explicit supported selection");
-        }
-        Coding coding = selection.copy();
+        Coding coding = DiagnosisValues.system(get(systemColumn), DiagnosisValues.systems());
         String versionColumn = codeColumn == Code ? "Version" : "Zusatzversion";
         if (hasColumn(versionColumn)) CodingVersion.apply(coding, get(versionColumn));
         Extension absent = DiagnosisValues.absentReason(value);

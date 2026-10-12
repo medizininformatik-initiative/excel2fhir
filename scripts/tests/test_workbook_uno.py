@@ -9,14 +9,28 @@ import xml.etree.ElementTree as ET
 from zipfile import ZipFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from synthea_to_excel import ROOT, apply_workbook_edits
+from synthea_to_excel import ROOT, apply_workbook_edits, write_workbook
 from workbook_xml import NS, read_sheets
+from workbook_records import SCHEMAS, record
 
 
 @unittest.skipUnless(shutil.which('java') and (
     Path('/Applications/LibreOffice.app/Contents/MacOS/soffice').exists()
     or shutil.which('libreoffice') or shutil.which('soffice')), 'Requires Java and LibreOffice')
 class WorkbookUnoTest(unittest.TestCase):
+    def test_named_records_reach_matching_workbook_columns(self):
+        rows = {name: [dict(reversed(list(record(name, {field: 'value:' + field for field in fields}).items())))]
+                for name, fields in SCHEMAS.items()}
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'named.xlsx'
+            write_workbook(rows, output)
+            sheets = read_sheets(output)
+            for name, fields in SCHEMAS.items():
+                headers = {value: cell[:-1] for cell, value in sheets[name].items()
+                           if cell.endswith('1') and cell[:-1].isalpha()}
+                for field in fields:
+                    self.assertEqual('value:' + field, sheets[name].get(headers[field] + '2'), (name, field))
+
     def test_rows_preserve_text_styles_and_interleaved_operations(self):
         def encoded(value):
             return base64.b64encode(value.encode()).decode()

@@ -28,14 +28,15 @@ def temporal_expectations(source, report):
     patient = next(r for r in resources if r['resourceType'] == 'Patient')
     result = {pid: {key: patient.get(key) for key in ('birthDate', 'deceasedDateTime')}}
     def identifier(row, suffix, key, number):
-        return pid + ('-E-' + row[1] if row[1] else '') + '-' + suffix + '-' + str(int(options.get('START_ID_' + key, 1)) + number)
+        return pid + ('-E-' + row['Fall-Nr'] if row['Fall-Nr'] else '') + '-' + suffix + '-' + str(int(options.get('START_ID_' + key, 1)) + number)
     for number, row in enumerate(rows['Diagnose']):
-        result[identifier(row, 'C', 'CONDITION', number)] = dict(zip(('recordedDate', 'onsetDateTime', 'abatementDateTime'), row[7:10]))
+        result[identifier(row, 'C', 'CONDITION', number)] = {'recordedDate': row['Dokumentationszeitpunkt'],
+                                                                        'onsetDateTime': row['Beginn'], 'abatementDateTime': row['Ende']}
     for number, row in enumerate(rows['Prozedur']):
-        result[identifier(row, 'P', 'PROCEDURE', number)] = ({'performedPeriod.start': row[4], 'performedPeriod.end': row[8]}
-                                                               if row[8] else {'performedDateTime': row[4]})
+        result[identifier(row, 'P', 'PROCEDURE', number)] = ({'performedPeriod.start': row['Durchführungsbeginn'], 'performedPeriod.end': row['Ende']}
+                                                               if row['Ende'] else {'performedDateTime': row['Durchführungsbeginn']})
     for number, row in enumerate(rows['DocumentReference']):
-        result[identifier(row, 'DR', 'DOCUMENT_REFERENCE', number)] = {'date': row[6]}
+        result[identifier(row, 'DR', 'DOCUMENT_REFERENCE', number)] = {'date': row['Ausgabezeitpunkt']}
     from check_medication_transformations import transformed_medications
     for medication in transformed_medications(rows['Medikation'], options, pid):
         fields = {k: medication.get(k) for k in ('authoredOn', 'dateAsserted', 'effectiveDateTime')}

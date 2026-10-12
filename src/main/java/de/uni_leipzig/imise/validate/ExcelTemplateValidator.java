@@ -101,7 +101,8 @@ public class ExcelTemplateValidator {
                 continue;
             }
             List<String> actualHeaders = readHeaders(sheet);
-            if (!actualHeaders.equals(entry.getValue())) {
+            if (actualHeaders.size() != entry.getValue().size()
+                    || !new HashSet<>(actualHeaders).equals(new HashSet<>(entry.getValue()))) {
                 add(result, ERROR, sheetName, 1, null,
                         "Header does not match current template schema. Expected " + entry.getValue() + " but found "
                                 + actualHeaders);
@@ -277,8 +278,8 @@ public class ExcelTemplateValidator {
             }
             String selection = get(row, columns, pair[1]);
             var coding = systems.get(selection);
-            if (coding == null) {
-                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Explicit supported codesystem required");
+            if (coding == null && !DiagnosisValues.isSystemUri(selection)) {
+                add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Codesystem requires a suggested name or an absolute URI");
             }
             try {
                 DiagnosisValues.absentReason(code);
@@ -487,15 +488,15 @@ public class ExcelTemplateValidator {
                 "Fachabteilung", "Station", "Zimmer", "Bett", AdmissionReasonValues.COLUMN,
                 "Kontaktart", "Erklärung/Ausfüllhilfe"));
         headers.put("Laborbefund", Arrays.asList("Patient-ID", "Fall-Nr", "LOINC", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Parameter", "Messwert",
-                "Einheit", "Zeitstempel (Abnahme)", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Erklärung/Ausfüllhilfe"));
+                "Einheit", "Zeitstempel (Abnahme)", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Einheitencodesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("Diagnose", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Code", "Codesystem",
                 "Zusatzcode", "Zusatzcodesystem", "Dokumentationszeitpunkt", "Beginn", "Ende",
                 "Klinischer Status", "Verifikationsstatus", "Typ", "Version", "Zusatzversion", "Erklärung/Ausfüllhilfe"));
         headers.put("Prozedur", Arrays.asList("Patient-ID", "Fall-Nr", "Prozedurentext", "Prozedurencode",
                 "Durchführungsbeginn", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Ende", "Status", "Kategorie", "Version", "Zusatzversion", "Erklärung/Ausfüllhilfe"));
-        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Medikationstyp", "Präparatbezeichnung", "Präparatcode", "Präparatcodesystem", "ATC-Code", "ATC-Version", "Darreichungsform", "Wirkstoffcode", "Wirkstoffcodesystem", "Status", "Absicht", "Dokumentationszeitpunkt", "Beginn", "Ende", "Einzeldosis", "Dosiereinheit", "Dosen pro Tag", "Dosierungstext", "Erklärung/Ausfüllhilfe"));
+        headers.put("Medikation", Arrays.asList("Patient-ID", "Fall-Nr", "Medikationstyp", "Präparatbezeichnung", "Präparatcode", "Präparatcodesystem", "ATC-Code", "ATC-Version", "Darreichungsform", "Wirkstoffcode", "Wirkstoffcodesystem", "Status", "Absicht", "Dokumentationszeitpunkt", "Beginn", "Ende", "Einzeldosis", "Dosiereinheit", "Dosiereinheitcodesystem", "Dosen pro Tag", "Dosierungstext", "Erklärung/Ausfüllhilfe"));
         headers.put("Klinische Dokumentation", Arrays.asList("Patient-ID", "Fall-Nr", "Bezeichner", "Untersuchungscode", "Codesystem", "Zusatzcode", "Zusatzcodesystem", "Wert",
-                "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Erklärung/Ausfüllhilfe"));
+                "Einheit", "Zeitstempel", "Werttyp", "Wertcode", "Wertcodesystem", "Kategorie", "Status", "Untersuchung ID", "Komponente von", "Ausgabezeitpunkt", "Einheitencode", "Einheitencodesystem", "Erklärung/Ausfüllhilfe"));
         headers.put("DocumentReference", Arrays.asList("Patient-ID", "Fall-Nr", "Dateipfad", "Embed",
                 "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));
         headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Version", "Erklärung/Ausfüllhilfe"));

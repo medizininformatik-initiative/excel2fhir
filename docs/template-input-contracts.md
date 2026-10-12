@@ -38,12 +38,17 @@ Unknown ingredients also require their code system. Status choices depend on the
 medication type. The default status is `active` for requests/statements and
 `completed` for administrations. Request intent defaults to `order`.
 
-For requests and statements, a complete dose, unit and integer daily frequency
-produce structured dosage. Free text or partial instructions preserve all
-provided facts in `Dosage.text`. Administrations keep dose structured and daily
-frequency as text; a missing dose unit receives DAR `unknown`. Text-only
-administration dosage is emitted as supplied. A dose unit without a dose value is
-retained as a structured quantity with the value omitted for all medication types.
+All medication types retain supplied dose fields as a structured quantity,
+independently of dosage text and daily frequency. `Dosiereinheitcodesystem`
+suggests `http://unitsofmeasure.org` and accepts arbitrary system text without
+translating names. Empty system, unit and value fields are omitted; missing reasons
+are emitted only when explicitly supplied. `Dosiereinheit` is copied to code and
+unit as entered, without UCUM normalization.
+For requests and statements, an integer daily frequency produces structured
+timing independently of the dose. Other frequencies remain in dosage text.
+Supplied dosage text is retained alongside the structured fields; textual
+fallbacks also retain partial instructions. Administrations retain daily frequency
+as text.
 Profile requirements, code validity
 and clinical plausibility are left to optional FHIR validation.
 
@@ -54,7 +59,14 @@ references use those generated IDs.
 
 The investigation code identifies what was measured. An additional coding describes
 the same investigation. Result code/system describe a coded answer.
-`Einheit` is the unit label; `Einheitencode` is its UCUM code.
+`Einheit`, `Einheitencode` and `Einheitencodesystem` map independently to the
+quantity's unit label, code and system. The system dropdown suggests
+`http://unitsofmeasure.org` and accepts arbitrary text. Supplied values are emitted
+unchanged; empty fields are omitted without inferred codes, systems or missing
+reasons. Numeric comparisons such as `<5`, `<=5`, `>5` and `>=5` are supported
+with or without a unit code or system, including component rows. A quantity with
+unit information but no numeric value preserves the supplied unit fields.
+The optional FHIR validator can report combinations such as a code without a system.
 
 Laboratory and clinical documentation rows support number, text, coded answer,
 Boolean values, components and missing values. Components follow their

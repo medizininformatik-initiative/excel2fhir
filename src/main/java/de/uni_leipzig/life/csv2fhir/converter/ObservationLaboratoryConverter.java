@@ -1,6 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_LABORATORY;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Einheit;
@@ -12,7 +11,6 @@ import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseComparator;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
 import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -113,12 +111,8 @@ public class ObservationLaboratoryConverter extends Converter {
         String raw = get(valueColumn);
         org.hl7.fhir.r4.model.Type value = null;
         if (kind == null || kind.equals("Zahl")) {
-            if (raw != null && !raw.isBlank()) {
-                String unitCode = ClinicalValues.get(this, ClinicalValues.Column.Einheitencode);
-                value = unitCode == null ? parseObservationValue(valueColumn, unitColumn)
-                        : new Quantity().setValue(parseDecimal(raw)).setUnit(get(unitColumn))
-                            .setSystem("http://unitsofmeasure.org").setCode(unitCode);
-            }
+            Quantity quantity = parseObservationValue(valueColumn, unitColumn);
+            if (!quantity.isEmpty()) value = quantity;
         } else if (kind.equals("Text")) {
             if (raw != null && !raw.isBlank()) {
                 if ("laboratory".equals(category)) {
@@ -223,23 +217,21 @@ public class ObservationLaboratoryConverter extends Converter {
      */
     public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier)
             throws Exception {
-        BigDecimal value = null;
-        String comparator = null;
-        try {
-            String valueString = get(valueColumnIdentifier);
-            comparator = parseComparator(valueString);
+        Quantity quantity = new Quantity();
+        String valueString = get(valueColumnIdentifier);
+        if (valueString != null && !valueString.isBlank()) {
+            String comparator = parseComparator(valueString);
             if (comparator != null) {
-                valueString = valueString.replace(comparator, "");
+                quantity.setComparator(Quantity.QuantityComparator.fromCode(comparator));
+                valueString = valueString.trim().substring(comparator.length());
             }
-            value = parseDecimal(valueString);
-        } catch (Exception e) {
-            warning(valueColumnIdentifier + " is not a numerical value for Record");
+            quantity.setValue(parseDecimal(valueString));
         }
         String unit = get(unitColumnIdentifier);
-        if (isNullOrEmpty(unit)) {
-            warning(unitColumnIdentifier + " is empty for Record");
-        }
-        return getUcumQuantity(value, unit, comparator);
+        if (unit != null && !unit.isBlank()) quantity.setUnit(unit);
+        quantity.setCode(ClinicalValues.get(this, ClinicalValues.Column.Einheitencode));
+        quantity.setSystem(ClinicalValues.get(this, ClinicalValues.Column.Einheitencodesystem));
+        return quantity;
     }
 
     /**

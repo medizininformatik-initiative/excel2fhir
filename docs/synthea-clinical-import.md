@@ -13,7 +13,7 @@ See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-m
 | Encounter | `Fall` | Class, period, patient association and emergency admission reason, plus synthetic movements. |
 | Condition | `Diagnose` | Source and mapped coding, documentation/onset/abatement times, status and case association. |
 | Procedure | `Prozedur` | Assessed OPS/SNOMED coding, period, status, category and patient/case association. |
-| Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and UCUM units. |
+| Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric values with comparisons, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and explicit unit labels, codes and systems. |
 | MedicationRequest / MedicationAdministration | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
 | Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
 | Immunization | `Impfung` | ATC classification for the selected catalogue year, vaccine text, time, status, primary-source flag and patient/case association. |

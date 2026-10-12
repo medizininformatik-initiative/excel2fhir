@@ -28,7 +28,7 @@ def expected_fields(source, report):
     def add(kind, identifier, **fields):
         r = dict(resourceType=kind, id=identifier, **fields); result[identifier] = r; return r
     def row_id(row, suffix, key, number):
-        return pid + ('-E-' + row[1] if row[1] else '') + '-' + suffix + '-' + str(int(options.get('START_ID_' + key, 1)) + number)
+        return pid + ('-E-' + row['Fall-Nr'] if row['Fall-Nr'] else '') + '-' + suffix + '-' + str(int(options.get('START_ID_' + key, 1)) + number)
     systems = {value: key for key, value in {**SYSTEMS, **INGREDIENT_SYSTEMS}.items()}
     systems.update({'ICD-10-GM': 'http://fhir.de/CodeSystem/bfarm/icd-10-gm', 'OPS': 'http://fhir.de/CodeSystem/bfarm/ops',
                     'ATC': 'http://fhir.de/CodeSystem/bfarm/atc', 'PZN': 'http://fhir.de/CodeSystem/ifa/pzn'})
@@ -48,8 +48,8 @@ def expected_fields(source, report):
     add('Patient', pid, name=[identity_fields['name']], address=[address], gender=person['gender'])
     conditions = [r for r in resources if r['resourceType'] == 'Condition' and r['id'] in evidence['conditionRows']]
     for number, (row, original) in enumerate(zip(rows['Diagnose'], conditions)):
-        r = add('Condition', row_id(row, 'C', 'CONDITION', number), code={'coding': [coding(row[3], row[4], row[13])]})
-        if row[5]: r['code']['coding'].append(coding(row[5], row[6], row[14]))
+        r = add('Condition', row_id(row, 'C', 'CONDITION', number), code={'coding': [coding(row['Code'], row['Codesystem'], row['Version'])]})
+        if row['Zusatzcode']: r['code']['coding'].append(coding(row['Zusatzcode'], row['Zusatzcodesystem'], row['Zusatzversion']))
         for field in ('clinicalStatus', 'verificationStatus'):
             if field in original: r[field] = deepcopy(original[field])
         decision = next(d for d in evidence['diagnosisMappings'] if d['sourceId'] == original['id'])
@@ -57,48 +57,50 @@ def expected_fields(source, report):
             r['verificationStatus'] = {'coding': [{'system': 'http://terminology.hl7.org/CodeSystem/condition-ver-status',
                                                  'code': decision['verificationStatusChange']['to']}]}
     for number, row in enumerate(rows['Prozedur']):
-        codes = [coding(row[3], row[5], row[11])]
-        if row[6]: codes.append(coding(row[6], row[7], row[12]))
+        codes = [coding(row['Prozedurencode'], row['Codesystem'], row['Version'])]
+        if row['Zusatzcode']: codes.append(coding(row['Zusatzcode'], row['Zusatzcodesystem'], row['Zusatzversion']))
         add('Procedure', row_id(row, 'P', 'PROCEDURE', number), code={'coding': codes})
     for sheet in ('Laborbefund', 'Klinische Dokumentation'):
         for row in rows[sheet]:
-            code, system, extra, extra_system = row[2:6] if sheet == 'Laborbefund' else row[3:7]
+            code, system, extra, extra_system = (row['LOINC' if sheet == 'Laborbefund' else 'Untersuchungscode'], row['Codesystem'], row['Zusatzcode'], row['Zusatzcodesystem'])
             codes = [coding(code, system)]
             if extra: codes.append(coding(extra, extra_system))
             value = {'code': {'coding': codes}}
-            original = next(r for r in resources if r['resourceType'] == 'Observation' and r['id'] == (row[16] or row[15]))
-            if row[16]:
-                parent = result[event_id(pid, 'Observation', row[16])]
+            original = next(r for r in resources if r['resourceType'] == 'Observation' and r['id'] == (row['Komponente von'] or row['Untersuchung ID']))
+            if row['Komponente von']:
+                parent = result[event_id(pid, 'Observation', row['Komponente von'])]
                 index = len(parent.setdefault('component', []))
                 component = original['component'][index]
                 parent['component'].append(value)
             else:
-                value = add('Observation', event_id(pid, 'Observation', row[15]), **value, category=deepcopy(original.get('category', [])))
+                value = add('Observation', event_id(pid, 'Observation', row['Untersuchung ID']), **value, category=deepcopy(original.get('category', [])))
                 component = original
             for key, v in component.items():
                 if key.startswith('value') or key == 'dataAbsentReason': value[key] = deepcopy(v)
-            if 'valueString' in value: value['valueString'] = row[7]
+            if 'valueString' in value: value['valueString'] = row['Messwert' if sheet == 'Laborbefund' else 'Wert']
             if 'valueQuantity' in value and enabled(options, resource_key(original) + '_UCUM_CODE_IN_UNIT', False):
-                quantity = value['valueQuantity']; quantity['unit'] = quantity.pop('code')
+                quantity = value['valueQuantity']
+                if quantity.get('system') == 'http://unitsofmeasure.org' and quantity.get('code'):
+                    quantity['unit'] = quantity.pop('code')
     for row in rows['Medikation']:
         codes = []
-        if row[4]: codes.append(coding(row[4], row[5]))
-        if row[6] or row[7]: codes.append(coding(row[6], 'ATC', row[7]))
+        if row['Präparatcode']: codes.append(coding(row['Präparatcode'], row['Präparatcodesystem']))
+        if row['ATC-Code'] or row['ATC-Version']: codes.append(coding(row['ATC-Code'], 'ATC', row['ATC-Version']))
         r = add('Medication', product_id(row), code={'coding': codes})
-        if row[8]: r['form'] = {'text': row[8]}
-        r['ingredient'] = [{'itemCodeableConcept': {'coding': [coding(code.strip(), row[10])]}} for code in row[9].split(';')]
+        if row['Darreichungsform']: r['form'] = {'text': row['Darreichungsform']}
+        r['ingredient'] = [{'itemCodeableConcept': {'coding': [coding(code.strip(), row['Wirkstoffcodesystem'])]}} for code in row['Wirkstoffcode'].split(';')]
     for medication in transformed_medications(rows['Medikation'], options, pid): result[medication['id']] = medication
     for row in rows['Impfung']:
-        add('Immunization', event_id(pid, 'Immunization', row[2]), vaccineCode={'coding': [coding(row[4], row[5], row[9])] if row[4] else []})
+        add('Immunization', event_id(pid, 'Immunization', row['Eintrag ID']), vaccineCode={'coding': [coding(row['Code'], row['Codesystem'], row['Version'])] if row['Code'] else []})
     for row in rows['Befundbericht']:
-        r = add('DiagnosticReport', event_id(pid, 'DiagnosticReport', row[2]), code={'coding': [coding(row[4], row[5])] if row[4] else []})
-        if row[10]: r['conclusion'] = row[10]
+        r = add('DiagnosticReport', event_id(pid, 'DiagnosticReport', row['Eintrag ID']), code={'coding': [coding(row['Code'], row['Codesystem'])] if row['Code'] else []})
+        if row['Beschreibung']: r['conclusion'] = row['Beschreibung']
     for row in rows['Behandlungsplan']:
-        r = add('CarePlan', event_id(pid, 'CarePlan', row[2]))
-        if row[10]: r['description'] = row[10]
+        r = add('CarePlan', event_id(pid, 'CarePlan', row['Eintrag ID']))
+        if row['Beschreibung']: r['description'] = row['Beschreibung']
     for number, row in enumerate(rows['DocumentReference']):
         add('DocumentReference', row_id(row, 'DR', 'DOCUMENT_REFERENCE', number),
-            content=[{'attachment': {'data': base64.b64encode(row[4].encode()).decode()}}])
+            content=[{'attachment': {'data': base64.b64encode(row['Dokumenttext'].encode()).decode()}}])
     days = shift_days(report)
     for identifier, dates in temporal_expectations(source, report).items():
         if identifier not in result: continue
@@ -124,8 +126,8 @@ def expected_fields(source, report):
                 {'url': 'VierteStelle', 'valueCoding': {'system': 'http://fhir.de/CodeSystem/dkgev/AufnahmegrundVierteStelle', 'code': '7'}}]}]
         row = contact.get('row')
         if row:
-            path = diz + '|' + row[5]
-            for kind, name in zip(('wa', 'ro', 'bd'), row[6:9]):
+            path = diz + '|' + row['Fachabteilung']
+            for kind, name in zip(('wa', 'ro', 'bd'), (row['Station'], row['Zimmer'], row['Bett'])):
                 if name:
                     path += '|' + kind + '|' + name
                     add('Location', named_id('Location', diz + '|Location|' + path), name=name)

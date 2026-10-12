@@ -2,6 +2,7 @@
 Original codes are the working default. Optional national terminology/product
 selection has a stable result contract and does not block the clinical import.
 """
+from workbook_records import record
 import copy
 import hashlib
 import re
@@ -15,18 +16,6 @@ from procedure_projection import project as project_procedures
 SNOMED = 'http://snomed.info/sct'
 SYSTEMS = {SNOMED: 'SNOMED CT (Version nicht angegeben)', 'http://loinc.org': 'LOINC',
            'http://www.nlm.nih.gov/research/umls/rxnorm': 'RxNorm', 'http://hl7.org/fhir/sid/cvx': 'CVX'}
-OBS_HEADERS = {
-    'Laborbefund': ['Patient-ID', 'Fall-Nr', 'LOINC', 'Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Parameter'],
-    'Klinische Dokumentation': ['Patient-ID', 'Fall-Nr', 'Bezeichner', 'Untersuchungscode', 'Codesystem', 'Zusatzcode', 'Zusatzcodesystem'],
-}
-for sheet, headers in OBS_HEADERS.items():
-    headers.extend(['Messwert' if sheet == 'Laborbefund' else 'Wert', 'Einheit',
-                    'Zeitstempel (Abnahme)' if sheet == 'Laborbefund' else 'Zeitstempel',
-                    'Werttyp', 'Wertcode', 'Wertcodesystem', 'Kategorie', 'Status', 'Untersuchung ID',
-                    'Komponente von', 'Ausgabezeitpunkt', 'Einheitencode'])
-PROCEDURE_EXTRA = ['Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie']
-MEDICATION_HEADERS = ['Patient-ID', 'Fall-Nr', 'Medikationstyp', 'Präparatbezeichnung', 'Präparatcode', 'Präparatcodesystem', 'ATC-Code', 'ATC-Version', 'Darreichungsform', 'Wirkstoffcode', 'Wirkstoffcodesystem', 'Status', 'Absicht', 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag', 'Dosierungstext']
-
 SUPPORTED = {'Observation', 'Procedure', 'MedicationRequest', 'MedicationAdministration', 'Medication'}
 
 def mapping_metadata():
@@ -56,19 +45,23 @@ def observation_value(r):
         codes = r['dataAbsentReason'].get('coding', [])
         if not codes or codes[0].get('system') != 'http://terminology.hl7.org/CodeSystem/data-absent-reason':
             raise UnsupportedValue('Unknown Data Absent Reason')
-        return ['!dar:' + codes[0]['code'], '', 'Fehlend', '', '', '']
+        return ['!dar:' + codes[0]['code'], '', 'Fehlend', '', '', '', '']
     if not values:
-        return ['', '', 'Komponenten', '', '', '']
+        return ['', '', 'Komponenten', '', '', '', '']
     key = values[0]; v = r[key]
     if key == 'valueQuantity':
-        if v.get('system') not in (None, 'http://unitsofmeasure.org') or 'value' not in v or v.get('comparator'):
-            raise UnsupportedValue('Quantity requires a number, no comparator and a supported unit system')
-        return [str(v['value']), v.get('unit', ''), 'Zahl', '', '', v.get('code', '')]
-    if key == 'valueString': return [v, '', 'Text', '', '', '']
-    if key == 'valueBoolean': return [str(v).lower(), '', 'Ja/Nein', '', '', '']
+        comparator = v.get('comparator', '')
+        if comparator not in ('', '<', '<=', '>=', '>'):
+            raise UnsupportedValue('Unsupported quantity comparator: ' + str(comparator))
+        if comparator and 'value' not in v:
+            raise UnsupportedValue('Comparator without a value has no input representation')
+        return [comparator + str(v.get('value', '')), v.get('unit', ''), 'Zahl', '', '',
+                v.get('code', ''), v.get('system', '')]
+    if key == 'valueString': return [v, '', 'Text', '', '', '', '']
+    if key == 'valueBoolean': return [str(v).lower(), '', 'Ja/Nein', '', '', '', '']
     if key == 'valueCodeableConcept':
         code, system, text = coding(v)
-        return [text, '', 'Code', code, system, '']
+        return [text, '', 'Code', code, system, '', '']
     raise UnsupportedValue('Unsupported value type: ' + key)
 
 
@@ -127,10 +120,21 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
                     main_system = 'OPS ' + main['version'] if main['system'].endswith('/ops') else SYSTEMS[main['system']]
                     extra_code = extras[0]['code'] if extras else ''
                     extra_system = SYSTEMS[extras[0]['system']] if extras else ''
-                    rows['Prozedur'].append([pid, nr, projected['label'], main['code'], projected['start'],
-                        main_system, extra_code, extra_system, projected['end'], projected['status'], category])
+                    rows['Prozedur'].append(record('Prozedur', {
+                        'Patient-ID': pid,
+                        'Fall-Nr': nr,
+                        'Prozedurentext': projected['label'],
+                        'Prozedurencode': main['code'],
+                        'Durchführungsbeginn': projected['start'],
+                        'Codesystem': main_system,
+                        'Zusatzcode': extra_code,
+                        'Zusatzcodesystem': extra_system,
+                        'Ende': projected['end'],
+                        'Status': projected['status'],
+                        'Kategorie': category,
+                    }))
                     if decision.get('internationalReplacement') and main['system'] == SNOMED:
-                        rows['Prozedur'][-1][3] = decision['source']['code']
+                        rows['Prozedur'][-1]['Prozedurencode'] = decision['source']['code']
                     projected['row'] = len(rows['Prozedur']) + 1
                     imported.append({'sourceId': r['id'], 'resourceType': typ, 'outputIndex': number})
                 mappings.append({'sourceId': r['id'], **decision})
@@ -146,7 +150,7 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
                 # Stage the entire parent and its components before adding any rows.
                 for item, parent in [(r, '')] + [(v, r['id']) for v in r.get('component', [])]:
                     c, sy, text = coding(item['code'])
-                    value, unit, kind, vc, vs, ucum = observation_value(item)
+                    value, unit, kind, vc, vs, unit_code, unit_system = observation_value(item)
                     extra_code, extra_system = '', ''
                     codings = item['code'].get('coding', [])
                     if len(codings) > 1:
@@ -155,11 +159,20 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
                         loss(('component.' if parent else '') + 'code.coding[2:]', 'Weitere Untersuchungscodings nicht in zwei Codepaaren darstellbar')
                     if len(item.get('valueCodeableConcept', {}).get('coding', [])) > 1:
                         loss(('component.' if parent else '') + 'valueCodeableConcept.coding[1:]', 'Weitere Ergebniscodings nicht dargestellt')
-                    base = ([pid, nr, c, sy, extra_code, extra_system, text] if sheet == 'Laborbefund'
-                            else [pid, nr, text, c, sy, extra_code, extra_system])
-                    data.append(base + [value, unit, r.get('effectiveDateTime', '')] +
-                                [kind, vc, vs, category, r.get('status', ''), r['id'] if not parent else '',
-                                 parent, r.get('issued', '') if not parent else '', ucum])
+                    values = {'Patient-ID': pid, 'Fall-Nr': nr, 'Codesystem': sy,
+                              'Zusatzcode': extra_code, 'Zusatzcodesystem': extra_system,
+                              'Einheit': unit, 'Werttyp': kind, 'Wertcode': vc, 'Wertcodesystem': vs,
+                              'Kategorie': category, 'Status': r.get('status', ''),
+                              'Untersuchung ID': r['id'] if not parent else '', 'Komponente von': parent,
+                              'Ausgabezeitpunkt': r.get('issued', '') if not parent else '',
+                              'Einheitencode': unit_code, 'Einheitencodesystem': unit_system}
+                    if sheet == 'Laborbefund':
+                        values.update({'LOINC': c, 'Parameter': text, 'Messwert': value,
+                                       'Zeitstempel (Abnahme)': r.get('effectiveDateTime', '')})
+                    else:
+                        values.update({'Untersuchungscode': c, 'Bezeichner': text, 'Wert': value,
+                                       'Zeitstempel': r.get('effectiveDateTime', '')})
+                    data.append(record(sheet, values))
                     if parent:
                         for key in item.keys() - {'code', 'valueQuantity', 'valueCodeableConcept', 'valueString', 'valueBoolean', 'dataAbsentReason'}:
                             loss('component.' + key, 'Komponenten-Eigenschaft nicht übernommen')
@@ -181,53 +194,67 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
                 daily = str(repeat['frequency']) if repeat.get('period') == 1 and repeat.get('periodUnit') == 'd' and 'frequency' in repeat else ''
                 period = r.get('effectivePeriod', {})
                 timestamp = r.get('authoredOn', r.get('effectiveDateTime', period.get('start', '')))
-                row = [pid, nr, {'MedicationRequest': 'Verordnung', 'MedicationAdministration': 'Verabreichung',
-                                     'MedicationStatement': 'Medikationsaussage'}[typ], label, code, system, '', '', '',
-                       '!dar:unknown', SYSTEMS[SNOMED], r.get('status', ''), r.get('intent', ''),
-                       timestamp if typ == 'MedicationRequest' else r.get('dateAsserted', ''),
-                       '' if typ == 'MedicationRequest' else (timestamp or '!dar:unknown'),
-                       period.get('end', ''), str(dose.get('value', '')), dose.get('code', dose.get('unit', '')), daily,
-                       dosage.get('text', '')]
+                row = record('Medikation', {
+                    'Patient-ID': pid,
+                    'Fall-Nr': nr,
+                    'Medikationstyp': {'MedicationRequest': 'Verordnung', 'MedicationAdministration': 'Verabreichung',
+                                     'MedicationStatement': 'Medikationsaussage'}[typ],
+                    'Präparatbezeichnung': label,
+                    'Präparatcode': code,
+                    'Präparatcodesystem': system,
+                    'Wirkstoffcode': '!dar:unknown',
+                    'Wirkstoffcodesystem': SYSTEMS[SNOMED],
+                    'Status': r.get('status', ''),
+                    'Absicht': r.get('intent', ''),
+                    'Dokumentationszeitpunkt': timestamp if typ == 'MedicationRequest' else r.get('dateAsserted', ''),
+                    'Beginn': '' if typ == 'MedicationRequest' else (timestamp or '!dar:unknown'),
+                    'Ende': period.get('end', ''),
+                    'Einzeldosis': str(dose.get('value', '')),
+                    'Dosiereinheit': dose.get('code', dose.get('unit', '')),
+                    'Dosiereinheitcodesystem': dose.get('system', ''),
+                    'Dosen pro Tag': daily,
+                    'Dosierungstext': dosage.get('text', ''),
+                })
                 decision = products.select(cc['coding'][0])
                 if cc['coding'][0]['system'] == RXNORM:
                     # Keep the detailed source description, not the US coding or
                     # US brand, when no proven German pack is available.
-                    row[3] = re.sub(r'\s*\[[^\]]+\]', '', product_texts.text(label, 'Medikation', system, code))
-                    row[4], row[5] = '', ''
-                    row[8] = source_dose_form(cc['coding'][0].get('display', ''))
+                    row['Präparatbezeichnung'] = re.sub(r'\s*\[[^\]]+\]', '', product_texts.text(label, 'Medikation', system, code))
+                    row['Präparatcode'], row['Präparatcodesystem'] = '', ''
+                    row['Darreichungsform'] = source_dose_form(cc['coding'][0].get('display', ''))
                     if decision['target'] is None:
-                        row[3] += ' (PZN-Zuordnung offen)'
+                        row['Präparatbezeichnung'] += ' (PZN-Zuordnung offen)'
                     if decision.get('atc') is None:
-                        row[3] += ' (ATC-Zuordnung offen)'
+                        row['Präparatbezeichnung'] += ' (ATC-Zuordnung offen)'
                 if decision.get('atc'):
-                    row[6], row[7] = decision['atc']['code'], decision['atc']['version']
+                    row['ATC-Code'], row['ATC-Version'] = decision['atc']['code'], decision['atc']['version']
                 if decision.get('ingredients'):
                     ingredients = decision['ingredients']
                     systems = {i['system'] for i in ingredients}
                     if len(systems) != 1:
                         raise ValueError('Ingredient list requires a shared code system')
-                    row[9] = '; '.join(i['code'] for i in ingredients)
-                    row[10] = INGREDIENT_SYSTEMS[ingredients[0]['system']]
+                    row['Wirkstoffcode'] = '; '.join(i['code'] for i in ingredients)
+                    row['Wirkstoffcodesystem'] = INGREDIENT_SYSTEMS[ingredients[0]['system']]
                 if decision.get('enrichment'):
                     enrichment = decision['enrichment']
-                    row[3] = enrichment['display']
-                    row[8] = enrichment['doseForm']
+                    row['Präparatbezeichnung'] = enrichment['display']
+                    row['Darreichungsform'] = enrichment['doseForm']
                     if enrichment.get('resetDose'):
                         replacement = enrichment['dose']
                         decision['sourceDosage'] = copy.deepcopy(dosage)
-                        row[16:20] = [replacement['value'], replacement['unit'],
+                        (row['Einzeldosis'], row['Dosiereinheit'], row['Dosiereinheitcodesystem'], row['Dosen pro Tag'], row['Dosierungstext'],) = [replacement['value'], replacement['unit'], 'http://unitsofmeasure.org',
                                       replacement['frequency'], replacement['text']]
                 if decision['target'] is not None:
                     product = decision['target']
-                    row[3], row[8] = product['display'], product['doseForm']
-                    row[4], row[5] = product['code'], 'PZN'
-                    if row[16] and not row[17] and product.get('sourceCountUnit'):
-                        row[17] = product['sourceCountUnit']
-                        decision['doseUnitEnrichment'] = row[17]
+                    row['Präparatbezeichnung'], row['Darreichungsform'] = product['display'], product['doseForm']
+                    row['Präparatcode'], row['Präparatcodesystem'] = product['code'], 'PZN'
+                    if row['Einzeldosis'] and not row['Dosiereinheit'] and row['Dosiereinheitcodesystem'] in ('', 'http://unitsofmeasure.org') and product.get('sourceCountUnit'):
+                        row['Dosiereinheit'] = product['sourceCountUnit']
+                        decision['doseUnitEnrichment'] = row['Dosiereinheit']
                     if product.get('ingredient'):
                         ingredient = product['ingredient']
                         if ingredient['system'] != RXNORM:
-                            row[9], row[10] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
+                            row['Wirkstoffcode'], row['Wirkstoffcodesystem'] = ingredient['code'], INGREDIENT_SYSTEMS[ingredient['system']]
                         else:
                             decision['ingredientOmitted'] = 'RxNorm-Wirkstoff bleibt nur in der Herkunft; nationale Zuordnung offen.'
                 rows['Medikation'].append(row)

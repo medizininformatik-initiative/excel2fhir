@@ -107,10 +107,10 @@ class DemographicsTest(unittest.TestCase):
         source = bundle();before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Person'][0][1:3],
+        self.assertEqual([rows['Person'][0]['Vorname'], rows['Person'][0]['Nachname']],
                          [report['demographics']['name']['given'][0], report['demographics']['name']['family']])
-        self.assertEqual(rows['Person'][0][5:11], [''] * 6)
-        self.assertEqual(rows['Person'][0][15], 'DE')
+        self.assertEqual([rows['Person'][0]['Datum Einwilligung'], rows['Person'][0]['PDAT Einwilligung'], rows['Person'][0]['KKDAT retro Einwilligung'], rows['Person'][0]['KKDAT Einwilligung'], rows['Person'][0]['BIOMAT Einwilligung'], rows['Person'][0]['BIOMAT Zusatz Einwilligung']], [''] * 6)
+        self.assertEqual(rows['Person'][0]['Land'], 'DE')
         self.assertTrue(any(l['path']=='address' for l in report['losses']))
 
 

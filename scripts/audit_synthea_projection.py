@@ -212,7 +212,9 @@ def audit(source, workbook, target, report):
     def observation_value(before, after):
         if 'valueQuantity' in before:
             q, t = before['valueQuantity'], after['valueQuantity']
-            assert decimal(q['value']) == decimal(t['value']) and q.get('code') == t.get('code')
+            assert decimal(q.get('value')) == decimal(t.get('value'))
+            for field in ('unit', 'code', 'system', 'comparator'):
+                assert q.get(field) == t.get(field), (field, q, t)
         if 'valueCodeableConcept' in before: assert codings(before['valueCodeableConcept'])[:1] == codings(after['valueCodeableConcept'])
         if 'valueBoolean' in before: assert before['valueBoolean'] == after['valueBoolean']
         if 'dataAbsentReason' in before: assert codings(before['dataAbsentReason']) == codings(after['dataAbsentReason'])

@@ -4,9 +4,18 @@ The `Codes` sheet provides dropdown values for specific input fields. Sheet name
 column headings and selection labels match the supplied German workbook.
 Clinical code and date fields also accept manual input.
 
+Clinical coding fields, including additional coding, coded answers, medication
+products and ingredients, accept an absolute system URI such as
+`https://example.org/fhir/CodeSystem/local` or `urn:example:local`.
+The dropdown values remain suggestions: known names resolve to their standard
+URIs; explicit URIs are emitted unchanged without fetching or validating their
+terminology. Code values may be intentionally invalid. A supplied code requires
+its system selection or URI; unrecognized labels and relative URI text are rejected.
+Version fields continue to control the coding version independently.
+
 ## Code systems and categories
 
-| Input | Available choices | Range on `Codes` |
+| Input | Suggested choices | Range on `Codes` |
 | --- | --- | --- |
 | Laboratory investigation system | LOINC | AS30 |
 | Clinical investigation and additional coding systems | LOINC, SNOMED CT | AT30:AT31 |
@@ -14,6 +23,8 @@ Clinical code and date fields also accept manual input.
 | Procedure systems | SNOMED CT, OPS | AB30:AB31 |
 | Medication product system | PZN, SNOMED CT, RxNorm, CVX | AV30:AV33 |
 | Medication ingredient system | ASK, UNII, SNOMED CT, RxNorm | AW30:AW33 |
+| Laboratory and clinical measurement unit systems | http://unitsofmeasure.org | BP30 |
+| Medication dose unit system | http://unitsofmeasure.org | BP30 |
 | Immunization system | ATC, SNOMED CT, RxNorm, CVX | AY30:AY33 |
 | Report/document type system | LOINC, SNOMED CT | AZ30:AZ31 |
 | Care plan system | SNOMED CT | BA30 |
@@ -23,6 +34,11 @@ Clinical code and date fields also accept manual input.
 Version fields suggest 2025, 2026 and all 15 DAR labels (`BM30:BM46`), while
 allowing arbitrary text. Synthea selectors use `BN30:BN31` for the year and
 `BO30:BO45` for the output policy. See [version handling](terminology-versions.md).
+
+`Dosiereinheitcodesystem` and `Einheitencodesystem` accept arbitrary text and emit
+the entered system directly. Their dropdown contains the UCUM URI itself; an empty
+cell omits the system. Unit fields are not automatically normalized or completed.
+See [dose input and output](template-input-contracts.md) for unit handling.
 
 Diagnosis selections provide SNOMED CT and ICD-10-GM choices. See
 [diagnosis input](diagnosis-workbook.md). ATC classification has separate medication

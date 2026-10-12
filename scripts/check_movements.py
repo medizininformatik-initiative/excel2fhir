@@ -18,8 +18,8 @@ def check_movements(source, target, report):
         row = contact.get('row')
         wanted = []
         if row:
-            path, parent = diz + '|' + row[5], None
-            for kind, name in zip(('wa', 'ro', 'bd'), row[6:9]):
+            path, parent = diz + '|' + row['Fachabteilung'], None
+            for kind, name in zip(('wa', 'ro', 'bd'), [row['Station'], row['Zimmer'], row['Bett']]):
                 if not name:
                     continue
                 path += '|' + kind + '|' + name

@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from workbook_records import record
 from check_time_shift import shift_date, shift_days, checked_original_times
 from check_encounter_policies import checked_original_periods
 from check_medication_transformations import transformed_medications, absent
@@ -48,8 +49,22 @@ class TimeShiftChecks(unittest.TestCase):
 
 class MedicationTransformationChecks(unittest.TestCase):
     def row(self, kind='Verordnung', status='completed'):
-        return ['p', '1', kind, 'Test product', '', '', '', '', '', '123', 'SNOMED CT (Version nicht angegeben)', status, 'order',
-                '2026-01-01T10:00:00Z', '2026-01-02T10:00:00Z', '', '5', 'mg', '2', '']
+        return record('Medikation', {
+            'Patient-ID': 'p',
+            'Fall-Nr': '1',
+            'Medikationstyp': kind,
+            'Präparatbezeichnung': 'Test product',
+            'Wirkstoffcode': '123',
+            'Wirkstoffcodesystem': 'SNOMED CT (Version nicht angegeben)',
+            'Status': status,
+            'Absicht': 'order',
+            'Dokumentationszeitpunkt': '2026-01-01T10:00:00Z',
+            'Beginn': '2026-01-02T10:00:00Z',
+            'Einzeldosis': '5',
+            'Dosiereinheit': 'mg',
+            'Dosiereinheitcodesystem': 'http://unitsofmeasure.org',
+            'Dosen pro Tag': '2',
+        })
 
     def test_prescription_transformation_does_not_invent_an_administered_event(self):
         for action, kind in [('replace-administration', 'MedicationAdministration'), ('replace-statement', 'MedicationStatement')]:

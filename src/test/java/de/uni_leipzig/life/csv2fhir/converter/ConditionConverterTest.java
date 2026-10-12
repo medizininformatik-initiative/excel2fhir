@@ -99,4 +99,12 @@ public class ConditionConverterTest {
             return (Condition) resources.get(0);
         }
     }
+    @Test public void systemUrisRemainLiteralAndSuggestedLabelsKeepTheirMeaning() {
+        for (String uri : java.util.List.of("https://example.invalid/system", "urn:oid:1.2.3", "urn:example:custom"))
+            assertEquals(uri, DiagnosisValues.system(uri, DiagnosisValues.systems()).getSystem());
+        assertEquals("2026", DiagnosisValues.system("ICD-10-GM 2026", DiagnosisValues.systems()).getVersion());
+        for (String invalid : java.util.List.of("", "not-a-uri", "https://has space"))
+            assertThrows(IllegalArgumentException.class, () -> DiagnosisValues.system(invalid, DiagnosisValues.systems()));
+    }
+
 }

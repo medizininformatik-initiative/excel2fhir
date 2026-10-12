@@ -37,7 +37,7 @@ def check_clinical_references(source, resources, report, medication_rows, docume
     imported_observations = {r['sourceId'] for r in report.get('clinicalImports', []) if r['resourceType'] == 'Observation'}
     documents = {}
     for number, row in enumerate(document_rows, int(options.get('START_ID_DOCUMENT_REFERENCE', 1))):
-        documents[pid + ('-E-' + row[1] if row[1] else '') + '-DR-' + str(number)] = row
+        documents[pid + ('-E-' + row['Fall-Nr'] if row['Fall-Nr'] else '') + '-DR-' + str(number)] = row
     from check_medication_transformations import transformed_medications
     medications = {r['id']: r for r in transformed_medications(medication_rows, options, pid)}
     for resource in resources:
@@ -67,10 +67,10 @@ def check_clinical_references(source, resources, report, medication_rows, docume
                      else [original.get('effectiveDateTime'), original.get('issued')])
         elif kind == 'DocumentReference':
             row = documents[resource['id']]
-            times = [row[6]]
+            times = [row['Ausgabezeitpunkt']]
             strategy = options.get('REFERENCE_DOCUMENT_REFERENCE_ASSIGNMENT_STRATEGY', 'fill-missing')
-            if strategy != 'timestamp-only' and row[1]:
-                contact = contacts[pid + '-E-' + row[1]]
+            if strategy != 'timestamp-only' and row['Fall-Nr']:
+                contact = contacts[pid + '-E-' + row['Fall-Nr']]
                 explicit = 'Encounter/' + contact['id'] if contact_selected(contact, options) else ''
             elif strategy == 'explicit-only':
                 explicit = ''

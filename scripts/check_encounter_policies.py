@@ -49,14 +49,14 @@ def checked_original_periods(source, target, report):
     phase = None
     primary_end = None
     for row in rows:
-        root = pid + '-E-' + row[1]
-        secondary = row[10] in ('Operation', 'Untersuchung und Behandlung', 'Konsil')
+        root = pid + '-E-' + row['Fall-Nr']
+        secondary = row['Kontaktart'] in ('Operation', 'Untersuchung und Behandlung', 'Konsil')
         if not secondary:
-            primary_end = row[3]
-            if phase is None or phase[:2] != (row[1], row[5]):
-                phase = (row[1], row[5], instant(row[2]), not row[3])
-            periods[(root, 'abteilungskontakt', phase[2], '')] = (row[3], phase[3])
-        periods[(root, 'versorgungsstellenkontakt', instant(row[2]), kinds.get(row[10], ''))] = (row[3] or primary_end, not row[3])
+            primary_end = row['Ende']
+            if phase is None or phase[:2] != (row['Fall-Nr'], row['Fachabteilung']):
+                phase = (row['Fall-Nr'], row['Fachabteilung'], instant(row['Start']), not row['Ende'])
+            periods[(root, 'abteilungskontakt', phase[2], '')] = (row['Ende'], phase[3])
+        periods[(root, 'versorgungsstellenkontakt', instant(row['Start']), kinds.get(row['Kontaktart'], ''))] = (row['Ende'] or primary_end, not row['Ende'])
     result = deepcopy(target)
     encounters = {e['resource']['id']: e['resource'] for e in result['entry'] if e['resource']['resourceType'] == 'Encounter'}
     for r in encounters.values():

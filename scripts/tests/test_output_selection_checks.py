@@ -6,6 +6,7 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from workbook_records import record
 from check_contact_selection import checked_contacts
 from check_clinical_references import matching_contact
 from check_medication_selection import check_medication_references
@@ -23,7 +24,7 @@ class OutputSelectionChecks(unittest.TestCase):
     def contacts(self):
         source = {'entry': [{'resource': {'resourceType': 'Encounter', 'id': 'stay',
                   'class': {'code': 'IMP'}, 'period': {'start': START, 'end': END}}}]}
-        _, movement = enrich(source, [['p', '1', '', '', 'stationaer', '', '', '', '', '']], {'stay': '1'})
+        _, movement = enrich(source, [record('Fall', {'Patient-ID': 'p', 'Fall-Nr': '1', 'Einrichtungskontaktklasse': 'stationaer'})], {'stay': '1'})
         report = {'sourcePatient': 'p', 'encounterNumbers': {'stay': '1'}, 'movements': movement, 'converterOptions': {}}
         entries = []
         for identifier, level, parent in [('p-E-1', 'einrichtungskontakt', None),
@@ -97,15 +98,26 @@ class OutputSelectionChecks(unittest.TestCase):
         self.assertFalse(selected({'resourceType': 'Observation'}, options))
 
     def test_ucum_relocation_checks_components_without_changing_target(self):
-        observation = {'resourceType': 'Observation', 'component': [{'valueQuantity': {'value': 1, 'system': 'http://unitsofmeasure.org', 'unit': 'mg'}}]}
+        observation = {'resourceType': 'Observation', 'id': 'o', 'component': [{'valueQuantity': {'value': 1, 'system': 'http://unitsofmeasure.org', 'unit': 'mg'}}]}
         options = {'OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT': 'true'}
-        result = checked_observation_units([observation], options)
+        original = copy.deepcopy(observation)
+        original['component'][0]['valueQuantity'].update(code='mg', unit='milligrams')
+        originals = {'o': original}
+        result = checked_observation_units([observation], options, originals)
         self.assertEqual('mg', result[0]['component'][0]['valueQuantity']['code'])
         self.assertNotIn('code', observation['component'][0]['valueQuantity'])
+        self.assertEqual('milligrams', result[0]['component'][0]['valueQuantity']['unit'])
         for key, value in [('code', 'mg'), ('system', 'wrong')]:
             wrong = copy.deepcopy(observation)
             wrong['component'][0]['valueQuantity'][key] = value
-            with self.assertRaises(AssertionError): checked_observation_units([wrong], options)
+            with self.assertRaises(AssertionError): checked_observation_units([wrong], options, originals)
+
+    def test_unit_error_check_preserves_custom_empty_systems_and_missing_codes(self):
+        for quantity in ({'value': 1, 'system': 'custom', 'code': 'c', 'unit': 'u'},
+                         {'value': 1, 'code': 'c'}, {'value': 1, 'system': 'http://unitsofmeasure.org', 'unit': 'u'}):
+            observation = {'resourceType': 'Observation', 'id': 'o', 'valueQuantity': quantity}
+            result = checked_observation_units([observation], {'OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT': 'true'}, {'o': observation})
+            self.assertEqual([observation], result)
 
     def test_descriptive_reference_has_exact_requested_fields(self):
         self.assertEqual({'identifier': {'value': 'm'}, 'display': 'Product'}, descriptive_reference('Medication', 'm', 'Product', {
@@ -113,7 +125,14 @@ class OutputSelectionChecks(unittest.TestCase):
         self.assertEqual({}, descriptive_reference('Location', 'l', 'Ward', {'LOCATION_MODE': 'neither'}))
 
     def test_medication_event_and_reference_cannot_disappear(self):
-        row = ['p', '1', 'Verordnung', 'Product', '', '', '', '', '', '123', 'SNOMED CT'] + [''] * 9
+        row = record('Medikation', {
+            'Patient-ID': 'p',
+            'Fall-Nr': '1',
+            'Medikationstyp': 'Verordnung',
+            'Präparatbezeichnung': 'Product',
+            'Wirkstoffcode': '123',
+            'Wirkstoffcodesystem': 'SNOMED CT',
+        })
         resource = {'resourceType': 'MedicationRequest', 'id': 'p-E-1-MR-1', 'status': 'active', 'intent': 'order'}
         options = {'MEDICATION_MODE': 'neither'}
         check_medication_references([row], [resource], options, 'p')
