@@ -27,7 +27,7 @@ public final class ContractConfiguration {
     private static final JsonNode CONTRACT = catalogue("options/contract.json");
     private static final JsonNode DAR = catalogue("dar/generated/catalog.json");
     private static final Pattern ASSIGNMENT = Pattern.compile("([A-Z][A-Z0-9_]*)\\s*=\\s*(.*)");
-    private static final Pattern RULE = Pattern.compile("IDENTIFIER_RULE_([1-9][0-9]*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)");
+    private static final Pattern RULE = Pattern.compile("IDENTIFIER_RULE_([1-9][0-9]*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|SCOPE|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)");
     private final Map<String, JsonNode> definitions = new LinkedHashMap<>();
     private final Map<String, JsonNode> values = new LinkedHashMap<>();
     private final Map<String, String> dar = new LinkedHashMap<>();
@@ -159,7 +159,9 @@ public final class ContractConfiguration {
                 if (!eligible || !types.add(resource)) throw invalid("Invalid identifier resource: " + resource);
             }
             if (rule.get("SYSTEM").isEmpty() || rule.get("PATTERN").isEmpty()) throw invalid("Empty identifier system or pattern");
-            validatePattern(rule.get("PATTERN"));
+            String scope = rule.getOrDefault("SCOPE", "resource");
+            if (!Set.of("resource", "case").contains(scope)) throw invalid("Invalid identifier scope: " + scope);
+            validatePattern(rule.get("PATTERN"), scope.equals("case"));
             String start = rule.getOrDefault("COUNT_START", "1");
             try {
                 if (!start.matches("[0-9]+") || Long.parseLong(start) < 1 || Long.parseLong(start) > 9007199254740991L)
@@ -247,7 +249,7 @@ public final class ContractConfiguration {
     }
     private static IllegalArgumentException invalid(String reason) { return new IllegalArgumentException(reason); }
 
-    private static void validatePattern(String pattern) {
+    private static void validatePattern(String pattern, boolean caseScoped) {
         for (int i = 0; i < pattern.length();) {
             if (pattern.startsWith("{{", i) || pattern.startsWith("}}", i)) { i += 2; continue; }
             char c = pattern.charAt(i++);
@@ -256,6 +258,11 @@ public final class ContractConfiguration {
             int end = pattern.indexOf('}', i);
             if (end < 0) throw invalid("Unmatched identifier brace");
             String token = pattern.substring(i, end);
+            if (caseScoped) {
+                if (!Set.of("patientId", "caseId").contains(token)) throw invalid("Invalid case identifier token: " + token);
+                i = end + 1;
+                continue;
+            }
             if (!Set.of("count", "patientId", "resourceId", "resourceType", "iteration", "hash").contains(token)) {
                 if (!token.matches("count:0[1-9][0-9]*")) throw invalid("Unknown identifier token: " + token);
                 try {

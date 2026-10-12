@@ -99,6 +99,7 @@ public class Main implements Callable<Integer> {
             FHIRValidator validator = validateBundles ? createValidator() : null;
             boolean importProblems = false;
             boolean validationProblems = false, validationRequested = false;
+            var identifiers = new java.util.HashMap<String, AdditionalIdentifiers>();
             for (String prefix : prefixes) {
                 var sets = converterOptions.isEmpty() ? ConverterOptionSet.defaults()
                         : ConverterOptionSet.external(converterOptions);
@@ -109,7 +110,8 @@ public class Main implements Callable<Integer> {
                     var snapshot = run.directory.resolve("details/options").resolve(set.directoryName());
                     if (prefixes.size() > 1) snapshot = snapshot.resolve(prefix + "Person");
                     set.snapshot(snapshot, patientsPerBundle, validateBundles, outputFileTypes);
-                    Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options());
+                    Csv2Fhir converter = new Csv2Fhir(inputDirectory, destination.toFile(), prefix, validator, set.options(),
+                            identifiers.computeIfAbsent(set.name(), key -> new AdditionalIdentifiers(set.options().configuration())));
                     converter.convertFiles(patientsPerBundle, outputFileTypes);
                     importProblems |= converter.hasImportProblems();
                     validationProblems |= converter.hasValidationProblems();

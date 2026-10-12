@@ -1,7 +1,7 @@
 import de from '../../catalog/options/de.json' with { type: 'json' }
 import en from '../../catalog/options/en.json' with { type: 'json' }
 import {
-  contract, options, darFields, darResource, defaults, normalize, problems,
+  identifierNumber, contract, options, darFields, darResource, defaults, normalize, problems,
   optionEnabled, unmetDependencies, resourceEnabled,
   type Configuration, type Option, type Value, type Rule
 } from './configuration.ts'
@@ -102,12 +102,12 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
   }
   for (const [index, rule] of config.identifierRules.entries()) {
     lines.push('')
-    comment(t('app.config.rule').replace('{number}', String(index + 1)))
-    comment(t('identifier.help'))
+    comment(t(rule.scope === 'case' ? 'app.config.caseRule' : 'app.config.rule').replace('{number}', String(identifierNumber(config.identifierRules, index))))
+    comment(t(rule.scope === 'case' ? 'app.config.caseRuleHelp' : 'identifier.help'))
     const inactive = !rule.enabled || !rule.resources.some(r => resourceEnabled(r, config.values))
     if (inactive) comment(t('app.config.fileRuleInactive'))
     const prefix = `${contract.propertiesFormat.identifierPrefix}${index + 1}_`
-    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.countStart !== undefined ? { COUNT_START: rule.countStart } : {}), ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
+    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.scope ? { SCOPE: rule.scope } : {}), ...(rule.countStart !== undefined ? { COUNT_START: rule.countStart } : {}), ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
     for (const [name, value] of Object.entries(fields)) {
       comment(t(`identifier.${name.toLowerCase()}`))
       // An explicit false remains executable: it intentionally disables this rule.
@@ -149,7 +149,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
     const option = byName.get(key)
     const conditionField = key.endsWith('_ONLY_WHEN_MISSING') ? darNames.get(key.slice(0, -18)) : undefined
     const field = darNames.get(key)
-    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
+    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|SCOPE|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
     if (!option && !field && !conditionField && !ruleMatch && key !== contract.propertiesFormat.versionProperty)
       throw new Error(`Unknown property: ${key}`)
     if (seen.has(key)) throw new Error(`Duplicate property: ${key}`)
@@ -184,7 +184,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
   config.identifierRules = entries.map(([index, rule], offset): Rule => {
     if (index !== offset + 1 || !['ID', 'ENABLED', 'RESOURCES', 'SYSTEM', 'PATTERN'].every(key => key in rule) || !['true', 'false'].includes(rule.ENABLED))
       throw new Error('Incomplete identifier rule')
-    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.COUNT_START !== undefined ? { countStart: decode(rule.COUNT_START, { type: 'integer' } as Option) as number } : {}), ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
+    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.SCOPE ? { scope: rule.SCOPE as Rule['scope'] } : {}), ...(rule.COUNT_START !== undefined ? { countStart: decode(rule.COUNT_START, { type: 'integer' } as Option) as number } : {}), ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
   })
   if (problems(config).length) throw new Error('Invalid configuration')
   return config

@@ -83,7 +83,7 @@ def report_summary(path):
                      'selections': len(report.get('outputSelections', [])),
                      'validationErrors': sum(message.get('severity') in {'ERROR', 'FATAL'} for message in report.get('messages', [])),
                      'validationWarnings': sum(message.get('severity') == 'WARNING' for message in report.get('messages', [])),
-                     'reasons': dict(Counter(item.get('category', item.get('reason', '')) for item in [*issues, *losses] if isinstance(item, dict)))}
+                     'reasons': dict(Counter(item.get('category', item.get('reason', '')) for item in [*issues, *losses, *(item for item in report.get('outputSelections', []) if isinstance(item, dict) and item.get('action') == 'omit-identifier')] if isinstance(item, dict)))}
         return summaries
     except (ValueError, TypeError):
         return None

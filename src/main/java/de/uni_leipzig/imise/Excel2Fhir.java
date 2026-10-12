@@ -23,6 +23,7 @@ import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
 import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
 import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
+import de.uni_leipzig.life.csv2fhir.AdditionalIdentifiers;
 import de.uni_leipzig.life.csv2fhir.OutputFileType;
 
 /**
@@ -139,11 +140,12 @@ public class Excel2Fhir {
         createAndCleanOutputDirectories(sourceExcelDir, tempDir, resultDir);
         File[] sources = sourceExcelDir.listFiles(filter);
         java.util.Arrays.sort(sources);
+        var identifiers = new java.util.HashMap<String, AdditionalIdentifiers>();
         for (File sourceExcelFile : sources) {
             File csv = sources.length == 1 ? tempDir : new File(tempDir, sourceExcelFile.getName());
             Files.createDirectories(csv.toPath());
             convertExcelFile(sourceExcelFile, sheetNamePatterns, csv, resultDir, patientsPerBundle, false,
-                    sources.length > 1 ? sourceExcelFile.getName() : null, outputFileTypes);
+                    sources.length > 1 ? sourceExcelFile.getName() : null, identifiers, outputFileTypes);
         }
     }
 
@@ -163,7 +165,7 @@ public class Excel2Fhir {
             File resultDir, int patientsPerBundle, OutputFileType... outputFileTypes)
             throws IOException {
         convertExcelFile(sourceExcelFile, sheetNamePatterns, tempDir, resultDir, patientsPerBundle, true, null,
-                outputFileTypes);
+                new java.util.HashMap<>(), outputFileTypes);
     }
 
     /**
@@ -182,7 +184,8 @@ public class Excel2Fhir {
      */
     private void convertExcelFile(File sourceExcelFile, Collection<String> sheetNamePatterns, File tempDir,
             File resultDir,
-            int patientsPerBundle, boolean createAndCleanOutputDirectories, String inputName, OutputFileType... outputFileTypes)
+            int patientsPerBundle, boolean createAndCleanOutputDirectories, String inputName,
+            java.util.Map<String, AdditionalIdentifiers> identifiers, OutputFileType... outputFileTypes)
             throws IOException {
         var sets = optionFiles.isEmpty() ? ConverterOptionSet.defaults()
                 : ConverterOptionSet.external(optionFiles);
@@ -203,7 +206,8 @@ public class Excel2Fhir {
             Files.createDirectories(destination);
             Path snapshots = optionsDirectory == null ? resultDir.toPath().resolve("options") : optionsDirectory;
             set.snapshot(snapshots.resolve(sourceExcelFile.getName()).resolve(set.directoryName()), patientsPerBundle, validateOutput, outputFileTypes);
-            Csv2Fhir converter = new Csv2Fhir(tempDir, destination.toFile(), fileBaseName, validator, set.options());
+            Csv2Fhir converter = new Csv2Fhir(tempDir, destination.toFile(), fileBaseName, validator, set.options(),
+                    identifiers.computeIfAbsent(set.name(), key -> new AdditionalIdentifiers(set.options().configuration())));
             try {
                 ConverterResultStatistics converterStatistics = converter.convertFiles(patientsPerBundle, outputFileTypes);
                 allFilesStatistics.add(converterStatistics);

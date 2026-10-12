@@ -1,5 +1,8 @@
 import copy
 import json
+import os
+import subprocess
+from unittest.mock import patch
 from pathlib import Path
 import sys
 import unittest
@@ -31,6 +34,27 @@ class MovementTest(unittest.TestCase):
             for left,right in zip(care,care[1:]): self.assertEqual(dt(left[3]),dt(right[2]))
             patterns.add(tuple((r[5],r[6],r[7],r[8],r[10])for r in care))
         self.assertGreater(len(patterns),10)
+
+    def test_reproducible_across_processes_and_python_hash_seeds(self):
+        source, rows, numbers = self.fixture(12)
+        expected = json.loads(json.dumps(enrich(source, rows, numbers)))
+        script = ("import json, random, sys; from synthea_movements import enrich; "
+                  "random.seed(999); print(json.dumps(enrich(*json.load(sys.stdin))))")
+        for hash_seed in ('1', '98765'):
+            env = dict(os.environ, PYTHONHASHSEED=hash_seed,
+                       PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+            result = subprocess.run([sys.executable, '-c', script], input=json.dumps([source, rows, numbers]),
+                                    text=True, capture_output=True, check=True, env=env)
+            self.assertEqual(expected, json.loads(result.stdout))
+
+    def test_movement_seed_changes_synthetic_contacts_reproducibly(self):
+        source, rows, numbers = self.fixture(12)
+        original, _ = enrich(source, rows, numbers)
+        with patch('synthea_movements.SEED', 123):
+            changed, report = enrich(source, rows, numbers)
+            self.assertEqual((changed, report), enrich(source, rows, numbers))
+        self.assertNotEqual(original, changed)
+        self.assertEqual(123, report['seed'])
 
     def test_only_known_operations_create_op_contacts_and_source_times_stay_unchanged(self):
         source,rows,numbers=self.fixture()

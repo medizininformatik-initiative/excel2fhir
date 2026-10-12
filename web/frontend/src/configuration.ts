@@ -38,6 +38,7 @@ export type Rule = {
   system: string
   pattern: string
   use?: string
+  scope?: 'resource' | 'case'
   countStart?: number
   typeText?: string
   typeCodings?: { system?: string; code?: string; display?: string }[]
@@ -194,7 +195,11 @@ export function parseUniqueJson(text: string): unknown {
   return result
 }
 type Token = { literal: string } | { name: string; width?: number }
-export function patternTokens(pattern: string): Token[] {
+export function identifierNumber(rules: Rule[], index: number): number {
+  const scope = rules[index].scope ?? 'resource'
+  return rules.slice(0, index + 1).filter(rule => (rule.scope ?? 'resource') === scope).length
+}
+export function patternTokens(pattern: string, scope: string = 'resource'): Token[] {
   const tokens: Token[] = []
   for (let i = 0; i < pattern.length; ) {
     if (pattern.startsWith('{{', i) || pattern.startsWith('}}', i)) {
@@ -205,17 +210,17 @@ export function patternTokens(pattern: string): Token[] {
       if (end < 0) throw new Error('pattern')
       const name = pattern.slice(i + 1, end)
       if (
-        [
+        (scope === 'case' ? ['patientId', 'caseId'] : [
           'count',
           'patientId',
           'resourceId',
           'resourceType',
           'iteration',
           'hash'
-        ].includes(name)
+        ]).includes(name)
       )
         tokens.push({ name })
-      else if (/^count:0[1-9]\d*$/.test(name)) {
+      else if (scope !== 'case' && /^count:0[1-9]\d*$/.test(name)) {
         const width = Number(name.slice(7))
         if (!Number.isSafeInteger(width)) throw new Error('pattern')
         tokens.push({ name: 'count', width })
@@ -244,12 +249,13 @@ export async function previewIdentifier(rule: Rule): Promise<string> {
   const sample: Record<string, string> = {
     count: String(rule.countStart ?? 1),
     patientId: 'patient-1',
+    caseId: '17',
     resourceId: 'example-1',
     resourceType,
     iteration: '0',
     hash
   }
-  return patternTokens(rule.pattern)
+  return patternTokens(rule.pattern, rule.scope)
     .map((token) =>
       'literal' in token
         ? token.literal
@@ -275,7 +281,7 @@ export function problems(input: unknown): Problem[] {
       issues.push({ key: 'app.config.duplicateRule', params: { id: rule.id } })
     ids.add(rule.id.toLowerCase())
     try {
-      patternTokens(rule.pattern)
+      patternTokens(rule.pattern, rule.scope)
     } catch {
       issues.push({
         key: 'config.error.invalidPattern',

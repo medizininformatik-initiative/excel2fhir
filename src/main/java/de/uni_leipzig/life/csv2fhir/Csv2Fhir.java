@@ -190,8 +190,17 @@ public class Csv2Fhir {
         this(inputDirectory, outputDirectory, outputFileNameBase, validator, null);
     }
 
+    private final AdditionalIdentifiers runIdentifiers;
+
     public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
             @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions) {
+        this(inputDirectory, outputDirectory, outputFileNameBase, validator, selectedOptions, null);
+    }
+
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
+            @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions,
+            @Nullable AdditionalIdentifiers runIdentifiers) {
+        this.runIdentifiers = runIdentifiers;
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -333,7 +342,8 @@ public class Csv2Fhir {
                 validationProblems |= validationRequested && validator != null && validator.hasValidationProblems();
                 validator = null;
             }
-            AdditionalIdentifiers identifiers = new AdditionalIdentifiers(converterOptions.configuration());
+            AdditionalIdentifiers identifiers = runIdentifiers == null
+                    ? new AdditionalIdentifiers(converterOptions.configuration()) : runIdentifiers;
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
 
@@ -640,12 +650,13 @@ public class Csv2Fhir {
                 continue;
             }
             output = encounterAssignments.output(output);
+            identifiers.captureCase(output, result, options.loopCounter);
             output = resourceSelection.output(output);
             output = encounterOutput.output(output);
             output = observationOutput.output(output);
             output = darOverrides.output(output);
             output = encounterOutput.finish(output);
-            output = identifiers.output(output, options.loopCounter);
+            output = identifiers.output(output, options.loopCounter, importReport.outputSelections);
             addEntry(bundle, output);
             addEntry(ndjsonBundle, output);
             outputResult.add(pending.getKey(), output);

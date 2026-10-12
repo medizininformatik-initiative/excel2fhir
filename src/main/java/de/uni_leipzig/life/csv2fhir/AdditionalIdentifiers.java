@@ -10,6 +10,7 @@ public final class AdditionalIdentifiers {
     private final List<Map<String, String>> rules;
     private final Map<String, Long> counters = new HashMap<>();
     private final Map<String, List<Long>> allocated = new HashMap<>();
+    private final Map<String, ContactIndex.Entry> cases = new HashMap<>();
     private final Map<String, String> patientIds = new HashMap<>();
     private final Map<String, Set<String>> owners = new HashMap<>();
     private final Map<String, ContactIndex.Level> contactLevels = new HashMap<>();
@@ -51,7 +52,45 @@ public final class AdditionalIdentifiers {
             allocated.put(identity, counts);
         }
     }
+    /** Capture case context before output selections and DAR can remove references. */
+    public void captureCase(Resource resource, ConverterResult context, int iteration) {
+        if (rules.stream().noneMatch(rule -> "case".equals(rule.get("SCOPE")))) return;
+        String identity = identity(resource, iteration);
+        Set<ContactIndex.Entry> candidates = new LinkedHashSet<>();
+        if (resource instanceof Encounter) context.contacts().get((Encounter)resource).ifPresent(candidates::add);
+        else {
+            String patient = patientIds.get(identity);
+            for (Property property : resource.children()) {
+                if (!Set.of("encounter", "context").contains(property.getName())) continue;
+                for (Base value : property.getValues()) {
+                    if (value instanceof Reference) {
+                        String ref = ((Reference)value).getReference();
+                        if (ref != null && ref.startsWith("Encounter/"))
+                            context.contacts().get(patient, ref.substring(10)).ifPresent(candidates::add);
+                    } else if (value instanceof DocumentReference.DocumentReferenceContextComponent) {
+                        for (Reference ref : ((DocumentReference.DocumentReferenceContextComponent)value).getEncounter())
+                            if (ref.hasReference() && ref.getReference().startsWith("Encounter/"))
+                                context.contacts().get(patient, ref.getReference().substring(10)).ifPresent(candidates::add);
+                    }
+                }
+            }
+            if (candidates.isEmpty() && !Set.of("Patient", "Organization", "Location", "Medication").contains(resource.fhirType())) {
+                var input = context.inputContext(resource);
+                if (input != null) for (String encounter : input.encounterIds())
+                    context.contacts().get(patient, encounter).ifPresent(candidates::add);
+            }
+        }
+        Set<String> facilities = new HashSet<>();
+        for (var entry : candidates) facilities.add(entry.patientId() + "/" + entry.facilityId());
+        cases.remove(identity);
+        if (facilities.size() == 1) cases.put(identity, candidates.iterator().next());
+    }
+
     public Resource output(Resource resource, int iteration) {
+        return output(resource, iteration, new ArrayList<>());
+    }
+
+    public Resource output(Resource resource, int iteration, List<Map<String, String>> notes) {
         if (rules.isEmpty()) return resource;
         String identity = identity(resource, iteration);
         List<Long> generated = allocated.get(identity);
@@ -64,14 +103,25 @@ public final class AdditionalIdentifiers {
         int index = 0;
         for (Map<String, String> rule : rules) {
             if (!rule.get("ENABLED").equals("true") || !selects(rule, resource, contactLevels.get(identity))) continue;
+            long count = generated.get(index++);
+            boolean caseScoped = "case".equals(rule.get("SCOPE"));
+            var caseEntry = cases.get(identity);
+            if (caseScoped && caseEntry == null) {
+                notes.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getIdElement().getIdPart(),
+                        "action", "omit-identifier", "reason", "missing-or-ambiguous-case",
+                        "ruleId", rule.get("ID"), "iteration", Integer.toString(iteration)));
+                continue;
+            }
+            String caseId = caseScoped ? caseEntry.facilityId().substring((caseEntry.patientId()
+                    + de.uni_leipzig.life.csv2fhir.converter.ResourceIdSuffix.ENCOUNTER_LEVEL_1).length()) : "";
             Identifier identifier = new Identifier().setSystem(rule.get("SYSTEM")).setValue(expand(rule.get("PATTERN"),
-                    generated.get(index++), patientIds.get(identity), resource, iteration, rule.get("ID")));
+                    count, patientIds.get(identity), resource, iteration, rule.get("ID"), caseId));
             if (!rule.getOrDefault("USE", "").isEmpty()) identifier.setUse(Identifier.IdentifierUse.fromCode(rule.get("USE")));
             if (!rule.getOrDefault("TYPE_TEXT", "").isEmpty()) identifier.getType().setText(rule.get("TYPE_TEXT"));
             for (var coding : ContractConfiguration.identifierTypeCodings(rule))
                 identifier.getType().addCoding(new Coding(coding.path("system").asText(null),
                         coding.path("code").asText(null), coding.path("display").asText(null)));
-            register(identifier, identity, rule.get("ID"));
+            register(identifier, caseScoped ? "case:" + caseEntry.patientId() + "/" + caseEntry.facilityId() : identity, rule.get("ID"));
             if (existing.stream().noneMatch(e -> e.equalsDeep(identifier))) {
                 output.setProperty("identifier", identifier.copy());
                 existing.add(identifier);
@@ -106,6 +156,9 @@ public final class AdditionalIdentifiers {
 
     }
     static String expand(String pattern, long count, String patientId, Resource resource, int iteration, String ruleId) {
+        return expand(pattern, count, patientId, resource, iteration, ruleId, "");
+    }
+    private static String expand(String pattern, long count, String patientId, Resource resource, int iteration, String ruleId, String caseId) {
         StringBuilder value = new StringBuilder();
         for (int i = 0; i < pattern.length();) {
             if (pattern.startsWith("{{", i) || pattern.startsWith("}}", i)) { value.append(pattern.charAt(i)); i += 2; continue; }
@@ -122,6 +175,7 @@ public final class AdditionalIdentifiers {
                 if (patientId.isEmpty()) throw new IllegalArgumentException("Identifier rule " + ruleId + " requires patient context");
                 value.append(patientId);
             }
+            else if (token.equals("caseId")) value.append(caseId);
             else if (token.equals("resourceId")) value.append(resource.getIdElement().getIdPart());
             else if (token.equals("resourceType")) value.append(resource.fhirType());
             else if (token.equals("iteration")) value.append(iteration);

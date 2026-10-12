@@ -36,6 +36,54 @@ public class ImportReportTest {
         assertTrue(Files.isRegularFile(output.resolve("case.import.json")));
         return converter;
     }
+    private String identifierConfig(String pattern) {
+        return "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nIDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
+                + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Patient\n"
+                + "IDENTIFIER_RULE_1_SYSTEM=urn:run-test\nIDENTIFIER_RULE_1_COUNT_START=500\n"
+                + "IDENTIFIER_RULE_1_PATTERN=" + pattern + "\n";
+    }
+
+    @Test public void identifierAllocationSpansInputConversionsAndRepetitions() throws Exception {
+        String config = identifierConfig("{count}") + "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n";
+        var identifiers = new AdditionalIdentifiers(ConverterOptions.fromText(config).configuration());
+        Set<String> values = new HashSet<>();
+        for (String patient : List.of("p1", "p2")) {
+            table(TableIdentifier.Person, List.of(patient(patient)));
+            Path destination = temp.newFolder(patient).toPath();
+            new Csv2Fhir(input.toFile(), destination.toFile(), "case_", null,
+                    ConverterOptions.fromText(config), identifiers)
+                    .convertFiles(Integer.MAX_VALUE, OutputFileType.JSON, OutputFileType.NDJSON);
+            var bundle = JsonParser.parseString(Files.readString(destination.resolve("case.json"))).getAsJsonObject();
+            for (var entry : bundle.getAsJsonArray("entry")) {
+                var resource = entry.getAsJsonObject().getAsJsonObject("resource");
+                if (!resource.get("resourceType").getAsString().equals("Patient")) continue;
+                for (var identifier : resource.getAsJsonArray("identifier")) {
+                    var id = identifier.getAsJsonObject();
+                    if (id.get("system").getAsString().equals("urn:run-test"))
+                        assertTrue(values.add(id.get("value").getAsString()));
+                }
+            }
+        }
+        assertEquals(Set.of("500", "501", "502", "503"), values);
+    }
+
+    @Test public void identifierCollisionsAreDetectedAcrossInputConversions() throws Exception {
+        String config = identifierConfig("fixed");
+        var identifiers = new AdditionalIdentifiers(ConverterOptions.fromText(config).configuration());
+        table(TableIdentifier.Person, List.of(patient("p1")));
+        new Csv2Fhir(input.toFile(), output.toFile(), "case_", null,
+                ConverterOptions.fromText(config), identifiers).convertFiles(Integer.MAX_VALUE, OutputFileType.JSON);
+        table(TableIdentifier.Person, List.of(patient("p2")));
+        var next = new Csv2Fhir(input.toFile(), temp.newFolder("next"), "case_", null,
+                ConverterOptions.fromText(config), identifiers);
+        var error = assertThrows(IllegalArgumentException.class,
+                () -> next.convertFiles(Integer.MAX_VALUE, OutputFileType.JSON));
+        assertTrue(error.getMessage().contains("Identifier collision"));
+        // An independent run starts with an independent identifier namespace/check.
+        new Csv2Fhir(input.toFile(), temp.newFolder("independent"), "case_", null,
+                ConverterOptions.fromText(config)).convertFiles(Integer.MAX_VALUE, OutputFileType.JSON);
+    }
+
     @Test public void unexpectedConversionFailuresAreCollectedAndPartialOutputIsMarked() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p.1"),patient("px1")));
         table(TableIdentifier.Prozedur,List.of(procedure("p.1","2026-01-01"),procedure("","invalid"),

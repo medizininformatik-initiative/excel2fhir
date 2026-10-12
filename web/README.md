@@ -152,6 +152,13 @@ values. An explicitly configured single-person seed also uses that timestamp whe
 requesting one patient. The resolved values are saved with the run. Loading a run
 into the editor selects its saved manual seeds, allowing reproducible generation.
 
+Synthetic contact enrichment has its own fixed seed, `20260912`. Patient and
+source Encounter IDs determine the per-case random sequence for room/bed movements;
+department routing also considers the clinical source data. Identical source data,
+generator rules and mappings reproduce the same contacts. The movement report
+records the seed and rule/mapping metadata. Converting saved workbooks again uses
+the contacts already stored in those workbooks.
+
 Advanced settings provide living/deceased selection, the bundled patient-selection
 modules, an optional single-person seed, simulation timestep, attempt limit,
 veteran population and disease/care modules. Module and location choices come
@@ -586,6 +593,28 @@ the input library after confirmation. Existing runs keep their independent input
 copies and results, and the original file on your computer is retained. Saved
 Excel sets can also be removed and recreated from an existing run. Bundled inputs
 remain available.
+
+### Replay identity audit
+
+Run the real worker audit in isolated temporary storage:
+
+```sh
+docker compose -f web/compose.yml exec -T worker python < web/integration/smoke_replay_ids.py
+```
+
+It imports two bundled Synthea examples once, reuses their Excel workbooks with
+different ID prefixes/suffixes and repetitions, and checks references, JSON/NDJSON
+agreement, counter starts, input independence and cleanup. It writes no FHIR
+server data and removes its temporary jobs. Assertions include unqualified
+`{count}` identifiers remaining unique across workbooks.
+
+Additional identifier counters start once per rule and run at the configured
+value. They continue across patients, repetitions and workbooks in sorted filename
+order; independent runs start again at the configured value. Collision checks also
+cover all workbooks in the run.
+Patient ID prefixes/suffixes affect
+patient-derived resource identities; identical medication definitions can retain
+shared identities.
 
 ### Run outcomes
 

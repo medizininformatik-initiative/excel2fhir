@@ -40,6 +40,81 @@ correction or additional generator restrictions.
 
 ## Verified implementation
 
+- [x] Audit explicit terminology versions and profile claims through serialized
+  CSV output. `TerminologyWorkflowTest` compares JSON/NDJSON for ICD-10-GM, OPS
+  and ATC years, free version text, omission and version DAR, including secondary
+  diagnosis coding. Date shifts and Synthea mapping settings preserve explicit
+  table versions; derived MedicationStatements claim their target profile.
+  These checks verify emitted metadata, not full profile conformance.
+  `test_terminology_year.py` covers Synthea mapping-year/output-policy separation.
+  No converter defect was found in these combinations.
+- [x] Verify synthetic movement reproducibility across separate Python processes
+  and hash seeds (`test_movements.py`). Movement generation uses the fixed seed
+  `20260912` with patient/source Encounter IDs and versioned rules, rather than
+  directly using the editor's Synthea seed. Changing the movement seed changes
+  synthetic contacts reproducibly. Reusing saved workbooks retains their contacts.
+- [x] Audit IDs, repetitions and time shifts together in serialized output.
+  `RepetitionWorkflowTest` covers numeric/UUID patient IDs with prefixes/suffixes,
+  two cases per patient and two additional repetitions. JSON/NDJSON agree on
+  66 unique object identifiers, 12 shared case groups, derived medication IDs,
+  patient/case-local references and base-plus-iteration shifts (including a
+  negative shift). Repeating the conversion preserves resource content and IDs;
+  deselecting diagnoses, department contacts and derived statements preserves
+  the identifiers of retained resources. Shared medication resources retain
+  identical content. No converter defect was found in these combinations.
+- [x] Audit medication transformations through serialized CSV-to-FHIR output.
+  `MedicationWorkflowTest` compares JSON and NDJSON for bidirectional additions,
+  request replacement, the combined request/event passes and deselected types.
+  It verifies retained source facts, stable derived IDs, actual-dose versus
+  regimen handling, reported omissions/missing event facts, local references,
+  shifted event/contact periods, Medication reference-only/omission modes and
+  DAR on derived doses. No converter defect was found in these combinations.
+- [x] Audit contact/diagnosis/document policy composition through serialized CSV
+  output. `ContactWorkflowTest` covers two patients with two cases each, transfer
+  boundaries, diagnosis propagation to department/ward contacts, disabled
+  departments with both ward-parent choices, procedure diagnosis levels and
+  deselection, and all three DocumentReference assignment strategies (explicit
+  time conflicts, missing/unresolved case numbers and missing source timestamps).
+  Diagnosis references now carry explicit resource IDs before output policies
+  resolve them; this fixes lost Condition/Procedure references in Encounter
+  diagnoses. Focused contact tests additionally cover overlapping contacts,
+  tie-breaking, secondary contacts, class selection and missing timestamps.
+- [x] Audit selection/reference modes together with DAR through serialized
+  Excel-to-FHIR output. `SelectionDarWorkflowTest` verifies Patient/Medication/
+  Location generation, reference-only and omission, stable retained IDs, removal
+  of references to deselected clinical resources, no resurrection through DAR
+  or medication transformations, missing-only versus overwrite, custom codes,
+  scoped inpatient precedence after end derivation, and coding-system retention.
+  Every conversion compares JSON with NDJSON. The starter workbook directly
+  exercises Condition, Procedure, Observation and MedicationRequest; derived
+  administrations/statements cover medication transformations. Additional
+  resource types and descriptive reference combinations remain covered by
+  `ResourceOutputPolicyTest`, with missing leaves, existing DAR and complex
+  values covered by `DarOverridesTest` and `EncounterOutputPolicyTest`.
+  No converter defect was found in these audited combinations.
+
+- [x] Case-based additional identifiers have a separate editor action and help,
+  the existing target-resource selectors, and patient/case pattern tokens.
+  Sharing is allowed within one patient/case, including Encounter hierarchy
+  levels; different cases retain collision checks. Missing or ambiguous cases
+  produce an omission note. Evidence: `CaseIdentifiersTest`, configuration
+  roundtrip tests and `integration/smoke_replay_ids.py`.
+
+- [x] Audit saved-workbook replay with two Synthea fixture patients, DIZ prefix
+  and suffix configurations, two additional repetitions, Procedure start 700 and
+  patient-qualified identifier counters starting at 500. Each replay produces six
+  patients and 159 unique resources; JSON/NDJSON agree, references resolve, and
+  linked clinical resources retain the same patient/repetition. Three identical
+  Medication definitions are shared between DIZ outputs. Input copies survive
+  source-run/input-library deletion; cleanup preserves output and further replay.
+  Evidence: `integration/smoke_replay_ids.py`, plus existing numeric/UUID and
+  collision tests in `ImportReportTest` and `ConverterOptionsTest`.
+- [x] Share additional-identifier counters and collision checks across all workbooks
+  and CSV input groups in one run. Each rule starts once at its configured value;
+  repetitions and subsequent inputs continue it. Independent runs reset it.
+  Evidence: `ImportReportTest` and `integration/smoke_replay_ids.py`, including
+  unqualified `{count}` identifiers 500 and 501 across two saved workbooks.
+
 - [x] Keep successful generation independent of source comparison differences and
   optional FHIR validation findings. Show validation reports and Synthea transfer
   notes separately, with configuration-covered omissions outside the import-note

@@ -2406,7 +2406,7 @@
       "iteration index"
     ],
     "hashEncoding": "For each hashContext component in the listed order, concatenate ASCII decimal UTF-8 byte length, a colon, and the UTF-8 bytes. UUID uses canonical lowercase spelling; iteration uses its nonnegative decimal index.",
-    "uniqueness": "system/value across distinct logical resources and iterations",
+    "uniqueness": "system/value across distinct logical resources and iterations; case-scoped rules permit sharing within the same effective patient/facility case",
     "duplicateSerialization": "same logical resource in multiple formats is counted once",
     "collision": "stop with rule and conflicting resource identities",
     "security": "Deterministic hash identifiers do not guarantee secure pseudonymization.",
@@ -2435,9 +2435,20 @@
       "enabled": "identifier.enabled",
       "resources": "identifier.resources",
       "system": "identifier.system",
-      "pattern": "identifier.pattern"
+      "pattern": "identifier.pattern",
+      "scope": "identifier.scope"
     },
-    "helpKey": "identifier.help"
+    "helpKey": "identifier.help",
+    "caseScope": {
+      "property": "SCOPE=case",
+      "tokens": [
+        "patientId",
+        "caseId"
+      ],
+      "identity": "effective patient and original facility case number",
+      "missingCase": "omit identifier with an import-report output-selection note",
+      "collision": "allow sharing within the same case; reject across cases"
+    }
   },
   "profileBaseline": {
     "base": "2026.0.1",

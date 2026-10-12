@@ -143,3 +143,15 @@ test('counter start survives properties export for a scoped contact rule', () =>
   for (const language of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, language)), config)
   }
 })
+
+test('case identifiers roundtrip with scope and restricted pattern tokens', () => {
+  const config = defaults()
+  config.identifierRules = [{ ...rule, scope: 'case', resources: ['Encounter', 'Observation'],
+    pattern: '{{case}}-{patientId}-{caseId}' }]
+  for (const lang of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, lang)), config)
+  for (const pattern of ['{count}', '{resourceId}', '{resourceType}', '{hash}', '{iteration}']) {
+    const invalid = structuredClone(config)
+    invalid.identifierRules[0].pattern = pattern
+    assert.throws(() => importConfiguration(JSON.stringify(invalid)))
+  }
+})

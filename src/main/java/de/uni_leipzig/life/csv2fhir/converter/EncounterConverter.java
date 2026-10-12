@@ -455,7 +455,10 @@ public class EncounterConverter extends Converter {
         }
         // construct a valid DiagnosisComponent from condition or
         // procedure to add it as reference to the encounter
-        Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis);
+        // Output policies resolve the target before serialization materializes object references.
+        Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis)
+                .setReference(conditionOrProcedureAsDiagnosis.fhirType() + "/"
+                        + conditionOrProcedureAsDiagnosis.getIdElement().getIdPart());
         // add diagnosis use to the diagnosis component
         CodeableConcept diagnosisUse = EncounterConverter.createDiagnosisUse(diagnosisUseIdentifier);
         DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);

@@ -22,6 +22,7 @@ import {
   resourceNavigationStatus,
   resourceOptions,
   previewIdentifier,
+  identifierNumber,
   type Configuration,
   type Option,
   type Value,
@@ -757,7 +758,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                       id: crypto.randomUUID(),
                       enabled: true,
                       resources: ['Patient'],
-                      system: '',
+                      system: 'https://example.org/fhir/sid/patient-id',
                       pattern: '{count:08}'
                     }
                   ]
@@ -769,6 +770,16 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               <Plus size={16} />
               {t('app.config.addRule')}
             </Button>
+            <span className="ml-3 inline-flex items-center gap-2">
+              <Button variant="outline" onClick={() => {
+                setConfig(c => ({ ...c, identifierRules: [...c.identifierRules, {
+                  id: crypto.randomUUID(), enabled: true, scope: 'case',
+                  resources: ['Encounter'], system: 'https://example.org/fhir/sid/case-id', pattern: '{patientId}-{caseId}'
+                }] }))
+                setDirty(true); setMessage(null)
+              }}><Plus size={16}/>{t('app.config.addCaseRule')}</Button>
+              <Help text={t('app.config.caseRuleHelp')} t={t}/>
+            </span>
             {config.identifierRules.length === 0 && (
               <p className="mt-6 text-sm text-slate-500">
                 {t('app.config.noRules')}
@@ -781,12 +792,12 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               >
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-semibold">
-                    {t('app.config.rule', { number: index + 1 })}
+                    {t(rule.scope === 'case' ? 'app.config.caseRule' : 'app.config.rule', { number: identifierNumber(config.identifierRules, index) })}
                   </h3>
                   <Button
                     variant="outline"
-                    aria-label={t('app.config.removeRule', {
-                      number: index + 1
+                    aria-label={t(rule.scope === 'case' ? 'app.config.removeCaseRule' : 'app.config.removeRule', {
+                      number: identifierNumber(config.identifierRules, index)
                     })}
                     onClick={() => {
                       setConfig((c) => ({
@@ -863,6 +874,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     />
                   </label>
                   <IdentifierPatternControl
+                    scope={rule.scope}
                     value={rule.pattern}
                     countStart={rule.countStart ?? 1}
                     onCountStartChange={(countStart) => updateRule(rule.id, { countStart })}

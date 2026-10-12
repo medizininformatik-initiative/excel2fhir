@@ -3653,6 +3653,13 @@
             "type": "string",
             "minLength": 1
           },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "resource",
+              "case"
+            ]
+          },
           "countStart": {
             "type": "integer",
             "minimum": 1,
