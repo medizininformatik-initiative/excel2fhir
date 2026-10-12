@@ -13,6 +13,13 @@ import org.junit.Test;
 public class ContractConfigurationTest {
     private static final String VERSION = "CONFIGURATION_VERSION = 1\n";
 
+    @Test public void retiredZeroOffsetsLoadWithoutChangingPatientIdentity() {
+        var options = ConverterOptions.fromText(VERSION + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=0\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=0\n");
+        assertTrue(options.getErrors().isEmpty());
+        assertEquals("patient-rep-1", options.getFullPID("patient", 1));
+        assertThrows(IllegalArgumentException.class, () -> ContractConfiguration.parse(VERSION + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=10\n"));
+    }
+
     @Test public void storedSelectionsStayIndependentFromEffectiveDependencies() {
         var config = ContractConfiguration.parse(VERSION + "CONTACT_FACILITY_ENABLED = false\n"
                 + "# REFERENCE_CONDITION_ENCOUNTER = facility\n");
@@ -55,7 +62,7 @@ public class ContractConfigurationTest {
                 VERSION + "PATIENT_MODE=neither\n# PATIENT_MODE=neither",
                 VERSION + "OTHER=true", VERSION + "CHECK_INPUT_CONSISTENCY=yes",
                 VERSION + "PID_PREFIX=broken\\", VERSION + "PID_PREFIX=\\uXYZW",
-                VERSION + "DAR_PATIENT_NAME_FAMILY=invalid", VERSION + "OUTPUT_FORMATS=JSON,JSON",
+                VERSION + "DAR_PATIENT_NAME_FAMILY=", VERSION + "OUTPUT_FORMATS=JSON,JSON",
                 VERSION + "OUTPUT_PATIENTS_PER_FILE=0", VERSION + "START_ID_CONDITION=1.2",
                 VERSION + "IDENTIFIER_RULE_1_ENABLED=true")) {
             assertThrows(text, IllegalArgumentException.class, () -> ContractConfiguration.parse(text));

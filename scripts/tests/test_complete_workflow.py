@@ -29,13 +29,13 @@ class CompleteWorkflowTest(unittest.TestCase):
     def conversion(self, source, output, *, option_files=(), directory=None, validate=False, **settings):
         self.assertTrue(all(p.is_file() for p in option_files))
         (directory / 'fhir/good.json').write_text('{"resourceType":"Bundle"}')
-        (directory / 'details/reports/summary.json').write_text(json.dumps({'status': self.status,
-            'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx')}],
+        (directory / 'details/reports/summary.json').write_text(json.dumps({'status': 'COMPLETE' if self.status == 'NOT_CHECKED' else self.status,
+            'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx'), 'validationStatus': self.status}],
             'failures': [{'source': 'bad'}] if self.status == 'FAILED' else []}))
-        return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED'} else 1
+        return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED', 'NOT_CHECKED'} else 1
 
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
-    def test_partial_or_unchecked_outputs_are_never_reported_as_complete(self, generate):
+    def test_partial_generation_fails_but_unchecked_validation_does_not(self, generate):
         self.status = 'FAILED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
             self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
@@ -44,7 +44,7 @@ class CompleteWorkflowTest(unittest.TestCase):
         self.assertEqual('FAILED', json.loads((directory/'details/reports/workflow.json').read_text())['status'])
         self.status = 'NOT_CHECKED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
-            self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
+            self.assertEqual(0, workflow.run(self.root / 'output', ['-p', '1']))
         self.assertEqual(2, len(list((self.root/'output').glob('run-*'))))
         self.assertIn('--exporter.fhir.bulk_data=false', generate.call_args.args[0])
 

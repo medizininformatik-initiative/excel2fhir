@@ -629,7 +629,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               {darGroups.filter((group) => darFilter === 'all' || group.filter === darFilter).map((group) => (
                 <section key={group.id} className="rounded-xl border border-slate-200 p-5" aria-labelledby={`dar-group-${group.id}`}>
                   <h3 id={`dar-group-${group.id}`} className="mb-3 text-lg font-semibold text-teal-800">
-                    {t(group.labelKey)}
+                    {t(group.id === 'Encounter' ? 'app.config.encounterDarTitle' : group.labelKey)}
                   </h3>
                   {group.classCode && <p className="mb-3 text-xs text-slate-600">{t('app.config.encounterClass', { code: group.classCode })}</p>}
                   {(group.id === 'Encounter' || group.classCode) && <p className="mb-4 text-sm text-slate-600">{t(group.classCode ? 'app.config.encounterDarScoped' : 'app.config.encounterDarCommon')}</p>}
@@ -685,31 +685,37 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                                 checked={mode === 'unchanged' ? current.mode === 'unchanged' : current.mode === 'overwrite' && (mode === 'missing' ? !!current.onlyWhenMissing : !current.onlyWhenMissing)}
                                 onChange={() => set(mode === 'unchanged' ? 'unchanged' : 'overwrite', code, mode === 'missing')}
                                 className="accent-teal-700" />
-                              {t(mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
+                              {t(mode === 'unchanged' && group.classCode ? 'dar.mode.inherit' : mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
                             </label>
                           ))}
                           <Help text={t('dar.onlyWhenMissingHelp')} t={t}/>
                         </div>
-                        <select
-                          aria-label={t(`dar.field.${field.id}.label`)}
-                          value={code}
-                          disabled={!enabled || current.mode !== 'overwrite'}
-                          onChange={(e) => {
-                            setDarCodes((old) => ({
-                              ...old,
-                              [field.id]: e.target.value
-                            }))
-                            set('overwrite', e.target.value)
-                          }}
-                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                        >
-                          <option value="">{t('app.config.chooseCode')}</option>
-                          {field.allowedCodes.map((c) => (
-                            <option key={c} value={c}>
-                              {t(`dar.code.${c}`)}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <select
+                            aria-label={`${t(`dar.field.${field.id}.label`)} – ${t('app.config.standardCode')}`}
+                            value={field.allowedCodes.includes(code) ? code : ''}
+                            disabled={!enabled || current.mode !== 'overwrite'}
+                            onChange={(e) => {
+                              setDarCodes((old) => ({ ...old, [field.id]: e.target.value }))
+                              set('overwrite', e.target.value)
+                            }}
+                            className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                          >
+                            <option value="">{t('app.config.customCode')}</option>
+                            {field.allowedCodes.map((c) => <option key={c} value={c}>{t(`dar.code.${c}`)}</option>)}
+                          </select>
+                          <input
+                            aria-label={t(`dar.field.${field.id}.label`)}
+                            value={code}
+                            placeholder={t('app.config.chooseCode')}
+                            disabled={!enabled || current.mode !== 'overwrite'}
+                            onChange={(e) => {
+                              setDarCodes((old) => ({ ...old, [field.id]: e.target.value }))
+                              set('overwrite', e.target.value)
+                            }}
+                            className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                          />
+                        </div>
                       </div>
 
                       {!enabled ? (
@@ -718,7 +724,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                         </p>
                       ) : current.mode !== 'overwrite' ? (
                         <p className="mt-2 text-xs text-slate-500">
-                          {t('disabled.darMode')}
+                          {t(group.classCode ? 'app.config.darInherited' : 'disabled.darMode')}
                         </p>
                       ) : null}
                       {field.codeConditions[code] && (

@@ -44,8 +44,9 @@ configurations and validates them before replacing the current draft. See the
 [configuration format](catalog/options/README.md#properties-export-and-import)
 for values, comments, DAR fields and identifier rules. Imports and **Restore defaults**
 are saved automatically. Invalid drafts cannot be exported. Imports reject unknown fields, incorrect types,
-unsupported schema versions, duplicate assignments, JSON members or rule IDs, unsuitable DAR
-codes and invalid identifier patterns.
+unsupported schema versions, duplicate assignments, JSON members or rule IDs, empty DAR
+codes and invalid identifier patterns. DAR code fields offer standard suggestions and accept
+free text, including intentionally invalid codes. Optional FHIR validation reports vocabulary violations.
 
 DAR rules offer three choices: unchanged, add DAR only when missing, or always
 replace. Missing-only rules retain existing values and existing DAR, including
@@ -253,6 +254,21 @@ work. An interrupted or failed transfer can leave already uploaded transactions
 on the server; it is not rolled back. Select the datasets again to explicitly
 start another action. Reloading the browser does not cancel an upload.
 
+Dataset labels combine the chosen name (or workbook filename), source and saved
+run facts, for example `Demo · Synthea (Pat 10 · Cases 42 · Hist 0 · Age 18–85)`.
+Patient and case counts come from the saved workbook Person/Fall entries; contact
+sublevels are excluded. Native Synthea output uses its inspected Patient/Encounter
+counts. When actual and requested populations differ, both are shown. History and
+age are the submitted Synthea settings; history is always numeric, including zero.
+Unavailable counts are omitted. New upload records retain these labels when the
+source run is deleted.
+
+The upload history initially shows the five latest completed actions and all active
+uploads. **Load older uploads** reveals more completed entries. Details and full
+server diagnostics expand on demand; a short error remains visible. Delete an
+individual completed history entry or clear all completed history to remove its
+local logs and working files. Uploaded resources remain on the FHIR server.
+
 The worker uses pinned `blazectl 1.5.1`, with two concurrent transactions for
 Blaze and one for HAPI. It prepares PUT transactions preserving resource IDs and
 FHIR resources, selects one representation per output directory in the same
@@ -280,6 +296,14 @@ converter reports, effective options and logs, including for failed validation
 runs. Formats, patients per output file and FHIR validation follow the submitted
 configuration. Defaults are JSON and NDJSON, one patient per JSON bundle and
 FHIR validation disabled. See [converter results](../docs/converter-usage.md#output).
+
+**Download configuration and Excel** provides a compact ZIP for conversion from
+saved workbooks. It includes the submitted configuration, available effective
+configuration files and environment reports, converter fingerprint, and file
+checksums. Use the identified converter version and the saved output settings.
+Externally referenced document files must be supplied separately at their expected
+paths. Source comparison and upstream generation require the original sources.
+For failed runs, the archive contains the workbooks produced before failure.
 
 **Cancel** cancels queued work or terminates the running converter process group.
 Reloading or closing the browser leaves work running. A worker restart marks
@@ -504,3 +528,79 @@ docker compose -f web/compose.yml up -d --no-deps api worker web
 Wait for active runs and uploads to finish before updating. Submitted runs retain
 the converter and importer fingerprints; execution rejects mismatched versions.
 The Synthea comparison uses the bundled DAR and option catalogues.
+
+### Run cleanup
+
+**Clean up / delete** opens a choice for the selected run. **Clean up** is available
+for completed or failed runs after dataset inspection. It retains configuration,
+Excel workbooks, generated FHIR files, version metadata and a checksum inventory.
+Referenced files are retained conservatively, including dependencies found in
+other saved workbooks and datasets. Shared input-library files are retained.
+
+Cleanup removes source data, intermediate files, logs and redundant ZIP archives.
+Source comparisons require the original source data and cannot be repeated after
+those sources have been removed. To repeat an Excel conversion, download
+**Configuration and Excel**, then load a workbook with the saved configuration.
+Original workbook/CSV inputs and generation settings remain loadable in the editor;
+removed Synthea import files do not. Native Synthea runs have no Excel workbooks.
+
+Dataset downloads and uploads remain available. A requested dataset ZIP is rebuilt
+from checksum-verified result files and cached until the next cleanup. Its archive
+checksum is updated when the ZIP is rebuilt. The complete run
+download contains the retained files and is created temporarily. Active uploads
+prevent cleanup. **Delete completely** removes the entire local run; FHIR-server
+contents and upload history remain available.
+
+### Patient repetitions
+
+**Additional repetitions** creates copies of the input patients: zero keeps one
+pass, two produces three passes. The first pass uses prefix + original patient ID
++ suffix. Additional passes append `-rep-1`, `-rep-2`, etc. Clinical references
+follow the corresponding copied patient. Collisions are checked before output.
+Resource counter starts and per-repetition clinical time shifts remain independent.
+Use different prefixes or suffixes to distinguish separate DIZ runs.
+
+### Reuse saved Excel workbooks
+
+On a completed run, **Reuse saved Excel** loads all its saved workbooks as one
+input set and restores its converter configuration in the editor. Set the dataset
+name and a DIZ-specific patient ID prefix or suffix, adjust the configuration, and
+start conversion. Repeat with another configuration to produce another dataset
+from exactly the same workbooks. The input selector retains the saved workbook
+set for subsequent runs.
+
+This executes Excel-to-FHIR conversion without running Synthea or the Synthea
+importer again. The clinical content and mappings already written into Excel stay
+fixed. Synthea-derived workbooks retain the Europe/Berlin conversion time zone.
+Each run owns byte-identical copies of its inputs, a checksum manifest, and its
+configuration. Removing the source run does not remove those copies. The action
+also works after run cleanup; failed runs may supply only their available subset
+of workbooks. Native Synthea output without Excel cannot use this action.
+
+**Load input and settings** on a Synthea generation run restores its generator
+settings and runs Synthea again when submitted. Use **Reuse saved Excel** to
+convert its existing workbooks instead.
+
+Select an uploaded input and choose **Remove input** to delete its saved copy from
+the input library after confirmation. Existing runs keep their independent input
+copies and results, and the original file on your computer is retained. Saved
+Excel sets can also be removed and recreated from an existing run. Bundled inputs
+remain available.
+
+### Run outcomes
+
+Generation succeeds when conversion completes and produces its output files.
+Source comparison differences and optional FHIR validation findings do not change
+that outcome or suppress generated test data. Process failures and incomplete
+imports still fail generation; the CLI returns a nonzero exit code for these
+failures. Inspect validation reports when using the CLI for conformance checks.
+
+Run details show generation and FHIR validation separately. Synthea conversions
+also show import notes, source comparisons with differences, and comparisons that
+could not be assessed. Notes covered by disabled resources or explicit DAR
+replacement are accounted for separately. Import notes can indicate mapping work,
+but do not automatically mean a missing mapping. A failing source comparison
+reports its first difference for each source dataset and variant, not an exhaustive
+count of differing fields. These summaries remain available after run cleanup.
+Historical reports without independent comparison results show that assessment as
+unavailable; their recorded execution status is retained.

@@ -107,6 +107,8 @@ public final class ContractConfiguration {
             if (name.equals("CONFIGURATION_VERSION")) {
                 if (commented || !value.equals("1")) throw invalid("Unsupported configuration version");
                 version = true;
+            } else if (Set.of("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET", "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET").contains(name)) {
+                if (!value.equals("0")) throw invalid("Use patient ID prefixes or suffixes instead of numeric offsets");
             } else if (name.equals("ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER")) {
                 booleanValue(value); // Retired editor setting; assignment is automatic.
             } else if (names.containsKey(name)) {
@@ -122,7 +124,8 @@ public final class ContractConfiguration {
                     if (scope.path("id").asText().equals(id)) source = scope.path("source").asText();
                 for (JsonNode candidate : DAR.get("fields")) if (candidate.get("id").asText().equals(source)) field = candidate;
                 if (!value.equals("unchanged")) {
-                    if (field == null || !contains(field.get("allowedCodes"), TextNode.valueOf(value)))
+                    if (value.startsWith("!dar:")) value = value.substring(5);
+                    if (field == null || value.isBlank())
                         throw invalid("Invalid DAR code: " + name);
                     config.dar.put(id, value);
                 }

@@ -102,6 +102,19 @@ public class DarOverridesTest {
         assertFalse(attachment.getDataElement().hasValue()); assertFalse(attachment.hasHash()); assertFalse(attachment.hasSize());
         reason(attachment.getDataElement(),"masked"); assertEquals("https://example.org/document",attachment.getUrl());
     }
+    @Test public void arbitraryDarCodesApplyToEveryRepresentation() {
+        Patient p = new Patient(); p.addName().setFamily("Original");
+        reason(((Patient)apply(p, "DAR_PATIENT_NAME_FAMILY=made-up\n")).getNameFirstRep().getFamilyElement(), "made-up");
+        reason(((Patient)apply(p, "DAR_PATIENT_NAME_FAMILY=!dar:unchanged\n")).getNameFirstRep().getFamilyElement(), "unchanged");
+        Patient retained = (Patient)apply(p, "DAR_PATIENT_NAME_FAMILY=made-up\nDAR_PATIENT_NAME_FAMILY_ONLY_WHEN_MISSING=true\n");
+        assertEquals("Original", retained.getNameFirstRep().getFamily());
+        reason(((Condition)apply(new Condition(), "DAR_CONDITION_CLINICAL_STATUS=made-up\n")).getClinicalStatus(), "made-up");
+        Observation o = new Observation(); o.setValue(new Quantity(42));
+        Observation out = (Observation)apply(o, "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=made-up\n");
+        assertFalse(out.hasValue());
+        assertEquals("made-up", out.getDataAbsentReason().getCodingFirstRep().getCode());
+    }
+
     @Test public void appliesAsTextWithoutRequiringNarrative() {
         Condition c = new Condition(); c.getCode().addCoding().setCode("A");
         reason(((Condition)apply(c,"DAR_CONDITION_CODE_CODING_CODE=as-text\n")).getCode().getCodingFirstRep().getCodeElement(),"as-text");

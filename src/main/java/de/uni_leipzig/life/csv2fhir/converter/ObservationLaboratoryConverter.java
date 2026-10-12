@@ -164,7 +164,7 @@ public class ObservationLaboratoryConverter extends Converter {
             observation.setMeta(new Meta().addProfile(PROFILE));
         }
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
-        observation.setStatus(status == null ? FINAL : Observation.ObservationStatus.fromCode(status));
+        observation.setStatusElement(InputCode.of(observation.getStatusElement(), status == null ? "final" : status));
         observation.setEffective(ClinicalValues.date(get(dateColumn)));
         String issued = ClinicalValues.get(this, ClinicalValues.Column.Ausgabezeitpunkt);
         if (issued != null) observation.setIssuedElement(new org.hl7.fhir.r4.model.InstantType(issued));

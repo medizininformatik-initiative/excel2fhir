@@ -33,9 +33,9 @@ sources. The validation probe detects changed source digests.
 
 ## Meaning and replacement
 
-The semantic allowlists are project decisions, not additional HL7 prohibitions.
-A numeric measurement can offer NaN and infinity reasons; a name or coding version
-cannot. Workflow-dependent reasons must describe the actual situation. `as-text`
+The semantic code lists are field-specific editor suggestions. Every DAR code field
+also accepts free text, including codes outside those suggestions or the FHIR value set.
+Numeric measurements suggest NaN and infinity reasons; names and coding versions do not. Workflow-dependent reasons must describe the actual situation. `as-text`
 requires the content to be present in the resource narrative, not merely in an
 arbitrary text property. These contextual conditions cannot be inferred reliably
 from a primitive datatype or a ValueSet binding.

@@ -6,13 +6,16 @@ import { translate, type Language, type TextKey } from './i18n'
 
 type Target = { id: string; name: string; address: string; available: boolean }
 type Dataset = DatasetContext & { id: string; name: string; state: string; created: number; sourceName?: string; source?: string; size?: number; error?: string }
-type Upload = { id: string; state: string; created: number; descriptor: { target: Target; datasets: { id: string; name: string }[] }; result?: { error?: string; acceptedBundles?: number; rejectedBundles?: number; otherResponses?: number; statusCounts?: Record<string, number>; serverErrors?: { file: string; bundle: number; status?: string; code?: string; diagnostics: string[] }[]; resource?: string; resources?: number; bundles?: number; mayHaveWritten?: boolean } }
+type Upload = { id: string; state: string; created: number; descriptor: { target: Target; datasets: (DatasetContext & { id: string; name: string })[] }; result?: { error?: string; acceptedBundles?: number; rejectedBundles?: number; otherResponses?: number; statusCounts?: Record<string, number>; serverErrors?: { file: string; bundle: number; status?: string; code?: string; diagnostics: string[] }[]; resource?: string; resources?: number; bundles?: number; mayHaveWritten?: boolean } }
 const stateKeys: Record<string, TextKey> = { queued: 'app.upload.queued', preparing: 'app.upload.preparing', uploading: 'app.upload.uploading', succeeded: 'app.upload.succeeded', conflict: 'app.upload.conflict', failed: 'app.upload.failed', interrupted: 'app.upload.interrupted', cancelled: 'app.upload.cancelled' }
 export function FhirUploads({ language, requestedSelection }: { language: Language; requestedSelection?: { ids: string[] } | null }) {
   const t = (key: TextKey, params?: Record<string, string | number>) => translate(language, key, params)
   const [targets, setTargets] = useState<Target[]>([])
   const [datasets, setDatasets] = useState<Dataset[]>([])
   const [uploads, setUploads] = useState<Upload[]>([])
+  const [historyLimit, setHistoryLimit] = useState(5)
+  const [hasMoreHistory, setHasMoreHistory] = useState(false)
+  const [completedCount, setCompletedCount] = useState(0)
   const [search, setSearch] = useState('')
   const [selectedOnly, setSelectedOnly] = useState(false)
   const [copyStatus, setCopyStatus] = useState('')
@@ -27,7 +30,7 @@ export function FhirUploads({ language, requestedSelection }: { language: Langua
     if (requestedSelection) { setSelection(requestedSelection.ids); setSearch(''); setSelectedOnly(true); setDatasetLimit(10) }
   }, [requestedSelection])
   async function refresh() {
-    const responses = await Promise.all(['/api/fhir-targets', '/api/datasets', '/api/fhir-uploads'].map(url => fetch(url)))
+    const responses = await Promise.all(['/api/fhir-targets', '/api/datasets', `/api/fhir-uploads?limit=${historyLimit}`].map(url => fetch(url)))
     if (responses.some(response => !response.ok)) throw new Error()
     const [nextTargets, nextDatasets, nextUploads] = await Promise.all(responses.map(response => response.json()))
     return { nextTargets, nextDatasets, nextUploads }
@@ -38,13 +41,24 @@ export function FhirUploads({ language, requestedSelection }: { language: Langua
     async function poll() {
       try {
         const data = await refresh()
-        if (active) { setTargets(data.nextTargets); setDatasets(data.nextDatasets); setUploads(data.nextUploads); setConnectionFailed(false) }
+        if (active) { setTargets(data.nextTargets); setDatasets(data.nextDatasets); setUploads(data.nextUploads.items); setHasMoreHistory(data.nextUploads.hasMore); setCompletedCount(data.nextUploads.completedCount); setConnectionFailed(false) }
       } catch { if (active) setConnectionFailed(true) }
       if (active) timer = setTimeout(() => void poll(), 5000)
     }
     void poll()
     return () => { active = false; clearTimeout(timer) }
-  }, [])
+  }, [historyLimit])
+  async function removeHistory(id?: string) {
+    if (!window.confirm(t(id ? 'app.upload.removeConfirm' : 'app.upload.clearConfirm'))) return
+    setPending(true); setError(false)
+    try {
+      const response = await fetch(`/api/fhir-uploads${id ? `/${id}` : ''}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error()
+      const data = await refresh()
+      setUploads(data.nextUploads.items); setHasMoreHistory(data.nextUploads.hasMore); setCompletedCount(data.nextUploads.completedCount)
+    } catch { setError(true) }
+    finally { setPending(false) }
+  }
   async function submit() {
     setPending(true); setError(false)
     const key = JSON.stringify([target, [...selection].sort()])
@@ -96,18 +110,22 @@ export function FhirUploads({ language, requestedSelection }: { language: Langua
       <ListExpansion language={language} total={filtered.length} limit={datasetLimit} onChange={setDatasetLimit} countKey="app.list.datasetsCount"/>
     </fieldset>
     <Button disabled={pending || !selection.length || !targets.some(server => server.id === target && server.available)} onClick={() => void submit()}>{t(pending ? 'app.upload.submitting' : 'app.upload.start', { count: selection.length })}</Button>
-    {uploads.length > 0 && <div className="space-y-3"><h3 className="font-medium">{t('app.upload.history')}</h3>{uploads.map(upload => <article key={upload.id} className="rounded-lg border p-3 text-sm">
+    {uploads.length > 0 && <div className="space-y-3"><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-medium">{t('app.upload.history')}</h3>{completedCount > 0 && <Button variant="outline" disabled={pending} onClick={() => void removeHistory()}>{t('app.upload.clearHistory')}</Button>}</div>{uploads.map(upload => <article key={upload.id} className="rounded-lg border p-3 text-sm">
       <p className="font-medium">{upload.descriptor.target.name} · {t(stateKeys[upload.state] || 'app.upload.failed')} · {new Date(upload.created * 1000).toLocaleString(language === 'de' ? 'de-DE' : 'en-GB')}</p>
-      <a className="break-all text-xs text-teal-800 underline" href={upload.descriptor.target.address} target="_blank" rel="noreferrer">{upload.descriptor.target.address}</a>
       <p>{upload.descriptor.datasets.map(dataset => `${datasetLabel(datasets.find(item => item.id === dataset.id) ?? dataset, language)} (${dataset.id.slice(0, 8)})`).join(', ')}</p>
+      {(upload.result?.error || upload.result?.serverErrors?.length) ? <p role="alert" className="mt-2 line-clamp-2 break-words text-red-700">{upload.result?.serverErrors?.[0]?.diagnostics[0] || upload.result?.serverErrors?.[0]?.code || upload.result?.error}</p> : null}
+      <details className="mt-2"><summary className="cursor-pointer text-teal-800">{t('app.upload.details')}</summary>
+      <a className="break-all text-xs text-teal-800 underline" href={upload.descriptor.target.address} target="_blank" rel="noreferrer">{upload.descriptor.target.address}</a>
       {upload.result?.resource && <p role="alert" className="mt-2 text-amber-800">{t('app.upload.conflictDetail', { resource: upload.result.resource })}</p>}
       {upload.result?.resources !== undefined && <p>{t('app.upload.counts', { resources: upload.result.resources, bundles: upload.result.bundles || 0 })}</p>}
       {upload.result?.acceptedBundles !== undefined && <p className="mt-2">{t('app.upload.outcomes', { accepted: upload.result.acceptedBundles, rejected: upload.result.rejectedBundles ?? 0 })}</p>}
       {upload.result?.statusCounts && <p className="text-xs text-slate-500">{Object.entries(upload.result.statusCounts).map(([status, count]) => `HTTP ${status}: ${count}`).join(' · ')}</p>}
       {upload.result?.error && !upload.result.serverErrors?.length && <p role="alert" className="mt-2 text-red-700">{upload.result.error}</p>}
-      {!!upload.result?.serverErrors?.length && <details open className="mt-2"><summary className="cursor-pointer font-medium">{t('app.upload.reasons')}</summary><ul className="mt-2 space-y-2">{upload.result.serverErrors.map((failure, index) => <li key={index} className="break-words rounded border border-red-200 p-2 text-red-800"><p>{failure.file} · Bundle {failure.bundle} · HTTP {failure.status ?? '?'}</p>{(failure.diagnostics.length ? failure.diagnostics : [failure.code ?? '']).map((diagnostic, i) => <p key={i}>{diagnostic}</p>)}</li>)}</ul></details>}
+      {!!upload.result?.serverErrors?.length && <details className="mt-2"><summary className="cursor-pointer font-medium">{t('app.upload.reasons')}</summary><ul className="mt-2 space-y-2">{upload.result.serverErrors.map((failure, index) => <li key={index} className="break-words rounded border border-red-200 p-2 text-red-800"><p>{failure.file} · Bundle {failure.bundle} · HTTP {failure.status ?? '?'}</p>{(failure.diagnostics.length ? failure.diagnostics : [failure.code ?? '']).map((diagnostic, i) => <p key={i}>{diagnostic}</p>)}</li>)}</ul></details>}
       {['failed', 'cancelled', 'interrupted'].includes(upload.state) && upload.result?.mayHaveWritten && <p className="text-amber-800">{t('app.upload.partial')}</p>}
       <div className="mt-2 flex items-center gap-3"><a className="text-teal-800 underline" href={`/api/fhir-uploads/${upload.id}/logs`} target="_blank" rel="noreferrer">{t('app.upload.logs')}</a>{['queued', 'preparing', 'uploading'].includes(upload.state) && <Button variant="outline" onClick={() => void cancel(upload.id)}>{t('app.cancel')}</Button>}</div>
-    </article>)}</div>}
+      </details>
+      {!['queued', 'preparing', 'uploading'].includes(upload.state) && <Button className="mt-2" variant="outline" disabled={pending} onClick={() => void removeHistory(upload.id)}>{t('app.upload.removeHistory')}</Button>}
+    </article>)}{hasMoreHistory && <Button variant="outline" disabled={pending} onClick={() => setHistoryLimit(limit => limit + 5)}>{t('app.upload.loadOlder')}</Button>}</div>}
   </section>
 }

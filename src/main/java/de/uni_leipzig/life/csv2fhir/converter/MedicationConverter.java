@@ -41,8 +41,8 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationRequest"));
             r.setId(createId(MedicationRequest.class));
             r.setSubject(getPatientReference()).setEncounter(getEncounterReference()).setMedication(medication);
-            r.setStatus(MedicationRequest.MedicationRequestStatus.fromCode(status == null ? "active" : status));
-            r.setIntent(MedicationRequest.MedicationRequestIntent.fromCode(value("Absicht") == null ? "order" : value("Absicht")));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "active" : status));
+            r.setIntentElement(InputCode.of(r.getIntentElement(), value("Absicht") == null ? "order" : value("Absicht")));
             r.setAuthoredOnElement(ClinicalValues.date(value("Dokumentationszeitpunkt")));
             Dosage dose = dosage();
             if (!dose.isEmpty()) r.addDosageInstruction(dose);
@@ -52,7 +52,7 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationAdministration"));
             r.setId(createId(MedicationAdministration.class));
             r.setSubject(getPatientReference()).setContext(getEncounterReference()).setMedication(medication);
-            r.setStatus(MedicationAdministration.MedicationAdministrationStatus.fromCode(status == null ? "completed" : status));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "completed" : status));
             r.setEffective(effective());
             var dose = new MedicationAdministration.MedicationAdministrationDosageComponent();
             if (value("Einzeldosis") != null || value("Dosiereinheit") != null) dose.setDose(quantity());
@@ -66,7 +66,7 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationStatement"));
             r.setId(createId(MedicationStatement.class));
             r.setSubject(getPatientReference()).setContext(getEncounterReference()).setMedication(medication);
-            r.setStatus(MedicationStatement.MedicationStatementStatus.fromCode(status == null ? "active" : status));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "active" : status));
             r.setEffective(effective());
             r.setDateAssertedElement(ClinicalValues.date(value("Dokumentationszeitpunkt")));
             Dosage dose = dosage();

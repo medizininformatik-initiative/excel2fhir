@@ -38,7 +38,7 @@ def incoming():
 
 def input_filename(kind):
     try:
-        return {'workbook': 'input.xlsx', 'csv': 'input.zip', 'synthea': 'input.json', 'synthea-zip': 'input.zip', 'synthea-generation': 'generation.json'}[kind]
+        return {'workbook-set': 'workbooks.json', 'workbook': 'input.xlsx', 'csv': 'input.zip', 'synthea': 'input.json', 'synthea-zip': 'input.zip', 'synthea-generation': 'generation.json'}[kind]
     except KeyError as error:
         raise ValueError('Unknown input kind') from error
 
@@ -143,10 +143,29 @@ def publish(directory, name):
     return item
 
 
-def summaries():
+@contextmanager
+def library_lock():
     root = store.ROOT / 'inputs'
-    return sorted([json.loads(path.read_text()) for path in root.glob('*/metadata.json')
-                   if not path.parent.name.startswith('.')], key=lambda item: item['created'], reverse=True)
+    root.mkdir(parents=True, exist_ok=True)
+    with (root / '.library.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
+def delete(identifier):
+    identifier = str(UUID(identifier))
+    with library_lock():
+        folder = store.ROOT / 'inputs' / identifier
+        if not (folder / 'metadata.json').is_file() or folder.is_symlink():
+            raise FileNotFoundError('Saved input not found')
+        shutil.rmtree(folder)
+
+
+def summaries():
+    with library_lock():
+        root = store.ROOT / 'inputs'
+        return sorted([json.loads(path.read_text()) for path in root.glob('*/metadata.json')
+                       if not path.parent.name.startswith('.')], key=lambda item: item['created'], reverse=True)
 
 
 def resolve(source):
@@ -164,4 +183,7 @@ def resolve(source):
     path = folder / input_filename(item.get('kind', 'workbook'))
     if store.digest(path) != item['sha256']:
         raise ValueError('The uploaded input has changed')
+    if item.get('kind') == 'workbook-set':
+        import run_replay
+        run_replay.verify(folder, json.loads(path.read_text()))
     return path, item['name'], item.get('kind', 'workbook')

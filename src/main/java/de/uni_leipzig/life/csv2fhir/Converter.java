@@ -25,7 +25,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -658,7 +657,10 @@ public abstract class Converter {
     public static Coding createCoding(String codeSystem, String code) {
         Coding coding = new Coding().setSystem(codeSystem);
         if (!isBlank(code)) {
-            return coding.setCode(code);
+            Extension absent = de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(code);
+            if (absent == null) coding.setCode(code);
+            else coding.getCodeElement().addExtension(absent);
+            return coding;
         }
         coding.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
         return coding;
@@ -694,21 +696,7 @@ public abstract class Converter {
      * @return
      */
     public boolean isDataAbsentReason(Coding coding) {
-        if (coding != null) {
-            String code = coding.getCode();
-            DataAbsentReason dataAbsentReason = null;
-            try {
-                dataAbsentReason = DataAbsentReason.fromCode(code);
-            } catch (FHIRException e) {
-                // ignore the org.hl7.fhir.exceptions.FHIRException: Unknown DataAbsentReason
-                // code
-            }
-            if (dataAbsentReason != null) {
-                String system = coding.getSystem();
-                return dataAbsentReason.getSystem().equals(system);
-            }
-        }
-        return false;
+        return coding != null && "http://terminology.hl7.org/CodeSystem/data-absent-reason".equals(coding.getSystem());
     }
 
     /**

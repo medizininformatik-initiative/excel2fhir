@@ -9,6 +9,35 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void freeStatusCodesAndDarPassThroughEveryClinicalConverter() throws Exception {
+        var options = new ConverterOptions("");
+        for (String value : List.of("made-up", "!dar:made-up")) {
+            var resources = new ArrayList<Resource>();
+            for (String type : MedicationValues.STATUSES.keySet()) {
+                var values = new HashMap<>(Map.of("Medikationstyp", type, "Status", value));
+                if (type.equals(MedicationValues.REQUEST)) values.put("Absicht", value);
+                resources.addAll(new MedicationConverter(row(values, MedicationConverter.Medication_Columns.values()),
+                        null, new ConverterResult(options), null, options).convertInternal().subList(1, 2));
+            }
+            var values = Map.of("Eintrag ID", "entry", "Status", value, "Absicht", value);
+            resources.addAll(new ClinicalEventConverter.Vaccine(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ClinicalEventConverter.Report(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ClinicalEventConverter.Plan(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ProcedureConverter(row(values, ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new DocumentReferenceConverter(row(Map.of("Status", value, "Dokumenttext", "Test"), DocumentReferenceConverter.DocumentReference_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ObservationLaboratoryConverter(row(values, ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ObservationVitalSignsConverter(row(values, ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new PatientConverter(row(Map.of("Geschlecht", value, "Geburtsdatum", "2000-01-01"), PatientConverter.Person_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            for (Resource resource : resources) {
+                for (OutputFileType format : List.of(OutputFileType.JSON, OutputFileType.XML)) {
+                    String encoded = format.getParser().encodeResourceToString(resource.copy());
+                    assertTrue(resource.fhirType() + ": " + encoded, encoded.contains("made-up"));
+                    if (value.startsWith("!dar:")) assertTrue(encoded.contains("data-absent-reason"));
+                }
+            }
+        }
+    }
+
     @Test public void unitWithoutDoseAndAtcVersionWithoutCodeArePreserved() throws Exception {
         for (String type : List.of("Verordnung", "Verabreichung", "Medikationsaussage")) {
             for (String version : List.of("2026", "!dar:unknown")) {
@@ -400,7 +429,7 @@ public class ClinicalImportConverterTest {
         assertFalse(MedicationValues.errors(values::get).isEmpty());
         values.put("Medikationstyp", "Verabreichung");
         values.put("Status", "draft");
-        assertFalse(MedicationValues.errors(values::get).isEmpty());
+        assertTrue(MedicationValues.errors(values::get).isEmpty());
         values.put("Status", "completed");
         values.put("Ende", "2025-12-31");
         assertTrue(MedicationValues.errors(values::get).isEmpty());

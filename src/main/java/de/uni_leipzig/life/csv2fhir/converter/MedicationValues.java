@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
-import org.hl7.fhir.r4.model.MedicationRequest.MedicationRequestIntent;
 
 /** One input contract shared by Excel preflight and CSV conversion. */
 public final class MedicationValues {
@@ -32,16 +31,9 @@ public final class MedicationValues {
         String type = get.apply("Medikationstyp");
         if (!STATUSES.containsKey(type == null ? "" : type)) {
             errors.add("Medikationstyp must be Verordnung, Verabreichung or Medikationsaussage");
-        } else {
-            String status = get.apply("Status");
-            if (status != null && !STATUSES.get(type).contains(status)) errors.add("Status is not valid for " + type);
         }
         String intent = get.apply("Absicht");
         if (!REQUEST.equals(type) && intent != null) errors.add("Absicht applies only to Verordnung");
-        if (intent != null) {
-            try { MedicationRequestIntent.fromCode(intent); }
-            catch (RuntimeException e) { errors.add("Unknown medication request intent: " + intent); }
-        }
         if (REQUEST.equals(type) && (get.apply("Beginn") != null || get.apply("Ende") != null)) {
             errors.add("Verordnung: leave Beginn/Ende empty; Dokumentationszeitpunkt specifies the creation time");
         }

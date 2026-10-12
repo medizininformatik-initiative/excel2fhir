@@ -151,7 +151,37 @@ def resolve_dataset(identifier):
     item = next((item for item in get(job_id)['datasets'] if item['id'] == identifier), None)
     if item is None:
         raise FileNotFoundError('Dataset not found')
-    return job, item, store.ROOT / 'jobs' / job_id / ('dataset-' + index + '.zip')
+    folder = store.ROOT / 'jobs' / job_id
+    target = folder / ('dataset-' + index + '.zip')
+    if not target.is_file() and (folder / 'cleanup.json').is_file():
+        with store.run_lock(job_id):
+            if not target.is_file():
+                temporary = target.with_suffix('.tmp')
+                try:
+                    checksums = {entry['path']: entry['sha256'] for entry in json.loads((folder / 'cleanup.json').read_text())['files']}
+                    with zipfile.ZipFile(temporary, 'w', zipfile.ZIP_DEFLATED) as archive:
+                        for file in item['files']:
+                            source = folder / 'output' / file['path']
+                            if source.is_symlink() or not source.resolve().is_relative_to((folder / 'output').resolve()):
+                                raise FileNotFoundError('Result file is unavailable')
+                            if store.digest(source) != checksums.get('output/' + file['path']):
+                                raise store.SubmissionConflict('Retained result differs from its saved checksum')
+                            name = file['path'][len(item['path']) + 1:]
+                            with source.open('rb') as stream, archive.open(name, 'w', force_zip64=True) as output:
+                                while chunk := stream.read(1024 * 1024):
+                                    output.write(chunk)
+                    item.update(sha256=store.digest(temporary), size=temporary.stat().st_size)
+                    manifest = get(job_id)
+                    manifest['datasets'] = [item if entry['id'] == identifier else entry for entry in manifest['datasets']]
+                    manifest_path = folder / 'datasets.tmp'
+                    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+                    # Publish metadata first so a concurrent uploader cannot accept stale bytes.
+                    manifest_path.replace(folder / 'datasets.json')
+                    temporary.replace(target)
+                finally:
+                    temporary.unlink(missing_ok=True)
+            item = next(entry for entry in get(job_id)['datasets'] if entry['id'] == identifier)
+    return job, item, target
 
 
 def resolve_artifact(job_id, identifier):

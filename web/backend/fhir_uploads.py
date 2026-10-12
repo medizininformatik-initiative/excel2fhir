@@ -99,6 +99,41 @@ def history():
     return [get(row['id']) for row in rows]
 
 
+def history_page(limit):
+    with store.connect() as db:
+        rows = db.execute("""SELECT id FROM uploads WHERE state IN ('queued','preparing','uploading')
+            OR id IN (SELECT id FROM uploads WHERE state NOT IN ('queued','preparing','uploading')
+                      ORDER BY created DESC, id DESC LIMIT ?)
+            ORDER BY created DESC, id DESC""", (limit,)).fetchall()
+        count = db.execute("SELECT COUNT(*) FROM uploads WHERE state NOT IN ('queued','preparing','uploading')").fetchone()[0]
+    items = []
+    for row in rows:
+        try:
+            items.append(get(row['id']))
+        except FileNotFoundError:
+            pass  # Another request may remove completed history while polling.
+    return {'items': items, 'hasMore': count > limit, 'completedCount': count}
+
+
+def delete_history(identifier=None):
+    """Remove only local completed upload records and their working files."""
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if identifier is not None:
+            row = db.execute('SELECT state FROM uploads WHERE id=?', (identifier,)).fetchone()
+            if row is None:
+                raise FileNotFoundError('Upload not found')
+            if row['state'] in {'queued', 'preparing', 'uploading'}:
+                raise store.SubmissionConflict('Active uploads cannot be removed')
+        rows = db.execute("""SELECT id FROM uploads WHERE state NOT IN ('queued','preparing','uploading')
+            AND (? IS NULL OR id=?)""", (identifier, identifier)).fetchall()
+        for row in rows:
+            path = folder(row['id'])
+            if path.exists():
+                shutil.rmtree(path)
+            db.execute('DELETE FROM uploads WHERE id=?', (row['id'],))
+
+
 def create(identifier, target, selection):
     if target not in TARGETS or not selection or len(set(selection)) != len(selection):
         raise ValueError('Invalid server or dataset selection')
@@ -117,7 +152,10 @@ def create(identifier, target, selection):
         if job['state'] != 'succeeded' or item.get('error') or not item.get('sha256') or not path.is_file():
             raise ValueError('Select complete datasets from successful runs')
         selected.append({'id': item['id'], 'name': item['name'], 'jobId': job['id'], 'sha256': item['sha256'],
-                         'snapshotSha256': store.digest(path.parent / 'snapshot.json')})
+                         'snapshotSha256': store.digest(path.parent / 'snapshot.json'),
+                         'datasetName': job.get('dataset_name'), 'source': job.get('source'),
+                         'sourceName': job.get('source_name'), 'inputKind': job.get('input_kind'),
+                         'generation': job.get('generation'), 'summary': job.get('summary')})
     descriptor = {'target': {'id': target, **TARGETS[target]}, 'datasets': selected,
                   'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'excel2fhir.jar')}
     with store.connect() as db:
@@ -125,6 +163,9 @@ def create(identifier, target, selection):
         for item in selected:
             if db.execute('SELECT id FROM jobs WHERE id=?', (item['jobId'],)).fetchone() is None:
                 raise ValueError('A selected run was deleted')
+            archive_path = store.ROOT / 'jobs' / item['jobId'] / ('dataset-' + item['id'].split('.')[1] + '.zip')
+            if not archive_path.is_file() or store.digest(archive_path) != item['sha256']:
+                raise store.SubmissionConflict('A selected run was cleaned up; select its dataset again')
         db.execute('INSERT OR IGNORE INTO uploads(id,state,created,descriptor) VALUES (?, ?, ?, ?)',
                    (identifier, 'queued', time.time(), json.dumps(descriptor)))
     current = get(identifier)

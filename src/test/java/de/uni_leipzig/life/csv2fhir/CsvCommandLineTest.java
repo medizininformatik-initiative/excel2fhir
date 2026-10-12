@@ -101,7 +101,7 @@ public class CsvCommandLineTest {
     }
 
     @Test
-    public void validationFailureReturnsNonzeroAndKeepsBundle() throws Exception {
+    public void validationFindingsKeepGenerationSuccessfulAndKeepBundle() throws Exception {
         // Test CLI status propagation without loading a second full profile set.
         // FHIRValidatorTest separately checks validation and raw report contents.
         FHIRValidator validator = mock(FHIRValidator.class);
@@ -112,13 +112,36 @@ public class CsvCommandLineTest {
                 return validator;
             }
         };
-        assertEquals(1, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(), "-p", "1000", "-v"));
+        assertEquals(0, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(), "-p", "1000", "-v"));
         try (var runs = Files.list(output)) {
             output = runs.findFirst().orElseThrow();
         }
         assertTrue(Files.readString(output.resolve("fhir/case.json")).contains("p1"));
         verify(validator).validateAndWriteReport(any(Bundle.class),
                 eq(output.resolve("details/pending/case_.validation.json").toFile()));
+    }
+
+    @Test
+    public void arbitraryCodesReachOutputWithValidationDisabledAndEnabled() throws Exception {
+        Path person = input.resolve("case_Person.csv");
+        Files.writeString(person, Files.readString(person).replace("weiblich", "made-up"));
+        for (boolean validate : java.util.List.of(false, true)) {
+            FHIRValidator validator = mock(FHIRValidator.class);
+            when(validator.hasValidationProblems()).thenReturn(true);
+            Main command = new Main() { @Override FHIRValidator createValidator() { return validator; } };
+            Path destination = temp.newFolder().toPath();
+            var args = new java.util.ArrayList<>(java.util.List.of("-i", input.toString(), "-o", destination.toString()));
+            if (validate) args.add("-v");
+            assertEquals(0, new CommandLine(command).execute(args.toArray(String[]::new)));
+            try (var files = Files.walk(destination)) {
+                var outputs = files.filter(p -> p.getParent().getFileName().toString().equals("fhir")
+                        && (p.toString().endsWith(".json") || p.toString().endsWith(".ndjson"))).toList();
+                assertFalse(outputs.isEmpty());
+                for (Path file : outputs) assertTrue(Files.readString(file).contains("made-up"));
+            }
+            if (validate) verify(validator, atLeastOnce()).validateAndWriteReport(any(Bundle.class), any(java.io.File.class));
+            else verifyNoInteractions(validator);
+        }
     }
 
     @Test

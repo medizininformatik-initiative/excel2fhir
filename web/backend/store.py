@@ -11,6 +11,8 @@ import subprocess
 import time
 import uuid
 import zipfile
+import run_summary
+import run_outcomes
 
 ROOT = Path(os.environ.get("WORKBENCH_DATA", "/data"))
 APP = Path(os.environ.get("CONVERTER_HOME", "/converter"))
@@ -135,6 +137,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     filename = input_filename(input_kind)
     if specification is None:
         shutil.copyfile(input_path, directory / filename)
+        if input_kind == 'workbook-set':
+            shutil.copytree(input_path.parent / 'workbooks', directory / 'workbooks')
+            import run_replay
+            run_replay.verify(directory, json.loads((directory / filename).read_text()))
     else:
         (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
     native = input_kind == 'synthea-generation' and json.loads((directory / filename).read_text()).get('outputMode') == 'synthea'
@@ -157,6 +163,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
                   'optionsProperties': (directory / 'default.config').read_text()}
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
                 'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+    if input_kind == 'workbook-set':
+        manifest = json.loads((directory / filename).read_text())
+        snapshot['repeatedFrom'] = {'id': manifest['sourceRun'], 'snapshotSha256': manifest['sourceSnapshotSha256']}
+        snapshot['clinicalTimeZone'] = manifest.get('clinicalTimeZone')
     if input_kind.startswith('synthea'):
         import synthea_runtime
         if not native:
@@ -192,8 +202,11 @@ def create(source, profile, configuration_properties=None, request_id=None, gene
         descriptor['generation'] = generation_settings
     if dataset_name:
         descriptor['datasetName'] = dataset_name
-    return submit(descriptor, request_id,
-                  lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name))[0]
+    import inputs
+    # Complete the run's independent copies before an input can be removed.
+    with inputs.library_lock():
+        return submit(descriptor, request_id,
+                      lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name))[0]
 
 
 def editor_input(job_id):
@@ -201,7 +214,12 @@ def editor_input(job_id):
     folder = ROOT / 'jobs' / job_id
     snapshot = json.loads((folder / 'snapshot.json').read_text())
     kind = snapshot.get('inputKind', 'workbook')
+    if kind == 'workbook-set':
+        import run_replay
+        return run_replay.editor(job_id)
     path = folder / inputs.input_filename(kind)
+    if not path.is_file():
+        raise SubmissionConflict('The source was removed during cleanup. Download the saved Excel workbooks and upload one to repeat the conversion.')
     if digest(path) != snapshot['inputSha256']:
         raise ValueError('The saved input has changed')
     source = snapshot['source']
@@ -228,11 +246,21 @@ def job_result(row):
     job['duration_seconds'] = (max(0, (job.get('finished') or time.time()) - job['started'])
                                if job.get('started') is not None and (job.get('finished') is not None or job['state'] == 'running') else None)
     job["download_available"] = job["state"] in {"succeeded", "failed"} and (ROOT / "jobs" / job["id"] / "result.zip").is_file()
+    cleanup_path = ROOT / 'jobs' / job['id'] / 'cleanup.json'
+    if cleanup_path.is_file():
+        cleanup = json.loads(cleanup_path.read_text())
+        job['cleanup'] = {key: cleanup[key] for key in ('completed', 'removedBytes', 'removedFiles')}
+        job['download_available'] = True
     snapshot_path = ROOT / 'jobs' / job['id'] / 'snapshot.json'
     if snapshot_path.is_file():
         snapshot = json.loads(snapshot_path.read_text())
+        import inputs, run_replay
+        job['workbook_count'] = len(run_replay.workbooks(snapshot_path.parent, snapshot))
+        job['editor_available'] = (snapshot_path.parent / inputs.input_filename(snapshot.get('inputKind', 'workbook'))).is_file()
         config = snapshot['profile']
-        job.update(dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
+        job['summary'] = run_summary.summary(snapshot_path.parent, snapshot, job['state'])
+        job['outcomes'] = run_outcomes.read(snapshot_path.parent, snapshot, job['state'])
+        job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
         result = snapshot_path.parent / 'generation-result.json'

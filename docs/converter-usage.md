@@ -125,13 +125,13 @@ CSV runs use the same options and output conventions, with the suffix `csv-to-fh
 | Run status | Exit code | Meaning |
 | --- | --- | --- |
 | `NOT_VALIDATED` | 0 | Conversion completed with FHIR validation disabled. |
-| `COMPLETE` | 0 | Conversion and requested validation completed successfully. |
-| `NOT_CHECKED` | 1 | Some requested terminology checks could not run. |
-| `FAILED` | 1 | An input, conversion or validation error occurred. |
+| `COMPLETE` | 0 | Generation completed; requested validation has separate results. |
+| `FAILED` | 1 | An input or conversion failure prevented complete generation. |
 
 Incomplete imports remain in `details/pending/`. Completed FHIR output remains
 available when validation finds errors. Inspect `status.txt` and the reports for
-the affected input and KDS variant.
+the affected input and KDS variant. `outcome.json` records generation and validation
+separately; validation findings do not change the generation exit code.
 
 See [import reports](import-report.md) and [FHIR validation](fhir-validation.md).
 

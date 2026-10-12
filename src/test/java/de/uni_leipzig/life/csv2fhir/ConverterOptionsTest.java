@@ -9,7 +9,7 @@ import java.util.List;
 public class ConverterOptionsTest {
     @Test public void syntheaYearAndVersionPolicyAreValidatedIndependently() {
         for (int year : List.of(2025, 2026)) {
-            for (String mode : List.of("Jahr", "", "Unbekannt (Data Absent Reason)", "!dar:masked")) {
+            for (String mode : List.of("Jahr", "", "Unbekannt (Data Absent Reason)", "!dar:masked", "!dar:invalid")) {
                 var options = ConverterOptions.fromText("SYNTHEA_MAPPING_YEAR=" + year + "\nSYNTHEA_VERSION_OUTPUT=" + mode);
                 assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
                 assertEquals(year, options.getValue(ConverterOptions.IntOption.SYNTHEA_MAPPING_YEAR));
@@ -17,7 +17,7 @@ public class ConverterOptionsTest {
             }
         }
         for (String text : List.of("SYNTHEA_MAPPING_YEAR=2024", "SYNTHEA_MAPPING_YEAR=2027",
-                "SYNTHEA_MAPPING_YEAR=2025,2026", "SYNTHEA_VERSION_OUTPUT=anything", "SYNTHEA_VERSION_OUTPUT=!dar:invalid")) {
+                "SYNTHEA_MAPPING_YEAR=2025,2026", "SYNTHEA_VERSION_OUTPUT=anything", "SYNTHEA_VERSION_OUTPUT=!dar:")) {
             assertFalse(text, ConverterOptions.fromText(text).getErrors().isEmpty());
         }
     }
@@ -47,27 +47,26 @@ public class ConverterOptionsTest {
             var o = ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=" + value);
             assertTrue(o.getErrors().isEmpty()); assertFalse(o.is(CHECK_INPUT_CONSISTENCY));
         }
-        var o = ConverterOptions.fromText("PID_PREFIX=demo\\u002d\nPID_SUFFIX=-x\n"
-                + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=10\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=100");
-        assertEquals("demo-p011-x", o.getFullPID("p001"));
-        assertEquals("demo-p111-x", o.getFullPID("p001", 1));
+        var o = ConverterOptions.fromText("PID_PREFIX=demo-\nPID_SUFFIX=-x");
+        assertEquals("demo-p001-x", o.getFullPID("p001"));
+        assertEquals("demo-p001-x-rep-1", o.getFullPID("p001", 1));
     }
 
     @Test public void filenamesPreserveUnderscoresWhileResourceIdsUseHyphens() {
-        var options = ConverterOptions.fromText("PID_PREFIX=demo_\nPID_SUFFIX=_x\n"
-                + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=10");
-        assertEquals("demo_p_011_x", options.getFullPIDForFileName("p_001"));
-        assertEquals("demo-p-011-x", options.getFullPID("p_001"));
+        var options = ConverterOptions.fromText("PID_PREFIX=demo_\nPID_SUFFIX=_x");
+        assertEquals("demo_p_001_x", options.getFullPIDForFileName("p_001"));
+        assertEquals("demo-p-001-x-rep-2", options.getFullPID("p_001", 2));
     }
 
-    @Test public void offsetsCannotWrapOrSilentlyIgnoreNegativeSettings() {
-        assertFalse(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=-1").getErrors().isEmpty());
-        assertFalse(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_LOOP_OFFSET=-1").getErrors().isEmpty());
-        var o = ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=1");
-        assertThrows(ArithmeticException.class, () -> o.getFullPID("p2147483647"));
-        assertThrows(IllegalArgumentException.class, () -> o.getFullPID("noDigits"));
-        var loop = ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_LOOP_OFFSET=2147483647");
-        assertThrows(ArithmeticException.class, () -> loop.getFullPID("p1", 2));
+    @Test public void repetitionsSupportUuidsLargeNumbersAndTextWithoutArithmetic() {
+        var options = ConverterOptions.fromText("");
+        for (String id : List.of("noDigits", "p2147483647", "550e8400-e29b-41d4-a716-446655440000")) {
+            assertEquals(id, options.getFullPID(id, 0));
+            assertEquals(id + "-rep-2", options.getFullPID(id, 2));
+        }
+        assertThrows(IllegalArgumentException.class, () -> options.getFullPID("p1", -1));
+        assertFalse(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_LOOP_OFFSET=1").getErrors().isEmpty());
+        assertTrue(ConverterOptions.fromText("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=0").getErrors().isEmpty());
     }
     @Test public void explicitOptionsOverrideWorkflowDefaultsWithoutHidingDuplicates() {
         var defaults = java.util.Map.of("SET_REFERENCE_FROM_CONDITION_TO_ENCOUNTER", "true", "PID_PREFIX", "workflow-");

@@ -15,14 +15,24 @@ class WorkflowTest(unittest.TestCase):
             (directory / 'Fall.json').write_text('{}')
             (directory / 'Fall.import.json').write_text('{"status":"COMPLETE"}')
             (directory / 'Fall.validation.json').write_text('{"status":"NOT_CHECKED"}')
-            bundle, statuses = inspect_conversion(directory, 1, validate=True)
+            bundle, statuses = inspect_conversion(directory, 0, validate=True)
             self.assertEqual('Fall.json', bundle.name)
             self.assertEqual('NOT_CHECKED', statuses['validationStatus'])
             with self.assertRaises(ValueError):
-                inspect_conversion(directory, 0, validate=True)
+                inspect_conversion(directory, 1, validate=True)
             (directory / 'Fall.import.json').write_text('{"status":"INCOMPLETE"}')
             with self.assertRaises(ValueError):
                 inspect_conversion(directory, 1, validate=True)
+
+    def test_validation_findings_and_unchecked_results_do_not_abort(self):
+        with tempfile.TemporaryDirectory() as d:
+            directory = Path(d)
+            (directory / 'Fall.json').write_text('{}')
+            (directory / 'Fall.import.json').write_text('{"status":"COMPLETE"}')
+            for status in ('ERROR', 'FATAL', 'WARNING', 'NOT_CHECKED', 'VALID'):
+                (directory / 'Fall.validation.json').write_text(json.dumps({'status': status}))
+                _, result = inspect_conversion(directory, 0, validate=True)
+                self.assertEqual(status, result['validationStatus'])
 
     def test_killed_converter_reports_exit_and_memory_hint_without_trusting_partial_files(self):
         with tempfile.TemporaryDirectory() as d:
@@ -41,15 +51,15 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Java heap exhausted'):
                 inspect_conversion(directory, 1, validate=True)
 
-    def test_missing_references_fail_even_with_an_acceptable_validator_status(self):
+    def test_missing_references_are_findings_without_failing_generation(self):
         with tempfile.TemporaryDirectory() as d:
             directory = Path(d)
             (directory / 'Fall.json').write_text('{}')
             (directory / 'Fall.import.json').write_text('{"status":"COMPLETE"}')
             (directory / 'Fall.validation.json').write_text(json.dumps({
                 'status': 'VALID', 'referencesWithoutTargetInBundle': {'Patient/missing': 1}}))
-            with self.assertRaises(ValueError):
-                inspect_conversion(directory, 0, validate=True)
+            _, statuses = inspect_conversion(directory, 0, validate=True)
+            self.assertEqual('ERROR', statuses['validationStatus'])
 
     @patch('run_synthea_cases.selected_configs', return_value=[{'name': 'Konvertierungsoptionen', 'values': {}, 'patients': {}}])
     @patch('run_synthea_cases.environment', return_value={})
@@ -159,6 +169,13 @@ class WorkflowTest(unittest.TestCase):
                          patch('run_synthea_cases.subprocess.run', side_effect=convert):
                         self.assertEqual(0, run(source, root / 'output'))
                         self.assertEqual(inputs * variants, check.call_count)
+                        check.side_effect = AssertionError('deliberate comparison difference')
+                        self.assertEqual(0, run(source, root / 'findings-output'))
+                        findings_dir = next((root / 'findings-output').glob('run-*'))
+                        summary = json.loads((findings_dir / 'details/reports/summary.json').read_text())
+                        self.assertEqual([], summary['failures'])
+                        self.assertEqual('differences', summary['results'][0]['variants'][0]['comparisonStatus'])
+                        self.assertTrue(list((findings_dir / 'fhir').rglob('*.json')))
                     run_dir = next((root / 'output').glob('run-*'))
                     for item in selected:
                         for i in range(inputs):

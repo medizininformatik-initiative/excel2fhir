@@ -117,3 +117,32 @@ File: /data/transactions/0000.ndjson [Bundle: 9]
         result = uploads.get(action['id'])
         self.assertEqual('failed', result['state'])
         self.assertFalse(result['result']['mayHaveWritten'])
+
+    def test_history_pages_keep_all_active_and_delete_only_completed_local_files(self):
+        client = TestClient(app)
+        identifiers = []
+        for index in range(9):
+            identifier = str(uuid.uuid4())
+            identifiers.append(identifier)
+            with store.connect() as db:
+                db.execute('INSERT INTO uploads(id,state,created,descriptor) VALUES (?,?,?,?)',
+                           (identifier, 'queued' if index == 0 else 'succeeded', index, '{}'))
+            uploads.folder(identifier).mkdir(parents=True)
+            (uploads.folder(identifier) / 'upload.log').write_text('local log')
+        page = client.get('/api/fhir-uploads').json()
+        self.assertEqual(6, len(page['items']))
+        self.assertEqual(identifiers[0], page['items'][-1]['id'])
+        self.assertTrue(page['hasMore'])
+        self.assertEqual(8, page['completedCount'])
+        self.assertEqual(9, len(client.get('/api/fhir-uploads?limit=10').json()['items']))
+        self.assertEqual(422, client.get('/api/fhir-uploads?limit=0').status_code)
+        self.assertEqual(409, client.delete('/api/fhir-uploads/' + identifiers[0]).status_code)
+        with patch.object(uploads.urllib.request, 'urlopen') as network:
+            self.assertEqual(204, client.delete('/api/fhir-uploads/' + identifiers[1]).status_code)
+            self.assertFalse(uploads.folder(identifiers[1]).exists())
+            self.assertEqual(404, client.delete('/api/fhir-uploads/' + identifiers[1]).status_code)
+            self.assertEqual(204, client.delete('/api/fhir-uploads').status_code)
+            network.assert_not_called()
+        self.assertEqual([identifiers[0]], [item['id'] for item in uploads.history()])
+        self.assertTrue((uploads.folder(identifiers[0]) / 'upload.log').exists())
+        self.assertFalse(uploads.folder(identifiers[-1]).exists())

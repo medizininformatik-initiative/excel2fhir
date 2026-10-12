@@ -293,9 +293,7 @@ public class ExcelTemplateValidator {
             String value = get(row, columns, column);
             if (!isBlank(value) && !values.containsKey(value)) {
                 try {
-                    if (DiagnosisValues.absentReason(value) == null) {
-                        throw new IllegalArgumentException();
-                    }
+                    DiagnosisValues.absentReason(value);
                 } catch (Exception e) {
                     add(result, ERROR, "Diagnose", row.getRowNum() + 1, column, "Unsupported status or data absent reason");
                 }

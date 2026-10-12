@@ -50,6 +50,9 @@ class LocalizationTest(unittest.TestCase):
         for source in (ROOT / '../../frontend/src').rglob('*.ts*'):
             required.update(re.findall(r"['\"]((?:app|identifier|dar)\.[\w.]+)['\"]", source.read_text()))
         required.update('identifier.coding.' + field for field in ('system', 'code', 'display'))
+        required.update('app.outcomes.' + status for status in (
+            'succeeded', 'failed', 'cancelled', 'interrupted', 'passed',
+            'not-requested', 'incomplete', 'differences', 'unavailable', 'findings'))
         required.discard('identifier.typeLabel.')
         bindings = json.loads((ROOT / 'identifier-bindings.json').read_text())
         required.update('identifier.typeLabel.' + item['code'] for item in bindings['types'])

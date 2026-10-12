@@ -75,7 +75,7 @@ public class ProcedureConverter extends Converter {
         var end = ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Ende));
         procedure.setPerformed(end == null ? start : new org.hl7.fhir.r4.model.Period().setStartElement(start).setEndElement(end));
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
-        procedure.setStatus(status == null ? Procedure.ProcedureStatus.COMPLETED : Procedure.ProcedureStatus.fromCode(status));
+        procedure.setStatusElement(InputCode.of(procedure.getStatusElement(), status == null ? "completed" : status));
         Coding category = convertSnomedCategory();
         if (category != null) procedure.setCategory(new CodeableConcept(category));
         procedure.setCode(convertProcedureCode());

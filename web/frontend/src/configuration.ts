@@ -87,8 +87,8 @@ draftRule.system.minLength = 0
 draftRule.pattern.minLength = 0
 draftRule.resources.minItems = 0
 for (const field of Object.values(draftSchema.properties.dar.properties)) {
-  const codes = field.oneOf[1].properties?.code?.enum
-  if (codes) codes.push('')
+  const code = field.oneOf[1].properties?.code
+  if (code) { code.minLength = 0; code.pattern = '' }
 }
 const validateDraft = ajv.compile(draftSchema)
 export function defaults(): Configuration {
@@ -299,6 +299,14 @@ function readConfiguration(text: string, draft: boolean): Configuration {
   // The remaining Procedure assignment is authoritative.
   if (parsed && typeof parsed === 'object' && 'values' in parsed) {
     const values = (parsed as Configuration).values
+    if (values && typeof values === 'object') {
+      for (const key of ['ids.patient.initialOffset', 'ids.patient.iterationOffset']) {
+        if (key in values) {
+          if (values[key] !== 0) throw new Error('Use patient ID prefixes or suffixes instead of numeric offsets')
+          delete values[key]
+        }
+      }
+    }
     if (values && typeof values === 'object' && 'reference.procedureDiagnosis.encounter' in values) {
       if (!['facility', 'department', 'ward-service', 'none'].includes(String(values['reference.procedureDiagnosis.encounter'])))
         throw new Error('invalid')

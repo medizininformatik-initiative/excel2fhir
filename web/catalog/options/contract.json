@@ -1812,38 +1812,6 @@
       "propertyName": "PID_SUFFIX"
     },
     {
-      "id": "ids.patient.initialOffset",
-      "section": "ids",
-      "type": "integer",
-      "default": 0,
-      "status": "agreed",
-      "control": "number",
-      "binding": {
-        "kind": "java-property",
-        "name": "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET"
-      },
-      "minimum": 0,
-      "labelKey": "option.ids.patient.initialOffset.label",
-      "helpKey": "option.ids.patient.initialOffset.help",
-      "propertyName": "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET"
-    },
-    {
-      "id": "ids.patient.iterationOffset",
-      "section": "ids",
-      "type": "integer",
-      "default": 0,
-      "status": "agreed",
-      "control": "number",
-      "binding": {
-        "kind": "java-property",
-        "name": "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET"
-      },
-      "minimum": 0,
-      "labelKey": "option.ids.patient.iterationOffset.label",
-      "helpKey": "option.ids.patient.iterationOffset.help",
-      "propertyName": "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET"
-    },
-    {
       "id": "ids.patient.additionalRepetitions",
       "section": "ids",
       "type": "integer",

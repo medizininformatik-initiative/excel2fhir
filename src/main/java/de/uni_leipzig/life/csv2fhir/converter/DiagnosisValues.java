@@ -7,7 +7,6 @@ import java.util.Map;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 
 /** Explicit selections used by the diagnosis sheet. No terminology lookup or code repair. */
 public final class DiagnosisValues {
@@ -75,9 +74,8 @@ public final class DiagnosisValues {
         }
         String reason = ABSENT_LABELS.getOrDefault(value, value.startsWith(DAR_PREFIX)
                 ? value.substring(DAR_PREFIX.length()) : value);
-        DataAbsentReason parsed = DataAbsentReason.fromCode(reason);
-        if (parsed == null || parsed == DataAbsentReason.NULL) {
-            throw new IllegalArgumentException("Unknown data absent reason: " + reason);
+        if (reason.isBlank()) {
+            throw new IllegalArgumentException("Data absent reason requires a code");
         }
         return new Extension("http://hl7.org/fhir/StructureDefinition/data-absent-reason", new CodeType(reason));
     }

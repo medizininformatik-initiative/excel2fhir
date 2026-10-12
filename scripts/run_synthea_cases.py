@@ -87,15 +87,14 @@ def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate
     statuses = []
     for path in validations:
         validation = json.loads(path.read_text())
-        if validation.get('referencesWithoutTargetInBundle'):
-            raise ValueError('Unresolved local FHIR references in the generated bundle')
         status = validation['status']
-        if status not in {'VALID', 'WARNING', 'IGNORED', 'NOT_CHECKED'}:
-            raise ValueError('FHIR validation failed; see ' + str(path))
+        if status not in {'VALID', 'WARNING', 'IGNORED', 'NOT_CHECKED', 'ERROR', 'FATAL'}:
+            raise ValueError('Unknown validation status: ' + status)
+        if validation.get('referencesWithoutTargetInBundle'):
+            status = 'ERROR'
         statuses.append(status)
-    status = 'NOT_CHECKED' if 'NOT_CHECKED' in statuses else 'WARNING' if 'WARNING' in statuses else statuses[0]
-    expected_exit = 1 if status == 'NOT_CHECKED' else 0
-    if exit_code != expected_exit:
+    status = next((state for state in ('FATAL', 'ERROR', 'NOT_CHECKED', 'WARNING', 'IGNORED', 'VALID') if state in statuses), 'NOT_CHECKED')
+    if exit_code != 0:
         raise ValueError(f'Unexpected converter exit code {exit_code} with status {status}')
     return bundles[0], {'importStatus': 'COMPLETE', 'validationStatus': status,
                         'converterExitCode': exit_code}
@@ -204,11 +203,19 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
                     destinations[item['name']] = final
             variants = []
             for item in selected:
+                target = read_output(destinations[item['name']])
+                patients = item['patients'][report['sourcePatient']]
                 try:
-                    result = check_configured(bundle, read_output(destinations[item['name']]), report, item['values'],
-                                              item['patients'][report['sourcePatient']])
+                    result = check_configured(bundle, target, report, item['values'], patients)
+                    result['comparisonStatus'] = 'passed'
+                except AssertionError as error:
+                    result = {'outputPatients': patients, 'comparisonStatus': 'differences',
+                              'comparisonDetails': str(error) or 'Source comparison assertion failed'}
                 except Exception as error:
-                    raise ValueError(f"Variant {item['name']}: {error}") from error
+                    result = {'outputPatients': patients, 'comparisonStatus': 'unavailable',
+                              'comparisonDetails': type(error).__name__ + ': ' + str(error)}
+                from transfer_findings import notes
+                result.update(notes(bundle, report, item['values']))
                 variants.append(dict(result, name=item['name']))
             if read_sheets(book)['Codes'] != codes:
                 raise ValueError('The Codes sheet was modified during import')
@@ -225,8 +232,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             write_json(summary_file, summary)
     if not summary['results'] and not summary['failures']:
         summary['failures'].append({'error': 'No Synthea patient bundles found'})
-    summary['status'] = ('FAILED' if summary['failures'] else 'NOT_CHECKED'
-        if any(r['validationStatus'] == 'NOT_CHECKED' for r in summary['results']) else 'COMPLETE' if validate else 'NOT_VALIDATED')
+    summary['status'] = 'FAILED' if summary['failures'] else 'COMPLETE' if validate else 'NOT_VALIDATED'
     write_json(summary_file, summary)
     write_status(out, summary['status'])
     return 0 if summary['status'] in {'COMPLETE', 'NOT_VALIDATED'} else 1

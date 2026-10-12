@@ -92,7 +92,7 @@ public class ImportReportTest {
 
     @Test public void repeatedOutputsKeepDistinctRowAndAttemptCounts() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p1")));
-        Files.writeString(input.resolve("options.config"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET = 10\n");
+        Files.writeString(input.resolve("options.config"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\n");
         var report=run().getImportReport(); assertFalse(report.hasErrors());
         assertEquals(1,report.tables.get("Person").processedRows);
         assertEquals(2,report.tables.get("Person").successfulAttempts);
@@ -130,33 +130,42 @@ public class ImportReportTest {
         assertEquals(0, report.tables.get("Person").successfulAttempts);
     }
 
-    @Test public void repeatedIdsAndOverflowsCannotProduceSuccessfulBundles() throws Exception {
-        table(TableIdentifier.Person, List.of(patient("p1"), patient("p2147483647")));
+    @Test public void repetitionSuffixCollisionsAreRejectedBeforeOutput() throws Exception {
+        table(TableIdentifier.Person, List.of(patient("p1"), patient("p1-rep-1")));
         Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
         var report = run().getImportReport();
-        assertEquals(2, report.issues.size());
-        assertTrue(report.issues.stream().allMatch(i -> i.category.equals("PATIENT_ID_COLLISION")));
-        assertEquals("INCOMPLETE", report.status);
-        assertFalse(Files.exists(output.resolve("case.json")));
-        Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=1\n");
-        report = run().getImportReport();
-        assertEquals("PATIENT_ID_ERROR", report.issues.get(0).category);
+        assertEquals("PATIENT_ID_COLLISION", report.issues.get(0).category);
         assertFalse(Files.exists(output.resolve("case.json")));
     }
 
-    @Test public void collidingSourceIdsAndOffsetsAreRejectedButValidCopiesWork() throws Exception {
+    @Test public void copiesKeepPrefixSuffixAndDistinctPatientIds() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1"), patient("p2")));
         Files.writeString(input.resolve("options.config"),
-                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=1\n");
-        assertEquals("PATIENT_ID_COLLISION", run().getImportReport().issues.get(0).category);
-        Files.writeString(input.resolve("options.config"),
-                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=10\nPID_PREFIX=test-\nPID_SUFFIX=-x\n");
+                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_PREFIX=test-\nPID_SUFFIX=-x\n");
         assertFalse(run().hasImportProblems());
         var bundle = JsonParser.parseString(Files.readString(output.resolve("case_test--x.json"))).getAsJsonObject();
         var ids = bundle.getAsJsonArray("entry").asList().stream()
                 .map(e -> e.getAsJsonObject().getAsJsonObject("resource").get("id").getAsString()).toList();
-        assertEquals(Set.of("test-p1-x", "test-p2-x", "test-p11-x", "test-p12-x"), new HashSet<>(ids));
+        assertEquals(Set.of("test-p1-x", "test-p2-x", "test-p1-x-rep-1", "test-p2-x-rep-1"), new HashSet<>(ids));
         assertEquals(4, ids.size());
+    }
+
+    @Test public void repeatedUuidPatientsHaveMatchingClinicalReferences() throws Exception {
+        String uuid = "550e8400-e29b-41d4-a716-446655440000";
+        table(TableIdentifier.Person, List.of(patient(uuid)));
+        table(TableIdentifier.Prozedur, List.of(procedure(uuid, "2026-01-01")));
+        Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
+        assertFalse(run().hasImportProblems());
+        var bundle = JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
+        Set<String> subjects = new HashSet<>();
+        Set<String> patients = new HashSet<>();
+        for (var entry : bundle.getAsJsonArray("entry")) {
+            var resource = entry.getAsJsonObject().getAsJsonObject("resource");
+            if (resource.get("resourceType").getAsString().equals("Patient")) patients.add("Patient/" + resource.get("id").getAsString());
+            if (resource.get("resourceType").getAsString().equals("Procedure")) subjects.add(resource.getAsJsonObject("subject").get("reference").getAsString());
+        }
+        assertEquals(Set.of("Patient/" + uuid, "Patient/" + uuid + "-rep-1"), patients);
+        assertEquals(patients, subjects);
     }
 
     @Test public void normalizedPatientIdCollisionsAreRejected() throws Exception {

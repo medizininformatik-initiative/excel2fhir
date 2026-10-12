@@ -87,6 +87,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     comment(t(`dar.field.${field.id}.label`))
     comment(t(`dar.help.${field.semanticGroup}`))
     comment(`${t('app.config.fileChoices')}: unchanged, ${field.allowedCodes.join(', ')}`)
+    comment(t('app.config.freeDarCode'))
     // Include conditional restrictions exactly as shown by the editor.
     for (const code of Object.keys(field.codeConditions)) {
       comment(`${code}: ${t(code === 'as-text'
@@ -96,7 +97,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     if (inactive) comment(t('app.config.fileResourceInactive'))
     const rule = config.dar[field.id]
     assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties],
-      rule?.mode === 'overwrite' ? rule.code : 'unchanged', inactive)
+      rule?.mode === 'overwrite' ? (rule.code === 'unchanged' || rule.code.startsWith('!dar:') ? '!dar:' + rule.code : rule.code) : 'unchanged', inactive)
     if (rule?.mode === 'overwrite' && rule.onlyWhenMissing) assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties] + '_ONLY_WHEN_MISSING', true, inactive)
   }
   for (const [index, rule] of config.identifierRules.entries()) {
@@ -135,6 +136,11 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       throw new Error('Expected NAME = VALUE')
     }
     const [, key, encoded] = match
+    if (['PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET', 'PID_LAST_NUMBER_INCREASE_LOOP_OFFSET'].includes(key)) {
+      if (seen.has(key) || encoded.trim() !== '0') throw new Error('Use patient ID prefixes or suffixes instead of numeric offsets')
+      seen.add(key)
+      continue
+    }
     if (key === 'ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER') {
       if (seen.has(key) || !['true', 'false'].includes(encoded.trim())) throw new Error('Invalid retired setting')
       seen.add(key)
@@ -160,7 +166,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       conditions.set(conditionField, value === 'true')
     } else if (option) config.values[option.id] = decode(value, option)
     else if (field) {
-      if (value !== 'unchanged') config.dar[field] = { mode: 'overwrite', code: value }
+      if (value !== 'unchanged') config.dar[field] = { mode: 'overwrite', code: value.startsWith('!dar:') ? value.slice(5) : value }
     } else if (ruleMatch) {
       const index = Number(ruleMatch[1])
       if (!Number.isSafeInteger(index)) throw new Error('Invalid rule index')

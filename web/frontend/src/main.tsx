@@ -1,7 +1,8 @@
+import { datasetLabel, type DatasetContext } from './dataset-label'
 import { resolveGenerationSeeds } from './generation-seeds'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Download, Play, Square, Activity } from 'lucide-react'
+import { Play, Square, Activity } from 'lucide-react'
 import { Button } from './components/ui/button'
 import { errorMessage, initialLanguage, InterfaceError, translate, type Language, type Message, type TextKey } from './i18n'
 import './index.css'
@@ -11,12 +12,13 @@ import { FhirUploads } from './FhirUploads'
 import { Help } from './Help'
 import { DatasetResults } from './DatasetResults'
 import { GenerationSettings, type Generation } from './GenerationSettings'
+import { RunOutcomes, type Outcomes } from './RunOutcomes'
 import { InputSelection } from './InputSelection'
 import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
 import { exportPropertiesConfiguration, importRunProperties } from './configuration-properties'
 
-type Job = { duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
+type Job = { outcomes?: Outcomes; workbook_count?: number; cleanup?: { completed: number; removedBytes: number; removedFiles: number }; editor_available?: boolean; summary?: DatasetContext['summary']; input_kind?: string; duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -86,6 +88,7 @@ function App() {
   const [logs, setLogs] = useState<string | null>(null)
   const [error, setError] = useState<Message | null>(null)
   const [connectionError, setConnectionError] = useState<Message | null>(null)
+  const deleteDialog = useRef<HTMLDialogElement>(null)
   const [busy, setBusy] = useState(false)
   const job = jobs.find(j => j.id === selected)
   useEffect(() => {
@@ -122,11 +125,11 @@ function App() {
       setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
-  async function loadRun() {
+  async function loadRun(fromExcel = false) {
     if (!job) return
     setBusy(true); setError(null)
     try {
-      const loaded = await request<{ source: string; datasetName: string; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/editor`, { method: 'POST' })
+      const loaded = await request<{ source: string; datasetName: string; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/${fromExcel ? 'excel-editor' : 'editor'}`, { method: 'POST' })
       const config = importRunProperties(loaded.configurationProperties)
       setEditorLoad({ configuration: config, generation: loaded.generation, key: Date.now() })
       setConfiguration(config); setGeneration(loaded.generation ?? null)
@@ -134,7 +137,8 @@ function App() {
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   async function deleteRun() {
-    if (!job || !window.confirm(t('app.deleteRunConfirm'))) return
+    if (!job) return
+    deleteDialog.current?.close()
     setBusy(true); setError(null)
     try {
       await fetchResponse(`/jobs/${job.id}`, { method: 'DELETE' })
@@ -142,16 +146,25 @@ function App() {
       setSelected(null); setLogs(null); localStorage.removeItem('selectedJob')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
+  async function cleanRun() {
+    if (!job) return
+    deleteDialog.current?.close()
+    setBusy(true); setError(null)
+    try {
+      const updated = await request<Job>(`/jobs/${job.id}/cleanup`, { method: 'POST' })
+      setJobs(old => old.map(item => item.id === updated.id ? updated : item)); setLogs(null)
+    } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
+  }
   function duration(job: Job) {
     if (job.duration_seconds == null) return null
     const seconds = Math.floor(job.duration_seconds)
     return t('app.duration', { time: `${Math.floor(seconds / 3600)}:${String(Math.floor(seconds / 60) % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}` })
   }
-  function configurationName(job: Job) {
-    const config = job.configuration
-    return !config ? '' : config.id === 'workbook' ? t('app.workbookConfiguration')
-      : config.id === 'synthea' ? t('app.generation.nativeOutput') : config.id === 'editor' ? t('app.defaults') : config.id === 'default' ? t('app.converterDefaults') : config.name
+  function runContext(job: Job): DatasetContext {
+    return { datasetName: job.dataset_name, source: job.source, sourceName: job.source_name,
+      inputKind: job.input_kind, generation: job.generation, summary: job.summary, configuration: job.configuration }
   }
+  function configurationName(job: Job) { return datasetLabel(runContext(job), language) }
   async function cancel() {
     try { await request(`/jobs/${selected}/cancel`, { method: 'POST' }) } catch (e) { setError(errorMessage(e)) }
   }
@@ -175,10 +188,10 @@ function App() {
     <div role="tabpanel" id="main-panel-generate" aria-labelledby="main-tab-generate" hidden={activeTab !== 'generate'}>
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
-      <div className="mt-6 flex flex-wrap items-end gap-5">
+      <div className="mt-6 flex flex-wrap items-start gap-5">
         <InputSelection key={editorLoad?.key} language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
         <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
-        <Button onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
+        <Button className="sm:mt-7" onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
       </div>{source === 'synthea-generation' && <GenerationSettings key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration}/>}
       <p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
     </section>
@@ -194,20 +207,39 @@ function App() {
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => { setRunSearch(e.target.value); setRunLimit(10) }}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(j.failure?.kind === 'memory' ? 'app.failure.memoryTitle' : stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{j.dataset_name && <strong className="block">{j.dataset_name}</strong>}{configurationName(j)}</p>{duration(j) && <p className="mt-1 text-xs text-slate-500">{duration(j)}</p>}{j.source && <p className="mt-1 text-xs text-slate-500">{j.source === 'synthea-generation' ? t('app.generation.title') : j.source === 'starter' ? t('app.starter') : j.source === 'demo' ? t('app.demo') : j.source_name ?? j.source}</p>}</button>)}
+        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(j.failure?.kind === 'memory' ? 'app.failure.memoryTitle' : stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{duration(j) && <p className="mt-1 text-xs text-slate-500">{duration(j)}</p>}</button>)}
       </div><ListExpansion language={language} total={filteredJobs.length} limit={runLimit} onChange={setRunLimit} countKey="app.list.runsCount"/></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div className="flex flex-wrap gap-2">{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy} onClick={() => void loadRun()}>{t('app.loadRun')}</Button>}{!['queued','running'].includes(job.state) && <><Help text={t('app.loadRunHelp')} t={key => t(key as TextKey)}/><Button variant="outline" disabled={busy} onClick={() => void deleteRun()}>{t('app.deleteRun')}</Button></>}{job.download_available && <Button asChild><a href={`/api/jobs/${job.id}/download`}><Download size={16}/>{t('app.download')}</a></Button>}{job.download_available && <Help text={t('app.downloadHelp')} t={key => t(key as TextKey)}/>}</div>}</div>
-        {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}</div>}</div>
         {job?.failure && <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{t(job.failure.kind === 'memory' ? 'app.failure.memory' : 'app.failure.killed')}</p>}
-        {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
-        {job && <p className="mb-3 break-words text-sm">{job.dataset_name && <strong>{job.dataset_name} · </strong>}{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
-        {job && duration(job) && <p className="mb-4 text-sm">{duration(job)}</p>}
-        {job && <DatasetResults onUpload={openUpload} context={{ datasetName: job.dataset_name, source: job.source, sourceName: job.source_name, configuration: job.configuration }} jobId={job.id} state={job.state} language={language}/>}
-        <pre aria-label={t('app.logs')} className="h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre>
+        {job && <DatasetResults key={job.id + ':' + (job.cleanup?.completed ?? '')} downloadAvailable={job.download_available} inputKind={job.input_kind} onUpload={openUpload} context={runContext(job)} jobId={job.id} state={job.state} language={language}>
+            {job?.outcomes && <RunOutcomes outcomes={{ ...job.outcomes, generation: job.state }} language={language}/>}
+          <section className="space-y-3 border-t border-slate-200 pt-4">
+            <h3 className="font-semibold">{t('app.runSettings')}</h3>
+            {job && <p className="mb-3 break-words text-sm">{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
+            {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
+            {job && duration(job) && <p className="mb-4 text-sm">{duration(job)}</p>}
+            {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
+            <div className="flex flex-wrap items-center gap-3">{job && <div className="flex flex-wrap gap-2">{['succeeded', 'failed'].includes(job.state) && !!job.workbook_count && <><Button variant="outline" disabled={busy} onClick={() => void loadRun(true)}>{t('app.replay.action')}</Button><Help text={t('app.replay.help', { count: job.workbook_count })} t={key => t(key as TextKey)}/></>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy || job.editor_available === false} onClick={() => void loadRun()}>{t('app.loadRun')}</Button>}{!['queued','running'].includes(job.state) && <><Help text={t('app.loadRunHelp')} t={key => t(key as TextKey)}/><Button variant="outline" disabled={busy} onClick={() => deleteDialog.current?.showModal()}>{t('app.deleteRun')}</Button></>}</div>}</div>
+            {job?.cleanup && <p role="status" className="mb-4 rounded-xl bg-teal-50 p-3 text-sm text-teal-900">{t('app.cleanup.done', { size: (job.cleanup.removedBytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 }) })} {t('app.cleanup.replay')}</p>}
+          </section>
+        </DatasetResults>}
+        {!job?.cleanup && <details open={!!job && ['queued', 'running'].includes(job.state)}><summary className="cursor-pointer text-sm font-medium">{t('app.logs')}</summary><pre aria-label={t('app.logs')} className="mt-3 h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre></details>}
       </section>
     </div>
     </div>
+    <dialog ref={deleteDialog} aria-labelledby="delete-run-title" className="m-auto w-[min(36rem,calc(100%-2rem))] rounded-2xl border border-slate-200 p-6 shadow-xl backdrop:bg-slate-950/40">
+      <h2 id="delete-run-title" className="mb-3 text-lg font-semibold">{t('app.cleanup.title')}</h2>
+      {job && <p className="mb-4 break-words text-sm text-slate-600">{configurationName(job)}</p>}
+      <p className="mb-3 text-sm">{t('app.cleanup.keep')}</p>
+      <p className="mb-4 text-sm text-slate-600">{t('app.cleanup.remove')}</p>
+      <p className="mb-5 text-sm text-slate-600">{t('app.deleteRunConfirm')}</p>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="outline" autoFocus onClick={() => deleteDialog.current?.close()}>{t('app.cleanup.cancel')}</Button>
+        <Button disabled={busy || !job || !['succeeded', 'failed'].includes(job.state)} onClick={() => void cleanRun()}>{t('app.cleanup.action')}</Button>
+        <Button variant="outline" disabled={busy} onClick={() => void deleteRun()}>{t('app.cleanup.delete')}</Button>
+      </div>
+    </dialog>
   </main>
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>)

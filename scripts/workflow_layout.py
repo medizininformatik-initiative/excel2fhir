@@ -55,8 +55,8 @@ def create_run(output, operation):
 def write_status(directory, status):
     explanation = {'NOT_CHECKED': 'Import and source comparison passed; some terminology checks could not run.',
                    'FAILED': 'Run incomplete. Generated FHIR files and error reports are available for review.',
-                   'NOT_VALIDATED': 'Import and source comparison completed; FHIR validation disabled.',
-                   'COMPLETE': 'Import, source comparison and FHIR validation completed.'}.get(status, 'Run in progress.')
+                   'NOT_VALIDATED': 'Generation completed; FHIR validation disabled. See reports for source transfer findings.',
+                   'COMPLETE': 'Generation completed. See reports for source transfer and FHIR validation findings.'}.get(status, 'Run in progress.')
     (directory / 'status.txt').write_text(status + '\n' + explanation
         + '\nFHIR: fhir/ (selected formats and KDS variants)\nExcel: excel/\nDetails: details/\n', encoding='utf-8')
 

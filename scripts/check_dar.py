@@ -43,6 +43,7 @@ def checked_original_dar(source, target, report):
                             for cc in original.get('category', []) for c in cc.get('coding', []))
                 if identifier.startswith('VitalSigns.') != vital: continue
             if code == 'unchanged': continue
+            if code.startswith('!dar:'): code = code[5:]
             only_missing = str(options.get(property_name + '_ONLY_WHEN_MISSING', False)).lower() == 'true'
             if field['representation'] == 'dataAbsentReason':
                 values = list(zip(original.get('component', []), resource.get('component', []))) if field['field'].startswith('component.') else [(original, resource)]

@@ -64,13 +64,14 @@ test('dependency chains disable controls and choices without losing stored selec
   )
   assert.equal(resourceEnabled('Medication', config.values), false)
 })
-test('DAR codes are field-specific; incomplete overwrite and unknown fields fail', () => {
+test('DAR codes accept free text; incomplete overwrite and unknown fields fail', () => {
   const config = defaults()
   const field = darFields.find((f) => !f.allowedCodes.includes('as-text'))
   config.dar[field.id] = { mode: 'overwrite', code: field.allowedCodes[0] }
   assert.equal(problems(config).length, 0)
-  config.dar[field.id].code = 'as-text'
-  assert.ok(problems(config).length)
+  config.dar[field.id].code = 'made-up'
+  assert.equal(problems(config).length, 0)
+  assert.deepEqual(importConfiguration(JSON.stringify(config)), config)
   config.dar[field.id].code = ''
   assert.ok(problems(config).length)
   assert.throws(() =>

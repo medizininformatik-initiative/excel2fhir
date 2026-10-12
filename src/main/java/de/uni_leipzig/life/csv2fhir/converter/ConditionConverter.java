@@ -131,10 +131,7 @@ public class ConditionConverter extends Converter {
         if (absent != null) {
             return (CodeableConcept) new CodeableConcept().addExtension(absent);
         }
-        String code = values.get(value);
-        if (code == null) {
-            throw new IllegalArgumentException("Unknown " + column + ": " + value);
-        }
+        String code = values.getOrDefault(value, value);
         return new CodeableConcept(new Coding(system, code, null));
     }
 }

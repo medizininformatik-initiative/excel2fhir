@@ -44,7 +44,7 @@ def generate():
                  'additionalProperties': False},
                 {'type': 'object', 'required': ['mode', 'code'],
                  'properties': {'mode': {'const': 'overwrite'},
-                                'code': {'enum': field['allowedCodes']},
+                                'code': {'type': 'string', 'minLength': 1, 'pattern': r'\S'},
                                 'onlyWhenMissing': {'type': 'boolean'}},
                  'additionalProperties': False},
             ]

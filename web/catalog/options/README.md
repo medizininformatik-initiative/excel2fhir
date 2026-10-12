@@ -16,7 +16,7 @@ The interface defaults to German and offers English. `de.json` and `en.json`
 contain the visible labels, choices, help, disabled-control reasons and interface
 messages. The contract references stable text keys; option IDs and values remain
 language independent. DAR field/code labels are resolved using the key patterns
-in `dar`; its clinical catalogue remains the source for allowed codes and rules.
+in `dar`; its clinical catalogue remains the source for suggested codes and representation rules.
 
 The language setting affects presentation only. FHIR output retains the German
 KDS profiles, terminology bindings and German descriptions/display text. Original
@@ -282,8 +282,10 @@ other clinical facts to hide a validation failure.
 Table code strings remain unrestricted by this target contract, including
 unknown `!dar:<code>` tokens. Structural and type checks still apply. Optional
 FHIR validation reports invalid vocabulary codes; a valid but clinically
-unsuitable DAR code can pass that validator. Editor choices provide the semantic
-selection policy.
+unsuitable DAR code can pass that validator. The editor offers field-specific suggestions and accepts custom codes for both
+missing-only and overwrite rules. In configuration properties, `unchanged` disables
+a rule; `!dar:unchanged` sets the literal code `unchanged`. A code starting with
+`!dar:` is escaped with one additional `!dar:` prefix by the exporter.
 
 MedicationRequest replacement runs first. MedicationAdministration and
 MedicationStatement each offer one action: retain, additionally create the other

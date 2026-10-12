@@ -62,10 +62,11 @@ public class ConditionConverterTest {
     }
 
     @Test
-    public void requiresSystemAndRejectsUnknownSelections() throws Exception {
+    public void requiresSystemAndPreservesFreeCodes() throws Exception {
         assertThrows(Exception.class, () -> convert(Map.of("Code", "00123")));
-        assertThrows(Exception.class, () -> convert(Map.of("Klinischer Status", "made-up")));
-        assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:made-up")));
+        assertEquals("made-up", convert(Map.of("Klinischer Status", "made-up")).getClinicalStatus().getCodingFirstRep().getCode());
+        assertEquals("made-up", convert(Map.of("Beginn", "!dar:made-up")).getOnsetDateTimeType().getExtensionFirstRep().getValue().primitiveValue());
+        assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:")));
         assertEquals(2, convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
                 "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).getCode().getCoding().size());
     }

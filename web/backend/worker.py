@@ -15,6 +15,7 @@ import zipfile
 
 import store
 import inputs
+import run_outcomes
 
 stopping = False
 
@@ -76,6 +77,12 @@ def execute(job_id):
                        '-p', str(snapshot.get('patientsPerFile', 1))]
             if snapshot.get('validation', False):
                 command.append('-v')
+        elif kind == 'workbook-set':
+            import run_replay
+            run_replay.verify(folder, json.loads(input_path.read_text()))
+            if snapshot.get('clinicalTimeZone'):
+                command.append('-Duser.timezone=' + snapshot['clinicalTimeZone'])
+            command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-i', str(folder / 'workbooks')])
         elif kind == 'csv':
             expanded = folder / 'input-csv'
             inputs.extract_csv(input_path, expanded)
@@ -120,17 +127,23 @@ def execute(job_id):
         if state in {"succeeded", "failed"}:
             if not failure:
                 datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))
+            run_outcomes.save(folder, snapshot, state)
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():
                         archive.write(path, path.relative_to(folder))
                 if (folder / "generation-result.json").exists():
                     archive.write(folder / "generation-result.json", "generation-result.json")
-                for name in ("datasets.json", "failure.json"):
+                for name in ("datasets.json", "failure.json", "outcomes.json"):
                     if (folder / name).exists():
                         archive.write(folder / name, name)
                 for path in folder.glob("dataset-*.log"):
                     archive.write(path, path.name)
+                if kind == 'workbook-set':
+                    for path in sorted((folder / 'workbooks').glob('*.xlsx')):
+                        archive.write(path, path.relative_to(folder))
+                    archive.write(folder / 'workbooks.json', 'workbooks.json')
+                    archive.write(folder / 'default.config', 'default.config')
                 archive.write(folder / "snapshot.json", "snapshot.json")
                 archive.write(folder / "converter.log", "converter.log")
             (folder / "result.tmp").rename(folder / "result.zip")

@@ -87,7 +87,7 @@ public class PatientConverter extends Converter {
         patient.setId(getPatientId());
         patient.setIdentifier(parseIdentifier());
         patient.addName(parseName());
-        patient.setGender(parseGender());
+        patient.setGenderElement(InputCode.of(patient.getGenderElement(), parseGender()));
         patient.setBirthDateElement(parseDate(Geburtsdatum));
         patient.addAddress(parseAddress());
         patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
@@ -150,7 +150,7 @@ public class PatientConverter extends Converter {
      * @return
      * @throws Exception
      */
-    private AdministrativeGender parseGender() throws Exception {
+    private String parseGender() throws Exception {
         String gender = get(Geschlecht);
         if (gender != null) {
             if (gender.length() != 0) {
@@ -158,31 +158,30 @@ public class PatientConverter extends Converter {
                 case "m":
                 case "male":
                 case "männlich":
-                    return MALE;
+                    return MALE.toCode();
                 case "w":
                 case "weiblich":
                 case "female":
                 case "f":
-                    return FEMALE;
+                    return FEMALE.toCode();
                 case "d":
                 case "divers":
                 case "other":
                 case "unbestimmt":
-                    return OTHER;
+                    return OTHER.toCode();
                 case "x":
                 case "unbekannt":
                 case "unknown":
-                    return UNKNOWN;
+                    return UNKNOWN.toCode();
                 default:
-                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + gender
-                            + "> not parsable for Record: " + this);
+                    return gender;
                 }
             }
             warning("Geschlecht empty for Record");
-            return UNKNOWN;
+            return UNKNOWN.toCode();
         }
         warning("Geschlecht not found");
-        return UNKNOWN;
+        return UNKNOWN.toCode();
     }
 
     /**

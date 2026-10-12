@@ -87,7 +87,7 @@ public class DocumentReferenceConverter extends Converter {
         documentReference.setDateElement(timestamp == null ? new org.hl7.fhir.r4.model.InstantType(new Date())
                 : new org.hl7.fhir.r4.model.InstantType(timestamp));
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
-        if (status != null) documentReference.setStatus(DocumentReferenceStatus.fromCode(status));
+        if (status != null) documentReference.setStatusElement(InputCode.of(documentReference.getStatusElement(), status));
 
         // Example:
         // AD0101 Arztberichte

@@ -493,23 +493,9 @@
           "default": "",
           "type": "string"
         },
-        "ids.patient.initialOffset": {
-          "title": "Initial patient-number offset",
-          "description": "Increase the last numeric block of the patient ID by this value before the first pass. Example: “P0012” with offset 100 becomes “P0112”.",
-          "default": 0,
-          "type": "integer",
-          "minimum": 0
-        },
-        "ids.patient.iterationOffset": {
-          "title": "Patient-number offset per repetition",
-          "description": "Increase the last numeric block of the patient ID by this value for each additional repetition. Example with 100: “P0012”, “P0112”, “P0212”. The initial offset is applied as well.",
-          "default": 0,
-          "type": "integer",
-          "minimum": 0
-        },
         "ids.patient.additionalRepetitions": {
           "title": "Additional repetitions",
-          "description": "Generate additional passes of the same dataset. 0 means one pass; 2 means three passes in total. Patient IDs change according to the offset per repetition.",
+          "description": "Create additional copies of the same dataset. 0 means one pass; 2 means three passes in total. The first pass keeps the original patient ID with its prefix and suffix. Copies append -rep-1, -rep-2, etc.",
           "default": 0,
           "type": "integer",
           "minimum": 0
@@ -705,18 +691,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -751,18 +728,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -797,18 +765,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -843,18 +802,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -889,18 +839,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -935,18 +876,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -981,18 +913,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1027,18 +950,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1073,18 +987,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1119,18 +1024,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1165,15 +1061,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1208,15 +1098,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1251,15 +1135,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1294,15 +1172,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1337,15 +1209,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1380,15 +1246,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1423,15 +1283,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1466,15 +1320,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1509,15 +1357,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1552,15 +1394,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1595,15 +1431,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1638,15 +1468,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1681,15 +1505,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1724,15 +1542,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1767,15 +1579,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1810,15 +1616,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1853,15 +1653,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1896,15 +1690,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1939,15 +1727,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -1982,15 +1764,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2025,15 +1801,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2068,15 +1838,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2111,23 +1875,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-a-number",
-                    "negative-infinity",
-                    "positive-infinity",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2162,20 +1912,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2210,23 +1949,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-a-number",
-                    "negative-infinity",
-                    "positive-infinity",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2261,20 +1986,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2309,15 +2023,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2352,15 +2060,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2395,23 +2097,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-a-number",
-                    "negative-infinity",
-                    "positive-infinity",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2446,20 +2134,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2494,23 +2171,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-a-number",
-                    "negative-infinity",
-                    "positive-infinity",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2545,20 +2208,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "as-text",
-                    "not-performed"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2593,14 +2245,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2635,15 +2282,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2678,14 +2319,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2720,15 +2356,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2763,14 +2393,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2805,15 +2430,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2848,14 +2467,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2890,15 +2504,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2933,14 +2541,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -2975,15 +2578,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3018,14 +2615,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3060,15 +2652,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3103,14 +2689,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3145,15 +2726,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3188,14 +2763,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3230,14 +2800,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3272,18 +2837,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3318,14 +2874,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3360,18 +2911,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3406,18 +2948,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3452,18 +2985,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3498,18 +3022,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "asked-unknown",
-                    "temp-unknown",
-                    "not-asked",
-                    "asked-declined",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3544,16 +3059,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable",
-                    "as-text"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3588,16 +3096,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable",
-                    "as-text"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3632,16 +3133,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable",
-                    "as-text"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3676,14 +3170,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3718,14 +3207,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3760,14 +3244,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3802,15 +3281,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3845,14 +3318,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3887,15 +3355,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "not-applicable",
-                    "unsupported",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3930,15 +3392,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -3973,15 +3429,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -4016,14 +3466,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -4058,15 +3503,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -4101,15 +3540,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "temp-unknown",
-                    "masked",
-                    "unsupported",
-                    "error",
-                    "not-permitted",
-                    "not-applicable"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"
@@ -4144,14 +3577,9 @@
                   "const": "overwrite"
                 },
                 "code": {
-                  "enum": [
-                    "unknown",
-                    "masked",
-                    "unsupported",
-                    "as-text",
-                    "error",
-                    "not-permitted"
-                  ]
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "\\S"
                 },
                 "onlyWhenMissing": {
                   "type": "boolean"

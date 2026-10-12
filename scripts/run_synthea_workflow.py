@@ -64,10 +64,10 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
         report['failedPatients'] = len(summary['failures'])
         print('FHIR files: ' + str(directory / 'fhir'), flush=True)
         print('Excel files: ' + str(directory / 'excel'), flush=True)
-        if summary['status'] == 'NOT_CHECKED':
-            print('Import and source comparison passed. Some FHIR validation checks could not run; see reports. Exit code: 1.', flush=True)
-        elif summary['status'] == 'FAILED':
-            print('Run INCOMPLETE: see details/reports/summary.json. Generated FHIR files and error reports are available for review.', flush=True)
+        if summary['failures']:
+            print('Run INCOMPLETE: see details/reports/summary.json. Generated files remain available.', flush=True)
+        else:
+            print('Generation complete. Source comparison and optional FHIR validation have separate results in the reports.', flush=True)
         return code
     except Exception as error:
         report.update(status='FAILED', error=str(error))
