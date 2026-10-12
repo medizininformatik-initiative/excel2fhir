@@ -62,7 +62,7 @@ public enum TableIdentifier {
 
     Impfung(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Vaccine.class),
     Befundbericht(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Report.class),
-    Behandlungsplan(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Plan.class),
+    Behandlungsplan(de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.Columns.class, de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.class),
 
     Consent(Consent_Columns.class, ConsentConverter.class) {
         @Override

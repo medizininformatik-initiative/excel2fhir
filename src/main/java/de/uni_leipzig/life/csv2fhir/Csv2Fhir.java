@@ -135,7 +135,9 @@ public class Csv2Fhir {
                         continue;
                     }
                     String pid = record.get(table.getPIDColumnIdentifier().toString());
-                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
+                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table == TableIdentifier.Behandlungsplan
+                            ? parser.getHeaderNames().stream().filter(h -> !h.equals("Erklärung/Ausfüllhilfe")).toList()
+                            : table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
                     if (!isNullOrEmpty(pid)) previous = pid;
                     if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Patient-ID is empty and no preceding Patient-ID is available", null);
                     else patients.put(record.getRecordNumber(), previous);
@@ -573,6 +575,9 @@ public class Csv2Fhir {
             for (CSVRecord record : records) {
                 String pid = patients.get(record.getRecordNumber());
                 if (pid == null || !pid.equalsIgnoreCase(filterID)) continue;
+                if (table == TableIdentifier.Behandlungsplan && record.get("Patient-ID") != null
+                        && !record.get("Patient-ID").isBlank())
+                    result.currentCarePlan = null;
                 try {
                     List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
                     for (Resource resource : resources) pendingOutput.add(Map.entry(table, resource));

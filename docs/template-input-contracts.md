@@ -123,8 +123,33 @@ General output rules still apply.
   `Dateipfad` and `Embed` select file content. Document type, date and status
   describe the document. Empty values are omitted; no current time, document type,
   category or final status is inferred. A file supplies its actual content metadata.
-- `Impfung`, `Befundbericht` and `Behandlungsplan`: event code/system, time and
+- `Impfung` and `Befundbericht`: event code/system, time and
   resource-specific status fields. See the workbook's field help.
+
+## General treatment plans
+
+`Behandlungsplan` represents a general FHIR CarePlan. A row with `Patient-ID`
+starts a new plan, including when the patient and `Fall-Nr` repeat. A following
+row with both identifiers empty adds an activity to that plan. Empty rows are
+ignored. The first row can include the first activity; a plan can also have no
+activities. Continuations require a preceding plan and cannot contain plan fields.
+
+The first row supplies `Titel`, `Beschreibung`, `Planstatus`, `Absicht`,
+`Erstellungsdatum`, `Beginn`, `Ende` and one category (`Kategorietext`,
+`Kategoriecode`, `Kategoriecodesystem`, `Kategorieversion`). Creation and validity
+period are independent. An empty `Fall-Nr` leaves the plan without an encounter.
+
+Each activity has `Aktivitätstext`, `Aktivitätscode`, `Aktivitätscodesystem`,
+`Aktivitätsversion`, `Aktivitätsstatus`, `Aktivitätsstatusgrund`,
+`Aktivitätsbeginn`, `Aktivitätsende` and `Aktivitätsort`. Text and coding form
+`activity.detail.code`; the reason is `statusReason.text`, dates form
+`scheduledPeriod`, and the location is a display text. Activity fields are never
+inherited from another row. Dropdowns offer suggestions and allow other values;
+code systems accept URI values. Empty properties stay absent.
+
+Technical plan IDs are generated from the patient and input row. The sheet does
+not assert conformance to specialist CarePlan profiles. See
+[Synthea import](synthea-clinical-import.md) for mapped fields and reported losses.
 
 ## Missing values
 

@@ -185,9 +185,11 @@ public class ExcelTemplateValidator {
 
     private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
-        for (String sheet : List.of("Impfung", "Befundbericht", "Behandlungsplan")) {
+        for (String sheet : List.of("Impfung", "Befundbericht")) {
             validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"));
         }
+        validateReferenceTable(workbook, result, patientIds, encounterIds, "Behandlungsplan",
+                List.of("Erstellungsdatum", "Beginn", "Ende", "Aktivitätsbeginn", "Aktivitätsende"));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Diagnose",
                 List.of("Dokumentationszeitpunkt", "Beginn", "Ende"));
         validateReferenceTable(workbook, result, patientIds, encounterIds, "Prozedur",
@@ -233,6 +235,11 @@ public class ExcelTemplateValidator {
                     add(result, WARNING, sheetName, rowIndex + 1, "Fall-Nr",
                             "Fall-Nr does not exist for this Patient-ID in Fall sheet");
                 }
+            }
+            if ("Behandlungsplan".equals(sheetName)) {
+                for (String error : de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.continuationErrors(
+                        field -> get(row, columns, field)))
+                    add(result, ERROR, sheetName, rowIndex + 1, "Patient-ID", error);
             }
             if ("Diagnose".equals(sheetName)) {
                 validateDiagnosisSelections(row, columns, result);
@@ -509,7 +516,7 @@ public class ExcelTemplateValidator {
                 "Dokumenttext", "Status", "Ausgabezeitpunkt", "Dokumentcode", "Dokumentcodesystem", "Dokumentbezeichner", "Erklärung/Ausfüllhilfe"));
         headers.put("Impfung", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Primärquelle", "Version", "Erklärung/Ausfüllhilfe"));
         headers.put("Befundbericht", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Status", "Ausgabezeitpunkt", "Ergebnisse", "Beschreibung", "Erklärung/Ausfüllhilfe"));
-        headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Eintrag ID", "Bezeichner", "Code", "Codesystem", "Zeitpunkt", "Ende", "Status", "Absicht", "Beschreibung", "Aktivitätscodes", "Erklärung/Ausfüllhilfe"));
+        headers.put("Behandlungsplan", Arrays.asList("Patient-ID", "Fall-Nr", "Titel", "Beschreibung", "Planstatus", "Absicht", "Erstellungsdatum", "Beginn", "Ende", "Kategorietext", "Kategoriecode", "Kategoriecodesystem", "Kategorieversion", "Aktivitätstext", "Aktivitätscode", "Aktivitätscodesystem", "Aktivitätsversion", "Aktivitätsstatus", "Aktivitätsstatusgrund", "Aktivitätsbeginn", "Aktivitätsende", "Aktivitätsort", "Erklärung/Ausfüllhilfe"));
         return headers;
     }
 

@@ -10,7 +10,7 @@ import de.uni_leipzig.life.csv2fhir.*;
 public abstract class ClinicalEventConverter extends Converter {
     public enum Columns implements TableColumnIdentifier {
         Eintrag_ID, Bezeichner, Code, Codesystem, Zeitpunkt, Ende, Status, Absicht,
-        Primärquelle, Ausgabezeitpunkt, Ergebnisse, Beschreibung, Aktivitätscodes;
+        Primärquelle, Ausgabezeitpunkt, Ergebnisse, Beschreibung;
         @Override public String toString() { return name().replace('_', ' '); }
         @Override public boolean isMandatory() { return false; }
     }
@@ -50,16 +50,6 @@ public abstract class ClinicalEventConverter extends Converter {
                 report.addResult(new Reference("Observation/" + ClinicalValues.resourceId(getPatientId(), "Observation", ref)));
             if (v(Columns.Beschreibung) != null) report.setConclusion(v(Columns.Beschreibung));
             resource = report; break;
-        case "CarePlan":
-            CarePlan plan = new CarePlan(); plan.setSubject(getPatientReference()); plan.setEncounter(getEncounterReference());
-            if (!code().isEmpty()) plan.addCategory(code());
-            plan.setPeriod(new Period().setStartElement(time).setEndElement(ClinicalValues.date(v(Columns.Ende))));
-            if (v(Columns.Status) != null) plan.setStatusElement(InputCode.of(plan.getStatusElement(), v(Columns.Status)));
-            if (v(Columns.Absicht) != null) plan.setIntentElement(InputCode.of(plan.getIntentElement(), v(Columns.Absicht)));
-            if (v(Columns.Beschreibung) != null) plan.setDescription(v(Columns.Beschreibung));
-            if (v(Columns.Aktivitätscodes) != null) for (String activity : v(Columns.Aktivitätscodes).split(";"))
-                plan.addActivity().getDetail().setCode(ClinicalValues.concept(activity, DiagnosisValues.SNOMED, null));
-            resource = plan; break;
         default: throw new IllegalArgumentException(type);
         }
         resource.setId(id);
@@ -70,8 +60,5 @@ public abstract class ClinicalEventConverter extends Converter {
     }
     public static class Report extends ClinicalEventConverter {
         public Report(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("DiagnosticReport",r,p,c,v,o); }
-    }
-    public static class Plan extends ClinicalEventConverter {
-        public Plan(CSVRecord r, String p, ConverterResult c, FHIRValidator v, ConverterOptions o) throws Exception { super("CarePlan",r,p,c,v,o); }
     }
 }

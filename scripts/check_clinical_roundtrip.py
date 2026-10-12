@@ -44,6 +44,10 @@ def check_clinical(source, target, report):
     if 'movements' in report: excluded.add('Location')
     actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
     assert wanted == actual, {'expectedClinicalCounts':wanted,'actualClinicalCounts':actual}
+    from check_careplans import check_careplans
+    localize_rows({'Behandlungsplan': events['Behandlungsplan']})
+    check_careplans(events['Behandlungsplan'] if enabled(options, 'CARE_PLAN_ENABLED') else [],
+                   dst, report.get('outputPatient', pid.replace('_', '-')))
     def code(cc):
         c=(cc.get('coding')or[{}])[0]
         return c.get('system'), c.get('code')

@@ -33,7 +33,7 @@ LISTS = {
     'AW': ['Wirkstoffcodes', 'ASK', 'UNII', SNOMED, 'RxNorm'],
     'AY': ['Impfstoffcodes', 'ATC', SNOMED, 'RxNorm', 'CVX'],
     'AZ': ['Befund- und Dokumenttypen', 'LOINC', SNOMED],
-    'BA': ['Behandlungsplancodes', SNOMED],
+    'BA': ['Behandlungsplancodes', 'http://snomed.info/sct'],
     'BB': ['Impfstatus', 'completed', 'entered-in-error', 'not-done'],
     'BC': ['Befundstatus', 'registered', 'partial', 'preliminary', 'final', 'amended',
            'corrected', 'appended', 'cancelled', 'entered-in-error', 'unknown'],
@@ -58,7 +58,7 @@ SELECTIONS = {
     'Impfung': {'Codesystem': 'AY', 'Status': 'BB'},
     'Befundbericht': {'Codesystem': 'AZ', 'Status': 'BC'},
     'DocumentReference': {'Dokumentcodesystem': 'AZ'},
-    'Behandlungsplan': {'Codesystem': 'BA', 'Absicht': 'BD'},
+    'Behandlungsplan': {'Kategoriecodesystem': 'BA', 'Aktivitätscodesystem': 'BA', 'Absicht': 'BD', 'Aktivitätsstatus': 'BQ'},
 }
 
 
@@ -79,6 +79,7 @@ LISTS.update({
            ('not-applicable', 'unsupported', 'error', 'not-a-number',
             'negative-infinity', 'positive-infinity', 'not-performed', 'not-permitted')],
 })
+LISTS['BQ'] = ['Aktivitätsstatus', 'not-started', 'scheduled', 'in-progress', 'on-hold', 'completed', 'cancelled', 'stopped', 'unknown', 'entered-in-error']
 LISTS['BH'] += COMMON
 LISTS['BM'] = ['Version', '2025', '2026'] + list(LABELS.values())
 LISTS['BN'] = ['Synthea: Mappingjahr', '2025', '2026']
@@ -100,7 +101,7 @@ for sheet, fields in {
     'Klinische Dokumentation': {'Werttyp': 'AC30:AC35', 'Status': 'AF30:AF37'},
     'DocumentReference': {'Embed': 'L4:L5', 'Status': 'AQ30:AQ32'},
     'Impfung': {'Primärquelle': 'AN30:AN31'},
-    'Behandlungsplan': {'Status': 'AP30:AP36'},
+    'Behandlungsplan': {'Planstatus': 'AP30:AP36'},
 }.items():
     SELECTIONS[sheet].update(fields)
 
@@ -113,7 +114,7 @@ for sheet, fields in FIELDS.items():
         if header not in SELECTIONS[sheet]:
             OPEN_FIELDS[sheet][header] = 'BK' if header in (
                 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Durchführungsbeginn',
-                'Zeitstempel (Abnahme)', 'Zeitstempel', 'Zeitpunkt', 'Einzeldosis', 'Geburtsdatum', 'Vorname', 'Nachname') else 'Z'
+                'Zeitstempel (Abnahme)', 'Zeitstempel', 'Zeitpunkt', 'Erstellungsdatum', 'Aktivitätsbeginn', 'Aktivitätsende', 'Einzeldosis', 'Geburtsdatum', 'Vorname', 'Nachname') else 'Z'
 for sheet, fields in {'Diagnose': ['Version', 'Zusatzversion'], 'Prozedur': ['Version', 'Zusatzversion'],
                       'Impfung': ['Version'], 'Medikation': ['ATC-Version']}.items():
     for header in fields: OPEN_FIELDS[sheet][header] = 'BM'
@@ -137,7 +138,7 @@ def validation_ops(sheets, row_counts=None):
                 ref = '$Codes.' + ':'.join(re.sub(r'([A-Z]+)([0-9]+)', r'$\1$\2', cell) for cell in (first, end))
             else:
                 ref = f'$Codes.${source}$30:${source}${28 + len(LISTS[source])}'
-            strict = header not in OPEN_FIELDS.get(sheet, {}) and header not in ('Wirkstoffcode', 'Darreichungsform') and not header.lower().endswith('codesystem')
+            strict = sheet != 'Behandlungsplan' and header not in OPEN_FIELDS.get(sheet, {}) and header not in ('Wirkstoffcode', 'Darreichungsform') and not header.lower().endswith('codesystem')
             ops.append(f'validation\t{sheet}\t{col}2:{col}{last}\t{ref}\t{str(strict).lower()}')
         if sheet == 'Medikation':
             kind_col = headers['Medikationstyp']

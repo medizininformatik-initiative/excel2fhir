@@ -34,6 +34,7 @@ import de.uni_leipzig.life.csv2fhir.converter.ContactConversionState;
  * @author AXS (29.11.2021)
  */
 public class ConverterResult {
+    public org.hl7.fhir.r4.model.CarePlan currentCarePlan;
     public final List<Map<String, String>> contactEndDerivations = new ArrayList<>();
     private final ContactConversionState contactState =
             new ContactConversionState();

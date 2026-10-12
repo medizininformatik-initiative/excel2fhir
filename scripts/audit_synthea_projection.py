@@ -112,7 +112,7 @@ def audit(source, workbook, target, report):
     procedure_audit = audit_procedures(source, target, sheets['Prozedur'], report)
     for typ, sheet in [('Condition', 'Diagnose'), ('Immunization', 'Impfung'),
                        ('DiagnosticReport', 'Befundbericht'), ('CarePlan', 'Behandlungsplan')]:
-        assert source_counts[typ] - len(excluded_clinical.get(typ, set())) == len(sheets[sheet]) == target_counts[typ], (typ, 'unintended event loss')
+        assert source_counts[typ] - len(excluded_clinical.get(typ, set())) == (sum(bool(row['Patient-ID']) for row in sheets[sheet]) if typ == 'CarePlan' else len(sheets[sheet])) == target_counts[typ], (typ, 'unintended event loss')
     assert source_counts['Patient'] == target_counts['Patient'] == len(sheets['Person']) == 1
     all_codes = list(all_codings(dst))
     assert not [c for c in all_codes if c['system'] in (RX, CVX) or '/us/core/' in c['system'] or (c['system'] == SNOMED and c['code'] == '456191000124101')], 'US-specific target coding'

@@ -19,12 +19,15 @@ public class ClinicalSelectionWorkflowTest {
                 "Geburtsdatum", "2000-01-01", "Geschlecht", "weiblich", "Datum Einwilligung", "2026-01-01", "PDAT Einwilligung", "ja"));
         table(TableIdentifier.Fall, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "2026-01-01", "Ende", "2026-01-10",
                 "Einrichtungskontaktklasse", "stationaer"));
-        for (TableIdentifier type : List.of(TableIdentifier.Impfung, TableIdentifier.Befundbericht, TableIdentifier.Behandlungsplan)) {
+        for (TableIdentifier type : List.of(TableIdentifier.Impfung, TableIdentifier.Befundbericht)) {
             var row = new LinkedHashMap<>(Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Eintrag ID", "event",
                     "Code", "example", "Codesystem", "SNOMED CT (Version nicht angegeben)", "Zeitpunkt", "2026-01-05", "Beschreibung", "Original text"));
             if (type == TableIdentifier.Befundbericht) row.put("Ergebnisse", "lab;vital");
             table(type, row);
         }
+        table(TableIdentifier.Behandlungsplan, Map.of("Patient-ID", "p1", "Fall-Nr", "1",
+                "Kategoriecode", "example", "Kategoriecodesystem", "http://snomed.info/sct",
+                "Beginn", "2026-01-05", "Beschreibung", "Original text"));
         table(TableIdentifier.Laborbefund, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Untersuchung ID", "lab",
                 "Kategorie", "laboratory", "LOINC", "718-7", "Messwert", "12.5", "Einheit", "g/dL", "Zeitstempel (Abnahme)", "2026-01-05"));
         table(TableIdentifier.Klinische_Dokumentation, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Untersuchung ID", "vital",
@@ -206,8 +209,9 @@ public class ClinicalSelectionWorkflowTest {
                 "Wertcode", "answer", "Wertcodesystem", "urn:example:answers"));
         table(TableIdentifier.Medikation, Map.of("Patient-ID", "p1", "Medikationstyp", "Verordnung",
                 "Präparatcode", "nonsense", "Präparatcodesystem", main, "Wirkstoffcode", "ingredient", "Wirkstoffcodesystem", extra));
-        for (TableIdentifier type : List.of(TableIdentifier.Impfung, TableIdentifier.Befundbericht, TableIdentifier.Behandlungsplan))
+        for (TableIdentifier type : List.of(TableIdentifier.Impfung, TableIdentifier.Befundbericht))
             table(type, Map.of("Patient-ID", "p1", "Eintrag ID", "event", "Code", "nonsense", "Codesystem", main));
+        table(TableIdentifier.Behandlungsplan, Map.of("Patient-ID", "p1", "Kategoriecode", "nonsense", "Kategoriecodesystem", main));
         table(TableIdentifier.DocumentReference, Map.of("Patient-ID", "p1", "Dokumenttext", "text",
                 "Dokumentcode", "nonsense", "Dokumentcodesystem", main));
         var resources = run("CHECK_INPUT_CONSISTENCY=true\n");
@@ -275,6 +279,50 @@ public class ClinicalSelectionWorkflowTest {
             }
         }
     }
+    @Test public void carePlanContinuationRowsPreserveIndependentActivitiesAndStartNewPlans() throws Exception {
+        var first = new LinkedHashMap<String, String>();
+        first.put("Aktivitätsort", "Freier Ort");
+        first.put("Aktivitätsende", "2026-03-05T11:00:00+02:00");
+        first.put("Aktivitätsbeginn", "2026-03-04T10:00:00+02:00");
+        first.put("Aktivitätsstatus", "completed");
+        first.put("Aktivitätsstatusgrund", "Freier Grund");
+        first.put("Aktivitätsversion", "v-custom");
+        first.put("Aktivitätscodesystem", "urn:custom:activities");
+        first.put("Aktivitätscode", "x"); first.put("Aktivitätstext", "Erste Aktivität");
+        first.put("Kategorieversion", "v-category"); first.put("Kategoriecodesystem", "urn:custom:category");
+        first.put("Kategoriecode", "k"); first.put("Kategorietext", "Kategorie");
+        first.put("Erstellungsdatum", "2026-03-01"); first.put("Beginn", "2026-03-02");
+        first.put("Titel", "Erster Plan"); first.put("Planstatus", "active"); first.put("Absicht", "order");
+        first.put("Patient-ID", "p1"); first.put("Fall-Nr", "1");
+        table(TableIdentifier.Behandlungsplan, List.of(first, Map.of(),
+                Map.of("Aktivitätstext", "Zweite Aktivität", "Aktivitätscode", "free"),
+                Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Titel", "Zweiter Plan"),
+                Map.of("Aktivitätsstatus", "scheduled"),
+                Map.of("Patient-ID", "p1", "Titel", "Ohne Fall")));
+        var output = run("");
+        var plans = output.values().stream().filter(CarePlan.class::isInstance).map(CarePlan.class::cast).toList();
+        assertEquals(3, plans.size());
+        CarePlan plan = plans.stream().filter(p -> "Erster Plan".equals(p.getTitle())).findFirst().orElseThrow();
+        assertEquals(2, plan.getActivity().size());
+        assertEquals("2026-03-01", plan.getCreatedElement().getValueAsString());
+        assertEquals("2026-03-02", plan.getPeriod().getStartElement().getValueAsString());
+        assertEquals("urn:custom:category", plan.getCategoryFirstRep().getCodingFirstRep().getSystem());
+        assertEquals("v-category", plan.getCategoryFirstRep().getCodingFirstRep().getVersion());
+        var activity = plan.getActivityFirstRep().getDetail();
+        assertEquals("v-custom", activity.getCode().getCodingFirstRep().getVersion());
+        assertEquals("Freier Grund", activity.getStatusReason().getText());
+        assertEquals("Freier Ort", activity.getLocation().getDisplay());
+        assertEquals("2026-03-04T10:00:00+02:00", activity.getScheduledPeriod().getStartElement().getValueAsString());
+        var second = plan.getActivity().get(1).getDetail();
+        assertFalse(second.hasStatus()); assertFalse(second.hasScheduled()); assertFalse(second.hasLocation());
+        assertFalse(second.getCode().getCodingFirstRep().hasSystem());
+        CarePlan other = plans.stream().filter(p -> "Zweiter Plan".equals(p.getTitle())).findFirst().orElseThrow();
+        assertFalse(other.hasStatus()); assertFalse(other.hasCategory());
+        assertEquals("scheduled", other.getActivityFirstRep().getDetail().getStatusElement().getValueAsString());
+        CarePlan noCase = plans.stream().filter(p -> "Ohne Fall".equals(p.getTitle())).findFirst().orElseThrow();
+        assertFalse(noCase.hasActivity()); assertFalse(noCase.hasEncounter());
+    }
+
     @Test public void patientIdentifiersComeOnlyFromExplicitRulesAndDoNotChangeReferences() throws Exception {
         var baseline = run("");
         String patientKey = baseline.keySet().stream().filter(key -> key.startsWith("Patient/")).findFirst().orElseThrow();

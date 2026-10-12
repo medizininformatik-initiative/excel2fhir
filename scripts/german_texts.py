@@ -127,8 +127,10 @@ def localize_rows(rows, address=None):
                  ('Klinische Dokumentation', 'Bezeichner', 'Untersuchungscode', 'Codesystem'),
                  ('Medikation', 'Präparatbezeichnung', 'Präparatcode', 'Präparatcodesystem'),
                  ('DocumentReference', 'Dokumentbezeichner', 'Dokumentcode', 'Dokumentcodesystem')]: coded(*args)
-    for sheet in ['Impfung', 'Befundbericht', 'Behandlungsplan']:
+    for sheet in ['Impfung', 'Befundbericht']:
         coded(sheet, 'Bezeichner', 'Code', 'Codesystem')
+    coded('Behandlungsplan', 'Kategorietext', 'Kategoriecode', 'Kategoriecodesystem')
+    coded('Behandlungsplan', 'Aktivitätstext', 'Aktivitätscode', 'Aktivitätscodesystem')
     for sheet in ['Laborbefund', 'Klinische Dokumentation']:
         value_field = 'Messwert' if sheet == 'Laborbefund' else 'Wert'
         code_field = 'LOINC' if sheet == 'Laborbefund' else 'Untersuchungscode'

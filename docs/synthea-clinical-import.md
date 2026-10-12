@@ -18,7 +18,7 @@ See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-m
 | Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
 | Immunization | `Impfung` | ATC classification for the selected catalogue year, vaccine text, time, status, primary-source flag and patient/case association. |
 | DiagnosticReport | `Befundbericht` | First coding, times, status, resolvable result references and conclusion. |
-| CarePlan | `Behandlungsplan` | Clinical SNOMED category, period, status, intent, description and activity codes. |
+| CarePlan | `Behandlungsplan` | Title, description, status, intent, creation date, period and one clinical category; each activity uses its own row with text, coding, status, reason, dates and location display. |
 | DocumentReference | `DocumentReference` | First document type, status, date, first contact and embedded UTF-8 text, up to Excel's 32,767-character cell limit. |
 
 `Fall.loss.json` records omitted resources and unsupported details with source IDs.
@@ -107,3 +107,10 @@ splits, therapy blocks, ingredient counts, periods and source-to-row links.
 FHIR profile and terminology validation is enabled separately with `-v`.
 Review mapping assumptions, dosage choices and text quality in the generated
 workbook and projection report as part of accepting a synthetic scenario.
+
+CarePlans use the [plan and continuation-row contract](template-input-contracts.md#general-treatment-plans).
+The import prefers a category containing a SNOMED coding, otherwise the first category.
+Additional categories, additional codings and fields outside the sheet are recorded
+in the loss report. Texts use the shared German terminology mapping; missing values
+remain empty. Source resource IDs are associated with the generated plan through
+`clinicalImports.inputRow` in the import report.

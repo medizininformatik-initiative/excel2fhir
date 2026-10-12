@@ -23,7 +23,7 @@ FIELDS = {
     'Klinische Dokumentation': {'Untersuchungscode', 'Zusatzcode', 'Zeitstempel', 'Wertcode'},
     'Impfung': {'Code', 'Zeitpunkt', 'Version'},
     'Befundbericht': {'Code', 'Zeitpunkt'},
-    'Behandlungsplan': {'Code', 'Zeitpunkt', 'Ende'},
+    'Behandlungsplan': {'Kategoriecode', 'Aktivitätscode', 'Erstellungsdatum', 'Beginn', 'Ende', 'Aktivitätsbeginn', 'Aktivitätsende'},
     'DocumentReference': {'Dokumentcode'},
 }
 

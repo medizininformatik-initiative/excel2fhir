@@ -74,7 +74,7 @@ measurement errors and tests not performed.
 | `DocumentReference` | Document code. |
 | `Impfung` | Code and vaccination time. |
 | `Befundbericht` | Code and investigation time. |
-| `Behandlungsplan` | Code and validity period. |
+| `Behandlungsplan` | Category and activity codes; creation, plan and activity dates. |
 
 Empty fields and explicit missing reasons have different output behavior; see
 [input fields](template-input-contracts.md). FHIR status codes such as `unknown`

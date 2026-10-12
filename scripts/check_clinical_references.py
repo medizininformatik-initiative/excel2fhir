@@ -30,7 +30,8 @@ def check_clinical_references(source, resources, report, medication_rows, docume
         return
     contacts = contact_expectations(source, report)
     pid = report.get('outputPatient', report['sourcePatient'].replace('_', '-'))
-    events = {event_id(pid, e['resource']['resourceType'], e['resource']['id']): e['resource']
+    plan_rows = {r['sourceId']: str(r['inputRow']) for r in report.get('clinicalImports', []) if r['resourceType'] == 'CarePlan'}
+    events = {event_id(pid, e['resource']['resourceType'], plan_rows.get(e['resource']['id'], e['resource']['id'])): e['resource']
               for e in source['entry'] if e['resource']['resourceType'] in ('CarePlan', 'DiagnosticReport')}
     sources = {e.get('fullUrl', e['resource']['resourceType'] + '/' + e['resource']['id']): e['resource'] for e in source['entry']}
     sources.update({e['resource']['resourceType'] + '/' + e['resource']['id']: e['resource'] for e in source['entry']})

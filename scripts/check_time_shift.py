@@ -21,7 +21,7 @@ def shift_days(report):
 def temporal_expectations(source, report):
     from synthea_to_excel import prepare
     settings = report.get('terminology', {})
-    rows, _ = prepare(source, {'SYNTHEA_MAPPING_YEAR': str(settings.get('mappingYear', '2026')), 'SYNTHEA_VERSION_OUTPUT': settings.get('versionOutput', 'Jahr')})
+    rows, evidence = prepare(source, {'SYNTHEA_MAPPING_YEAR': str(settings.get('mappingYear', '2026')), 'SYNTHEA_VERSION_OUTPUT': settings.get('versionOutput', 'Jahr')})
     pid = report.get('outputPatient', report['sourcePatient'].replace('_', '-'))
     options = report.get('converterOptions', {})
     resources = [e['resource'] for e in source['entry']]
@@ -48,9 +48,17 @@ def temporal_expectations(source, report):
         if kind == 'Observation': fields = {k: r.get(k) for k in ('effectiveDateTime', 'issued')}
         elif kind == 'Immunization': fields = {'occurrenceDateTime': r.get('occurrenceDateTime')}
         elif kind == 'DiagnosticReport': fields = {k: r.get(k) for k in ('effectiveDateTime', 'issued')}
-        elif kind == 'CarePlan': fields = {'period.' + k: r.get('period', {}).get(k) for k in ('start', 'end')}
+        elif kind == 'CarePlan': continue  # Plan and activity dates are checked below from named input fields.
         else: continue
         result[event_id(pid, kind, r['id'])] = fields
+    from check_careplans import expected_plans
+    for plan in expected_plans(rows['Behandlungsplan'], pid):
+        fields = {'created': plan.get('created')}
+        fields.update({'period.' + k: plan.get('period', {}).get(k) for k in ('start', 'end')})
+        for i, activity in enumerate(plan.get('activity', [])):
+            for key, value in activity['detail'].get('scheduledPeriod', {}).items():
+                fields[f'activity.{i}.detail.scheduledPeriod.{key}'] = value
+        result[plan['id']] = fields
     return result
 
 
@@ -69,7 +77,7 @@ def checked_original_times(source, target, report):
             parent = resource
             *parts, leaf = path.split('.')
             for part in parts:
-                parent = parent.get(part, {})
+                parent = parent[int(part)] if isinstance(parent, list) else parent.get(part, {})
             wanted = shift_date(original, days)
             actual = parent.get(leaf)
             assert (actual or '').replace('Z', '+00:00') == (wanted or '').replace('Z', '+00:00'), {

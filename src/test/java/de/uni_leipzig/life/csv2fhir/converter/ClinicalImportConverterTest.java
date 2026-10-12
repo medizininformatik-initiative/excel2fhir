@@ -9,6 +9,18 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    @Test public void carePlanRejectsOrphansAndPlanValuesOnContinuationRows() throws Exception {
+        var options = new ConverterOptions("");
+        var result = new ConverterResult(options);
+        assertThrows(IllegalArgumentException.class, () -> new CarePlanConverter(
+                row(Map.of("Patient-ID", "", "Aktivitätstext", "Orphan"), CarePlanConverter.Columns.values()),
+                "p1", result, null, options).convertInternal());
+        for (String field : CarePlanConverter.PLAN_FIELDS) {
+            assertFalse(field, CarePlanConverter.continuationErrors(name -> name.equals(field) ? "explicit" : "").isEmpty());
+        }
+        assertTrue(CarePlanConverter.continuationErrors(name -> name.equals("Aktivitätstext") ? "Activity" : "").isEmpty());
+    }
+
     private Patient patientWith(Map<String, String> values) throws Exception {
         var options = new ConverterOptions("");
         return (Patient)new PatientConverter(row(values, PatientConverter.Person_Columns.values()), null,
@@ -65,7 +77,7 @@ public class ClinicalImportConverterTest {
             var values = Map.of("Eintrag ID", "entry", "Status", value, "Absicht", value);
             resources.addAll(new ClinicalEventConverter.Vaccine(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
             resources.addAll(new ClinicalEventConverter.Report(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
-            resources.addAll(new ClinicalEventConverter.Plan(row(values, ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new CarePlanConverter(row(Map.of("Planstatus", value, "Absicht", value, "Aktivitätsstatus", value), CarePlanConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
             resources.addAll(new ProcedureConverter(row(values, ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
             resources.addAll(new DocumentReferenceConverter(row(Map.of("Status", value, "Dokumenttext", "Test"), DocumentReferenceConverter.DocumentReference_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
             resources.addAll(new ObservationLaboratoryConverter(row(values, ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
@@ -663,7 +675,7 @@ public class ClinicalImportConverterTest {
         var event = row(Map.of("Eintrag ID", "empty"), ClinicalEventConverter.Columns.values());
         resources.addAll(new ClinicalEventConverter.Vaccine(event, null, new ConverterResult(options), null, options).convertInternal());
         resources.addAll(new ClinicalEventConverter.Report(event, null, new ConverterResult(options), null, options).convertInternal());
-        resources.addAll(new ClinicalEventConverter.Plan(event, null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new CarePlanConverter(row(Map.of(), CarePlanConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
         for (Resource resource : resources) {
             for (var format : List.of(OutputFileType.JSON, OutputFileType.XML)) {
                 String encoded = format.getParser().encodeResourceToString(resource);
@@ -721,8 +733,8 @@ public class ClinicalImportConverterTest {
         assertEquals("Freier Dokumenttyp", document.getType().getText());
         assertFalse(document.getType().hasCoding());
         assertEquals("not-asked", document.getDateElement().getExtensionFirstRep().getValue().primitiveValue());
-        CarePlan plan = (CarePlan)new ClinicalEventConverter.Plan(row(Map.of("Eintrag ID", "plan", "Aktivitätscodes", "12345"),
-                ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+        CarePlan plan = (CarePlan)new CarePlanConverter(row(Map.of("Aktivitätscode", "12345"),
+                CarePlanConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
         assertEquals("12345", plan.getActivityFirstRep().getDetail().getCode().getCodingFirstRep().getCode());
         assertFalse(plan.getActivityFirstRep().getDetail().hasStatus());
     }

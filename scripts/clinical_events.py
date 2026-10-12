@@ -28,15 +28,21 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
         encounter = r.get('encounter', {}).get('reference')
         if encounter and (encounter not in index or index[encounter]['id'] not in encounters): raise ValueError('Broken encounter '+encounter)
         nr = encounters[index[encounter]['id']] if encounter else ''
+        if typ == 'CarePlan':
+            from careplan_import import project_plan
+            first_row = len(rows['Behandlungsplan']) + 1
+            rows['Behandlungsplan'].extend(project_plan(r, pid, nr, loss))
+            imported.append({'sourceId': r['id'], 'resourceType': typ, 'inputRow': first_row})
+            continue
         values = {'Patient-ID': pid, 'Fall-Nr': nr, 'Eintrag ID': r['id']}
         handled = {'resourceType','id','subject','patient','encounter'}
         try:
             cc = (r.get('vaccineCode') if typ=='Immunization'
-                  else next((c for c in r.get('category',[]) if any(v.get('system')=='http://snomed.info/sct' for v in c.get('coding',[]))), {}) if typ=='CarePlan' else r.get('code'))
+                  else r.get('code'))
             code, system, label = coding(cc or {})
             if len((cc or {}).get('coding',[]))>1:loss('code.coding[1:]','Erstes Coding übernommen; weitere Codings nicht dargestellt')
             values.update({'Code':code,'Codesystem':system,'Bezeichner':label})
-            handled.add('vaccineCode' if typ=='Immunization' else 'category' if typ=='CarePlan' else 'code')
+            handled.add('vaccineCode' if typ=='Immunization' else 'code')
             for source, target in [('status','Status'),('intent','Absicht')]:
                 if target in SCHEMAS[SHEETS[typ]]:
                     values[target] = r.get(source,''); handled.add(source)
@@ -63,17 +69,6 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
                 # Presented notes remain in the DocumentReference input; no
                 # attachment text is relabelled as a diagnostic conclusion.
                 handled.update(['effectiveDateTime','issued','result','conclusion'])
-            elif typ=='CarePlan':
-                values['Zeitpunkt']=r.get('period',{}).get('start','');values['Ende']=r.get('period',{}).get('end','')
-                values['Beschreibung']=r.get('description','')
-                activities=[]
-                for activity in r.get('activity',[]):
-                    ac, sy, _=coding(activity.get('detail',{}).get('code',{}))
-                    if sy!='SNOMED CT (Version nicht angegeben)':raise UnsupportedValue('Activity must use SNOMED')
-                    activities.append(ac)
-                values['Aktivitätscodes']=';'.join(activities)
-                if activities:loss('activity','Aktivitätscodes übernommen; Detailstatus als unknown erzeugt, weitere Details fehlen')
-                handled.update(['period','description'])
             rows[SHEETS[typ]].append(record(SHEETS[typ], values))
             imported.append({'sourceId':r['id'],'resourceType':typ})
             for key in r.keys()-handled:loss(key,'Eigenschaft nicht oder nur teilweise übernommen')

@@ -96,9 +96,8 @@ def expected_fields(source, report):
     for row in rows['Befundbericht']:
         r = add('DiagnosticReport', event_id(pid, 'DiagnosticReport', row['Eintrag ID']), code={'coding': [coding(row['Code'], row['Codesystem'])] if row['Code'] else []})
         if row['Beschreibung']: r['conclusion'] = row['Beschreibung']
-    for row in rows['Behandlungsplan']:
-        r = add('CarePlan', event_id(pid, 'CarePlan', row['Eintrag ID']))
-        if row['Beschreibung']: r['description'] = row['Beschreibung']
+    from check_careplans import expected_plans
+    for plan in expected_plans(rows['Behandlungsplan'], pid): result[plan['id']] = plan
     for number, row in enumerate(rows['DocumentReference']):
         add('DocumentReference', row_id(row, 'DR', 'DOCUMENT_REFERENCE', number),
             content=[{'attachment': {'data': base64.b64encode(row['Dokumenttext'].encode()).decode()}}])
@@ -110,7 +109,7 @@ def expected_fields(source, report):
             if not shifted: continue
             parent = result[identifier]
             *parts, key = path.split('.')
-            for part in parts: parent = parent.setdefault(part, {})
+            for part in parts: parent = parent[int(part)] if isinstance(parent, list) else parent.setdefault(part, {})
             parent[key] = shifted
     contacts = contact_expectations(source, report)
     diz = re.sub('[^A-Z]', '', pid.upper())
