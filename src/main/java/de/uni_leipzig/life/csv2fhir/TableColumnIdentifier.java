@@ -15,15 +15,6 @@ public interface TableColumnIdentifier {
     }
 
     /**
-     * @return If this value is absent but marked as mandatory then this default
-     *         value will be set. <code>null</code> is not a valid default value so
-     *         this will cause an error.
-     */
-    public default String getDefaultIfMissing() {
-        return null;
-    }
-
-    /**
      * @param potencialTableColumnIdentifier
      * @return <code>true</code> if the {@link Enum} is an
      *         {@link TableColumnIdentifier} and this TableColumnIdentifier returns

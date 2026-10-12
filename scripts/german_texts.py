@@ -41,10 +41,28 @@ class GermanTexts:
         self.translated = 0
         self.address = address
 
-    def observation_text(self, value, system, code, context='Observation.Wert'):
-        if SYSTEMS.get(system, system) == 'http://loinc.org' and code == '56799-0' and self.address:
+    def observation_text(self, value, system, code, context='Observation.Wert', *, require_translation=False):
+        system = SYSTEMS.get(system, system)
+        if system == 'http://loinc.org' and code == '56799-0' and self.address:
             self.translated += 1
             return ', '.join(self.address['line'])
+        # Synthea embeds counts and thresholds in strings. Translate the phrase,
+        # preserving its parameter verbatim instead of enumerating sampled values.
+        if system == 'http://loinc.org' and code == '29554-3':
+            match = re.fullmatch(r'CABG (Grafts|Arterial Conduits): ([0-9]+)', value)
+            if match:
+                arterial, count = match[1] == 'Arterial Conduits', match[2]
+                noun = 'Transplantat' if int(count) == 1 else 'Transplantate'
+                adjective = ('arterielles ' if int(count) == 1 else 'arterielle ') if arterial else ''
+                self.translated += 1
+                return f'Koronarbypass: {count} {adjective}{noun}'
+        if system == 'http://loinc.org' and code == '85318-4':
+            match = re.fullmatch(r'less than ([0-9]+(?:\.[0-9]+)?)', value)
+            if match:
+                self.translated += 1
+                return 'kleiner als ' + match[1]
+        if require_translation:
+            return self.german_only(value, context)
         return self.text(value, context)
 
     def missing_text(self, value, context):
@@ -59,6 +77,21 @@ class GermanTexts:
         if result is None: return self.missing_text(value, context)
         self.translated += 1
         return result
+
+    def german_only(self, value, context, system=None, code=None):
+        """Use known German text; retain untranslated source text in the report."""
+        choices = self.codes.get((SYSTEMS.get(system, system), str(code)), {}) if code else self.words
+        translated = choices.get(str(value).casefold())
+        if translated is not None:
+            self.translated += 1
+            return translated
+        if value and (value in choices.values() or value in self.words.values()):
+            return value
+        self.missing_text(value, context)
+        if code and choices:
+            self.translated += 1
+            return next(iter(choices.values()))
+        return ''
 
     def fragments(self, value, context):
         """Replace whole known phrases once; audit every unmatched text span."""
@@ -120,7 +153,8 @@ def localize_rows(rows, address=None):
                 continue  # Product mapping translated before removing source coding.
             if sheet == 'Impfung' and (row[system].startswith('ATC ') or row[system] == ''):
                 continue  # Detailed vaccine text was translated before removing CVX.
-            row[label] = tr.text(row[label], sheet, row[system], row[code])
+            translate = tr.german_only if sheet in ('Laborbefund', 'Klinische Dokumentation', 'Behandlungsplan') else tr.text
+            row[label] = translate(row[label], sheet, row[system], row[code])
     for args in [('Diagnose', 'Bezeichner', 'Code', 'Codesystem'),
                  ('Prozedur', 'Prozedurentext', 'Prozedurencode', 'Codesystem'),
                  ('Laborbefund', 'Parameter', 'LOINC', 'Codesystem'),
@@ -136,11 +170,15 @@ def localize_rows(rows, address=None):
         code_field = 'LOINC' if sheet == 'Laborbefund' else 'Untersuchungscode'
         for row in rows.get(sheet, []):
             if row['Werttyp'] == 'Text':
-                row[value_field] = tr.observation_text(row[value_field], row['Codesystem'], row[code_field], sheet+'.Wert')
+                row[value_field] = tr.observation_text(row[value_field], row['Codesystem'], row[code_field],
+                                                     sheet+'.Wert', require_translation=True)
             elif row['Werttyp'] == 'Code':
-                row[value_field] = tr.text(row[value_field], sheet+'.Wert', row['Wertcodesystem'], row['Wertcode'])
-    for sheet, field in [('Medikation', 'Dosierungstext'), ('Befundbericht', 'Beschreibung'), ('Behandlungsplan', 'Beschreibung')]:
+                row[value_field] = tr.german_only(row[value_field], sheet+'.Wert', row['Wertcodesystem'], row['Wertcode'])
+    for sheet, field in [('Medikation', 'Dosierungstext'), ('Befundbericht', 'Beschreibung')]:
         for row in rows.get(sheet, []):
             if row[field]: row[field] = tr.text(row[field], sheet+'.Freitext')
+    for row in rows.get('Behandlungsplan', []):
+        for field in ('Titel', 'Beschreibung', 'Aktivitätsstatusgrund'):
+            if row[field]: row[field] = tr.german_only(row[field], 'Behandlungsplan.' + field)
     for row in rows.get('DocumentReference', []): row['Dokumenttext'] = tr.document(row['Dokumenttext'], 'DocumentReference.Text')
     return tr.report()

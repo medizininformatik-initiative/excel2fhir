@@ -14,7 +14,7 @@ See [running the workflow](synthea-workflow.md) or [importing bundles](synthea-m
 | Condition | `Diagnose` | Source and mapped coding, documentation/onset/abatement times, status and case association. |
 | Procedure | `Prozedur` | Assessed OPS/SNOMED coding, period, status, category and patient/case association. |
 | Observation | `Laborbefund` / `Klinische Dokumentation` | Numeric values with comparisons, text, coded and Boolean values, missing reasons, components, category, status, effective/issued times and explicit unit labels, codes and systems. |
-| MedicationRequest / MedicationAdministration | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
+| MedicationRequest / MedicationAdministration / MedicationStatement | `Medikation` | Product, status, intent, event times, dosage text, first dose and simple daily frequency. |
 | Medication | Product fields in medication rows | Referenced definitions, German product selection and ingredient information. |
 | Immunization | `Impfung` | ATC classification for the selected catalogue year, vaccine text, time, status, primary-source flag and patient/case association. |
 | DiagnosticReport | `Befundbericht` | First coding, times, status, resolvable result references and conclusion. |
@@ -67,8 +67,8 @@ codes and IDs in the report, with their own target coding in Excel.
 Contextual rules enrich 261 additional source concepts with compatible OPS
 replacements or separate companion services. Selection is deterministic per source
 event, with guards for age, reproductive context, anatomy, indication and time.
-Conflicting source events are reported and withheld; incompatible enrichments retain
-the source service. The report records rejected candidates, assumptions, selection
+Clinically conflicting source events retain their original coding and times with
+a review warning; incompatible enrichments retain the source service. The report records rejected candidates, assumptions, selection
 seeds, synthetic periods and shared output links. See
 [procedure mapping behavior and maintenance](procedure-mapping-maintenance.md) for
 precise defaults, coverage interpretation and reproducible source checks.
@@ -80,6 +80,16 @@ The table records sources for these decisions, including the
 Clinical review assesses the appropriateness of each synthetic interpretation.
 
 ## Observations and documents
+
+Bundles can contain clinical data without any diagnoses. Missing Observation
+categories remain empty and use `Klinische Dokumentation`. For multiple categories,
+the first representable category determines the sheet; additional categories are
+reported. Explicit coding versions and custom systems do not exclude an event.
+Versions use existing version columns where available; other versions remain in
+the source bundle and are listed in the loss report.
+
+Integer results use the numeric value column. Unsupported values or components are
+reported individually while the parent and representable components remain available.
 
 Observation components follow the main row and reference its `Untersuchung ID`.
 Diagnostic reports use the same IDs. The converter creates patient-specific FHIR
@@ -114,3 +124,7 @@ Additional categories, additional codings and fields outside the sheet are recor
 in the loss report. Texts use the shared German terminology mapping; missing values
 remain empty. Source resource IDs are associated with the generated plan through
 `clinicalImports.inputRow` in the import report.
+
+Medication imports leave ingredient code/system empty when no ingredient mapping
+is available. Missing medication event times remain empty; the importer does not
+create an unknown Data Absent Reason for these omissions.

@@ -50,7 +50,7 @@ def procedure_decisions(decisions, year):
         if decision.get('targets'): decision['targets'] = [target(c, year) for c in decision['targets']]
         for output in decision['outputs']:
             output['codings'] = [target(c, year) for c in output['codings']]
-            if output['codings'][0]['system'] in SYSTEMS:
+            if output['codings'][0].get('system') in SYSTEMS:
                 output['label'] = output['codings'][0]['display']
         if decision.get('chemotherapyBlock'):
             block = decision['chemotherapyBlock']
@@ -76,7 +76,7 @@ def version_rows(rows, year, mode):
             for code_field, system_field, version_field in pairs:
                 selection = row[system_field]
                 annual = selection.startswith(('ICD-10-GM ', 'OPS ', 'ATC '))
-                row[version_field] = version_value(selection.rsplit(' ', 1)[-1], mode) if row[code_field] and annual else ''
+                row[version_field] = version_value(selection.rsplit(' ', 1)[-1], mode) if row[code_field] and annual else row[version_field]
                 if annual: row[system_field] = selection.rsplit(' ', 1)[0]
     for row in rows.get('Medikation', []):
         row['ATC-Version'] = version_value(year, mode) if row['ATC-Code'] else ''

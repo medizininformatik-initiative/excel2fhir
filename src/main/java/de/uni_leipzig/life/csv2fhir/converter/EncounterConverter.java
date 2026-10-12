@@ -284,12 +284,6 @@ public class EncounterConverter extends Converter {
         }
     }
 
-    /**
-     * Value that will be set if the mandatory column "Versorgungsfall-Nr" is
-     * missing in the data table sheets.
-     */
-    public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
-
     /** Map with the encounter types and its displays. */
     public static final CodeSystemMapper ENCOUNTER_TYPE_RESOURCES = new CodeSystemMapper("Encounter_Type.map");
 

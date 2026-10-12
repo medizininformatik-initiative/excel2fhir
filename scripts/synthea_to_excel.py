@@ -153,13 +153,13 @@ def prepare(bundle, options=None):
         if not coding: raise ValueError('Condition without coding; no empty clinical shell emitted')
         chosen = []
         for c in coding:
-            if c.get('system') == SNOMED and not c.get('version'):
+            if c.get('system') == SNOMED:
                 selection = 'SNOMED CT (Version nicht angegeben)'
             elif c.get('system') == 'http://fhir.de/CodeSystem/bfarm/icd-10-gm' and c.get('version') in map(str,range(2009,2027)):
                 selection = 'ICD-10-GM ' + c['version']
-            else: raise ValueError('Unsupported coding system/version: ' + str(c))
+            else: selection = c.get('system', '')
             if not c.get('code'): raise ValueError('Source coding without code')
-            chosen.append({'code': c['code'], 'system': selection})
+            chosen.append({'code': c['code'], 'system': selection, 'version': c.get('version', '')})
             for key in c.keys() - {'system','version','code'}:loss(r,'code.coding.'+key,'Bezeichner übernommen, Coding-Metadaten nicht separat darstellbar')
         if len(chosen)>2 or len({c.get('system')for c in coding}) != len(coding):
             raise ValueError('More codings than supported by the diagnosis sheet/profile')
@@ -192,6 +192,8 @@ def prepare(bundle, options=None):
             'Codesystem': chosen[0]['system'],
             'Zusatzcode': chosen[1]['code'],
             'Zusatzcodesystem': chosen[1]['system'],
+            'Version': chosen[0].get('version', ''),
+            'Zusatzversion': chosen[1].get('version', ''),
             'Dokumentationszeitpunkt': r.get('recordedDate',''),
             'Beginn': r.get('onsetDateTime',''),
             'Ende': r.get('abatementDateTime',''),
@@ -206,7 +208,6 @@ def prepare(bundle, options=None):
                 for key in c.keys() - {'system','code'}:loss(r,f'{field}.coding[{i}].'+key,'Generator unterstützt Sachverhalt noch nicht')
         for field in ['subject','encounter']:
             for key in r.get(field,{}).keys() - {'reference'}:loss(r,field+'.'+key,'Generator unterstützt Sachverhalt noch nicht')
-    if not source_conditions:raise ValueError('No diagnoses: this package must not emit an administrative shell')
     clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers, year)
     rows.update(clinical_rows)
     event_rows, event_report = prepare_events(entries, pid, encounter_numbers,

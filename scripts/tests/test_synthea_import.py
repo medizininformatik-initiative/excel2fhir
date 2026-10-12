@@ -61,15 +61,18 @@ class ImportTest(unittest.TestCase):
         self.assertEqual(report['importedConditions'],1)
         self.assertTrue(any(x['resourceType']=='Procedure'for x in report['losses']))
 
-    def test_rejects_broken_reference_and_unknown_version(self):
+    def test_rejects_broken_reference_and_retains_unknown_version(self):
         source=bundle();source['entry'][2]['resource']['encounter']['reference']='urn:uuid:missing'
         with self.assertRaises(ValueError):prepare(source)
         source=bundle();source['entry'][2]['resource']['code']['coding'][0]['version']='unverified-release'
-        with self.assertRaises(ValueError):prepare(source)
+        rows, _ = prepare(source)
+        self.assertEqual(rows['Diagnose'][0]['Version'], 'unverified-release')
 
-    def test_never_emits_administrative_shell_or_relabels_unknown_encounter_class(self):
+    def test_imports_without_diagnoses_and_rejects_unknown_encounter_class(self):
         source=bundle();source['entry']=[x for x in source['entry']if x['resource']['resourceType']!='Condition']
-        with self.assertRaises(ValueError):prepare(source)
+        rows, report = prepare(source)
+        self.assertEqual(rows['Diagnose'], [])
+        self.assertEqual(report['sourceConditions'], 0)
         source=bundle();source['entry'][1]['resource']['class']['code']='UNKNOWN'
         with self.assertRaises(ValueError):prepare(source)
 

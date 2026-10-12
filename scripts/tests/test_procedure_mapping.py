@@ -85,8 +85,7 @@ class ProcedureMappingTest(unittest.TestCase):
         self.assertEqual(len(rows['Prozedur']), len(outputs))
         self.assertEqual(len(report['clinicalMappings']), len(ENTRIES))
         self.assertEqual({l['id'] for l in report['losses'] if l['resourceType'] == 'Procedure' and l['path'] == '$'},
-                         {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'} |
-                         {'procedure-22523008', 'procedure-90470006', 'procedure-65575008'})
+                         {'procedure-' + code for code, e in ENTRIES.items() if e['status'] == 'excluded'})
         for row, projected in zip(rows['Prozedur'], outputs):
             self.assertEqual(row['Prozedurencode'], projected['codings'][0]['code'])
             self.assertEqual(row['Durchführungsbeginn'], '2026-09-01T08:00:00+02:00')

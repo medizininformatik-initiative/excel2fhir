@@ -343,50 +343,13 @@ public abstract class Converter {
         return null;
     }
 
-    /**
-     * In old excel files the column with the encounter number does not exists.
-     * That means that this number should always be 1 (in every table sheet) and
-     * there is always only 1 encounter per patient possible.</br>
-     * Now there is an extra column in every sheet for the encounter number so that
-     * we can define multiple encounters for 1 patient and add medication,
-     * diagnosis etc. to a special encounter.</br>
-     * To ensure that the files without the encounter number column will still be
-     * converted we set the value 1 if the column is missing. Same happens if the
-     * column exists and the value is mandatory but missing.</br>
-     * If the column is optional but exists then the value of the column will be
-     * inserted in the full ID. Only in this case the resulting ID can be
-     * <code>null</code> if the value in the record is empty.</br>
-     * If the column is optional and is not in the data then (for backward
-     * compatibility reason) the value will set to 1.
-     *
-     * @return the encounter ids in the record or a default if the column is
-     *         mandatory.
-     * @throws Exception
-     */
+    /** Read explicit encounter numbers; a missing or empty column leaves the association absent. */
     private List<String> parseEncounterIds() throws Exception {
-        TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
-        // missing encounter number -> set it to 1 if the column does not exists in the
-        // table
-        if (encounterIDColumnIdentifier == null) {
-            return Collections.emptyList();
-        }
-        String encounterIDColumnName = encounterIDColumnIdentifier.toString();
-        boolean columnExists = record.isMapped(encounterIDColumnName);
-        List<String> encounterNumbers = null;
-        if (columnExists) {
-            String recordEncounterNumbers = record.get(encounterIDColumnName);
-            if (!isBlank(recordEncounterNumbers)) {
-                encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
-            }
-        } else {
-            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a
-                                                                                                            // mutable
-                                                                                                            // list!
-        }
-        // is still null if the column exists but the value is missing
-        if (encounterNumbers == null || encounterNumbers.isEmpty()) {
-            return Collections.emptyList();
-        }
+        TableColumnIdentifier column = getMainEncounterNumberColumnIdentifier();
+        if (column == null || !record.isMapped(column.toString())) return Collections.emptyList();
+        String value = record.get(column.toString());
+        if (isBlank(value)) return Collections.emptyList();
+        List<String> encounterNumbers = StringUtils.parseList(value, ",");
         for (int i = encounterNumbers.size() - 1; i >= 0; i--) {
             encounterNumbers.set(i, pid + ResourceIdSuffix.ENCOUNTER_LEVEL_1 + encounterNumbers.get(i));
         }

@@ -21,6 +21,24 @@ public class ClinicalImportConverterTest {
         assertTrue(CarePlanConverter.continuationErrors(name -> name.equals("Aktivitätstext") ? "Activity" : "").isEmpty());
     }
 
+    @Test public void missingEncounterColumnBehavesLikeEmptyColumn() throws Exception {
+        var options = new ConverterOptions("");
+        for (String csv : List.of("Patient-ID\npatient\n", "Patient-ID,Fall-Nr\npatient,\n")) {
+            try (var parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true)
+                    .setNullString("").get().parse(new StringReader(csv))) {
+                var converter = new CarePlanConverter(parser.getRecords().get(0), null,
+                        new ConverterResult(options), null, options);
+                assertTrue(converter.getEncounterIds().isEmpty());
+                CarePlan plan = (CarePlan)converter.convertInternal().get(0);
+                assertFalse(plan.hasEncounter());
+                assertEquals("Patient/patient", plan.getSubject().getReference());
+            }
+        }
+        var explicit = new CarePlanConverter(row(Map.of("Fall-Nr", "1,2"), CarePlanConverter.Columns.values()),
+                null, new ConverterResult(options), null, options);
+        assertEquals(List.of("patient-E-1", "patient-E-2"), explicit.getEncounterIds());
+    }
+
     private Patient patientWith(Map<String, String> values) throws Exception {
         var options = new ConverterOptions("");
         return (Patient)new PatientConverter(row(values, PatientConverter.Person_Columns.values()), null,

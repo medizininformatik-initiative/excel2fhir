@@ -11,6 +11,52 @@ from german_texts import GermanTexts, PATH, catalog, localize_rows
 
 
 class GermanTextsTest(unittest.TestCase):
+    def test_parameterized_observation_text_preserves_counts_and_thresholds(self):
+        examples = [
+            ('29554-3', 'CABG Grafts: 3', 'Koronarbypass: 3 Transplantate'),
+            ('29554-3', 'CABG Grafts: 1', 'Koronarbypass: 1 Transplantat'),
+            ('29554-3', 'CABG Grafts: 12', 'Koronarbypass: 12 Transplantate'),
+            ('29554-3', 'CABG Arterial Conduits: 2', 'Koronarbypass: 2 arterielle Transplantate'),
+            ('29554-3', 'CABG Arterial Conduits: 6', 'Koronarbypass: 6 arterielle Transplantate'),
+            ('29554-3', 'CABG Arterial Conduits: 1', 'Koronarbypass: 1 arterielles Transplantat'),
+            ('29554-3', 'CABG Arterial Conduits: 0', 'Koronarbypass: 0 arterielle Transplantate'),
+            ('85318-4', 'less than 1.8', 'kleiner als 1.8'),
+            ('85318-4', 'less than 0.050', 'kleiner als 0.050'),
+            ('85318-4', 'less than 2', 'kleiner als 2'),
+            ('X9999-1', 'emergent_salvage', 'Notfallmäßiger Rettungseingriff'),
+        ]
+        for code, source, expected in examples:
+            for sheet in ['Laborbefund', 'Klinische Dokumentation']:
+                with self.subTest(source=source, sheet=sheet):
+                    value_field = 'Messwert' if sheet == 'Laborbefund' else 'Wert'
+                    code_field = 'LOINC' if sheet == 'Laborbefund' else 'Untersuchungscode'
+                    row = record(sheet, {value_field: source, code_field: code, 'Codesystem': 'LOINC',
+                                         'Werttyp': 'Text', 'Untersuchung ID': 'value',
+                                         'Komponente von': 'parent' if code == 'X9999-1' else ''})
+                    original = dict(row)
+                    report = localize_rows({sheet: [row]})
+                    self.assertEqual(row[value_field], expected)
+                    labels = {value_field, 'Parameter', 'Bezeichner'}
+                    self.assertEqual({k:v for k,v in row.items() if k not in labels},
+                                     {k:v for k,v in original.items() if k not in labels})
+                    self.assertFalse(any(m['context'] == sheet + '.Wert' for m in report['missing']))
+                    self.assertEqual(GermanTexts().observation_text(source, 'http://loinc.org', code), expected)
+
+    def test_unknown_observation_text_remains_detectable_by_source_comparison(self):
+        for source, system, code in [
+            ('CABG Grafts: 3', 'SNOMED CT (Version nicht angegeben)', '29554-3'),
+            ('CABG Grafts: 3', 'LOINC', 'other'),
+            ('CABG Grafts: 3 extra', 'LOINC', '29554-3'),
+            ('less than 1.8 extra', 'LOINC', '85318-4'),
+            ('Novel source value', 'LOINC', '85318-4'),
+        ]:
+            with self.subTest(source=source, system=system, code=code):
+                tr = GermanTexts()
+                self.assertEqual(tr.observation_text(source, system, code, require_translation=True), '')
+                self.assertEqual(tr.report()['missing'], [
+                    {'context': 'Observation.Wert', 'original': source, 'occurrences': 1}])
+                self.assertEqual(GermanTexts().observation_text(source, system, code), source)
+
     def test_full_registry_coverage_and_provenance(self):
         data = catalog()[0]
         source = PATH.with_name('synthea-source-code-registry.json')

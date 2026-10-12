@@ -1,5 +1,6 @@
 """Project a general CarePlan into one plan row and activity continuation rows."""
 from workbook_records import record
+from german_texts import GermanTexts
 
 
 def project_plan(plan, patient, encounter, loss):
@@ -29,13 +30,21 @@ def project_plan(plan, patient, encounter, loss):
         path = f'activity[{i}]'
         detail = activity.get('detail', {})
         fields = code_fields(detail.get('code', {}), 'Aktivitäts', path + '.detail.code')
+        description = detail.get('description', '')
+        if description:
+            texts = GermanTexts()
+            translated = texts.german_only(description, path + '.detail.description')
+            if translated:
+                fields['Aktivitätstext'] = translated
+            else:
+                loss(path + '.detail.description', 'Deutsche Übersetzung fehlt: ' + description)
         fields.update({'Aktivitätsstatus': detail.get('status', ''),
                        'Aktivitätsstatusgrund': detail.get('statusReason', {}).get('text', ''),
                        'Aktivitätsbeginn': detail.get('scheduledPeriod', {}).get('start', ''),
                        'Aktivitätsende': detail.get('scheduledPeriod', {}).get('end', ''),
                        'Aktivitätsort': detail.get('location', {}).get('display', '')})
         for key in activity.keys() - {'detail'}: loss(path + '.' + key, 'Eigenschaft nicht übernommen')
-        for key in detail.keys() - {'code', 'status', 'statusReason', 'scheduledPeriod', 'location'}:
+        for key in detail.keys() - {'code', 'description', 'status', 'statusReason', 'scheduledPeriod', 'location'}:
             loss(path + '.detail.' + key, 'Eigenschaft nicht übernommen')
         for parent, kept in [('statusReason', {'text'}), ('location', {'display'}), ('scheduledPeriod', {'start', 'end'})]:
             for key in detail.get(parent, {}).keys() - kept:

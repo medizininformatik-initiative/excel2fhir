@@ -138,8 +138,8 @@ def audit(source, workbook, target, report):
     index.update({e['fullUrl']: e['resource'] for e in source['entry'] if e.get('fullUrl')})
     meds = {r['id']: r for r in dst if r['resourceType'] == 'Medication'}
     mapping = {e['source']['code']: e for e in json.loads((MAPS/'synthea-medications-de-2026.json').read_text())['entries']}
-    source_meds = [r for r in src if r['resourceType'] in ('MedicationRequest', 'MedicationAdministration')]
-    assert len(source_meds) == len(sheets['Medikation']) == target_counts['MedicationRequest'] + target_counts['MedicationAdministration']
+    source_meds = [r for r in src if r['resourceType'] in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement')]
+    assert len(source_meds) == len(sheets['Medikation']) == sum(target_counts[t] for t in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'))
     expected_events = Counter()
     for resource, row in zip(source_meds, sheets['Medikation']):
         typ = resource['resourceType']
@@ -147,23 +147,30 @@ def audit(source, workbook, target, report):
         first = cc['coding'][0]
         assert first['system'] == RX, 'Extend independent audit for a new source medication system'
         entry = mapping.get(str(first['code']), {})
-        assert row.get('ATC-Code', '') == (entry.get('atc') or {}).get('code', '')
+        source_dosage = resource.get('dosage', {}) if typ == 'MedicationAdministration' else resource.get('dosage' if typ == 'MedicationStatement' else 'dosageInstruction', [])
+        def has_facts(value):
+            if isinstance(value, dict): return any(has_facts(v) for k, v in value.items() if k not in ('sequence', 'id'))
+            if isinstance(value, list): return any(has_facts(v) for v in value)
+            return value is not None and value != ''
+        supplied_dosage = has_facts(source_dosage)
         product = entry.get('product') or {}
+        atc = entry.get('atc')
+        assert row.get('ATC-Code', '') == (atc or {}).get('code', '')
         assert row.get('Präparatcode', '') == product.get('code', '')
         if not product: assert 'PZN-Zuordnung offen' in row['Präparatbezeichnung']
-        if not entry.get('atc'): assert 'ATC-Zuordnung offen' in row['Präparatbezeichnung']
-        assert row['Medikationstyp'] == ('Verordnung' if typ == 'MedicationRequest' else 'Verabreichung')
-        dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosageInstruction') or [{}])[0]
+        if not atc: assert 'ATC-Zuordnung offen' in row['Präparatbezeichnung']
+        assert row['Medikationstyp'] == {'MedicationRequest': 'Verordnung', 'MedicationAdministration': 'Verabreichung', 'MedicationStatement': 'Medikationsaussage'}[typ]
+        dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosage' if typ == 'MedicationStatement' else 'dosageInstruction') or [{}])[0]
         quantity = dose.get('dose', {}) if typ == 'MedicationAdministration' else next((v['doseQuantity'] for v in dose.get('doseAndRate', []) if 'doseQuantity' in v), {})
         repeat = dose.get('timing', {}).get('repeat', {})
         frequency = str(repeat['frequency']) if repeat.get('period') == 1 and repeat.get('periodUnit') == 'd' and 'frequency' in repeat else ''
         enrichment = entry.get('enrichment') or {}
-        if enrichment.get('resetDose'):
+        if not supplied_dosage and enrichment.get('resetDose'):
             replacement = enrichment['dose']
             quantity = {'value': replacement['value'], 'unit': replacement['unit']}
             frequency = replacement['frequency']
             assert row.get('Dosierungstext', '') == replacement['text']
-        if quantity.get('value') not in (None, '') and not quantity.get('code', quantity.get('unit', '')) and product.get('sourceCountUnit'):
+        if not supplied_dosage and quantity.get('value') not in (None, '') and not quantity.get('code', quantity.get('unit', '')) and product.get('sourceCountUnit'):
             quantity = {**quantity, 'unit': product['sourceCountUnit']}
         assert decimal(row.get('Einzeldosis')) == decimal(quantity.get('value'))
         assert row.get('Dosiereinheit', '') == quantity.get('code', quantity.get('unit', ''))
@@ -181,9 +188,9 @@ def audit(source, workbook, target, report):
     actual_events = Counter(); text_doses = 0
     for resource in dst:
         typ = resource['resourceType']
-        if typ not in ('MedicationRequest', 'MedicationAdministration'): continue
+        if typ not in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'): continue
         med = meds[resource['medicationReference']['reference'].removeprefix('Medication/')]
-        dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosageInstruction') or [{}])[0]
+        dose = resource.get('dosage', {}) if typ == 'MedicationAdministration' else (resource.get('dosage' if typ == 'MedicationStatement' else 'dosageInstruction') or [{}])[0]
         quantity = dose.get('dose', {}) if typ == 'MedicationAdministration' else next((v['doseQuantity'] for v in dose.get('doseAndRate', []) if 'doseQuantity' in v), {})
         amount, unit = decimal(quantity.get('value')), quantity.get('code', quantity.get('unit', ''))
         for extension in quantity.get('_value', {}).get('extension', []):
@@ -209,13 +216,25 @@ def audit(source, workbook, target, report):
     observations = {r['id']: r for r in dst if r['resourceType'] == 'Observation'}
     omitted_observations = {l['id'] for l in report['losses'] if l['resourceType']=='Observation' and l['path']=='$'}
     checked = 0
-    def observation_value(before, after):
+    observation_losses = {(l['id'], l['path']) for l in report['losses'] if l['resourceType'] == 'Observation'}
+    def observation_codes(concept, identifier, path):
+        values = codings(concept)[:2]
+        return tuple((system, code, None if (identifier, path + f'.coding[{i}].version') in observation_losses else version)
+                     for i, (system, code, version) in enumerate(values)
+                     if (identifier, path.lstrip('.') + f'.coding[{i}]') not in observation_losses)
+    def observation_value(before, after, identifier, path=''):
+        if (identifier, path + 'value[x]') in observation_losses:
+            assert not any(k.startswith('value') for k in after)
+            return
+        if 'valueInteger' in before:
+            assert decimal(before['valueInteger']) == decimal(after['valueQuantity']['value'])
         if 'valueQuantity' in before:
             q, t = before['valueQuantity'], after['valueQuantity']
             assert decimal(q.get('value')) == decimal(t.get('value'))
             for field in ('unit', 'code', 'system', 'comparator'):
                 assert q.get(field) == t.get(field), (field, q, t)
-        if 'valueCodeableConcept' in before: assert codings(before['valueCodeableConcept'])[:1] == codings(after['valueCodeableConcept'])
+        if 'valueCodeableConcept' in before:
+            assert observation_codes(before['valueCodeableConcept'], identifier, '.' + path + 'valueCodeableConcept')[:1] == codings(after['valueCodeableConcept'])
         if 'valueBoolean' in before: assert before['valueBoolean'] == after['valueBoolean']
         if 'dataAbsentReason' in before: assert codings(before['dataAbsentReason']) == codings(after['dataAbsentReason'])
     for resource in src:
@@ -223,7 +242,7 @@ def audit(source, workbook, target, report):
         if resource['id'] in omitted_observations: continue
         key = 'Observation-' + str(uuid.UUID(bytes=hashlib.md5((pid+'|Observation|'+resource['id']).encode()).digest(), version=3))
         found = observations[key];checked += 1
-        expected_codes = codings(resource['code'])[:2]
+        expected_codes = observation_codes(resource['code'], resource['id'], '.code')
         if expected_codes and expected_codes[0][0] == SNOMED and expected_codes[0][1] in ('413077008', '413078003'):
             assert resource['valueQuantity']['code'] == '{logmar}'
             correct = {'413077008': '6617-5', '413078003': '6616-7'}[expected_codes[0][1]]
@@ -232,10 +251,13 @@ def audit(source, workbook, target, report):
         assert resource.get('effectiveDateTime') == found.get('effectiveDateTime')
         assert resource.get('issued') == found.get('issued')
         assert resource.get('status') == found.get('status')
-        observation_value(resource, found)
-        assert len(resource.get('component', [])) == len(found.get('component', []))
-        for before, after in zip(resource.get('component', []), found.get('component', [])):
-            assert codings(before['code'])[:2] == codings(after['code']); observation_value(before, after)
+        observation_value(resource, found, resource['id'])
+        retained = [(i, c) for i, c in enumerate(resource.get('component', []))
+                    if (resource['id'], f'component[{i}].code') not in observation_losses]
+        assert len(retained) == len(found.get('component', []))
+        for (i, before), after in zip(retained, found.get('component', [])):
+            assert observation_codes(before['code'], resource['id'], f'.component[{i}].code') == codings(after['code'])
+            observation_value(before, after, resource['id'], f'component[{i}].')
     assert checked == len(observations)
     return {'status': 'PASSED', 'sourceCounts': dict(source_counts), 'targetCounts': dict(target_counts),
             'procedures': procedure_audit,

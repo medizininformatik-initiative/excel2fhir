@@ -159,3 +159,7 @@ choices such as `Unbekannt (Data Absent Reason)` or `!dar:unknown` create the
 appropriate FHIR extension. [Selection lists](clinical-selections.md) describe
 where those choices apply. Profile requirements are checked by the optional
 [FHIR validator](fhir-validation.md).
+
+In CSV input, an omitted optional `Fall-Nr` column leaves the explicit encounter
+association absent, just like an empty cell. Configured encounter assignment rules
+still apply.

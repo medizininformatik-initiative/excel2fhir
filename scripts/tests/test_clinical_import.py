@@ -13,6 +13,26 @@ class ClinicalImportTest(unittest.TestCase):
         resource.update(subject={'reference':'urn:uuid:p'}, encounter={'reference':'urn:uuid:e'})
         source['entry'].append({'fullUrl':'urn:uuid:'+resource['id'],'resource':resource})
 
+    def test_missing_medication_ingredients_and_event_time_stay_empty(self):
+        for kind in ('MedicationRequest', 'MedicationAdministration'):
+            source = bundle()
+            medication = {'resourceType': kind, 'id': 'no-mapping',
+                          'medicationCodeableConcept': {'coding': [
+                              {'system': 'http://snomed.info/sct', 'code': '12345', 'display': 'Probe'}]}}
+            self.add(source, medication)
+            before = copy.deepcopy(source)
+            rows, _ = prepare(source)
+            row = rows['Medikation'][0]
+            for field in ('Wirkstoffcode', 'Wirkstoffcodesystem', 'Beginn', 'Dokumentationszeitpunkt'):
+                self.assertEqual('', row[field], (kind, field))
+            self.assertEqual('12345', row['Präparatcode'])
+            self.assertEqual(before, source)
+            field = 'authoredOn' if kind == 'MedicationRequest' else 'effectiveDateTime'
+            medication[field] = '2026-09-01T08:30:00+02:00'
+            rows, _ = prepare(source)
+            target = 'Dokumentationszeitpunkt' if kind == 'MedicationRequest' else 'Beginn'
+            self.assertEqual(medication[field], rows['Medikation'][0][target])
+
     def test_components_preserve_zero_and_coded_answers_without_new_observation(self):
         source=bundle()
         self.add(source, {'resourceType':'Observation','id':'bp','status':'final',

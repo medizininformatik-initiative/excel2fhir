@@ -53,7 +53,7 @@ class ProductTest(unittest.TestCase):
 
     def test_absent_local_catalog_uses_public_atc_and_removes_rxnorm(self):
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual([rows['Medikation'][0]['Präparatcode'], rows['Medikation'][0]['Präparatcodesystem'], rows['Medikation'][0]['ATC-Code'], rows['Medikation'][0]['ATC-Version']], ['18160187', 'PZN', 'G03AC06', '2026'])
+        self.assertEqual([rows['Medikation'][0]['Präparatcode'], rows['Medikation'][0]['Präparatcodesystem'], rows['Medikation'][0]['ATC-Code'], rows['Medikation'][0]['ATC-Version']], [ProductCatalog().select(SOURCE)['target']['code'], 'PZN', 'G03AC06', '2026'])
         self.assertNotIn('PZN-Zuordnung offen', rows['Medikation'][0]['Präparatbezeichnung'])
         self.assertTrue(rows['Medikation'][0]['Präparatbezeichnung'])
         self.assertFalse(report['productDataUsage']['containsLocalProductData'])
@@ -82,14 +82,31 @@ class ProductTest(unittest.TestCase):
         with self.assertRaises(ValueError): write_workbook(local_rows, ROOT / 'target/local.xlsx')
         require_external_output(report, self.path.parent / 'case.xlsx')
 
-    def test_unknown_local_product_and_unresolved_dose_fall_back_to_public_mapping(self):
+    def test_unknown_source_stays_unmapped_but_unresolved_local_dose_is_allowed(self):
         self.save()
         self.assertIsNone(ProductCatalog().select({'system': RXNORM, 'code': 'not-in-inventory'})['target'])
         data = fixture(); data['entries'][0]['doseCompatibility'] = 'unresolved'; self.save(data)
         rows, report = prepare(self.medication_bundle())
-        self.assertEqual(rows['Medikation'][0]['Präparatcode'], '18160187')
-        self.assertNotIn('Erfundenes Adapter-Testpräparat', json.dumps(report))
-        self.assertFalse(report['productDataUsage']['containsLocalProductData'])
+        self.assertEqual(rows['Medikation'][0]['Präparatcode'], ProductCatalog().select(SOURCE)['target']['code'])
+        self.assertEqual('Erfundenes Adapter-Testpräparat', rows['Medikation'][0]['Präparatbezeichnung'])
+        self.assertTrue(report['productDataUsage']['containsLocalProductData'])
+
+    def test_local_product_keeps_available_classifications_and_original_dose(self):
+        data = fixture()
+        data['entries'][0]['source']['code'] = '1860491'
+        self.save(data)
+        source = self.medication_bundle()
+        request = source['entry'][-1]['resource']
+        request['medicationCodeableConcept'] = {'coding': [{'system': RXNORM, 'code': '1860491'}]}
+        rows, report = prepare(source)
+        row = rows['Medikation'][0]
+        self.assertEqual('00000000', row['Präparatcode'])
+        self.assertEqual(['2', 'mg', '3'], [row[k] for k in ('Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag')])
+        self.assertEqual('N02AA03', row['ATC-Code'])
+        self.assertTrue(row['Wirkstoffcode'])
+        decision = next(m for m in report['clinicalMappings'] if m['sourceId'] == 'rx')
+        self.assertIsNone(decision['enrichment'])
+        self.assertEqual('preserve-source', decision['dosePolicyApplied'])
 
     def test_corrupt_ambiguous_or_untraceable_catalogue_is_not_silently_ignored(self):
         self.path.write_text('{')
