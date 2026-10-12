@@ -189,6 +189,9 @@ public class ConsentConverter extends Converter {
         Set<Integer> provisionGroupIndices = STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices.keySet();
         for (int provisionGroupIndex : provisionGroupIndices) {
             String consentGroupColumnName = STATIC_CONSENT_DATA.getProvisionGroupColumnName(provisionGroupIndex);
+            if (!hasColumn(consentGroupColumnName)) {
+                continue;
+            }
             String consentValue = get(consentGroupColumnName);
             if (isNotBlank(consentValue)) {
                 for (int subProvisionIndex : STATIC_CONSENT_DATA.provisionGroupIndexToGroupMemberIndices

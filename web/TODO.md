@@ -10,6 +10,8 @@ planned work streams; this checklist does not change their status.
 Open items are ordered by the agreed next steps. Verified implementation is
 summarized below with code/test evidence; the comprehensive output audit remains
 open even where individual behaviors have regression coverage.
+Complete the remaining clinical configuration audit before further performance
+optimization. Native CLI guidance in the workbench follows the optimization work.
 
 Generation must follow input and configuration, including intentionally nonconformant
 test data. Profile/terminology conformance belongs to optional validation, not silent
@@ -23,10 +25,28 @@ correction or additional generator restrictions.
   terminology years, arbitrary table versions and emitted profile claims; output
   formats, consistency checking and optional validation. Reuse existing focused
   tests and add end-to-end evidence for uncovered cases.
+- [ ] During the clinical audit, before performance optimization, review the entire
+  codebase for automatically generated defaults and assigned coding systems that
+  might need to be configurable for intentionally nonconformant test data. Record
+  each candidate with its input path, actual output and existing configuration
+  coverage, then discuss candidates individually with the user before changing
+  behavior or adding options. Verify whether a real restriction exists: established
+  correct mappings do not automatically need an override. Preserve the freedom to
+  generate intentionally invalid data without introducing conformance restrictions.
+  First candidate for discussion: DocumentReference.date uses the current run time
+  when the input timestamp is absent (`DocumentReferenceConverter`); an explicit
+  input timestamp and the existing date DAR option already control this field.
+  Assess the intended default individually before changing it or adding an option.
 - [ ] Complete a determinism audit across the pipeline, derived resources, formats
   and versions; distinguish clinical content from run/archive metadata.
 - [ ] Broader memory/runtime tests with portal, Blaze and TORCH,
   including 1000 patients, remain deferred.
+- [ ] After the optimization work, show native command-line instructions in the
+  workbench for reproducing the selected run outside Docker. Include the matching
+  input files, configuration, converter version, generation settings/seeds where
+  applicable, and required commands. Preserve the same effective settings and
+  clinical output. Native execution uses host resources rather than Docker limits;
+  document its runtime requirements. Optimize first; implement this UI guidance later.
 - [ ] Agree on compatible `mii-data-quality` rules and scope before integration.
 - [ ] Complete the separately scoped Keycloak/OAuth, FLARE, external terminology
   and DSF integration.
@@ -40,6 +60,69 @@ correction or additional generator restrictions.
 
 ## Verified implementation
 
+- [x] Audit DiagnosticReport timestamp candidates through CSV output
+  (`ContactWorkflowTest`): effective time precedes issued time within a contact
+  class, later candidates can match, inpatient candidates precede ambulatory
+  fallback, and deselected inpatient contacts allow eligible ambulatory matches.
+  Two patients and two cases exercise identity separation, missing/unmatched
+  timestamps and explicit reference omission. DAR and output end rules preserve
+  matching based on original timestamps. All contact workflow cases compare
+  JSON/NDJSON resource content, including identical shared Location definitions.
+- [x] Audit composed DAR behavior through CSV/workbook conversion and JSON/NDJSON
+  (`ClinicalSelectionWorkflowTest`, `MedicationWorkflowTest`, `SelectionDarWorkflowTest`):
+  missing-only rules retain negative measurements, custom units, free coded values
+  and existing custom reasons; empty measurements receive the chosen reason.
+  Numeric and nonnumeric rules target their respective supplied value types.
+  Overwriting medication periods/doses removes their value components while keeping
+  other fields and resource IDs. Scoped inpatient rules take precedence over common
+  rules, including opposite missing-only flags. Contact periods retain the documented
+  mirroring to location entries and preserve pre-DAR statuses. These cases introduce
+  no new conformance restrictions or settings; the separate codewide default-value
+  review remains open for individual discussion.
+- [x] Close populated-input selection gaps (`ClinicalSelectionWorkflowTest`):
+  Immunization, DiagnosticReport, CarePlan, Consent and DocumentReference are
+  present in the baseline and individually omitted without changing other
+  resources. Disabling laboratory or vital-sign observations removes only the
+  matching DiagnosticReport results. JSON and NDJSON agree in every case.
+  Optional Consent columns may be absent or blank with identical output; only
+  explicitly supplied consent groups produce provisions. This fixes conversion
+  failures when a dated consent contains only some optional group columns.
+- [x] Check descriptive Medication/Location references through workbook conversion
+  and derived administrations/statements (`SelectionDarWorkflowTest`): all four
+  literal-reference/description combinations preserve selected resource IDs and
+  target identities. Document attachment DAR preserves supplied data in missing-only
+  mode and removes payload/hash/size on overwrite (`ClinicalSelectionWorkflowTest`).
+  Additional timestamp-candidate coverage is recorded above; the overall clinical
+  audit and individual default-value review remain open.
+- [x] Audit deliberately invalid codes with the real bundled profile validator
+  (`integration/smoke_validation_policy.py`): 16 CSV/Excel cases exercise profile
+  validation and input consistency on/off. Invalid Patient gender and family DAR
+  codes remain unchanged in JSON/NDJSON; validation reports both errors while
+  generation succeeds. Missing required headers and unknown patient references
+  fail with both consistency settings. Independent workbench outcomes agree with
+  process results and reports. The native audit passes; the first Docker validation
+  attempt was OOM-killed alongside the running portal services, so combined-load
+  memory validation remains part of the deferred runtime tests.
+- [x] Audit versioned configuration precedence over conflicting CLI output and
+  validation flags, including default and configured snapshots
+  (`ExecutionSettingsTest`, `CsvCommandLineTest`). Stored settings reproduce the
+  selected format and grouping. CSV and Excel entry points create the validator
+  according to the effective configuration, retaining the requested report level
+  when configuration enables validation and avoiding profile loading when it
+  disables validation. Supplied configuration files require CONFIGURATION_VERSION=1;
+  empty, unversioned and unsupported-version files fail before conversion. Omitted
+  configuration uses defaults and CLI execution settings. Excel/CSV entry points,
+  direct file loading and the Synthea bridge share this rule. Configuration snapshots
+  preserve current selections and comments; no alternate snapshot format is needed.
+- [x] Audit output formats and patient partitioning with repetitions and date
+  shifts (`OutputFormatsWorkflowTest`). JSON, XML, NDJSON, GZIP, BZIP2 and ZIP
+  retain identical resource fields, IDs and transaction requests for file sizes
+  1, 2, 4 and 1000. Fresh conversion and compressed-only output also agree.
+  Partial final groups are finalized, and filenames account for repetitions to
+  keep distinct groups from overwriting each other. Tests cover three original
+  patients both with and without repetitions, shared medication resources,
+  derived statements, Unicode and fractional doses. Archive timestamps are not
+  treated as clinical content. The broader determinism audit remains open.
 - [x] Batch consecutive, equally wide workbook rows in UNO writes of at most 512
   rows. The same 10 saved inpatient sources take 40.4 seconds for Excel creation
   versus 68.4 seconds with individual row writes (41% less); the import including

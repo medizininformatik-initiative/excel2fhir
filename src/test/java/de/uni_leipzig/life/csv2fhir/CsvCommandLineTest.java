@@ -96,7 +96,7 @@ public class CsvCommandLineTest {
     public void preflightFailureReturnsNonzeroAndReportWithoutBundle() throws Exception {
         Files.writeString(input.resolve("case_Konvertierungsoptionen.csv"), "CHECK_INPUT_CONSISTENCY=treu\n");
         assertEquals(1, run("--converter-options", input.resolve("case_Konvertierungsoptionen.csv").toString()));
-        assertTrue(Files.readString(output.resolve("details/reports/case.import.json")).contains("INCOMPLETE"));
+        assertTrue(Files.readString(output.resolve("status.txt")).contains("CONFIGURATION_VERSION=1"));
         assertFalse(Files.exists(output.resolve("fhir/case.json")));
     }
 
@@ -261,8 +261,8 @@ public class CsvCommandLineTest {
                 Files.readString(input.resolve("case_Person.csv")).replace("p1", "p2"));
         Path a = temp.newFile("KDS-A.config").toPath();
         Path b = temp.newFile("KDS-B.config").toPath();
-        Files.writeString(a, "PID_PREFIX=A-\n");
-        Files.writeString(b, "PID_PREFIX=B-\n");
+        Files.writeString(a, "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_PREFIX=A-\n");
+        Files.writeString(b, "CONFIGURATION_VERSION=1\nPID_PREFIX=B-\n");
         assertEquals(0, run("--converter-options", a.toString()));
         for (String variant : java.util.List.of("")) {
             for (String source : java.util.List.of("case", "case2")) {
@@ -296,6 +296,48 @@ public class CsvCommandLineTest {
                 "--converter-options", file.toString(), "-v"));
         verifyNoInteractions(validator);
     }
+    @Test public void validatorCreationUsesEffectiveConfigurationInsteadOfConflictingCliFlag() throws Exception {
+        for (boolean enabled : new boolean[] {false, true}) {
+            Path file = temp.newFile("validation-" + enabled + ".config").toPath();
+            Files.writeString(file, "CONFIGURATION_VERSION=1\nCHECKS_FHIR_VALIDATION=" + enabled + "\n");
+            FHIRValidator validator = mock(FHIRValidator.class);
+            int[] created = {0};
+            Main command = new Main() {
+                @Override FHIRValidator createValidator() { created[0]++; return validator; }
+            };
+            assertEquals(0, new CommandLine(command).execute("-i", input.toString(), "-o", output.toString(),
+                    "--converter-options", file.toString(), enabled ? "--no-validate-bundles" : "-v"));
+            assertEquals(enabled ? 1 : 0, created[0]);
+            if (enabled) verify(validator, atLeastOnce()).validateAndWriteReport(any(), any());
+            else verifyNoInteractions(validator);
+        }
+    }
+
+    @Test public void configuredFormatsAndPartitionSizeMatchSavedSnapshotDespiteConflictingFlags() throws Exception {
+        Path person = input.resolve("case_Person.csv");
+        String text = Files.readString(person);
+        String row = Files.readAllLines(person).get(1);
+        Files.writeString(person, text + row.replace("p1", "p2") + "\n" + row.replace("p1", "p3") + "\n");
+        Path file = temp.newFile("partition.config").toPath();
+        Files.writeString(file, "CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\nOUTPUT_PATIENTS_PER_FILE=2\n");
+        assertEquals(0, run("--converter-options", file.toString(), "-r", "XML", "-p", "9"));
+        try (var files = Files.list(output.resolve("fhir"))) {
+            var paths = files.toList();
+            assertEquals(2, paths.size());
+            int patients = 0;
+            for (var path : paths) {
+                assertTrue(path.toString().endsWith(".json"));
+                int count = OutputFileType.JSON.getParser().parseResource(Bundle.class, Files.readString(path)).getEntry().size();
+                assertTrue(count > 0 && count <= 2); patients += count;
+            }
+            assertEquals(3, patients);
+        }
+        var saved = ConverterOptions.fromText(Files.readString(output.resolve("details/options/partition/converter-options.config")));
+        assertEquals(2, saved.patientsPerFile(9));
+        assertArrayEquals(new OutputFileType[] {OutputFileType.JSON}, saved.outputFormats(new OutputFileType[] {OutputFileType.XML}));
+        assertFalse(saved.validationEnabled(true));
+    }
+
     @Test public void versionedConfigurationShiftsBeforeCalendarEndAndReportsActualPolicy() throws Exception {
         var contact = new LinkedHashMap<String, String>();
         for (String name : new LinkedHashSet<>(TableIdentifier.Fall.getMandatoryColumnNames())) contact.put(name, "");
@@ -344,4 +386,19 @@ public class CsvCommandLineTest {
         assertEquals(0, run("--converter-options", file.toString()));
         assertTrue(Files.exists(output.resolve("fhir/patients.ndjson")));
     }
+
+    @Test public void suppliedEmptyOrUnversionedConfigurationsFailWithoutFhirOutput() throws Exception {
+        for (String text : new String[] {"", "PID_PREFIX=site-\n"}) {
+            Path file = temp.newFile().toPath(); Files.writeString(file, text);
+            Path destination = temp.newFolder().toPath();
+            assertEquals(1, new CommandLine(new Main()).execute("-i", input.toString(), "-o", destination.toString(),
+                    "--converter-options", file.toString()));
+            try (var runs = Files.list(destination)) {
+                Path run = runs.findFirst().orElseThrow();
+                assertFalse(Files.exists(run.resolve("fhir")));
+                assertTrue(Files.readString(run.resolve("status.txt")).contains("CONFIGURATION_VERSION=1"));
+            }
+        }
+    }
+
 }

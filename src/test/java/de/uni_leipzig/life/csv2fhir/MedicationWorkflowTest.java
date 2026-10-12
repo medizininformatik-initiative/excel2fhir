@@ -187,4 +187,62 @@ public class MedicationWorkflowTest {
         }
     }
 
+    private String reason(Element element) {
+        var extension = element.getExtensionByUrl(DarOverrides.URL);
+        return extension == null ? null : extension.getValue().primitiveValue();
+    }
+    @Test public void complexMedicationDarReplacesWholeValuesAndPreservesUnselectedFields() throws Exception {
+        String transformations = "MEDICATION_STATEMENT_TREATMENT=add-administration\nMEDICATION_ADMINISTRATION_TREATMENT=add-statement\n";
+        String rules = "DAR_MEDICATION_ADMINISTRATION_EFFECTIVE_X=free-period\n"
+                + "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE=free-dose\n"
+                + "DAR_MEDICATION_STATEMENT_EFFECTIVE_X=free-statement-period\n";
+        var baseline = run(transformations);
+        var missing = run(transformations + rules
+                + "DAR_MEDICATION_ADMINISTRATION_EFFECTIVE_X_ONLY_WHEN_MISSING=true\n"
+                + "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE_ONLY_WHEN_MISSING=true\n"
+                + "DAR_MEDICATION_STATEMENT_EFFECTIVE_X_ONLY_WHEN_MISSING=true\n");
+        var overwrite = run(transformations + rules);
+        assertEquals(baseline.keySet(), overwrite.keySet());
+        assertEquals(baseline.keySet(), missing.keySet());
+        int periods = 0, doses = 0, statements = 0;
+        for (String key : baseline.keySet()) {
+            Resource original = baseline.get(key), expected = original.copy();
+            if (original instanceof MedicationAdministration) {
+                var source = (MedicationAdministration)original;
+                var changed = (MedicationAdministration)overwrite.get(key);
+                assertTrue(source.hasEffective());
+                assertTrue(source.getEffective().equalsDeep(((MedicationAdministration)missing.get(key)).getEffective()));
+                assertEquals("free-period", reason(changed.getEffective()));
+                if (changed.getEffective() instanceof Period) {
+                    assertFalse(changed.getEffectivePeriod().hasStart()); assertFalse(changed.getEffectivePeriod().hasEnd()); periods++;
+                }
+                var expectedAdministration = (MedicationAdministration)expected;
+                expectedAdministration.setEffective(changed.getEffective().copy());
+                if (source.hasDosage()) {
+                    assertEquals("free-dose", reason(changed.getDosage().getDose()));
+                    assertFalse(changed.getDosage().getDose().hasValue()); assertFalse(changed.getDosage().getDose().hasUnit());
+                    assertFalse(changed.getDosage().getDose().hasSystem()); assertFalse(changed.getDosage().getDose().hasCode());
+                    if (source.getDosage().getDose().hasValue()) {
+                        assertTrue(source.getDosage().getDose().equalsDeep(((MedicationAdministration)missing.get(key)).getDosage().getDose()));
+                        doses++;
+                    }
+                    expectedAdministration.getDosage().setDose(changed.getDosage().getDose().copy());
+                }
+            } else if (original instanceof MedicationStatement) {
+                var source = (MedicationStatement)original;
+                var changed = (MedicationStatement)overwrite.get(key);
+                assertTrue(source.hasEffective());
+                assertTrue(source.getEffective().equalsDeep(((MedicationStatement)missing.get(key)).getEffective()));
+                assertEquals("free-statement-period", reason(changed.getEffective()));
+                if (changed.getEffective() instanceof Period) {
+                    assertFalse(changed.getEffectivePeriod().hasStart()); assertFalse(changed.getEffectivePeriod().hasEnd());
+                }
+                ((MedicationStatement)expected).setEffective(changed.getEffective().copy()); statements++;
+            } else assertTrue(key, original.equalsDeep(missing.get(key)));
+            assertTrue("Unselected fields changed: " + key, expected.equalsDeep(overwrite.get(key)));
+        }
+        assertTrue(periods > 0); assertTrue(doses > 0); assertTrue(statements > 0);
+    }
+
+
 }

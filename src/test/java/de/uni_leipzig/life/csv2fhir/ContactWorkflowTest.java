@@ -45,11 +45,29 @@ public class ContactWorkflowTest {
         Path output = temp.newFolder().toPath();
         var converter = new Csv2Fhir(input.toFile(), output.toFile(), "case_", null,
                 ConverterOptions.fromText("CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\n" + settings));
-        converter.convertFiles(Integer.MAX_VALUE, OutputFileType.JSON);
+        converter.convertFiles(Integer.MAX_VALUE, OutputFileType.JSON, OutputFileType.NDJSON);
         report = converter.getImportReport();
         assertFalse(report.issues.toString(), report.hasErrors());
         Bundle bundle = (Bundle)OutputFileType.JSON.getParser().parseResource(Files.readString(output.resolve("case.json")));
-        return bundle.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
+        var resources = bundle.getEntry().stream().map(Bundle.BundleEntryComponent::getResource).toList();
+        List<Resource> ndjson = new ArrayList<>();
+        try (var files = Files.walk(output)) {
+            for (Path file : files.filter(path -> path.toString().endsWith(".ndjson")).toList())
+                for (String line : Files.readAllLines(file)) {
+                    Resource parsed = (Resource)OutputFileType.JSON.getParser().parseResource(line);
+                    if (parsed instanceof Bundle) for (var entry : ((Bundle)parsed).getEntry()) ndjson.add(entry.getResource());
+                    else ndjson.add(parsed);
+                }
+        }
+        Map<String, Resource> byId = new HashMap<>();
+        for (Resource resource : ndjson) {
+            Resource previous = byId.put(resource.fhirType() + "/" + resource.getIdElement().getIdPart(), resource);
+            if (previous != null) assertTrue("Conflicting shared resource", previous.equalsDeep(resource));
+        }
+        assertEquals(resources.size(), byId.size());
+        for (Resource resource : resources) assertTrue("Format mismatch: " + resource.getId(),
+                resource.equalsDeep(byId.get(resource.fhirType() + "/" + resource.getIdElement().getIdPart())));
+        return resources;
     }
     private List<Encounter> encounters(List<Resource> resources) {
         return resources.stream().filter(Encounter.class::isInstance).map(Encounter.class::cast).toList();
@@ -164,4 +182,68 @@ public class ContactWorkflowTest {
             if (!strategy.equals("explicit-only")) assertTrue(reasons.contains("missing-timestamp"));
         }
     }
+    @Test public void reportTimestampCandidatesUseOriginalInputBeforeDarAndEndRules() throws Exception {
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (String patient : List.of("p1", "p2")) for (String scenario : List.of("first", "fallback", "issued", "missing", "outside")) {
+            var row = new LinkedHashMap<>(Map.of("Patient-ID", patient, "Eintrag ID", scenario, "Beschreibung", scenario));
+            if (scenario.equals("first")) row.put("Zeitpunkt", "2026-01-05");
+            if (scenario.equals("fallback") || scenario.equals("outside")) row.put("Zeitpunkt", "2025-12-01");
+            if (!scenario.equals("missing")) row.put("Ausgabezeitpunkt",
+                    scenario.equals("outside") ? "2025-12-02T00:00:00Z" : "2026-02-05T00:00:00Z");
+            rows.add(row);
+        }
+        table(TableIdentifier.Befundbericht, rows);
+        for (boolean changedOutput : List.of(false, true)) {
+            String settings = "REFERENCE_DIAGNOSTIC_REPORT_ENCOUNTER=department\n";
+            if (changedOutput) settings += "ENCOUNTER_INPATIENT_END_POLICY=start\nDAR_ENCOUNTER_PERIOD_START=free-contact\n"
+                    + "DAR_DIAGNOSTIC_REPORT_EFFECTIVE_X=free-effective\nDAR_DIAGNOSTIC_REPORT_ISSUED=free-issued\n";
+            var resources = run(settings);
+            var reports = resources.stream().filter(DiagnosticReport.class::isInstance).map(DiagnosticReport.class::cast).toList();
+            assertEquals(10, reports.size());
+            for (var clinical : reports) {
+                String scenario = clinical.getConclusion();
+                boolean matches = !List.of("missing", "outside").contains(scenario);
+                assertEquals(scenario, matches, clinical.hasEncounter());
+                if (matches) {
+                    Encounter contact = target(resources, clinical.getEncounter());
+                    assertEquals(clinical.getSubject().getReference(), contact.getSubject().getReference());
+                    assertTrue(level(contact, "abteilungskontakt"));
+                    String date = scenario.equals("first") ? "2026-01-05" : "2026-02-05";
+                    assertEquals(date, changedOutput ? contact.getPeriod().getEndElement().getValueAsString()
+                            : contact.getPeriod().getStartElement().getValueAsString());
+                }
+                if (changedOutput) {
+                    assertEquals("free-effective", clinical.getEffective().getExtensionByUrl(DarOverrides.URL).getValue().primitiveValue());
+                    assertFalse(clinical.getIssuedElement().hasValue());
+                    assertEquals("free-issued", clinical.getIssuedElement().getExtensionByUrl(DarOverrides.URL).getValue().primitiveValue());
+                }
+            }
+            assertEquals(4, report.encounterReferenceIssues.size());
+            assertEquals(2, report.encounterReferenceIssues.stream().filter(i -> "missing-timestamp".equals(i.get("reason"))).count());
+            assertEquals(2, report.encounterReferenceIssues.stream().filter(i -> "no-matching-contact".equals(i.get("reason"))).count());
+        }
+        var disabled = run("REFERENCE_DIAGNOSTIC_REPORT_ENCOUNTER=none\n");
+        assertEquals(10, disabled.stream().filter(DiagnosticReport.class::isInstance).count());
+        for (Resource resource : disabled) if (resource instanceof DiagnosticReport) assertFalse(((DiagnosticReport)resource).hasEncounter());
+        assertTrue(report.encounterReferenceIssues.isEmpty());
+    }
+
+    @Test public void reportPrefersLaterInpatientCandidateAndFallsBackWhenThatClassIsDisabled() throws Exception {
+        table(TableIdentifier.Fall, List.of(
+                Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Start", "2026-01-01", "Ende", "2026-01-10", "Einrichtungskontaktklasse", "ambulant"),
+                Map.of("Patient-ID", "p1", "Fall-Nr", "2", "Start", "2026-02-01", "Ende", "2026-02-10", "Einrichtungskontaktklasse", "stationaer"),
+                Map.of("Patient-ID", "p2", "Fall-Nr", "2", "Start", "2026-02-01", "Ende", "2026-02-10", "Einrichtungskontaktklasse", "stationaer")));
+        table(TableIdentifier.Befundbericht, List.of(Map.of("Patient-ID", "p1", "Eintrag ID", "report",
+                "Zeitpunkt", "2026-01-05", "Ausgabezeitpunkt", "2026-02-05T00:00:00Z")));
+        for (boolean inpatient : List.of(true, false)) {
+            var resources = run("REFERENCE_DIAGNOSTIC_REPORT_ENCOUNTER=facility\nENCOUNTER_INPATIENT_ENABLED=" + inpatient + "\n");
+            var clinical = (DiagnosticReport)resources.stream().filter(DiagnosticReport.class::isInstance).findFirst().orElseThrow();
+            Encounter contact = target(resources, clinical.getEncounter());
+            assertEquals("Patient/p1", contact.getSubject().getReference());
+            assertEquals(inpatient ? "IMP" : "AMB", contact.getClass_().getCode());
+            assertEquals(inpatient ? "2026-02-01" : "2026-01-01", contact.getPeriod().getStartElement().getValueAsString());
+            assertTrue(report.encounterReferenceIssues.isEmpty());
+        }
+    }
+
 }

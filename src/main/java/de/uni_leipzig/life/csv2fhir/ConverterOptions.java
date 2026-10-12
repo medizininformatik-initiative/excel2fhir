@@ -92,7 +92,7 @@ public class ConverterOptions {
             return;
         }
         try {
-            readValues(Files.readString(path));
+            readConfiguration(Files.readString(path));
         } catch (IOException e) {
             errors.add("Cannot read options file: " + fileName + ": " + e.getMessage());
         }
@@ -100,6 +100,21 @@ public class ConverterOptions {
 
     public static ConverterOptions fromText(String text) {
         return fromText(text, Map.of());
+    }
+
+    /** Parse a supplied configuration using the current versioned contract. */
+    public static ConverterOptions fromConfigurationText(String text) {
+        ConverterOptions result = new ConverterOptions("");
+        result.readConfiguration(text);
+        return result;
+    }
+
+    private void readConfiguration(String text) {
+        if (!ContractConfiguration.isContractText(text)) {
+            errors.add("Configuration must include CONFIGURATION_VERSION=1. Use --export-default-options to create a configuration.");
+            return;
+        }
+        readValues(text);
     }
 
     /** Layer explicit values over the caller's defaults without treating overrides as duplicates. */

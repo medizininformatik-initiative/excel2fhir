@@ -212,3 +212,15 @@ class DarChecks(unittest.TestCase):
             values = resolve_config(path)['values']
             self.assertEqual('0', values['TIME_SHIFT_BASE_DAYS'])
             self.assertEqual('retain', values['MEDICATION_REQUEST_TREATMENT'])
+
+    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/excel2fhir.jar').exists(), 'Build converter JAR')
+    def test_bridge_requires_version_for_supplied_files_and_uses_defaults_when_omitted(self):
+        self.assertEqual([], resolve_config()['errors'])
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'test.config'
+            for text in ['', '# comment\n', 'PID_PREFIX=site-\n', 'CONFIGURATION_VERSION=2\n']:
+                path.write_text(text)
+                with self.assertRaisesRegex(ValueError, 'configuration|Configuration'):
+                    resolve_config(path)
+            path.write_text('CONFIGURATION_VERSION=1\nPID_PREFIX=site-\n')
+            self.assertEqual('site-', resolve_config(path)['values']['PID_PREFIX'])

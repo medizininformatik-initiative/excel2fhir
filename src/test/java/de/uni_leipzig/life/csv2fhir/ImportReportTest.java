@@ -140,7 +140,7 @@ public class ImportReportTest {
 
     @Test public void repeatedOutputsKeepDistinctRowAndAttemptCounts() throws Exception {
         table(TableIdentifier.Person,List.of(patient("p1")));
-        Files.writeString(input.resolve("options.config"),"PID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\n");
+        Files.writeString(input.resolve("options.config"),"CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT = 1\n");
         var report=run().getImportReport(); assertFalse(report.hasErrors());
         assertEquals(1,report.tables.get("Person").processedRows);
         assertEquals(2,report.tables.get("Person").successfulAttempts);
@@ -170,9 +170,9 @@ public class ImportReportTest {
     @Test public void invalidOptionsAreCollectedBeforeAnyOutput() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1")));
         Files.writeString(input.resolve("options.config"),
-                "CHECK_INPUT_CONSISTENCY=treu\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\nSTART_ID_CONDITION=not-a-number\n");
+                "CONFIGURATION_VERSION=1\nCHECK_INPUT_CONSISTENCY=treu\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\nSTART_ID_CONDITION=not-a-number\n");
         var report = run().getImportReport();
-        assertEquals(3, report.issues.size());
+        assertEquals(1, report.issues.size());
         assertTrue(report.issues.stream().allMatch(i -> i.category.equals("OPTION_ERROR")));
         assertFalse(Files.exists(output.resolve("case.json")));
         assertEquals(0, report.tables.get("Person").successfulAttempts);
@@ -180,7 +180,7 @@ public class ImportReportTest {
 
     @Test public void repetitionSuffixCollisionsAreRejectedBeforeOutput() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1"), patient("p1-rep-1")));
-        Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
+        Files.writeString(input.resolve("options.config"), "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
         var report = run().getImportReport();
         assertEquals("PATIENT_ID_COLLISION", report.issues.get(0).category);
         assertFalse(Files.exists(output.resolve("case.json")));
@@ -189,7 +189,7 @@ public class ImportReportTest {
     @Test public void copiesKeepPrefixSuffixAndDistinctPatientIds() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1"), patient("p2")));
         Files.writeString(input.resolve("options.config"),
-                "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_PREFIX=test-\nPID_SUFFIX=-x\n");
+                "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\nPID_PREFIX=test-\nPID_SUFFIX=-x\n");
         assertFalse(run().hasImportProblems());
         var bundle = JsonParser.parseString(Files.readString(output.resolve("case_test--x.json"))).getAsJsonObject();
         var ids = bundle.getAsJsonArray("entry").asList().stream()
@@ -202,7 +202,7 @@ public class ImportReportTest {
         String uuid = "550e8400-e29b-41d4-a716-446655440000";
         table(TableIdentifier.Person, List.of(patient(uuid)));
         table(TableIdentifier.Prozedur, List.of(procedure(uuid, "2026-01-01")));
-        Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
+        Files.writeString(input.resolve("options.config"), "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=1\n");
         assertFalse(run().hasImportProblems());
         var bundle = JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
         Set<String> subjects = new HashSet<>();
@@ -227,8 +227,8 @@ public class ImportReportTest {
                 "Ende", "2026-01-03", "Einrichtungskontaktklasse", "stationaer",
                 "Fachabteilung", "Allgemeine Chirurgie", "Station", "S1")));
         table(TableIdentifier.Diagnose, List.of(Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Code", "I10.90",
-                "Codesystem", "ICD-10-GM 2026", "Typ", "Hauptdiagnose")));
-        Files.writeString(input.resolve("options.config"), "ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER=true\n");
+                "Codesystem", "ICD-10-GM 2026", "Typ", "Hauptdiagnose", "Dokumentationszeitpunkt", "2026-01-02")));
+        Files.writeString(input.resolve("options.config"), "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nCONTACT_DIAGNOSES_LEVELS=facility,department,ward-service\n");
         assertFalse(run().hasImportProblems());
         var bundle = JsonParser.parseString(Files.readString(output.resolve("case.json"))).getAsJsonObject();
         var encounters = bundle.getAsJsonArray("entry").asList().stream().map(e -> e.getAsJsonObject().getAsJsonObject("resource"))
@@ -240,7 +240,7 @@ public class ImportReportTest {
 
     @Test public void overflowingOutputCountIsRejectedBeforeIteration() throws Exception {
         table(TableIdentifier.Person, List.of(patient("p1")));
-        Files.writeString(input.resolve("options.config"), "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=2147483647\n");
+        Files.writeString(input.resolve("options.config"), "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_LAST_NUMBER_INCREASE_LOOP_COUNT=2147483647\n");
         var report = run().getImportReport();
         assertEquals("OPTION_ERROR", report.issues.get(0).category);
         assertFalse(Files.exists(output.resolve("case.json")));

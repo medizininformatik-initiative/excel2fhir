@@ -96,13 +96,14 @@ public class Main implements Callable<Integer> {
         FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
                 FileLogger.LogContentLayout.DATE_LEVEL_SOURCE_LINENUMBER);
         try {
-            FHIRValidator validator = validateBundles ? createValidator() : null;
+            var sets = converterOptions.isEmpty() ? ConverterOptionSet.defaults()
+                    : ConverterOptionSet.external(converterOptions);
+            FHIRValidator validator = sets.stream().anyMatch(set -> set.options().validationEnabled(validateBundles))
+                    ? createValidator() : null;
             boolean importProblems = false;
             boolean validationProblems = false, validationRequested = false;
             var identifiers = new java.util.HashMap<String, AdditionalIdentifiers>();
             for (String prefix : prefixes) {
-                var sets = converterOptions.isEmpty() ? ConverterOptionSet.defaults()
-                        : ConverterOptionSet.external(converterOptions);
                 for (var set : sets) {
                     var destination = sets.size() > 1 ? run.staging.resolve(set.directoryName()) : run.staging;
                     if (prefixes.size() > 1) destination = destination.resolve(prefix + "Person");

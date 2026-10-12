@@ -87,6 +87,9 @@ java -jar target/excel2fhir.jar --export-default-options options.config
 ```
 
 The export creates a new file. Edit it and pass it with `--converter-options`.
+Configuration files require `CONFIGURATION_VERSION=1`. Missing or unsupported
+versions and invalid settings are rejected. Omitting `--converter-options` uses
+the defaults with the supplied CLI execution settings.
 Excel workbooks and CSV inputs contain case data; configuration files are supplied
 separately. Each run records its effective configuration under `details/options/`.
 Run the converter separately for each KDS variant.

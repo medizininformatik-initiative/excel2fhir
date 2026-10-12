@@ -27,21 +27,24 @@ public final class ConverterOptionSet {
     }
 
     public ConverterOptions options() {
-        return text.isBlank() ? ConverterOptions.fromText(ContractConfiguration.defaultProperties()).withCommandLineExecution()
-                : ConverterOptions.fromText(text);
+        return text == null ? ConverterOptions.fromConfigurationText(ContractConfiguration.defaultProperties()).withCommandLineExecution()
+                : ConverterOptions.fromConfigurationText(text);
     }
 
     public static List<ConverterOptionSet> external(List<File> files) throws IOException {
         List<ConverterOptionSet> result = new ArrayList<>();
         for (File file : files) {
-            result.add(new ConverterOptionSet(file.getName().replaceFirst("\\.[^.]+$", ""),
-                    Files.readString(file.toPath())));
+            var set = new ConverterOptionSet(file.getName().replaceFirst("\\.[^.]+$", ""),
+                    Files.readString(file.toPath()));
+            var errors = set.options().getErrors();
+            if (!errors.isEmpty()) throw new IllegalArgumentException(file.getName() + ": " + String.join("\n", errors));
+            result.add(set);
         }
         return checked(result);
     }
 
     public static List<ConverterOptionSet> defaults() {
-        return List.of(new ConverterOptionSet("default", ""));
+        return List.of(new ConverterOptionSet("default", null));
     }
 
     private static List<ConverterOptionSet> checked(List<ConverterOptionSet> sets) {
@@ -61,7 +64,7 @@ public final class ConverterOptionSet {
     }
 
     public void snapshot(Path directory, int patients, boolean validation, OutputFileType[] formats) throws IOException {
-        if (text.isBlank()) {
+        if (text == null) {
             Properties values = new Properties();
             values.load(new java.io.StringReader(ContractConfiguration.defaultProperties()));
             values.setProperty("OUTPUT_PATIENTS_PER_FILE", Integer.toString(patients));
@@ -73,19 +76,10 @@ public final class ConverterOptionSet {
             Files.writeString(directory.resolve("converter-options.config"), writer.toString());
             return;
         }
-        Files.createDirectories(directory);
         ConverterOptions options = options();
-        if (ContractConfiguration.isContractText(text)) {
-            // Preserve version, all selections and inactive comments, not just legacy bindings.
-            Files.writeString(directory.resolve("converter-options.config"), text);
-            return;
-        }
-        Properties values = new Properties();
-        for (var key : ConverterOptions.BooleanOption.values()) values.setProperty(key.name(), Boolean.toString(options.is(key)));
-        for (var key : ConverterOptions.IntOption.values()) values.setProperty(key.name(), Integer.toString(options.getValue(key)));
-        for (var key : ConverterOptions.StringOption.values()) values.setProperty(key.name(), options.getValue(key));
-        StringWriter writer = new StringWriter();
-        values.store(writer, "Converter options: " + name);
-        Files.writeString(directory.resolve("converter-options.config"), writer.toString());
+        if (!options.getErrors().isEmpty()) throw new IllegalArgumentException(String.join("\n", options.getErrors()));
+        Files.createDirectories(directory);
+        // Preserve all selections and inactive comments in the supplied configuration.
+        Files.writeString(directory.resolve("converter-options.config"), text);
     }
 }

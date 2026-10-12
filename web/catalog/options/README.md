@@ -114,14 +114,14 @@ selected contact level could fall back to a different, available default level.
 Missing assignments use defaults; stored unavailable selections become ineffective
 without substituting another choice.
 
-The shared Java reader accepts this format from external files, CSV option files
-and Excel option sheets. It validates stored values and determines effective
+External configuration files require `CONFIGURATION_VERSION=1`. The shared Java
+reader rejects missing or unsupported versions and validates supplied settings. It validates stored values and determines effective
 selections from the same contract. Directly equivalent Java properties are mapped to existing converter options.
 Resource selection, diagnosis/procedure references, medication transformations,
 DAR, identifiers and encounter rules use the shared Java execution pipeline.
 Versioned configuration controls output formats, patients per file and FHIR
 validation for Excel, CSV and web runs; these values replace the corresponding
-legacy CLI defaults and flags. The API uses the same Java preflight as file-based
+CLI defaults and flags. The API uses the same Java preflight as file-based
 configuration input. The web start action submits the current editor settings.
 
 

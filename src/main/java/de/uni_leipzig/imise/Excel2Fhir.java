@@ -193,7 +193,8 @@ public class Excel2Fhir {
             var checked = templateValidator.validate(sourceExcelFile, set.options(), set.name());
             if (checked.hasErrors()) throw new TemplateValidationException(checked);
         }
-        if (validateOutput && validator == null) validator = new FHIRValidator(minLogLevel);
+        if (validator == null && sets.stream().anyMatch(set -> set.options().validationEnabled(validateOutput)))
+            validator = new FHIRValidator(minLogLevel);
         if (createAndCleanOutputDirectories) {
             createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
         }

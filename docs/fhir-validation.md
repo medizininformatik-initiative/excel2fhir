@@ -10,6 +10,17 @@ status `COMPLETE` and exit code 0 even when validation reports findings or unava
 terminology checks. Inspect the separate validation reports for conformance.
 Technical process failures and incomplete imports produce exit code 1.
 
+With a configuration file, `CHECKS_FHIR_VALIDATION` selects profile validation and
+takes precedence over `-v`. `CHECK_INPUT_CONSISTENCY` controls the additional
+workbook input checks. These settings have separate purposes.
+
+Free codes and custom data-absent-reason codes are retained in generated resources,
+including deliberately invalid codes. Enabling profile validation adds findings
+without correcting or removing those values. Required input structure and patient
+references must still be usable: missing required headers and unknown patient IDs
+fail conversion even with consistency checks and profile validation disabled.
+See [input requirements](contact-input-checks.md) for the shared checks.
+
 ## Reports
 
 `<bundle-name>.validation.json` records every validator message, its severity,

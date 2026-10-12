@@ -391,7 +391,7 @@ public class Csv2Fhir {
                             bundle = createTransactionBundle();
                         }
                     }
-                    if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
+                    if (bundlePIDCount == patientsPerBundle || fullPIDCount == pids2ConvertCount) {
                         lastPID = converterOptions.getFullPIDForFileName(pid);
                     }
                     LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
@@ -412,7 +412,7 @@ public class Csv2Fhir {
                     pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
-                        if (pids.size() >= patientsPerBundle) {
+                        if (pids2ConvertCount >= patientsPerBundle) {
                             if (firstPID == null) {
                                 throw new IllegalStateException(
                                         "Cannot build output file name extension without first patient ID");

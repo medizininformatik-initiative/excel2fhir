@@ -179,4 +179,87 @@ public class SelectionDarWorkflowTest {
         }
         assertTrue(namedPatients > 0); assertTrue(inpatient > 0); assertTrue(other > 0);
     }
+    @Test public void descriptiveReferencesPreserveTargetIdentityAcrossMedicationDerivation() throws Exception {
+        String transformations = "MEDICATION_REQUEST_TREATMENT=replace-administration\nMEDICATION_ADMINISTRATION_TREATMENT=add-statement\n";
+        var baseline = convert(transformations);
+        for (boolean literal : List.of(false, true)) for (boolean description : List.of(false, true)) {
+            var output = convert(transformations + "MEDICATION_MODE=reference-only\nLOCATION_MODE=reference-only\n"
+                    + "MEDICATION_EXISTING_REFERENCE=" + literal + "\nLOCATION_EXISTING_REFERENCE=" + literal
+                    + "\nMEDICATION_DESCRIPTION=" + description + "\nLOCATION_DESCRIPTION=" + description + "\n");
+            Set<String> expected = new HashSet<>(baseline.keySet());
+            expected.removeIf(key -> key.startsWith("Medication/") || key.startsWith("Location/"));
+            assertEquals(expected, output.keySet());
+            Set<String> checked = new HashSet<>();
+            for (String key : output.keySet()) {
+                Resource original = baseline.get(key), changed = output.get(key);
+                List<Reference> before = new ArrayList<>(), after = new ArrayList<>();
+                if (original instanceof MedicationRequest) {
+                    before.add(((MedicationRequest)original).getMedicationReference());
+                    if (((MedicationRequest)changed).hasMedication()) after.add(((MedicationRequest)changed).getMedicationReference());
+                } else if (original instanceof MedicationAdministration) {
+                    before.add(((MedicationAdministration)original).getMedicationReference());
+                    if (((MedicationAdministration)changed).hasMedication()) after.add(((MedicationAdministration)changed).getMedicationReference());
+                } else if (original instanceof MedicationStatement) {
+                    before.add(((MedicationStatement)original).getMedicationReference());
+                    if (((MedicationStatement)changed).hasMedication()) after.add(((MedicationStatement)changed).getMedicationReference());
+                } else if (original instanceof Encounter) {
+                    for (var location : ((Encounter)original).getLocation()) before.add(location.getLocation());
+                    for (var location : ((Encounter)changed).getLocation()) after.add(location.getLocation());
+                }
+                if (before.isEmpty()) continue;
+                checked.add(original.fhirType());
+                assertEquals(key, literal || description ? before.size() : 0, after.size());
+                for (int i = 0; i < after.size(); i++) {
+                    Reference ref = after.get(i), source = before.get(i);
+                    Resource target = baseline.get(source.getReference());
+                    assertNotNull(source.getReference(), target);
+                    assertEquals(literal, ref.hasReference());
+                    if (literal) assertEquals(source.getReference(), ref.getReference());
+                    assertEquals(description, ref.hasIdentifier());
+                    if (description) {
+                        Identifier identity = target instanceof Medication ? ((Medication)target).getIdentifierFirstRep()
+                                : ((Location)target).getIdentifierFirstRep();
+                        if (identity.hasValue()) assertTrue(identity.equalsDeep(ref.getIdentifier()));
+                        else assertEquals(target.getIdElement().getIdPart(), ref.getIdentifier().getValue());
+                        String display = target instanceof Medication ? ((Medication)target).getCode().getText() : ((Location)target).getName();
+                        if (display != null) assertEquals(display, ref.getDisplay());
+                    } else assertFalse(ref.hasDisplay());
+                }
+            }
+            assertEquals(Set.of("Encounter", "MedicationAdministration", "MedicationStatement"), checked);
+        }
+    }
+
+    @Test public void scopedMissingOnlyFlagTakesPrecedenceOverCommonFlag() throws Exception {
+        // The workbook omits document dates; keep their generated run time out of this contact-policy comparison.
+        String shared = "DAR_DOCUMENT_REFERENCE_DATE=audit-date\n";
+        var baseline = convert(shared);
+        for (boolean scopedMissing : List.of(false, true)) {
+            var output = convert(shared + "DAR_ENCOUNTER_PERIOD_START=common-free\nDAR_ENCOUNTER_PERIOD_START_ONLY_WHEN_MISSING=" + !scopedMissing
+                    + "\nDAR_ENCOUNTER_INPATIENT_PERIOD_START=scoped-free\nDAR_ENCOUNTER_INPATIENT_PERIOD_START_ONLY_WHEN_MISSING=" + scopedMissing + "\n");
+            assertEquals(baseline.keySet(), output.keySet());
+            int retained = 0, replaced = 0;
+            for (String key : baseline.keySet()) {
+                Resource original = baseline.get(key), expected = original.copy();
+                if (original instanceof Encounter) {
+                    Encounter source = (Encounter)original, actual = (Encounter)output.get(key);
+                    assertTrue(source.getPeriod().hasStart());
+                    boolean inpatient = "IMP".equals(source.getClass_().getCode());
+                    if (inpatient == scopedMissing) retained++;
+                    else {
+                        assertFalse(actual.getPeriod().getStartElement().hasValue());
+                        assertEquals(inpatient ? "scoped-free" : "common-free", reason(actual.getPeriod().getStartElement()));
+                        Encounter expectedEncounter = (Encounter)expected;
+                        expectedEncounter.getPeriod().setStartElement(actual.getPeriod().getStartElement().copy());
+                        // The documented contact policy mirrors its final period to location entries.
+                        for (var location : expectedEncounter.getLocation()) location.setPeriod(expectedEncounter.getPeriod().copy());
+                        replaced++;
+                    }
+                }
+                assertTrue(key + " scopedMissing=" + scopedMissing, expected.equalsDeep(output.get(key)));
+            }
+            assertTrue(retained > 0); assertTrue(replaced > 0);
+        }
+    }
+
 }

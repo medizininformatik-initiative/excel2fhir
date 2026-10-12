@@ -22,19 +22,19 @@ public class ConverterOptionsTest {
         }
     }
 
-    @Test public void fileAndWorkbookTextUseTheSameParserAndCollectErrors() throws Exception {
-        String text = "# Comment\nCHECK_INPUT_CONSISTENCY=treu\nSTART_ID_CONDITION=abc\n"
-                + "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1\n"
-                + "PID_PREFIX=first\nPID_PREFIX=second\n";
+    @Test public void configurationFilesAndTextRejectTheSameInvalidSettings() throws Exception {
         var file = Files.createTempFile("converter-options-", ".config");
         try {
-            Files.writeString(file, text);
-            var a = ConverterOptions.fromText(text);
-            var b = new ConverterOptions(file.toString());
-            assertEquals(4, a.getErrors().size());
-            assertEquals(a.getErrors(), b.getErrors());
-            // Invalid input must not silently turn validation off.
-            assertTrue(a.is(CHECK_INPUT_CONSISTENCY));
+            for (String invalid : List.of("CHECK_INPUT_CONSISTENCY=treu", "START_ID_CONDITION=abc",
+                    "PID_LAST_NUMBER_INCREASE_LOOP_COUNT=-1", "PID_PREFIX=first\nPID_PREFIX=second")) {
+                String text = "CONFIGURATION_VERSION=1\n" + invalid + "\n";
+                Files.writeString(file, text);
+                var a = ConverterOptions.fromConfigurationText(text);
+                var b = new ConverterOptions(file.toString());
+                assertFalse(invalid, a.getErrors().isEmpty());
+                assertEquals(a.getErrors(), b.getErrors());
+                assertTrue(a.is(CHECK_INPUT_CONSISTENCY));
+            }
         } finally { Files.delete(file); }
     }
 
