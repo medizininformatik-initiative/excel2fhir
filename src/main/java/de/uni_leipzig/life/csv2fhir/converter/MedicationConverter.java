@@ -41,8 +41,8 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationRequest"));
             r.setId(createId(MedicationRequest.class));
             r.setSubject(getPatientReference()).setEncounter(getEncounterReference()).setMedication(medication);
-            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "active" : status));
-            r.setIntentElement(InputCode.of(r.getIntentElement(), value("Absicht") == null ? "order" : value("Absicht")));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status));
+            r.setIntentElement(InputCode.of(r.getIntentElement(), value("Absicht")));
             r.setAuthoredOnElement(ClinicalValues.date(value("Dokumentationszeitpunkt")));
             Dosage dose = dosage();
             if (!dose.isEmpty()) r.addDosageInstruction(dose);
@@ -52,7 +52,7 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationAdministration"));
             r.setId(createId(MedicationAdministration.class));
             r.setSubject(getPatientReference()).setContext(getEncounterReference()).setMedication(medication);
-            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "completed" : status));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status));
             r.setEffective(effective());
             var dose = new MedicationAdministration.MedicationAdministrationDosageComponent();
             if (hasDose()) dose.setDose(quantity());
@@ -66,7 +66,7 @@ public class MedicationConverter extends Converter {
             r.setMeta(new Meta().addProfile(PROFILE + "MedicationStatement"));
             r.setId(createId(MedicationStatement.class));
             r.setSubject(getPatientReference()).setContext(getEncounterReference()).setMedication(medication);
-            r.setStatusElement(InputCode.of(r.getStatusElement(), status == null ? "active" : status));
+            r.setStatusElement(InputCode.of(r.getStatusElement(), status));
             r.setEffective(effective());
             r.setDateAssertedElement(ClinicalValues.date(value("Dokumentationszeitpunkt")));
             Dosage dose = dosage();
@@ -79,7 +79,6 @@ public class MedicationConverter extends Converter {
         Medication r = new Medication();
         r.setMeta(new Meta().addProfile(PROFILE + "Medication"));
         r.setId(getMedicationId());
-        r.addIdentifier().setValue(getMedicationId());
         CodeableConcept code = ClinicalValues.concept(value("Präparatcode"), value("Präparatcodesystem"), value("Präparatbezeichnung"));
         if (value("ATC-Code") != null || value("ATC-Version") != null) {
             Coding atc = CodingVersion.apply(new Coding().setSystem("http://fhir.de/CodeSystem/bfarm/atc"), value("ATC-Version"));
@@ -91,11 +90,14 @@ public class MedicationConverter extends Converter {
         // Coding order does not express FHIR equivalence or clinical priority.
         Map<String, Integer> order = Map.of("http://fhir.de/CodeSystem/ifa/pzn", 0,
                 "http://fhir.de/CodeSystem/bfarm/atc", 1);
-        code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(c.getSystem(), 2)));
+        code.getCoding().sort(Comparator.comparingInt(c -> order.getOrDefault(Objects.toString(c.getSystem(), ""), 2)));
         r.setCode(code);
         if (value("Darreichungsform") != null) r.setForm(new CodeableConcept().setText(value("Darreichungsform")));
         if (value("Wirkstoffcode") != null) for (String ingredient : value("Wirkstoffcode").split(";")) {
             r.addIngredient().setItem(ClinicalValues.concept(ingredient.trim(), value("Wirkstoffcodesystem"), null));
+        }
+        if (value("Wirkstoffcode") == null && value("Wirkstoffcodesystem") != null) {
+            r.addIngredient().setItem(ClinicalValues.concept(null, value("Wirkstoffcodesystem"), null));
         }
         return r;
     }

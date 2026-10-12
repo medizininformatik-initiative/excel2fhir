@@ -64,6 +64,7 @@ public class ClinicalEncounterAssignmentTest {
         var date = new DateTimeType("2026-05-02");
         Procedure procedure = new Procedure(); procedure.setPerformed(new Period().setStartElement(date));
         Observation lab = new Observation(); lab.setEffective(date);
+        lab.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         Observation vital = new Observation(); vital.setEffective(date);
         vital.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("vital-signs");
         MedicationRequest request = new MedicationRequest(); request.setAuthoredOnElement(date);
@@ -127,6 +128,7 @@ public class ClinicalEncounterAssignmentTest {
         var ends = new EncounterOutputPolicy(r.getConverterOptions().configuration(), r.contacts());
         assertEquals("2026-05-01", ((Encounter)ends.output(imp)).getPeriod().getEndElement().getValueAsString());
         var observation = new Observation(); observation.setId("o");
+        observation.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         observation.setEffective(new DateTimeType("2026-05-10")); context(r, observation, false);
         assertEquals("Encounter/imp", ((Observation)policy(r).output(observation)).getEncounter().getReference());
         var document = new DocumentReference(); document.setId("d");

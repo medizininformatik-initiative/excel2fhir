@@ -31,7 +31,11 @@ public final class ClinicalEncounterAssignment {
             boolean vital = ((Observation)resource).getCategory().stream().flatMap(c -> c.getCoding().stream())
                     .anyMatch(c -> "http://terminology.hl7.org/CodeSystem/observation-category".equals(c.getSystem())
                             && "vital-signs".equals(c.getCode()));
-            return vital ? "Observation.vitalSigns" : "Observation.laboratory";
+            if (vital) return "Observation.vitalSigns";
+            boolean laboratory = ((Observation)resource).getCategory().stream().flatMap(c -> c.getCoding().stream())
+                    .anyMatch(c -> "http://terminology.hl7.org/CodeSystem/observation-category".equals(c.getSystem())
+                            && "laboratory".equals(c.getCode()));
+            return laboratory ? "Observation.laboratory" : null;
         }
         if (resource instanceof Condition || resource instanceof Procedure || resource instanceof MedicationRequest
                 || resource instanceof MedicationAdministration || resource instanceof MedicationStatement

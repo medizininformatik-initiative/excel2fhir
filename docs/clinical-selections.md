@@ -65,6 +65,7 @@ measurement errors and tests not performed.
 
 | Sheet | Fields with explicit missing-value choices |
 | --- | --- |
+| `Person` | Given name, family name and birth date. |
 | `Fall` | Admission reason. |
 | `Diagnose` | Codes, times and supported status fields. |
 | `Prozedur` | Codes and times. |

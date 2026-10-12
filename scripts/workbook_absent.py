@@ -12,6 +12,7 @@ CODES.update({label.removesuffix(' (Data Absent Reason)'): '!dar:' + code
 # Only fields whose converters explicitly interpret missing values. Never translate
 # arbitrary names, identifiers, narratives or ordinary status codes.
 FIELDS = {
+    'Person': {'Vorname', 'Nachname', 'Geburtsdatum'},
     'Fall': {'Aufnahmegrund (4. Stelle)'},
     'Diagnose': {'Code', 'Zusatzcode', 'Dokumentationszeitpunkt', 'Beginn', 'Ende',
                  'Klinischer Status', 'Verifikationsstatus', 'Version', 'Zusatzversion'},
@@ -34,6 +35,8 @@ def missing_field(sheet, header, row):
 
 def display(sheet, header, value, row):
     if missing_field(sheet, header, row) and isinstance(value, str):
+        if sheet == 'Person' and header in ('Vorname', 'Nachname') and not (value.startswith('!dar:') or value.endswith(' (Data Absent Reason)')):
+            return value
         token = CODES.get(value, value)
         if token.startswith('!dar:'):
             return LABELS.get(token[5:], value)
@@ -41,5 +44,7 @@ def display(sheet, header, value, row):
 
 
 def canonical(sheet, row):
-    return {header: CODES.get(value, value) if missing_field(sheet, header, row) else value
+    return {header: CODES.get(value, value) if missing_field(sheet, header, row)
+            and not (sheet == 'Person' and header in ('Vorname', 'Nachname')
+                     and not (value.startswith('!dar:') or value.endswith(' (Data Absent Reason)'))) else value
             for header, value in row.items()}

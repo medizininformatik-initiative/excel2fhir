@@ -45,9 +45,9 @@ def baseline_medications(rows, options, pid):
         number = counts.get(kind, int(options.get('START_ID_' + key, 1))); counts[kind] = number + 1
         identifier = pid + ('-E-' + row['Fall-Nr'] if row['Fall-Nr'] else '') + '-' + suffix + '-' + str(number)
         resource = {'resourceType': kind, 'id': identifier, 'medicationReference': {'reference': 'Medication/' + product_id(row)}}
-        resource['status'] = row['Status'] or ('completed' if suffix == 'MA' else 'active')
+        primitive(resource, 'status', row['Status'])
         if suffix == 'MR':
-            resource['intent'] = row['Absicht'] or 'order'
+            primitive(resource, 'intent', row['Absicht'])
             primitive(resource, 'authoredOn', row['Dokumentationszeitpunkt'])
         else:
             if row['Ende']:

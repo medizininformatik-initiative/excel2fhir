@@ -99,4 +99,19 @@ public class ObservationOutputPolicyTest {
         assertTrue(value.equalsDeep(output.getValueQuantity()));
     }
 
+    @Test public void categoryCodesRequireTheMatchingSystemAndInspectAllCodings() {
+        for (String code : List.of("laboratory", "vital-signs")) {
+            Observation source = observation(code);
+            source.getCategoryFirstRep().getCodingFirstRep().setSystem("https://example.org/custom");
+            assertNull(ClinicalEncounterAssignment.optionResource(source));
+            var configuration = ContractConfiguration.parse("CONFIGURATION_VERSION=1\n"
+                    + "OBSERVATION_LABORATORY_ENABLED=false\nOBSERVATION_VITAL_SIGNS_ENABLED=false\n"
+                    + "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=masked\nDAR_VITAL_SIGNS_VALUE_X_NUMERIC_MEASUREMENT=masked\n");
+            assertTrue(new ResourceOutputPolicy(configuration, List.of(source)).emits(source));
+            assertTrue(source.equalsDeep(new DarOverrides(configuration).output(source)));
+            source.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode(code);
+            assertEquals(code.equals("laboratory") ? "Observation.laboratory" : "Observation.vitalSigns",
+                    ClinicalEncounterAssignment.optionResource(source));
+        }
+    }
 }

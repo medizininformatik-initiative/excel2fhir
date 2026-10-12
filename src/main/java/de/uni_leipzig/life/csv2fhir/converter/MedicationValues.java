@@ -75,8 +75,8 @@ public final class MedicationValues {
             Set<String> systems, List<String> errors) {
         String code = get.apply(column), system = get.apply(systemColumn);
         if (code == null && system == null) return;
-        if (code == null || system == null || (!systems.contains(system) && !DiagnosisValues.isSystemUri(system))) {
-            errors.add(column + " requires a code and a matching " + systemColumn);
+        if (system != null && !systems.contains(system) && !DiagnosisValues.isSystemUri(system)) {
+            errors.add(systemColumn + " requires a suggested name or an absolute URI");
             return;
         }
         try {

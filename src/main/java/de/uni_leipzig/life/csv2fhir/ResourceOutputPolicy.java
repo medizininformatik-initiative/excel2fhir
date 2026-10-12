@@ -36,6 +36,7 @@ public final class ResourceOutputPolicy {
         if (configuration == null) return true;
         if (replaced.contains(resource.fhirType() + "/" + resource.getIdElement().getIdPart())) return false;
         String type = resource instanceof Observation ? ClinicalEncounterAssignment.optionResource(resource) : resource.fhirType();
+        if (type == null) return true;
         if (type.equals("Location") || type.equals("Medication")) return mode(type).equals("generate-reference");
         return !BOOLEAN_TYPES.contains(type) || enabled("resource." + type + ".enabled");
     }

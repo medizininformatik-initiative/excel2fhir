@@ -22,7 +22,9 @@ public final class ObservationOutputPolicy {
 
     public Resource output(Resource source) {
         if (configuration == null || !(source instanceof Observation)) return source;
-        String option = "resource." + ClinicalEncounterAssignment.optionResource(source) + ".ucumCodeInUnit";
+        String type = ClinicalEncounterAssignment.optionResource(source);
+        if (type == null) return source;
+        String option = "resource." + type + ".ucumCodeInUnit";
         if (!supports(option) || !configuration.effective(option).map(v -> v.asBoolean()).orElse(false)) return source;
         Observation output = ((Observation)source).copy();
         moveCode(output.getValue());

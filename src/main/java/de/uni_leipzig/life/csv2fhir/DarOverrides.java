@@ -42,10 +42,8 @@ public final class DarOverrides {
             boolean onlyMissing = missingOnly.contains(ruleId);
             if (code == null || !field.path("resourceType").asText().equals(source.fhirType())) continue;
             if (source instanceof Observation) {
-                boolean vital = ((Observation)source).getCategory().stream().flatMap(c -> c.getCoding().stream())
-                        .anyMatch(c -> "http://terminology.hl7.org/CodeSystem/observation-category".equals(c.getSystem())
-                                && "vital-signs".equals(c.getCode()));
-                if (id.startsWith("VitalSigns.") != vital) continue;
+                String type = ClinicalEncounterAssignment.optionResource(source);
+                if (type == null || id.startsWith("VitalSigns.") != type.equals("Observation.vitalSigns")) continue;
             }
             String path = field.path("field").asText();
             if (field.path("representation").asText().equals("dataAbsentReason")) {

@@ -113,7 +113,7 @@ for sheet, fields in FIELDS.items():
         if header not in SELECTIONS[sheet]:
             OPEN_FIELDS[sheet][header] = 'BK' if header in (
                 'Dokumentationszeitpunkt', 'Beginn', 'Ende', 'Durchführungsbeginn',
-                'Zeitstempel (Abnahme)', 'Zeitstempel', 'Zeitpunkt', 'Einzeldosis') else 'Z'
+                'Zeitstempel (Abnahme)', 'Zeitstempel', 'Zeitpunkt', 'Einzeldosis', 'Geburtsdatum', 'Vorname', 'Nachname') else 'Z'
 for sheet, fields in {'Diagnose': ['Version', 'Zusatzversion'], 'Prozedur': ['Version', 'Zusatzversion'],
                       'Impfung': ['Version'], 'Medikation': ['ATC-Version']}.items():
     for header in fields: OPEN_FIELDS[sheet][header] = 'BM'

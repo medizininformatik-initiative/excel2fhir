@@ -23,8 +23,6 @@ import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.DocumentReference;
 import org.hl7.fhir.r4.model.DocumentReference.DocumentReferenceContentComponent;
 import org.hl7.fhir.r4.model.DocumentReference.DocumentReferenceContextComponent;
-import org.hl7.fhir.r4.model.DocumentReference.ReferredDocumentStatus;
-import org.hl7.fhir.r4.model.Enumerations.DocumentReferenceStatus;
 import org.hl7.fhir.r4.model.Resource;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
@@ -78,45 +76,14 @@ public class DocumentReferenceConverter extends Converter {
         // No official profile available
         // documentReference.setMeta(new Meta().addProfile(PROFILE));
         documentReference.setSubject(getPatientReference());
-        // Status of the Reference; always: "This is the current reference for this
-        // document."
-        documentReference.setStatus(DocumentReferenceStatus.CURRENT);
-        // Status of the underlying document; always: "final"
-        documentReference.setDocStatus(ReferredDocumentStatus.FINAL);
         String timestamp = ClinicalValues.get(this, ClinicalValues.Column.Ausgabezeitpunkt);
-        documentReference.setDateElement(timestamp == null ? new org.hl7.fhir.r4.model.InstantType(new Date())
-                : new org.hl7.fhir.r4.model.InstantType(timestamp));
+        documentReference.setDateElement(ClinicalValues.instant(timestamp));
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
         if (status != null) documentReference.setStatusElement(InputCode.of(documentReference.getStatusElement(), status));
 
-        // Example:
-        // AD0101 Arztberichte
-        // AD010104 Entlassungsbericht extern
-        // AD010111 Ambulanzbrief
-        //
-        // 68609-7 Hospital Letter
-        // 18842-5 Discharge summary
-
-        // Coding loinc = createCoding("http://loinc.org", "68609-7");
-        // CodeableConcept cc = new CodeableConcept();
-        // loinc.setVersion("2.74");
-        // loinc.setDisplay("Hospital Letter");
-
-        // TODO: Enable DocumentResource category filling by excel input data
-        CodeableConcept category = createCodeableConcept("http://dvmd.de/fhir/CodeSystem/kdl", "AD0101", "Arztberichte",
-                null, "2023");
-        documentReference.setCategory(singletonList(category));
-
-        // TODO: Enable DocumentResource type filling by excel input data
-        CodeableConcept type = createCodeableConcept("http://dvmd.de/fhir/CodeSystem/kdl", "AD010104",
-                "Entlassungsbericht extern", null, "2023");
-        String documentCode = ClinicalValues.get(this, ClinicalValues.Column.Dokumentcode);
-        if (documentCode != null) {
-            type = ClinicalValues.concept(documentCode, ClinicalValues.get(this, ClinicalValues.Column.Dokumentcodesystem),
-                    ClinicalValues.get(this, ClinicalValues.Column.Dokumentbezeichner));
-            documentReference.setCategory(java.util.Collections.emptyList());
-        }
-        documentReference.setType(type);
+        documentReference.setType(ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Dokumentcode),
+                ClinicalValues.get(this, ClinicalValues.Column.Dokumentcodesystem),
+                ClinicalValues.get(this, ClinicalValues.Column.Dokumentbezeichner)));
 
         // TODO: Enable DocumentResource securityLabel filling by excel input data
         CodeableConcept securityLabel1 = createCodeableConcept(
@@ -136,7 +103,7 @@ public class DocumentReferenceConverter extends Converter {
         Attachment attachment = text == null ? createAttachment(path, embed)
                 : new Attachment().setContentType("text/plain; charset=utf-8")
                     .setData(text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
+        if (!attachment.isEmpty()) documentReference.setContent(singletonList(new DocumentReferenceContentComponent(attachment)));
         return singletonList(documentReference);
     }
 
@@ -150,12 +117,7 @@ public class DocumentReferenceConverter extends Converter {
      */
     public static Attachment createAttachment(Path path, boolean embed) throws IOException {
         Attachment attachment = new Attachment();
-        if (path == null) {
-            attachment.getDataElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
-            attachment.setContentType("text");
-            return attachment;
-        }
+        if (path == null) return attachment;
         File file = path.toFile();
         if (embed) {
             if (file.isFile() && file.canRead()) {
@@ -176,7 +138,7 @@ public class DocumentReferenceConverter extends Converter {
         String contentType = getContentType(file);
         // available type:
         // https://terminology.hl7.org/1.0.0/CodeSystem-v3-mediatypes.html
-        attachment.setContentType(contentType != null ? contentType : "text"); // set "text" as default
+        attachment.setContentType(contentType);
 
         // optional
         Path fileName = path.getFileName();
@@ -188,8 +150,6 @@ public class DocumentReferenceConverter extends Converter {
         // Better (?): date, when document was written
         if (file.isFile() && file.canRead()) {
             attachment.setCreation(new Date(((FileTime) Files.getAttribute(path, "creationTime")).toMillis()));
-        } else {
-            attachment.getCreationElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
         }
         return attachment;
     }

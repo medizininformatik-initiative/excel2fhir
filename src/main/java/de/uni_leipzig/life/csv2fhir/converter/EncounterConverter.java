@@ -392,6 +392,7 @@ public class EncounterConverter extends Converter {
      * @return
      */
     public static CodeableConcept createDiagnosisUse(String useIdentifier) {
+        if (useIdentifier == null || useIdentifier.isBlank()) return null;
         String codeSystem = DIAGNOSIS_ROLE_RESOURCES.getCodeSystem();
         String code = DIAGNOSIS_ROLE_RESOURCES.getHumanToCode(useIdentifier);
         String display = DIAGNOSIS_ROLE_RESOURCES.getCodeToHuman(code);
@@ -431,12 +432,6 @@ public class EncounterConverter extends Converter {
      */
     private static void addDiagnosisResourceToEncounter(ConverterResult result, String encounterID,
             Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
-        // The KDS definition needs a diagnosis use (min cardinality 1), but a
-        // procedure doesn't have this -> arbitrary default
-        if (diagnosisUseIdentifier == null) { // default for missing values
-            String defaultDiagnosisRoleCode = DIAGNOSIS_ROLE_RESOURCES.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
-            diagnosisUseIdentifier = DIAGNOSIS_ROLE_RESOURCES.getFirstBackwardKey(defaultDiagnosisRoleCode);
-        }
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Fall, Encounter.class, encounterID);

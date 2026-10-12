@@ -70,6 +70,7 @@ public class ResourceOutputPolicyTest {
     }
     @Test public void disabledObservationCategoryRemovesOnlyItsOwnOutputAndReferences() {
         Observation lab = new Observation(); lab.setId("lab");
+        lab.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         Observation vital = new Observation(); vital.setId("vital");
         vital.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("vital-signs");
         DiagnosticReport report = new DiagnosticReport(); report.setId("report");

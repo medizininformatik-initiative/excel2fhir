@@ -16,6 +16,42 @@ import picocli.CommandLine;
 public class SelectionDarWorkflowTest {
     @Rule public TemporaryFolder temp = new TemporaryFolder();
 
+    @Test public void explicitAndEmptyPatientFieldsSurviveWorkbookConversion() throws Exception {
+        Path root = temp.newFolder().toPath(), input = root.resolve("names.xlsx"), output = root.resolve("output");
+        try (var stream = Files.newInputStream(Path.of("input/FHIR_Testdatengenerator_Vorlage.xlsx"));
+                var book = new org.apache.poi.xssf.usermodel.XSSFWorkbook(stream)) {
+            var sheet = book.getSheet("Person");
+            var cases = List.of(Map.of("Vorname", "", "Nachname", "", "Geburtsdatum", ""),
+                    Map.of("Vorname", "Unbekannt (Data Absent Reason)", "Nachname", "Müller", "Geburtsdatum", "Nicht erhoben (Data Absent Reason)"),
+                    Map.of("Vorname", "Anna Maria", "Nachname", "!dar:masked", "Geburtsdatum", "1980-05"));
+            for (int i = 0; i < cases.size(); i++) for (var cell : sheet.getRow(0)) {
+                String field = cell.getStringCellValue();
+                if (cases.get(i).containsKey(field)) sheet.getRow(i + 1).getCell(cell.getColumnIndex(),
+                        org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue(cases.get(i).get(field));
+            }
+            try (var streamOut = Files.newOutputStream(input)) { book.write(streamOut); }
+        }
+        var checked = new ExcelTemplateValidator().validate(input.toFile());
+        assertFalse(checked.getIssues().toString(), checked.hasErrors());
+        Path config = root.resolve("input.config");
+        Files.writeString(config, "CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n");
+        assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", input.toString(), "-o", output.toString(),
+                "--converter-options", config.toString()));
+        var resources = read(output, ".json");
+        var patients = resources.values().stream().filter(Patient.class::isInstance).map(Patient.class::cast)
+                .collect(Collectors.toMap(p -> p.getIdElement().getIdPart(), p -> p));
+        Patient empty = patients.get("Projekt-XY-Patient-00001");
+        assertFalse(empty.hasName()); assertFalse(empty.hasBirthDateElement());
+        Patient absent = patients.get("Projekt-XY-Patient-00002");
+        assertEquals("Müller", absent.getNameFirstRep().getFamily());
+        assertEquals("unknown", reason(absent.getNameFirstRep().getGiven().get(0)));
+        assertEquals("not-asked", reason(absent.getBirthDateElement()));
+        Patient mixed = patients.get("Projekt-XY-Patient-00003");
+        assertEquals(List.of("Anna", "Maria"), mixed.getNameFirstRep().getGiven().stream().map(StringType::getValue).toList());
+        assertEquals("masked", reason(mixed.getNameFirstRep().getFamilyElement()));
+        assertEquals("1980-05", mixed.getBirthDateElement().getValueAsString());
+    }
+
     private Map<String, Resource> convert(String settings) throws Exception {
         Path root = temp.newFolder().toPath(), config = root.resolve("audit.config");
         Files.writeString(config, "CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON,NDJSON\n" + settings);
@@ -111,7 +147,15 @@ public class SelectionDarWorkflowTest {
         for (String type : types) {
             if (List.of("Condition", "Procedure", "Observation", "MedicationRequest", "MedicationAdministration", "MedicationStatement").contains(type))
                 assertTrue("Fixture must exercise " + type, !ids(baseline, type).isEmpty() || !ids(derivedBaseline, type).isEmpty());
-            assertTrue(type, ids(output, type).isEmpty());
+            if (type.equals("Observation")) {
+                for (String key : ids(output, type)) {
+                    Observation observation = (Observation)output.get(key);
+                    assertFalse(observation.getCategory().stream().flatMap(c -> c.getCoding().stream()).anyMatch(c ->
+                            "http://terminology.hl7.org/CodeSystem/observation-category".equals(c.getSystem())
+                            && List.of("laboratory", "vital-signs").contains(c.getCode())));
+                    assertTrue(baseline.get(key).equalsDeep(observation));
+                }
+            } else assertTrue(type, ids(output, type).isEmpty());
         }
         for (Resource resource : output.values()) for (Reference ref : references(resource))
             if (ref.hasReference() && baseline.containsKey(ref.getReference()))

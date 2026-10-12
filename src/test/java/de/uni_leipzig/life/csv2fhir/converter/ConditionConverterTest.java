@@ -62,8 +62,9 @@ public class ConditionConverterTest {
     }
 
     @Test
-    public void requiresSystemAndPreservesFreeCodes() throws Exception {
-        assertThrows(Exception.class, () -> convert(Map.of("Code", "00123")));
+    public void preservesCodeWithoutSystemAndFreeCodes() throws Exception {
+        assertEquals("00123", convert(Map.of("Code", "00123")).getCode().getCodingFirstRep().getCode());
+        assertFalse(convert(Map.of("Code", "00123")).getCode().getCodingFirstRep().hasSystem());
         assertEquals("made-up", convert(Map.of("Klinischer Status", "made-up")).getClinicalStatus().getCodingFirstRep().getCode());
         assertEquals("made-up", convert(Map.of("Beginn", "!dar:made-up")).getOnsetDateTimeType().getExtensionFirstRep().getValue().primitiveValue());
         assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:")));

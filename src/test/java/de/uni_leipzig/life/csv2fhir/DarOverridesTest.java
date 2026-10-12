@@ -5,6 +5,11 @@ import org.junit.Test;
 import org.hl7.fhir.r4.model.*;
 
 public class DarOverridesTest {
+    private Observation laboratory() {
+        Observation observation = new Observation();
+        observation.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
+        return observation;
+    }
     private Resource apply(Resource source, String settings) {
         return new DarOverrides(ContractConfiguration.parse("CONFIGURATION_VERSION=1\n" + settings)).output(source);
     }
@@ -26,10 +31,10 @@ public class DarOverridesTest {
         e.getClass_().setCode("AMB");
         out = (Encounter)apply(e, rule + "DAR_ENCOUNTER_AMBULATORY_PERIOD_END=masked\n");
         reason(out.getPeriod().getEndElement(), "masked");
-        Observation o = new Observation(); o.setValue(new Quantity(5));
+        Observation o = laboratory(); o.setValue(new Quantity(5));
         rule = "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=unknown\nDAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT_ONLY_WHEN_MISSING=true\n";
         assertTrue(((Observation)apply(o, rule)).hasValue());
-        assertEquals("unknown", ((Observation)apply(new Observation(), rule)).getDataAbsentReason().getCodingFirstRep().getCode());
+        assertEquals("unknown", ((Observation)apply(laboratory(), rule)).getDataAbsentReason().getCodingFirstRep().getCode());
         DocumentReference d = new DocumentReference(); d.addContent().getAttachment().setData(new byte[]{1}).setHash(new byte[]{2}).setSize(1);
         var attachment = ((DocumentReference)apply(d, "DAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA=masked\nDAR_DOCUMENT_REFERENCE_CONTENT_ATTACHMENT_DATA_ONLY_WHEN_MISSING=true\n")).getContentFirstRep().getAttachment();
         assertTrue(attachment.hasData()); assertTrue(attachment.hasHash()); assertTrue(attachment.hasSize());
@@ -45,7 +50,7 @@ public class DarOverridesTest {
         rule = "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE=unknown\n";
         reason(((MedicationAdministration)apply(medication, rule + "DAR_MEDICATION_ADMINISTRATION_DOSAGE_DOSE_ONLY_WHEN_MISSING=true\n")).getDosage().getDose(), "masked");
         reason(((MedicationAdministration)apply(medication, rule)).getDosage().getDose(), "unknown");
-        Observation observation = new Observation();
+        Observation observation = laboratory();
         observation.getDataAbsentReason().addCoding().setCode("masked");
         observation.addComponent().getDataAbsentReason().addCoding().setCode("masked");
         rule = "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=unknown\nDAR_LABORATORY_COMPONENT_VALUE_X_NUMERIC_MEASUREMENT=unknown\n";
@@ -81,8 +86,8 @@ public class DarOverridesTest {
         assertFalse(((Patient)apply(new Patient(), "DAR_PATIENT_NAME_FAMILY=unknown\n")).hasName());
     }
     @Test public void selectsMeasurementVariantFromOriginalAndKeepsCategories() {
-        Observation o = new Observation(); o.setValue(new Quantity(5));
-        o.addCategory().addCoding().setSystem("urn:fixed").setCode("laboratory");
+        Observation o = laboratory(); o.setValue(new Quantity(5));
+        o.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         o.addComponent().setValue(new StringType("positive"));
         Observation out = (Observation)apply(o, "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=error\nDAR_LABORATORY_VALUE_X_MEASUREMENT=unknown\nDAR_LABORATORY_COMPONENT_VALUE_X_MEASUREMENT=masked\n");
         assertFalse(out.hasValue()); assertEquals("error", out.getDataAbsentReason().getCodingFirstRep().getCode());
@@ -109,7 +114,7 @@ public class DarOverridesTest {
         Patient retained = (Patient)apply(p, "DAR_PATIENT_NAME_FAMILY=made-up\nDAR_PATIENT_NAME_FAMILY_ONLY_WHEN_MISSING=true\n");
         assertEquals("Original", retained.getNameFirstRep().getFamily());
         reason(((Condition)apply(new Condition(), "DAR_CONDITION_CLINICAL_STATUS=made-up\n")).getClinicalStatus(), "made-up");
-        Observation o = new Observation(); o.setValue(new Quantity(42));
+        Observation o = laboratory(); o.setValue(new Quantity(42));
         Observation out = (Observation)apply(o, "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=made-up\n");
         assertFalse(out.hasValue());
         assertEquals("made-up", out.getDataAbsentReason().getCodingFirstRep().getCode());

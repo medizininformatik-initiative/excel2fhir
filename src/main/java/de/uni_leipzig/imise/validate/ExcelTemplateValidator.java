@@ -273,12 +273,12 @@ public class ExcelTemplateValidator {
         for (String[] pair : List.of(new String[] {"Code", "Codesystem"},
                 new String[] {"Zusatzcode", "Zusatzcodesystem"})) {
             String code = get(row, columns, pair[0]);
-            if (isBlank(code)) {
+            String selection = get(row, columns, pair[1]);
+            if (isBlank(code) && isBlank(selection)) {
                 continue;
             }
-            String selection = get(row, columns, pair[1]);
             var coding = systems.get(selection);
-            if (coding == null && !DiagnosisValues.isSystemUri(selection)) {
+            if (!isBlank(selection) && coding == null && !DiagnosisValues.isSystemUri(selection)) {
                 add(result, ERROR, "Diagnose", row.getRowNum() + 1, pair[1], "Codesystem requires a suggested name or an absolute URI");
             }
             try {
@@ -342,6 +342,14 @@ public class ExcelTemplateValidator {
                 add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName, "Value is required");
             }
             return null;
+        }
+        if ("Person".equals(sheet.getSheetName()) && "Geburtsdatum".equals(columnName) && DiagnosisValues.isAbsent(value)) {
+            try {
+                return (DateTimeType)new DateTimeType().addExtension(DiagnosisValues.absentReason(value));
+            } catch (IllegalArgumentException e) {
+                add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName, e.getMessage());
+                return null;
+            }
         }
         if (isExcelDateCell(cell)) {
             return new DateTimeType(cell.getDateCellValue());

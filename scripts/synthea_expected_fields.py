@@ -40,6 +40,7 @@ def expected_fields(source, report):
     from german_demographics import identity
     identity_fields = identity(person)
     address = deepcopy(identity_fields['address'])
+    address.pop('type', None)
     # ISO state codes are the converter's address output contract.
     states = dict(zip(('Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen','Hamburg','Hessen','Mecklenburg-Vorpommern',
                       'Niedersachsen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'),

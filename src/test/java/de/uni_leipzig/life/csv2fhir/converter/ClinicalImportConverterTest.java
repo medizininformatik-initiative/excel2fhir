@@ -9,6 +9,49 @@ import org.junit.Test;
 import de.uni_leipzig.life.csv2fhir.*;
 
 public class ClinicalImportConverterTest {
+    private Patient patientWith(Map<String, String> values) throws Exception {
+        var options = new ConverterOptions("");
+        return (Patient)new PatientConverter(row(values, PatientConverter.Person_Columns.values()), null,
+                new ConverterResult(options), null, options).convertInternal().get(0);
+    }
+
+    @Test public void emptyPatientNamesStayAbsentAndOrdinaryNamesStayLiteral() throws Exception {
+        Patient empty = patientWith(Map.of());
+        assertFalse(empty.hasName());
+        assertFalse(empty.hasIdentifier());
+        assertFalse(empty.hasBirthDateElement());
+        for (var values : List.of(Map.of("Vorname", "Anna Maria"), Map.of("Nachname", "Müller"),
+                Map.of("Vorname", "Unbekannt", "Nachname", "Maskiert"))) {
+            HumanName name = patientWith(values).getNameFirstRep();
+            assertEquals(values.get("Nachname"), name.getFamily());
+            assertEquals(values.containsKey("Vorname") ? List.of(values.get("Vorname").split(" ")) : List.of(),
+                    name.getGiven().stream().map(StringType::getValue).toList());
+            assertFalse(name.getFamilyElement().hasExtension());
+            assertTrue(name.getGiven().stream().noneMatch(StringType::hasExtension));
+        }
+    }
+
+    @Test public void explicitPatientNameAndBirthDateDarSurviveJsonAndXml() throws Exception {
+        for (String value : List.of("!dar:unknown", "Unbekannt (Data Absent Reason)", "!dar:custom-reason")) {
+            Patient patient = patientWith(Map.of("Vorname", value, "Nachname", value, "Geburtsdatum", value));
+            String reason = value.equals("!dar:custom-reason") ? "custom-reason" : "unknown";
+            for (var format : List.of(OutputFileType.JSON, OutputFileType.XML)) {
+                var parser = format.getParser();
+                String encoded = parser.encodeResourceToString(patient);
+                assertFalse(encoded.contains("DUMMY_"));
+                Patient restored = (Patient)parser.parseResource(encoded);
+                assertEquals(reason, restored.getNameFirstRep().getFamilyElement().getExtensionFirstRep().getValue().primitiveValue());
+                assertEquals(reason, restored.getNameFirstRep().getGiven().get(0).getExtensionFirstRep().getValue().primitiveValue());
+                assertEquals(reason, restored.getBirthDateElement().getExtensionFirstRep().getValue().primitiveValue());
+                assertFalse(restored.getBirthDateElement().hasValue());
+                assertNull(restored.getNameFirstRep().getFamily());
+                assertNull(restored.getNameFirstRep().getGiven().get(0).getValue());
+            }
+        }
+        for (String date : List.of("1980", "1980-05", "1980-05-12"))
+            assertEquals(date, patientWith(Map.of("Geburtsdatum", date)).getBirthDateElement().getValueAsString());
+    }
+
     @Test public void freeStatusCodesAndDarPassThroughEveryClinicalConverter() throws Exception {
         var options = new ConverterOptions("");
         for (String value : List.of("made-up", "!dar:made-up")) {
@@ -178,7 +221,7 @@ public class ClinicalImportConverterTest {
         assertEquals("2026-05-01", period.getEndElement().getValueAsString());
     }
 
-    @Test public void inputContextDistinguishesExplicitDocumentTimeFromGeneratedRunTime() throws Exception {
+    @Test public void inputContextTracksExplicitDocumentTimeAndLeavesEmptyTimeAbsent() throws Exception {
         var options = ConverterOptions.fromText("PID_PREFIX=prefix-\n");
         var result = new ConverterResult(options);
         for (boolean explicit : List.of(false, true)) {
@@ -186,7 +229,7 @@ public class ClinicalImportConverterTest {
             if (explicit) values.put("Ausgabezeitpunkt", "2026-05-02T00:00:00Z");
             var resource = new DocumentReferenceConverter(row(values, DocumentReferenceConverter.DocumentReference_Columns.values()),
                     null, result, null, options).convert().get(0);
-            assertTrue(((DocumentReference)resource).hasDate());
+            assertEquals(explicit, ((DocumentReference)resource).hasDate());
             var context = result.inputContext(resource);
             assertEquals("prefix-patient", context.patientId());
             assertEquals(explicit, context.explicitDocumentTimestamp());
@@ -210,8 +253,7 @@ public class ClinicalImportConverterTest {
                     "Version", version), ConditionConverter.Diagnosis_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
             Procedure procedure = (Procedure) new ProcedureConverter(row(Map.of("Prozedurencode", "5-511.y", "Codesystem", "OPS",
                     "Version", version), ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
-            assertTrue("OPS requires a SNOMED category regardless of version representation",
-                    procedure.getCategory().hasCoding("http://snomed.info/sct", "387713003"));
+            assertFalse("Empty category remains absent regardless of OPS version", procedure.hasCategory());
             Immunization vaccine = (Immunization) new ClinicalEventConverter.Vaccine(row(Map.of("Eintrag ID", "v", "Code", "J07BF03",
                     "Codesystem", "ATC", "Version", version), ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
             for (Coding coding : List.of(medication.getCode().getCodingFirstRep(), condition.getCode().getCodingFirstRep(),
@@ -321,16 +363,16 @@ public class ClinicalImportConverterTest {
         assertEquals(1, observation.getValueCodeableConcept().getCoding().size());
         assertEquals("266919005", observation.getValueCodeableConcept().getCodingFirstRep().getCode());
     }
-    @Test public void laboratoryHasBothRequiredCategoryCodings() throws Exception {
+    @Test public void laboratoryKeepsOnlyTheEnteredCategoryCoding() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         Observation observation = (Observation)new ObservationLaboratoryConverter(
-                row(Map.of("LOINC", "718-7", "Messwert", "14", "Einheit", "g/dL"),
+                row(Map.of("LOINC", "718-7", "Messwert", "14", "Einheit", "g/dL", "Kategorie", "laboratory"),
                         ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()),
                 null, new ConverterResult(options), null, options).convertInternal().get(0);
         assertTrue(observation.getCategoryFirstRep().hasCoding(
                 "http://terminology.hl7.org/CodeSystem/observation-category", "laboratory"));
-        assertTrue(observation.getCategoryFirstRep().hasCoding("http://loinc.org", "26436-6"));
-        assertEquals(2, observation.getCategoryFirstRep().getCoding().size());
+        assertFalse(observation.getCategoryFirstRep().hasCoding("http://loinc.org", "26436-6"));
+        assertEquals(1, observation.getCategoryFirstRep().getCoding().size());
     }
     private CSVRecord row(Map<String,String> values, Enum<?>[] columns) throws Exception {
         Map<String,String> data = new LinkedHashMap<>();
@@ -408,7 +450,7 @@ public class ClinicalImportConverterTest {
         ConverterOptions options = new ConverterOptions(""); ConverterResult result = new ConverterResult(options);
         var columns = ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values();
         var parent = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "85354-9", "Untersuchung ID", "bp",
-                "Werttyp", "Komponenten", "Zeitstempel", "2026-01-02"), columns), null, result, null, options);
+                "Werttyp", "Komponenten", "Zeitstempel", "2026-01-02", "Kategorie", "vital-signs"), columns), null, result, null, options);
         Observation o = (Observation)parent.convertInternal().get(0);
         result.add(TableIdentifier.Klinische_Dokumentation, o);
         var component = new ObservationVitalSignsConverter(row(Map.of("Untersuchungscode", "8480-6", "Komponente von", "bp",
@@ -456,20 +498,14 @@ public class ClinicalImportConverterTest {
         assertEquals("2", request.getDosageInstructionFirstRep().getDoseAndRateFirstRep().getDoseQuantity().getValue().toPlainString());
         assertEquals(3, request.getDosageInstructionFirstRep().getTiming().getRepeat().getFrequency());
     }
-    @Test public void textLabResultUsesExplicitMissingCodingAndPreservesText() throws Exception {
+    @Test public void textLabResultPreservesTextWithoutInventedMissingCoding() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         Observation observation = (Observation)new ObservationLaboratoryConverter(
                 row(Map.of("LOINC", "630-4", "Messwert", "Escherichia coli nachgewiesen", "Werttyp", "Text"),
                         ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()),
                 null, new ConverterResult(options), null, options).convertInternal().get(0);
-        CodeableConcept value = observation.getValueCodeableConcept();
-        assertEquals("Escherichia coli nachgewiesen", value.getText());
-        Coding coding = value.getCodingFirstRep();
-        assertFalse(coding.getCodeElement().hasValue());
-        assertEquals("unknown", coding.getCodeElement().getExtensionByUrl(
-                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
-        assertEquals("unknown", coding.getSystemElement().getExtensionByUrl(
-                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
+        assertEquals("Escherichia coli nachgewiesen", observation.getValueStringType().getValue());
+        assertFalse(OutputFileType.JSON.getParser().encodeResourceToString(observation).contains("data-absent-reason"));
     }
 
     @Test public void partialAndMixedDosagesPreserveFactsWithoutInventedTiming() throws Exception {
@@ -502,8 +538,6 @@ public class ClinicalImportConverterTest {
                 "Geburtsdatum", "2000-01-01"), PatientConverter.Person_Columns.values()), null,
                 new ConverterResult(options), null, options).convertInternal().get(0);
         assertEquals("DE-HH", patient.getAddressFirstRep().getState());
-        assertEquals("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
-                Converter.DATA_ABSENT_REASON_UNKNOWN.getUrl());
     }
 
     @Test public void insurerIsNeverEmittedAsGeneralPractitioner() throws Exception {
@@ -514,7 +548,7 @@ public class ClinicalImportConverterTest {
         assertFalse(patient.hasGeneralPractitioner());
     }
 
-    @Test public void structuredAddressSurvivesMissingCountryAndEmptyAddressUsesDar() throws Exception {
+    @Test public void structuredAddressSurvivesMissingCountryAndEmptyAddressIsOmitted() throws Exception {
         ConverterOptions options = new ConverterOptions("");
         var values = new HashMap<>(Map.of("Straße", "Musterstraße 7", "Postleitzahl", "01234",
                 "Ort", "Beispielort", "Geburtsdatum", "2000-01-01"));
@@ -530,8 +564,7 @@ public class ClinicalImportConverterTest {
         values.keySet().removeAll(List.of("Straße", "Postleitzahl", "Ort"));
         patient = (Patient)new PatientConverter(row(values, columns), null,
                 new ConverterResult(options), null, options).convertInternal().get(0);
-        assertEquals("unknown", patient.getAddressFirstRep().getExtensionByUrl(
-                "http://hl7.org/fhir/StructureDefinition/data-absent-reason").getValue().primitiveValue());
+        assertFalse(patient.hasAddress());
     }
 
     @Test public void medicationTimeMatrixRejectsMisplacedDatesAndUnknownTypes() throws Exception {
@@ -614,5 +647,99 @@ public class ClinicalImportConverterTest {
         assertFalse(dose.hasSystemElement());
         values.remove("Einzeldosis"); values.put("Dosierungstext", "Gabe ohne Mengenangabe");
         assertTrue(MedicationValues.errors(values::get).isEmpty());
+    }
+    @Test public void emptyClinicalInputsSerializeWithoutRepairValues() throws Exception {
+        var options = new ConverterOptions("");
+        var resources = new ArrayList<Resource>();
+        resources.add(patientWith(Map.of()));
+        for (String type : MedicationValues.STATUSES.keySet())
+            resources.addAll(new MedicationConverter(row(Map.of("Medikationstyp", type), MedicationConverter.Medication_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ConditionConverter(row(Map.of(), ConditionConverter.Diagnosis_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ProcedureConverter(row(Map.of(), ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new DocumentReferenceConverter(row(Map.of(), DocumentReferenceConverter.DocumentReference_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ObservationLaboratoryConverter(row(Map.of(), ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ObservationVitalSignsConverter(row(Map.of(), ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()), null, new ConverterResult(options), null, options).convertInternal());
+        var event = row(Map.of("Eintrag ID", "empty"), ClinicalEventConverter.Columns.values());
+        resources.addAll(new ClinicalEventConverter.Vaccine(event, null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ClinicalEventConverter.Report(event, null, new ConverterResult(options), null, options).convertInternal());
+        resources.addAll(new ClinicalEventConverter.Plan(event, null, new ConverterResult(options), null, options).convertInternal());
+        for (Resource resource : resources) {
+            for (var format : List.of(OutputFileType.JSON, OutputFileType.XML)) {
+                String encoded = format.getParser().encodeResourceToString(resource);
+                assertFalse(resource.fhirType() + ": " + encoded, encoded.contains("data-absent-reason"));
+                var restored = (Resource)format.getParser().parseResource(encoded);
+                var json = new com.fasterxml.jackson.databind.ObjectMapper().readTree(OutputFileType.JSON.getParser().encodeResourceToString(restored));
+                for (String absent : List.of("status", "intent", "category", "gender", "name", "birthDate", "address", "docStatus", "date", "type", "content"))
+                    assertFalse(resource.fhirType() + " invented " + absent + ": " + encoded, json.has(absent));
+            }
+        }
+    }
+
+    @Test public void partialCodingsAndExplicitAddressReasonsKeepOnlyEnteredFacts() throws Exception {
+        var options = new ConverterOptions("");
+        for (var values : List.of(Map.of("Code", "00123"), Map.of("Codesystem", "https://example.org/custom"),
+                Map.of("Version", "custom edition"), Map.of("Code", "!dar:masked"))) {
+            var condition = (Condition)new ConditionConverter(row(values, ConditionConverter.Diagnosis_Columns.values()), null,
+                    new ConverterResult(options), null, options).convertInternal().get(0);
+            Coding coding = condition.getCode().getCodingFirstRep();
+            assertEquals(values.containsKey("Codesystem"), coding.hasSystem());
+            assertEquals(values.containsKey("Code"), coding.hasCodeElement());
+            assertEquals(values.containsKey("Version"), coding.hasVersion());
+        }
+        for (var values : List.of(Map.of("Präparatcode", "00123", "Wirkstoffcode", "ingredient"),
+                Map.of("Präparatcodesystem", "RxNorm", "Wirkstoffcodesystem", "UNII"))) {
+            var input = new HashMap<>(values); input.put("Medikationstyp", "Verordnung");
+            assertTrue(MedicationValues.errors(input::get).toString(), MedicationValues.errors(input::get).isEmpty());
+            Medication medication = (Medication)new MedicationConverter(row(input, MedicationConverter.Medication_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal().get(0);
+            assertEquals(values.containsKey("Präparatcode"), medication.getCode().getCodingFirstRep().hasCode());
+            assertEquals(values.containsKey("Präparatcodesystem"), medication.getCode().getCodingFirstRep().hasSystem());
+            assertEquals(values.containsKey("Wirkstoffcode"), medication.getIngredientFirstRep().getItemCodeableConcept().getCodingFirstRep().hasCode());
+        }
+        Patient patient = patientWith(Map.of("Straße", "!dar:masked", "Ort", "Unbekannt", "Geschlecht", "unknown"));
+        assertEquals("unknown", patient.getGenderElement().getValueAsString());
+        assertEquals("masked", patient.getAddressFirstRep().getLine().get(0).getExtensionFirstRep().getValue().primitiveValue());
+        assertEquals("Unbekannt", patient.getAddressFirstRep().getCity());
+        assertFalse(patient.getAddressFirstRep().hasType());
+        assertNull(EncounterConverter.createDiagnosisUse(null));
+        assertNull(EncounterConverter.createDiagnosisUse(""));
+        assertFalse(Converter.createCoding("https://example.org/system", (String)null).hasCodeElement());
+    }
+
+    @Test public void procedureDocumentAndCarePlanPreserveExplicitValuesWithoutInferredExtras() throws Exception {
+        var options = new ConverterOptions("");
+        Procedure procedure = (Procedure)new ProcedureConverter(row(Map.of("Prozedurencode", "5-511.y", "Zusatzcode", "extra"),
+                ProcedureConverter.Procedure_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals(2, procedure.getCode().getCoding().size());
+        assertEquals("5-511.y", procedure.getCode().getCodingFirstRep().getCode());
+        assertFalse(procedure.getCode().getCodingFirstRep().hasSystem());
+        assertFalse(procedure.getCode().getCodingFirstRep().hasVersion());
+        assertFalse(procedure.hasCategory());
+        DocumentReference document = (DocumentReference)new DocumentReferenceConverter(row(Map.of("Dokumentbezeichner", "Freier Dokumenttyp", "Ausgabezeitpunkt", "!dar:not-asked"),
+                DocumentReferenceConverter.DocumentReference_Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("Freier Dokumenttyp", document.getType().getText());
+        assertFalse(document.getType().hasCoding());
+        assertEquals("not-asked", document.getDateElement().getExtensionFirstRep().getValue().primitiveValue());
+        CarePlan plan = (CarePlan)new ClinicalEventConverter.Plan(row(Map.of("Eintrag ID", "plan", "Aktivitätscodes", "12345"),
+                ClinicalEventConverter.Columns.values()), null, new ConverterResult(options), null, options).convertInternal().get(0);
+        assertEquals("12345", plan.getActivityFirstRep().getDetail().getCode().getCodingFirstRep().getCode());
+        assertFalse(plan.getActivityFirstRep().getDetail().hasStatus());
+    }
+    @Test public void emptyObservationValuesStayEmptyForEverySelectedValueType() throws Exception {
+        var options = new ConverterOptions("");
+        for (String kind : List.of("Zahl", "Text", "Code", "Ja/Nein", "Komponenten", "Fehlend")) {
+            var values = Map.of("Werttyp", kind);
+            var resources = new ArrayList<Resource>();
+            resources.addAll(new ObservationLaboratoryConverter(row(values, ObservationLaboratoryConverter.ObservationLaboratory_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal());
+            resources.addAll(new ObservationVitalSignsConverter(row(values, ObservationVitalSignsConverter.ObservationVitalSigns_Columns.values()),
+                    null, new ConverterResult(options), null, options).convertInternal());
+            for (Resource resource : resources) {
+                Observation observation = (Observation)resource;
+                assertFalse(kind, observation.hasValue());
+                assertFalse(kind, observation.hasDataAbsentReason());
+            }
+        }
     }
 }

@@ -22,7 +22,7 @@ public abstract class ClinicalEventConverter extends Converter {
     private String v(Columns c) { String v = get(c); return v == null || v.isBlank() ? null : v; }
     private CodeableConcept code() {
         CodeableConcept code = ClinicalValues.concept(v(Columns.Code), v(Columns.Codesystem), v(Columns.Bezeichner));
-        if (hasColumn("Version") && code.hasCoding()) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
+        if (hasColumn("Version") && (code.hasCoding() || (get("Version") != null && !get("Version").isBlank()))) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
         return code;
     }
     @Override protected List<Resource> convertInternal() throws Exception {
@@ -45,7 +45,7 @@ public abstract class ClinicalEventConverter extends Converter {
             DiagnosticReport report = new DiagnosticReport(); report.setSubject(getPatientReference());
             report.setEncounter(getEncounterReference()); report.setCode(code()); report.setEffective(time);
             if (v(Columns.Status) != null) report.setStatusElement(InputCode.of(report.getStatusElement(), v(Columns.Status)));
-            if (v(Columns.Ausgabezeitpunkt) != null) report.setIssuedElement(new InstantType(v(Columns.Ausgabezeitpunkt)));
+            if (v(Columns.Ausgabezeitpunkt) != null) report.setIssuedElement(ClinicalValues.instant(v(Columns.Ausgabezeitpunkt)));
             if (v(Columns.Ergebnisse) != null) for (String ref : v(Columns.Ergebnisse).split(";"))
                 report.addResult(new Reference("Observation/" + ClinicalValues.resourceId(getPatientId(), "Observation", ref)));
             if (v(Columns.Beschreibung) != null) report.setConclusion(v(Columns.Beschreibung));
@@ -58,8 +58,7 @@ public abstract class ClinicalEventConverter extends Converter {
             if (v(Columns.Absicht) != null) plan.setIntentElement(InputCode.of(plan.getIntentElement(), v(Columns.Absicht)));
             if (v(Columns.Beschreibung) != null) plan.setDescription(v(Columns.Beschreibung));
             if (v(Columns.Aktivitätscodes) != null) for (String activity : v(Columns.Aktivitätscodes).split(";"))
-                plan.addActivity().getDetail().setCode(ClinicalValues.concept(activity, DiagnosisValues.SNOMED, null))
-                    .setStatus(CarePlan.CarePlanActivityStatus.UNKNOWN);
+                plan.addActivity().getDetail().setCode(ClinicalValues.concept(activity, DiagnosisValues.SNOMED, null));
             resource = plan; break;
         default: throw new IllegalArgumentException(type);
         }

@@ -18,6 +18,37 @@ class WorkbookSelectionsTest(unittest.TestCase):
         self.assertEqual('Unbekannt', canonical('Laborbefund', {'Werttyp': 'Text', 'Messwert': 'Unbekannt'})['Messwert'])
         self.assertEqual('!dar:unknown', canonical('Laborbefund', {'Werttyp': 'Fehlend', 'Messwert': 'Unbekannt'})['Messwert'])
 
+    def test_names_require_explicit_dar_and_keep_ordinary_words(self):
+        for field in ('Vorname', 'Nachname'):
+            for value in ('Unbekannt', 'Maskiert', 'Müller', ''):
+                self.assertEqual(value, display('Person', field, value, {}))
+                self.assertEqual(value, canonical('Person', {field: value})[field])
+            self.assertEqual('!dar:unknown', canonical('Person', {field: 'Unbekannt (Data Absent Reason)'})[field])
+            self.assertEqual('Unbekannt (Data Absent Reason)', display('Person', field, '!dar:unknown', {}))
+        self.assertEqual('!dar:unknown', canonical('Person', {'Geburtsdatum': 'Unbekannt (Data Absent Reason)'})['Geburtsdatum'])
+
+    def test_person_name_and_birth_date_dropdowns_allow_free_input(self):
+        from clinical_selections import validation_ops
+        for filename in ('FHIR_Testdatengenerator_Vorlage.xlsx', 'input/FHIR_Testdatengenerator_Vorlage.xlsx',
+                         'FHIR_Testdatengenerator_Interpolar_Demo.xlsx'):
+            sheets = read_sheets(ROOT / filename)
+            headers = {v: k[:-1] for k, v in sheets['Person'].items() if re.fullmatch('[A-Z]+1', k)}
+            operations = validation_ops(sheets)
+            with ZipFile(ROOT / filename) as z:
+                rels = {r.attrib['Id']: r.attrib['Target'] for r in ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))}
+                sheet = next(s for s in ET.fromstring(z.read('xl/workbook.xml')).findall('s:sheets/s:sheet', NS) if s.attrib['name'] == 'Person')
+                target = rels[sheet.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']]
+                target = target.lstrip('/') if target.startswith('/') else 'xl/' + target
+                validations = ET.fromstring(z.read(target)).findall('.//s:dataValidation', NS)
+                for field in ('Vorname', 'Nachname', 'Geburtsdatum'):
+                    col = headers[field]
+                    rule = next(v for v in validations if v.get('sqref') == f'{col}2:{col}1031')
+                    self.assertEqual('list', rule.get('type'))
+                    self.assertEqual('false', rule.get('showErrorMessage'))
+                    self.assertEqual('false', rule.get('showDropDown'))
+                    self.assertEqual('Codes!$BK$30:$BK$35', rule.findtext('s:formula1', namespaces=NS))
+                    self.assertIn(f'validation\tPerson\t{col}2:{col}1031\t$Codes.$BK$30:$BK$35\tfalse', operations)
+
     def test_shipped_dropdowns_target_only_input_columns_and_existing_values(self):
         for filename in ('FHIR_Testdatengenerator_Vorlage.xlsx', 'FHIR_Testdatengenerator_Interpolar_Demo.xlsx'):
             path = ROOT / filename

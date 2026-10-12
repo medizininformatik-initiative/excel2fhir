@@ -10,7 +10,6 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
-import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,9 +77,6 @@ public abstract class Converter {
         /** Ignore missing value */
         IGNORE,
     }
-
-    /**  */
-    public static final Extension DATA_ABSENT_REASON_UNKNOWN = createDataAbsentReason(UNKNOWN);
 
     /**  */
     public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
@@ -529,22 +525,13 @@ public abstract class Converter {
      *                       {@link Coding}
      * @param textColumnName Name of the column with the text for the returned
      *                       {@link CodeableConcept}
-     * @return a new {@link CodeableConcept} or if missing and mandatory then a
-     *         data absent reasond or if not mandatory then <code>null</code>
+     * @return the supplied code and text, or <code>null</code> when both are empty
      */
     public CodeableConcept createCodeableConcept(String codeSystem, Enum<?> codeColumnName, Enum<?> textColumnName) {
         String code = record.get(codeColumnName);
-        if (code != null) {
-            Coding coding = createCoding(codeSystem, code);
-            return createCodeableConcept(coding, textColumnName);
-        }
-        String errorMessage = codeColumnName + " empty for Record";
-        if (isMandatory(codeColumnName)) {
-            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
-            return getUnknownDataAbsentReasonCodeableConcept().setText(record.get(textColumnName));
-        }
-        warning(errorMessage);
-        return null;
+        CodeableConcept concept = new CodeableConcept().setText(record.get(textColumnName));
+        if (!isBlank(code)) concept.addCoding(createCoding(codeSystem, code));
+        return concept.isEmpty() ? null : concept;
     }
 
     /**
@@ -634,14 +621,7 @@ public abstract class Converter {
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName) {
         String code = record.get(codeColumnName);
-        if (isBlank(code)) {
-            String errorMessage = codeColumnName + " empty for Record";
-            if (!isMandatory(codeColumnName)) {
-                warning(errorMessage);
-                return null;
-            }
-            warning(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
-        }
+        if (isBlank(code)) return null;
         return createCoding(codeSystem, code);
     }
 
@@ -658,7 +638,6 @@ public abstract class Converter {
             else coding.getCodeElement().addExtension(absent);
             return coding;
         }
-        coding.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
         return coding;
     }
 
@@ -787,30 +766,6 @@ public abstract class Converter {
     private static Extension createDataAbsentReason(DataAbsentReason dataAbsentReason) {
         return Factory.newExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
                 new CodeType(dataAbsentReason.toCode()), true);
-    }
-
-    /**
-     * @return a {@link CodeableConcept} that represents a valid unknown data
-     *         absent reason.
-     */
-    public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
-        return getDataAbsentReasonCodeableConcept(DataAbsentReason.UNKNOWN);
-    }
-
-    /**
-     * @return a {@link CodeableConcept} that represents a valid error data absent
-     *         reason.
-     */
-    public static CodeableConcept getErrorDataAbsentReasonCodeableConcept() {
-        return getDataAbsentReasonCodeableConcept(DataAbsentReason.ERROR);
-    }
-
-    /**
-     * @param dataAbsentReason
-     * @return
-     */
-    public static CodeableConcept getDataAbsentReasonCodeableConcept(DataAbsentReason dataAbsentReason) {
-        return createCodeableConcept(dataAbsentReason.getSystem(), dataAbsentReason.toCode());
     }
 
     /**

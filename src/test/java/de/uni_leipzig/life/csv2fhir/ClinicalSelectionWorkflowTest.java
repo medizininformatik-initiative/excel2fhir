@@ -26,9 +26,9 @@ public class ClinicalSelectionWorkflowTest {
             table(type, row);
         }
         table(TableIdentifier.Laborbefund, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Untersuchung ID", "lab",
-                "LOINC", "718-7", "Messwert", "12.5", "Einheit", "g/dL", "Zeitstempel (Abnahme)", "2026-01-05"));
+                "Kategorie", "laboratory", "LOINC", "718-7", "Messwert", "12.5", "Einheit", "g/dL", "Zeitstempel (Abnahme)", "2026-01-05"));
         table(TableIdentifier.Klinische_Dokumentation, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Untersuchung ID", "vital",
-                "Untersuchungscode", "8867-4", "Wert", "70", "Einheit", "/min", "Zeitstempel", "2026-01-05"));
+                "Kategorie", "vital-signs", "Untersuchungscode", "8867-4", "Wert", "70", "Einheit", "/min", "Zeitstempel", "2026-01-05"));
         table(TableIdentifier.DocumentReference, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Dokumenttext", "Original document",
                 "Ausgabezeitpunkt", "2026-01-05T00:00:00Z"));
     }
@@ -143,7 +143,7 @@ public class ClinicalSelectionWorkflowTest {
         List<Map<String, String>> rows = new ArrayList<>();
         for (String kind : List.of("Zahl", "Code", "Fehlend", "Komponenten")) {
             var row = new LinkedHashMap<>(Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Untersuchung ID", kind,
-                    "LOINC", "718-7", "Zeitstempel (Abnahme)", "2026-01-05", "Werttyp", kind));
+                    "Kategorie", "laboratory", "LOINC", "718-7", "Zeitstempel (Abnahme)", "2026-01-05", "Werttyp", kind));
             if (kind.equals("Zahl")) { row.put("Messwert", "-123.5"); row.put("Einheit", "custom-unit"); }
             if (kind.equals("Code")) { row.put("Wertcode", "free-code"); row.put("Wertcodesystem", "LOINC"); row.put("Messwert", "Free text"); }
             if (kind.equals("Fehlend")) row.put("Messwert", "!dar:existing-custom");
@@ -240,4 +240,156 @@ public class ClinicalSelectionWorkflowTest {
         assertEquals(Set.of("Condition", "Procedure", "Observation", "Medication", "Immunization", "DiagnosticReport", "CarePlan", "DocumentReference"), checked);
     }
 
+    @Test public void unclassifiedObservationsIgnoreBothGroupsOfOptions() throws Exception {
+        for (String category : List.of("", "social-history", "custom-category")) {
+            for (var table : List.of(TableIdentifier.Laborbefund, TableIdentifier.Klinische_Dokumentation)) {
+                boolean lab = table == TableIdentifier.Laborbefund;
+                var row = new LinkedHashMap<String, String>();
+                row.put("Patient-ID", "p1"); row.put("Fall-Nr", "1");
+                row.put("Untersuchung ID", lab ? "lab" : "vital"); row.put("Kategorie", category);
+                row.put(lab ? "LOINC" : "Untersuchungscode", "1234-5");
+                row.put(lab ? "Messwert" : "Wert", "7"); row.put("Einheit", "entered unit");
+                row.put("Einheitencode", "mg"); row.put("Einheitencodesystem", "http://unitsofmeasure.org");
+                row.put(lab ? "Zeitstempel (Abnahme)" : "Zeitstempel", "2026-01-05");
+                table(table, row);
+            }
+            var baseline = run("");
+            String rules = "REFERENCE_OBSERVATION_LABORATORY_ENCOUNTER=none\n"
+                    + "REFERENCE_OBSERVATION_VITAL_SIGNS_ENCOUNTER=none\n"
+                    + "DAR_LABORATORY_VALUE_X_NUMERIC_MEASUREMENT=masked\n"
+                    + "DAR_VITAL_SIGNS_VALUE_X_NUMERIC_MEASUREMENT=masked\n"
+                    + "OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT=true\n"
+                    + "OBSERVATION_VITAL_SIGNS_UCUM_CODE_IN_UNIT=true\n";
+            for (String settings : List.of(rules, rules + "OBSERVATION_LABORATORY_ENABLED=false\nOBSERVATION_VITAL_SIGNS_ENABLED=false\n")) {
+                var output = run(settings);
+                assertEquals(baseline.keySet(), output.keySet());
+                for (String key : baseline.keySet()) assertTrue(category + ": " + key, baseline.get(key).equalsDeep(output.get(key)));
+                var observations = output.values().stream().filter(Observation.class::isInstance).map(Observation.class::cast).toList();
+                assertEquals(2, observations.size());
+                for (Observation observation : observations) {
+                    assertTrue(observation.hasEncounter());
+                    assertEquals("mg", observation.getValueQuantity().getCode());
+                    assertEquals("entered unit", observation.getValueQuantity().getUnit());
+                    assertEquals(!category.isEmpty(), observation.hasCategory());
+                }
+            }
+        }
+    }
+    @Test public void patientIdentifiersComeOnlyFromExplicitRulesAndDoNotChangeReferences() throws Exception {
+        var baseline = run("");
+        String patientKey = baseline.keySet().stream().filter(key -> key.startsWith("Patient/")).findFirst().orElseThrow();
+        Patient original = (Patient)baseline.get(patientKey);
+        assertFalse(original.hasIdentifier());
+        assertTrue(original.hasId());
+        String rule = "IDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
+                + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Patient\n"
+                + "IDENTIFIER_RULE_1_SYSTEM=https://example.org/patient-numbers\n"
+                + "IDENTIFIER_RULE_1_PATTERN=patient-{patientId}\n";
+        for (String code : List.of("", "MR", "custom-type")) {
+            String settings = rule;
+            if (!code.isEmpty()) settings += "IDENTIFIER_RULE_1_USE=secondary\n"
+                    + "IDENTIFIER_RULE_1_TYPE_CODINGS=[{\"system\":\"http://terminology.hl7.org/CodeSystem/v2-0203\",\"code\":\"" + code + "\"}]\n";
+            var output = run(settings);
+            assertEquals(baseline.keySet(), output.keySet());
+            Patient patient = (Patient)output.get(patientKey);
+            assertEquals(1, patient.getIdentifier().size());
+            Identifier identifier = patient.getIdentifierFirstRep();
+            assertEquals("https://example.org/patient-numbers", identifier.getSystem());
+            assertEquals("patient-" + original.getIdElement().getIdPart(), identifier.getValue());
+            assertEquals(!code.isEmpty(), identifier.hasUse());
+            assertEquals(!code.isEmpty(), identifier.hasType());
+            if (!code.isEmpty()) {
+                assertEquals(Identifier.IdentifierUse.SECONDARY, identifier.getUse());
+                assertEquals(code, identifier.getType().getCodingFirstRep().getCode());
+            }
+            Patient expected = original.copy(); expected.addIdentifier(identifier.copy());
+            assertTrue(expected.equalsDeep(patient));
+            for (String key : baseline.keySet()) if (!key.equals(patientKey))
+                assertTrue("Changed resource or reference: " + key, baseline.get(key).equalsDeep(output.get(key)));
+        }
+        var disabled = run(rule.replace("ENABLED=true", "ENABLED=false"));
+        for (String key : baseline.keySet()) assertTrue(baseline.get(key).equalsDeep(disabled.get(key)));
+    }
+    @Test public void diagnosisAndMedicationIdentifiersComeOnlyFromRulesAndKeepReferences() throws Exception {
+        table(TableIdentifier.Diagnose, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Code", "example", "Codesystem", "urn:test:codes"));
+        table(TableIdentifier.Medikation, Map.of("Patient-ID", "p1", "Fall-Nr", "1", "Medikationstyp", "Verordnung",
+                "Präparatcode", "example", "Präparatcodesystem", "urn:test:codes", "Präparatbezeichnung", "Product"));
+        var baseline = run("");
+        assertEquals(1, baseline.values().stream().filter(Condition.class::isInstance).count());
+        assertEquals(1, baseline.values().stream().filter(Medication.class::isInstance).count());
+        String rule = "IDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
+                + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Condition,Medication\n"
+                + "IDENTIFIER_RULE_1_SYSTEM=urn:test:identifiers\nIDENTIFIER_RULE_1_PATTERN={resourceId}\n";
+        var output = run(rule);
+        var disabled = run(rule.replace("ENABLED=true", "ENABLED=false"));
+        assertEquals(baseline.keySet(), output.keySet());
+        assertEquals(baseline.keySet(), disabled.keySet());
+        for (String key : baseline.keySet()) {
+            Resource original = baseline.get(key), expected = original.copy();
+            Identifier identifier = new Identifier().setSystem("urn:test:identifiers").setValue(original.getIdElement().getIdPart());
+            if (original instanceof Condition) {
+                assertFalse(((Condition)original).hasIdentifier());
+                ((Condition)expected).addIdentifier(identifier);
+            } else if (original instanceof Medication) {
+                assertFalse(((Medication)original).hasIdentifier());
+                ((Medication)expected).addIdentifier(identifier);
+            }
+            assertTrue("Changed resource or reference: " + key, expected.equalsDeep(output.get(key)));
+            assertTrue(key, original.equalsDeep(disabled.get(key)));
+        }
+        Medication medication = (Medication)baseline.values().stream().filter(Medication.class::isInstance).findFirst().orElseThrow();
+        MedicationRequest request = (MedicationRequest)baseline.values().stream().filter(MedicationRequest.class::isInstance).findFirst().orElseThrow();
+        assertEquals("Medication/" + medication.getIdElement().getIdPart(), request.getMedicationReference().getReference());
+        var descriptive = run("MEDICATION_MODE=reference-only\nMEDICATION_EXISTING_REFERENCE=false\nMEDICATION_DESCRIPTION=true\n");
+        assertFalse(descriptive.values().stream().anyMatch(Medication.class::isInstance));
+        var reference = ((MedicationRequest)descriptive.get("MedicationRequest/" + request.getIdElement().getIdPart())).getMedicationReference();
+        assertFalse(reference.hasReference());
+        assertEquals(medication.getIdElement().getIdPart(), reference.getIdentifier().getValue());
+        assertEquals("Product", reference.getDisplay());
+    }
+    @Test public void observationIdentifiersComeOnlyFromRulesAndKeepReportReferences() throws Exception {
+        var baseline = run("");
+        var observations = baseline.values().stream().filter(Observation.class::isInstance).map(Observation.class::cast).toList();
+        assertEquals(2, observations.size());
+        for (Observation observation : observations) {
+            assertFalse(observation.hasIdentifier());
+            assertTrue(observation.hasId());
+        }
+        for (String scope : List.of("Observation", "Observation.laboratory", "Observation.vitalSigns")) {
+            String rule = "IDENTIFIER_RULE_1_ID=a152e771-3d5a-4cb1-9866-35fa6d91fd83\n"
+                    + "IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=" + scope + "\n"
+                    + "IDENTIFIER_RULE_1_SYSTEM=urn:test:observations\nIDENTIFIER_RULE_1_PATTERN={resourceId}\n";
+            for (String type : List.of("", "OBI", "custom-type")) {
+                String settings = rule;
+                if (!type.isEmpty()) settings += "IDENTIFIER_RULE_1_TYPE_CODINGS=[{\"system\":\"http://terminology.hl7.org/CodeSystem/v2-0203\",\"code\":\"" + type + "\"}]\n";
+                var output = run(settings);
+                assertEquals(baseline.keySet(), output.keySet());
+                int identified = 0;
+                for (String key : baseline.keySet()) {
+                    Resource original = baseline.get(key);
+                    boolean selected = original instanceof Observation && (scope.equals("Observation")
+                            || scope.equals(ClinicalEncounterAssignment.optionResource(original)));
+                    if (!selected) {
+                        assertTrue("Changed resource or report reference: " + key, original.equalsDeep(output.get(key)));
+                        continue;
+                    }
+                    Observation observation = (Observation)output.get(key);
+                    assertEquals(1, observation.getIdentifier().size());
+                    Identifier identifier = observation.getIdentifierFirstRep();
+                    assertEquals("urn:test:observations", identifier.getSystem());
+                    assertEquals(original.getIdElement().getIdPart(), identifier.getValue());
+                    assertFalse(identifier.hasAssigner());
+                    assertFalse(identifier.hasUse());
+                    assertEquals(!type.isEmpty(), identifier.hasType());
+                    if (!type.isEmpty()) assertEquals(type, identifier.getType().getCodingFirstRep().getCode());
+                    Observation expected = ((Observation)original).copy(); expected.addIdentifier(identifier.copy());
+                    assertTrue(expected.equalsDeep(observation));
+                    identified++;
+                }
+                assertEquals(scope.equals("Observation") ? 2 : 1, identified);
+            }
+            var disabled = run(rule.replace("ENABLED=true", "ENABLED=false"));
+            for (String key : baseline.keySet()) assertTrue(baseline.get(key).equalsDeep(disabled.get(key)));
+        }
+    }
 }
