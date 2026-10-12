@@ -25,8 +25,8 @@ correction or additional generator restrictions.
   tests and add end-to-end evidence for uncovered cases.
 - [ ] Complete a determinism audit across the pipeline, derived resources, formats
   and versions; distinguish clinical content from run/archive metadata.
-- [ ] Measure and improve memory/runtime with generator, portal, Blaze and TORCH;
-  cover larger end-to-end workloads including 1000 patients. Deferred by the user.
+- [ ] Broader memory/runtime tests with portal, Blaze and TORCH,
+  including 1000 patients, remain deferred.
 - [ ] Agree on compatible `mii-data-quality` rules and scope before integration.
 - [ ] Complete the separately scoped Keycloak/OAuth, FLARE, external terminology
   and DSF integration.
@@ -39,6 +39,34 @@ correction or additional generator restrictions.
   substance matches, salts, hydrates and mixtures; avoid a dependency on MMI Pharmindex.
 
 ## Verified implementation
+
+- [x] Batch consecutive, equally wide workbook rows in UNO writes of at most 512
+  rows. The same 10 saved inpatient sources take 40.4 seconds for Excel creation
+  versus 68.4 seconds with individual row writes (41% less); the import including
+  conversion/comparison takes 98.4 versus 126.8 seconds, excluding Synthea generation.
+  All 380 workbook content/style parts match both the stored baseline and the fresh
+  unoptimized run byte for byte; only save metadata differs. All 20 JSON/NDJSON
+  files match semantically and all 10 source comparisons pass. These are single
+  local measurements. `scripts/tests/test_workbook_uno.py` covers text, operation
+  boundaries and formatting beyond 1030 rows through real LibreOffice.
+- [x] Measure the 10-patient inpatient workflow (history 10 years, minimum stay
+  2 days, ages 18–80, patient/clinician seeds 20260912, default conversion,
+  JSON/NDJSON, profile validation disabled): 141.5 seconds total; Excel creation
+  66.2 seconds, conversion 34.4, Synthea/setup 17.9, comparison 8.0, mapping 5.6,
+  remaining work 9.4. All 10 patients meet the duration in source and output;
+  all 10 source comparisons pass. Single local measurement, not a general SLA.
+- [x] Repeat that cohort with identical generator settings: all 10 source JSON
+  contents, prepared worksheet rows and movement reports match exactly. Changing
+  the patient seed to 20260913 produces 10 different patient IDs. Seven movement
+  tests also pass, including separate processes and Python hash seeds. This is
+  focused seed evidence; the comprehensive determinism audit remains open.
+
+- [x] Optional inpatient patient selection with a minimum individual stay duration
+  in 24-hour days, constrained by the export history window. Existing selection
+  criteria and per-patient attempt limits apply together. Live attempt/match counts,
+  a notice after 100 unsuccessful candidates and explicit failure on exhaustion
+  make unsuccessful searches visible. Tests cover time boundaries, validation,
+  progress parsing and stopping before KDS conversion after failed generation.
 
 - [x] Audit explicit terminology versions and profile claims through serialized
   CSV output. `TerminologyWorkflowTest` compares JSON/NDJSON for ICD-10-GM, OPS

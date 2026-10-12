@@ -159,6 +159,25 @@ generator rules and mappings reproduce the same contacts. The movement report
 records the seed and rule/mapping metadata. Converting saved workbooks again uses
 the contacts already stored in those workbooks.
 
+Enable **Only patients with an inpatient stay** to require one individual hospital
+stay lasting at least the selected number of days (default: 2; one day is 24 hours).
+The stay must overlap the exported history window. History 0 includes all history.
+Durations are not added across stays; other encounters of a selected patient remain
+available. The criterion combines with the other patient-selection settings.
+
+The run shows matching patients, candidates checked, attempts for the current
+patient and the configured limit. After 100 consecutive unsuccessful candidates,
+a notice suggests cancelling and relaxing the criteria. **Maximum attempts** is a
+limit per requested patient. Exhausting it stops the generation with a failed
+status; it does not proceed to KDS conversion with a smaller cohort. Cancellation
+also stops an ongoing candidate simulation through the existing process-group
+shutdown. A limit bounds candidate count, not the duration of a single simulation.
+
+The Compose build applies `scripts/synthea-workbench/generator.patch` to the pinned
+Synthea source and includes `InpatientSelection.java`. The resulting JAR fingerprint
+is saved in each generation snapshot. The build runs selection boundary checks
+against this JAR before assembling the runtime images.
+
 Advanced settings provide living/deceased selection, the bundled patient-selection
 modules, an optional single-person seed, simulation timestep, attempt limit,
 veteran population and disease/care modules. Module and location choices come

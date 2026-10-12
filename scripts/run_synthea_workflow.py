@@ -46,7 +46,16 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
     try:
         print('Synthea is generating patients; see details/logs/synthea.log for progress.', flush=True)
         with (directory / 'details/logs/synthea.log').open('w') as log:
-            generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+            if '--generate.workbench_inpatient=true' in arguments:
+                with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as generated:
+                    for line in generated.stdout:
+                        log.write(line)
+                        log.flush()
+                        if line.startswith('WORKBENCH_SELECTION '):
+                            print(line, end='', flush=True)
+                    generated.wait()
+            else:
+                generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
         with (directory / 'details/logs/synthea.log').open(errors='replace') as log:
             if any('OutOfMemoryError' in line for line in log):
                 raise MemoryError('Synthea ran out of memory; generated files may be incomplete. See details/logs/synthea.log.')

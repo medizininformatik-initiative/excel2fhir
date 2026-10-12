@@ -24,6 +24,18 @@ class GenerationTests(QueueFixture):
                      patch.object(synthea_runtime, 'fingerprint', return_value='importer')]:
             item.start(); self.addCleanup(item.stop)
 
+    def test_inpatient_selection_is_validated_and_only_enabled_explicitly(self):
+        for invalid in [0, -1, True, 1.5, 36501]:
+            with self.assertRaises(ValueError):
+                generation.Settings(inpatientMinDays=invalid)
+        defaults = generation.arguments({})
+        self.assertFalse(any('workbench_inpatient' in arg for arg in defaults))
+        args = generation.arguments({'inpatientOnly': True, 'inpatientMinDays': 7, 'yearsOfHistory': 10, 'maxAttempts': 4})
+        self.assertIn('--generate.workbench_inpatient=true', args)
+        self.assertIn('--generate.workbench_inpatient_days=7', args)
+        self.assertIn('--generate.max_attempts_to_keep_patient=4', args)
+        self.assertIn('--exporter.years_of_history=10', args)
+
     def test_invalid_settings_do_not_create_jobs(self):
         for settings in [{'population': 0}, {'population': True}, {'minAge': 81}, {'patientSeed': str(2**63)},
                          {'state': '--some-option'}, {'city': 'Unknown'}, {'modules': ['../../file']},

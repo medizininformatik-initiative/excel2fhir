@@ -1,3 +1,4 @@
+import { SelectionProgress } from './SelectionProgress'
 import { datasetLabel, type DatasetContext } from './dataset-label'
 import { resolveGenerationSeeds } from './generation-seeds'
 import React, { useEffect, useRef, useState } from 'react'
@@ -224,6 +225,7 @@ function App() {
             {job?.cleanup && <p role="status" className="mb-4 rounded-xl bg-teal-50 p-3 text-sm text-teal-900">{t('app.cleanup.done', { size: (job.cleanup.removedBytes / 1024 / 1024).toLocaleString(locale, { maximumFractionDigits: 1 }) })} {t('app.cleanup.replay')}</p>}
           </section>
         </DatasetResults>}
+        <SelectionProgress log={logText} language={language} running={job?.state === 'running'}/>
         {!job?.cleanup && <details open={!!job && ['queued', 'running'].includes(job.state)}><summary className="cursor-pointer text-sm font-medium">{t('app.logs')}</summary><pre aria-label={t('app.logs')} className="mt-3 h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre></details>}
       </section>
     </div>

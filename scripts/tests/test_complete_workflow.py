@@ -1,4 +1,6 @@
 import json
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 import tempfile
 import unittest
@@ -33,6 +35,23 @@ class CompleteWorkflowTest(unittest.TestCase):
             'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx'), 'validationStatus': self.status}],
             'failures': [{'source': 'bad'}] if self.status == 'FAILED' else []}))
         return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED', 'NOT_CHECKED'} else 1
+
+    def test_inpatient_progress_is_forwarded_and_exhaustion_prevents_conversion(self):
+        line = 'WORKBENCH_SELECTION {"attempts":1,"exhausted":true}\n'
+        process = Mock(stdout=iter([line]), returncode=1)
+        manager = Mock()
+        manager.__enter__ = Mock(return_value=process)
+        manager.__exit__ = Mock(return_value=False)
+        output = io.StringIO()
+        with patch.object(workflow.subprocess, 'Popen', return_value=manager), \
+                patch.object(workflow, 'convert_cases') as convert, redirect_stdout(output):
+            with self.assertRaisesRegex(RuntimeError, 'Synthea failed'):
+                workflow.run(self.root / 'output', ['--generate.workbench_inpatient=true'])
+        convert.assert_not_called()
+        self.assertIn(line, output.getvalue())
+        directory = next((self.root / 'output').glob('run-*'))
+        self.assertEqual(line, (directory / 'details/logs/synthea.log').read_text())
+        self.assertEqual('FAILED', json.loads((directory / 'details/reports/workflow.json').read_text())['status'])
 
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
     def test_partial_generation_fails_but_unchecked_validation_does_not(self, generate):

@@ -31,6 +31,8 @@ class Settings(BaseModel):
     overflow: bool = Field(default=False, strict=True)
     modules: list[str] = Field(default_factory=list, max_length=500)
     keepModule: str = ''
+    inpatientOnly: bool = Field(default=False, strict=True)
+    inpatientMinDays: int = Field(default=2, ge=1, le=36500, strict=True)
     timestepDays: int = Field(default=7, ge=1, le=365, strict=True)
     maxAttempts: int = Field(default=1000, ge=1, le=10000, strict=True)
     veteranPopulation: bool = Field(default=False, strict=True)
@@ -108,6 +110,9 @@ def arguments(value):
               f'--generate.timestep={settings.timestepDays * 86400000}',
               f'--generate.max_attempts_to_keep_patient={settings.maxAttempts}',
               '--generate.veteran_population_override=' + str(settings.veteranPopulation).lower()]
+    if settings.inpatientOnly:
+        result += ['--generate.workbench_inpatient=true',
+                   f'--generate.workbench_inpatient_days={settings.inpatientMinDays}']
     if settings.gender:
         result += ['-g', settings.gender]
     if settings.singlePersonSeed:

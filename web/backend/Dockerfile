@@ -1,11 +1,16 @@
 FROM maven:3.8.5-openjdk-17 AS synthea-build
 COPY scripts/synthea-version.txt /synthea-version.txt
+COPY scripts/synthea-workbench /workbench-selection
 WORKDIR /synthea
 RUN git init && git remote add origin https://github.com/astruebi/synthea.git \
     && git fetch --depth 1 origin "$(cat /synthea-version.txt)" \
     && git checkout --detach FETCH_HEAD \
     && test "$(git rev-parse HEAD)" = "$(cat /synthea-version.txt)" \
-    && ./gradlew --no-daemon shadowJar
+    && git apply /workbench-selection/generator.patch \
+    && cp /workbench-selection/InpatientSelection.java src/main/java/org/mitre/synthea/engine/ \
+    && ./gradlew --no-daemon shadowJar \
+    && javac -cp build/libs/synthea-with-dependencies.jar -d /tmp/selection-tests /workbench-selection/InpatientSelectionTest.java \
+    && java -cp /tmp/selection-tests:build/libs/synthea-with-dependencies.jar org.mitre.synthea.engine.InpatientSelectionTest
 
 FROM maven:3.8.5-openjdk-17 AS converter
 WORKDIR /build

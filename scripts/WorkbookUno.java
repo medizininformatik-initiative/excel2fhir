@@ -1,6 +1,8 @@
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.ArrayList;
+import java.util.List;
 import com.sun.star.beans.*;
 import com.sun.star.bridge.XUnoUrlResolver;
 import com.sun.star.comp.helper.Bootstrap;
@@ -38,7 +40,9 @@ public class WorkbookUno {
                 new PropertyValue[] {prop("Hidden", true), prop("UpdateDocMode", (short) 0)});
         try {
             XSpreadsheetDocument book = q(XSpreadsheetDocument.class, doc);
-            for (String line : Files.readAllLines(Path.of(args[1]), StandardCharsets.UTF_8)) {
+            List<String> lines = Files.readAllLines(Path.of(args[1]), StandardCharsets.UTF_8);
+            for (int index = 0; index < lines.size(); index++) {
+                String line = lines.get(index);
                 if (line.isBlank()) continue;
                 String[] a = line.split("\t", -1);
                 if (a[0].equals("removeSheet")) {
@@ -56,10 +60,18 @@ public class WorkbookUno {
                 XSpreadsheet sheet = q(XSpreadsheet.class, book.getSheets().getByName(a[1]));
                 if (a[0].equals("row")) {
                     int row = Integer.parseInt(a[2].substring(1)) - 1;
-                    Object[][] values = new Object[1][a.length - 3];
-                    for (int i = 3; i < a.length; i++) values[0][i - 3] =
-                            new String(Base64.getDecoder().decode(a[i]), StandardCharsets.UTF_8);
-                    q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4, row)).setDataArray(values);
+                    List<Object[]> values = new ArrayList<>();
+                    values.add(rowValues(a));
+                    // Bound each UNO payload; preserve operation order and range boundaries.
+                    while (values.size() < 512 && index + 1 < lines.size()) {
+                        String[] next = lines.get(index + 1).split("\t", -1);
+                        if (next.length != a.length || !next[0].equals("row") || !next[1].equals(a[1])
+                                || Integer.parseInt(next[2].substring(1)) - 1 != row + values.size()) break;
+                        values.add(rowValues(next));
+                        index++;
+                    }
+                    q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4,
+                            row + values.size() - 1)).setDataArray(values.toArray(new Object[0][]));
                 } else if (a[0].equals("insert")) {
                     q(XColumnRowRange.class, sheet).getColumns().insertByIndex(Integer.parseInt(a[2]), Integer.parseInt(a[3]));
                 } else if (a[0].equals("removeRows")) {
@@ -129,5 +141,12 @@ public class WorkbookUno {
         }
         // UNO connection threads otherwise keep the standalone helper alive.
         System.exit(0);
+    }
+
+    private static Object[] rowValues(String[] operation) {
+        Object[] values = new Object[operation.length - 3];
+        for (int i = 3; i < operation.length; i++) values[i - 3] =
+                new String(Base64.getDecoder().decode(operation[i]), StandardCharsets.UTF_8);
+        return values;
     }
 }

@@ -8,6 +8,7 @@ export type Generation = {
   timestampSeeds?: boolean; patientSeed: string; clinicianSeed: string; singlePersonSeed: string;
   referenceDate: string; endDate: string; state: string; city: string;
   yearsOfHistory: number; patientFilter: string; overflow: boolean;
+  inpatientOnly?: boolean; inpatientMinDays?: number;
   modules: string[]; keepModule: string; timestepDays: number; maxAttempts: number; veteranPopulation: boolean
 }
 type Catalogue = { revision: string; defaults: Generation; locations: Record<string, string[]>; modules: ModuleDescription[]; keepModules: ModuleDescription[] }
@@ -26,13 +27,14 @@ export function GenerationSettings({ language, onChange, initialValue }: { langu
       setCatalogue(next)
       let saved = next.defaults
       try { const stored = JSON.parse(localStorage.getItem('syntheaGeneration') ?? 'null'); if (stored && Object.entries(next.defaults).every(([key, initial]) => stored[key] === undefined || (Array.isArray(initial) ? Array.isArray(stored[key]) && stored[key].every((item: unknown) => typeof item === 'string') : typeof stored[key] === typeof initial))) saved = { ...next.defaults, ...stored } } catch { /* Use the pinned defaults. */ }
-      setValue(initialValue ? { ...initialValue, timestampSeeds: false } : { ...saved, timestampSeeds: saved.timestampSeeds === true })
+      setValue(initialValue ? { ...next.defaults, ...initialValue, timestampSeeds: false } : { ...saved, timestampSeeds: saved.timestampSeeds === true })
     }).catch(() => { if (active) setFailed(true) })
     return () => { active = false; onChange(null) }
   }, [onChange, initialValue])
   const seedValid = (seed: string) => /^-?\d{1,19}$/.test(seed) && BigInt(seed) >= -(2n ** 63n) && BigInt(seed) < 2n ** 63n
   const valid = value !== null && catalogue !== null &&
     [value.population, value.minAge, value.maxAge, value.yearsOfHistory, value.timestepDays, value.maxAttempts].every(Number.isInteger) &&
+    (!value.inpatientOnly || (Number.isInteger(value.inpatientMinDays) && value.inpatientMinDays! >= 1 && value.inpatientMinDays! <= 36500)) &&
     value.population >= 1 && value.population <= 1000 && value.minAge >= 0 && value.minAge <= value.maxAge && value.maxAge <= 140 &&
     value.yearsOfHistory >= 0 && value.yearsOfHistory <= 140 && value.timestepDays >= 1 && value.timestepDays <= 365 && value.maxAttempts >= 1 && value.maxAttempts <= 10000 &&
     /^\d{4}-\d{2}-\d{2}$/.test(value.referenceDate) && value.referenceDate <= value.endDate && value.endDate <= new Date().toISOString().slice(0, 10) &&
@@ -70,6 +72,10 @@ export function GenerationSettings({ language, onChange, initialValue }: { langu
       <label className="text-sm">{t('app.generation.state')}{info('state')}<select className={inputClass} value={value.state} onChange={e => setValue({ ...value, state: e.target.value, city: '' })}>{Object.keys(catalogue.locations).map(state => <option key={state}>{state}</option>)}</select></label>
       <label className="text-sm">{t('app.generation.city')}{info('city')}<select className={inputClass} value={value.city} onChange={e => update('city', e.target.value)}><option value="">{t('app.generation.anyCity')}</option>{(catalogue.locations[value.state] ?? []).map(city => <option key={city}>{city}</option>)}</select></label>
       {number('yearsOfHistory', 'app.generation.history', 0, 140)}
+    </div>
+    <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-3">
+      <label className="flex min-h-10 items-center gap-2 text-sm"><input type="checkbox" checked={value.inpatientOnly === true} onChange={e => update('inpatientOnly', e.target.checked)}/>{t('app.generation.inpatientOnly')}<Help text={t('app.generation.inpatientHelp')} t={key => t(key as TextKey)}/></label>
+      <label className={`block w-full max-w-xs text-sm ${value.inpatientOnly ? '' : 'text-neutral-400'}`}>{t('app.generation.inpatientMinDays')}<input type="number" disabled={!value.inpatientOnly} className={inputClass} min={1} max={36500} step={1} value={value.inpatientMinDays ?? 2} onChange={e => update('inpatientMinDays', Number(e.target.value))}/></label>
     </div>
     <details className="mt-5"><summary className="cursor-pointer font-medium">{t('app.generation.advanced')}</summary>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

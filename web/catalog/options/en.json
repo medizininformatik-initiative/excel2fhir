@@ -753,5 +753,8 @@
   "app.outcomes.validationCounts": "{reports} validation reports · {findings} with findings · {incomplete} incomplete",
   "app.outcomes.transferCounts": "{checked} comparisons · {differences} with differences · {notes} import notes · {unavailable} not assessed",
   "app.outcomes.details": "Show transfer details",
-  "app.outcomes.explanation": "Import notes document transfer limitations and may identify mapping work. Comparison differences are counted per source dataset and variant; each comparison reports its first difference. {count} notes are covered by disabled resources or DAR replacements and accounted for separately."
+  "app.outcomes.explanation": "Import notes document transfer limitations and may identify mapping work. Comparison differences are counted per source dataset and variant; each comparison reports its first difference. {count} notes are covered by disabled resources or DAR replacements and accounted for separately.",
+  "app.generation.inpatientOnly": "Only patients with an inpatient stay",
+  "app.generation.inpatientMinDays": "Minimum inpatient stay duration in days",
+  "app.generation.inpatientHelp": "At least one individual inpatient stay must meet the duration and overlap the history window. One day means 24 hours. Other encounters are retained. Maximum attempts limits the search per requested patient."
 }
