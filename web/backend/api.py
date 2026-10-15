@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Literal
 from urllib.parse import quote, urlsplit
 
 from fastapi import FastAPI, HTTPException, Request, Query
@@ -38,6 +39,8 @@ class JobRequest(BaseModel):
     datasetName: str | None = Field(default=None, max_length=200)
     generation: GenerationSettings | None = None
     source: str = "starter"
+    diagnostics: bool = False
+    tableFormat: Literal["csv", "excel"] | None = None
     configurationProperties: str | None = Field(default=None, min_length=1, max_length=1_000_000)
 
 
@@ -66,7 +69,7 @@ def jobs():
 def create(request: JobRequest):
     try:
         job_id = store.create(request.source, "default", request.configurationProperties, str(request.requestId) if request.requestId else None,
-                              request.generation.model_dump(mode='json') if request.generation else None, request.datasetName)
+                              request.generation.model_dump(mode='json') if request.generation else None, request.datasetName, table_format=request.tableFormat, diagnostics=request.diagnostics)
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
     except ValueError as error:

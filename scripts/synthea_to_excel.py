@@ -35,7 +35,7 @@ VERIFICATION = dict(zip(['unconfirmed','provisional','differential','confirmed',
 CLASSES = {'EMER':'ambulant', 'AMB':'ambulant', 'IMP':'stationaer', 'HH':'home health', 'VR':'virtual', 'SS':'short stay', 'PRENC':'pre-admission'}
 
 
-def prepare(bundle, options=None):
+def prepare(bundle, options=None, *, diagnostics=True):
     from terminology_year import settings, version_rows, metadata
     year, version_mode = settings(options)
     entries = bundle.get('entry', [])
@@ -55,7 +55,8 @@ def prepare(bundle, options=None):
     rows = {'Person':[], 'Fall':[], 'Diagnose':[]}
     losses = []
     def loss(r, path, reason):
-        losses.append({'resourceType':r['resourceType'], 'id':r.get('id'), 'path':path, 'reason':reason})
+        if diagnostics:
+            losses.append({'resourceType':r['resourceType'], 'id':r.get('id'), 'path':path, 'reason':reason})
     def fields(r, handled):
         # Complete top-level property accounting, with explicit nested losses below.
         for key in r.keys() - set(handled) - {'resourceType','id'}:
@@ -208,14 +209,14 @@ def prepare(bundle, options=None):
                 for key in c.keys() - {'system','code'}:loss(r,f'{field}.coding[{i}].'+key,'Generator unterstützt Sachverhalt noch nicht')
         for field in ['subject','encounter']:
             for key in r.get(field,{}).keys() - {'reference'}:loss(r,field+'.'+key,'Generator unterstützt Sachverhalt noch nicht')
-    clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers, year)
+    clinical_rows, clinical_report = prepare_clinical(entries, pid, encounter_numbers, year, diagnostics=diagnostics)
     rows.update(clinical_rows)
     event_rows, event_report = prepare_events(entries, pid, encounter_numbers,
-        {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'}, year)
+        {r['sourceId'] for r in clinical_report['clinicalImports'] if r['resourceType']=='Observation'}, year, diagnostics=diagnostics)
     rows.update(event_rows)
     clinical_report['clinicalImports'].extend(event_report['clinicalImports'])
     clinical_report.update({k: v for k, v in event_report.items() if k not in ('clinicalImports', 'losses')})
-    document_rows, document_report = prepare_documents(entries, pid, encounter_numbers)
+    document_rows, document_report = prepare_documents(entries, pid, encounter_numbers, diagnostics=diagnostics)
     rows['DocumentReference'] = document_rows
     clinical_report['clinicalImports'].extend(document_report['clinicalImports'])
     clinical_report['documentIdentityChanges'] = document_report['documentIdentityChanges']
@@ -248,6 +249,8 @@ def prepare(bundle, options=None):
         if decision.get('target'):
             row['Bezeichner'] = decision['target']['display']
     version_rows(rows, year, version_mode)
+    if not diagnostics:
+        return rows, {'sourcePatient': pid}
     return rows, {'terminology': metadata(year, version_mode), **clinical_report, 'germanTexts':translation_report, 'demographics':demographics, 'movements': movement_report, 'sourcePatient':pid,'encounterNumbers':encounter_numbers,'sourceConditions':source_conditions,
                   'importedConditions':len(rows['Diagnose']),'conditionRows':condition_rows,'losses':losses,
                   'encounterMappings':encounter_mappings,
@@ -274,14 +277,18 @@ def column_number(name):
     return value
 
 
-def write_workbook(rows, output, options=None):
+def write_workbook(rows, output, options=None, *, session=None):
     if any(row['Präparatcodesystem'] == 'PZN' for row in rows.get('Medikation', [])):
         require_external_path(output)
     template = ROOT/'FHIR_Testdatengenerator_Vorlage.xlsx'
     sheets = read_sheets(template)
-    ops = []
-    def op(*args):ops.append('\t'.join(map(str,args)))
-    def put(sheet,cell,value):op('set',sheet,cell,base64.b64encode(str(value).encode()).decode())
+    apply_workbook_edits(template, workbook_operations(rows, sheets), output, session=session)
+
+
+def workbook_operations(rows, sheets):
+    """Encode one edit at a time without retaining a second copy of all rows."""
+    def op(*args):
+        return '\t'.join(map(str, args))
     for name, cells in sheets.items():
         if name in ['Codes','Konvertierungsoptionen']:continue
         last=max([int(''.join(filter(str.isdigit,k)))for k in cells]+[2])
@@ -290,59 +297,142 @@ def write_workbook(rows, output, options=None):
         if hint is None:
             raise ValueError('Missing template help boundary on sheet ' + name)
         data_end = column_name(column_number(hint) - 1)
-        op('clear',name,f'A2:{data_end}{last}')
+        yield op('clear',name,f'A2:{data_end}{last}')
     for name, values in rows.items():
         headers = [v for cell, v in sorted(sheets[name].items(), key=lambda item: (len(item[0]), item[0]))
                    if cell.endswith('1') and cell[:-1].isalpha() and v != 'Erklärung/Ausfüllhilfe']
         if len(values) > 1030:
             # Extend the existing input-row formatting, never rebuild the sheet.
             for i in range(1032, len(values) + 2):
-                op('copy', name, f'A2:{column_name(len(headers))}2', 'A' + str(i))
+                yield op('copy', name, f'A2:{column_name(len(headers))}2', 'A' + str(i))
         from workbook_absent import display
         for i, row in enumerate(values, 2):
             shown = [display(name, header, value, row)
                      for header, value in zip(headers, ordered_values(name, row, headers))]
-            op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
+            yield op('row', name, 'A'+str(i), *(base64.b64encode(str(value).encode()).decode() for value in shown))
         # Imported codes, IDs and FHIR dates are text, never floating point values.
-        if values:op('text',name,f'A2:{column_name(len(headers))}{len(values)+1}')
+        if values:yield op('text',name,f'A2:{column_name(len(headers))}{len(values)+1}')
     from clinical_selections import validation_ops
-    ops.extend(validation_ops(sheets, {name: len(values) for name, values in rows.items()}))
-    apply_workbook_edits(template, ops, output)
+    yield from validation_ops(sheets, {name: len(values) for name, values in rows.items()})
 
 
-def apply_workbook_edits(template, ops, output, preview=None):
-    office=Path('/Applications/LibreOffice.app/Contents')
-    if office.exists():soffice=office/'MacOS/soffice';jars=office/'Resources/java/*'
-    else:
-        executable=shutil.which('libreoffice') or shutil.which('soffice')
-        if not executable:raise RuntimeError('LibreOffice is required')
-        soffice=Path(executable);jars=Path('/usr/share/java/*')
-    with tempfile.TemporaryDirectory(prefix='synthea-excel-') as temp:
-        temp=Path(temp);commands=temp/'edits.tsv';commands.write_text('\n'.join(ops)+'\n')
-        candidate=temp/'case.xlsx';shutil.copy2(template,candidate)
-        with socket.socket()as sock:sock.bind(('127.0.0.1',0));port=sock.getsockname()[1]
-        process=subprocess.Popen([str(soffice),'-env:UserInstallation='+ (temp/'profile').as_uri(),
-                '--headless','--norestore','--nodefault',f'--accept=socket,host=localhost,port={port};urp;StarOffice.ComponentContext'],
-                stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+
+class WorkbookSession:
+    """One isolated Office process and compiled helper for a sequential import."""
+
+    def __init__(self):
+        self.process = None
+        self.temp = None
+        self.compiled = False
+
+    def __enter__(self):
+        if self.temp is not None:
+            raise RuntimeError('WorkbookSession is already open')
+        self.compiled = False
+        self.temp = tempfile.TemporaryDirectory(prefix='synthea-excel-')
+        self.directory = Path(self.temp.name)
+        return self
+
+    def __exit__(self, *_):
+        try:
+            self.stop()
+        finally:
+            self.temp.cleanup()
+            self.temp = None
+
+    def stop(self):
+        if self.process is not None:
+            try:
+                if self.process.poll() is None:
+                    self.process.terminate()
+                try:
+                    self.process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait()
+            finally:
+                self.process = None
+
+    def start(self):
+        if self.temp is None:
+            raise RuntimeError('WorkbookSession must be used as a context manager')
+        if self.process is not None and self.process.poll() is None:
+            return
+        self.stop()
+        office = Path('/Applications/LibreOffice.app/Contents')
+        if office.exists():
+            soffice = office / 'MacOS/soffice'
+            jars = office / 'Resources/java/*'
+        else:
+            executable = shutil.which('libreoffice') or shutil.which('soffice')
+            if not executable:
+                raise RuntimeError('LibreOffice is required')
+            soffice = Path(executable)
+            jars = Path('/usr/share/java/*')
+        classes = self.directory / 'classes'
+        if not self.compiled:
+            classes.mkdir(exist_ok=True)
+            subprocess.run(['javac', '-cp', str(jars), '-d', str(classes),
+                            str(ROOT / 'scripts/WorkbookUno.java')], check=True, timeout=60)
+            self.compiled = True
+        self.classpath = os.pathsep.join([str(classes), str(jars)])
+        with socket.socket() as sock:
+            sock.bind(('127.0.0.1', 0))
+            self.port = sock.getsockname()[1]
+        self.process = subprocess.Popen([
+            str(soffice), '-env:UserInstallation=' + (self.directory / 'profile').as_uri(),
+            '--headless', '--norestore', '--nodefault',
+            f'--accept=socket,host=localhost,port={self.port};urp;StarOffice.ComponentContext'],
+            # Bound native allocator retention across documents and XLSX export threads.
+            env=dict(os.environ, MALLOC_ARENA_MAX='2'),
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             for attempt in range(100):
                 try:
-                    with socket.create_connection(('localhost',port),timeout=.2):break
+                    with socket.create_connection(('localhost', self.port), timeout=.2):
+                        return
                 except OSError:
-                    if process.poll() is not None:raise RuntimeError('LibreOffice failed to start')
+                    if self.process.poll() is not None:
+                        raise RuntimeError('LibreOffice failed to start')
                     time.sleep(.1)
-            else:raise RuntimeError('LibreOffice startup timed out')
-            env=dict(os.environ, CSV2FHIR_UNO_PORT=str(port))
-            subprocess.run(['java','-cp',str(jars),str(ROOT/'scripts/WorkbookUno.java'),str(candidate),str(commands)] + (preview or []),
-                           # Full lifetime cohorts can contain tens of thousands of rows.
-                           check=True,timeout=600,env=env)
-            output.parent.mkdir(parents=True,exist_ok=True)
-            if output.exists():raise FileExistsError(output)
-            shutil.copy2(candidate,output)
-        finally:
-            process.terminate()
-            try:process.wait(timeout=10)
-            except subprocess.TimeoutExpired:process.kill();process.wait()
+            raise RuntimeError('LibreOffice startup timed out')
+        except BaseException:
+            self.stop()
+            raise
+
+    def apply(self, template, ops, output, preview=None):
+        self.start()
+        with tempfile.TemporaryDirectory(prefix='workbook-', dir=self.directory) as temp:
+            temp = Path(temp)
+            commands = temp / 'edits.tsv'
+            with commands.open('w', encoding='utf-8') as stream:
+                for operation in ops:
+                    stream.write(operation)
+                    stream.write('\n')
+            candidate = temp / 'case.xlsx'
+            shutil.copy2(template, candidate)
+            try:
+                subprocess.run(['java', '-cp', self.classpath, 'WorkbookUno',
+                                str(candidate), str(commands)] + (preview or []),
+                               # Full lifetime cohorts can contain tens of thousands of rows.
+                               check=True, timeout=600,
+                               env=dict(os.environ, CSV2FHIR_UNO_PORT=str(self.port)))
+            except BaseException:
+                # A failed/timed-out helper may have left an open document in Office.
+                self.stop()
+                raise
+            output.parent.mkdir(parents=True, exist_ok=True)
+            if output.exists():
+                raise FileExistsError(output)
+            shutil.copy2(candidate, output)
+
+
+def apply_workbook_edits(template, ops, output, preview=None, *, session=None):
+    if session is not None:
+        session.apply(template, ops, output, preview)
+    else:
+        with WorkbookSession() as standalone:
+            standalone.apply(template, ops, output, preview)
 
 
 def main():

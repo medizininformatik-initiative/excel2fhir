@@ -531,7 +531,7 @@
   "app.workbookStructureChecked": "Inspected · {count} tables or files",
   "app.workbookInspectionHint": "Excel: checks sheet structure and column headings. CSV: also checks file groups, record structure and patient assignments using the shared converter. Row counts exclude headers. Further clinical checks run during conversion.",
   "app.inputRows": "{count} nonempty rows",
-  "app.syntheaInspectionHint": "Inspection counts resources and patients in the JSON bundles. The run imports Synthea R4 data through the Excel template and reports imported and unsupported content. Bundles without patients are skipped.",
+  "app.syntheaInspectionHint": "Inspection counts resources and patients in the JSON bundles. The run imports Synthea R4 data through the selected table format and reports imported and unsupported content. Bundles without patients are skipped.",
   "app.syntheaInputPatients": "{count} patients · {skipped} bundles without patients",
   "app.inputResources": "{count} resources",
   "app.generation.title": "Generate Synthea data",
@@ -756,5 +756,13 @@
   "app.outcomes.explanation": "Import notes document transfer limitations and may identify mapping work. Comparison differences are counted per source dataset and variant; each comparison reports its first difference. {count} notes are covered by disabled resources or DAR replacements and accounted for separately.",
   "app.generation.inpatientOnly": "Only patients with an inpatient stay",
   "app.generation.inpatientMinDays": "Minimum inpatient stay duration in days",
-  "app.generation.inpatientHelp": "At least one individual inpatient stay must meet the duration and overlap the history window. One day means 24 hours. Other encounters are retained. Maximum attempts limits the search per requested patient."
+  "app.generation.inpatientHelp": "At least one individual inpatient stay must meet the duration and overlap the history window. One day means 24 hours. Other encounters are retained. Maximum attempts limits the search per requested patient.",
+  "app.tableFormat": "Table format for Synthea",
+  "app.tableFormat.csv": "CSV (ZIP) – recommended for many cases",
+  "app.tableFormat.excel": "Excel – for editing",
+  "app.tableFormat.help": "CSV produces FHIR data faster and uses less memory. Choose Excel to edit the generated tables and convert them again.",
+  "app.tableFormat.storage": "CSV tables are downloaded as a ZIP archive. Processing needs additional disk space for unpacked tables, source data and FHIR output. Plan capacity for large case counts.",
+  "app.tableFormat.download": "CSV (ZIP)",
+  "app.diagnostics": "Detailed source diagnostics",
+  "app.diagnostics.help": "Compares generated FHIR data with the Synthea source and saves detailed transfer reports. Requires additional time, memory and disk space. Input and conversion errors are reported even when diagnostics are disabled."
 }

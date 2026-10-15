@@ -1,6 +1,8 @@
-"""Read the saved workbook population and case rows for compact run labels."""
+"""Read the saved table population and case rows for compact run labels."""
 from functools import lru_cache
 import json
+import csv
+import io
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -40,6 +42,25 @@ def workbook_counts(filename, modified, size):
         return frozenset(patients), frozenset(cases)
 
 
+@lru_cache(maxsize=2048)
+def csv_counts(filename, modified, size):
+    patients, cases = set(), set()
+    with zipfile.ZipFile(filename) as archive:
+        for name in archive.namelist():
+            if not name.endswith(('_Person.csv', '_Fall.csv')):
+                continue
+            with archive.open(name) as member:
+                rows = csv.reader(io.TextIOWrapper(member, encoding='utf-8-sig'))
+                next(rows, None)
+                for row in rows:
+                    if row and row[0].strip():
+                        if name.endswith('_Person.csv'):
+                            patients.add(row[0].strip())
+                        elif len(row) > 1 and row[1].strip():
+                            cases.add((row[0].strip(), row[1].strip()))
+    return frozenset(patients), frozenset(cases)
+
+
 def summary(folder, snapshot, state):
     if state not in {'succeeded', 'failed'}:
         return {}
@@ -47,16 +68,20 @@ def summary(folder, snapshot, state):
     books = [folder / 'input.xlsx'] if kind == 'workbook' else sorted((folder / 'output').glob('run-*/excel/*.xlsx'))
     if kind == 'workbook-set':
         books = sorted((folder / 'workbooks').glob('*.xlsx'))
+    count = workbook_counts
+    if snapshot.get('tableFormat') == 'csv':
+        books = sorted((folder / 'output').glob('run-*/csv.zip'))
+        count = csv_counts
     if books:
         patients, cases = set(), set()
         try:
             for book in books:
                 stat = book.stat()
-                people, visits = workbook_counts(str(book), stat.st_mtime_ns, stat.st_size)
+                people, visits = count(str(book), stat.st_mtime_ns, stat.st_size)
                 patients.update(people)
                 cases.update(visits)
             return {'patients': len(patients), 'cases': len(cases)}
-        except (OSError, ValueError, KeyError, IndexError, zipfile.BadZipFile, ET.ParseError):
+        except (OSError, ValueError, KeyError, IndexError, zipfile.BadZipFile, csv.Error, ET.ParseError):
             return {}  # Unreadable/unfinished inputs have no reliable counts.
     if snapshot.get('generation', {}).get('outputMode') == 'synthea':
         path = folder / 'datasets.json'

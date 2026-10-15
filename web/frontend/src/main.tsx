@@ -19,7 +19,7 @@ import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
 import { exportPropertiesConfiguration, importRunProperties } from './configuration-properties'
 
-type Job = { outcomes?: Outcomes; workbook_count?: number; cleanup?: { completed: number; removedBytes: number; removedFiles: number }; editor_available?: boolean; summary?: DatasetContext['summary']; input_kind?: string; duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
+type Job = { table_format?: 'csv' | 'excel'; outcomes?: Outcomes; workbook_count?: number; cleanup?: { completed: number; removedBytes: number; removedFiles: number }; editor_available?: boolean; summary?: DatasetContext['summary']; input_kind?: string; duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -78,12 +78,16 @@ function App() {
   const [selected, setSelected] = useState<string | null>(localStorage.getItem('selectedJob'))
   const [datasetName, setDatasetName] = useState('')
   const [source, setSource] = useState('starter')
+  const [inputKind, setInputKind] = useState<string | undefined>()
+  const [diagnostics, setDiagnostics] = useState(false)
+  const [tableFormat, setTableFormat] = useState<'csv' | 'excel'>('csv')
   const [generation, setGeneration] = useState<Generation | null>(null)
   const [uploadingInput, setUploadingInput] = useState(false)
   const [editorLoad, setEditorLoad] = useState<{ configuration: Configuration; generation?: Generation; key: number } | null>(null)
   const [configuration, setConfiguration] = useState<Configuration | null>(null)
   const configurationReady = configuration !== null && problems(configuration).length === 0
   const nativeOutput = source === 'synthea-generation' && generation?.outputMode === 'synthea'
+  const syntheaTables = !nativeOutput && (source === 'synthea-generation' || inputKind?.startsWith('synthea'))
   const canStart = (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
   const generationPayload = { ...(source === 'synthea-generation' ? { generation } : {}), datasetName: datasetName.trim() || undefined }
   const [logs, setLogs] = useState<string | null>(null)
@@ -121,6 +125,7 @@ function App() {
     try {
       const next = [await submitRuns<Job>('/jobs', {
         source, ...generationPayload,
+        ...(syntheaTables ? { tableFormat, diagnostics } : {}),
         ...(nativeOutput ? {} : { configurationProperties: exportPropertiesConfiguration(configuration!, language) })
       })]
       setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
@@ -130,10 +135,12 @@ function App() {
     if (!job) return
     setBusy(true); setError(null)
     try {
-      const loaded = await request<{ source: string; datasetName: string; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/${fromExcel ? 'excel-editor' : 'editor'}`, { method: 'POST' })
+      const loaded = await request<{ source: string; datasetName: string; tableFormat?: 'csv' | 'excel'; diagnostics?: boolean; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/${fromExcel ? 'excel-editor' : 'editor'}`, { method: 'POST' })
       const config = importRunProperties(loaded.configurationProperties)
       setEditorLoad({ configuration: config, generation: loaded.generation, key: Date.now() })
       setConfiguration(config); setGeneration(loaded.generation ?? null)
+      setTableFormat(loaded.tableFormat ?? 'csv');
+      setDiagnostics(loaded.diagnostics ?? false);
       setSource(loaded.source); setDatasetName(loaded.datasetName); setActiveTab('generate')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
@@ -190,10 +197,23 @@ function App() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-start gap-5">
-        <InputSelection key={editorLoad?.key} language={language} source={source} onChange={setSource} onBusy={setUploadingInput}/>
+        <InputSelection key={editorLoad?.key} language={language} source={source} onChange={value => { setInputKind(undefined); setSource(value) }} onBusy={setUploadingInput} onKindChange={setInputKind}/>
         <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
         <Button className="sm:mt-7" onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
-      </div>{source === 'synthea-generation' && <GenerationSettings key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration}/>}
+      </div>
+      {syntheaTables && <div className="mt-5 rounded-xl border border-teal-200 bg-teal-50 p-4">
+        <label className="flex max-w-xl flex-col gap-2 text-sm font-medium">{t('app.tableFormat')}
+          <select className="rounded-lg border border-slate-300 bg-white p-2.5" value={tableFormat} onChange={e => setTableFormat(e.target.value as 'csv' | 'excel')} aria-describedby="table-format-help">
+            <option value="csv">{t('app.tableFormat.csv')}</option>
+            <option value="excel">{t('app.tableFormat.excel')}</option>
+          </select>
+        </label>
+        <p id="table-format-help" className="mt-2 text-sm text-slate-700">{t('app.tableFormat.help')}</p>
+        <p className="mt-2 text-xs text-slate-600">{t('app.tableFormat.storage')}</p>
+        <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={diagnostics} onChange={e => setDiagnostics(e.target.checked)} aria-describedby="diagnostics-help" />{t('app.diagnostics')}</label>
+        <p id="diagnostics-help" className="mt-2 text-xs text-slate-600">{t('app.diagnostics.help')}</p>
+      </div>}
+      {source === 'synthea-generation' && <GenerationSettings key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration}/>}
       <p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : 'app.outputHint')}</p>
     </section>
     <div hidden={nativeOutput}>
@@ -219,6 +239,7 @@ function App() {
             <h3 className="font-semibold">{t('app.runSettings')}</h3>
             {job && <p className="mb-3 break-words text-sm">{configurationName(job)}{job.batch_id ? ` · ${t('app.runGroup')}: ${job.batch_id.slice(0, 8)}` : ''}{job.repeated_from ? ` · ${t('app.repeatedFrom')}: ${job.repeated_from.slice(0, 8)}` : ''}</p>}
             {job?.generation && <p className="mb-3 text-sm">{t('app.generation.requested', { count: job.generation.population })}{job.generation_result && ` · ${t(job.generation.outputMode === 'synthea' ? 'app.generation.nativeActual' : 'app.generation.actual', { generated: job.generation_result.generatedPatients, imported: job.generation_result.importedPatients, failed: job.generation_result.failedPatients })}`}</p>}
+            {job?.table_format && <p className="text-sm">{t('app.tableFormat')}: {t(job.table_format === 'csv' ? 'app.tableFormat.csv' : 'app.tableFormat.excel')}</p>}
             {job && duration(job) && <p className="mb-4 text-sm">{duration(job)}</p>}
             {job && <p className="mb-3 text-sm text-slate-500">{t('app.status')}: {t(stateKey(job.state))}{job.exit_code !== null ? ` · ${t('app.exitCode')}: ${job.exit_code}` : ''}{job.state === 'interrupted' ? ` · ${t('app.retry')}` : ''}</p>}
             <div className="flex flex-wrap items-center gap-3">{job && <div className="flex flex-wrap gap-2">{['succeeded', 'failed'].includes(job.state) && !!job.workbook_count && <><Button variant="outline" disabled={busy} onClick={() => void loadRun(true)}>{t('app.replay.action')}</Button><Help text={t('app.replay.help', { count: job.workbook_count })} t={key => t(key as TextKey)}/></>}{!['queued','running'].includes(job.state) && <Button variant="outline" disabled={busy || job.editor_available === false} onClick={() => void loadRun()}>{t('app.loadRun')}</Button>}{!['queued','running'].includes(job.state) && <><Help text={t('app.loadRunHelp')} t={key => t(key as TextKey)}/><Button variant="outline" disabled={busy} onClick={() => deleteDialog.current?.showModal()}>{t('app.deleteRun')}</Button></>}</div>}</div>

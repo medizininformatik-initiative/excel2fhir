@@ -38,11 +38,17 @@ public class WorkbookUno {
                 context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", context));
         XComponent doc = loader.loadComponentFromURL(Path.of(args[0]).toUri().toString(), "_blank", 0,
                 new PropertyValue[] {prop("Hidden", true), prop("UpdateDocMode", (short) 0)});
-        try {
+        try (java.io.BufferedReader commands = Files.newBufferedReader(Path.of(args[1]), StandardCharsets.UTF_8)) {
             XSpreadsheetDocument book = q(XSpreadsheetDocument.class, doc);
-            List<String> lines = Files.readAllLines(Path.of(args[1]), StandardCharsets.UTF_8);
-            for (int index = 0; index < lines.size(); index++) {
-                String line = lines.get(index);
+            XPropertySet settings = q(XPropertySet.class, doc);
+            Object undoEnabled = settings.getPropertyValue("IsUndoEnabled");
+            // The generated document is disposable on failure; restore before saving.
+            settings.setPropertyValue("IsUndoEnabled", false);
+            String pending = null;
+            while (true) {
+                String line = pending != null ? pending : commands.readLine();
+                pending = null;
+                if (line == null) break;
                 if (line.isBlank()) continue;
                 String[] a = line.split("\t", -1);
                 if (a[0].equals("removeSheet")) {
@@ -63,12 +69,12 @@ public class WorkbookUno {
                     List<Object[]> values = new ArrayList<>();
                     values.add(rowValues(a));
                     // Bound each UNO payload; preserve operation order and range boundaries.
-                    while (values.size() < 512 && index + 1 < lines.size()) {
-                        String[] next = lines.get(index + 1).split("\t", -1);
+                    while (values.size() < 512 && (pending = commands.readLine()) != null) {
+                        String[] next = pending.split("\t", -1);
                         if (next.length != a.length || !next[0].equals("row") || !next[1].equals(a[1])
                                 || Integer.parseInt(next[2].substring(1)) - 1 != row + values.size()) break;
                         values.add(rowValues(next));
-                        index++;
+                        pending = null;
                     }
                     q(XCellRangeData.class, sheet.getCellRangeByPosition(0, row, a.length - 4,
                             row + values.size() - 1)).setDataArray(values.toArray(new Object[0][]));
@@ -81,7 +87,19 @@ public class WorkbookUno {
                 } else if (a[0].equals("copy")) {
                     CellRangeAddress source = q(XCellRangeAddressable.class, sheet.getCellRangeByName(a[2])).getRangeAddress();
                     CellAddress target = q(XCellAddressable.class, sheet.getCellRangeByName(a[3]).getCellByPosition(0, 0)).getCellAddress();
-                    q(XCellRangeMovement.class, sheet).copyRange(target, source);
+                    XCellRangeMovement movement = q(XCellRangeMovement.class, sheet);
+                    String column = columnName(target.Column);
+                    // Reuse addresses for adjacent copies, preserving each copy and its order.
+                    while (true) {
+                        movement.copyRange(target, source);
+                        pending = commands.readLine();
+                        if (pending == null) break;
+                        String[] next = pending.split("\t", -1);
+                        if (next.length != 4 || !next[0].equals("copy") || !next[1].equals(a[1])
+                                || !next[2].equals(a[2]) || !next[3].equals(column + (target.Row + 2))) break;
+                        target.Row++;
+                        pending = null;
+                    }
                 } else if (a[0].equals("clear")) {
                     q(XSheetOperation.class, sheet.getCellRangeByName(a[2])).clearContents(1 | 2 | 4 | 16);
                 } else if (a[0].equals("set")) {
@@ -127,6 +145,7 @@ public class WorkbookUno {
                             .setPropertyValue("Width", Integer.parseInt(a[3]));
                 }
             }
+            settings.setPropertyValue("IsUndoEnabled", undoEnabled);
             if (args.length >= 3) {
                 XSpreadsheet diagnosis = q(XSpreadsheet.class, book.getSheets().getByName(args.length >= 4 ? args[3] : "Diagnose"));
                 q(XStorable.class, doc).storeToURL(Path.of(args[2]).toUri().toString(),
@@ -141,6 +160,13 @@ public class WorkbookUno {
         }
         // UNO connection threads otherwise keep the standalone helper alive.
         System.exit(0);
+    }
+
+    private static String columnName(int column) {
+        StringBuilder name = new StringBuilder();
+        for (int value = column + 1; value > 0; value = (value - 1) / 26)
+            name.append((char) ('A' + (value - 1) % 26));
+        return name.reverse().toString();
     }
 
     private static Object[] rowValues(String[] operation) {

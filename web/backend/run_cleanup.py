@@ -36,7 +36,7 @@ def strings(path):
                     for element in document.iter():
                         if element.tag.endswith(('}si', '}is')):
                             yield ''.join(element.itertext())
-    elif path.name == 'input.zip':
+    elif path.name in {'input.zip', 'csv.zip'}:
         with zipfile.ZipFile(path) as archive:
             for name in archive.namelist():
                 with archive.open(name) as member:
@@ -76,7 +76,7 @@ def retained(root, manifest):
     for path in (root / 'output').rglob('*'):
         parts = path.relative_to(root / 'output').parts
         if path.is_file() and (len(parts) >= 3 and parts[1] in {'fhir', 'excel'}
-                or path.suffix == '.config' or path.name == 'environment.json'):
+                or path.suffix == '.config' or path.name in {'environment.json', 'csv.zip'}):
             keep.add(path)
     for item in manifest['datasets']:
         for file in item['files']:
@@ -116,12 +116,12 @@ def cleanup(job_id):
         by_name = {}
         for path in candidates:
             by_name.setdefault(path.name, []).append(path)
-        sources = {path for path in keep if path.name == 'input.zip' or path.suffix in {'.xlsx', '.csv'} or 'fhir' in path.relative_to(root).parts}
+        sources = {path for path in keep if path.name in {'input.zip', 'csv.zip'} or path.suffix in {'.xlsx', '.csv'} or 'fhir' in path.relative_to(root).parts}
         for path in (store.ROOT / 'jobs').rglob('*'):
             if path.is_symlink() and not path.is_relative_to(root):
                 target = path.resolve()
                 keep.update(file for file in all_files if file.resolve() == target or file.resolve().is_relative_to(target))
-            if path.is_file() and not path.is_relative_to(root) and (path.name in {'input.zip', 'input.json'} or path.suffix == '.xlsx' or 'fhir' in path.parts):
+            if path.is_file() and not path.is_relative_to(root) and (path.name in {'input.zip', 'input.json', 'csv.zip'} or path.suffix == '.xlsx' or 'fhir' in path.parts):
                 sources.add(path)
         sources.update((store.ROOT / 'inputs').glob('*/workbooks/*.xlsx'))
         for path in (store.ROOT / 'inputs').glob('*/input.*'):

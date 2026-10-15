@@ -8,6 +8,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from run_synthea_cases import inspect_conversion, run
 
 
+def fake_batch(converter):
+    def execute(jobs, validate):
+        for job in jobs:
+            converted = converter(job['arguments'])
+            Path(job['result']).write_text(json.dumps({'exitCode': converted.returncode, 'seconds': 0}))
+    return execute
+
+
 class WorkflowTest(unittest.TestCase):
     def test_not_checked_is_preserved_but_unexpected_exit_is_rejected(self):
         with tempfile.TemporaryDirectory() as d:
@@ -128,6 +136,59 @@ class WorkflowTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'missing'):
                 inspect_conversion(directory, 0, expected_imports=2)
 
+    def test_phase_failures_continue_and_comparison_uses_saved_source(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            source = root / 'source'
+            source.mkdir()
+            for i in range(3):
+                (source / f'p{i}.json').write_text(json.dumps({'entry': [
+                    {'resource': {'resourceType': 'Patient', 'id': f'p{i}'}}]}))
+            events = []
+            class Session:
+                def __enter__(self):
+                    return self
+                def __exit__(self, *_):
+                    events.append('closed')
+                    (source / 'p2.json').write_text('changed after snapshot')
+
+            def workbook(rows, output, **kwargs):
+                events.append(output.stem)
+                if output.stem == 'Fall-p0':
+                    raise ValueError('workbook failed')
+
+            def convert(command, **kwargs):
+                self.assertEqual(['Fall-p0', 'Fall-p1', 'Fall-p2', 'closed'], events[:4])
+                case = Path(command[command.index('-o') + 1])
+                events.append('convert:' + case.name)
+                if case.name == 'p1':
+                    return SimpleNamespace(returncode=1)
+                converted = case / 'run-test-excel-to-fhir'
+                (converted / 'fhir').mkdir(parents=True)
+                (converted / 'fhir/case.json').write_text('{"entry": []}')
+                (converted / 'details/reports').mkdir(parents=True)
+                (converted / 'details/reports/case.import.json').write_text('{"status":"COMPLETE"}')
+                return SimpleNamespace(returncode=0)
+
+            selected = [{'name': 'default', 'values': {}, 'patients': {f'p{i}': [f'p{i}'] for i in range(3)}}]
+            with patch('run_synthea_cases.environment', return_value={}), \
+                 patch('run_synthea_cases.selected_configs', return_value=selected), \
+                 patch('run_synthea_cases.read_sheets', return_value={'Codes': []}), \
+                 patch('run_synthea_cases.prepare', side_effect=lambda bundle, options, **kwargs: (
+                     {}, {'sourcePatient': bundle['entry'][0]['resource']['id']})), \
+                 patch('run_synthea_cases.write_workbook', side_effect=workbook), \
+                 patch('run_synthea_cases.WorkbookSession', Session), \
+                 patch('run_synthea_cases.run_conversion_batch', side_effect=fake_batch(convert)), \
+                 patch('run_synthea_cases.check_configured', return_value={'outputPatients': ['p2']}) as check:
+                self.assertEqual(1, run(source, root / 'output', diagnostics=True))
+            summary = json.loads(next((root / 'output').glob('*/details/reports/summary.json')).read_text())
+            self.assertEqual('FAILED', summary['status'])
+            self.assertEqual(['p0.json', 'p1.json'], [Path(x['source']).name for x in summary['failures']])
+            self.assertEqual(['p2.json'], [Path(x['source']).name for x in summary['results']])
+            self.assertEqual('p2', check.call_args.args[0]['entry'][0]['resource']['id'])
+            self.assertEqual(['convert:p1', 'convert:p2'], events[4:])
+
     def test_output_layout_for_single_and_multiple_sources_and_variants(self):
         from types import SimpleNamespace
         for inputs in (1, 2):
@@ -145,7 +206,21 @@ class WorkflowTest(unittest.TestCase):
                     selected = [{'name': f'KDS-{v}', 'values': {}, 'patients': {'p1': ['p1']}}
                                 for v in range(variants)]
 
+                    events = []
+                    class Session:
+                        def __enter__(self):
+                            events.append('open')
+                            return self
+                        def __exit__(self, *_):
+                            events.append('close')
+
+                    def workbook(*args, **kwargs):
+                        events.append('workbook')
+
                     def convert(command, **kwargs):
+                        self.assertIn('close', events)
+                        self.assertEqual(inputs, events.count('workbook'))
+                        events.append('convert')
                         case = Path(command[command.index('-o') + 1])
                         converted = case / 'run-test-excel-to-fhir'
                         for item in selected:
@@ -164,13 +239,19 @@ class WorkflowTest(unittest.TestCase):
                          patch('run_synthea_cases.selected_configs', return_value=selected), \
                          patch('run_synthea_cases.read_sheets', return_value={'Codes': []}), \
                          patch('run_synthea_cases.prepare', return_value=({}, {'sourcePatient': 'p1'})), \
-                         patch('run_synthea_cases.write_workbook'), \
+                         patch('run_synthea_cases.write_workbook', side_effect=workbook), \
+                         patch('run_synthea_cases.WorkbookSession', Session), \
                          patch('run_synthea_cases.check_configured', return_value={'outputPatients': ['p1']}) as check, \
-                         patch('run_synthea_cases.subprocess.run', side_effect=convert):
+                         patch('run_synthea_cases.run_conversion_batch', side_effect=fake_batch(convert)):
                         self.assertEqual(0, run(source, root / 'output'))
-                        self.assertEqual(inputs * variants, check.call_count)
+                        self.assertEqual(0, check.call_count)
+                        self.assertFalse(list((root / 'output').rglob('Fall.loss.json')))
+                        normal = json.loads(next((root / 'output').glob('*/details/reports/summary.json')).read_text())
+                        self.assertEqual('not-requested', normal['results'][0]['variants'][0]['comparisonStatus'])
+                        self.assertEqual(['open'] + ['workbook'] * inputs + ['close'] + ['convert'] * inputs, events)
+                        events.clear()
                         check.side_effect = AssertionError('deliberate comparison difference')
-                        self.assertEqual(0, run(source, root / 'findings-output'))
+                        self.assertEqual(0, run(source, root / 'findings-output', diagnostics=True))
                         findings_dir = next((root / 'findings-output').glob('run-*'))
                         summary = json.loads((findings_dir / 'details/reports/summary.json').read_text())
                         self.assertEqual([], summary['failures'])

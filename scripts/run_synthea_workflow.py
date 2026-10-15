@@ -63,7 +63,7 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
             raise RuntimeError('Synthea failed; see details/logs/synthea.log (exit code ' + str(generated.returncode) + ').')
         report['status'] = 'CONVERTING'
         write_json(report_path, report)
-        print('Converting patients through Excel to FHIR and comparing them with the source data.', flush=True)
+        print('Converting patients to tables and FHIR.', flush=True)
         code = convert_cases(directory / 'details/sources/synthea/fhir', output,
                              option_files=snapshots, directory=directory, validate=validate, **settings)
         summary = json.loads((directory / 'details/reports/summary.json').read_text())
@@ -76,7 +76,7 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
         if summary['failures']:
             print('Run INCOMPLETE: see details/reports/summary.json. Generated files remain available.', flush=True)
         else:
-            print('Generation complete. Source comparison and optional FHIR validation have separate results in the reports.', flush=True)
+            print('Generation complete. Requested diagnostics and FHIR validation have separate outcomes.', flush=True)
         return code
     except Exception as error:
         report.update(status='FAILED', error=str(error))

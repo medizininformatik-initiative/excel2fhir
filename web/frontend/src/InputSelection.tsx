@@ -5,8 +5,8 @@ import { translate, type Language } from './i18n'
 
 type Input = { kind?: string; id: string; name: string; size: number; inspection: { patients?: number; bundlesWithoutPatient?: number; sheets: { name: string; rows: number }[] } }
 
-export function InputSelection({ language, source, onChange, onBusy }: {
-  language: Language; source: string; onChange: (source: string) => void; onBusy: (busy: boolean) => void
+export function InputSelection({ language, source, onChange, onBusy, onKindChange }: {
+  language: Language; source: string; onChange: (source: string) => void; onBusy: (busy: boolean) => void; onKindChange: (kind: string | undefined) => void
 }) {
   const t = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(language, key, params)
   const [items, setItems] = useState<Input[]>([])
@@ -68,6 +68,7 @@ export function InputSelection({ language, source, onChange, onBusy }: {
     finally { setRemoving(false); onBusy(false) }
   }
   const selected = items.find(item => item.id === source)
+  useEffect(() => { onKindChange(selected?.kind) }, [source, selected?.kind, onKindChange])
   return <div className="contents">
     <div className="min-w-0 w-full sm:w-[28rem]">
     <label className="flex flex-col gap-2 text-sm font-medium">{t('app.input')}

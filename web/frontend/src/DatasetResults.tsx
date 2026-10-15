@@ -32,7 +32,9 @@ export function DatasetResults({ jobId, state, language, context, onUpload, inpu
     void refresh()
     return () => { active = false; clearTimeout(timer) }
   }, [jobId, state])
+  const csvArchive = manifest?.artifacts.find(file => file.path.endsWith('/csv.zip'))
   const runDownloads = <>
+    {csvArchive && <Button variant="outline" asChild><a href={`/api/jobs/${jobId}/artifacts/${csvArchive.id}`}><Download size={14}/>{t('app.tableFormat.download')}</a></Button>}
     {['succeeded', 'failed'].includes(state) && (['workbook', 'workbook-set'].includes(inputKind ?? '') || manifest?.artifacts.some(file => file.path.endsWith('.xlsx'))) && <div className="flex items-center gap-2"><Button variant="outline" asChild><a href={`/api/jobs/${jobId}/inputs-download`} aria-label={t('app.datasets.inputsDownload')}><Download size={14}/>{t('app.datasets.inputsShort')}</a></Button><Help text={t('app.datasets.inputsHint')} t={key => t(key as TextKey)}/></div>}
     {downloadAvailable && <div className="flex items-center gap-2"><Button variant="outline" asChild><a href={`/api/jobs/${jobId}/download`} aria-label={t('app.download')}><Download size={14}/>{t('app.datasets.runShort')}</a></Button><Help text={t('app.downloadHelp')} t={key => t(key as TextKey)}/></div>}
   </>
@@ -64,7 +66,7 @@ export function DatasetResults({ jobId, state, language, context, onUpload, inpu
     if (extension === 'xml') return 'xml'
     if (['xlsx', 'xls', 'xlsm'].includes(extension ?? '')) return 'excel'
     if (extension === 'log' || /(^|\/)logs?\//i.test(file.path)) return 'logs'
-    if (extension === 'csv') return 'csv'
+    if (extension === 'csv' || file.path.endsWith('/csv.zip')) return 'csv'
     return 'other'
   }
   const isFhir = (file: Artifact) => manifest.datasets.some(dataset => dataset.path && file.path.startsWith(`${dataset.path}/`))

@@ -100,8 +100,15 @@ def execute(job_id):
             destination = folder / 'output/run-synthea'
             destination.mkdir(parents=True)
             command = generation.native_command(snapshot['generation'], destination)
+        environment = dict(os.environ)
+        if kind.startswith('synthea') and not native:
+            table_format = snapshot.get('tableFormat', 'excel')
+            if table_format not in {'csv', 'excel'}:
+                raise ValueError('Unknown Synthea table format')
+            environment['EXCEL2FHIR_TABLE_FORMAT'] = table_format
+            environment['EXCEL2FHIR_DIAGNOSTICS'] = 'true' if snapshot.get('diagnostics', True) else 'false'
         with (folder / "converter.log").open("w") as log:
-            process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=environment)
             while process.poll() is None:
                 if stopping or store.get(job_id)["cancel"]:
                     terminate(process)

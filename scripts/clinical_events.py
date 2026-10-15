@@ -10,7 +10,7 @@ from vaccine_mapping import map_vaccine, metadata as vaccine_metadata
 SHEETS = {'Immunization': 'Impfung', 'DiagnosticReport': 'Befundbericht', 'CarePlan': 'Behandlungsplan'}
 
 
-def prepare_events(entries, pid, encounters, imported_observations, year=2026):
+def prepare_events(entries, pid, encounters, imported_observations, year=2026, *, diagnostics=True):
     rows = {s: [] for s in SHEETS.values()}; imported, losses, vaccines = [], [], []
     texts = GermanTexts()
     index = {}
@@ -22,7 +22,8 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
     for entry in entries:
         r = entry.get('resource', {}); typ = r.get('resourceType')
         if typ not in SHEETS: continue
-        def loss(path, reason): losses.append({'resourceType':typ,'id':r.get('id'),'path':path,'reason':reason})
+        def loss(path, reason):
+            if diagnostics: losses.append({'resourceType':typ,'id':r.get('id'),'path':path,'reason':reason})
         patient = r.get('patient', r.get('subject', {})).get('reference')
         if patient and (patient not in index or index[patient]['id'] != pid): raise ValueError('Broken patient reference '+patient)
         encounter = r.get('encounter', {}).get('reference')
@@ -79,7 +80,7 @@ def prepare_events(entries, pid, encounters, imported_observations, year=2026):
 
 
 
-def prepare_documents(entries, pid, encounters):
+def prepare_documents(entries, pid, encounters, *, diagnostics=True):
     rows=[];imports=[];losses=[];identity_changes=[]
     index={}
     for e in entries:
@@ -90,7 +91,8 @@ def prepare_documents(entries, pid, encounters):
     for e in entries:
         r=e.get('resource',{})
         if r.get('resourceType')!='DocumentReference':continue
-        def loss(path,reason):losses.append({'resourceType':'DocumentReference','id':r['id'],'path':path,'reason':reason})
+        def loss(path,reason):
+            if diagnostics: losses.append({'resourceType':'DocumentReference','id':r['id'],'path':path,'reason':reason})
         patient=index.get(r.get('subject',{}).get('reference'))
         if patient is None or patient.get('id')!=pid:raise ValueError('Broken document patient reference')
         refs=r.get('context',{}).get('encounter',[])

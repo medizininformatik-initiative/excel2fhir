@@ -113,7 +113,7 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None):
+                source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None, table_format=None, diagnostics=False):
     specification = None
     if input_path is None and source == 'synthea-generation':
         import generation
@@ -144,6 +144,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     else:
         (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
     native = input_kind == 'synthea-generation' and json.loads((directory / filename).read_text()).get('outputMode') == 'synthea'
+    if table_format is not None and (table_format not in {'csv', 'excel'} or not input_kind.startswith('synthea') or native):
+        raise ValueError('Table format requires Synthea KDS conversion and must be csv or excel')
+    if diagnostics and (not input_kind.startswith('synthea') or native):
+        raise ValueError('Source diagnostics require Synthea KDS conversion')
     if native:
         if configuration_properties is not None:
             raise ValueError('Synthea FHIR output does not use a KDS configuration')
@@ -170,6 +174,8 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     if input_kind.startswith('synthea'):
         import synthea_runtime
         if not native:
+            snapshot['tableFormat'] = table_format or 'csv'
+            snapshot['diagnostics'] = diagnostics
             snapshot['syntheaImportSha256'] = synthea_runtime.fingerprint()
         if input_kind == 'synthea-generation':
             import generation
@@ -195,9 +201,13 @@ def normalize_dataset_name(value):
     return value.strip() or None
 
 
-def create(source, profile, configuration_properties=None, request_id=None, generation_settings=None, dataset_name=None):
+def create(source, profile, configuration_properties=None, request_id=None, generation_settings=None, dataset_name=None, *, table_format=None, diagnostics=False):
     dataset_name = normalize_dataset_name(dataset_name)
     descriptor = {'kind': 'single', 'source': source, 'profile': profile, 'configuration': configuration_properties}
+    if diagnostics:
+        descriptor['diagnostics'] = True
+    if table_format is not None:
+        descriptor['tableFormat'] = table_format
     if generation_settings is not None:
         descriptor['generation'] = generation_settings
     if dataset_name:
@@ -206,7 +216,7 @@ def create(source, profile, configuration_properties=None, request_id=None, gene
     # Complete the run's independent copies before an input can be removed.
     with inputs.library_lock():
         return submit(descriptor, request_id,
-                      lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name))[0]
+                      lambda prepared: prepare_job(prepared, source, profile, configuration_properties, generation_settings=generation_settings, dataset_name=dataset_name, table_format=table_format, diagnostics=diagnostics))[0]
 
 
 def editor_input(job_id):
@@ -231,6 +241,7 @@ def editor_input(job_id):
             name = snapshot.get('sourceName') or ('Run-' + job_id[:8] + suffix)
             source = inputs.publish(incoming, name)['id']
     return {'source': source, 'generation': snapshot.get('generation'),
+            **({'tableFormat': snapshot.get('tableFormat', 'excel'), 'diagnostics': snapshot.get('diagnostics', True)} if kind.startswith('synthea') and snapshot['profile']['id'] != 'synthea' else {}),
             'datasetName': snapshot.get('datasetName', ''),
             'configurationProperties': snapshot['profile'].get('optionsProperties')
                 or (APP / 'defaults.config').read_text()}
@@ -260,6 +271,7 @@ def job_result(row):
         config = snapshot['profile']
         job['summary'] = run_summary.summary(snapshot_path.parent, snapshot, job['state'])
         job['outcomes'] = run_outcomes.read(snapshot_path.parent, snapshot, job['state'])
+        job['table_format'] = snapshot.get('tableFormat')
         job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))

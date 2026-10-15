@@ -29,6 +29,15 @@ class OutcomeTests(unittest.TestCase):
             self.assertEqual('p.json', transfer['details'][0]['source'])
             self.assertEqual(result, json.loads((folder / 'outcomes.json').read_text()))
 
+    def test_disabled_diagnostics_are_not_a_successful_comparison(self):
+        with tempfile.TemporaryDirectory() as root:
+            result = collect(Path(root), {'inputKind': 'synthea', 'diagnostics': False,
+                                         'validation': True}, 'failed')
+            self.assertEqual('not-requested', result['transfer']['status'])
+            self.assertEqual(0, result['transfer']['checked'])
+            self.assertEqual('unavailable', result['validation']['status'])
+            self.assertEqual('failed', result['generation'])
+
     def test_absent_reports_are_not_reported_as_passed(self):
         with tempfile.TemporaryDirectory() as root:
             folder = Path(root)

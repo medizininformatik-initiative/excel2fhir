@@ -95,7 +95,7 @@ with tempfile.TemporaryDirectory(prefix='replay-id-audit-') as directory:
             for name in ('female.json', 'male.json'):
                 archive.write(fixture / name, name)
         item = inputs.publish(incoming, 'patients.zip')
-    source = store.create(item['id'], 'default', BASE)
+    source = store.create(item['id'], 'default', BASE, table_format='excel')
     baseline = execute(source)
     patients = {r['id'] for r in baseline.values() if r['resourceType'] == 'Patient'}
     assert len(patients) == 2, patients

@@ -32,6 +32,17 @@ class RunSummaryTests(TestCase):
             book.write_bytes(b'broken')
             self.assertEqual({}, run_summary.summary(root, {}, 'failed'))
 
+    def test_csv_zip_counts_match_workbook_counts(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / 'output/run-1'
+            output.mkdir(parents=True)
+            with zipfile.ZipFile(output / 'csv.zip', 'w') as archive:
+                archive.writestr('one_Person.csv', 'Patient-ID,Name\npatient-1,Änne\npatient-1,Änne\n,Hint\n')
+                archive.writestr('one_Fall.csv', 'Patient-ID,Fall-ID\npatient-1,1\npatient-1,2\npatient-1,2\n,\n')
+            self.assertEqual({'patients': 1, 'cases': 2}, run_summary.summary(root,
+                {'inputKind': 'synthea', 'tableFormat': 'csv'}, 'succeeded'))
+
     def test_native_synthea_uses_inspected_counts_and_unknown_counts_stay_unknown(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)

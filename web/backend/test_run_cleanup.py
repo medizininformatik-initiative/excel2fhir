@@ -67,6 +67,18 @@ class RunCleanupTests(QueueFixture):
         upload = fhir_uploads.create(str(uuid.uuid4()), 'blaze', [job + '.0'])
         self.assertEqual(store.digest(root / 'dataset-0.zip'), upload['descriptor']['datasets'][0]['sha256'])
 
+    def test_csv_archive_and_referenced_files_survive_cleanup(self):
+        job, root = self.completed()
+        attachment = root / 'output/run-test/details/document.txt'
+        attachment.write_text('document content')
+        archive_path = root / 'output/run-test/csv.zip'
+        with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr('case_Dokument.csv', 'File\n' + str(attachment) + '\n')
+        original = archive_path.read_bytes()
+        run_cleanup.cleanup(job)
+        self.assertEqual(original, archive_path.read_bytes())
+        self.assertEqual('document content', attachment.read_text())
+
     def test_blocks_active_work_before_mutation(self):
         job, root = self.completed()
         with store.connect() as db:

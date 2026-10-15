@@ -130,10 +130,19 @@ ZIP archives retain their original bytes; each run extracts its own input direct
 
 Synthea inspection counts patients and resources, rejects duplicate patient IDs
 and identifies bundles without patients. The import skips those bundles. Each
-patient bundle must contain one Patient with an ID. The worker runs the existing
-Synthea-to-Excel-to-FHIR pipeline using LibreOffice, the bundled template and
-German mappings. Results include the generated workbooks, source comparison,
-projection-loss reports and effective configuration. The current editor settings
+patient bundle must contain one Patient with an ID. Choose **CSV (ZIP)** for faster
+conversion with lower memory use, especially for many cases. Choose **Excel** to
+edit the generated workbooks and convert them again. Both paths use the same German
+mappings, table validation and KDS converter. Excel creation uses LibreOffice.
+Results include CSV tables as a ZIP archive or editable workbooks and the effective
+configuration. Source comparisons and projection-loss reports are included when
+**Detailed source diagnostics** is enabled. The selected table format is
+saved with the run and restored when loading its settings.
+
+CSV downloads are compressed; processing still needs space for unpacked tables,
+original sources and FHIR output. The worker streams tables into a ZIP and verifies
+it before removing the unpacked CSV working copies. Run cleanup retains that ZIP.
+Plan disk capacity for the complete run, not only the download size. The current editor settings
 control the KDS conversion. Each snapshot also fingerprints the import scripts,
 template and mappings.
 
@@ -209,7 +218,7 @@ counts separately. Extra deceased patients can increase the exported count.
 The web workflow accepts 1–1000 requested patients per run and up to 10,000
 attempts per patient slot. Generation defaults to ages 18–80, five years of history and disabled overflow.
 It uses one Synthea thread, a 1.5 GiB generator heap, a 1 GiB converter heap
-and a 2200 MiB worker container; jobs run sequentially. Generated FHIR, editable
+and a 6 GiB worker container; jobs run sequentially. Generated FHIR, CSV ZIP or editable
 workbooks, original Synthea bundles, workflow reports and logs are included in
 the download. See the [Synthea workflow](../docs/synthea-workflow.md) for output
 layout and seed semantics.
@@ -559,7 +568,7 @@ The Synthea comparison uses the bundled DAR and option catalogues.
 
 **Clean up / delete** opens a choice for the selected run. **Clean up** is available
 for completed or failed runs after dataset inspection. It retains configuration,
-Excel workbooks, generated FHIR files, version metadata and a checksum inventory.
+Excel workbooks or the CSV table ZIP, generated FHIR files, version metadata and a checksum inventory.
 Referenced files are retained conservatively, including dependencies found in
 other saved workbooks and datasets. Shared input-library files are retained.
 
@@ -652,3 +661,7 @@ reports its first difference for each source dataset and variant, not an exhaust
 count of differing fields. These summaries remain available after run cleanup.
 Historical reports without independent comparison results show that assessment as
 unavailable; their recorded execution status is retained.
+
+### Source diagnostics
+
+Synthea KDS runs generate tables and FHIR with source diagnostics disabled by default. Enable **Detailed source diagnostics** to compare the result with the Synthea source and retain detailed transfer reports. This increases runtime, memory and disk usage. The selection is saved with the run and restored when loading it into the editor. Input checks, conversion failures and missing-output checks always run. FHIR validation remains a separate configuration option.

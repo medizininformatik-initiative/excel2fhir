@@ -29,6 +29,9 @@ def collect(folder, snapshot, state):
     transfer = {'status': 'not-applicable', 'checked': 0, 'differences': 0, 'unavailable': 0,
                 'importNotes': 0, 'configuredOmissions': 0, 'notes': [], 'details': []}
     if snapshot.get('inputKind', '').startswith('synthea') and not native:
+        if snapshot.get('diagnostics') is False:
+            transfer['status'] = 'not-requested'
+            return {'generation': state, 'validation': validation, 'transfer': transfer}
         transfer['status'] = 'unavailable'
         notes = Counter()
         for path in (folder / 'output').glob('*/details/reports/summary.json'):

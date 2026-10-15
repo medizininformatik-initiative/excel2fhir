@@ -67,7 +67,7 @@ def observation_value(r):
     raise UnsupportedValue('Unsupported value type: ' + key)
 
 
-def prepare_clinical(entries, pid, encounter_numbers, year=2026):
+def prepare_clinical(entries, pid, encounter_numbers, year=2026, *, diagnostics=True):
     products = ProductCatalog(year)
     product_texts = GermanTexts()
     index = {}
@@ -96,7 +96,8 @@ def prepare_clinical(entries, pid, encounter_numbers, year=2026):
         r = e.get('resource', {}); typ = r.get('resourceType')
         if typ not in SUPPORTED: continue
         def loss(path, reason):
-            losses.append({'resourceType': typ, 'id': r.get('id'), 'path': path, 'reason': reason})
+            if diagnostics:
+                losses.append({'resourceType': typ, 'id': r.get('id'), 'path': path, 'reason': reason})
         if typ == 'Medication':
             # Medication is consumed through MedicationRequest references; the
             # target converter creates a shared definition per source code.

@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
         (incoming / 'input.zip').write_bytes(data)
         item = inputs.publish(incoming, 'Synthea.zip')
     assert item['inspection']['patients'] == 2
-    job = store.create(item['id'], 'default', 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n')
+    job = store.create(item['id'], 'default', 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n', table_format='excel')
     assert store.claim() == job
     worker.execute(job)
     folder = store.ROOT / 'jobs' / job
@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     assert len(manifest['datasets']) == 1
     assert manifest['datasets'][0]['inspection']['patients'] == 2
     loaded = store.editor_input(job)
-    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'), table_format=loaded.get('tableFormat'))
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated
