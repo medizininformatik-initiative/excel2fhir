@@ -33,6 +33,53 @@ public class DiagnosisWorkbookTest {
     }
 
     @Test
+    public void sparseRowsPreserveContinuationAndOriginalIssueLocations() throws Exception {
+        try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                var template = new XSSFWorkbook(input); var book = new XSSFWorkbook()) {
+            // Build a sparse fixture with the real headers, without modifying the template.
+            for (var source : template) {
+                var header = book.createSheet(source.getSheetName()).createRow(0);
+                for (var cell : source.getRow(0))
+                    header.createCell(cell.getColumnIndex()).setCellValue(cell.getStringCellValue());
+            }
+            var person = book.getSheet("Person");
+            person.createRow(1);
+            field(person, 1, "Patient-ID").setCellValue("p1");
+            var encounter = book.getSheet("Fall");
+            encounter.createRow(1);
+            field(encounter, 1, "Patient-ID").setCellValue("p1");
+            field(encounter, 1, "Fall-Nr").setCellValue("f1");
+            field(encounter, 1, "Einrichtungskontaktklasse").setCellValue("vollstationär");
+            field(encounter, 1, "Start").setCellValue("2026-01-01T12:00:00+01:00");
+            var vaccination = book.getSheet("Impfung");
+            vaccination.createRow(1);
+            field(vaccination, 1, "Patient-ID").setCellValue("p1");
+            field(vaccination, 1, "Fall-Nr").setCellValue("f1");
+            field(vaccination, 1, "Eintrag ID").setCellValue("v1");
+            int last = 1048575;
+            for (var sheet : List.of(person, encounter, vaccination)) {
+                sheet.createRow(100); // A physical empty row among absent rows.
+                sheet.createRow(last);
+            }
+            field(person, last, "Patient-ID").setCellValue("p1"); // Duplicate at the original Excel row.
+            field(encounter, last, "Start").setCellValue("invalid timestamp"); // Inherits p1 across the gap.
+            field(vaccination, last, "Fall-Nr").setCellValue("f1"); // Inherits p1 and resolves f1.
+            field(vaccination, last, "Eintrag ID").setCellValue("v2");
+            field(vaccination, last, "Zeitpunkt").setCellValue("invalid timestamp");
+            var checked = new ExcelTemplateValidator().validate(book,
+                    de.uni_leipzig.life.csv2fhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"), "test");
+            assertEquals(checked.getIssues().toString(), 3, checked.getIssues().size());
+            for (String sheet : List.of("Person", "Fall", "Impfung")) {
+                assertTrue(checked.getIssues().toString(), checked.getIssues().stream().anyMatch(issue ->
+                        sheet.equals(issue.getSheetName()) && issue.getRowNumber() == last + 1 && issue.isError()));
+            }
+            assertTrue(checked.getIssues().stream().anyMatch(issue -> "Patient-ID must be unique".equals(issue.getMessage())));
+            assertTrue(checked.getIssues().stream().noneMatch(issue -> issue.getMessage().contains("previous Patient-ID")
+                    || issue.getMessage().contains("does not exist")));
+        }
+    }
+
+    @Test
     public void reorderedFieldsPassButDuplicateFieldsFail() throws Exception {
         var file = java.nio.file.Files.createTempFile("reordered-fields-", ".xlsx");
         try {

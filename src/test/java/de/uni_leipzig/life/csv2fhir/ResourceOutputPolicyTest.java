@@ -6,6 +6,25 @@ import org.hl7.fhir.r4.model.*;
 import org.junit.Test;
 
 public class ResourceOutputPolicyTest {
+    @Test public void replacedTargetsAreRemovedFromNestedReferencesOnly() {
+        Observation replaced = new Observation(); replaced.setId("old");
+        Observation retained = new Observation(); retained.setId("keep");
+        DiagnosticReport report = new DiagnosticReport(); report.setId("report");
+        report.addResult(new Reference("Observation/old"));
+        report.addResult(new Reference("Observation/keep"));
+        report.addExtension().setUrl("urn:test").setValue(new Reference("Observation/old"));
+        report.addResult(new Reference("https://external.test/Observation/old"));
+        var configuration = ContractConfiguration.parse("CONFIGURATION_VERSION=1\n");
+        var policy = new ResourceOutputPolicy(configuration, List.of(replaced, retained, report),
+                java.util.Set.of("Observation/old"));
+        var output = (DiagnosticReport)policy.output(report);
+        assertEquals(2, output.getResult().size());
+        assertEquals("Observation/keep", output.getResult().get(0).getReference());
+        assertEquals("https://external.test/Observation/old", output.getResult().get(1).getReference());
+        assertFalse(output.getExtension().get(0).hasValue());
+        assertTrue(report.getExtension().get(0).hasValue());
+        assertEquals(3, report.getResult().size());
+    }
     @Test public void booleanSelectionsOmitEveryConfiguredResourceType() {
         Resource[] resources = {new Condition(), new Procedure(), new MedicationRequest(), new MedicationAdministration(),
                 new MedicationStatement(), new Immunization(), new DiagnosticReport(), new CarePlan(), new DocumentReference(), new Consent()};

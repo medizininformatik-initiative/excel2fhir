@@ -13,6 +13,36 @@ import org.junit.Test;
 public class ContractConfigurationTest {
     private static final String VERSION = "CONFIGURATION_VERSION = 1\n";
 
+    @Test public void effectiveContainersRemainIndependentFromCallersAndStoredSelections() {
+        var config = ContractConfiguration.parse(VERSION + "OUTPUT_FORMATS=JSON,NDJSON\n");
+        var first = (com.fasterxml.jackson.databind.node.ArrayNode) config.effective("output.formats").orElseThrow();
+        first.removeAll().add("XML");
+        var stored = (com.fasterxml.jackson.databind.node.ArrayNode) config.stored("output.formats");
+        stored.removeAll();
+        var second = config.effective("output.formats").orElseThrow();
+        assertEquals(2, second.size());
+        assertEquals("JSON", second.get(0).asText());
+        assertEquals("NDJSON", second.get(1).asText());
+        assertEquals(second, config.stored("output.formats"));
+    }
+
+    @Test public void effectiveDependenciesRemainIsolatedAcrossConfigurations() {
+        var defaults = ContractConfiguration.parse(VERSION);
+        var inactive = ContractConfiguration.parse(VERSION + "ENCOUNTER_ENABLED=false\n");
+        var choiceDisabled = ContractConfiguration.parse(VERSION + "CONTACT_FACILITY_ENABLED=false\n"
+                + "REFERENCE_CONDITION_ENCOUNTER=facility\n");
+        var openEnd = ContractConfiguration.parse(VERSION + "ENCOUNTER_AMBULATORY_END_POLICY=open\n");
+        for (int repeat = 0; repeat < 3; repeat++) {
+            assertTrue(defaults.effective("contact.facility.enabled").orElseThrow().asBoolean());
+            assertTrue(inactive.effective("contact.facility.enabled").isEmpty());
+            assertTrue(inactive.effective("contact.diagnoses.levels").isEmpty());
+            assertEquals("facility", choiceDisabled.stored("reference.Condition.encounter").asText());
+            assertTrue(choiceDisabled.effective("reference.Condition.encounter").isEmpty());
+            assertTrue(defaults.effective("resource.Encounter.ambulatory.endApplication").isEmpty());
+            assertTrue(openEnd.effective("resource.Encounter.ambulatory.endApplication").isPresent());
+        }
+    }
+
     @Test public void retiredZeroOffsetsLoadWithoutChangingPatientIdentity() {
         var options = ConverterOptions.fromText(VERSION + "PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET=0\nPID_LAST_NUMBER_INCREASE_LOOP_OFFSET=0\n");
         assertTrue(options.getErrors().isEmpty());

@@ -514,12 +514,12 @@ public class Csv2Fhir {
         String fileName = getOutputFileName(outputFileNameBase, fileNameExtension, outputFileType);
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
-        try (Writer fileWriter = new FileWriter(outputFile)) {
+        try (Writer fileWriter = new BufferedWriter(new FileWriter(outputFile))) {
             outputFileType.getParser()
                     .setPrettyPrint(true)
                     .encodeResourceToWriter(bundle, fileWriter);
+            fileWriter.write("\n");
         }
-        appendNewLineAtEOF(outputFile);
         return outputFile;
     }
 
@@ -539,16 +539,6 @@ public class Csv2Fhir {
         return fileNameBase.endsWith("_") || fileNameBase.endsWith("-")
                 ? fileNameBase.substring(0, fileNameBase.length() - 1)
                 : fileNameBase;
-    }
-
-    /**
-     * @param file
-     * @throws IOException
-     */
-    private static void appendNewLineAtEOF(File file) throws IOException {
-        try (Writer output = new BufferedWriter(new FileWriter(file, true))) {
-            output.append("\n");
-        }
     }
 
     /**

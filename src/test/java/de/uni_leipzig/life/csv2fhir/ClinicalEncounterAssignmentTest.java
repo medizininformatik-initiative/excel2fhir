@@ -24,6 +24,36 @@ public class ClinicalEncounterAssignmentTest {
     private void context(ConverterResult r, Resource resource, boolean explicitTime, String... ids) {
         r.recordInput(resource, new ConverterResult.InputContext("p", List.of(ids), 4, explicitTime));
     }
+    @Test public void outputPoliciesPreserveInputAndIndependentVariants() throws Exception {
+        var r = result("MEDICATION_MODE=reference-only\nMEDICATION_DESCRIPTION=true\n");
+        Encounter encounter = contact(r, "p", "department", DEPARTMENT, "2026-05-01", null);
+        Medication medication = new Medication(); medication.setId("drug");
+        medication.addIdentifier().setSystem("urn:product").setValue("123");
+        medication.setCode(new CodeableConcept().setText("Example medication"));
+        MedicationRequest source = new MedicationRequest(); source.setId("request");
+        source.setMedication(new Reference("Medication/drug"));
+        source.setEncounter(new Reference("Encounter/original"));
+        source.setAuthoredOnElement(new DateTimeType("2026-05-03"));
+        source.addDosageInstruction().setText("Original dosage");
+        context(r, source, false);
+        var selection = new ResourceOutputPolicy(r.getConverterOptions().configuration(),
+                List.of(source, medication, encounter));
+        Resource expected = selection.output(policy(r).output(source));
+        MedicationRequest first = (MedicationRequest)selection.output(policy(r).output(source));
+        assertNotSame(source, first);
+        assertTrue(expected.equalsDeep(first));
+        MedicationRequest second = (MedicationRequest)selection.output(policy(r).output(source));
+        assertNotSame(first, second);
+        first.getMedicationReference().getIdentifier().setValue("changed");
+        first.getDosageInstructionFirstRep().setText("Changed dosage");
+        first.getEncounter().setReference("Encounter/changed");
+        assertTrue(expected.equalsDeep(second));
+        assertEquals("Encounter/original", source.getEncounter().getReference());
+        assertEquals("Original dosage", source.getDosageInstructionFirstRep().getText());
+        assertFalse(source.getMedicationReference().hasIdentifier());
+        assertEquals("123", medication.getIdentifierFirstRep().getValue());
+        assertEquals("department", encounter.getId());
+    }
     @Test public void conditionMatchingUsesInputIdentityEvenWithoutPatientReference() throws Exception {
         var r = result("PATIENT_MODE=neither\nCONTACT_FACILITY_ENABLED=false\n");
         contact(r, "p", "department", DEPARTMENT, "2026-05-01", null);

@@ -1,7 +1,6 @@
 package de.uni_leipzig.imise.utils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -21,7 +20,6 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,104 +82,109 @@ public class Excel2Csv {
     @SuppressWarnings("null")
     public static void splitExcel(File sourceExcelFile, Collection<String> sheetNamePatterns, File targetCsvDir)
             throws IOException {
+        try (Workbook workbook = ExcelWorkbooks.openReadOnly(sourceExcelFile)) {
+            splitExcel(workbook, sourceExcelFile, sheetNamePatterns, targetCsvDir);
+        }
+    }
+
+    /** Exports a caller-owned workbook, preserving cached formula results. */
+    public static void splitExcel(Workbook workbook, File sourceExcelFile,
+            Collection<String> sheetNamePatterns, File targetCsvDir) throws IOException {
         LOG.info("Start splitting Excel to CSV...");
         Stopwatch stopwatch = Stopwatch.createStarted();
         String sourceFileName = FilenameUtils.removeExtension(sourceExcelFile.getName());
         String csvDirBasename = targetCsvDir.getPath();
-        try (FileInputStream sourceInputStream = new FileInputStream(sourceExcelFile);
-                Workbook workbook = new XSSFWorkbook(sourceInputStream)) {
-            for (Sheet dataSheet : workbook) {
-                String sheetName = dataSheet.getSheetName();
-                if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) continue;
-                if (sheetNamePatterns != null) {
-                    if (!matches(sheetName, sheetNamePatterns)) {
-                        LOG.info("Skip sheet \"" + sheetName + "\"");
-                        continue;
-                    }
+        for (Sheet dataSheet : workbook) {
+            String sheetName = dataSheet.getSheetName();
+            if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) continue;
+            if (sheetNamePatterns != null) {
+                if (!matches(sheetName, sheetNamePatterns)) {
+                    LOG.info("Skip sheet \"" + sheetName + "\"");
+                    continue;
                 }
-                // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
-                // Wir setzten nun aber nur auf UTF
-                String csvFile = FilenameUtils.concat(csvDirBasename, sourceFileName + "_" + sheetName + ".csv");
-                try (OutputStream os = new FileOutputStream(new File(csvFile));
-                        PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
-                    LOG.info("Creating " + csvFile);
-                    // Annahme: Header ist in der ersten Zeile
-                    // Annahme: Es gibt nur soviele Spalten wie Header
-                    int maxCol = 0;
-                    Row firstRow = dataSheet.getRow(0);
-                    // Z�hle relevante Spalten
-                    for (int col = 0; col < firstRow.getLastCellNum(); col++) {
-                        // This looks fine but skips null cells
-                        // for (Cell cell : firstRow) {
-                        // String s = cell.getStringCellValue();
-                        Cell cell = firstRow.getCell(col);
-                        if (cell == null) {
-                            break;
-                        }
-                        String cellColumnHeader = cell.getStringCellValue();
-                        if (cellColumnHeader.isEmpty()) {
-                            break;
-                        }
-                        if (!cellColumnHeader.trim().equals(cellColumnHeader)) {
-                            LOG.error("Column \"" + cellColumnHeader + "\" is not trimmed");
-                        }
-                        maxCol++;
+            }
+            // Das ist der Trick für das pot. Setzen des encondigs.(z.B. wegen "männlich")
+            // Wir setzten nun aber nur auf UTF
+            String csvFile = FilenameUtils.concat(csvDirBasename, sourceFileName + "_" + sheetName + ".csv");
+            try (OutputStream os = new FileOutputStream(new File(csvFile));
+                    PrintWriter csv = new PrintWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
+                LOG.info("Creating " + csvFile);
+                // Annahme: Header ist in der ersten Zeile
+                // Annahme: Es gibt nur soviele Spalten wie Header
+                int maxCol = 0;
+                Row firstRow = dataSheet.getRow(0);
+                // Z�hle relevante Spalten
+                for (int col = 0; col < firstRow.getLastCellNum(); col++) {
+                    // This looks fine but skips null cells
+                    // for (Cell cell : firstRow) {
+                    // String s = cell.getStringCellValue();
+                    Cell cell = firstRow.getCell(col);
+                    if (cell == null) {
+                        break;
                     }
-                    for (Row row : dataSheet) {
-                        boolean skipEmptyRow = true;
-                        List<String> rowValues = new ArrayList<>();
-                        for (int col = 0; col < maxCol; col++) {
-                            Cell cell = row.getCell(col);
-                            String cellValue = null;
-                            CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
-                            CellType formulaResultType = cellType == CellType.FORMULA
-                                    ? cell.getCachedFormulaResultType()
-                                    : null;
-                            if (cellType == CellType.BLANK) {
-                                cellValue = "";
-                            } else if (cellType == CellType.NUMERIC || formulaResultType == CellType.NUMERIC) {
-                                if (DateUtil.isCellDateFormatted(cell)) {
-                                    // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein
-                                    // String
-                                    cellValue = DATE_FORMAT.format(cell.getDateCellValue());
-                                } else {
-                                    // 11715311 wird ansonsten zu 1.1715311E7
-                                    // Mist Excel
-                                    double d = cell.getNumericCellValue();
-                                    long l = (long) d;
-                                    if (d - l == 0) {
-                                        cellValue = "" + l;
-                                    } else {
-                                        cellValue = "" + d;
-                                    }
-                                    cellValue = cellValue.replace(",", ".");
-                                    cellValue = cellValue.replaceAll("\\.0$", "");
-                                }
-                                skipEmptyRow = false;
-                            } else if (cellType == CellType.STRING || formulaResultType == CellType.STRING) {
-                                cellValue = cell.getStringCellValue();
-                                skipEmptyRow = false;
+                    String cellColumnHeader = cell.getStringCellValue();
+                    if (cellColumnHeader.isEmpty()) {
+                        break;
+                    }
+                    if (!cellColumnHeader.trim().equals(cellColumnHeader)) {
+                        LOG.error("Column \"" + cellColumnHeader + "\" is not trimmed");
+                    }
+                    maxCol++;
+                }
+                for (Row row : dataSheet) {
+                    boolean skipEmptyRow = true;
+                    List<String> rowValues = new ArrayList<>();
+                    for (int col = 0; col < maxCol; col++) {
+                        Cell cell = row.getCell(col);
+                        String cellValue = null;
+                        CellType cellType = cell != null ? cell.getCellType() : CellType.BLANK;
+                        CellType formulaResultType = cellType == CellType.FORMULA
+                                ? cell.getCachedFormulaResultType()
+                                : null;
+                        if (cellType == CellType.BLANK) {
+                            cellValue = "";
+                        } else if (cellType == CellType.NUMERIC || formulaResultType == CellType.NUMERIC) {
+                            if (DateUtil.isCellDateFormatted(cell)) {
+                                // Achtung: Das klappt nicht immer; ab und zu ist Datum in Excel trotzdem ein
+                                // String
+                                cellValue = DATE_FORMAT.format(cell.getDateCellValue());
                             } else {
-                                LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
-                                cellValue = "";
+                                // 11715311 wird ansonsten zu 1.1715311E7
+                                // Mist Excel
+                                double d = cell.getNumericCellValue();
+                                long l = (long) d;
+                                if (d - l == 0) {
+                                    cellValue = "" + l;
+                                } else {
+                                    cellValue = "" + d;
+                                }
+                                cellValue = cellValue.replace(",", ".");
+                                cellValue = cellValue.replaceAll("\\.0$", "");
                             }
-                            // Preserve literal cell contents. CSV represents embedded quotes by
-                            // doubling them and protects delimiters, newlines and edge whitespace.
-                            if (cellValue.contains(DELIM) || cellValue.contains("\"")
-                                    || cellValue.contains("\n") || cellValue.contains("\r")
-                                    || !cellValue.equals(cellValue.strip())) {
-                                cellValue = QUOTE + cellValue.replace("\"", "\"\"") + QUOTE;
-                            }
-                            rowValues.add(cellValue);
+                            skipEmptyRow = false;
+                        } else if (cellType == CellType.STRING || formulaResultType == CellType.STRING) {
+                            cellValue = cell.getStringCellValue();
+                            skipEmptyRow = false;
+                        } else {
+                            LOG.error("Unknown cell type " + cell.getCellType().name() + " " + cell.getAddress());
+                            cellValue = "";
                         }
-                        if (!skipEmptyRow) {
-                            for (int i = 0; i < rowValues.size() - 1; i++) {
-                                csv.print(rowValues.get(i));
-                                csv.print(DELIM);
-                            }
-                            csv.print(rowValues.get(rowValues.size() - 1));
-                            csv.println();
+                        // Preserve literal cell contents. CSV represents embedded quotes by
+                        // doubling them and protects delimiters, newlines and edge whitespace.
+                        if (cellValue.contains(DELIM) || cellValue.contains("\"")
+                                || cellValue.contains("\n") || cellValue.contains("\r")
+                                || !cellValue.equals(cellValue.strip())) {
+                            cellValue = QUOTE + cellValue.replace("\"", "\"\"") + QUOTE;
                         }
+                        rowValues.add(cellValue);
+                    }
+                    if (!skipEmptyRow) {
+                        for (int i = 0; i < rowValues.size() - 1; i++) {
+                            csv.print(rowValues.get(i));
+                            csv.print(DELIM);
+                        }
+                        csv.print(rowValues.get(rowValues.size() - 1));
+                        csv.println();
                     }
                 }
             }

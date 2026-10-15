@@ -5,7 +5,6 @@ import static de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity.WAR
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,24 +64,70 @@ public class ExcelTemplateValidator {
     }
 
     public TemplateValidationResult validate(File excelFile, ConverterOptions options, String optionSetName) throws IOException {
-        TemplateValidationResult result = new TemplateValidationResult();
-        try (FileInputStream inputStream = new FileInputStream(excelFile);
-                XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
+        try (XSSFWorkbook workbook = de.uni_leipzig.imise.utils.ExcelWorkbooks.openReadOnly(excelFile)) {
+            return validate(workbook, options, optionSetName);
+        }
+    }
+
+    /** Validates a caller-owned workbook without closing or modifying it. */
+    public TemplateValidationResult validate(XSSFWorkbook workbook, ConverterOptions options, String optionSetName) {
+        try {
             formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            Map<String, TableView> tables = new LinkedHashMap<>();
+            for (String name : EXPECTED_HEADERS.keySet()) {
+                var sheet = workbook.getSheet(name);
+                if (sheet != null) tables.put(name, new ExcelTable(sheet));
+            }
+            return validateTables(tables, options, optionSetName);
+        } finally {
+            // The evaluator retains the workbook and its cell graph, even after close().
+            formulaEvaluator = null;
+        }
+    }
+
+    /** Applies the same input rules to UTF-8 CSV tables without constructing a workbook. */
+    public TemplateValidationResult validateCsv(java.nio.file.Path directory, String prefix,
+            ConverterOptions options, String optionSetName) throws IOException {
+        Map<String, TableView> tables = new LinkedHashMap<>();
+        for (String name : EXPECTED_HEADERS.keySet()) {
+            var file = directory.resolve(prefix + name + ".csv");
+            if (!java.nio.file.Files.exists(file)) continue;
+            List<RowView> rows = new ArrayList<>();
+            try (var reader = java.nio.file.Files.newBufferedReader(file, java.nio.charset.StandardCharsets.UTF_8);
+                    var parser = org.apache.commons.csv.CSVFormat.DEFAULT.parse(reader)) {
+                int width = -1;
+                for (var record : parser) {
+                    if (width < 0) width = record.size();
+                    if (record.size() != width) throw new IOException("CSV column count differs from header: " + file
+                            + " record " + record.getRecordNumber());
+                    List<CellView> cells = new ArrayList<>();
+                    for (String value : record) cells.add(new TextCell(cells.size(), value));
+                    rows.add(new TextRow(rows.size(), cells));
+                }
+            }
+            tables.put(name, new TextTable(name, rows));
+        }
+        return validateTables(tables, options, optionSetName);
+    }
+
+    private TemplateValidationResult validateTables(Map<String, TableView> tables, ConverterOptions options,
+            String optionSetName) {
+        TemplateValidationResult result = new TemplateValidationResult();
+        try {
             for (String error : options.getErrors()) add(result, ERROR, optionSetName, 0, "A", error);
             boolean checkInputConsistency = options.is(CHECK_INPUT_CONSISTENCY);
-            validateHeaders(workbook, result);
+            validateHeaders(tables, result);
             if (!checkInputConsistency) {
                 LOG.info("Excel input consistency checks are disabled by {}", CHECK_INPUT_CONSISTENCY);
-                log(result);
                 return result;
             }
-            Set<String> patientIds = validatePatients(workbook, result);
-            Set<String> encounterIds = validateEncounters(workbook, result, patientIds);
-            validateReferenceTables(workbook, result, patientIds, encounterIds);
+            Set<String> patientIds = validatePatients(tables, result);
+            Set<String> encounterIds = validateEncounters(tables, result, patientIds);
+            validateReferenceTables(tables, result, patientIds, encounterIds);
+            return result;
+        } finally {
+            log(result);
         }
-        log(result);
-        return result;
     }
 
     public void validateAndThrow(File excelFile) throws IOException {
@@ -92,10 +137,10 @@ public class ExcelTemplateValidator {
         }
     }
 
-    private void validateHeaders(XSSFWorkbook workbook, TemplateValidationResult result) {
+    private void validateHeaders(Map<String, TableView> workbook, TemplateValidationResult result) {
         for (Map.Entry<String, List<String>> entry : EXPECTED_HEADERS.entrySet()) {
             String sheetName = entry.getKey();
-            XSSFSheet sheet = workbook.getSheet(sheetName);
+            TableView sheet = workbook.get(sheetName);
             if (sheet == null) {
                 add(result, ERROR, sheetName, 0, null, "Required sheet is missing");
                 continue;
@@ -110,15 +155,16 @@ public class ExcelTemplateValidator {
         }
     }
 
-    private Set<String> validatePatients(XSSFWorkbook workbook, TemplateValidationResult result) {
+    private Set<String> validatePatients(Map<String, TableView> workbook, TemplateValidationResult result) {
         Set<String> patientIds = new HashSet<>();
-        XSSFSheet sheet = workbook.getSheet("Person");
+        TableView sheet = workbook.get("Person");
         if (sheet == null) {
             return patientIds;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
-        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-            Row row = sheet.getRow(rowIndex);
+        for (RowView row : sheet) {
+            int rowIndex = row.getRowNum();
+            if (rowIndex == 0) continue;
             if (isEmptyDataRow(row, columns)) {
                 continue;
             }
@@ -136,18 +182,19 @@ public class ExcelTemplateValidator {
         return patientIds;
     }
 
-    private Set<String> validateEncounters(XSSFWorkbook workbook, TemplateValidationResult result,
+    private Set<String> validateEncounters(Map<String, TableView> workbook, TemplateValidationResult result,
             Set<String> patientIds) {
         Set<String> encounterIds = new HashSet<>();
-        XSSFSheet sheet = workbook.getSheet("Fall");
+        TableView sheet = workbook.get("Fall");
         if (sheet == null) {
             return encounterIds;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
         var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
         String previousPatientId = null;
-        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-            Row row = sheet.getRow(rowIndex);
+        for (RowView row : sheet) {
+            int rowIndex = row.getRowNum();
+            if (rowIndex == 0) continue;
             if (isEmptyDataRow(row, columns)) {
                 continue;
             }
@@ -166,9 +213,8 @@ public class ExcelTemplateValidator {
             Map<String, String> contactValues = new HashMap<>();
             for (String column : columns.keySet()) contactValues.put(column, get(row, columns, column));
             for (String column : List.of("Start", "Ende")) {
-                Cell cell = getCell(row, columns, column);
-                if (isExcelDateCell(cell)) contactValues.put(column, new DateTimeType(cell.getDateCellValue()).getValueAsString());
-                else if (isExcelDateFormulaCell(cell)) contactValues.put(column, new DateTimeType(evaluateDateFormula(cell)).getValueAsString());
+                CellView cell = getCell(row, columns, column);
+                if (cell != null && cell.hasDate()) contactValues.put(column, new DateTimeType(cell.date()).getValueAsString());
             }
             for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
                     rowIndex + 1, patientId, contactValues))) {
@@ -183,7 +229,7 @@ public class ExcelTemplateValidator {
         return encounterIds;
     }
 
-    private void validateReferenceTables(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
+    private void validateReferenceTables(Map<String, TableView> workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds) {
         for (String sheet : List.of("Impfung", "Befundbericht")) {
             validateReferenceTable(workbook, result, patientIds, encounterIds, sheet, List.of("Zeitpunkt", "Ende", "Ausgabezeitpunkt"));
@@ -203,17 +249,18 @@ public class ExcelTemplateValidator {
                 List.of("Dokumentationszeitpunkt", "Beginn", "Ende"));
     }
 
-    private void validateReferenceTable(XSSFWorkbook workbook, TemplateValidationResult result, Set<String> patientIds,
+    private void validateReferenceTable(Map<String, TableView> workbook, TemplateValidationResult result, Set<String> patientIds,
             Set<String> encounterIds, String sheetName, List<String> dateTimeColumns) {
-        XSSFSheet sheet = workbook.getSheet(sheetName);
+        TableView sheet = workbook.get(sheetName);
         if (sheet == null) {
             return;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
         String previousPatientId = null;
         Set<String> entryIds = new HashSet<>();
-        for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-            Row row = sheet.getRow(rowIndex);
+        for (RowView row : sheet) {
+            int rowIndex = row.getRowNum();
+            if (rowIndex == 0) continue;
             if (isEmptyDataRow(row, columns)) {
                 continue;
             }
@@ -246,9 +293,8 @@ public class ExcelTemplateValidator {
             }
             if ("Medikation".equals(sheetName)) {
                 for (String error : de.uni_leipzig.life.csv2fhir.converter.MedicationValues.errors(key -> {
-                    Cell cell = getCell(row, columns, key);
-                    if (isExcelDateCell(cell)) return new DateTimeType(cell.getDateCellValue()).getValueAsString();
-                    if (isExcelDateFormulaCell(cell)) return new DateTimeType(evaluateDateFormula(cell)).getValueAsString();
+                    CellView cell = getCell(row, columns, key);
+                    if (cell != null && cell.hasDate()) return new DateTimeType(cell.date()).getValueAsString();
                     return get(row, columns, key);
                 })) {
                     add(result, ERROR, sheetName, rowIndex + 1, "Medikation", error);
@@ -275,6 +321,10 @@ public class ExcelTemplateValidator {
     }
 
     void validateDiagnosisSelections(Row row, Map<String, Integer> columns, TemplateValidationResult result) {
+        validateDiagnosisSelections(new ExcelRow(row), columns, result);
+    }
+
+    private void validateDiagnosisSelections(RowView row, Map<String, Integer> columns, TemplateValidationResult result) {
         Map<String, Coding> systems =
                 DiagnosisValues.systems();
         for (String[] pair : List.of(new String[] {"Code", "Codesystem"},
@@ -309,9 +359,9 @@ public class ExcelTemplateValidator {
         });
     }
 
-    private DateTimeType validateDateTime(XSSFSheet sheet, Row row, Map<String, Integer> columns, String columnName,
+    private DateTimeType validateDateTime(TableView sheet, RowView row, Map<String, Integer> columns, String columnName,
             TemplateValidationResult result, boolean required) {
-        Cell cell = getCell(row, columns, columnName);
+        CellView cell = getCell(row, columns, columnName);
         String value = get(row, columns, columnName);
         if (isBlank(value)) {
             if (required) {
@@ -319,11 +369,8 @@ public class ExcelTemplateValidator {
             }
             return null;
         }
-        if (isExcelDateCell(cell)) {
-            return new DateTimeType(cell.getDateCellValue());
-        }
-        if (isExcelDateFormulaCell(cell)) {
-            return new DateTimeType(evaluateDateFormula(cell));
+        if (cell != null && cell.hasDate()) {
+            return new DateTimeType(cell.date());
         }
         try {
             if (DiagnosisValues.absentReason(value) != null) {
@@ -340,9 +387,9 @@ public class ExcelTemplateValidator {
         }
     }
 
-    private DateTimeType validateDateValue(XSSFSheet sheet, Row row, Map<String, Integer> columns, String columnName,
+    private DateTimeType validateDateValue(TableView sheet, RowView row, Map<String, Integer> columns, String columnName,
             TemplateValidationResult result, boolean required) {
-        Cell cell = getCell(row, columns, columnName);
+        CellView cell = getCell(row, columns, columnName);
         String value = get(row, columns, columnName);
         if (isBlank(value)) {
             if (required) {
@@ -358,11 +405,8 @@ public class ExcelTemplateValidator {
                 return null;
             }
         }
-        if (isExcelDateCell(cell)) {
-            return new DateTimeType(cell.getDateCellValue());
-        }
-        if (isExcelDateFormulaCell(cell)) {
-            return new DateTimeType(evaluateDateFormula(cell));
+        if (cell != null && cell.hasDate()) {
+            return new DateTimeType(cell.date());
         }
         try {
             return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
@@ -373,7 +417,7 @@ public class ExcelTemplateValidator {
         }
     }
 
-    private void validateRequired(XSSFSheet sheet, Row row, Map<String, Integer> columns, String columnName,
+    private void validateRequired(TableView sheet, RowView row, Map<String, Integer> columns, String columnName,
             TemplateValidationResult result) {
         if (isBlank(get(row, columns, columnName))) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
@@ -381,14 +425,14 @@ public class ExcelTemplateValidator {
         }
     }
 
-    private List<String> readHeaders(XSSFSheet sheet) {
-        Row headerRow = sheet.getRow(0);
+    private List<String> readHeaders(TableView sheet) {
+        RowView headerRow = sheet.getRow(0);
         List<String> headers = new ArrayList<>();
         if (headerRow == null) {
             return headers;
         }
-        for (Cell cell : headerRow) {
-            headers.add(formatter.formatCellValue(cell).trim());
+        for (CellView cell : headerRow) {
+            headers.add(cell.text().trim());
         }
         for (int i = headers.size() - 1; i >= 0 && headers.get(i).isBlank(); i--) {
             headers.remove(i);
@@ -396,14 +440,14 @@ public class ExcelTemplateValidator {
         return headers;
     }
 
-    private Map<String, Integer> columnIndexes(XSSFSheet sheet) {
+    private Map<String, Integer> columnIndexes(TableView sheet) {
         Map<String, Integer> columns = new HashMap<>();
-        Row headerRow = sheet.getRow(0);
+        RowView headerRow = sheet.getRow(0);
         if (headerRow == null) {
             return columns;
         }
-        for (Cell cell : headerRow) {
-            String header = formatter.formatCellValue(cell).trim();
+        for (CellView cell : headerRow) {
+            String header = cell.text().trim();
             if (!header.isBlank()) {
                 columns.put(header, cell.getColumnIndex());
             }
@@ -411,7 +455,7 @@ public class ExcelTemplateValidator {
         return columns;
     }
 
-    private boolean isEmptyDataRow(Row row, Map<String, Integer> columns) {
+    private boolean isEmptyDataRow(RowView row, Map<String, Integer> columns) {
         if (row == null) {
             return true;
         }
@@ -419,25 +463,40 @@ public class ExcelTemplateValidator {
             if ("Erklärung/Ausfüllhilfe".equals(column.getKey())) {
                 continue;
             }
-            Cell cell = row.getCell(column.getValue());
-            if (!isBlank(formatCell(cell))) {
+            CellView cell = row.getCell(column.getValue());
+            if (cell != null && !isBlank(cell.text())) {
                 return false;
             }
         }
         return true;
     }
 
-    private String get(Row row, Map<String, Integer> columns, String columnName) {
-        Cell cell = getCell(row, columns, columnName);
-        return cell == null ? "" : formatCell(cell).trim();
+    private String get(RowView row, Map<String, Integer> columns, String columnName) {
+        CellView cell = getCell(row, columns, columnName);
+        return cell == null ? "" : cell.text().trim();
     }
 
-    private Cell getCell(Row row, Map<String, Integer> columns, String columnName) {
+    private CellView getCell(RowView row, Map<String, Integer> columns, String columnName) {
         Integer columnIndex = columns.get(columnName);
         if (row == null || columnIndex == null) {
             return null;
         }
         return row.getCell(columnIndex);
+    }
+
+    private List<String> getEncounterNumbers(RowView row, Map<String, Integer> columns) {
+        String value = get(row, columns, "Fall-Nr");
+        if (isBlank(value)) {
+            return List.of();
+        }
+        List<String> encounterNumbers = new ArrayList<>();
+        for (String encounterNumber : value.split(",")) {
+            String trimmedEncounterNumber = encounterNumber.trim();
+            if (!trimmedEncounterNumber.isEmpty()) {
+                encounterNumbers.add(trimmedEncounterNumber);
+            }
+        }
+        return encounterNumbers;
     }
 
     private boolean isExcelDateCell(Cell cell) {
@@ -453,23 +512,90 @@ public class ExcelTemplateValidator {
         return DateUtil.getJavaDate(cellValue.getNumberValue());
     }
 
-    private List<String> getEncounterNumbers(Row row, Map<String, Integer> columns) {
-        String value = get(row, columns, "Fall-Nr");
-        if (isBlank(value)) {
-            return List.of();
-        }
-        List<String> encounterNumbers = new ArrayList<>();
-        for (String encounterNumber : value.split(",")) {
-            String trimmedEncounterNumber = encounterNumber.trim();
-            if (!trimmedEncounterNumber.isEmpty()) {
-                encounterNumbers.add(trimmedEncounterNumber);
+    private String formatCell(Cell cell) {
+        if (cell instanceof org.apache.poi.xssf.usermodel.XSSFCell
+                && cell.getCellType() == CellType.FORMULA) {
+            // DataFormatter evaluates into the cell cache. CSV export must retain the
+            // source cache, just as it did when it opened a separate workbook.
+            var formula = (org.apache.poi.xssf.usermodel.XSSFCell) cell;
+            var xml = formula.getCTCell();
+            boolean hadValue = xml.isSetV(), hadType = xml.isSetT();
+            String value = xml.getV();
+            var type = xml.getT();
+            try {
+                return formatter.formatCellValue(cell, formulaEvaluator);
+            } finally {
+                if (hadValue) xml.setV(value); else xml.unsetV();
+                if (hadType) xml.setT(type); else xml.unsetT();
             }
         }
-        return encounterNumbers;
+        return formatter.formatCellValue(cell, formulaEvaluator);
     }
 
-    private String formatCell(Cell cell) {
-        return formatter.formatCellValue(cell, formulaEvaluator);
+    private interface CellView {
+        int getColumnIndex();
+        String text();
+        default boolean hasDate() { return false; }
+        default Date date() { throw new IllegalStateException("Text cell has no Excel date"); }
+    }
+    private interface RowView extends Iterable<CellView> {
+        int getRowNum();
+        CellView getCell(int index);
+    }
+    private interface TableView extends Iterable<RowView> {
+        String getSheetName();
+        RowView getRow(int index);
+    }
+    private static final class TextCell implements CellView {
+        private final int index;
+        private final String value;
+        TextCell(int index, String value) { this.index = index; this.value = value; }
+        public int getColumnIndex() { return index; }
+        public String text() { return value; }
+    }
+    private static final class TextRow implements RowView {
+        private final int index;
+        private final List<CellView> cells;
+        TextRow(int index, List<CellView> cells) { this.index = index; this.cells = cells; }
+        public int getRowNum() { return index; }
+        public CellView getCell(int index) { return index < cells.size() ? cells.get(index) : null; }
+        public java.util.Iterator<CellView> iterator() { return cells.iterator(); }
+    }
+    private static final class TextTable implements TableView {
+        private final String name;
+        private final List<RowView> rows;
+        TextTable(String name, List<RowView> rows) { this.name = name; this.rows = rows; }
+        public String getSheetName() { return name; }
+        public RowView getRow(int index) { return index < rows.size() ? rows.get(index) : null; }
+        public java.util.Iterator<RowView> iterator() { return rows.iterator(); }
+    }
+    private final class ExcelCell implements CellView {
+        private final Cell cell;
+        ExcelCell(Cell cell) { this.cell = cell; }
+        public int getColumnIndex() { return cell.getColumnIndex(); }
+        public String text() { return formatCell(cell); }
+        public boolean hasDate() { return isExcelDateCell(cell) || isExcelDateFormulaCell(cell); }
+        public Date date() { return isExcelDateCell(cell) ? cell.getDateCellValue() : evaluateDateFormula(cell); }
+    }
+    private final class ExcelRow implements RowView {
+        private final Row row;
+        ExcelRow(Row row) { this.row = row; }
+        public int getRowNum() { return row.getRowNum(); }
+        public CellView getCell(int index) { var cell = row.getCell(index); return cell == null ? null : new ExcelCell(cell); }
+        public java.util.Iterator<CellView> iterator() {
+            return java.util.stream.StreamSupport.stream(row.spliterator(), false)
+                    .<CellView>map(ExcelCell::new).iterator();
+        }
+    }
+    private final class ExcelTable implements TableView {
+        private final XSSFSheet sheet;
+        ExcelTable(XSSFSheet sheet) { this.sheet = sheet; }
+        public String getSheetName() { return sheet.getSheetName(); }
+        public RowView getRow(int index) { var row = sheet.getRow(index); return row == null ? null : new ExcelRow(row); }
+        public java.util.Iterator<RowView> iterator() {
+            return java.util.stream.StreamSupport.stream(sheet.spliterator(), false)
+                    .<RowView>map(ExcelRow::new).iterator();
+        }
     }
 
     private void add(TemplateValidationResult result, Severity severity, String sheetName, int rowNumber,

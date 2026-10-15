@@ -189,17 +189,37 @@ public class Excel2Fhir {
             throws IOException {
         var sets = optionFiles.isEmpty() ? ConverterOptionSet.defaults()
                 : ConverterOptionSet.external(optionFiles);
+        try (var workbook = de.uni_leipzig.imise.utils.ExcelWorkbooks.openReadOnly(sourceExcelFile)) {
+            for (var set : sets) {
+                var checked = templateValidator.validate(workbook, set.options(), set.name());
+                if (checked.hasErrors()) throw new TemplateValidationException(checked);
+            }
+            if (createAndCleanOutputDirectories) {
+                createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
+            }
+            Excel2Csv.splitExcel(workbook, sourceExcelFile, sheetNamePatterns, tempDir);
+        }
+        convertTables(sourceExcelFile, tempDir, resultDir, patientsPerBundle, inputName, identifiers, sets, outputFileTypes);
+    }
+
+    /** Convert internally generated CSV tables with the same validation and output policy as Excel. */
+    public void convertCsvDirectory(File source, File input, File tempDir, File resultDir,
+            int patientsPerBundle, OutputFileType... outputFileTypes) throws IOException {
+        var sets = optionFiles.isEmpty() ? ConverterOptionSet.defaults() : ConverterOptionSet.external(optionFiles);
+        String prefix = FilenameUtils.removeExtension(source.getName()) + "_";
         for (var set : sets) {
-            var checked = templateValidator.validate(sourceExcelFile, set.options(), set.name());
+            var checked = templateValidator.validateCsv(input.toPath(), prefix, set.options(), set.name());
             if (checked.hasErrors()) throw new TemplateValidationException(checked);
         }
+        convertTables(source, input, resultDir, patientsPerBundle, null, new java.util.HashMap<>(), sets, outputFileTypes);
+    }
+
+    private void convertTables(File sourceExcelFile, File tempDir, File resultDir, int patientsPerBundle,
+            String inputName, java.util.Map<String, AdditionalIdentifiers> identifiers,
+            List<ConverterOptionSet> sets, OutputFileType... outputFileTypes) throws IOException {
         if (validator == null && sets.stream().anyMatch(set -> set.options().validationEnabled(validateOutput)))
             validator = new FHIRValidator(minLogLevel);
-        if (createAndCleanOutputDirectories) {
-            createAndCleanOutputDirectories(sourceExcelFile, tempDir, resultDir);
-        }
         String fileBaseName = FilenameUtils.removeExtension(sourceExcelFile.getName()) + "-";
-        Excel2Csv.splitExcel(sourceExcelFile, sheetNamePatterns, tempDir);
         for (var set : sets) {
             Path destination = resultDir.toPath();
             if (sets.size() > 1) destination = destination.resolve(set.directoryName());
