@@ -5,6 +5,45 @@ GUI code, catalogues, tests and documentation live under `web/`. Shared converte
 behavior remains in the Java converter. Existing issue references describe the
 planned work streams; this checklist does not change their status.
 
+## Next bulk generation steps
+
+- [ ] Regenerate all 10,000 patients in one sequential bulk run after the
+  enrichment and packaging checks. Preserve the existing 3,000-patient output.
+- [x] Group the internal 100-patient chunks into 1,000-patient ZIP output packages
+  and show package progress within the single run; remove verified loose duplicates.
+- [x] Load bulk ZIP packages into Blaze/HAPI with bounded memory, progress and resume.
+- [x] Disable additional patient copies and per-copy time shifts in bulk mode;
+  retain patient ID settings and the common clinical time shift.
+- [x] Explain internal seed increments next to the start seed and display the
+  effective seed range before submission.
+- [ ] Review the prepared cohort settings and runtime before starting generation.
+
+- [x] Support up to 100,000 patients per overall job with configurable subrun size,
+  sequential execution, visible subrun states and checkpoint-based resumption.
+- [x] Show phase progress, generated size and adaptive time/size estimates in place.
+
+- [x] Keep additional identifier counters unique across bulk chunks and subruns,
+  including cancellation/resumption; verify committed ZIPs remain unchanged in CI.
+- [x] Show actual patient counts in ZIP names, whole-percent progress, the current
+  subrun and a compact copy action for the local output path.
+
+## Optional synthetic enrichment of Synthea data
+
+- [x] Add reproducible optional synthetic Consent enrichment with a
+  50/15/15/10/10 distribution, saved seeds and provenance.
+- [ ] Inventory other content supported by the converter but absent from the
+  Synthea input, and offer an explicit choice for each supported enrichment.
+  Distinguish generating additional source content from selecting which existing
+  content to emit. Agree the available choices, defaults and generated content
+  before implementation; preserve supplied source data.
+
+## Interface follow-ups
+
+- [ ] Add small flag icons alongside the German and English language entries,
+  preserving the explicit language labels.
+- [ ] Add a light/dark appearance switch and apply the selected theme consistently
+  throughout the workbench.
+
 ## Follow-up work recorded on 2026-10-08
 
 Open items are ordered by the agreed next steps. Verified implementation is

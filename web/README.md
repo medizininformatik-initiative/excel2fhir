@@ -215,7 +215,7 @@ generator revision and hashes are recorded.
 Runs show requested, actually exported and successfully imported source-patient
 counts separately. Extra deceased patients can increase the exported count.
 
-The web workflow accepts 1–1000 requested patients per run and up to 10,000
+Standard generation accepts 1–1,000 requested patients per run; bulk generation accepts up to 100,000 patients per overall job. Selection allows up to 10,000
 attempts per patient slot. Generation defaults to ages 18–80, five years of history and disabled overflow.
 It uses one Synthea thread, a 1.5 GiB generator heap, a 1 GiB converter heap
 and a 6 GiB worker container; jobs run sequentially. Generated FHIR, CSV ZIP or editable
@@ -644,6 +644,22 @@ Patient ID prefixes/suffixes affect
 patient-derived resource identities; identical medication definitions can retain
 shared identities.
 
+### Bulk cancellation and resume audit
+
+Run the integration test in a separate worker container without mounting existing data:
+
+```sh
+docker run --rm -i --memory=4g --cpus=2 excel2fhir-web-prototype-worker:latest python - < web/integration/smoke_bulk_resume.py
+```
+
+The test uses temporary queue and output directories and fixed Synthea fixtures with
+the real mapper and Java converter. It cancels through the API handler after the
+second subrun has produced unpublished FHIR, then resumes through the API handler.
+It checks unique, contiguous patient and encounter identifiers across both subruns,
+checkpoint counters, ZIP checksums, unchanged published output and temporary-file
+cleanup. A synchronization gate makes the cancellation deterministic. The test
+runs in the `workbench-inputs` CI job.
+
 ### Run outcomes
 
 Generation succeeds when conversion completes and produces its output files.
@@ -665,3 +681,137 @@ unavailable; their recorded execution status is retained.
 ### Source diagnostics
 
 Synthea KDS runs generate tables and FHIR with source diagnostics disabled by default. Enable **Detailed source diagnostics** to compare the result with the Synthea source and retain detailed transfer reports. This increases runtime, memory and disk usage. The selection is saved with the run and restored when loading it into the editor. Input checks, conversion failures and missing-output checks always run. FHIR validation remains a separate configuration option.
+
+### Bulk gzip JSON generation
+
+Run `bash web/prepare-bulk.sh` from the project directory before submitting a bulk
+run. It stops the currently running optional Compose services (DataPortal and its
+databases/authentication, TORCH, Blaze/HAPI and auxiliary services), keeping the
+web UI, API and worker available. It records the stopped services locally. After
+completion, `bash web/restore-services.sh` restarts exactly those services. Both
+commands require queued/running generations and FHIR transfers to finish first.
+
+Bulk admission requires at least 3 GiB of available Docker VM RAM. The interface
+updates availability every five seconds; the API checks submission and the worker
+checks again immediately before execution, including its container memory headroom.
+Unavailable memory measurements block admission. If memory is still insufficient
+after preparation, assign more RAM to Docker. Keep optional services stopped during
+the run. The check reserves no memory and cannot prevent other applications from
+consuming RAM later. Standard generation uses its existing admission behavior.
+
+Choose **Bulk data generation** in the Synthea settings to generate up to 100,000
+source patients. Set **Patients per subrun** to a multiple of 100 between 100 and
+10,000. A final subrun may contain fewer patients. One start executes all subruns
+sequentially within one overall job; its details list each subrun and seed range.
+The worker processes at most 100 patients per internal chunk.
+For KDS output, additional identifier counters continue across every patient, chunk
+and subrun of the overall job. Completed chunks store the counter positions for
+resumption; independent jobs start at the configured values.
+Overall progress weights generation, KDS mapping and conversion (or native JSON
+compression), and ZIP writing/checksum verification equally per patient. A second
+bar shows the current stage. The patient counter counts completed chunks; the
+remaining-time estimate uses measured processing times rather than stage weights.
+Choose **KDS FHIR** to apply the clinical configuration and German mappings, or
+**Synthea FHIR** to retain the original US FHIR R4 output. Both produce one
+gzip-compressed JSON bundle per patient (`.json.gz`). Synthea output also retains
+separate organization and clinician bundles as `support-*.json.gz` in each chunk.
+Decompression restores the original Synthea JSON bytes. Source diagnostics and
+FHIR validation are disabled in bulk mode. Bulk runs do not create dataset previews, CSV downloads,
+whole-run ZIPs or detailed reports. Standard runs retain their existing behavior.
+
+Directory names use a Europe/Berlin timestamp, a sanitized dataset name and the unique run ID. Dataset names use portable ASCII letters, digits, hyphens and underscores and retain at most the final 24 characters. The timestamp uses `YYYYMMDD-HHMMSS`; the full run UUID is written without hyphens. Patient files are named `p001.json.gz` through `p100.json.gz` within each chunk; patient IDs remain inside the bundles.
+
+Completed chunks are temporarily stored under
+`outputMass/<timestamp>_<dataset-name>_<run-id>/run-00001/part-00001/`.
+The `packages/` directory contains ZIP packages of at most 1,000 patients, each
+belonging to one subrun. ZIP stores the `.json.gz` files without recompressing them.
+Every package contains a manifest with file checksums and generation checkpoints.
+After the ZIP is closed and all checksums verified, its loose files are removed.
+Only the package currently being built temporarily needs space for both copies.
+Packages can be downloaded individually or selected for FHIR upload.
+To choose another base directory, set `MASS_OUTPUT_DIRECTORY` to an absolute host
+path before starting Compose. The directory must be writable by the worker
+(container UID 10001). The interface displays the configured destination.
+
+Each chunk uses a distinct reproducible patient seed derived from the submitted
+seed. A 10,000-patient subrun consumes 100 seeds; the next starts with the following
+seed. The requested count refers to source patients; supporting bundles do not count
+toward that total. For KDS output, clinical output selections, ID settings and a
+common time shift apply. Additional patient copies and per-copy
+time shifts are disabled. Synthea output uses the generator settings directly;
+KDS configuration and synthetic consent apply only to KDS output. Overflow is disabled in bulk mode.
+The processes finish between chunks, and successful chunks release their temporary
+sources and tables. The final gzip JSON collection continues to consume disk space.
+
+Only successfully completed chunks receive a `part-*` name. Hidden `.partial`
+directories are incomplete and must not be imported or shared. A failed or cancelled
+run retains completed chunks; failed working files remain with the run for diagnosis.
+Deleting the run removes its job metadata and working files, but never deletes the
+external result directory. Loading settings starts a new run, not a resume operation.
+
+### Synthetic consent
+
+**Add synthetic consent** is enabled by default in the Synthea KDS generation
+settings and populates consent fields. Clear the checkbox to disable it. The
+default KDS configuration generates ward organizations as separate resources and
+references them from Encounter.serviceProvider. Patient identities are ranked by a versioned hash of the patient
+seed and identity. The allocation is 50% full consent, 15% patient data only,
+15% patient and insurance data, 10% full refusal, and 10% without documented consent.
+Bulk generation applies this allocation to each 100-patient chunk. Partial chunks
+and standard runs use largest-remainder rounding. Reproducing the same seed,
+patient set and chunk boundaries reproduces the assignment.
+
+The consent date is the first inpatient encounter within the configured history,
+falling back to the first other encounter in that period. The history ends on the
+simulation end date; zero history years includes the entire lifetime. Dates are
+restricted to the patient's lifetime. Without a matching encounter, the history
+start (or birth, if later) is used. With unlimited history, the fallback is the
+simulation end date or death date, whichever is earlier. Consent is omitted when
+no plausible date is available, including death before the history window.
+Supplied consent fields remain unchanged. The five groups are set explicitly to
+yes or no; patients without documented consent have no consent date.
+The generation setting is saved with the run. Consent provenance is included only
+when detailed source diagnostics are enabled. Bulk jobs do not create separate
+consent reports.
+
+To broaden medication output, select **Add medication statement** for medication
+administrations. To emit ward organizations, select **Generate and reference
+organization** under **Ward as service provider**. These are independent clinical
+configuration settings.
+
+### Bulk progress and resuming
+
+The current status updates in place approximately every two seconds during generation
+and conversion. It shows the phase, selected/generated patients or converted files,
+and selection attempts where available. Console output records chunk and subrun
+completion. No per-patient console messages are displayed.
+
+After the first completed chunk, the interface estimates remaining generation time
+and total compressed FHIR size from completed chunks. These estimates adapt as more
+patients complete. They are approximate: patient histories vary, and packaging adds
+some overhead. Generated FHIR bytes and the size stored in ZIP packages are shown separately; these are not two retained copies.
+
+A failed or cancelled overall job stops before subsequent subruns. **Resume overall
+job** reuses its saved settings and seeds, skips completed chunks in verified ZIP packages or loose chunk directories and
+recreates only unfinished temporary work. Completed files and packages remain in
+place. Resume requires the generator, converter and importer versions saved with
+the job. Keep its local output files and job record until it finishes.
+
+### Uploading bulk packages
+
+In **Provide & use data**, start Blaze or HAPI, select completed ZIP packages and
+submit an upload. Search by run name and use **Select all matches** to select all
+packages of a run. The packages use the same dataset selection as standard results.
+
+The uploader scans the selected resources for conflicting contents before writing
+to the server. For bulk packages it reads one gzip-compressed patient bundle at a
+time directly from the ZIP; it does not extract archives or create full upload
+copies. A temporary on-disk resource hash index supports conflict detection.
+Ordinary datasets in a mixed selection retain their existing format conversion.
+
+Each patient is sent as a FHIR transaction with stable-ID PUT requests. Progress
+shows checked bundles, confirmed transactions and completed packages. **Resume
+upload** continues a stopped bulk upload to the same target after the last confirmed
+patient. If a response was lost, that patient's PUT transaction may be repeated.
+Previously uploaded resources must still exist on the target; after clearing a
+server, start a new upload. Generation and upload are explicitly separate actions.
