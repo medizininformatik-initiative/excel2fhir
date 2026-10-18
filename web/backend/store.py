@@ -36,6 +36,8 @@ def connect():
             for column in ('started', 'finished'):
                 if column not in columns:
                     db.execute(f'ALTER TABLE jobs ADD COLUMN {column} REAL')
+            if "elapsed" not in columns:
+                db.execute("ALTER TABLE jobs ADD COLUMN elapsed REAL NOT NULL DEFAULT 0")
             db.execute("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, jobs TEXT NOT NULL)")
         with db:
             yield db
@@ -143,6 +145,12 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             run_replay.verify(directory, json.loads((directory / filename).read_text()))
     else:
         (directory / filename).write_text(json.dumps(specification, sort_keys=True, indent=2))
+    bulk = specification is not None and specification.get('executionMode') == 'bulk'
+    if bulk and (diagnostics or table_format == 'excel'):
+        raise ValueError('Bulk generation uses CSV without diagnostics')
+    if bulk:
+        import bulk_resources
+        bulk_resources.require_available()
     native = input_kind == 'synthea-generation' and json.loads((directory / filename).read_text()).get('outputMode') == 'synthea'
     if table_format is not None and (table_format not in {'csv', 'excel'} or not input_kind.startswith('synthea') or native):
         raise ValueError('Table format requires Synthea KDS conversion and must be csv or excel')
@@ -165,6 +173,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         config = {'id': 'default' if configuration_properties is None else 'editor',
                   'name': 'Converter defaults' if configuration_properties is None else 'Submitted configuration',
                   'optionsProperties': (directory / 'default.config').read_text()}
+    if bulk:
+        if execution.get('additionalRepetitions', 0):
+            raise ValueError('Bulk generation requires zero additional patient copies')
+        execution = {'formats': ['JSONGZIP'], 'validation': False, 'patientsPerFile': 1}
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
                 'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
     if input_kind == 'workbook-set':
@@ -183,6 +195,11 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             snapshot['syntheaGeneratorSha256'] = generation.catalogue()['sha256']
             snapshot['syntheaRevision'] = generation.catalogue()['revision']
             snapshot['generation'] = json.loads((directory / filename).read_text())
+    if bulk:
+        import bulk_generation
+        snapshot['bulkLayoutVersion'] = 3
+        snapshot['bulkOutputName'] = bulk_generation.output_directory_name(job_id, dataset_name, time.time())
+        snapshot['bulkOutputDirectory'] = bulk_generation.output_directory_label(snapshot['bulkOutputName'])
     if dataset_name:
         snapshot['datasetName'] = dataset_name
     if source_name:
@@ -254,8 +271,8 @@ def jobs():
 
 def job_result(row):
     job = dict(row)
-    job['duration_seconds'] = (max(0, (job.get('finished') or time.time()) - job['started'])
-                               if job.get('started') is not None and (job.get('finished') is not None or job['state'] == 'running') else None)
+    job['duration_seconds'] = (job.get('elapsed', 0) + max(0, (job.get('finished') or time.time()) - job['started'])
+                               if job.get('started') is not None and (job.get('finished') is not None or job['state'] == 'running') else (job.get('elapsed') or None))
     job["download_available"] = job["state"] in {"succeeded", "failed"} and (ROOT / "jobs" / job["id"] / "result.zip").is_file()
     cleanup_path = ROOT / 'jobs' / job['id'] / 'cleanup.json'
     if cleanup_path.is_file():
@@ -275,6 +292,16 @@ def job_result(row):
         job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
+        if snapshot.get('generation', {}).get('executionMode') == 'bulk':
+            import bulk_generation
+            job['bulk_output_directory'] = (bulk_generation.output_directory_label(snapshot['bulkOutputName'])
+                                            if snapshot.get('bulkOutputName') else snapshot['bulkOutputDirectory'])
+            progress = snapshot_path.parent / 'bulk-progress.json'
+            job['bulk_progress'] = json.loads(progress.read_text()) if progress.is_file() else None
+            if snapshot.get('bulkLayoutVersion', 0) >= 2:
+                import bulk_plan
+                job['bulk_subruns'] = bulk_plan.subruns(snapshot['generation'], job['bulk_progress'] or {}, job['state'])
+                job['bulk_resumable'] = job['state'] in {'failed', 'cancelled', 'interrupted'}
         result = snapshot_path.parent / 'generation-result.json'
         if job['state'] in {'succeeded', 'failed'} and result.is_file():
             job['generation_result'] = json.loads(result.read_text())
@@ -295,6 +322,33 @@ def cancel(job_id):
         db.execute("UPDATE jobs SET cancel=1, state=CASE WHEN state='queued' THEN 'cancelled' ELSE state END WHERE id=? AND state IN ('queued','running')", (job_id,))
 
 
+
+def resume(job_id):
+    """Requeue the same immutable bulk snapshot; published chunks remain committed."""
+    job_id = str(uuid.UUID(job_id))
+    with run_lock(job_id):
+        with connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT * FROM jobs WHERE id=?', (job_id,)).fetchone()
+            if not row:
+                raise FileNotFoundError('Run not found')
+            if row['state'] == 'queued':
+                return  # An identical retry must not create or restart anything.
+            if row['state'] not in {'failed', 'cancelled', 'interrupted'}:
+                raise SubmissionConflict('Only stopped bulk jobs can be resumed')
+            folder = ROOT / 'jobs' / job_id
+            snapshot = json.loads((folder / 'snapshot.json').read_text())
+            if snapshot.get('bulkLayoutVersion', 0) < 2:
+                raise SubmissionConflict('This run has no resumable subrun checkpoints')
+            import bulk_resources
+            bulk_resources.require_available()
+            elapsed = max(0, (row['finished'] or time.time()) - row['started']) if row['started'] else 0
+            failure = folder / 'failure.json'
+            if failure.exists():
+                failure.rename(folder / f'failure-{time.time_ns()}.json')
+            db.execute("UPDATE jobs SET state='queued',cancel=0,exit_code=NULL,elapsed=elapsed+?,started=NULL,finished=NULL WHERE id=?", (elapsed, job_id))
+
+
 def claim():
     with connect() as db:
         db.execute("BEGIN IMMEDIATE")
@@ -308,10 +362,10 @@ def finish(job_id, state, code=None):
     # Publish terminal state only after timing is saved, so deletion cannot race final writes.
     with connect() as db:
         db.execute('BEGIN IMMEDIATE')
-        row = db.execute('SELECT started FROM jobs WHERE id=?', (job_id,)).fetchone()
+        row = db.execute('SELECT started,elapsed FROM jobs WHERE id=?', (job_id,)).fetchone()
         ended = time.time()
         if row and row['started'] is not None:
-            timing = {'started': row['started'], 'finished': ended, 'duration_seconds': max(0, ended - row['started'])}
+            timing = {'started': row['started'], 'finished': ended, 'duration_seconds': row['elapsed'] + max(0, ended - row['started'])}
             folder = ROOT / 'jobs' / job_id
             (folder / 'timing.json').write_text(json.dumps(timing, indent=2))
             with (folder / 'converter.log').open('a') as log:

@@ -1,3 +1,5 @@
+import re
+import archive_names
 from uuid import UUID
 from typing import Literal
 from urllib.parse import quote, urlsplit
@@ -55,6 +57,12 @@ def directory(job_id):
     return store.ROOT / "jobs" / job_id, job
 
 
+@app.get("/api/bulk-resources")
+def bulk_resources_status():
+    import bulk_resources
+    return bulk_resources.status()
+
+
 @app.get("/api/catalog")
 def catalog():
     return {"sources": list(store.SOURCES), "profiles": ["default"]}
@@ -82,6 +90,19 @@ def cancel(job_id: str):
     directory(job_id)
     store.cancel(job_id)
     return store.get(job_id)
+
+
+@app.post('/api/jobs/{job_id}/resume', status_code=202)
+def resume_job(job_id: UUID):
+    try:
+        store.resume(str(job_id))
+    except FileNotFoundError as error:
+        raise HTTPException(404, str(error))
+    except store.SubmissionConflict as error:
+        raise HTTPException(409, str(error))
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+    return store.get(str(job_id))
 
 
 @app.delete('/api/jobs/{job_id}', status_code=204)
@@ -123,9 +144,9 @@ def download(job_id: str):
         raise HTTPException(409, "Result archive is not available")
     if (folder / 'cleanup.json').is_file():
         path = run_cleanup.archive(job_id)
-        return FileResponse(path, filename=f'excel2fhir-{job_id}.zip',
+        return FileResponse(path, filename=archive_names.filename(job.get('dataset_name'), archive_names.patient_count(path, result=True), job_id),
                             background=BackgroundTask(path.unlink, missing_ok=True))
-    return FileResponse(folder / "result.zip", filename=f"excel2fhir-{job_id}.zip")
+    return FileResponse(folder / "result.zip", filename=archive_names.filename(job.get('dataset_name'), archive_names.patient_count(folder / 'result.zip', result=True), job_id))
 
 
 @app.get('/api/jobs/{job_id}/inputs-download')
@@ -306,10 +327,18 @@ def list_datasets():
 @app.get('/api/datasets/{dataset_id}/download')
 def dataset_download(dataset_id: str):
     try:
-        _, item, path = datasets.resolve_dataset(dataset_id)
+        job, item, path = datasets.resolve_dataset(dataset_id)
         if not path.is_file():
             raise HTTPException(409, 'Dataset archive is not available')
-        return FileResponse(path, filename='dataset-' + dataset_id + '.zip')
+        count = item.get('inspection', {}).get('patients')
+        if count is None:
+            count = archive_names.patient_count(path)
+        if item.get('kind') == 'bulk':
+            stem = re.sub(r'-\d+Pat$', '', path.stem)
+            name = f'{stem}-{count}Pat.zip'
+        else:
+            name = archive_names.filename(job.get('dataset_name'), count, dataset_id)
+        return FileResponse(path, filename=name)
     except FileNotFoundError as error:
         raise HTTPException(404, str(error))
 
@@ -321,7 +350,7 @@ class UploadRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
     requestId: UUID
     target: str
-    datasets: list[str] = Field(min_length=1, max_length=100)
+    datasets: list[str] = Field(min_length=1, max_length=10000)
 
 
 @app.get('/api/services')
@@ -352,6 +381,11 @@ def delete_fhir_upload(upload_id: UUID):
 @app.post('/api/fhir-uploads', status_code=202)
 def fhir_upload(request: UploadRequest):
     return configuration_call(fhir_uploads.create, str(request.requestId), request.target, request.datasets)
+
+
+@app.post('/api/fhir-uploads/{upload_id}/resume', status_code=202)
+def resume_fhir_upload(upload_id: UUID):
+    return configuration_call(fhir_uploads.resume, str(upload_id))
 
 
 @app.post('/api/fhir-uploads/{upload_id}/cancel', status_code=202)

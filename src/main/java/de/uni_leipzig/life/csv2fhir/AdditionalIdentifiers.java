@@ -26,6 +26,22 @@ public final class AdditionalIdentifiers {
             }
         }
     }
+    /** Restore only counters between independent bulk patient conversions. */
+    public AdditionalIdentifiers(ContractConfiguration configuration, Map<String, Long> savedCounters) {
+        this(configuration);
+        if (!savedCounters.isEmpty() && !savedCounters.keySet().equals(counters.keySet()))
+            throw new IllegalArgumentException("Identifier counter checkpoint differs from configured rules");
+        for (var entry : savedCounters.entrySet()) {
+            if (entry.getValue() < counters.get(entry.getKey()))
+                throw new IllegalArgumentException("Identifier counter checkpoint precedes configured start");
+            counters.put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public Map<String, Long> counterSnapshot() {
+        return Map.copyOf(counters);
+    }
+
     boolean enabled() { return !rules.isEmpty(); }
     private static String identity(Resource resource, int iteration) {
         if (!resource.hasIdElement() || resource.getIdElement().getIdPart() == null)
@@ -107,7 +123,7 @@ public final class AdditionalIdentifiers {
             boolean caseScoped = "case".equals(rule.get("SCOPE"));
             var caseEntry = cases.get(identity);
             if (caseScoped && caseEntry == null) {
-                notes.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getIdElement().getIdPart(),
+                if (notes != null) notes.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getIdElement().getIdPart(),
                         "action", "omit-identifier", "reason", "missing-or-ambiguous-case",
                         "ruleId", rule.get("ID"), "iteration", Integer.toString(iteration)));
                 continue;

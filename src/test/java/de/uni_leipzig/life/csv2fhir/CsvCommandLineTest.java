@@ -45,6 +45,52 @@ public class CsvCommandLineTest {
     }
 
     @Test
+    public void bulkCountersContinueAcrossPatientsAndConverterInvocations() throws Exception {
+        String rule = "a152e771-3d5a-4cb1-9866-35fa6d91fd83";
+        Path config = temp.getRoot().toPath().resolve("bulk.config");
+        Files.writeString(config, "CONFIGURATION_VERSION=1\nIDENTIFIER_RULE_1_ID=" + rule
+                + "\nIDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Patient\n"
+                + "IDENTIFIER_RULE_1_SYSTEM=urn:bulk-test\nIDENTIFIER_RULE_1_PATTERN={count:08}\n");
+        Path counters = temp.getRoot().toPath().resolve("counters.json");
+        Path manifest = temp.getRoot().toPath().resolve("manifest.json");
+        var gson = new com.google.gson.Gson();
+        var saved = new com.google.gson.JsonObject();
+        int expected = 0;
+        for (int chunk = 0; chunk < 2; chunk++) {
+            var jobs = new com.google.gson.JsonArray();
+            for (int patient = 0; patient < 2; patient++) {
+                var job = new com.google.gson.JsonObject();
+                Path destination = output.resolve("patient-" + chunk + "-" + patient);
+                job.addProperty("input", input.toString());
+                job.addProperty("output", destination.toString());
+                job.addProperty("prefix", "case");
+                jobs.add(job);
+            }
+            jobs.get(0).getAsJsonObject().add("identifierCounters", saved);
+            jobs.get(0).getAsJsonObject().addProperty("identifierCountersOutput", counters.toString());
+            Files.writeString(manifest, gson.toJson(jobs));
+            de.uni_leipzig.imise.SyntheaBulkConverter.main(new String[] {manifest.toString(), config.toString()});
+            saved = com.google.gson.JsonParser.parseString(Files.readString(counters)).getAsJsonObject();
+            for (var element : jobs) {
+                try (var files = Files.list(Path.of(element.getAsJsonObject().get("output").getAsString()))) {
+                    Path bundleFile = files.filter(f -> f.toString().endsWith(".json.gz")).findFirst().orElseThrow();
+                    try (var gzip = new java.util.zip.GZIPInputStream(Files.newInputStream(bundleFile))) {
+                        Bundle bundle = OutputFileType.JSON.getParser().parseResource(Bundle.class,
+                                new String(gzip.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8));
+                        var patient = bundle.getEntry().stream().map(Bundle.BundleEntryComponent::getResource)
+                                .filter(org.hl7.fhir.r4.model.Patient.class::isInstance)
+                                .map(org.hl7.fhir.r4.model.Patient.class::cast).findFirst().orElseThrow();
+                        String value = patient.getIdentifier().stream().filter(id -> "urn:bulk-test".equals(id.getSystem()))
+                                .findFirst().orElseThrow().getValue();
+                        assertEquals(String.format("%08d", ++expected), value);
+                    }
+                }
+            }
+            assertEquals(expected, saved.get(rule).getAsInt());
+        }
+    }
+
+    @Test
     public void defaultOutputContainsOnePatientPerJsonBundle() throws Exception {
         Path source = input.resolve("case_Person.csv");
         var rows = Files.readAllLines(source);

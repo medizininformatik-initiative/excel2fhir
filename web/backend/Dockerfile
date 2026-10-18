@@ -69,7 +69,7 @@ USER workbench
 CMD ["python", "worker.py"]
 
 FROM amazoncorretto:17.0.20-alpine AS api
-RUN apk add --no-cache python3 py3-pip && python3 -m venv /opt/venv
+RUN apk add --no-cache python3 py3-pip tzdata && python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 COPY web/backend/requirements.txt .
@@ -78,4 +78,5 @@ COPY web/backend/*.py .
 COPY --from=runtime-files / /
 RUN adduser -D -u 10001 workbench && mkdir /data && chown workbench /data
 USER workbench
+RUN python -c "from bulk_generation import output_directory_name; from uuid import UUID; assert output_directory_name(str(UUID(int=0)), 'timezone-check', 0).startswith('19700101-010000_')"
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

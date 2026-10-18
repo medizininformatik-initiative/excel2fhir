@@ -152,6 +152,14 @@ def resolve_dataset(identifier):
     if item is None:
         raise FileNotFoundError('Dataset not found')
     folder = store.ROOT / 'jobs' / job_id
+    if item.get('kind') == 'bulk':
+        import bulk_archives
+        snapshot = json.loads((folder / 'snapshot.json').read_text())
+        root = bulk_archives.output_path(snapshot)
+        target = root / item['path']
+        if target.is_symlink() or not target.resolve().is_relative_to(root.resolve()) or not target.is_file():
+            raise FileNotFoundError('Bulk package is unavailable')
+        return job, item, target
     target = folder / ('dataset-' + index + '.zip')
     if not target.is_file() and (folder / 'cleanup.json').is_file():
         with store.run_lock(job_id):
@@ -198,6 +206,16 @@ def resolve_artifact(job_id, identifier):
 def backfill(cancelled):
     for job in store.jobs():
         folder = store.ROOT / 'jobs' / job['id']
+        if (job.get('generation') or {}).get('executionMode') == 'bulk':
+            if job['state'] == 'succeeded' and not (folder / 'datasets.json').exists():
+                import bulk_archives
+                try:
+                    with store.run_lock(job['id']):
+                        bulk_archives.migrate_completed(folder, json.loads((folder / 'snapshot.json').read_text()))
+                except (OSError, ValueError, zipfile.BadZipFile) as error:
+                    (folder / 'datasets.json').write_text(json.dumps({'datasets': [], 'artifacts': [], 'error': str(error)}))
+                return
+            continue
         if job['state'] not in {'succeeded', 'failed'} or (folder / 'datasets.json').exists():
             continue
         try:

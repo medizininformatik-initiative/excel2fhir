@@ -24,6 +24,15 @@ class GenerationTests(QueueFixture):
                      patch.object(synthea_runtime, 'fingerprint', return_value='importer')]:
             item.start(); self.addCleanup(item.stop)
 
+    def test_consent_is_optional_saved_and_requires_kds(self):
+        self.assertTrue(generation.Settings().syntheticConsent)
+        self.assertFalse(generation.Settings(outputMode='synthea').syntheticConsent)
+        self.assertFalse(generation.Settings(syntheticConsent=False).syntheticConsent)
+        job = store.create('synthea-generation', 'default', generation_settings={'syntheticConsent': True})
+        self.assertTrue(store.editor_input(job)['generation']['syntheticConsent'])
+        with self.assertRaises(ValueError):
+            generation.Settings(outputMode='synthea', syntheticConsent=True)
+
     def test_table_format_snapshot_repeat_and_request_identity(self):
         for table_format in ('csv', 'excel'):
             request = {'source': 'synthea-generation', 'generation': {}, 'tableFormat': table_format, 'requestId': str(uuid4())}

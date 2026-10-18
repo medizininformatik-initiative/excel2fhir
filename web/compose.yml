@@ -5,8 +5,11 @@ services:
       context: ..
       dockerfile: web/backend/Dockerfile
       target: api
+    environment:
+      MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
+      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output:ro
     mem_limit: 512m
     cpus: 1
     restart: unless-stopped
@@ -17,8 +20,11 @@ services:
       target: worker
     command: [python, worker.py]
     init: true
+    environment:
+      MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
+      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output
     mem_limit: 6g
     cpus: 2
     stop_grace_period: 15s
