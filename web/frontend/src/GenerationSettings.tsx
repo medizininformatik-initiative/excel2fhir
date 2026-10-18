@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Help } from './Help'
+import { generationErrors, seedValid, type GenerationErrors } from './generation-validation'
 import { generationHelp, selectionRule, moduleHelp, type HelpKey, type ModuleDescription } from './generation-help'
 import { translate, type Language, type TextKey } from './i18n'
 
 export type Generation = {
+  executionMode?: 'standard' | 'bulk'; syntheticConsent?: boolean; patientsPerRun?: number;
   outputMode: 'kds' | 'synthea'; population: number; minAge: number; maxAge: number; gender: string;
   timestampSeeds?: boolean; patientSeed: string; clinicianSeed: string; singlePersonSeed: string;
   referenceDate: string; endDate: string; state: string; city: string;
@@ -11,11 +13,22 @@ export type Generation = {
   inpatientOnly?: boolean; inpatientMinDays?: number;
   modules: string[]; keepModule: string; timestepDays: number; maxAttempts: number; veteranPopulation: boolean
 }
-type Catalogue = { revision: string; defaults: Generation; locations: Record<string, string[]>; modules: ModuleDescription[]; keepModules: ModuleDescription[] }
-export function GenerationSettings({ language, onChange, initialValue }: { language: Language; onChange: (value: Generation | null) => void; initialValue?: Generation }) {
+type Catalogue = { bulkOutputDirectory: string; revision: string; defaults: Generation; locations: Record<string, string[]>; modules: ModuleDescription[]; keepModules: ModuleDescription[] }
+export function GenerationSettings({ language, onChange, initialValue, onExecutionModeChange, children }: { children?: ReactNode; onExecutionModeChange: (mode: 'standard' | 'bulk') => void; language: Language; onChange: (value: Generation | null) => void; initialValue?: Generation }) {
+  const fieldId = useId()
   const t = (key: TextKey) => translate(language, key)
   const [catalogue, setCatalogue] = useState<Catalogue | null>(null)
   const [value, setValue] = useState<Generation | null>(null)
+  useEffect(() => { onExecutionModeChange(value?.executionMode ?? 'standard') }, [value?.executionMode, onExecutionModeChange])
+  const [memory, setMemory] = useState<{ ready: boolean; availableBytes: number | null } | null>(null)
+  useEffect(() => {
+    if (value?.executionMode !== 'bulk') { setMemory(null); return }
+    let active = true
+    const refresh = () => fetch('/api/bulk-resources').then(r => { if (!r.ok) throw new Error(); return r.json() }).then(next => { if (active) setMemory(next) }).catch(() => { if (active) setMemory(null) })
+    void refresh()
+    const timer = window.setInterval(refresh, 5000)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [value?.executionMode])
   const [failed, setFailed] = useState(false)
   const [moduleSearch, setModuleSearch] = useState('')
   useEffect(() => {
@@ -31,36 +44,52 @@ export function GenerationSettings({ language, onChange, initialValue }: { langu
     }).catch(() => { if (active) setFailed(true) })
     return () => { active = false; onChange(null) }
   }, [onChange, initialValue])
-  const seedValid = (seed: string) => /^-?\d{1,19}$/.test(seed) && BigInt(seed) >= -(2n ** 63n) && BigInt(seed) < 2n ** 63n
-  const valid = value !== null && catalogue !== null &&
-    [value.population, value.minAge, value.maxAge, value.yearsOfHistory, value.timestepDays, value.maxAttempts].every(Number.isInteger) &&
-    (!value.inpatientOnly || (Number.isInteger(value.inpatientMinDays) && value.inpatientMinDays! >= 1 && value.inpatientMinDays! <= 36500)) &&
-    value.population >= 1 && value.population <= 1000 && value.minAge >= 0 && value.minAge <= value.maxAge && value.maxAge <= 140 &&
-    value.yearsOfHistory >= 0 && value.yearsOfHistory <= 140 && value.timestepDays >= 1 && value.timestepDays <= 365 && value.maxAttempts >= 1 && value.maxAttempts <= 10000 &&
-    /^\d{4}-\d{2}-\d{2}$/.test(value.referenceDate) && value.referenceDate <= value.endDate && value.endDate <= new Date().toISOString().slice(0, 10) &&
-    (value.timestampSeeds || ([value.patientSeed, value.clinicianSeed].every(seedValid) &&
-    (value.singlePersonSeed === '' || (value.population === 1 && seedValid(value.singlePersonSeed))))) &&
-    value.state in catalogue.locations && (!value.city || catalogue.locations[value.state].includes(value.city))
+  const errors: GenerationErrors = value && catalogue
+    ? generationErrors(value, catalogue.locations, new Date().toLocaleDateString('sv-SE')) : {}
+  const valid = value !== null && catalogue !== null && Object.keys(errors).length === 0 &&
+    (value.executionMode !== 'bulk' || memory?.ready === true)
   useEffect(() => {
-    if (value) { try { localStorage.setItem('syntheaGeneration', JSON.stringify(value)) } catch { /* Submission still works. */ } }
+    if (value && Object.values(value).every(item => typeof item !== 'number' || Number.isFinite(item))) { try { localStorage.setItem('syntheaGeneration', JSON.stringify(value)) } catch { /* Submission still works. */ } }
     onChange(valid ? value : null)
   }, [value, valid, onChange])
   if (failed) return <p role="alert" className="mt-4 text-red-700">{t('app.generation.loadFailed')}</p>
   if (!value || !catalogue) return <p className="mt-4 text-sm">{t('app.generation.loading')}</p>
   const update = <K extends keyof Generation>(key: K, next: Generation[K]) => setValue(old => old && ({ ...old, [key]: next }))
-  const info = (key: HelpKey, detail?: string) => <Help text={detail ?? generationHelp(language, key)} t={key => t(key as TextKey)}/>
+  const info = (key: HelpKey, detail?: string) => <Help text={detail ?? generationHelp(language, key, value.executionMode === 'bulk')} t={key => t(key as TextKey)}/>
   const inputClass = 'mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:bg-neutral-50 disabled:text-neutral-400 disabled:shadow-none'
-  const number = (key: keyof Generation, label: TextKey, min: number, max: number) => <label className="text-sm">{t(label)}{info(key as HelpKey)}<input className={inputClass} type="number" min={min} max={max} step="1" value={String(value[key])} onChange={e => update(key, Number(e.target.value))}/></label>
+  const fieldProps = (key: keyof Generation) => ({
+    className: errors[key] ? inputClass.replace('border-slate-300 bg-white', 'border-red-600 bg-red-50 outline-red-600') : inputClass,
+    'aria-invalid': errors[key] ? true : undefined,
+    'aria-describedby': errors[key] ? `${fieldId}-${key}-error` : undefined
+  })
+  const error = (key: keyof Generation) => errors[key] && <span id={`${fieldId}-${key}-error`} role="status" className="mt-1 block text-sm text-red-700">{translate(language, errors[key]!.key, errors[key]!.params)}</span>
+  const numericValue = (amount: unknown) => typeof amount === 'number' && Number.isFinite(amount) ? amount : ''
+  const readNumber = (raw: string) => raw === '' ? Number.NaN : Number(raw)
+  const number = (key: keyof Generation, label: TextKey, min: number, max: number) => <label className="text-sm">{t(label)}{key === 'population' && ` (${min}–${max})`}{info(key as HelpKey)}<input {...fieldProps(key)} type="number" min={min} max={max} step="1" value={numericValue(value[key])} onChange={e => update(key, readNumber(e.target.value))}/>{error(key)}</label>
   const text = (key: keyof Generation, label: TextKey, type = 'text') => {
     const disabled = value.timestampSeeds === true && ['patientSeed', 'clinicianSeed', 'singlePersonSeed'].includes(key)
-    return <label className={`text-sm ${disabled ? 'text-neutral-400' : ''}`}>{t(label)}{info(key as HelpKey)}<input className={inputClass} type={type} disabled={disabled} value={String(value[key])} onChange={e => update(key, e.target.value)}/></label>
+    return <label className={`text-sm ${disabled ? 'text-neutral-400' : ''}`}>{t(label)}{info(key as HelpKey, key === 'patientSeed' && value.executionMode === 'bulk' ? t('app.generation.bulkSeedHelp') : undefined)}<input {...fieldProps(key)} type={type} disabled={disabled} value={String(value[key])} onChange={e => update(key, e.target.value)}/>{error(key)}</label>
   }
   return <section className="mt-6 border-t border-slate-200 pt-5">
     <h3 className="font-semibold">{t('app.generation.title')}</h3>
     <p className="mt-2 text-sm text-slate-600">{t('app.generation.hint')}</p>
-    <label className="mt-4 block text-sm">{t('app.generation.outputMode')}{info('outputMode')}<select className={inputClass} value={value.outputMode} onChange={e => update('outputMode', e.target.value as Generation['outputMode'])}><option value="kds">{t('app.generation.kdsOutput')}</option><option value="synthea">{t('app.generation.nativeOutput')}</option></select></label>
+    <label className="mt-4 block text-sm">{t('app.bulk.mode')}<Help text={t('app.bulk.modeHelp')} t={key => t(key as TextKey)}/><select className={inputClass} value={value.executionMode ?? 'standard'} onChange={e => setValue({ ...value, executionMode: e.target.value as 'standard' | 'bulk', ...(e.target.value === 'bulk' ? { overflow: false } : {}) })}><option value="standard">{t('app.bulk.standard')}</option><option value="bulk">{t('app.bulk.title')}</option></select></label>
+    {value.executionMode === 'bulk' ? <div className="mt-3 rounded-xl bg-teal-50 p-4 text-sm">
+      <p className={`font-medium ${memory === null ? 'text-slate-600' : memory.ready ? 'text-teal-800' : 'text-red-700'}`} role="status">{t(memory === null ? 'app.bulk.memoryChecking' : memory.ready ? 'app.bulk.memoryReady' : 'app.bulk.memoryBlocked').replace('{available}', memory?.availableBytes == null ? '—' : (memory.availableBytes / 1024 ** 3).toFixed(1))}</p>
+      <p className="mt-2">{t('app.bulk.directory')}: <code className="break-all">{catalogue.bulkOutputDirectory}</code></p>
+      <p className="mt-3">{t('app.bulk.format')}</p>
+      <details className="mt-3 text-slate-600" open={memory !== null && !memory.ready || undefined}>
+        <summary className="cursor-pointer">{t('app.bulk.memoryHelp')}</summary>
+        <p className="mt-2">{t('app.bulk.prepare')}</p>
+        <code className="mt-2 block select-all">bash web/prepare-bulk.sh</code>
+        <p className="mt-2">{t('app.bulk.restore')}</p>
+        <code className="mt-1 block select-all">bash web/restore-services.sh</code>
+      </details>
+    </div> : value.population >= 500 && <div className="mt-3 rounded-xl bg-amber-50 p-4 text-sm"><p>{t('app.bulk.recommend')}</p><button type="button" className="mt-2 underline" onClick={() => setValue({ ...value, executionMode: 'bulk', overflow: false })}>{t('app.bulk.switch')}</button></div>}
+    <label className="mt-4 block text-sm">{t('app.generation.outputMode')}{info('outputMode')}<select className={inputClass} value={value.outputMode} onChange={e => setValue({ ...value, outputMode: e.target.value as Generation['outputMode'], syntheticConsent: e.target.value === 'kds' })}><option value="kds">{t('app.generation.kdsOutput')}</option><option value="synthea">{t('app.generation.nativeOutput')}</option></select></label>
     <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {number('population', 'app.generation.population', 1, 1000)}
+      {number('population', 'app.generation.population', 1, value.executionMode === 'bulk' ? 100000 : 1000)}
+      {value.executionMode === 'bulk' && <label className="text-sm">{t('app.bulk.patientsPerRun')}<Help text={t('app.bulk.subrunsHelp')} t={key => t(key as TextKey)}/><input {...fieldProps('patientsPerRun')} type="number" min={100} max={10000} step={100} value={numericValue(value.patientsPerRun ?? 10000)} onChange={e => update('patientsPerRun', readNumber(e.target.value))}/>{error('patientsPerRun')}</label>}
       {number('minAge', 'app.generation.minAge', 0, 140)}{number('maxAge', 'app.generation.maxAge', 0, 140)}
       <label className="text-sm">{t('app.generation.gender')}{info('gender')}<select className={inputClass} value={value.gender} onChange={e => update('gender', e.target.value)}><option value="">{t('app.generation.anyGender')}</option><option value="F">{t('app.generation.female')}</option><option value="M">{t('app.generation.male')}</option></select></label>
       <div className="flex items-center gap-1 text-sm sm:col-span-2 lg:col-span-4">
@@ -69,24 +98,27 @@ export function GenerationSettings({ language, onChange, initialValue }: { langu
       </div>
       {text('patientSeed', 'app.generation.patientSeed')}{text('clinicianSeed', 'app.generation.clinicianSeed')}
       {text('referenceDate', 'app.generation.referenceDate', 'date')}{text('endDate', 'app.generation.endDate', 'date')}
-      <label className="text-sm">{t('app.generation.state')}{info('state')}<select className={inputClass} value={value.state} onChange={e => setValue({ ...value, state: e.target.value, city: '' })}>{Object.keys(catalogue.locations).map(state => <option key={state}>{state}</option>)}</select></label>
-      <label className="text-sm">{t('app.generation.city')}{info('city')}<select className={inputClass} value={value.city} onChange={e => update('city', e.target.value)}><option value="">{t('app.generation.anyCity')}</option>{(catalogue.locations[value.state] ?? []).map(city => <option key={city}>{city}</option>)}</select></label>
+      <label className="text-sm">{t('app.generation.state')}{info('state')}<select {...fieldProps('state')} value={value.state} onChange={e => setValue({ ...value, state: e.target.value, city: '' })}>{Object.keys(catalogue.locations).map(state => <option key={state}>{state}</option>)}</select>{error('state')}</label>
+      <label className="text-sm">{t('app.generation.city')}{info('city')}<select {...fieldProps('city')} value={value.city} onChange={e => update('city', e.target.value)}><option value="">{t('app.generation.anyCity')}</option>{(catalogue.locations[value.state] ?? []).map(city => <option key={city}>{city}</option>)}</select>{error('city')}</label>
       {number('yearsOfHistory', 'app.generation.history', 0, 140)}
     </div>
+    {value.executionMode === 'bulk' && !errors.population && !errors.patientsPerRun && <p className="mt-3 text-sm">{t('app.bulk.subrunsSummary').replace('{count}', String(Math.ceil(value.population / (value.patientsPerRun ?? 10000)))).replace('{size}', String(value.patientsPerRun ?? 10000))}</p>}
+    {value.executionMode === 'bulk' && !value.timestampSeeds && seedValid(value.patientSeed) && !errors.population && <p className="mt-3 text-sm" aria-live="polite">{t('app.generation.seedRange').replace('{patients}', String(value.population)).replace('{count}', String(Math.ceil(value.population / 100))).replace('{first}', value.patientSeed).replace('{last}', String(BigInt.asIntN(64, BigInt(value.patientSeed) + BigInt(Math.ceil(value.population / 100) - 1))))}</p>}
+    {value.outputMode === 'kds' && <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={value.syntheticConsent === true} onChange={e => update('syntheticConsent', e.target.checked)}/>{t('app.generation.syntheticConsent')}<Help text={t('app.generation.syntheticConsentHelp')} t={key => t(key as TextKey)}/></label>}
     <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-3">
       <label className="flex min-h-10 items-center gap-2 text-sm"><input type="checkbox" checked={value.inpatientOnly === true} onChange={e => update('inpatientOnly', e.target.checked)}/>{t('app.generation.inpatientOnly')}<Help text={t('app.generation.inpatientHelp')} t={key => t(key as TextKey)}/></label>
-      <label className={`block w-full max-w-xs text-sm ${value.inpatientOnly ? '' : 'text-neutral-400'}`}>{t('app.generation.inpatientMinDays')}<input type="number" disabled={!value.inpatientOnly} className={inputClass} min={1} max={36500} step={1} value={value.inpatientMinDays ?? 2} onChange={e => update('inpatientMinDays', Number(e.target.value))}/></label>
+      <label className={`block w-full max-w-xs text-sm ${value.inpatientOnly ? '' : 'text-neutral-400'}`}>{t('app.generation.inpatientMinDays')}<input type="number" disabled={!value.inpatientOnly} {...fieldProps('inpatientMinDays')} min={1} max={36500} step={1} value={numericValue(value.inpatientMinDays ?? 2)} onChange={e => update('inpatientMinDays', readNumber(e.target.value))}/>{error('inpatientMinDays')}</label>
     </div>
-    <details className="mt-5"><summary className="cursor-pointer font-medium">{t('app.generation.advanced')}</summary>
+    <details className="mt-5" open={!!(errors.singlePersonSeed || errors.timestepDays || errors.maxAttempts) || undefined}><summary className="cursor-pointer font-medium">{t('app.generation.advanced')}</summary>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <label className="text-sm">{t('app.generation.patientFilter')}{info('patientFilter')}<select className={inputClass} value={value.patientFilter} onChange={e => update('patientFilter', e.target.value)}><option value="all">{t('app.generation.allPatients')}</option><option value="alive">{t('app.generation.alive')}</option><option value="dead">{t('app.generation.dead')}</option></select></label>
+        <label className={`flex min-h-10 items-center gap-2 self-end text-sm ${value.patientFilter !== 'all' ? 'text-slate-400' : ''}`}><input type="checkbox" disabled={value.patientFilter !== 'all' || value.executionMode === 'bulk'} checked={value.overflow} onChange={e => update('overflow', e.target.checked)}/>{t('app.generation.overflow')}{info('overflow')}</label>
         <label className="text-sm">{t('app.generation.keepModule')}{info('keepModule')}<select className={inputClass} value={value.keepModule} onChange={e => update('keepModule', e.target.value)}><option value="">{t('app.generation.noKeepModule')}</option>{catalogue.keepModules.map(module => <option key={module.id} value={module.id}>{selectionRule(language, module.id, module.name).name}</option>)}</select>{value.keepModule && <span className="mt-2 block text-xs text-slate-600">{selectionRule(language, value.keepModule, value.keepModule).description}</span>}</label>
         {text('singlePersonSeed', 'app.generation.singleSeed')}
         {number('timestepDays', 'app.generation.timestep', 1, 365)}{number('maxAttempts', 'app.generation.attempts', 1, 10000)}
-        <label className={`flex items-center gap-2 text-sm ${value.patientFilter !== 'all' ? 'text-slate-400' : ''}`}><input type="checkbox" disabled={value.patientFilter !== 'all'} checked={value.overflow} onChange={e => update('overflow', e.target.checked)}/>{t('app.generation.overflow')}{info('overflow')}</label>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.veteranPopulation} onChange={e => update('veteranPopulation', e.target.checked)}/>{t('app.generation.veterans')}{info('veteranPopulation')}</label>
       </div>
-      <p className="mt-4 text-sm text-slate-600">{t('app.generation.selectionHint')}</p>
+      <p className="mt-4 text-sm text-slate-600">{value.executionMode === 'bulk' ? generationHelp(language, 'population', true) : t('app.generation.selectionHint')}</p>
       <fieldset className="mt-5"><legend className="font-medium">{t('app.generation.modules')}{info('modules')}</legend>
         <p className="mt-2 text-sm text-slate-600">{t('app.generation.modulesHint')}</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -97,7 +129,7 @@ export function GenerationSettings({ language, onChange, initialValue }: { langu
         <div className="mt-2 grid max-h-64 gap-2 overflow-auto rounded-lg border p-3 sm:grid-cols-2">{catalogue.modules.filter(module => (module.name + module.id).toLowerCase().includes(moduleSearch.toLowerCase())).map(module => <label key={module.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value.modules.includes(module.id)} onChange={e => update('modules', e.target.checked ? [...value.modules, module.id] : value.modules.filter(id => id !== module.id))}/>{module.name}{moduleHelp(language, module) && info('modules', moduleHelp(language, module))}</label>)}</div>
       </fieldset>
     </details>
-    {!valid && <p role="alert" className="mt-4 text-sm text-red-700">{t('app.generation.invalid')}</p>}
     <p className="mt-4 break-all text-xs text-slate-500">Synthea: {catalogue.revision}</p>
+    {children}
   </section>
 }

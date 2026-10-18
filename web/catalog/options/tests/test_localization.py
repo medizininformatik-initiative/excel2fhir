@@ -53,6 +53,9 @@ class LocalizationTest(unittest.TestCase):
         required.update('app.outcomes.' + status for status in (
             'succeeded', 'failed', 'cancelled', 'interrupted', 'passed',
             'not-requested', 'incomplete', 'differences', 'unavailable', 'findings'))
+        validation = (ROOT / '../../frontend/src/generation-validation.ts').read_text()
+        required.update('app.generation.error.' + code for code in
+                        re.findall(r"error\([^,]+, '([A-Za-z]+)'", validation))
         required.discard('identifier.typeLabel.')
         bindings = json.loads((ROOT / 'identifier-bindings.json').read_text())
         required.update('identifier.typeLabel.' + item['code'] for item in bindings['types'])

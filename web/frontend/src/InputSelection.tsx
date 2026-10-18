@@ -23,8 +23,13 @@ export function InputSelection({ language, source, onChange, onBusy, onKindChang
       try {
         const response = await fetch('/api/inputs')
         if (!response.ok) throw new Error()
-        const next = await response.json()
-        if (active && sequence === refreshSequence.current) { setItems(next); setFailed(false) }
+        const next: Input[] = await response.json()
+        if (active && sequence === refreshSequence.current) {
+          setItems(next); setFailed(false)
+          if (!['synthea-generation', 'starter', 'demo'].includes(source) && !next.some(item => item.id === source)) {
+            onChange('synthea-generation')
+          }
+        }
       } catch { if (active && sequence === refreshSequence.current) setFailed(true) }
     }
     void refresh()
@@ -63,7 +68,7 @@ export function InputSelection({ language, source, onChange, onBusy, onKindChang
       if (!response.ok && response.status !== 404) throw new Error(t('app.inputRemoveFailed'))
       refreshSequence.current++
       setItems(old => old.filter(value => value.id !== item.id))
-      onChange('starter')
+      onChange('synthea-generation')
     } catch (e) { setError(e instanceof Error ? e.message : t('app.inputRemoveFailed')) }
     finally { setRemoving(false); onBusy(false) }
   }

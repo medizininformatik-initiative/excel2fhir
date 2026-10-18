@@ -246,7 +246,7 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     </div>
   )
 }
-export function ConfigurationEditor({ language, onChange, initialConfiguration }: { language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
+export function ConfigurationEditor({ language, onChange, initialConfiguration, bulkMode = false }: { bulkMode?: boolean; language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
   const t: Translator = (key, params) =>
     translate(language, key as TextKey, params)
   const [initial] = useState(() => {
@@ -263,7 +263,13 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
     }
   })
   const [config, setConfig] = useState<Configuration>(initial.config)
-  useEffect(() => { onChange?.(config) }, [config, onChange])
+  useEffect(() => {
+    if (bulkMode && (config.values['ids.patient.additionalRepetitions'] !== 0 || config.values['timeShift.iterationDays'] !== 0)) {
+      setConfig(old => ({ ...old, values: { ...old.values, 'ids.patient.additionalRepetitions': 0, 'timeShift.iterationDays': 0 } }))
+      return
+    }
+    onChange?.(config)
+  }, [config, onChange, bulkMode])
   const [tab, setTab] = useState('resources')
   const [message, setMessage] = useState<Message | null>(
     initial.failed ? { key: 'app.config.restoreFailed' } : null
@@ -560,6 +566,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
         )}
         {tab === 'ids' && (
           <div className="space-y-5">
+            {bulkMode && <p className="text-sm text-slate-600">{t('app.bulk.noCopies')}</p>}
             {idGroups.map((group) => (
               <section key={group.prefix} className="rounded-xl border border-slate-200 p-5" aria-label={t(group.key)}>
                 <div className="mb-3 flex items-center gap-2">
@@ -567,7 +574,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   {group.prefix === 'ids.start.' && <Help text={t('option.ids.start.CONSENT.help')} t={t} />}
                 </div>
                 <div className={`grid gap-x-8 gap-y-2 md:grid-cols-2 ${group.prefix === 'ids.start.' ? 'xl:grid-cols-3' : ''}`}>
-                  {options.filter((o) => o.id.startsWith(group.prefix)).map((option) => (
+                  {options.filter((o) => o.id.startsWith(group.prefix) && (!bulkMode || !['ids.patient.additionalRepetitions', 'timeShift.iterationDays'].includes(o.id))).map((option) => (
                     <div key={option.id} className={option.id === 'timeShift.enabled' || option.id === 'ids.patient.additionalRepetitions' ? 'md:col-span-2' : 'min-w-0'}>
                       <OptionControl
                         option={option}
