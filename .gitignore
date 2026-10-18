@@ -31,3 +31,13 @@ __pycache__/
 /web/frontend/node_modules/
 /web/frontend/dist/
 /web/frontend/*.tsbuildinfo
+
+# Local bulk generation results
+/outputMass/
+
+# Services paused for local bulk generation
+/web/.bulk-services
+/web/.bulk-services.tmp
+
+# Local Compose environment
+/web/.env

@@ -1,0 +1,73 @@
+--- a/src/main/java/org/mitre/synthea/engine/Generator.java
++++ b/src/main/java/org/mitre/synthea/engine/Generator.java
+@@ -102,6 +102,7 @@
+   private boolean onlyDeadPatients;
+   private boolean onlyVeterans;
+   private Module keepPatientsModule;
++  private final InpatientSelection inpatientSelection = new InpatientSelection();
+   private Long maxAttemptsToKeepPatient;
+   /** The state to default to */
+   public static String DEFAULT_STATE = "Massachusetts";
+@@ -455,6 +456,10 @@
+       threadPool.shutdownNow();
+     }
+ 
++    if (inpatientSelection.exhausted()) {
++      throw new IllegalStateException("Inpatient selection exhausted the attempt limit; lower the minimum duration or relax the selection.");
++    }
++
+     // Save a snapshot of the generated population using Java Serialization
+     if (options.updatedPopulationSnapshotPath != null) {
+       FileOutputStream fos = null;
+@@ -519,6 +524,7 @@
+    */
+   public Person generatePerson(int index, long personSeed) {
+ 
++    if (inpatientSelection.exhausted()) return null;
+     Person person = new Person(personSeed);
+     boolean wasExported = true;
+ 
+@@ -547,6 +553,9 @@
+ 
+         CriteriaCheck check = checkCriteria(person, finishTime, index, isAlive);
+         patientMeetsCriteria = check.meetsCriteria();
++        inpatientSelection.report(patientMeetsCriteria, tryNumber,
++            this.maxAttemptsToKeepPatient == null ? 1000 : this.maxAttemptsToKeepPatient,
++            this.options.population);
+ 
+         if (!patientMeetsCriteria) {
+           if (this.maxAttemptsToKeepPatient != null
+@@ -637,6 +646,7 @@
+     private boolean isDeadButAliveRequired;
+     private boolean insufficientProviders;
+     private boolean failedKeepModule;
++    private boolean failedInpatient;
+ 
+     private boolean meetsCriteria() {
+       // if any of the flags are true, the patient does not meet criteria
+@@ -644,7 +654,7 @@
+         || isAliveButDeadRequired
+         || isDeadButAliveRequired
+         || insufficientProviders
+-        || failedKeepModule);
++        || failedKeepModule || failedInpatient);
+     }
+ 
+     private boolean exportAnyway() {
+@@ -653,7 +663,7 @@
+       return !isAliveButDeadRequired
+         && !isDeadButAliveRequired
+         && !insufficientProviders
+-        && !failedKeepModule;
++        && !failedKeepModule && !failedInpatient;
+     }
+   }
+ 
+@@ -695,6 +705,7 @@
+       }
+     }
+ 
++    check.failedInpatient = !inpatientSelection.matches(person, finishTime);
+     return check;
+   }
+ 

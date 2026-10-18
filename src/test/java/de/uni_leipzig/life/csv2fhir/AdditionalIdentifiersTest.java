@@ -30,6 +30,30 @@ public class AdditionalIdentifiersTest {
         for (String invalid : List.of("0", "-1", "1.5", "9007199254740992", "no", ""))
             assertThrows("Invalid start: " + invalid, IllegalArgumentException.class, () -> ContractConfiguration.parse(settings("{count}") + "IDENTIFIER_RULE_1_COUNT_START=" + invalid + "\n"));
     }
+    @Test public void restoresIndependentPatientAndEncounterCountersIncludingReservations() throws Exception {
+        String config = settings("{count:08}").replace("Patient,Observation,MedicationAdministration,MedicationStatement", "Patient")
+                + "IDENTIFIER_RULE_1_COUNT_START=500\n"
+                + "IDENTIFIER_RULE_2_ID=ad9bc333-5456-4a27-99de-6e428e7c8831\n"
+                + "IDENTIFIER_RULE_2_ENABLED=true\nIDENTIFIER_RULE_2_RESOURCES=Encounter\n"
+                + "IDENTIFIER_RULE_2_SYSTEM=urn:case\nIDENTIFIER_RULE_2_PATTERN={resourceType}-{count:08}\n";
+        var counters = java.util.Map.<String, Long>of();
+        for (int patient = 0; patient < 3; patient++) {
+            Patient p = new Patient(); p.setId("p" + patient);
+            Encounter e = new Encounter(); e.setId("e" + patient);
+            Encounter reserved = new Encounter(); reserved.setId("reserved" + patient);
+            var context = context(config, p, e, reserved);
+            var ids = new AdditionalIdentifiers(context.getConverterOptions().configuration(), counters);
+            ids.reserve(List.of(p, e, reserved), context, 0);
+            assertEquals(String.format("%08d", 500 + patient), ((Patient)ids.output(p, 0)).getIdentifierFirstRep().getValue());
+            assertEquals(String.format("Encounter-%08d", 1 + 2 * patient), ((Encounter)ids.output(e, 0)).getIdentifierFirstRep().getValue());
+            var checkpoint = ids.counterSnapshot();
+            ids.reserve(List.of(p), context, 1);
+            assertEquals(Long.valueOf(500 + patient), checkpoint.get(ID));
+            counters = checkpoint;
+        }
+        var configuration = ConverterOptions.fromText(config).configuration();
+        assertThrows(IllegalArgumentException.class, () -> new AdditionalIdentifiers(configuration, java.util.Map.of("unknown", 1L)));
+    }
     @Test public void selectsContactLevelsAndObservationCategories() throws Exception {
         Encounter facility = new Encounter(); facility.setId("facility"); facility.setClass_(new Coding().setCode("IMP"));
         Encounter department = new Encounter(); department.setId("department"); department.setClass_(new Coding().setCode("IMP"));

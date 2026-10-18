@@ -55,10 +55,12 @@ def create_run(output, operation):
 def write_status(directory, status):
     explanation = {'NOT_CHECKED': 'Import and source comparison passed; some terminology checks could not run.',
                    'FAILED': 'Run incomplete. Generated FHIR files and error reports are available for review.',
-                   'NOT_VALIDATED': 'Import and source comparison completed; FHIR validation disabled.',
-                   'COMPLETE': 'Import, source comparison and FHIR validation completed.'}.get(status, 'Run in progress.')
+                   'NOT_VALIDATED': 'Generation completed; FHIR validation disabled. Requested source diagnostics are available in the reports.',
+                   'COMPLETE': 'Generation completed. Requested source diagnostics and FHIR validation findings are available in the reports.'}.get(status, 'Run in progress.')
     (directory / 'status.txt').write_text(status + '\n' + explanation
-        + '\nFHIR: fhir/ (selected formats and KDS variants)\nExcel: excel/\nDetails: details/\n', encoding='utf-8')
+        + '\nFHIR: fhir/ (selected formats and KDS variants)\n'
+        + ('CSV: csv.zip\n' if (directory / 'csv.zip').is_file() else 'Excel: excel/\n')
+        + 'Details: details/\n', encoding='utf-8')
 
 
 def add_converter_arguments(parser):

@@ -46,7 +46,16 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
     try:
         print('Synthea is generating patients; see details/logs/synthea.log for progress.', flush=True)
         with (directory / 'details/logs/synthea.log').open('w') as log:
-            generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
+            if '--generate.workbench_inpatient=true' in arguments:
+                with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) as generated:
+                    for line in generated.stdout:
+                        log.write(line)
+                        log.flush()
+                        if line.startswith('WORKBENCH_SELECTION '):
+                            print(line, end='', flush=True)
+                    generated.wait()
+            else:
+                generated = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT)
         with (directory / 'details/logs/synthea.log').open(errors='replace') as log:
             if any('OutOfMemoryError' in line for line in log):
                 raise MemoryError('Synthea ran out of memory; generated files may be incomplete. See details/logs/synthea.log.')
@@ -54,7 +63,7 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
             raise RuntimeError('Synthea failed; see details/logs/synthea.log (exit code ' + str(generated.returncode) + ').')
         report['status'] = 'CONVERTING'
         write_json(report_path, report)
-        print('Converting patients through Excel to FHIR and comparing them with the source data.', flush=True)
+        print('Converting patients to tables and FHIR.', flush=True)
         code = convert_cases(directory / 'details/sources/synthea/fhir', output,
                              option_files=snapshots, directory=directory, validate=validate, **settings)
         summary = json.loads((directory / 'details/reports/summary.json').read_text())
@@ -64,10 +73,10 @@ def run(output, arguments, *, validate=False, option_files=(), **settings):
         report['failedPatients'] = len(summary['failures'])
         print('FHIR files: ' + str(directory / 'fhir'), flush=True)
         print('Excel files: ' + str(directory / 'excel'), flush=True)
-        if summary['status'] == 'NOT_CHECKED':
-            print('Import and source comparison passed. Some FHIR validation checks could not run; see reports. Exit code: 1.', flush=True)
-        elif summary['status'] == 'FAILED':
-            print('Run INCOMPLETE: see details/reports/summary.json. Generated FHIR files and error reports are available for review.', flush=True)
+        if summary['failures']:
+            print('Run INCOMPLETE: see details/reports/summary.json. Generated files remain available.', flush=True)
+        else:
+            print('Generation complete. Requested diagnostics and FHIR validation have separate outcomes.', flush=True)
         return code
     except Exception as error:
         report.update(status='FAILED', error=str(error))

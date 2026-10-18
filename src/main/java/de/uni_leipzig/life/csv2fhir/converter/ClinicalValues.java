@@ -12,7 +12,7 @@ public final class ClinicalValues {
     public enum Column implements TableColumnIdentifier {
         Codesystem, Zusatzcode, Zusatzcodesystem, Version, Zusatzversion, Ende, Status, Kategorie,
         Absicht, Dosierungstext, Werttyp, Wertcode, Wertcodesystem, Untersuchung_ID,
-        Komponente_von, Ausgabezeitpunkt, Einheitencode, Wirkstoffcode, Wirkstoffcodesystem, Straße, Postleitzahl, Ort, Bundesland, Land, Sterbezeitpunkt, Dokumenttext, Dokumentcode, Dokumentcodesystem, Dokumentbezeichner;
+        Komponente_von, Ausgabezeitpunkt, Einheitencode, Einheitencodesystem, Wirkstoffcode, Wirkstoffcodesystem, Straße, Postleitzahl, Ort, Bundesland, Land, Sterbezeitpunkt, Dokumenttext, Dokumentcode, Dokumentcodesystem, Dokumentbezeichner;
         @Override public boolean isMandatory() { return false; }
         @Override public String toString() { return name().replace('_', ' '); }
     }
@@ -43,13 +43,22 @@ public final class ClinicalValues {
         return values;
     }
     public static Coding coding(String code, String selection) {
-        if (code == null || code.isBlank()) return null;
-        Coding system = systems().get(selection);
-        if (system == null) throw new IllegalArgumentException("Explicit codesystem required: " + selection);
-        Coding coding = system.copy();
+        if ((code == null || code.isBlank()) && (selection == null || selection.isBlank())) return null;
+        Coding coding = selection == null || selection.isBlank() ? new Coding() : DiagnosisValues.system(selection, systems());
         Extension absent = DiagnosisValues.absentReason(code);
         if (absent == null) coding.setCode(code); else coding.getCodeElement().addExtension(absent);
         return coding;
+    }
+    public static StringType text(String value) {
+        if (value == null || value.isBlank()) return null;
+        Extension absent = value.startsWith(DiagnosisValues.DAR_PREFIX) || value.endsWith(" (Data Absent Reason)")
+                ? DiagnosisValues.absentReason(value) : null;
+        return absent == null ? new StringType(value) : (StringType) new StringType().addExtension(absent);
+    }
+    public static InstantType instant(String value) {
+        if (value == null || value.isBlank()) return null;
+        Extension absent = DiagnosisValues.absentReason(value);
+        return absent == null ? new InstantType(value) : (InstantType) new InstantType().addExtension(absent);
     }
     public static DateTimeType date(String value) throws Exception {
         if (value == null || value.isBlank()) return null;

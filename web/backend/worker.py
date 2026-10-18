@@ -15,6 +15,7 @@ import zipfile
 
 import store
 import inputs
+import run_outcomes
 
 stopping = False
 
@@ -57,6 +58,7 @@ def execute(job_id):
         input_path = folder / inputs.input_filename(kind)
         if store.digest(input_path) != snapshot["inputSha256"]:
             raise RuntimeError("Input snapshot has changed")
+        bulk = snapshot.get('generation', {}).get('executionMode') == 'bulk'
         native = kind == 'synthea-generation' and snapshot.get('generation', {}).get('outputMode') == 'synthea'
         if kind.startswith('synthea'):
             if not native and synthea_runtime.fingerprint() != snapshot['syntheaImportSha256']:
@@ -76,6 +78,12 @@ def execute(job_id):
                        '-p', str(snapshot.get('patientsPerFile', 1))]
             if snapshot.get('validation', False):
                 command.append('-v')
+        elif kind == 'workbook-set':
+            import run_replay
+            run_replay.verify(folder, json.loads(input_path.read_text()))
+            if snapshot.get('clinicalTimeZone'):
+                command.append('-Duser.timezone=' + snapshot['clinicalTimeZone'])
+            command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-i', str(folder / 'workbooks')])
         elif kind == 'csv':
             expanded = folder / 'input-csv'
             inputs.extract_csv(input_path, expanded)
@@ -89,12 +97,31 @@ def execute(job_id):
             command.extend(["--converter-options", str(folder / "default.config")])
         if kind == 'synthea-generation':
             command += ['--', *generation.arguments(json.loads(input_path.read_text()))]
-        if native:
+        if native and not bulk:
             destination = folder / 'output/run-synthea'
             destination.mkdir(parents=True)
             command = generation.native_command(snapshot['generation'], destination)
-        with (folder / "converter.log").open("w") as log:
-            process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        if bulk:
+            import bulk_resources
+            bulk_resources.require_available(container=True)
+            from pathlib import Path
+            command = [sys.executable, str(Path(__file__).with_name('bulk_generation.py')), str(folder)]
+        environment = dict(os.environ)
+        environment.pop('EXCEL2FHIR_CONSENT_SEED', None)
+        environment.pop('EXCEL2FHIR_CONSENT_CONTEXT', None)
+        if kind == 'synthea-generation' and snapshot['generation'].get('syntheticConsent'):
+            environment['EXCEL2FHIR_CONSENT_SEED'] = snapshot['generation']['patientSeed']
+            environment['EXCEL2FHIR_CONSENT_CONTEXT'] = json.dumps({
+                'end_date': snapshot['generation']['endDate'],
+                'years_of_history': snapshot['generation']['yearsOfHistory']})
+        if kind.startswith('synthea') and not native:
+            table_format = snapshot.get('tableFormat', 'excel')
+            if table_format not in {'csv', 'excel'}:
+                raise ValueError('Unknown Synthea table format')
+            environment['EXCEL2FHIR_TABLE_FORMAT'] = table_format
+            environment['EXCEL2FHIR_DIAGNOSTICS'] = 'true' if snapshot.get('diagnostics', True) else 'false'
+        with (folder / "converter.log").open("a" if bulk else "w") as log:
+            process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=environment)
             while process.poll() is None:
                 if stopping or store.get(job_id)["cancel"]:
                     terminate(process)
@@ -108,7 +135,7 @@ def execute(job_id):
                 state = 'failed'
                 with (folder / 'converter.log').open('a') as log:
                     log.write('\n' + failure['evidence'] + '\n')
-        if kind == 'synthea-generation' and state in {'succeeded', 'failed'} and not failure:
+        if not bulk and kind == 'synthea-generation' and state in {'succeeded', 'failed'} and not failure:
             generated = list((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
             if native:
                 generated = list((folder / 'output/run-synthea/fhir').glob('*.json'))
@@ -117,20 +144,26 @@ def execute(job_id):
             (folder / 'generation-result.json').write_text(json.dumps({
                 'generatedPatients': generation.patient_count(generated), 'importedPatients': len(summary.get('results', [])),
                 'failedPatients': len(summary.get('failures', []))}))
-        if state in {"succeeded", "failed"}:
+        if not bulk and state in {"succeeded", "failed"}:
             if not failure:
                 datasets.build(job_id, snapshot, lambda: stopping or bool(store.get(job_id)["cancel"]))
+            run_outcomes.save(folder, snapshot, state)
             with zipfile.ZipFile(folder / "result.tmp", "w", zipfile.ZIP_DEFLATED) as archive:
                 for path in sorted((folder / "output").rglob("*")):
                     if path.is_file():
                         archive.write(path, path.relative_to(folder))
                 if (folder / "generation-result.json").exists():
                     archive.write(folder / "generation-result.json", "generation-result.json")
-                for name in ("datasets.json", "failure.json"):
+                for name in ("datasets.json", "failure.json", "outcomes.json"):
                     if (folder / name).exists():
                         archive.write(folder / name, name)
                 for path in folder.glob("dataset-*.log"):
                     archive.write(path, path.name)
+                if kind == 'workbook-set':
+                    for path in sorted((folder / 'workbooks').glob('*.xlsx')):
+                        archive.write(path, path.relative_to(folder))
+                    archive.write(folder / 'workbooks.json', 'workbooks.json')
+                    archive.write(folder / 'default.config', 'default.config')
                 archive.write(folder / "snapshot.json", "snapshot.json")
                 archive.write(folder / "converter.log", "converter.log")
             (folder / "result.tmp").rename(folder / "result.zip")

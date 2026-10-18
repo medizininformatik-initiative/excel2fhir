@@ -24,6 +24,36 @@ public class ClinicalEncounterAssignmentTest {
     private void context(ConverterResult r, Resource resource, boolean explicitTime, String... ids) {
         r.recordInput(resource, new ConverterResult.InputContext("p", List.of(ids), 4, explicitTime));
     }
+    @Test public void outputPoliciesPreserveInputAndIndependentVariants() throws Exception {
+        var r = result("MEDICATION_MODE=reference-only\nMEDICATION_DESCRIPTION=true\n");
+        Encounter encounter = contact(r, "p", "department", DEPARTMENT, "2026-05-01", null);
+        Medication medication = new Medication(); medication.setId("drug");
+        medication.addIdentifier().setSystem("urn:product").setValue("123");
+        medication.setCode(new CodeableConcept().setText("Example medication"));
+        MedicationRequest source = new MedicationRequest(); source.setId("request");
+        source.setMedication(new Reference("Medication/drug"));
+        source.setEncounter(new Reference("Encounter/original"));
+        source.setAuthoredOnElement(new DateTimeType("2026-05-03"));
+        source.addDosageInstruction().setText("Original dosage");
+        context(r, source, false);
+        var selection = new ResourceOutputPolicy(r.getConverterOptions().configuration(),
+                List.of(source, medication, encounter));
+        Resource expected = selection.output(policy(r).output(source));
+        MedicationRequest first = (MedicationRequest)selection.output(policy(r).output(source));
+        assertNotSame(source, first);
+        assertTrue(expected.equalsDeep(first));
+        MedicationRequest second = (MedicationRequest)selection.output(policy(r).output(source));
+        assertNotSame(first, second);
+        first.getMedicationReference().getIdentifier().setValue("changed");
+        first.getDosageInstructionFirstRep().setText("Changed dosage");
+        first.getEncounter().setReference("Encounter/changed");
+        assertTrue(expected.equalsDeep(second));
+        assertEquals("Encounter/original", source.getEncounter().getReference());
+        assertEquals("Original dosage", source.getDosageInstructionFirstRep().getText());
+        assertFalse(source.getMedicationReference().hasIdentifier());
+        assertEquals("123", medication.getIdentifierFirstRep().getValue());
+        assertEquals("department", encounter.getId());
+    }
     @Test public void conditionMatchingUsesInputIdentityEvenWithoutPatientReference() throws Exception {
         var r = result("PATIENT_MODE=neither\nCONTACT_FACILITY_ENABLED=false\n");
         contact(r, "p", "department", DEPARTMENT, "2026-05-01", null);
@@ -64,6 +94,7 @@ public class ClinicalEncounterAssignmentTest {
         var date = new DateTimeType("2026-05-02");
         Procedure procedure = new Procedure(); procedure.setPerformed(new Period().setStartElement(date));
         Observation lab = new Observation(); lab.setEffective(date);
+        lab.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         Observation vital = new Observation(); vital.setEffective(date);
         vital.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("vital-signs");
         MedicationRequest request = new MedicationRequest(); request.setAuthoredOnElement(date);
@@ -127,6 +158,7 @@ public class ClinicalEncounterAssignmentTest {
         var ends = new EncounterOutputPolicy(r.getConverterOptions().configuration(), r.contacts());
         assertEquals("2026-05-01", ((Encounter)ends.output(imp)).getPeriod().getEndElement().getValueAsString());
         var observation = new Observation(); observation.setId("o");
+        observation.addCategory().addCoding().setSystem("http://terminology.hl7.org/CodeSystem/observation-category").setCode("laboratory");
         observation.setEffective(new DateTimeType("2026-05-10")); context(r, observation, false);
         assertEquals("Encounter/imp", ((Observation)policy(r).output(observation)).getEncounter().getReference());
         var document = new DocumentReference(); document.setId("d");

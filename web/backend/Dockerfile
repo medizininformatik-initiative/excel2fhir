@@ -1,11 +1,16 @@
 FROM maven:3.8.5-openjdk-17 AS synthea-build
 COPY scripts/synthea-version.txt /synthea-version.txt
+COPY scripts/synthea-workbench /workbench-selection
 WORKDIR /synthea
 RUN git init && git remote add origin https://github.com/astruebi/synthea.git \
     && git fetch --depth 1 origin "$(cat /synthea-version.txt)" \
     && git checkout --detach FETCH_HEAD \
     && test "$(git rev-parse HEAD)" = "$(cat /synthea-version.txt)" \
-    && ./gradlew --no-daemon shadowJar
+    && git apply /workbench-selection/generator.patch \
+    && cp /workbench-selection/InpatientSelection.java src/main/java/org/mitre/synthea/engine/ \
+    && ./gradlew --no-daemon shadowJar \
+    && javac -cp build/libs/synthea-with-dependencies.jar -d /tmp/selection-tests /workbench-selection/InpatientSelectionTest.java \
+    && java -cp /tmp/selection-tests:build/libs/synthea-with-dependencies.jar org.mitre.synthea.engine.InpatientSelectionTest
 
 FROM maven:3.8.5-openjdk-17 AS converter
 WORKDIR /build
@@ -56,7 +61,7 @@ COPY web/backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY web/backend/*.py .
 COPY --from=runtime-files / /
-RUN PYTHONPATH=/synthea/scripts python -c "from check_dar import catalogue; from check_medication_transformations import ucum_tables; catalogue(); ucum_tables()"
+RUN PYTHONPATH=/synthea/scripts python -c "from check_dar import catalogue; catalogue()"
 COPY --from=blazectl /blazectl/blazectl /usr/local/bin/blazectl
 COPY third-party/blazectl/LICENSE /usr/share/doc/blazectl/LICENSE
 RUN useradd --create-home --uid 10001 workbench && mkdir /data && chown workbench /data
@@ -64,7 +69,7 @@ USER workbench
 CMD ["python", "worker.py"]
 
 FROM amazoncorretto:17.0.20-alpine AS api
-RUN apk add --no-cache python3 py3-pip && python3 -m venv /opt/venv
+RUN apk add --no-cache python3 py3-pip tzdata && python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 COPY web/backend/requirements.txt .
@@ -73,4 +78,5 @@ COPY web/backend/*.py .
 COPY --from=runtime-files / /
 RUN adduser -D -u 10001 workbench && mkdir /data && chown workbench /data
 USER workbench
+RUN python -c "from bulk_generation import output_directory_name; from uuid import UUID; assert output_directory_name(str(UUID(int=0)), 'timezone-check', 0).startswith('19700101-010000_')"
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]

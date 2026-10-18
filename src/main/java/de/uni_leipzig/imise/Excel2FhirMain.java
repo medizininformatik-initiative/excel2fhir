@@ -26,6 +26,12 @@ import picocli.CommandLine.Option;
 @Command(name = "excel2fhir", mixinStandardHelpOptions = true, version = "1.0", description = "Converts a directory containing multiple excel files into (a) json bundle(s).")
 public class Excel2FhirMain implements Callable<Integer> {
 
+    private final File csvInput;
+
+    public Excel2FhirMain() { this(null); }
+
+    Excel2FhirMain(File csvInput) { this.csvInput = csvInput; }
+
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Excel2FhirMain.class);
 
@@ -107,7 +113,7 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         if (inputFile == null && inputDirectory == null)
             inputDirectory = new File("input");
-        if (inputFile != null && !inputFile.isFile())
+        if (csvInput == null && inputFile != null && !inputFile.isFile())
             throw new IllegalArgumentException("Input file not found: " + inputFile);
         if (inputDirectory != null) {
             File[] inputs = inputDirectory.listFiles(f -> f.isFile() && !f.getName().startsWith("~")
@@ -115,13 +121,17 @@ public class Excel2FhirMain implements Callable<Integer> {
             if (inputs == null || inputs.length == 0)
                 throw new IllegalArgumentException("No Excel workbooks in " + inputDirectory);
         }
-        WorkflowRun run = new WorkflowRun(outputDirectory, tempDirectory, "excel-to-fhir");
-        FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
-                logFileContentLayout);
-        try {
+        if (csvInput != null && (!csvInput.isDirectory() || inputFile == null || inputDirectory != null))
+            throw new IllegalArgumentException("CSV batch input requires a directory and a logical file name");
+        WorkflowRun run = new WorkflowRun(outputDirectory, tempDirectory, csvInput == null ? "excel-to-fhir" : "csv-to-fhir");
+        try (var log = FileLogger.openRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
+                logFileContentLayout)) {
             List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
-            if (inputFile != null) {
+            if (csvInput != null) {
+                converter.convertCsvDirectory(inputFile, csvInput, run.csv.toFile(), run.staging.toFile(),
+                        patientsPerBundle, outputFileTypes);
+            } else if (inputFile != null) {
                 converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             } else {

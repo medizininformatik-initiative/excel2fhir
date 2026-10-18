@@ -30,10 +30,7 @@ public final class AdmissionReasonValues {
         if (absent != null) {
             coding.getCodeElement().addExtension(absent);
         } else {
-            String code = VALUES.get(selection);
-            if (code == null) {
-                throw new IllegalArgumentException("Unknown admission reason: " + selection);
-            }
+            String code = VALUES.getOrDefault(selection, selection);
             coding.setCode(code);
         }
         Extension reason = new Extension(EXTENSION);

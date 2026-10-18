@@ -16,18 +16,15 @@ import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.Address;
-import org.hl7.fhir.r4.model.Address.AddressType;
 import org.hl7.fhir.r4.model.Enumerations.AdministrativeGender;
 import org.hl7.fhir.r4.model.HumanName;
 import org.hl7.fhir.r4.model.HumanName.NameUse;
-import org.hl7.fhir.r4.model.Identifier;
-import org.hl7.fhir.r4.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.StringType;
+import org.hl7.fhir.r4.model.DateType;
 
-import com.google.common.base.Strings;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
@@ -85,11 +82,15 @@ public class PatientConverter extends Converter {
         Patient patient = new Patient();
         patient.setMeta(new Meta().addProfile(PROFILE));
         patient.setId(getPatientId());
-        patient.setIdentifier(parseIdentifier());
-        patient.addName(parseName());
-        patient.setGender(parseGender());
-        patient.setBirthDateElement(parseDate(Geburtsdatum));
-        patient.addAddress(parseAddress());
+        HumanName name = parseName();
+        if (!name.isEmpty()) patient.addName(name);
+        patient.setGenderElement(InputCode.of(patient.getGenderElement(), parseGender()));
+        String birthDate = get(Geburtsdatum);
+        var birthAbsent = DiagnosisValues.absentReason(birthDate);
+        if (birthAbsent != null) patient.setBirthDateElement((DateType)new DateType().addExtension(birthAbsent));
+        else if (birthDate != null && !birthDate.isBlank()) patient.setBirthDateElement(parseDate(Geburtsdatum));
+        Address address = parseAddress();
+        if (!address.isEmpty()) patient.addAddress(address);
         patient.setDeceased(ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Sterbezeitpunkt)));
         // String resourceAsJson =
         // OutputFileType.JSON.getParser().setPrettyPrint(true).encodeResourceToString(patient);
@@ -100,89 +101,63 @@ public class PatientConverter extends Converter {
 
     /**
      * @return
-     * @throws Exception
-     */
-    private List<Identifier> parseIdentifier() throws Exception {
-        Identifier identifier = new Identifier()
-                .setSystem("https://" + getDIZId() + ".de/pid")
-                .setValue(getPatientId())
-                .setUse(IdentifierUse.USUAL)
-                .setType(createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "MR"));
-        return Collections.singletonList(identifier);
-    }
-
-    /**
-     * @return
      */
     private HumanName parseName() {
         String forename = get(Vorname);
         String surname = get(Nachname);
         HumanName humanName = new HumanName();
-        // for unknown reasons a Data Absent Reason in name is not valid -> so we set
-        // dummy names
-        if (Strings.isNullOrEmpty(surname)) {
-            surname = "DUMMY_SURNAME";
+        var familyAbsent = explicitNameAbsent(surname);
+        if (familyAbsent != null) humanName.setFamilyElement((StringType)new StringType().addExtension(familyAbsent));
+        else if (surname != null && !surname.isBlank()) humanName.setFamily(surname);
+        var givenAbsent = explicitNameAbsent(forename);
+        if (givenAbsent != null) humanName.addGivenElement().addExtension(givenAbsent);
+        else if (forename != null && !forename.isBlank()) {
+            for (String name : forename.split(" ")) humanName.addGiven(name);
         }
-        if (Strings.isNullOrEmpty(surname)) { // should never happen while we must set the dummy name to be valid
-            warning("Empty " + Nachname + " -> Create Data Absent Reason \"unknown\"");
-            StringType familyElement = humanName.getFamilyElement();
-            familyElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        } else {
-            humanName.setFamily(surname).setUse(NameUse.OFFICIAL);
-        }
-        // same dummy name reason here
-        if (Strings.isNullOrEmpty(forename)) {
-            forename = "DUMMY_NAME";
-        }
-        if (Strings.isNullOrEmpty(forename)) {
-            warning("Empty " + Vorname + " -> Create Data Absent Reason \"unknown\"");
-            StringType givenElement = humanName.addGivenElement();
-            givenElement.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        } else {
-            for (String name : forename.split(" ")) {
-                humanName.addGiven(name);
-            }
-        }
+        if (!humanName.isEmpty()) humanName.setUse(NameUse.OFFICIAL);
         return humanName;
+    }
+
+    private static org.hl7.fhir.r4.model.Extension explicitNameAbsent(String value) {
+        // Ordinary names remain literal; only an explicit marker denotes missing data.
+        return value != null && (value.startsWith(DiagnosisValues.DAR_PREFIX) || value.endsWith(" (Data Absent Reason)"))
+                ? DiagnosisValues.absentReason(value) : null;
     }
 
     /**
      * @return
      * @throws Exception
      */
-    private AdministrativeGender parseGender() throws Exception {
+    private String parseGender() throws Exception {
         String gender = get(Geschlecht);
         if (gender != null) {
-            if (gender.length() != 0) {
+            if (!gender.isBlank()) {
                 switch (gender) {
                 case "m":
                 case "male":
                 case "männlich":
-                    return MALE;
+                    return MALE.toCode();
                 case "w":
                 case "weiblich":
                 case "female":
                 case "f":
-                    return FEMALE;
+                    return FEMALE.toCode();
                 case "d":
                 case "divers":
                 case "other":
                 case "unbestimmt":
-                    return OTHER;
+                    return OTHER.toCode();
                 case "x":
                 case "unbekannt":
                 case "unknown":
-                    return UNKNOWN;
+                    return UNKNOWN.toCode();
                 default:
-                    throw new Exception("Error on " + Person + ": " + Geschlecht + " <" + gender
-                            + "> not parsable for Record: " + this);
+                    return gender;
                 }
             }
-            warning("Geschlecht empty for Record");
-            return UNKNOWN;
+            return null;
         }
-        warning("Geschlecht not found");
-        return UNKNOWN;
+        return null;
     }
 
     /**
@@ -191,24 +166,13 @@ public class PatientConverter extends Converter {
     private Address parseAddress() {
         Address address = new Address();
         String street = ClinicalValues.get(this, ClinicalValues.Column.Straße);
-        if (street != null) address.addLine(street);
-        address.setPostalCode(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl));
-        address.setCity(ClinicalValues.get(this, ClinicalValues.Column.Ort));
+        if (street != null) address.getLine().add(ClinicalValues.text(street));
+        address.setPostalCodeElement(ClinicalValues.text(ClinicalValues.get(this, ClinicalValues.Column.Postleitzahl)));
+        address.setCityElement(ClinicalValues.text(ClinicalValues.get(this, ClinicalValues.Column.Ort)));
         String country = ClinicalValues.get(this, ClinicalValues.Column.Land);
-        address.setCountry(country);
+        address.setCountryElement(ClinicalValues.text(country));
         String state = ClinicalValues.get(this, ClinicalValues.Column.Bundesland);
-        address.setState("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state);
-        return address.isEmpty() ? getDataAbsentAddress() : address.setType(AddressType.BOTH);
-    }
-
-    /**
-     * @return an address filled with UNKNOWN data absent reasons
-     */
-    public Address getDataAbsentAddress() {
-        Address address = new Address();
-        address.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        // address.getCityElement().addExtension(getUnknownDataAbsentReason());
-        // address.getPostalCodeElement().addExtension(getUnknownDataAbsentReason());
+        address.setStateElement(ClinicalValues.text("DE".equals(country) ? GERMAN_STATES.getOrDefault(state == null ? "" : state, state) : state));
         return address;
     }
 

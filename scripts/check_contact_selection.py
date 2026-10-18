@@ -2,6 +2,7 @@
 from check_encounter_policies import instant
 from check_output_selection import enabled
 from synthea_movements import enrich
+from workbook_records import record
 
 LEVELS = {'facility': 'einrichtungskontakt', 'department': 'abteilungskontakt',
           'ward-service': 'versorgungsstellenkontakt'}
@@ -15,7 +16,8 @@ def contact_expectations(source, report):
     options = report.get('converterOptions', {})
     source_contacts = [e['resource'] for e in source['entry'] if e['resource']['resourceType'] == 'Encounter']
     if 'movements' in report:
-        rows = [[report['sourcePatient'], report['encounterNumbers'][r['id']], '', '', CLASSES[r['class']['code']], '', '', '', '', '']
+        rows = [record('Fall', {'Patient-ID': report['sourcePatient'], 'Fall-Nr': report['encounterNumbers'][r['id']],
+                                'Einrichtungskontaktklasse': CLASSES[r['class']['code']]})
                 for r in source_contacts]
         _, movement = enrich(source, rows, report['encounterNumbers'])
         assert movement == report['movements'], 'Movement report or rules changed'
@@ -32,21 +34,21 @@ def contact_expectations(source, report):
     ward_number = int(options.get('START_ID_ENCOUNTER_LEVEL_3', 1))
     phase, previous, primary_end = None, None, None
     for row in movement['contacts']:
-        root = pid + '-E-' + row[1]
-        secondary = row[10] in ('Operation', 'Untersuchung und Behandlung', 'Konsil')
+        root = pid + '-E-' + row['Fall-Nr']
+        secondary = row['Kontaktart'] in ('Operation', 'Untersuchung und Behandlung', 'Konsil')
         if not secondary:
-            if previous != (root, row[5]):
+            if previous != (root, row['Fachabteilung']):
                 phase = root + '-A-' + str(department_number)
                 department_number += 1
-                expected[phase] = dict(id=phase, root=root, level='department', kind='', start=row[2],
-                                       end=row[3], missing=not row[3], cls=expected[root]['cls'], parent=root)
+                expected[phase] = dict(id=phase, root=root, level='department', kind='', start=row['Start'],
+                                       end=row['Ende'], missing=not row['Ende'], cls=expected[root]['cls'], parent=root)
             else:
-                expected[phase]['end'] = row[3]
-            previous, primary_end = (root, row[5]), row[3]
+                expected[phase]['end'] = row['Ende']
+            previous, primary_end = (root, row['Fachabteilung']), row['Ende']
         identifier = root + '-V-' + str(ward_number)
         ward_number += 1
-        expected[identifier] = dict(id=identifier, root=root, level='ward-service', kind=KINDS.get(row[10], ''),
-                                    start=row[2], end=row[3] or primary_end, missing=not row[3],
+        expected[identifier] = dict(id=identifier, root=root, level='ward-service', kind=KINDS.get(row['Kontaktart'], ''),
+                                    start=row['Start'], end=row['Ende'] or primary_end, missing=not row['Ende'],
                                     cls=expected[root]['cls'], parent=phase or root, row=row)
     return expected
 

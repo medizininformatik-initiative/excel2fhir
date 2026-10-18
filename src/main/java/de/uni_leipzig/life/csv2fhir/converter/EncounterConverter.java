@@ -126,32 +126,34 @@ public class EncounterConverter extends Converter {
     private void locations(Encounter encounter, String department, List<Resource> resources) throws Exception {
         Location parent = null;
         String path = getDIZId() + "|" + Objects.toString(department, "");
-        String[] names = {value(Station), value(Zimmer), value(Bett)};
+        String station = value(Station);
         var configuration = options.configuration();
         String providerMode = configuration == null ? "none" : configuration.effective("resource.Encounter.stationServiceProvider")
                 .map(v -> v.asText()).orElse("none");
         boolean stationLocation = configuration == null || configuration.effective("resource.Encounter.stationLocation")
                 .map(v -> v.asBoolean()).orElse(true);
-        if (names[0] != null && !providerMode.equals("none")) {
+        if (station != null && !providerMode.equals("none")) {
             Organization organization = new Organization();
-            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + names[0]));
-            organization.setName(names[0]).setActive(true);
+            organization.setId(ClinicalValues.resourceId(getDIZId(), "Organization", path + "|wa|" + station));
+            organization.setName(station).setActive(true);
             String reference = "Organization/" + organization.getIdElement().getIdPart();
             if (providerMode.equals("contained")) {
                 encounter.addContained(organization);
                 reference = "#" + organization.getIdElement().getIdPart();
             } else if (providerMode.equals("generate-reference")) resources.add(organization);
-            encounter.setServiceProvider(new Reference(reference).setDisplay(names[0]));
+            encounter.setServiceProvider(new Reference(reference).setDisplay(station));
         }
-        String[] types = {"wa", "ro", "bd"};
-        for (int i = 0; i < names.length; i++) {
-            if (names[i] == null) continue;
-            path += "|" + types[i] + "|" + names[i];
-            if (i == 0 && !stationLocation) continue;
+        var types = Map.of(Station, "wa", Zimmer, "ro", Bett, "bd");
+        for (var field : List.of(Station, Zimmer, Bett)) {
+            String name = value(field);
+            if (name == null) continue;
+            String type = types.get(field);
+            path += "|" + type + "|" + name;
+            if (field == Station && !stationLocation) continue;
             Location location = new Location();
             location.setId(ClinicalValues.resourceId(getDIZId(), "Location", path));
-            location.setName(names[i]).setStatus(LocationStatus.ACTIVE);
-            location.setPhysicalType(new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/location-physical-type", types[i], null)));
+            location.setName(name).setStatus(LocationStatus.ACTIVE);
+            location.setPhysicalType(new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/location-physical-type", type, null)));
             if (parent != null) location.setPartOf(new Reference("Location/" + parent.getId()));
             encounter.addLocation().setLocation(new Reference("Location/" + location.getId()))
                     .setPhysicalType(location.getPhysicalType().copy());
@@ -282,12 +284,6 @@ public class EncounterConverter extends Converter {
         }
     }
 
-    /**
-     * Value that will be set if the mandatory column "Versorgungsfall-Nr" is
-     * missing in the data table sheets.
-     */
-    public static final String DEFAULT_ENCOUNTER_ID_NUMBER = "1";
-
     /** Map with the encounter types and its displays. */
     public static final CodeSystemMapper ENCOUNTER_TYPE_RESOURCES = new CodeSystemMapper("Encounter_Type.map");
 
@@ -390,6 +386,7 @@ public class EncounterConverter extends Converter {
      * @return
      */
     public static CodeableConcept createDiagnosisUse(String useIdentifier) {
+        if (useIdentifier == null || useIdentifier.isBlank()) return null;
         String codeSystem = DIAGNOSIS_ROLE_RESOURCES.getCodeSystem();
         String code = DIAGNOSIS_ROLE_RESOURCES.getHumanToCode(useIdentifier);
         String display = DIAGNOSIS_ROLE_RESOURCES.getCodeToHuman(code);
@@ -429,12 +426,6 @@ public class EncounterConverter extends Converter {
      */
     private static void addDiagnosisResourceToEncounter(ConverterResult result, String encounterID,
             Resource conditionOrProcedureAsDiagnosis, String diagnosisUseIdentifier) {
-        // The KDS definition needs a diagnosis use (min cardinality 1), but a
-        // procedure doesn't have this -> arbitrary default
-        if (diagnosisUseIdentifier == null) { // default for missing values
-            String defaultDiagnosisRoleCode = DIAGNOSIS_ROLE_RESOURCES.get("DEFAULT_DIAGNOSIS_ROLE_CODE");
-            diagnosisUseIdentifier = DIAGNOSIS_ROLE_RESOURCES.getFirstBackwardKey(defaultDiagnosisRoleCode);
-        }
         // encounter should be only null in error cases, but mybe we
         // should catch and log
         Encounter encounter = result.get(Fall, Encounter.class, encounterID);
@@ -455,7 +446,10 @@ public class EncounterConverter extends Converter {
         }
         // construct a valid DiagnosisComponent from condition or
         // procedure to add it as reference to the encounter
-        Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis);
+        // Output policies resolve the target before serialization materializes object references.
+        Reference conditionReference = new Reference(conditionOrProcedureAsDiagnosis)
+                .setReference(conditionOrProcedureAsDiagnosis.fhirType() + "/"
+                        + conditionOrProcedureAsDiagnosis.getIdElement().getIdPart());
         // add diagnosis use to the diagnosis component
         CodeableConcept diagnosisUse = EncounterConverter.createDiagnosisUse(diagnosisUseIdentifier);
         DiagnosisComponent diagnosisComponent = new DiagnosisComponent(conditionReference);

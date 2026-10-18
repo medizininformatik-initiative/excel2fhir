@@ -22,6 +22,7 @@ import {
   resourceNavigationStatus,
   resourceOptions,
   previewIdentifier,
+  identifierNumber,
   type Configuration,
   type Option,
   type Value,
@@ -245,7 +246,7 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     </div>
   )
 }
-export function ConfigurationEditor({ language, onChange, initialConfiguration }: { language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
+export function ConfigurationEditor({ language, onChange, initialConfiguration, bulkMode = false }: { bulkMode?: boolean; language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
   const t: Translator = (key, params) =>
     translate(language, key as TextKey, params)
   const [initial] = useState(() => {
@@ -262,7 +263,13 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
     }
   })
   const [config, setConfig] = useState<Configuration>(initial.config)
-  useEffect(() => { onChange?.(config) }, [config, onChange])
+  useEffect(() => {
+    if (bulkMode && (config.values['ids.patient.additionalRepetitions'] !== 0 || config.values['timeShift.iterationDays'] !== 0)) {
+      setConfig(old => ({ ...old, values: { ...old.values, 'ids.patient.additionalRepetitions': 0, 'timeShift.iterationDays': 0 } }))
+      return
+    }
+    onChange?.(config)
+  }, [config, onChange, bulkMode])
   const [tab, setTab] = useState('resources')
   const [message, setMessage] = useState<Message | null>(
     initial.failed ? { key: 'app.config.restoreFailed' } : null
@@ -559,6 +566,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
         )}
         {tab === 'ids' && (
           <div className="space-y-5">
+            {bulkMode && <p className="text-sm text-slate-600">{t('app.bulk.noCopies')}</p>}
             {idGroups.map((group) => (
               <section key={group.prefix} className="rounded-xl border border-slate-200 p-5" aria-label={t(group.key)}>
                 <div className="mb-3 flex items-center gap-2">
@@ -566,7 +574,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                   {group.prefix === 'ids.start.' && <Help text={t('option.ids.start.CONSENT.help')} t={t} />}
                 </div>
                 <div className={`grid gap-x-8 gap-y-2 md:grid-cols-2 ${group.prefix === 'ids.start.' ? 'xl:grid-cols-3' : ''}`}>
-                  {options.filter((o) => o.id.startsWith(group.prefix)).map((option) => (
+                  {options.filter((o) => o.id.startsWith(group.prefix) && (!bulkMode || !['ids.patient.additionalRepetitions', 'timeShift.iterationDays'].includes(o.id))).map((option) => (
                     <div key={option.id} className={option.id === 'timeShift.enabled' || option.id === 'ids.patient.additionalRepetitions' ? 'md:col-span-2' : 'min-w-0'}>
                       <OptionControl
                         option={option}
@@ -629,7 +637,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               {darGroups.filter((group) => darFilter === 'all' || group.filter === darFilter).map((group) => (
                 <section key={group.id} className="rounded-xl border border-slate-200 p-5" aria-labelledby={`dar-group-${group.id}`}>
                   <h3 id={`dar-group-${group.id}`} className="mb-3 text-lg font-semibold text-teal-800">
-                    {t(group.labelKey)}
+                    {t(group.id === 'Encounter' ? 'app.config.encounterDarTitle' : group.labelKey)}
                   </h3>
                   {group.classCode && <p className="mb-3 text-xs text-slate-600">{t('app.config.encounterClass', { code: group.classCode })}</p>}
                   {(group.id === 'Encounter' || group.classCode) && <p className="mb-4 text-sm text-slate-600">{t(group.classCode ? 'app.config.encounterDarScoped' : 'app.config.encounterDarCommon')}</p>}
@@ -685,31 +693,37 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                                 checked={mode === 'unchanged' ? current.mode === 'unchanged' : current.mode === 'overwrite' && (mode === 'missing' ? !!current.onlyWhenMissing : !current.onlyWhenMissing)}
                                 onChange={() => set(mode === 'unchanged' ? 'unchanged' : 'overwrite', code, mode === 'missing')}
                                 className="accent-teal-700" />
-                              {t(mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
+                              {t(mode === 'unchanged' && group.classCode ? 'dar.mode.inherit' : mode === 'missing' ? 'dar.onlyWhenMissing' : `dar.mode.${mode}`)}
                             </label>
                           ))}
                           <Help text={t('dar.onlyWhenMissingHelp')} t={t}/>
                         </div>
-                        <select
-                          aria-label={t(`dar.field.${field.id}.label`)}
-                          value={code}
-                          disabled={!enabled || current.mode !== 'overwrite'}
-                          onChange={(e) => {
-                            setDarCodes((old) => ({
-                              ...old,
-                              [field.id]: e.target.value
-                            }))
-                            set('overwrite', e.target.value)
-                          }}
-                          className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                        >
-                          <option value="">{t('app.config.chooseCode')}</option>
-                          {field.allowedCodes.map((c) => (
-                            <option key={c} value={c}>
-                              {t(`dar.code.${c}`)}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="flex min-w-0 flex-col gap-2">
+                          <select
+                            aria-label={`${t(`dar.field.${field.id}.label`)} – ${t('app.config.standardCode')}`}
+                            value={field.allowedCodes.includes(code) ? code : ''}
+                            disabled={!enabled || current.mode !== 'overwrite'}
+                            onChange={(e) => {
+                              setDarCodes((old) => ({ ...old, [field.id]: e.target.value }))
+                              set('overwrite', e.target.value)
+                            }}
+                            className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                          >
+                            <option value="">{t('app.config.customCode')}</option>
+                            {field.allowedCodes.map((c) => <option key={c} value={c}>{t(`dar.code.${c}`)}</option>)}
+                          </select>
+                          <input
+                            aria-label={t(`dar.field.${field.id}.label`)}
+                            value={code}
+                            placeholder={t('app.config.chooseCode')}
+                            disabled={!enabled || current.mode !== 'overwrite'}
+                            onChange={(e) => {
+                              setDarCodes((old) => ({ ...old, [field.id]: e.target.value }))
+                              set('overwrite', e.target.value)
+                            }}
+                            className="max-w-full rounded-lg border border-slate-300 p-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                          />
+                        </div>
                       </div>
 
                       {!enabled ? (
@@ -718,7 +732,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                         </p>
                       ) : current.mode !== 'overwrite' ? (
                         <p className="mt-2 text-xs text-slate-500">
-                          {t('disabled.darMode')}
+                          {t(group.classCode ? 'app.config.darInherited' : 'disabled.darMode')}
                         </p>
                       ) : null}
                       {field.codeConditions[code] && (
@@ -751,7 +765,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                       id: crypto.randomUUID(),
                       enabled: true,
                       resources: ['Patient'],
-                      system: '',
+                      system: 'https://example.org/fhir/sid/patient-id',
                       pattern: '{count:08}'
                     }
                   ]
@@ -763,6 +777,16 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               <Plus size={16} />
               {t('app.config.addRule')}
             </Button>
+            <span className="ml-3 inline-flex items-center gap-2">
+              <Button variant="outline" onClick={() => {
+                setConfig(c => ({ ...c, identifierRules: [...c.identifierRules, {
+                  id: crypto.randomUUID(), enabled: true, scope: 'case',
+                  resources: ['Encounter'], system: 'https://example.org/fhir/sid/case-id', pattern: '{patientId}-{caseId}'
+                }] }))
+                setDirty(true); setMessage(null)
+              }}><Plus size={16}/>{t('app.config.addCaseRule')}</Button>
+              <Help text={t('app.config.caseRuleHelp')} t={t}/>
+            </span>
             {config.identifierRules.length === 0 && (
               <p className="mt-6 text-sm text-slate-500">
                 {t('app.config.noRules')}
@@ -775,12 +799,12 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
               >
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-semibold">
-                    {t('app.config.rule', { number: index + 1 })}
+                    {t(rule.scope === 'case' ? 'app.config.caseRule' : 'app.config.rule', { number: identifierNumber(config.identifierRules, index) })}
                   </h3>
                   <Button
                     variant="outline"
-                    aria-label={t('app.config.removeRule', {
-                      number: index + 1
+                    aria-label={t(rule.scope === 'case' ? 'app.config.removeCaseRule' : 'app.config.removeRule', {
+                      number: identifierNumber(config.identifierRules, index)
                     })}
                     onClick={() => {
                       setConfig((c) => ({
@@ -857,6 +881,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration }
                     />
                   </label>
                   <IdentifierPatternControl
+                    scope={rule.scope}
                     value={rule.pattern}
                     countStart={rule.countStart ?? 1}
                     onCountStartChange={(countStart) => updateRule(rule.id, { countStart })}

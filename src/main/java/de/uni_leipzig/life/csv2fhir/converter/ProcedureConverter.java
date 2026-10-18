@@ -1,6 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static de.uni_leipzig.life.csv2fhir.BundleFunctions.getEncounterDate;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_ENCOUNTER_TO_PROCEDURE_CONDITION;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.SET_REFERENCE_FROM_PROCEDURE_CONDITION_TO_ENCOUNTER;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_PROCEDURE;
@@ -11,7 +10,6 @@ import static de.uni_leipzig.life.csv2fhir.converter.ProcedureConverter.Procedur
 import static java.util.Collections.singletonList;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
@@ -26,7 +24,6 @@ import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.utils.TerminologyVersionUtil;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -75,7 +72,7 @@ public class ProcedureConverter extends Converter {
         var end = ClinicalValues.date(ClinicalValues.get(this, ClinicalValues.Column.Ende));
         procedure.setPerformed(end == null ? start : new org.hl7.fhir.r4.model.Period().setStartElement(start).setEndElement(end));
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
-        procedure.setStatus(status == null ? Procedure.ProcedureStatus.COMPLETED : Procedure.ProcedureStatus.fromCode(status));
+        procedure.setStatusElement(InputCode.of(procedure.getStatusElement(), status));
         Coding category = convertSnomedCategory();
         if (category != null) procedure.setCategory(new CodeableConcept(category));
         procedure.setCode(convertProcedureCode());
@@ -106,69 +103,23 @@ public class ProcedureConverter extends Converter {
      * @throws Exception
      */
     private CodeableConcept convertProcedureCode() throws Exception {
-        String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
-        if (selection != null) {
-            CodeableConcept code = ClinicalValues.concept(get(Prozedurencode), selection, get(Prozedurentext));
-            Coding extra = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
-                    ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
-            if (hasColumn("Version")) CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
-            if (hasColumn("Zusatzversion")) CodingVersion.apply(extra, get("Zusatzversion"));
-            if (extra != null) code.addCoding(extra);
-            return code;
+        CodeableConcept code = ClinicalValues.concept(get(Prozedurencode),
+                ClinicalValues.get(this, ClinicalValues.Column.Codesystem), get(Prozedurentext));
+        Coding extra = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
+                ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
+        if (hasColumn("Version") && (code.hasCoding() || !isBlank(get("Version"))))
+            CodingVersion.apply(code.getCodingFirstRep(), get("Version"));
+        if (hasColumn("Zusatzversion")) {
+            if (extra == null && !isBlank(get("Zusatzversion"))) extra = new Coding();
+            CodingVersion.apply(extra, get("Zusatzversion"));
         }
-        Coding procedureCoding = createCoding("http://fhir.de/CodeSystem/bfarm/ops", Prozedurencode);
-        if (procedureCoding != null) {
-            procedureCoding.setVersion(TerminologyVersionUtil
-                    .getOpsVersion(getEncounterDate(result, getPatientId(), getEncounterId())));
-            return createCodeableConcept(procedureCoding, Prozedurentext);
-        }
-        return null;
+        if (extra != null) code.addCoding(extra);
+        return code;
     }
 
-    /**
-     * @return
-     * @throws Exception
-     */
     private Coding convertSnomedCategory() throws Exception {
         String explicit = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
-        if (explicit != null) return ClinicalValues.coding(explicit, DiagnosisValues.SNOMED);
-        String selection = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
-        Coding selectedSystem = ClinicalValues.systems().get(selection);
-        if (selection != null && (selectedSystem == null
-                || !"http://fhir.de/CodeSystem/bfarm/ops".equals(selectedSystem.getSystem()))) return null;
-        String code = get(Prozedurencode);
-        String display = null;
-        if (code != null && !code.isBlank()) {
-            switch (code.charAt(0)) {
-            case '1':
-                code = "103693007";
-                display = "Diagnostic procedure";
-                break;
-            case '3':
-                code = "363679005";
-                display = "Imaging";
-                break;
-            case '5':
-                code = "387713003";
-                display = "Surgical procedure";
-                break;
-            case '6':
-                code = "18629005";
-                display = "Administration of medicine";
-                break;
-            case '8':
-                code = "277132007";
-                display = "Therapeutic procedure";
-                break;
-            case '9':
-                code = "394841004";
-                display = "Other category";
-                break;
-            default:
-                return null;
-            }
-        }
-        return createCoding("http://snomed.info/sct", code, display);
+        return explicit == null ? null : ClinicalValues.coding(explicit, DiagnosisValues.SNOMED);
     }
 
 }

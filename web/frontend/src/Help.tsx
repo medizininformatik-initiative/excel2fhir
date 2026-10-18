@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { tooltipPosition } from './tooltip-position'
 import { Info } from 'lucide-react'
@@ -14,6 +14,27 @@ export function Help({ text, t }: { text: string; t: Translator }) {
   const anchor = useRef<HTMLSpanElement>(null)
   const tooltip = useRef<HTMLSpanElement>(null)
   const [position, setPosition] = useState<CSSProperties>({})
+  useEffect(() => {
+    if (!open) return
+    const close = () => {
+      setHovered(false)
+      setFocused(false)
+      setPinned(false)
+    }
+    const outside = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Node && !anchor.current?.contains(target) && !tooltip.current?.contains(target)) close()
+    }
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close()
+    }
+    document.addEventListener('pointerdown', outside, true)
+    document.addEventListener('keydown', escape)
+    return () => {
+      document.removeEventListener('pointerdown', outside, true)
+      document.removeEventListener('keydown', escape)
+    }
+  }, [open])
   useLayoutEffect(() => {
     if (!open) return
     const update = () => {
@@ -59,17 +80,18 @@ export function Help({ text, t }: { text: string; t: Translator }) {
         aria-expanded={open}
         aria-controls={id}
         aria-describedby={open ? id : undefined}
-        onFocus={() => setFocused(true)}
+        onFocus={event => setFocused(event.currentTarget.matches(':focus-visible'))}
         onBlur={() => {
           setFocused(false)
           setPinned(false)
         }}
-        onClick={() => setPinned(!pinned)}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
+        onClick={() => {
+          if (pinned) {
             setPinned(false)
             setFocused(false)
             setHovered(false)
+          } else {
+            setPinned(true)
           }
         }}
         className="rounded p-1 text-slate-500 focus-visible:outline-2 focus-visible:outline-teal-700"

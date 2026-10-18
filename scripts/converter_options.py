@@ -5,7 +5,7 @@ def resolve_config(path=None, patients=None):
     from pathlib import Path
     import subprocess
     root = Path(__file__).resolve().parents[1]
-    request = {'text': Path(path).read_text(encoding='utf-8') if path is not None else '', 'defaults': {}}
+    request = {'text': Path(path).read_text(encoding='utf-8') if path is not None else ''}
     if path is not None:
         request['name'] = Path(path).stem
     if patients is not None:

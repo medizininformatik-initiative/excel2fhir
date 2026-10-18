@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_OFFSET;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -15,10 +13,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Range;
 
 import de.uni_leipzig.life.csv2fhir.utils.ResourceMapper;
 
@@ -96,7 +92,7 @@ public class ConverterOptions {
             return;
         }
         try {
-            readValues(Files.readString(path));
+            readConfiguration(Files.readString(path));
         } catch (IOException e) {
             errors.add("Cannot read options file: " + fileName + ": " + e.getMessage());
         }
@@ -104,6 +100,21 @@ public class ConverterOptions {
 
     public static ConverterOptions fromText(String text) {
         return fromText(text, Map.of());
+    }
+
+    /** Parse a supplied configuration using the current versioned contract. */
+    public static ConverterOptions fromConfigurationText(String text) {
+        ConverterOptions result = new ConverterOptions("");
+        result.readConfiguration(text);
+        return result;
+    }
+
+    private void readConfiguration(String text) {
+        if (!ContractConfiguration.isContractText(text)) {
+            errors.add("Configuration must include CONFIGURATION_VERSION=1. Use --export-default-options to create a configuration.");
+            return;
+        }
+        readValues(text);
     }
 
     /** Layer explicit values over the caller's defaults without treating overrides as duplicates. */
@@ -144,6 +155,11 @@ public class ConverterOptions {
             values.load(new StringReader(text));
         } catch (IOException | IllegalArgumentException e) {
             errors.add("Invalid converter options: " + e.getMessage());
+        }
+        for (String retired : List.of("PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET", "PID_LAST_NUMBER_INCREASE_LOOP_OFFSET")) {
+            Object value = values.remove(retired);
+            if (value != null && !value.toString().trim().equals("0"))
+                errors.add(retired + ": numeric patient offsets are unsupported; use a prefix or suffix");
         }
         options.putAll(values);
         String versionOutput = getValue(StringOption.SYNTHEA_VERSION_OUTPUT);
@@ -377,26 +393,7 @@ public class ConverterOptions {
         START_ID_PROCEDURE,
         START_ID_DOCUMENT_REFERENCE,
 
-        /**
-         * The last number in all patient IDs of an data set will be increased by this
-         * value. At the beginning this number will be added to all patient IDs.</br>
-         * Default value is 0.
-         */
-        PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET(0),
-        /**
-         * The last number in all patient IDs of an data set will be increased by this
-         * value on every loop. For a contiguous numeric ID range this number must be
-         * greater than the difference between the highest and lowest number. If
-         * not then some patients can be generated with the same ID.</br>
-         * Default value is 0.
-         */
-        PID_LAST_NUMBER_INCREASE_LOOP_OFFSET(0),
-        /**
-         * Count of repetitions of increasings of the patient ID. If you want to expand
-         * a data set n times then set this value to n and the
-         * PID_LAST_NUMBER_INCREASE_LOOP_OFFSET in the described way.</br>
-         * Default value is 0.
-         */
+        /** Additional copies of each patient, identified by a -rep-N suffix. */
         PID_LAST_NUMBER_INCREASE_LOOP_COUNT(0);
 
         /** Default value of the int option */
@@ -461,64 +458,6 @@ public class ConverterOptions {
 
     }
 
-    /**
-     * @param s
-     * @return the substring positions of the last integer number in this string
-     */
-    private static Range<Integer> getLastNumberStringBounds(String s) {
-        // this is probably still faster than using a RegExp
-        int start = -1;
-        int end = -1;
-        for (int i = s.length() - 1; i >= 0; i--) {
-            char c = s.charAt(i);
-            if (Character.isDigit(c)) {
-                if (end == -1) {
-                    end = i + 1;
-                }
-                start = i;
-            } else if (end != -1) {
-                break;
-            }
-        }
-        return Range.closedOpen(start, end);
-    }
-
-    /**
-     * @param pid
-     * @return
-     */
-    public String getIncreasedLastPidNumber(String pid, int value) {
-        Range<Integer> lastNumberStringBounds = getLastNumberStringBounds(pid);
-        int start = lastNumberStringBounds.lowerEndpoint();
-        int end = lastNumberStringBounds.upperEndpoint();
-        if (start < 0 || end < 0) {
-            throw new IllegalArgumentException("PID does not contain a number to increase: " + pid);
-        }
-        String preNumberString = pid.substring(0, start);
-        String numberSubString = pid.substring(start, end);
-        String afterNumberString = pid.substring(end);
-        int numberLength = numberSubString.length();
-        int number = parsePidNumber(pid, numberSubString);
-        number = Math.addExact(number, value);
-        numberSubString = Integer.toString(number);
-        if (numberSubString.length() < numberLength) {
-            numberSubString = StringUtils.leftPad(numberSubString, numberLength, "0");
-        }
-        return preNumberString + numberSubString + afterNumberString;
-    }
-
-    private static int parsePidNumber(String pid, String numberSubString) {
-        try {
-            return Integer.parseInt(numberSubString);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("PID contains an invalid number to increase: " + pid, e);
-        }
-    }
-
-    /**
-     * @param pid
-     * @return
-     */
     public String getFullPID(String pid) {
         return getFullPID(pid, loopCounter);
     }
@@ -532,18 +471,11 @@ public class ConverterOptions {
     }
 
     private String getFullPIDForFileName(String pid, int iteration) {
-        int loopOffset = Math.multiplyExact(iteration, getValue(PID_LAST_NUMBER_INCREASE_LOOP_OFFSET));
-        int pidOffset = Math.addExact(getValue(PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET), loopOffset);
-        if (pidOffset > 0) {
-            pid = getIncreasedLastPidNumber(pid, pidOffset);
-        }
-        pid = getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX);
-        return pid;
+        if (iteration < 0) throw new IllegalArgumentException("Repetition must be at least 0");
+        return getValue(StringOption.PID_PREFIX) + pid + getValue(StringOption.PID_SUFFIX)
+                + (iteration == 0 ? "" : "-rep-" + iteration);
     }
 
-    /**
-     * @return
-     */
     public String getPrefixWithSuffix() {
         return getValue(StringOption.PID_PREFIX) + getValue(StringOption.PID_SUFFIX);
     }

@@ -62,10 +62,12 @@ public class ConditionConverterTest {
     }
 
     @Test
-    public void requiresSystemAndRejectsUnknownSelections() throws Exception {
-        assertThrows(Exception.class, () -> convert(Map.of("Code", "00123")));
-        assertThrows(Exception.class, () -> convert(Map.of("Klinischer Status", "made-up")));
-        assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:made-up")));
+    public void preservesCodeWithoutSystemAndFreeCodes() throws Exception {
+        assertEquals("00123", convert(Map.of("Code", "00123")).getCode().getCodingFirstRep().getCode());
+        assertFalse(convert(Map.of("Code", "00123")).getCode().getCodingFirstRep().hasSystem());
+        assertEquals("made-up", convert(Map.of("Klinischer Status", "made-up")).getClinicalStatus().getCodingFirstRep().getCode());
+        assertEquals("made-up", convert(Map.of("Beginn", "!dar:made-up")).getOnsetDateTimeType().getExtensionFirstRep().getValue().primitiveValue());
+        assertThrows(Exception.class, () -> convert(Map.of("Beginn", "!dar:")));
         assertEquals(2, convert(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
                 "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).getCode().getCoding().size());
     }
@@ -98,4 +100,12 @@ public class ConditionConverterTest {
             return (Condition) resources.get(0);
         }
     }
+    @Test public void systemUrisRemainLiteralAndSuggestedLabelsKeepTheirMeaning() {
+        for (String uri : java.util.List.of("https://example.invalid/system", "urn:oid:1.2.3", "urn:example:custom"))
+            assertEquals(uri, DiagnosisValues.system(uri, DiagnosisValues.systems()).getSystem());
+        assertEquals("2026", DiagnosisValues.system("ICD-10-GM 2026", DiagnosisValues.systems()).getVersion());
+        for (String invalid : java.util.List.of("", "not-a-uri", "https://has space"))
+            assertThrows(IllegalArgumentException.class, () -> DiagnosisValues.system(invalid, DiagnosisValues.systems()));
+    }
+
 }

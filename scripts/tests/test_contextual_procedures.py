@@ -44,26 +44,27 @@ class ContextualProceduresTest(unittest.TestCase):
         changed['contextualRules']['echo']['candidates'][0]['weight'] = 0
         with self.assertRaises(ValueError): validate_structure(changed)
 
-    def test_existing_and_new_maternal_codes_reject_male_newborn_and_unknown(self):
+    def test_maternal_codes_retain_source_for_male_newborn_and_unknown(self):
         for code in ('177157003', '31208007', '169230002', '386216000', '1263416007', '287664005'):
             for sex, birth in [('male', '1980-01-01'), ('female', '2026-09-01'), ('unknown', '1980-01-01')]:
                 with self.subTest(code=code, sex=sex, birth=birth):
                     d = project(source(code, sex=sex, birth=birth))['procedure']
-                    self.assertEqual(d['status'], 'context-conflict')
-                    self.assertEqual(d['outputs'], [])
+                    self.assertTrue(d['contextWarning'])
+                    self.assertEqual(d['outputs'][0]['codings'][0]['code'], code)
+                    self.assertEqual(ops(d), [])
         self.assertIn('9-261', ops(project(source('31208007'))['procedure']))
 
-    def test_male_reproductive_source_rejects_female(self):
-        self.assertEqual(project(source('65575008'))['procedure']['status'], 'context-conflict')
+    def test_male_reproductive_source_retained_for_female(self):
+        self.assertEqual(project(source('65575008'))['procedure']['status'], 'source-preserved')
         self.assertEqual(ops(project(source('65575008', sex='male'))['procedure']), ['1-464.00'])
 
-    def test_reproductive_history_blocks_later_pregnancy_not_its_own_operation(self):
+    def test_reproductive_history_prevents_enrichment_but_retains_source(self):
         s = source('31208007')
         s.insert(3, {'resource': {'resourceType': 'Procedure', 'id': 'hyst', 'status': 'completed',
                                 'subject': {'reference': 'Patient/p'}, 'encounter': {'reference': 'Encounter/e'},
                                 'code': {'coding': [{'system': SCT, 'code': 'fake-hyst', 'display': 'Hysterectomy'}]},
                                 'performedDateTime': '2025-01-01T00:00:00Z'}})
-        self.assertEqual(project(s)['procedure']['status'], 'context-conflict')
+        self.assertEqual(project(s)['procedure']['status'], 'source-preserved')
 
     def test_weighted_choice_is_order_independent_and_has_genuine_variation(self):
         s = source('40701008')
@@ -139,7 +140,7 @@ class ContextualProceduresTest(unittest.TestCase):
         invalid = source('367336001', 'after-death')[-1]
         invalid['resource']['performedPeriod'] = {'start': '2026-09-02T08:00:00+02:00'}
         result = project(s + [invalid])
-        self.assertEqual(result['after-death']['status'], 'context-conflict')
+        self.assertEqual(result['after-death']['status'], 'source-preserved')
         self.assertEqual(result['valid']['chemotherapyBlock']['sourceIds'], ['valid'])
         self.assertEqual(summary(result)['withOps'], 1)
 
@@ -173,14 +174,14 @@ class ContextualProceduresTest(unittest.TestCase):
         self.assertNotIn('1-770', ops(d))
         self.assertTrue(any(c['code'] == '1-770' for c in d['contextualSelection']['rejectedCandidates']))
 
-    def test_after_death_is_withheld_and_reference_aliases_are_supported(self):
+    def test_after_death_is_preserved_and_reference_aliases_are_supported(self):
         s = source('40701008');s[0]['resource']['deceasedDateTime'] = '2026-08-01T00:00:00Z'
-        self.assertEqual(project(s)['procedure']['status'], 'context-conflict')
+        self.assertEqual(project(s)['procedure']['status'], 'source-preserved')
         s = source('40701008');s[-1]['resource']['subject']['reference'] = 'Patient/p'
         s[-1]['resource']['encounter']['reference'] = 'Encounter/e'
         self.assertTrue(ops(project(s)['procedure']))
 
-    def test_independent_audit_requires_evidence_for_omissions(self):
+    def test_independent_audit_requires_evidence_and_source_retention_for_warnings(self):
         for sex in ('male', 'female'):
             s = source('31208007', sex=sex)
             index = {e['fullUrl']: e['resource'] for e in s}
@@ -188,7 +189,7 @@ class ContextualProceduresTest(unittest.TestCase):
             if sex == 'male':
                 check_conflict(s[-1]['resource'], d, index, DATA)
             else:
-                d.update(outputs=[], status='context-conflict', reason='Invented conflict')
+                d.update(outputs=[], contextWarning='Invented conflict')
                 with self.assertRaises(AssertionError):
                     check_conflict(s[-1]['resource'], d, index, DATA)
 

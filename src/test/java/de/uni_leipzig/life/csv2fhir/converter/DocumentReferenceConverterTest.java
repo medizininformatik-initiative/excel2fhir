@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -27,14 +28,10 @@ public class DocumentReferenceConverterTest {
     }
 
     @Test
-    public void createAttachmentMarksMissingEmbeddedDataAsAbsent() throws Exception {
+    public void createAttachmentLeavesMissingInputEmpty() throws Exception {
         Attachment attachment = DocumentReferenceConverter.createAttachment(null, true);
 
-        assertNull(attachment.getData());
-        assertTrue(attachment.getDataElement().hasExtension());
-        assertNull(attachment.getSizeElement().getValue());
-        assertTrue(attachment.getCreationElement().hasExtension());
-        assertEquals("text", attachment.getContentType());
+        assertTrue(attachment.isEmpty());
     }
 
     @Test
@@ -45,7 +42,7 @@ public class DocumentReferenceConverterTest {
 
         assertTrue(attachment.hasUrl());
         assertNull(attachment.getSizeElement().getValue());
-        assertTrue(attachment.getCreationElement().hasExtension());
+        assertFalse(attachment.hasCreationElement());
         assertEquals("does-not-exist.pdf", attachment.getTitle());
     }
 
@@ -58,6 +55,6 @@ public class DocumentReferenceConverterTest {
         assertNull(attachment.getData());
         assertTrue(attachment.getDataElement().hasExtension());
         assertNull(attachment.getSizeElement().getValue());
-        assertTrue(attachment.getCreationElement().hasExtension());
+        assertFalse(attachment.hasCreationElement());
     }
 }

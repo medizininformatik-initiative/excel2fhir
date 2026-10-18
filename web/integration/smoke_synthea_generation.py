@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory(prefix='generation-workbench-') as directory:
     originals = sorted((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
     assert originals
     loaded = store.editor_input(job)
-    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'), table_format=loaded.get('tableFormat'))
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated

@@ -17,7 +17,6 @@ import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Condition;
 import org.hl7.fhir.r4.model.DateTimeType;
 import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Resource;
 
@@ -55,7 +54,6 @@ public class ConditionConverter extends Converter {
         String id = (isBlank(encounterId) ? getPatientId() : encounterId) + ResourceIdSuffix.CONDITION
                 + result.getNextId(Diagnose, Condition.class, START_ID_CONDITION);
         condition.setId(id);
-        condition.addIdentifier(new Identifier().setValue(id));
         condition.setMeta(new Meta().addProfile(PROFILE));
         CodeableConcept code = new CodeableConcept();
         addCoding(code, Code, Codesystem);
@@ -84,24 +82,13 @@ public class ConditionConverter extends Converter {
     }
 
     private void addCoding(CodeableConcept concept, Diagnosis_Columns codeColumn, Diagnosis_Columns systemColumn) {
-        String value = get(codeColumn);
-        if (isBlank(value)) {
-            return;
-        }
-        Coding selection = DiagnosisValues.systems().get(get(systemColumn));
-        if (selection == null) {
-            throw new IllegalArgumentException(systemColumn + " requires an explicit supported selection");
-        }
-        Coding coding = selection.copy();
+        Coding coding = ClinicalValues.coding(get(codeColumn), get(systemColumn));
         String versionColumn = codeColumn == Code ? "Version" : "Zusatzversion";
-        if (hasColumn(versionColumn)) CodingVersion.apply(coding, get(versionColumn));
-        Extension absent = DiagnosisValues.absentReason(value);
-        if (absent == null) {
-            coding.setCode(value);
-        } else {
-            coding.getCodeElement().addExtension(absent);
+        if (hasColumn(versionColumn)) {
+            if (coding == null && !isBlank(get(versionColumn))) coding = new Coding();
+            CodingVersion.apply(coding, get(versionColumn));
         }
-        concept.addCoding(coding);
+        if (coding != null) concept.addCoding(coding);
     }
 
     private DateTimeType date(Diagnosis_Columns column) throws Exception {
@@ -131,10 +118,7 @@ public class ConditionConverter extends Converter {
         if (absent != null) {
             return (CodeableConcept) new CodeableConcept().addExtension(absent);
         }
-        String code = values.get(value);
-        if (code == null) {
-            throw new IllegalArgumentException("Unknown " + column + ": " + value);
-        }
+        String code = values.getOrDefault(value, value);
         return new CodeableConcept(new Coding(system, code, null));
     }
 }

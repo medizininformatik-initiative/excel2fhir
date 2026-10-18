@@ -31,7 +31,7 @@ class ConverterOptionsWorkflowTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'bad boolean\nduplicate value'):
                 options.resolve_config(path)
             payload = json.loads(run.call_args.kwargs['input'])
-            self.assertEqual({}, payload['defaults'])
+            self.assertEqual('CHECK_INPUT_CONSISTENCY=bad', payload['text'])
 
     def test_each_requested_copy_is_audited_and_extra_patients_are_rejected(self):
         from check_synthea_roundtrip import check_configured

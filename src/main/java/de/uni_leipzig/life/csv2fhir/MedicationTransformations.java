@@ -115,7 +115,7 @@ public final class MedicationTransformations {
             reasons = administration.getReasonCode(); reasonReferences = administration.getReasonReference();
             var statement = (MedicationStatement)output;
             if (administration.hasEffective()) statement.setEffective(administration.getEffective().copy());
-            String status = administration.hasStatus() ? administration.getStatus().toCode() : null;
+            String status = administration.hasStatus() ? administration.getStatusElement().getValueAsString() : null;
             if (status != null && Set.of("completed", "entered-in-error", "stopped", "on-hold", "unknown").contains(status))
                 statement.setStatus(MedicationStatement.MedicationStatementStatus.fromCode(status));
             else if (status != null) omitted.add("status");
@@ -136,7 +136,7 @@ public final class MedicationTransformations {
             reasons = statement.getReasonCode(); reasonReferences = statement.getReasonReference();
             var administration = (MedicationAdministration)output;
             if (statement.hasEffective()) administration.setEffective(statement.getEffective().copy());
-            String status = statement.hasStatus() ? statement.getStatus().toCode() : null;
+            String status = statement.hasStatus() ? statement.getStatusElement().getValueAsString() : null;
             if (status != null && Set.of("completed", "entered-in-error", "stopped", "on-hold", "unknown").contains(status))
                 administration.setStatus(MedicationAdministration.MedicationAdministrationStatus.fromCode(status));
             else if (status != null) omitted.add("status");

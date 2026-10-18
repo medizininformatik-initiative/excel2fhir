@@ -1,6 +1,5 @@
 package de.uni_leipzig.life.csv2fhir.converter;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_LABORATORY;
 import static de.uni_leipzig.life.csv2fhir.TableIdentifier.Laborbefund;
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Einheit;
@@ -10,32 +9,24 @@ import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConver
 import static de.uni_leipzig.life.csv2fhir.converter.ObservationLaboratoryConverter.ObservationLaboratory_Columns.Zeitstempel_Abnahme;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseComparator;
 import static de.uni_leipzig.life.csv2fhir.utils.DecimalUtil.parseDecimal;
-import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
 
-import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.csv.CSVRecord;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
-import org.hl7.fhir.r4.model.DateTimeType;
-import org.hl7.fhir.r4.model.Identifier;
 import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 
-import com.google.common.collect.ImmutableList;
 
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.life.csv2fhir.Converter;
 import de.uni_leipzig.life.csv2fhir.ConverterOptions;
 import de.uni_leipzig.life.csv2fhir.ConverterResult;
 import de.uni_leipzig.life.csv2fhir.TableColumnIdentifier;
-import de.uni_leipzig.life.csv2fhir.utils.DateUtil;
 
 /**
  * @author jheuschkel (19.10.2020), AXS (05.11.2021)
@@ -64,12 +55,6 @@ public class ObservationLaboratoryConverter extends Converter {
     // https://simplifier.net/medizininformatikinitiative-modullabor/observationlab
 
     /**
-     * The always identical category for all observations. We can use always the
-     * dame object.
-     */
-    static final List<CodeableConcept> LABORYTORY_OBSERVATION_FIXED_CATEGORY = getLaborytoryObservationFixedCategory();
-
-    /**
      * @param record
      * @param previousRecordPID
      * @param result
@@ -95,7 +80,6 @@ public class ObservationLaboratoryConverter extends Converter {
         Enum<?> unitColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit : Einheit;
         Enum<?> dateColumn = clinical ? ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel : Zeitstempel_Abnahme;
         String category = ClinicalValues.get(this, ClinicalValues.Column.Kategorie);
-        if (category == null) category = clinical ? "vital-signs" : "laboratory";
         String sourceId = ClinicalValues.get(this, ClinicalValues.Column.Untersuchung_ID);
         String id = sourceId == null ? (getEncounterReference() == null ? getPatientId() : getEncounterId())
                 + (clinical ? ResourceIdSuffix.OBSERVATION_VITALSIGNS : ResourceIdSuffix.OBSERVATION_LABORATORY)
@@ -103,7 +87,7 @@ public class ObservationLaboratoryConverter extends Converter {
                     ? de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.START_ID_OBSERVATION_VITAL_SIGNS
                     : START_ID_OBSERVATION_LABORATORY) : ClinicalValues.resourceId(getPatientId(), "Observation", sourceId);
         String system = ClinicalValues.get(this, ClinicalValues.Column.Codesystem);
-        CodeableConcept code = ClinicalValues.concept(get(codeColumn), system == null ? "LOINC" : system, get(textColumn));
+        CodeableConcept code = ClinicalValues.concept(get(codeColumn), system, get(textColumn));
         Coding additionalCode = ClinicalValues.coding(ClinicalValues.get(this, ClinicalValues.Column.Zusatzcode),
                 ClinicalValues.get(this, ClinicalValues.Column.Zusatzcodesystem));
         if (additionalCode != null && code.getCoding().stream().noneMatch(c -> c.equalsDeep(additionalCode))) {
@@ -113,34 +97,25 @@ public class ObservationLaboratoryConverter extends Converter {
         String raw = get(valueColumn);
         org.hl7.fhir.r4.model.Type value = null;
         if (kind == null || kind.equals("Zahl")) {
-            if (raw != null && !raw.isBlank()) {
-                String unitCode = ClinicalValues.get(this, ClinicalValues.Column.Einheitencode);
-                value = unitCode == null ? parseObservationValue(valueColumn, unitColumn)
-                        : new Quantity().setValue(parseDecimal(raw)).setUnit(get(unitColumn))
-                            .setSystem("http://unitsofmeasure.org").setCode(unitCode);
-            }
+            Quantity quantity = parseObservationValue(valueColumn, unitColumn);
+            if (!quantity.isEmpty()) value = quantity;
         } else if (kind.equals("Text")) {
             if (raw != null && !raw.isBlank()) {
-                if ("laboratory".equals(category)) {
-                    Coding missing = new Coding();
-                    missing.getSystemElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
-                    missing.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN.copy());
-                    value = new CodeableConcept().addCoding(missing).setText(raw);
-                } else {
-                    value = new org.hl7.fhir.r4.model.StringType(raw);
-                }
+                value = new org.hl7.fhir.r4.model.StringType(raw);
             }
         } else if (kind.equals("Code")) {
             value = ClinicalValues.concept(ClinicalValues.get(this, ClinicalValues.Column.Wertcode),
                     ClinicalValues.get(this, ClinicalValues.Column.Wertcodesystem), raw);
         } else if (kind.equals("Ja/Nein")) {
-            if (!"true".equals(raw) && !"false".equals(raw)) throw new IllegalArgumentException("Boolean must be true or false");
-            value = new org.hl7.fhir.r4.model.BooleanType(Boolean.parseBoolean(raw));
+            if (raw != null && !raw.isBlank()) {
+                if (!"true".equals(raw) && !"false".equals(raw)) throw new IllegalArgumentException("Boolean must be true or false");
+                value = new org.hl7.fhir.r4.model.BooleanType(Boolean.parseBoolean(raw));
+            }
         } else if (!kind.equals("Komponenten") && !kind.equals("Fehlend")) {
             throw new IllegalArgumentException("Unknown value type: " + kind);
         }
         CodeableConcept absent = null;
-        if ("Fehlend".equals(kind)) {
+        if ("Fehlend".equals(kind) && raw != null && !raw.isBlank()) {
             org.hl7.fhir.r4.model.Extension extension = DiagnosisValues.absentReason(raw);
             if (extension == null) throw new IllegalArgumentException("Missing explicit data absent reason");
             absent = new CodeableConcept(new Coding("http://terminology.hl7.org/CodeSystem/data-absent-reason",
@@ -157,62 +132,20 @@ public class ObservationLaboratoryConverter extends Converter {
         observation.setId(id);
         observation.setSubject(getPatientReference());
         observation.setEncounter(getEncounterReference());
-        observation.setCategory(Collections.singletonList(new CodeableConcept(new Coding(
-                "http://terminology.hl7.org/CodeSystem/observation-category", category, null))));
-        if (category.equals("laboratory")) {
-            observation.setCategory(getLaborytoryObservationFixedCategory());
+        if (category != null) observation.addCategory(ClinicalValues.concept(category,
+                "http://terminology.hl7.org/CodeSystem/observation-category", null));
+        if ("laboratory".equals(category)) {
             observation.setMeta(new Meta().addProfile(PROFILE));
         }
         String status = ClinicalValues.get(this, ClinicalValues.Column.Status);
-        observation.setStatus(status == null ? FINAL : Observation.ObservationStatus.fromCode(status));
+        observation.setStatusElement(InputCode.of(observation.getStatusElement(), status));
         observation.setEffective(ClinicalValues.date(get(dateColumn)));
         String issued = ClinicalValues.get(this, ClinicalValues.Column.Ausgabezeitpunkt);
-        if (issued != null) observation.setIssuedElement(new org.hl7.fhir.r4.model.InstantType(issued));
+        if (issued != null) observation.setIssuedElement(ClinicalValues.instant(issued));
         observation.setCode(code);
         observation.setValue(value);
         observation.setDataAbsentReason(absent);
-        observation.setIdentifier(getIdentifier(id, getDIZId()));
         return Collections.singletonList(observation);
-    }
-
-    /**
-     * @return
-     * @throws Exception
-     */
-    protected CodeableConcept parseObservationCode() throws Exception {
-        String loincCodeSystem = "http://loinc.org";
-        Coding loincCoding = createCoding(loincCodeSystem, LOINC);
-        if (isDataAbsentReason(loincCoding)) {
-            warning(LOINC + " empty for Record -> creating \"unknown\" Data Absent Reason");
-        }
-        return createCodeableConcept(loincCoding, Parameter);
-    }
-
-    /**
-     * @param loincCodeColumnIdentifier
-     * @param loincTextColumnIdentifier
-     * @return
-     */
-    protected CodeableConcept parseLoincCodeableConcept(Enum<?> loincCodeColumnIdentifier,
-            Enum<?> loincTextColumnIdentifier) {
-        return createCodeableConcept("http://loinc.org", loincCodeColumnIdentifier, loincTextColumnIdentifier);
-    }
-
-    /**
-     * @param observation
-     * @param converter
-     * @param timestampColumnIdentifier
-     */
-    public static void setEffective(Observation observation, Converter converter, Enum<?> timestampColumnIdentifier) {
-        try {
-            String timestamp = converter.get(timestampColumnIdentifier);
-            observation.setEffective(DateUtil.parseDateTimeType(timestamp));
-        } catch (Exception e) {
-            converter.warning(
-                    "Can not parse " + timestampColumnIdentifier + " for Record -> set \"unknown\" Data Absent Reason");
-            DateTimeType effectiveDateTimeType = observation.getEffectiveDateTimeType();
-            effectiveDateTimeType.addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
     }
 
     /**
@@ -223,62 +156,21 @@ public class ObservationLaboratoryConverter extends Converter {
      */
     public Quantity parseObservationValue(Enum<?> valueColumnIdentifier, Enum<?> unitColumnIdentifier)
             throws Exception {
-        BigDecimal value = null;
-        String comparator = null;
-        try {
-            String valueString = get(valueColumnIdentifier);
-            comparator = parseComparator(valueString);
+        Quantity quantity = new Quantity();
+        String valueString = get(valueColumnIdentifier);
+        if (valueString != null && !valueString.isBlank()) {
+            String comparator = parseComparator(valueString);
             if (comparator != null) {
-                valueString = valueString.replace(comparator, "");
+                quantity.setComparator(Quantity.QuantityComparator.fromCode(comparator));
+                valueString = valueString.trim().substring(comparator.length());
             }
-            value = parseDecimal(valueString);
-        } catch (Exception e) {
-            warning(valueColumnIdentifier + " is not a numerical value for Record");
+            quantity.setValue(parseDecimal(valueString));
         }
         String unit = get(unitColumnIdentifier);
-        if (isNullOrEmpty(unit)) {
-            warning(unitColumnIdentifier + " is empty for Record");
-        }
-        return getUcumQuantity(value, unit, comparator);
-    }
-
-    /**
-     * @param observationID
-     * @param dizID
-     * @return
-     */
-    public static List<Identifier> getIdentifier(String observationID, String dizID) {
-        CodeableConcept obiCode = createCodeableConcept("http://terminology.hl7.org/CodeSystem/v2-0203", "OBI");
-        Reference assigner = new Reference()
-                .setIdentifier(
-                        new Identifier()
-                                .setValue(dizID)
-                                .setSystem(
-                                        "https://www.medizininformatik-initiative.de/fhir/core/NamingSystem/org-identifier"));
-        return Arrays.asList(
-                new Identifier()
-                        .setValue(observationID)
-                        .setSystem("https://" + dizID + ".de/befund")
-                        .setAssigner(assigner)
-                        .setType(obiCode));
-    }
-
-    /**
-     * @return the always same category for laboratory observations
-     */
-    private static List<CodeableConcept> getLaborytoryObservationFixedCategory() {
-        Coding laboratoryCategory1 = new Coding()
-                .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
-                .setCode("laboratory")
-                .setDisplay("Laboratory");
-        Coding laboratoryCatgeory2 = new Coding()
-                .setSystem("http://loinc.org")
-                .setCode("26436-6")
-                .setDisplay("Laboratory studies (set)");
-        CodeableConcept laboratoryCategories = new CodeableConcept()
-                .addCoding(laboratoryCategory1)
-                .addCoding(laboratoryCatgeory2);
-        return ImmutableList.of(laboratoryCategories);
+        if (unit != null && !unit.isBlank()) quantity.setUnit(unit);
+        quantity.setCode(ClinicalValues.get(this, ClinicalValues.Column.Einheitencode));
+        quantity.setSystem(ClinicalValues.get(this, ClinicalValues.Column.Einheitencodesystem));
+        return quantity;
     }
 
 }

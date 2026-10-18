@@ -7,7 +7,6 @@ import java.util.Map;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Extension;
-import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
 
 /** Explicit selections used by the diagnosis sheet. No terminology lookup or code repair. */
 public final class DiagnosisValues {
@@ -69,15 +68,31 @@ public final class DiagnosisValues {
         return values;
     }
 
+    /** Resolve a suggested label or an explicit absolute system URI without terminology lookup. */
+    public static Coding system(String selection, Map<String, Coding> suggestions) {
+        Coding known = suggestions.get(selection);
+        if (known != null) return known.copy();
+        if (isSystemUri(selection)) return new Coding().setSystem(selection);
+        throw new IllegalArgumentException("Codesystem requires a suggested name or an absolute URI: " + selection);
+    }
+
+    public static boolean isSystemUri(String selection) {
+        if (selection == null || selection.isBlank()) return false;
+        try {
+            return new java.net.URI(selection).isAbsolute();
+        } catch (java.net.URISyntaxException e) {
+            return false;
+        }
+    }
+
     public static Extension absentReason(String value) {
         if (!isAbsent(value)) {
             return null;
         }
         String reason = ABSENT_LABELS.getOrDefault(value, value.startsWith(DAR_PREFIX)
                 ? value.substring(DAR_PREFIX.length()) : value);
-        DataAbsentReason parsed = DataAbsentReason.fromCode(reason);
-        if (parsed == null || parsed == DataAbsentReason.NULL) {
-            throw new IllegalArgumentException("Unknown data absent reason: " + reason);
+        if (reason.isBlank()) {
+            throw new IllegalArgumentException("Data absent reason requires a code");
         }
         return new Extension("http://hl7.org/fhir/StructureDefinition/data-absent-reason", new CodeType(reason));
     }

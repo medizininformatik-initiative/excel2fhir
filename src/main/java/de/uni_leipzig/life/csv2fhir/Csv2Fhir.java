@@ -32,6 +32,7 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Location;
+import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -86,6 +87,7 @@ public class Csv2Fhir {
     private final Map<TableIdentifier, List<CSVRecord>> tableIdentifierToParsedRecords = new HashMap<>();
 
     private final ImportReport importReport = new ImportReport();
+    private boolean generatedTables;
     private final Map<TableIdentifier, Map<Long, String>> recordPatients = new HashMap<>();
 
     public boolean hasImportProblems() { return variantImportProblems || importReport.hasErrors(); }
@@ -135,7 +137,9 @@ public class Csv2Fhir {
                         continue;
                     }
                     String pid = record.get(table.getPIDColumnIdentifier().toString());
-                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
+                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table == TableIdentifier.Behandlungsplan
+                            ? parser.getHeaderNames().stream().filter(h -> !h.equals("Erklärung/Ausfüllhilfe")).toList()
+                            : table.getMandatoryColumnNames())) { summary.emptyRows++; continue; }
                     if (!isNullOrEmpty(pid)) previous = pid;
                     if (previous == null) importReport.failure(table, record.getRecordNumber(), "MISSING_PATIENT", "Patient-ID is empty and no preceding Patient-ID is available", null);
                     else patients.put(record.getRecordNumber(), previous);
@@ -163,12 +167,42 @@ public class Csv2Fhir {
         return pids;
     }
 
+    /** Internal path for tables just emitted by the Synthea mapper. No diagnostic passes. */
+    public void convertGeneratedTables() throws Exception {
+        generatedTables = true;
+        for (TableIdentifier table : TableIdentifier.values()) {
+            if (!table.isConvertableTableSheet()) continue;
+            File file = getCsvInputFile(outputFileNameBase, table.toString());
+            if (!file.isFile()) continue;
+            try (Reader in = new FileReader(file); CSVParser parser = csvFormat.parse(in)) {
+                List<CSVRecord> records = parser.getRecords();
+                tableIdentifierToParsedRecords.put(table, records);
+                Map<Long, String> patients = new HashMap<>();
+                recordPatients.put(table, patients);
+                String previous = null;
+                for (CSVRecord record : records) {
+                    String pid = record.get(table.getPIDColumnIdentifier().toString());
+                    if (isNullOrEmpty(pid) && isRecordEmpty(record, table == TableIdentifier.Behandlungsplan
+                            ? parser.getHeaderNames().stream().filter(h -> !h.equals("Erklärung/Ausfüllhilfe")).toList()
+                            : table.getMandatoryColumnNames())) continue;
+                    if (!isNullOrEmpty(pid)) previous = pid;
+                    if (previous != null) patients.put(record.getRecordNumber(), previous);
+                }
+            }
+        }
+        List<String> patients = new ArrayList<>(recordPatients.getOrDefault(Person, Map.of()).values().stream()
+                .map(pid -> pid.toUpperCase(java.util.Locale.ROOT)).collect(Collectors.toSet()));
+        Alphabetical.sort(patients);
+        for (var options : allConverterOptions) options.withCommandLineExecution();
+        convertPreparedFiles(patients, 1, OutputFileType.JSONGZIP);
+    }
+
     /*
      * Resource classes which are not dependant of a patient (which have no subject
      * reference)
      */
     private static final Set<Class<? extends Resource>> PID_INDIPENDENT_RESOURCE_TYPES = Set.of(Medication.class,
-            Location.class);
+            Location.class, Organization.class);
 
     /**
      * @param inputDirectory
@@ -190,8 +224,17 @@ public class Csv2Fhir {
         this(inputDirectory, outputDirectory, outputFileNameBase, validator, null);
     }
 
+    private final AdditionalIdentifiers runIdentifiers;
+
     public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
             @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions) {
+        this(inputDirectory, outputDirectory, outputFileNameBase, validator, selectedOptions, null);
+    }
+
+    public Csv2Fhir(File inputDirectory, File outputDirectory, String outputFileNameBase,
+            @Nullable FHIRValidator validator, @Nullable ConverterOptions selectedOptions,
+            @Nullable AdditionalIdentifiers runIdentifiers) {
+        this.runIdentifiers = runIdentifiers;
         this.inputDirectory = inputDirectory;
         this.outputDirectory = outputDirectory;
         this.outputFileNameBase = outputFileNameBase;
@@ -333,7 +376,8 @@ public class Csv2Fhir {
                 validationProblems |= validationRequested && validator != null && validator.hasValidationProblems();
                 validator = null;
             }
-            AdditionalIdentifiers identifiers = new AdditionalIdentifiers(converterOptions.configuration());
+            AdditionalIdentifiers identifiers = runIdentifiers == null
+                    ? new AdditionalIdentifiers(converterOptions.configuration()) : runIdentifiers;
 
             int pids2ConvertCount = pids.size() * (converterOptions.getValue(PID_LAST_NUMBER_INCREASE_LOOP_COUNT) + 1);
 
@@ -381,7 +425,7 @@ public class Csv2Fhir {
                             bundle = createTransactionBundle();
                         }
                     }
-                    if (bundlePIDCount == patientsPerBundle || bundlePIDCount == pids2ConvertCount) {
+                    if (bundlePIDCount == patientsPerBundle || fullPIDCount == pids2ConvertCount) {
                         lastPID = converterOptions.getFullPIDForFileName(pid);
                     }
                     LOG.info("Start add patient to Fhir-Json-Bundle for Patient-ID " + pid + " ...");
@@ -402,7 +446,7 @@ public class Csv2Fhir {
                     pid = pid.replace('_', '-'); // see comment at ConverterOptions#getFullPID()
                     if (lastPID != null) {
                         String fileNameExtendsion = converterOptions.getPrefixWithSuffix();
-                        if (pids.size() >= patientsPerBundle) {
+                        if (pids2ConvertCount >= patientsPerBundle) {
                             if (firstPID == null) {
                                 throw new IllegalStateException(
                                         "Cannot build output file name extension without first patient ID");
@@ -449,6 +493,18 @@ public class Csv2Fhir {
      */
     private boolean writeOutputFile(Bundle bundle, String fileNameExtension, List<OutputFileType> baseFileTypes,
             List<OutputFileType> compressedFileTypes) throws Exception {
+        if (generatedTables) {
+            if (bundle == null || bundle.getEntry().isEmpty()) return false;
+            File target = new File(outputDirectory,
+                    getOutputFileName(outputFileNameBase, fileNameExtension, JSON) + ".gz");
+            try (Writer writer = new BufferedWriter(new java.io.OutputStreamWriter(
+                    new java.util.zip.GZIPOutputStream(new java.io.FileOutputStream(target)),
+                    java.nio.charset.StandardCharsets.UTF_8))) {
+                JSON.getParser().setPrettyPrint(false).encodeResourceToWriter(bundle, writer);
+                writer.write("\n");
+            }
+            return true;
+        }
         List<OutputFileType> compressedFileTypesCopy = new ArrayList<>(compressedFileTypes); // copy the global list
                                                                                              // because we remove from
                                                                                              // it
@@ -502,12 +558,12 @@ public class Csv2Fhir {
         String fileName = getOutputFileName(outputFileNameBase, fileNameExtension, outputFileType);
         File outputFile = new File(outputDirectory, fileName);
         LOG.info("writing file " + fileName);
-        try (Writer fileWriter = new FileWriter(outputFile)) {
+        try (Writer fileWriter = new BufferedWriter(new FileWriter(outputFile))) {
             outputFileType.getParser()
                     .setPrettyPrint(true)
                     .encodeResourceToWriter(bundle, fileWriter);
+            fileWriter.write("\n");
         }
-        appendNewLineAtEOF(outputFile);
         return outputFile;
     }
 
@@ -527,16 +583,6 @@ public class Csv2Fhir {
         return fileNameBase.endsWith("_") || fileNameBase.endsWith("-")
                 ? fileNameBase.substring(0, fileNameBase.length() - 1)
                 : fileNameBase;
-    }
-
-    /**
-     * @param file
-     * @throws IOException
-     */
-    private static void appendNewLineAtEOF(File file) throws IOException {
-        try (Writer output = new BufferedWriter(new FileWriter(file, true))) {
-            output.append("\n");
-        }
     }
 
     /**
@@ -563,12 +609,16 @@ public class Csv2Fhir {
             for (CSVRecord record : records) {
                 String pid = patients.get(record.getRecordNumber());
                 if (pid == null || !pid.equalsIgnoreCase(filterID)) continue;
+                if (table == TableIdentifier.Behandlungsplan && record.get("Patient-ID") != null
+                        && !record.get("Patient-ID").isBlank())
+                    result.currentCarePlan = null;
                 try {
                     List<? extends Resource> resources = table.convert(record, pid, result, validator, options);
                     for (Resource resource : resources) pendingOutput.add(Map.entry(table, resource));
                     // Count emitted resources after all output selections have been applied.
-                    importReport.success(table, record.getRecordNumber(), 0);
+                    if (!generatedTables) importReport.success(table, record.getRecordNumber(), 0);
                 } catch (Exception e) {
+                    if (generatedTables) throw new IllegalStateException("Generated table conversion failed", e);
                     importReport.failure(table, record.getRecordNumber(), "CONVERSION_ERROR", ImportReport.describe(e), options);
                     LOG.error("Conversion error in {} record {}: {}", table, record.getRecordNumber(),
                             importReport.issues.get(importReport.issues.size() - 1).reason);
@@ -580,7 +630,7 @@ public class Csv2Fhir {
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         long shiftDays = ClinicalTimeShift.days(options);
         ClinicalTimeShift.apply(potentialResources, shiftDays);
-        if (shiftDays != 0) importReport.timeShifts.add(Map.of("patientId", filterID,
+        if (!generatedTables && shiftDays != 0) importReport.timeShifts.add(Map.of("patientId", filterID,
                 "iteration", Integer.toString(options.loopCounter), "days", Long.toString(shiftDays)));
         Map<String, TableIdentifier> sourceTables = new java.util.HashMap<>();
         for (var pending : pendingOutput) sourceTables.put(pending.getValue().fhirType() + "/"
@@ -592,7 +642,7 @@ public class Csv2Fhir {
                 resource.fhirType() + "/" + resource.getIdElement().getIdPart(), TableIdentifier.Medikation), resource))
                 .collect(java.util.stream.Collectors.toList());
         if (transformed != potentialResources) potentialResources.addAll(transformed);
-        for (var change : transformations.changes()) {
+        if (!generatedTables) for (var change : transformations.changes()) {
             var reported = new java.util.LinkedHashMap<>(change);
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.medicationTransformations.add(reported);
@@ -600,7 +650,7 @@ public class Csv2Fhir {
         ResourceOutputPolicy resourceSelection = new ResourceOutputPolicy(options.configuration(), potentialResources, transformations.replaced());
         DiagnosisOutputPolicy diagnoses = new DiagnosisOutputPolicy(options.configuration(), result.contacts(),
                 pendingOutput.stream().map(Map.Entry::getValue).collect(java.util.stream.Collectors.toList()));
-        for (var issue : diagnoses.issues()) {
+        if (!generatedTables) for (var issue : diagnoses.issues()) {
             var reported = new java.util.LinkedHashMap<>(issue);
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.diagnosisReferenceIssues.add(reported);
@@ -611,14 +661,14 @@ public class Csv2Fhir {
         for (var pending : pendingOutput) {
             Resource resource = pending.getValue();
             if (!resourceSelection.emits(resource)) {
-                importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                if (!generatedTables) importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
                         "action", "omit-resource", "reason", "resource-output-selection",
                         "iteration", Integer.toString(options.loopCounter)));
                 continue;
             }
             Resource output = options.patientOutputPolicy().output(resource);
             if (output != resource) {
-                importReport.outputSelections.add(Map.of(
+                if (!generatedTables) importReport.outputSelections.add(Map.of(
                         "resourceType", resource.fhirType(), "resourceId", resource.getId(),
                         "action", output == null ? "omit-resource" : "omit-patient-reference",
                         "reason", "PATIENT_MODE=" + options.configuration().stored("resource.Patient.mode").asText(),
@@ -626,7 +676,7 @@ public class Csv2Fhir {
             }
             if (output != null) {
                 output = diagnoses.output(output);
-                if (output == null) importReport.outputSelections.add(Map.of(
+                if (!generatedTables && output == null) importReport.outputSelections.add(Map.of(
                         "resourceType", resource.fhirType(), "resourceId", resource.getId(),
                         "action", "omit-resource", "reason", "CONDITION_ENABLED=false",
                         "iteration", Integer.toString(options.loopCounter)));
@@ -634,30 +684,31 @@ public class Csv2Fhir {
             if (output == null) continue;
             output = contacts.output(output);
             if (output == null) {
-                importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
+                if (!generatedTables) importReport.outputSelections.add(Map.of("resourceType", resource.fhirType(), "resourceId", resource.getId(),
                         "action", "omit-resource", "reason", "contact-output-selection",
                         "iteration", Integer.toString(options.loopCounter)));
                 continue;
             }
             output = encounterAssignments.output(output);
+            identifiers.captureCase(output, result, options.loopCounter);
             output = resourceSelection.output(output);
             output = encounterOutput.output(output);
             output = observationOutput.output(output);
             output = darOverrides.output(output);
             output = encounterOutput.finish(output);
-            output = identifiers.output(output, options.loopCounter);
+            output = identifiers.output(output, options.loopCounter, generatedTables ? null : importReport.outputSelections);
             addEntry(bundle, output);
             addEntry(ndjsonBundle, output);
             outputResult.add(pending.getKey(), output);
-            importReport.tables.get(pending.getKey().name()).returnedResources++;
+            if (!generatedTables) importReport.tables.get(pending.getKey().name()).returnedResources++;
         }
-        importReport.contactEndDerivations.addAll(result.contactEndDerivations);
-        for (var change : encounterOutput.changes()) {
+        if (!generatedTables) importReport.contactEndDerivations.addAll(result.contactEndDerivations);
+        if (!generatedTables) for (var change : encounterOutput.changes()) {
             var reported = new java.util.LinkedHashMap<>(change);
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.contactEndDerivations.add(reported);
         }
-        for (var issue : encounterAssignments.issues()) {
+        if (!generatedTables) for (var issue : encounterAssignments.issues()) {
             var reported = new java.util.LinkedHashMap<>(issue);
             reported.put("iteration", Integer.toString(options.loopCounter));
             importReport.encounterReferenceIssues.add(reported);

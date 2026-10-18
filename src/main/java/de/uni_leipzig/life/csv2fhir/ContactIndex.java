@@ -65,7 +65,7 @@ public final class ContactIndex {
         return Optional.ofNullable(byPatient.getOrDefault(patientId, Map.of()).get(encounterId));
     }
 
-    /** Resource IDs retain the converted patient identity, including prefixes and offsets. */
+    /** Resource IDs retain the converted patient identity, including prefixes, suffixes and repetition markers. */
     public Optional<Entry> get(Encounter encounter) {
         return byPatient.values().stream().map(entries -> entries.get(encounter.getId()))
                 .filter(java.util.Objects::nonNull).findFirst();

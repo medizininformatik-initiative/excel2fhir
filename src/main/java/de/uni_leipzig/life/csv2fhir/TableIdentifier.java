@@ -1,7 +1,5 @@
 package de.uni_leipzig.life.csv2fhir;
 
-import static de.uni_leipzig.life.csv2fhir.converter.EncounterConverter.DEFAULT_ENCOUNTER_ID_NUMBER;
-
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,7 +60,7 @@ public enum TableIdentifier {
 
     Impfung(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Vaccine.class),
     Befundbericht(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Report.class),
-    Behandlungsplan(ClinicalEventConverter.Columns.class, ClinicalEventConverter.Plan.class),
+    Behandlungsplan(de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.Columns.class, de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.class),
 
     Consent(Consent_Columns.class, ConsentConverter.class) {
         @Override
@@ -93,11 +91,6 @@ public enum TableIdentifier {
             @Override
             public String toString() {
                 return "Fall-Nr";
-            }
-
-            @Override
-            public String getDefaultIfMissing() {
-                return DEFAULT_ENCOUNTER_ID_NUMBER;
             }
 
             @Override
@@ -149,14 +142,7 @@ public enum TableIdentifier {
             for (Enum<? extends TableColumnIdentifier> columnIndentifier : columnIdentifiersClass.getEnumConstants()) {
                 TableColumnIdentifier tableColumnIdentifier = (TableColumnIdentifier) columnIndentifier;
                 if (tableColumnIdentifier.isMandatory()) {
-                    // A cloumn can be mandatory but missing in the data. In this case
-                    // there must be defined a default value to provide the mandatory
-                    // value. If the column is mandatory and no default is defined
-                    // then the column will be added here as the strict mandatory column
-                    // which is needed to convert the table.
-                    if (tableColumnIdentifier.getDefaultIfMissing() == null) {
-                        mandatoryColumns.add(columnIndentifier);
-                    }
+                    mandatoryColumns.add(columnIndentifier);
                 }
             }
         }

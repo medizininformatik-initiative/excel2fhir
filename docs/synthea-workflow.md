@@ -85,10 +85,12 @@ Each invocation creates `outputGlobal/run-…-synthea/`:
 | `details/sources/` / `details/logs/` | Original Synthea output and logs. |
 | `status.txt` | Overall result. |
 
-`NOT_VALIDATED` with exit code 0 means import and source comparison succeeded
-with FHIR validation disabled. With `-v`, `COMPLETE` indicates success and
-`NOT_CHECKED` indicates unavailable terminology checks, with exit code 1.
-`FAILED` identifies a failed step; inspect the reports and retained output.
+`NOT_VALIDATED` with exit code 0 means generation completed with FHIR validation
+disabled. With `-v`, completed generation has status `COMPLETE` and exit code 0.
+Each result records validation status separately. Each variant records source
+comparison status, the first difference if any, import notes and configuration-covered
+omissions. These findings do not abort generation. `FAILED` and exit code 1 identify
+technical failures or incomplete imports; inspect the reports and retained output.
 
 Under Linux, the complete workflow uses the mounted output directory owner's
 UID/GID so the generated files remain editable by that user.

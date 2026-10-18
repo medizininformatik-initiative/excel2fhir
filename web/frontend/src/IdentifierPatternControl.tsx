@@ -3,7 +3,7 @@ import type { Message } from './i18n'
 import { Help } from './Help'
 import { insertPatternToken } from './configuration'
 
-const tokens: { value: string; key: string; label?: string }[] = [
+const resourceTokens: { value: string; key: string; label?: string }[] = [
   { value: '{count}', key: 'app.config.token.count' },
   { value: '{count:08}', key: 'app.config.token.paddedCount' },
   { value: '{patientId}', key: 'app.config.token.patientId' },
@@ -16,17 +16,23 @@ const tokens: { value: string; key: string; label?: string }[] = [
 ]
 export function IdentifierPatternControl({
   value,
+  scope,
   countStart,
   onCountStartChange,
   onChange,
   t
 }: {
   value: string
+  scope?: 'resource' | 'case'
   countStart: number
   onCountStartChange: (value: number) => void
   onChange: (value: string) => void
   t: (key: string, params?: Message['params']) => string
 }) {
+  const tokens = scope === 'case' ? [
+    resourceTokens[2], { value: '{caseId}', key: 'app.config.token.caseId' },
+    ...resourceTokens.slice(-2)
+  ] : resourceTokens
   const tooltipId = useId()
   const [hoveredToken, setHoveredToken] = useState<string | null>(null)
   const [focusedToken, setFocusedToken] = useState<string | null>(null)
@@ -61,7 +67,7 @@ export function IdentifierPatternControl({
           </label>
           <Help
             text={
-              t('app.config.patternInstructions') +
+              t(scope === 'case' ? 'app.config.casePatternInstructions' : 'app.config.patternInstructions') +
               '\n' +
               t('app.config.literalBraces')
             }
@@ -126,13 +132,13 @@ export function IdentifierPatternControl({
           </button>
         ))}
       </div>
-        <div className="flex w-24 shrink-0 flex-col gap-1 text-xs">
+        {scope !== 'case' && <div className="flex w-24 shrink-0 flex-col gap-1 text-xs">
           <span className="flex items-center gap-1"><label htmlFor={tooltipId + '-count-start'}>{t('identifier.count_start')}</label>
           <Help text={t('identifier.countStartHelp')} t={t}/></span>
           <input id={tooltipId + '-count-start'} type="number" min={1} max={Number.MAX_SAFE_INTEGER} step={1}
             value={countStart} onChange={e => onCountStartChange(Number(e.target.value))}
             className="h-8 w-24 rounded-md border border-slate-300 px-2"/>
-        </div>
+        </div>}
       </div>
     </div>
   )

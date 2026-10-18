@@ -200,13 +200,13 @@ public class EncounterConverterTest {
     }
 
     @Test
-    public void admissionReasonSupportsExplicitDarAndRejectsUnknownValues() {
+    public void admissionReasonSupportsExplicitDarAndFreeCodes() {
         var reason = AdmissionReasonValues.extension("!dar:masked");
         var coding = (org.hl7.fhir.r4.model.Coding) reason.getExtensionByUrl("VierteStelle").getValue();
         assertFalse(coding.getCodeElement().hasValue());
         assertEquals("masked", coding.getCodeElement().getExtensionFirstRep().getValue().primitiveValue());
         assertEquals(null, AdmissionReasonValues.extension(""));
-        assertThrows(IllegalArgumentException.class, () -> AdmissionReasonValues.extension("EMER"));
+        assertEquals("EMER", ((org.hl7.fhir.r4.model.Coding)AdmissionReasonValues.extension("EMER").getExtensionByUrl("VierteStelle").getValue()).getCode());
     }
 
     @Test

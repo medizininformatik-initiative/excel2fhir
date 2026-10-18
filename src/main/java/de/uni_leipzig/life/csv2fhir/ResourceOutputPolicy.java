@@ -16,6 +16,7 @@ public final class ResourceOutputPolicy {
     private final ContractConfiguration configuration;
     private final Map<String, Resource> potential = new LinkedHashMap<>();
     private final Set<String> replaced;
+    private final Set<String> omittedTargets = new java.util.HashSet<>();
 
     public ResourceOutputPolicy(ContractConfiguration configuration, List<Resource> resources) {
         this(configuration, resources, Set.of());
@@ -24,6 +25,11 @@ public final class ResourceOutputPolicy {
         this.configuration = configuration;
         this.replaced = Set.copyOf(replaced);
         for (Resource resource : resources) potential.put(resource.fhirType() + "/" + resource.getIdElement().getIdPart(), resource);
+        // Selection is fixed for this completed patient graph. Resolve it once,
+        // avoiding recursive HAPI property lists when no target is omitted.
+        potential.forEach((key, target) -> {
+            if (!emits(target) && !referenceOnly(target)) omittedTargets.add(key);
+        });
     }
 
     static boolean supports(String id) {
@@ -36,6 +42,7 @@ public final class ResourceOutputPolicy {
         if (configuration == null) return true;
         if (replaced.contains(resource.fhirType() + "/" + resource.getIdElement().getIdPart())) return false;
         String type = resource instanceof Observation ? ClinicalEncounterAssignment.optionResource(resource) : resource.fhirType();
+        if (type == null) return true;
         if (type.equals("Location") || type.equals("Medication")) return mode(type).equals("generate-reference");
         return !BOOLEAN_TYPES.contains(type) || enabled("resource." + type + ".enabled");
     }
@@ -61,7 +68,7 @@ public final class ResourceOutputPolicy {
             if (output instanceof MedicationAdministration) ((MedicationAdministration)output).setMedication(value);
             if (output instanceof MedicationStatement) ((MedicationStatement)output).setMedication(value);
         }
-        removeOmittedTargets(output);
+        if (!omittedTargets.isEmpty()) removeOmittedTargets(output);
         if (output instanceof Encounter) ((Encounter)output).getDiagnosis().removeIf(d -> !d.hasCondition());
         return output;
     }
@@ -99,8 +106,7 @@ public final class ResourceOutputPolicy {
         for (Property property : base.children()) {
             for (Base value : new ArrayList<>(property.getValues())) {
                 if (value instanceof Reference) {
-                    Resource target = potential.get(key((Reference)value));
-                    if (target != null && !emits(target) && !referenceOnly(target)) base.removeChild(property.getName(), value);
+                    if (omittedTargets.contains(key((Reference)value))) base.removeChild(property.getName(), value);
                 } else if (!(value instanceof PrimitiveType<?>)) removeOmittedTargets(value);
             }
         }

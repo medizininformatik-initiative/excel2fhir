@@ -10,9 +10,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.logging.log4j.util.Strings.isBlank;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.ERROR;
 import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.NOTAPPLICABLE;
-import static org.hl7.fhir.r4.model.codesystems.DataAbsentReason.UNKNOWN;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +23,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r4.model.CodeSystem;
 import org.hl7.fhir.r4.model.CodeType;
 import org.hl7.fhir.r4.model.CodeableConcept;
@@ -37,8 +34,6 @@ import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Factory;
 import org.hl7.fhir.r4.model.Patient;
 import org.hl7.fhir.r4.model.Period;
-import org.hl7.fhir.r4.model.Quantity;
-import org.hl7.fhir.r4.model.Quantity.QuantityComparator;
 import org.hl7.fhir.r4.model.Reference;
 import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.codesystems.DataAbsentReason;
@@ -49,7 +44,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import de.uni_leipzig.UcumMapper;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.imise.utils.StringUtils;
 import de.uni_leipzig.imise.utils.Sys;
@@ -83,9 +77,6 @@ public abstract class Converter {
         /** Ignore missing value */
         IGNORE,
     }
-
-    /**  */
-    public static final Extension DATA_ABSENT_REASON_UNKNOWN = createDataAbsentReason(UNKNOWN);
 
     /**  */
     public static final Extension DATA_ABSENT_REASON_NOTAPPLICABLE = createDataAbsentReason(NOTAPPLICABLE);
@@ -352,50 +343,13 @@ public abstract class Converter {
         return null;
     }
 
-    /**
-     * In old excel files the column with the encounter number does not exists.
-     * That means that this number should always be 1 (in every table sheet) and
-     * there is always only 1 encounter per patient possible.</br>
-     * Now there is an extra column in every sheet for the encounter number so that
-     * we can define multiple encounters for 1 patient and add medication,
-     * diagnosis etc. to a special encounter.</br>
-     * To ensure that the files without the encounter number column will still be
-     * converted we set the value 1 if the column is missing. Same happens if the
-     * column exists and the value is mandatory but missing.</br>
-     * If the column is optional but exists then the value of the column will be
-     * inserted in the full ID. Only in this case the resulting ID can be
-     * <code>null</code> if the value in the record is empty.</br>
-     * If the column is optional and is not in the data then (for backward
-     * compatibility reason) the value will set to 1.
-     *
-     * @return the encounter ids in the record or a default if the column is
-     *         mandatory.
-     * @throws Exception
-     */
+    /** Read explicit encounter numbers; a missing or empty column leaves the association absent. */
     private List<String> parseEncounterIds() throws Exception {
-        TableColumnIdentifier encounterIDColumnIdentifier = getMainEncounterNumberColumnIdentifier();
-        // missing encounter number -> set it to 1 if the column does not exists in the
-        // table
-        if (encounterIDColumnIdentifier == null) {
-            return Collections.emptyList();
-        }
-        String encounterIDColumnName = encounterIDColumnIdentifier.toString();
-        boolean columnExists = record.isMapped(encounterIDColumnName);
-        List<String> encounterNumbers = null;
-        if (columnExists) {
-            String recordEncounterNumbers = record.get(encounterIDColumnName);
-            if (!isBlank(recordEncounterNumbers)) {
-                encounterNumbers = StringUtils.parseList(recordEncounterNumbers, ",");
-            }
-        } else {
-            encounterNumbers = new ArrayList<>(List.of(encounterIDColumnIdentifier.getDefaultIfMissing())); // must be a
-                                                                                                            // mutable
-                                                                                                            // list!
-        }
-        // is still null if the column exists but the value is missing
-        if (encounterNumbers == null || encounterNumbers.isEmpty()) {
-            return Collections.emptyList();
-        }
+        TableColumnIdentifier column = getMainEncounterNumberColumnIdentifier();
+        if (column == null || !record.isMapped(column.toString())) return Collections.emptyList();
+        String value = record.get(column.toString());
+        if (isBlank(value)) return Collections.emptyList();
+        List<String> encounterNumbers = StringUtils.parseList(value, ",");
         for (int i = encounterNumbers.size() - 1; i >= 0; i--) {
             encounterNumbers.set(i, pid + ResourceIdSuffix.ENCOUNTER_LEVEL_1 + encounterNumbers.get(i));
         }
@@ -534,22 +488,13 @@ public abstract class Converter {
      *                       {@link Coding}
      * @param textColumnName Name of the column with the text for the returned
      *                       {@link CodeableConcept}
-     * @return a new {@link CodeableConcept} or if missing and mandatory then a
-     *         data absent reasond or if not mandatory then <code>null</code>
+     * @return the supplied code and text, or <code>null</code> when both are empty
      */
     public CodeableConcept createCodeableConcept(String codeSystem, Enum<?> codeColumnName, Enum<?> textColumnName) {
         String code = record.get(codeColumnName);
-        if (code != null) {
-            Coding coding = createCoding(codeSystem, code);
-            return createCodeableConcept(coding, textColumnName);
-        }
-        String errorMessage = codeColumnName + " empty for Record";
-        if (isMandatory(codeColumnName)) {
-            err(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
-            return getUnknownDataAbsentReasonCodeableConcept().setText(record.get(textColumnName));
-        }
-        warning(errorMessage);
-        return null;
+        CodeableConcept concept = new CodeableConcept().setText(record.get(textColumnName));
+        if (!isBlank(code)) concept.addCoding(createCoding(codeSystem, code));
+        return concept.isEmpty() ? null : concept;
     }
 
     /**
@@ -639,14 +584,7 @@ public abstract class Converter {
      */
     public Coding createCoding(String codeSystem, Enum<?> codeColumnName) {
         String code = record.get(codeColumnName);
-        if (isBlank(code)) {
-            String errorMessage = codeColumnName + " empty for Record";
-            if (!isMandatory(codeColumnName)) {
-                warning(errorMessage);
-                return null;
-            }
-            warning(errorMessage + " -> Creating \"unknown\" Data Absent Reason");
-        }
+        if (isBlank(code)) return null;
         return createCoding(codeSystem, code);
     }
 
@@ -658,9 +596,11 @@ public abstract class Converter {
     public static Coding createCoding(String codeSystem, String code) {
         Coding coding = new Coding().setSystem(codeSystem);
         if (!isBlank(code)) {
-            return coding.setCode(code);
+            Extension absent = de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues.absentReason(code);
+            if (absent == null) coding.setCode(code);
+            else coding.getCodeElement().addExtension(absent);
+            return coding;
         }
-        coding.getCodeElement().addExtension(DATA_ABSENT_REASON_UNKNOWN);
         return coding;
     }
 
@@ -694,21 +634,7 @@ public abstract class Converter {
      * @return
      */
     public boolean isDataAbsentReason(Coding coding) {
-        if (coding != null) {
-            String code = coding.getCode();
-            DataAbsentReason dataAbsentReason = null;
-            try {
-                dataAbsentReason = DataAbsentReason.fromCode(code);
-            } catch (FHIRException e) {
-                // ignore the org.hl7.fhir.exceptions.FHIRException: Unknown DataAbsentReason
-                // code
-            }
-            if (dataAbsentReason != null) {
-                String system = coding.getSystem();
-                return dataAbsentReason.getSystem().equals(system);
-            }
-        }
-        return false;
+        return coding != null && "http://terminology.hl7.org/CodeSystem/data-absent-reason".equals(coding.getSystem());
     }
 
     /**
@@ -747,47 +673,6 @@ public abstract class Converter {
      */
     public Period createPeriod(DateTimeType startDate, DateTimeType endDate) {
         return new Period().setStartElement(startDate).setEndElement(endDate);
-    }
-
-    /**
-     * @param value
-     * @param ucumCode
-     * @param comparator
-     * @return
-     * @throws Exception
-     */
-    public static Quantity getUcumQuantity(BigDecimal value, String ucumCode, String comparator) throws Exception {
-        String ucumUnit = null;
-        if (!isBlank(ucumCode)) {
-            ucumCode = UcumMapper.getValidUcumCode(ucumCode);
-            ucumUnit = UcumMapper.getUcumUnit(ucumCode);
-        } else {
-            ucumCode = null;
-        }
-        Quantity quantity = new Quantity().setSystem("http://unitsofmeasure.org");
-        if (value != null) {
-            quantity.setValue(value);
-        } else {
-            quantity.getValueElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(ucumCode)) {
-            quantity.setCode(ucumCode);
-        } else {
-            quantity.getCodeElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(ucumUnit)) {
-            quantity.setUnit(ucumUnit);
-        } else {
-            quantity.getUnitElement()
-                    .addExtension(DATA_ABSENT_REASON_UNKNOWN);
-        }
-        if (!isBlank(comparator)) {
-            QuantityComparator quantityComparator = QuantityComparator.fromCode(comparator);
-            quantity.setComparator(quantityComparator);
-        }
-        return quantity;
     }
 
     /**
@@ -844,30 +729,6 @@ public abstract class Converter {
     private static Extension createDataAbsentReason(DataAbsentReason dataAbsentReason) {
         return Factory.newExtension("http://hl7.org/fhir/StructureDefinition/data-absent-reason",
                 new CodeType(dataAbsentReason.toCode()), true);
-    }
-
-    /**
-     * @return a {@link CodeableConcept} that represents a valid unknown data
-     *         absent reason.
-     */
-    public static CodeableConcept getUnknownDataAbsentReasonCodeableConcept() {
-        return getDataAbsentReasonCodeableConcept(DataAbsentReason.UNKNOWN);
-    }
-
-    /**
-     * @return a {@link CodeableConcept} that represents a valid error data absent
-     *         reason.
-     */
-    public static CodeableConcept getErrorDataAbsentReasonCodeableConcept() {
-        return getDataAbsentReasonCodeableConcept(DataAbsentReason.ERROR);
-    }
-
-    /**
-     * @param dataAbsentReason
-     * @return
-     */
-    public static CodeableConcept getDataAbsentReasonCodeableConcept(DataAbsentReason dataAbsentReason) {
-        return createCodeableConcept(dataAbsentReason.getSystem(), dataAbsentReason.toCode());
     }
 
     /**
