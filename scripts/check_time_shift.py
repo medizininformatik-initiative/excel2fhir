@@ -70,8 +70,8 @@ def checked_original_times(source, target, report):
     result = deepcopy(target)
     for entry in result['entry']:
         resource = entry['resource']
-        if resource['resourceType'] in ('Encounter', 'Location', 'Medication'):
-            continue  # Contact periods have their own end-policy check; shared definitions contain no clinical dates.
+        if resource['resourceType'] in ('Encounter', 'Location', 'Medication', 'Organization', 'Consent'):
+            continue  # Contacts and synthetic consent have separate date checks; shared definitions have no clinical dates.
         assert resource['id'] in expected, 'Missing temporal expectation: ' + resource['id']
         for path, original in expected[resource['id']].items():
             parent = resource

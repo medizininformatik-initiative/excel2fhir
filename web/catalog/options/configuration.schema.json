@@ -25,7 +25,7 @@
         },
         "resource.Encounter.enabled": {
           "title": "Generate encounter",
-          "description": "Include Encounter resources in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Encounter resources in the output.",
           "default": true,
           "type": "boolean"
         },
@@ -109,19 +109,19 @@
         },
         "resource.Condition.enabled": {
           "title": "Generate diagnosis",
-          "description": "Include Condition resources for Diagnosis in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Condition resources for Diagnosis in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.Procedure.enabled": {
           "title": "Generate procedure",
-          "description": "Include Procedure resources for Procedure in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Procedure resources for Procedure in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.Observation.laboratory.enabled": {
           "title": "Generate laboratory observation",
-          "description": "Include Observation resources for Laboratory observation in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Observation resources for Laboratory observation in the output.",
           "default": true,
           "type": "boolean"
         },
@@ -133,7 +133,7 @@
         },
         "resource.Observation.vitalSigns.enabled": {
           "title": "Generate vital signs observation",
-          "description": "Include Observation resources for Vital signs in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Observation resources for Vital signs in the output.",
           "default": true,
           "type": "boolean"
         },
@@ -185,31 +185,31 @@
         },
         "resource.Immunization.enabled": {
           "title": "Generate immunization",
-          "description": "Include Immunization resources for Immunization in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Immunization resources for Immunization in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.DiagnosticReport.enabled": {
           "title": "Generate diagnostic report",
-          "description": "Include DiagnosticReport resources for Diagnostic report in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include DiagnosticReport resources for Diagnostic report in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.CarePlan.enabled": {
           "title": "Generate care plan",
-          "description": "Include CarePlan resources for Care plan in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include CarePlan resources for Care plan in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.DocumentReference.enabled": {
           "title": "Generate document reference",
-          "description": "Include DocumentReference resources for document references in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include DocumentReference resources for document references in the output.",
           "default": true,
           "type": "boolean"
         },
         "resource.Consent.enabled": {
           "title": "Generate consent",
-          "description": "Include Consent resources for Consent in the output. When deselected, these resources are excluded, including resources produced by additional transformations.",
+          "description": "Include Consent resources for Consent in the output.",
           "default": true,
           "type": "boolean"
         },
@@ -322,7 +322,7 @@
         },
         "reference.Condition.encounter": {
           "title": "Diagnosis: encounter assignment",
-          "description": "Set Condition.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set Condition.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -333,7 +333,7 @@
         },
         "reference.Procedure.encounter": {
           "title": "Procedure: encounter assignment",
-          "description": "Set Procedure.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set Procedure.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -344,7 +344,7 @@
         },
         "reference.Observation.laboratory.encounter": {
           "title": "Laboratory observation: encounter assignment",
-          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -355,7 +355,7 @@
         },
         "reference.Observation.vitalSigns.encounter": {
           "title": "Vital signs observation: encounter assignment",
-          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set Observation.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -366,7 +366,7 @@
         },
         "reference.MedicationRequest.encounter": {
           "title": "Medication request: encounter assignment",
-          "description": "Set MedicationRequest.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set MedicationRequest.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -377,7 +377,7 @@
         },
         "reference.MedicationAdministration.encounter": {
           "title": "Medication administration: encounter assignment",
-          "description": "Set MedicationAdministration.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set MedicationAdministration.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -388,7 +388,7 @@
         },
         "reference.MedicationStatement.encounter": {
           "title": "Medication statement: encounter assignment",
-          "description": "Set MedicationStatement.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set MedicationStatement.context to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -399,7 +399,7 @@
         },
         "reference.Immunization.encounter": {
           "title": "Immunization: encounter assignment",
-          "description": "Set Immunization.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set Immunization.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -410,7 +410,7 @@
         },
         "reference.DiagnosticReport.encounter": {
           "title": "Diagnostic report: encounter assignment",
-          "description": "Set DiagnosticReport.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set DiagnosticReport.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -421,7 +421,7 @@
         },
         "reference.CarePlan.encounter": {
           "title": "Care plan: encounter assignment",
-          "description": "Set CarePlan.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted and reported.",
+          "description": "Set CarePlan.encounter to the matching facility, department or ward/service encounter. Matching uses the patient and clinical timestamp. “None” omits the field. If no matching encounter is found, the reference is omitted.",
           "default": "department",
           "enum": [
             "facility",
@@ -645,7 +645,7 @@
         "resource.Encounter.stationServiceProvider": {
           "title": "Ward as service provider",
           "description": "Uses the ward of the ward/service encounter as an Organization in Encounter.serviceProvider. Its stable ID is based on facility, department and ward. A contained organization is embedded in the Encounter; an external organization can be generated or only referenced.",
-          "default": "none",
+          "default": "generate-reference",
           "enum": [
             "none",
             "generate-reference",

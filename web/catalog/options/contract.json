@@ -2178,7 +2178,7 @@
       "section": "resources",
       "type": "enum",
       "control": "radio",
-      "default": "none",
+      "default": "generate-reference",
       "labelKey": "option.stationServiceProvider.label",
       "helpKey": "option.stationServiceProvider.help",
       "choices": [

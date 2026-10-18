@@ -122,7 +122,7 @@ def inspect_conversion(directory, exit_code, reports=None, log=None, *, validate
                         'converterExitCode': exit_code}
 
 
-def prepare_workbook(source, out, defaults, workbook_session, table_format="excel", diagnostics=False):
+def prepare_workbook(source, out, defaults, workbook_session, table_format="excel", diagnostics=False, consent=None):
     """Persist one case; keep only paths, counts and timing between phases."""
     started = time.monotonic()
     bundle = json.loads(source.read_text(encoding='utf-8'))
@@ -135,6 +135,11 @@ def prepare_workbook(source, out, defaults, workbook_session, table_format="exce
     if saved_source != source:
         shutil.copy2(source, saved_source)
     rows, report = prepare(bundle, defaults, diagnostics=diagnostics)
+    if consent is not None:
+        from synthea_consent import enrich
+        report['syntheticConsent'] = enrich(rows, bundle, consent[report['sourcePatient']],
+                                             os.environ['EXCEL2FHIR_CONSENT_SEED'],
+                                             **json.loads(os.environ.get('EXCEL2FHIR_CONSENT_CONTEXT', '{}')))
     write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
     source_patient = report['sourcePatient']
     if diagnostics:
@@ -206,6 +211,10 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
             pass  # The per-file conversion below records malformed inputs individually.
         finally:
             candidate = None
+    consent = None
+    if 'EXCEL2FHIR_CONSENT_SEED' in os.environ:
+        from synthea_consent import assignments
+        consent = assignments(source_patients, os.environ['EXCEL2FHIR_CONSENT_SEED'])
     selected = selected_configs(option_files, source_patients)
     defaults = resolve_config()['values'] if option_files else selected[0]['values']
     from terminology_year import settings
@@ -309,7 +318,7 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
     with (WorkbookSession() if table_format == 'excel' else nullcontext()) as workbook_session:
         for source in sources:
             try:
-                task = prepare_workbook(source, out, defaults, workbook_session, table_format, diagnostics)
+                task = prepare_workbook(source, out, defaults, workbook_session, table_format, diagnostics, consent)
                 if task is None:
                     summary['skipped'].append({'source': str(source), 'reason': 'No Patient in the bundle'})
                 else:

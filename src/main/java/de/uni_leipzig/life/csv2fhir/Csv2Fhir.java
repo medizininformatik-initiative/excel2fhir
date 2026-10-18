@@ -32,6 +32,7 @@ import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r4.model.Bundle.BundleEntryRequestComponent;
 import org.hl7.fhir.r4.model.Location;
+import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Medication;
 import org.hl7.fhir.r4.model.Resource;
 import org.slf4j.Logger;
@@ -170,7 +171,7 @@ public class Csv2Fhir {
      * reference)
      */
     private static final Set<Class<? extends Resource>> PID_INDIPENDENT_RESOURCE_TYPES = Set.of(Medication.class,
-            Location.class);
+            Location.class, Organization.class);
 
     /**
      * @param inputDirectory

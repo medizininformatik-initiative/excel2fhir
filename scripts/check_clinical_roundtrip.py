@@ -40,6 +40,29 @@ def check_clinical(source, target, report):
     medication_events = transformed_medications(medication_rows, options, report.get('outputPatient', pid.replace('_', '-')))
     wanted = Counter(r['resourceType'] for r in imports if r['resourceType'] not in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'))
     wanted.update(r['resourceType'] for r in medication_events)
+    consent = report.get('syntheticConsent')
+    if consent and consent.get('date') and enabled(options, 'CONSENT_ENABLED'):
+        wanted['Consent'] = 1
+        actual_consent = [r for r in dst if r['resourceType'] == 'Consent']
+        assert len(actual_consent) == 1, 'Expected one synthetic consent'
+        from datetime import date, timedelta
+        from check_time_shift import shift_days
+        expected_date = (date.fromisoformat(consent['date']) + timedelta(days=shift_days(report))).isoformat()
+        assert actual_consent[0]['dateTime'][:10] == expected_date
+        expected_groups = {'full': [True]*5, 'patient-data': [True,False,False,False,False],
+                           'patient-and-insurance': [True,True,True,False,False], 'deny': [False]*5}
+        groups = [(2,3,4,5,6,7,8,9,37),(11,12,13,38),(15,16,17,39),(19,20,21,22,23),(25,)]
+        expected_codes = {str(code): 'permit' if permitted else 'deny'
+                          for codes, permitted in zip(groups, expected_groups[consent['variant']]) for code in codes}
+        provisions = actual_consent[0]['provision']
+        assert provisions['type'] == 'deny'
+        assert {c['code'].rsplit('.',1)[-1]: p['type'] for p in provisions['provision']
+                for concept in p['code'] for c in concept['coding']} == expected_codes
+    if options.get('ENCOUNTER_STATION_SERVICE_PROVIDER') == 'generate-reference':
+        organization_ids = {r['serviceProvider']['reference'].split('/',1)[1] for r in dst
+                            if r['resourceType'] == 'Encounter' and r.get('serviceProvider',{}).get('reference','').startswith('Organization/')}
+        assert {r['id'] for r in dst if r['resourceType'] == 'Organization'} == organization_ids
+        wanted['Organization'] = len(organization_ids)
     excluded = {'Patient','Encounter','Condition','Medication'}
     if 'movements' in report: excluded.add('Location')
     actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
