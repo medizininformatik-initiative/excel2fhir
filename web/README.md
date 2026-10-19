@@ -707,6 +707,9 @@ The worker processes at most 100 patients per internal chunk.
 For KDS output, additional identifier counters continue across every patient, chunk
 and subrun of the overall job. Completed chunks store the counter positions for
 resumption; independent jobs start at the configured values.
+Identifier collisions across patients and chunks stop publication of the affected
+chunk. A disk-backed index checks identifier ownership, including case-scoped
+sharing, and is rebuilt from checksummed registration journals on resume.
 Overall progress weights generation, KDS mapping and conversion (or native JSON
 compression), and ZIP writing/checksum verification equally per patient. A second
 bar shows the current stage. The patient counter counts completed chunks; the
@@ -725,6 +728,9 @@ Completed chunks are temporarily stored under
 `outputMass/<timestamp>_<dataset-name>_<run-id>/run-00001/part-00001/`.
 The `packages/` directory contains ZIP packages of at most 1,000 patients, each
 belonging to one subrun. ZIP stores the `.json.gz` files without recompressing them.
+The `-<count>Pat.zip` suffix and dataset patient count report distinct Patient
+resources actually contained in the package. Reference-only patient output retains
+its clinical resources and reports `0Pat` when no Patient resources are included.
 Every package contains a manifest with file checksums and generation checkpoints.
 After the ZIP is closed and all checksums verified, its loose files are removed.
 Only the package currently being built temporarily needs space for both copies.

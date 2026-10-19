@@ -1,5 +1,6 @@
 """Atomic ZIP packages of already compressed patient bundles, without loose duplicates."""
 import hashlib
+import gzip
 import json
 from pathlib import Path, PurePosixPath
 import shutil
@@ -8,6 +9,22 @@ import time
 import zipfile
 
 import store
+
+
+def patient_ids(path):
+    with gzip.open(path, 'rt') as stream:
+        resource = json.load(stream)
+    entries = resource.get('entry', []) if resource.get('resourceType') == 'Bundle' else [{'resource': resource}]
+    return {entry['resource']['id'] for entry in entries
+            if entry.get('resource', {}).get('resourceType') == 'Patient' and entry['resource'].get('id')}
+
+
+def patient_count(manifest):
+    files = manifest['files'].values()
+    if all('patientIds' in entry for entry in files):
+        return len({pid for entry in files for pid in entry['patientIds']})
+    # Keep published packages readable without rewriting their manifests.
+    return sum(entry.get('role') != 'support' for entry in files)
 
 
 def read_manifest(path, verify=True, update=None):
@@ -50,8 +67,8 @@ def package_path(directory, parts, target):
         raise ValueError('Multiple published ZIPs exist for this package')
     if existing:
         return existing[0]
-    count = sum(not path.name.startswith('support-')
-                for part in parts for path in (directory / part).glob('*.json.gz'))
+    count = len({pid for part in parts for path in (directory / part).glob('*.json.gz')
+                 for pid in patient_ids(path)})
     return target.with_name(f'{target.stem}-{count}Pat.zip')
 
 
@@ -77,7 +94,8 @@ def package(directory, parts, destination, update, chunks=None):
                     raise ValueError('Cannot package an empty patient chunk')
                 for source in files:
                     name = part + '/' + source.name
-                    manifest['files'][name] = {'size': source.stat().st_size, 'sha256': store.digest(source)}
+                    manifest['files'][name] = {'size': source.stat().st_size, 'sha256': store.digest(source),
+                                             'patientIds': sorted(patient_ids(source))}
                     if source.name.startswith('support-'):
                         manifest['files'][name]['role'] = 'support'
                     archive.write(source, name)
@@ -139,7 +157,7 @@ def publish(folder, snapshot):
         items.append({'id': folder.name + '.' + str(len(items)), 'name': path.stem,
                       'kind': 'bulk', 'path': path.relative_to(destination).as_posix(),
                       'size': path.stat().st_size, 'sha256': store.digest(path),
-                      'inspection': {'patients': sum(entry.get('role') != 'support' for entry in manifest['files'].values())}, 'files': []})
+                      'inspection': {'patients': patient_count(manifest)}, 'files': []})
     from bulk_generation import atomic_json
     atomic_json(folder / 'datasets.json', {'schemaVersion': 1, 'datasets': items, 'artifacts': []})
 

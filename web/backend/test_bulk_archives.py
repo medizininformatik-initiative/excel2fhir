@@ -31,18 +31,18 @@ class PackageTests(unittest.TestCase):
     def test_verification_failure_keeps_originals(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); part = root / 'part-00001'; part.mkdir()
-            (part / 'p001.json.gz').write_bytes(b'original')
+            (part / 'p001.json.gz').write_bytes(gzip.compress(b'{}'))
             target = root / 'packages/test.zip'
             with patch.object(archives, 'read_manifest', side_effect=ValueError('damaged')):
                 with self.assertRaisesRegex(ValueError, 'damaged'):
                     archives.package(root, [part.name], target, lambda *_: None)
-            self.assertEqual(b'original', (part / 'p001.json.gz').read_bytes())
+            self.assertEqual(gzip.compress(b'{}'), (part / 'p001.json.gz').read_bytes())
             self.assertFalse(target.exists())
 
     def test_changed_loose_file_is_not_deleted_on_retry(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); part = root / 'part-00001'; part.mkdir()
-            source = part / 'p001.json.gz'; source.write_bytes(b'first')
+            source = part / 'p001.json.gz'; source.write_bytes(gzip.compress(b'{}'))
             target = root / 'test.zip'
             with patch.object(archives.shutil, 'rmtree', side_effect=OSError()):
                 with self.assertRaises(OSError): archives.package(root, [part.name], target, lambda *_: None)
