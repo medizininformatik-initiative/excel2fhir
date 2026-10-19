@@ -15,6 +15,12 @@ public final class AdditionalIdentifiers {
     private final Map<String, Set<String>> owners = new HashMap<>();
     private final Map<String, ContactIndex.Level> contactLevels = new HashMap<>();
     private final Map<String, String> ownerRules = new HashMap<>();
+    private java.util.function.Consumer<Map<String, String>> registrationListener = registration -> {};
+
+    /** Stream registrations to the bulk run's durable collision index. */
+    public void onRegistration(java.util.function.Consumer<Map<String, String>> listener) {
+        registrationListener = Objects.requireNonNull(listener);
+    }
     public AdditionalIdentifiers(ContractConfiguration configuration) {
         rules = configuration == null ? List.of() : configuration.identifierRules().stream()
                 .filter(rule -> rule.get("ENABLED").equals("true")).collect(java.util.stream.Collectors.toList());
@@ -169,7 +175,8 @@ public final class AdditionalIdentifiers {
         if (resourceOwners.size() > 1 && (!rule.equals("existing identifier") || !previousRule.equals("existing identifier")))
             throw new IllegalArgumentException("Identifier collision for rule " + rule + " / " + previousRule
                     + ": " + identifier.getSystem() + " | " + identifier.getValue() + " on " + resourceOwners);
-
+        registrationListener.accept(Map.of("system", identifier.getSystem(), "value", identifier.getValue(),
+                "owner", identity, "rule", rule));
     }
     static String expand(String pattern, long count, String patientId, Resource resource, int iteration, String ruleId) {
         return expand(pattern, count, patientId, resource, iteration, ruleId, "");

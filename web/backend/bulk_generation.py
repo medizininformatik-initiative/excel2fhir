@@ -13,6 +13,7 @@ import subprocess
 import sys
 import time
 import bulk_archives
+from bulk_identifiers import Registry
 
 import bulk_plan
 
@@ -149,6 +150,14 @@ package = bulk_archives.package
 
 
 def run(folder):
+    registry = Registry(folder / 'bulk-identifiers.sqlite')
+    try:
+        _run(folder, registry)
+    finally:
+        registry.close()
+
+
+def _run(folder, registry):
     os.environ['TZ'] = 'Europe/Berlin'
     time.tzset()
     snapshot = json.loads((folder / 'snapshot.json').read_text())
@@ -217,12 +226,16 @@ def run(folder):
             final = run_directory / name
             part_names.append(name)
             checkpoint = checkpoint_root / f'{index:06d}.json'
+            journal = checkpoint_root / f'{index:06d}.identifiers.jsonl'
             if grouped and (name in packed_chunks or final.exists()):
                 saved = packed_chunks[name] if name in packed_chunks else json.loads(checkpoint.read_text())
                 if saved['identity'] != identity or saved['size'] != size or (name not in packed_chunks and len(list(final.glob('*.json.gz'))) != saved.get('files', size)):
                     raise ValueError('Completed chunk no longer matches its checkpoint')
                 if not native:
                     identifier_counters = saved.get('identifierCounters')
+                    if not journal.is_file() or store.digest(journal) != saved.get('identifierJournalSha256'):
+                        raise ValueError('Completed chunk identifier journal is missing or changed')
+                    registry.include(journal)
                 completed += size
                 generated_bytes += saved['bytes']
                 measured_seconds += saved['seconds']
@@ -287,7 +300,9 @@ def run(folder):
                     if len(jobs) != size:
                         raise RuntimeError(f'Synthea produced {len(jobs)} patients; expected {size}')
                     counters_output = work / 'identifier-counters.json'
-                    jobs[0].update(identifierCounters=identifier_counters, identifierCountersOutput=str(counters_output))
+                    registrations_output = work / 'identifier-registrations.jsonl'
+                    jobs[0].update(identifierCounters=identifier_counters, identifierCountersOutput=str(counters_output),
+                                   identifierRegistrationsOutput=str(registrations_output))
                     manifest = work / 'conversion.json'
                     manifest.write_text(json.dumps(jobs))
                     update(phase='converting', stageCompleted=0)
@@ -299,6 +314,7 @@ def run(folder):
                     else:
                         checked_process(command, work / 'conversion.log')
                     identifier_counters = json.loads(counters_output.read_text())
+                    registry.include(registrations_output)
                     compact_output_names(pending)
                 files = list(pending.glob('*.json.gz'))
                 if not native and len(files) != size:
@@ -307,8 +323,12 @@ def run(folder):
                 seconds = time.monotonic() - current_started
                 # Metadata first, directory rename second: only the final directory commits a chunk.
                 if grouped:
+                    if not native:
+                        checkpoint_root.mkdir(parents=True, exist_ok=True)
+                        registrations_output.replace(journal)
                     atomic_json(checkpoint, {'identity': identity, 'size': size, 'bytes': size_bytes, 'seconds': seconds, 'files': len(files),
-                                             **({'identifierCounters': identifier_counters} if not native else {})})
+                                             **({'identifierCounters': identifier_counters,
+                                                 'identifierJournalSha256': store.digest(journal)} if not native else {})})
                 pending.rename(final)
                 pending = None
                 completed += size

@@ -34,10 +34,28 @@ class ArchiveNameTests(unittest.TestCase):
             part = root / 'part-00001'
             part.mkdir()
             for name in ['p.json.gz', 'support-org.json.gz']:
-                (part / name).write_bytes(b'content')
+                (part / name).write_bytes(gzip.compress(json.dumps({'resourceType': 'Organization' if name.startswith('support-') else 'Patient', 'id': name}).encode()))
             base = root / 'packages/run-00001-package-00001.zip'
             target = bulk_archives.package_path(root, [part.name], base)
             self.assertEqual('run-00001-package-00001-1Pat.zip', target.name)
             bulk_archives.package(root, [part.name], target, lambda *_: None)
             self.assertEqual(target, bulk_archives.package_path(root, [part.name], base))
             bulk_archives.package(root, [part.name], target, lambda *_: None)
+
+    def test_package_counts_distinct_patient_resources_not_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            part = root / 'part-00001'
+            part.mkdir()
+            resources = [
+                {'resourceType': 'Patient', 'id': 'same'},
+                {'resourceType': 'Patient', 'id': 'same'},
+                {'resourceType': 'Observation', 'id': 'observation', 'subject': {'reference': 'Patient/external'}},
+            ]
+            for index, resource in enumerate(resources):
+                (part / f'p{index}.json.gz').write_bytes(gzip.compress(json.dumps({
+                    'resourceType': 'Bundle', 'entry': [{'resource': resource}]}).encode()))
+            target = bulk_archives.package_path(root, [part.name], root / 'packages/test.zip')
+            self.assertEqual('test-1Pat.zip', target.name)
+            bulk_archives.package(root, [part.name], target, lambda *_: None)
+            self.assertEqual(1, bulk_archives.patient_count(bulk_archives.read_manifest(target)))
