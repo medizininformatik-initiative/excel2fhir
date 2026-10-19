@@ -13,6 +13,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     stream = io.BytesIO()
     fixtures = synthea_runtime.ROOT / 'scripts/tests/fixtures/synthea'
     with zipfile.ZipFile(stream, 'w') as archive:

@@ -11,6 +11,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='native-generation-workbench-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     settings = generation.normalize({'outputMode': 'synthea', 'population': 1,
                                      'minAge': 20, 'maxAge': 20, 'patientFilter': 'alive',
                                      'modules': ['appendicitis'], 'yearsOfHistory': 1})

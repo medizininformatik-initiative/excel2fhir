@@ -172,7 +172,7 @@ def _run(folder, registry):
         options = resolve_config(folder / 'default.config')['values']
         if int(options.get('PID_LAST_NUMBER_INCREASE_LOOP_COUNT', 0)):
             raise ValueError('Bulk generation requires zero additional patient copies')
-    destination = OUTPUT_ROOT / snapshot.get('bulkOutputName', folder.name)
+    destination = bulk_archives.output_path(snapshot) if snapshot.get('resultOutputName') else OUTPUT_ROOT / snapshot.get('bulkOutputName', folder.name)
     grouped = snapshot.get('bulkLayoutVersion', 0) >= 2
     destination.mkdir(parents=True, exist_ok=grouped)
     identifier_counters = {}
@@ -210,8 +210,9 @@ def _run(folder, registry):
     # Recover only atomically published chunks belonging to this immutable snapshot.
     for run_info in runs:
         run_number = run_info['number']
-        run_directory = destination / f'run-{run_number:05d}' if grouped else destination
-        run_directory.mkdir(exist_ok=True)
+        staging_root = folder / 'bulk-staging' if snapshot.get('resultOutputName') else destination
+        run_directory = staging_root / f'run-{run_number:05d}' if grouped else staging_root
+        run_directory.mkdir(parents=True, exist_ok=True)
         update(run=run_number, phase='starting', stageCompleted=0, stageTotal=0)
         print(f'Subrun {run_number}/{len(runs)}: {run_info["total"]} patients', flush=True)
         part_names = []

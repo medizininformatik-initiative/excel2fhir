@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import store
+import result_exports
 
 
 class QueueFixture(unittest.TestCase):
@@ -12,6 +13,9 @@ class QueueFixture(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        exports = patch.object(result_exports, 'ROOT', self.root / 'outputGlobal')
+        exports.start()
+        self.addCleanup(exports.stop)
         self.patch = patch.multiple(store, ROOT=self.root / 'data', APP=self.root / 'converter')
         self.patch.start()
         self.addCleanup(self.patch.stop)

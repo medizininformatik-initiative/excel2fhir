@@ -102,7 +102,7 @@ def run():
         sentinel = output / 'existing-output.zip'
         sentinel.write_bytes(b'Existing outputs must remain unchanged')
         sentinel_before = fingerprint(sentinel)
-        environment = {'WORKBENCH_DATA': str(root / 'data'), 'MASS_OUTPUT_ROOT': str(output)}
+        environment = {'WORKBENCH_DATA': str(root / 'data'), 'MASS_OUTPUT_ROOT': str(output), 'WORKBENCH_OUTPUT': str(output)}
         config = ('CONFIGURATION_VERSION=1\nCHECKS_FHIR_VALIDATION=false\n'
                   'IDENTIFIER_RULE_1_ID=4797e210-671c-4200-9bfb-90faaee082f0\n'
                   'IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Encounter\n'
@@ -111,7 +111,8 @@ def run():
                   'IDENTIFIER_RULE_2_ID=aef7e40e-9e7f-437b-9813-e8ffc86b9607\n'
                   'IDENTIFIER_RULE_2_ENABLED=true\nIDENTIFIER_RULE_2_RESOURCES=Patient\n'
                   'IDENTIFIER_RULE_2_SYSTEM=urn:resume:patient\nIDENTIFIER_RULE_2_PATTERN={count:08}\n')
-        with patch.dict(os.environ, environment), patch.object(store, 'ROOT', root / 'data'), \
+        import result_exports
+        with patch.object(result_exports, 'ROOT', output), patch.dict(os.environ, environment), patch.object(store, 'ROOT', root / 'data'), \
                 patch.object(bulk_generation, 'OUTPUT_ROOT', output), \
                 patch.object(worker, '__file__', str(shim / 'worker.py')):
             settings = generation.Settings(executionMode='bulk', population=200, patientsPerRun=100,
@@ -121,7 +122,7 @@ def run():
             job_id = job['id']
             folder = store.ROOT / 'jobs' / job_id
             snapshot = (folder / 'snapshot.json').read_bytes()
-            destination = output / json.loads(snapshot)['bulkOutputName']
+            destination = output / json.loads(snapshot)['resultOutputName']
             assert store.claim() == job_id
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(worker.execute, job_id)
@@ -129,7 +130,7 @@ def run():
                     wait_until(lambda: (root / 'cancel-ready').exists(), future, folder)
                     first, = (destination / 'packages').glob('*.zip')
                     before = fingerprint(first)
-                    assert list(destination.rglob('*.json.gz')), 'Cancellation must encounter unpublished FHIR'
+                    assert list((folder / 'bulk-staging').rglob('*.json.gz')), 'Cancellation must encounter unpublished FHIR'
                     assert json.loads((folder / 'bulk-progress.json').read_text())['completed'] == 100
                     api.cancel(job_id)
                     future.result(timeout=30)

@@ -556,8 +556,8 @@ Build and update API and worker together whenever converter or import-pipeline
 files change. Both services must contain identical converter and importer assets:
 
 ```sh
-docker compose -f web/compose.yml build api worker web
-docker compose -f web/compose.yml up -d --no-deps api worker web
+docker compose -f web/compose.yml build output-init api worker web
+docker compose -f web/compose.yml up -d api worker web
 ```
 
 Wait for active runs and uploads to finish before updating. Submitted runs retain
@@ -724,20 +724,27 @@ whole-run ZIPs or detailed reports. Standard runs retain their existing behavior
 
 Directory names use a Europe/Berlin timestamp, a sanitized dataset name and the unique run ID. Dataset names use portable ASCII letters, digits, hyphens and underscores and retain at most the final 24 characters. The timestamp uses `YYYYMMDD-HHMMSS`; the full run UUID is written without hyphens. Patient files are named `p001.json.gz` through `p100.json.gz` within each chunk; patient IDs remain inside the bundles.
 
-Completed chunks are temporarily stored under
-`outputMass/<timestamp>_<dataset-name>_<run-id>/run-00001/part-00001/`.
-The `packages/` directory contains ZIP packages of at most 1,000 patients, each
-belonging to one subrun. ZIP stores the `.json.gz` files without recompressing them.
-The `-<count>Pat.zip` suffix and dataset patient count report distinct Patient
-resources actually contained in the package. Reference-only patient output retains
-its clinical resources and reports `0Pat` when no Patient resources are included.
-Every package contains a manifest with file checksums and generation checkpoints.
-After the ZIP is closed and all checksums verified, its loose files are removed.
-Only the package currently being built temporarily needs space for both copies.
-Packages can be downloaded individually or selected for FHIR upload.
-To choose another base directory, set `MASS_OUTPUT_DIRECTORY` to an absolute host
-path before starting Compose. The directory must be writable by the worker
-(container UID 10001). The interface displays the configured destination.
+Standard and bulk Workbench runs publish reusable dataset ZIPs under
+`outputGlobal/<timestamp>_<dataset-name>_<run-id>/`. Standard runs export one ZIP
+per dataset variant; bulk runs publish ZIPs in `packages/`, each containing at most
+1,000 patients from one subrun. The interface shows a copyable result directory.
+Inputs, logs, reports and intermediate files remain in the internal Workbench
+volume. Standard-run downloads and reports remain available in the interface.
+Deleting or cleaning a run does not remove its exported ZIPs.
+
+Compose prepares the output directory before starting the unprivileged services.
+On Linux it grants the service user access using filesystem ACLs and retains the
+checkout owner's access. Docker Desktop uses its shared-folder permissions.
+No host UID configuration or manual permission changes are required on supported
+writable local filesystems. Read-only shares cannot be used as output directories.
+
+Bulk chunks are staged internally until their ZIP is closed and verified. ZIP
+stores `.json.gz` files without recompressing them. The `-<count>Pat.zip` suffix
+reports distinct Patient resources actually contained in the package.
+Reference-only output retains clinical resources and reports `0Pat` when no
+Patient resources are included. Every bulk package contains a manifest with
+checksums and generation checkpoints. Packages can be downloaded individually
+or selected for FHIR upload.
 
 Each chunk uses a distinct reproducible patient seed derived from the submitted
 seed. A 10,000-patient subrun consumes 100 seeds; the next starts with the following
