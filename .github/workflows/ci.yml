@@ -100,6 +100,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build workbench worker
       run: docker build -f web/backend/Dockerfile --target worker -t excel2fhir-workbench:ci .
+    - name: Verify output permissions and standard exports
+      run: docker run --rm -i --user 0:0 --memory=2g excel2fhir-workbench:ci python - < web/integration/smoke_output_storage.py
     - name: Verify blazectl uploads on Blaze and HAPI
       run: |
         trap 'docker compose -f web/compose.yml stop blaze hapi hapi-db' EXIT

@@ -52,7 +52,7 @@ COPY --from=converter /defaults/converter-options.config /converter/defaults.con
 # The existing Synthea importer fills a copy of the template through LibreOffice.
 FROM debian:bookworm-slim AS worker
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    ca-certificates tzdata python3 python3-venv openjdk-17-jdk-headless libreoffice-calc \
+    acl ca-certificates tzdata python3 python3-venv openjdk-17-jdk-headless libreoffice-calc \
     libreoffice-java-common fonts-crosextra-carlito \
     && rm -rf /var/lib/apt/lists/* && python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1

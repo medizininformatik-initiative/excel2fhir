@@ -29,6 +29,8 @@ def hashes(paths, base=None):
 
 with tempfile.TemporaryDirectory(prefix='table-formats-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     fixtures = Path(sys.argv[1]) if len(sys.argv) > 1 else synthea_runtime.ROOT / 'scripts/tests/fixtures/synthea'
     sources = sorted(fixtures.glob('*.json')) if len(sys.argv) > 1 else [fixtures / name for name in ('female.json', 'male.json')]
     with inputs.incoming() as incoming:

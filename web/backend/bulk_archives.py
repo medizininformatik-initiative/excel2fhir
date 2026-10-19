@@ -82,7 +82,7 @@ def package(directory, parts, destination, update, chunks=None):
             raise ValueError('Existing ZIP checkpoint differs from this run')
     else:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        pending = destination.with_suffix('.zip.partial')
+        pending = destination.with_name('.' + destination.name + '.partial')
         manifest = {'version': 1, 'chunks': chunks or {part: {} for part in parts}, 'files': {}}
         file_count = sum(len(list((directory / part).glob('*.json.gz'))) for part in parts)
         written = 0
@@ -141,6 +141,9 @@ def remove_legacy_tar(path, zip_path):
 
 
 def output_path(snapshot):
+    if snapshot.get('resultOutputName'):
+        import result_exports
+        return result_exports.path(snapshot)
     from bulk_generation import OUTPUT_ROOT
     name = snapshot.get('bulkOutputName')
     if not name or Path(name).name != name:
@@ -165,6 +168,9 @@ def publish(folder, snapshot):
 def migrate_completed(folder, snapshot):
     """Package completed existing runs, retaining originals until their ZIP is verified."""
     from bulk_generation import atomic_json
+    if snapshot.get('resultOutputName'):
+        publish(folder, snapshot)
+        return
     destination = output_path(snapshot)
     if not destination.is_dir():
         raise FileNotFoundError('Bulk results directory is unavailable')

@@ -1,5 +1,17 @@
 name: excel2fhir-web-prototype
 services:
+  output-init:
+    build:
+      context: ..
+      dockerfile: web/backend/Dockerfile
+      target: worker
+    user: "0:0"
+    command: [python, init_output.py]
+    volumes:
+      - ../outputGlobal:/global-output
+      - ..:/host-project:ro
+      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output
+    restart: "no"
   api:
     build:
       context: ..
@@ -9,7 +21,11 @@ services:
       MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
+      - ../outputGlobal:/global-output
       - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output:ro
+    depends_on:
+      output-init:
+        condition: service_completed_successfully
     mem_limit: 512m
     cpus: 1
     restart: unless-stopped
@@ -24,7 +40,11 @@ services:
       MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
+      - ../outputGlobal:/global-output
       - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output
+    depends_on:
+      output-init:
+        condition: service_completed_successfully
     mem_limit: 6g
     cpus: 2
     stop_grace_period: 15s

@@ -130,6 +130,8 @@ def build_locked(job_id, snapshot, cancelled=lambda: False):
                 item['sha256'] = store.digest(target)
             except ValueError as error:
                 item['error'] = str(error)
+    import result_exports
+    result_exports.publish(folder, snapshot, manifest)
     temporary = folder / 'datasets.tmp'
     temporary.write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
     temporary.replace(folder / 'datasets.json')

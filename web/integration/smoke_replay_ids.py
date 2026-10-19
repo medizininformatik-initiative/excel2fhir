@@ -89,6 +89,8 @@ CASE_RULE = ('IDENTIFIER_RULE_2_ID=b152e771-3d5a-4cb1-9866-35fa6d91fd83\n'
              'IDENTIFIER_RULE_2_PATTERN={patientId}-{caseId}\n')
 with tempfile.TemporaryDirectory(prefix='replay-id-audit-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     fixture = synthea_runtime.ROOT / 'scripts/tests/fixtures/synthea'
     with inputs.incoming() as incoming:
         with zipfile.ZipFile(incoming / 'input.zip', 'w') as archive:

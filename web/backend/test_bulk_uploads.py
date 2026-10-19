@@ -32,7 +32,7 @@ class StreamingTests(QueueFixture):
                         generation={'executionMode': 'bulk', 'population': 2, 'patientsPerRun': 100, 'patientSeed': '1'}, bulkLayoutVersion=3)
         (folder / 'snapshot.json').chmod(0o600)
         (folder / 'snapshot.json').write_text(json.dumps(snapshot))
-        root = self.output / job
+        root = bulk_archives.output_path(snapshot)
         part = root / 'run-00001/part-00001'; part.mkdir(parents=True)
         resources = resources or [{'resourceType': 'Patient', 'id': 'one'}, {'resourceType': 'Patient', 'id': 'two'}]
         for index, resource in enumerate(resources):
@@ -86,7 +86,7 @@ class StreamingTests(QueueFixture):
         dataset = self.publish()
         action = uploads.create(str(uuid4()), 'blaze', [dataset])
         job,item,path = datasets.resolve_dataset(dataset)
-        self.assertTrue(path.is_relative_to(self.output))
+        self.assertTrue(path.is_relative_to(self.root / 'outputGlobal'))
         response = TestClient(app).get('/api/datasets/'+dataset+'/download')
         self.assertEqual(path.read_bytes(),response.content)
         path.write_bytes(b'changed')

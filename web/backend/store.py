@@ -195,11 +195,13 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             snapshot['syntheaGeneratorSha256'] = generation.catalogue()['sha256']
             snapshot['syntheaRevision'] = generation.catalogue()['revision']
             snapshot['generation'] = json.loads((directory / filename).read_text())
+    import bulk_generation
+    snapshot['resultOutputName'] = bulk_generation.output_directory_name(job_id, dataset_name or 'Datensatz', time.time())
     if bulk:
-        import bulk_generation
         snapshot['bulkLayoutVersion'] = 3
-        snapshot['bulkOutputName'] = bulk_generation.output_directory_name(job_id, dataset_name, time.time())
-        snapshot['bulkOutputDirectory'] = bulk_generation.output_directory_label(snapshot['bulkOutputName'])
+        snapshot['bulkOutputName'] = snapshot['resultOutputName']
+        import result_exports
+        snapshot['bulkOutputDirectory'] = result_exports.label(snapshot)
     if dataset_name:
         snapshot['datasetName'] = dataset_name
     if source_name:
@@ -292,9 +294,12 @@ def job_result(row):
         job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
+        if snapshot.get('resultOutputName'):
+            import result_exports
+            job['output_directory'] = result_exports.label(snapshot)
         if snapshot.get('generation', {}).get('executionMode') == 'bulk':
             import bulk_generation
-            job['bulk_output_directory'] = (bulk_generation.output_directory_label(snapshot['bulkOutputName'])
+            job['bulk_output_directory'] = job.get('output_directory') or (bulk_generation.output_directory_label(snapshot['bulkOutputName'])
                                             if snapshot.get('bulkOutputName') else snapshot['bulkOutputDirectory'])
             progress = snapshot_path.parent / 'bulk-progress.json'
             job['bulk_progress'] = json.loads(progress.read_text()) if progress.is_file() else None
