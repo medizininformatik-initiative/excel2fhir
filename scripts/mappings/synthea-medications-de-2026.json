@@ -4,7 +4,7 @@
     "conditionsUrl": "https://terminologien.bfarm.de/files/conditions/bfarm.terminologien.atcgm-conditions.xml"
   },
   "schemaVersion": 1,
-  "id": "synthea-medications-de-2026-v5",
+  "id": "synthea-medications-de-2026-v7",
   "sourceRegistrySha256": "7474c75fed99ea96d2505ddf3331535ef603f65c6abd182d2d82851a5dbbc700",
   "atcSource": {
     "url": "https://terminologien.bfarm.de/CodeSystem-atcgm-2026.html",
@@ -257,6 +257,11 @@
       "url": "https://www.meine-onlineapo.de/14169010-wick-medinait-mit-anisgeschmack-sirup.html",
       "sha256": "cf9614d0ec6f24ae8eee421dfda75e2fe51d8d389bdf8518573c6a498e4aacad",
       "evidence": "Öffentlich belegte reale deutsche Packung. Einzelne Packungsfakten; keine Vollübernahme einer Arzneimitteldatenbank und keine Zusage aktueller Lieferbarkeit."
+    },
+    "gba-antibiotics-20230615": {
+      "url": "https://www.g-ba.de/downloads/39-261-6055/2023-06-15_DeQS-RL_Freigabe-IQTIG-Bericht_Pruefung-Umsetzbarkeit-QS-AB-Z.pdf",
+      "publicationDate": "2023-06-15",
+      "evidence": "Anhang C, gedruckte Seite 119, PDF-Seite 209: Nitrofurantoin-ratiopharm 100 mg, 50 Retardkapseln, PZN 07097540. Historisch belegte Packung für Testdaten; keine Lieferbarkeitsaussage."
     }
   },
   "entries": [
@@ -545,6 +550,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -662,6 +670,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -779,6 +790,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -1457,6 +1471,9 @@
           "frequency": "2",
           "text": "Morgens und abends eine Filmtablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -1855,6 +1872,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -2108,6 +2128,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette für 21 Tage, anschließend sieben Tage Einnahmepause; synthetisch neu gewähltes Zyklusschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die Mehrphasen-, Langzyklus- oder Placebopackung wird durch ein anderes Zyklusschema ersetzt."
       }
     },
     {
@@ -2318,6 +2341,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -2374,6 +2400,9 @@
           "frequency": "",
           "text": "Ein Implantat subkutan; Wechsel nach drei Jahren."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -2484,6 +2513,9 @@
           "text": "Täglich eine Filmtablette."
         },
         "evidence": "https://www.ema.europa.eu/en/medicines/human/EPAR/forxiga"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -2548,6 +2580,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -3138,6 +3173,9 @@
           "frequency": "2",
           "text": "Morgens und abends jeweils eine Inhalation (100 µg Fluticasonpropionat)."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Fluticasonfuroat und Fluticasonpropionat unterscheiden sich im vorgesehenen Einnahmerhythmus; ein vorhandenes Inhalationsschema ist nicht unverändert übertragbar."
       }
     },
     {
@@ -3193,6 +3231,9 @@
           "frequency": "2",
           "text": "Morgens und abends jeweils zwei Inhalationen (je 100 µg Fluticasonpropionat)."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Fluticasonfuroat und Fluticasonpropionat unterscheiden sich im vorgesehenen Einnahmerhythmus; ein vorhandenes Inhalationsschema ist nicht unverändert übertragbar."
       }
     },
     {
@@ -3257,6 +3298,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die Kombination Donepezil/Memantin wird auf Donepezil allein reduziert; ein Bestandteil der Patientengeschichte entfällt."
       }
     },
     {
@@ -3361,15 +3405,22 @@
       },
       "product": {
         "system": "http://fhir.de/CodeSystem/ifa/pzn",
-        "code": "04071824",
-        "display": "Nifuretten",
-        "doseForm": "überzogene Tablette",
+        "code": "07097540",
+        "display": "Nitrofurantoin-ratiopharm 100 mg Retardkapseln",
+        "doseForm": "Hartkapsel, retardiert",
         "doseCompatibility": "synthetic-representative",
-        "selectionReason": "Öffentlich belegte Packung mit gleicher deutscher ATC-Klassifikation; orale bzw. inhalative/parenterale Applikation bleibt erhalten. Konkrete Stärke und Form für synthetische Zieldaten gewählt.",
-        "source": "bfarm-kinder-20260904",
+        "selectionReason": "Deutsche 100-mg-Retardkapsel als plausibler Vertreter des Nitrofurantoin-100-mg-Kapselkonzepts; Unterschiede der Kristall-/Monohydratform sind für diesen synthetischen Fall zulässig.",
+        "source": "gba-antibiotics-20230615",
         "evidenceIngredient": "Nitrofurantoin",
         "review": "pending-human-review",
-        "dosePolicy": "explicit-synthetic-regimen"
+        "dosePolicy": "explicit-synthetic-regimen",
+        "evidencePage": 209,
+        "sourceNominalStrengthMg": [
+          100.0
+        ],
+        "targetNominalStrengthMg": [
+          100.0
+        ]
       },
       "reason": "Redaktionelle Klassifikationszuordnung anhand des konkreten Quellkonzepts und der deutschen ATC-Systematik; keine Präparateäquivalenz.",
       "review": "pending-human-review",
@@ -3388,17 +3439,24 @@
         "method": "rxnav-active-ingredients",
         "sourceEvidenceSha256": "eefd22e5fb3e9b703291c44924a114133ff544cfdeb37de42afa9383e2f4990f"
       },
+      "sourceDoseReview": {
+        "evidence": [
+          "https://www.fachinfo.de/fi/pdf/001489",
+          "https://www.g-ba.de/downloads/39-261-6055/2023-06-15_DeQS-RL_Freigabe-IQTIG-Bericht_Pruefung-Umsetzbarkeit-QS-AB-Z.pdf"
+        ],
+        "note": "Gleicher Wirkstoff, gleiche Gesamtstärke und eine Retardkapsel mit einem für das Quellszenario passenden Einnahmerhythmus. Quelldosierung bleibt unverändert."
+      },
       "enrichment": {
         "kind": "synthetic-regimen",
-        "display": "Nifuretten",
-        "doseForm": "überzogene Tablette",
-        "reason": "Synthetisches Schema an deutsche Stärke, Form und den Behandlungszweck des Quellmoduls angepasst.",
+        "display": "Nitrofurantoin-ratiopharm 100 mg Retardkapseln",
+        "doseForm": "Hartkapsel, retardiert",
+        "reason": "Nur bei fehlender Quelldosierung: synthetisches Schema der gewählten 100-mg-Retardkapsel.",
         "resetDose": true,
         "dose": {
-          "value": "5",
-          "unit": "{tbl}",
-          "frequency": "3",
-          "text": "Dreimal täglich fünf Tabletten (je 20 mg) als zeitlich begrenzte Behandlung des Harnwegsinfekts."
+          "value": "1",
+          "unit": "{caps}",
+          "frequency": "2",
+          "text": "Zweimal täglich eine Retardkapsel (100 mg)."
         }
       }
     },
@@ -4296,6 +4354,9 @@
           "frequency": "3",
           "text": "Dreimal täglich 1 g intravenös."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -5051,6 +5112,9 @@
           "frequency": "",
           "text": "Intravenöse Eptifibatid-Infusion; Rate entsprechend Körpergewicht und Nierenfunktion."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Tirofiban- und Eptifibatid-Infusionen benötigen unterschiedliche Bolus- und Infusionsschemata."
       }
     },
     {
@@ -5920,6 +5984,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "5a028b895a03074a1fafea5984cd69d9b503489b59c2b89f408bdfc00225bb07"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -6383,6 +6450,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -6866,6 +6936,9 @@
       "ingredientSelection": {
         "method": "rxnav-active-ingredients",
         "sourceEvidenceSha256": "a8d19bc0a384fc8e56647ee91e0c1be10333a78fd96a2498c972eb99c19f44e0"
+      },
+      "sourceDoseReview": {
+        "note": "Colchicin 0,5 mg ist als angenäherter deutscher Vertreter des 0,6-mg-Quellpräparats zugelassen. Menge, Einheit und Rhythmus der Quelle bleiben unverändert; keine pharmazeutische Äquivalenzbehauptung."
       }
     },
     {
@@ -7138,6 +7211,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -7480,6 +7556,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Lovastatin wird für das synthetische Lipidsenkungsszenario durch eine Simvastatin-Tablette derselben nominalen Stärke ersetzt; kein Dosisumbau und keine Äquivalenzbehauptung."
       }
     },
     {
@@ -7537,6 +7616,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Lovastatin wird für das synthetische Lipidsenkungsszenario durch eine Simvastatin-Tablette derselben nominalen Stärke ersetzt; kein Dosisumbau und keine Äquivalenzbehauptung."
       }
     },
     {
@@ -7601,6 +7683,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Lovastatin wird für das synthetische Lipidsenkungsszenario durch eine Simvastatin-Tablette derselben nominalen Stärke ersetzt; kein Dosisumbau und keine Äquivalenzbehauptung."
       }
     },
     {
@@ -9470,6 +9555,9 @@
           "frequency": "1",
           "text": "Täglich eine Filmtablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -9586,6 +9674,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -10894,6 +10985,9 @@
           "frequency": "3",
           "text": "Dreimal täglich 1,5 g intravenös."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -11233,6 +11327,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "138e35ebe44e1798a29c202f2c692b596db0da55d2748ea8c0e0c9cc2eb922c4"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -11383,6 +11480,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "d7da6d7432110617c5fe88b8957157fcd3bae61fe185e025d6ce3b43c6167c17"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -11703,6 +11803,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -12135,6 +12238,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -13089,6 +13195,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -13305,6 +13414,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz wechselt von einem mehrfach täglichen Quellschema zu einem einmal täglichen Zielpräparat."
       }
     },
     {
@@ -13699,6 +13811,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -13764,6 +13879,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -13829,6 +13947,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -14150,6 +14271,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -14214,6 +14338,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz wechselt von einem mehrfach täglichen Quellschema zu einem einmal täglichen Zielpräparat."
       }
     },
     {
@@ -14269,6 +14396,9 @@
           "frequency": "",
           "text": "Intravenöse STEMI-Fibrinolyse mit Alteplase nach gewichtsabhängigem Bolus-/Infusionsschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Bolus-/Infusionsschema und gegebenenfalls biologische Einheiten unterscheiden sich zwischen den Fibrinolytika."
       }
     },
     {
@@ -14333,6 +14463,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 2 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -14495,6 +14628,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -14822,6 +14958,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -15803,6 +15942,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -16055,6 +16197,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz wechselt von einem mehrfach täglichen Quellschema zu einem einmal täglichen Zielpräparat."
       }
     },
     {
@@ -16119,6 +16264,9 @@
           "frequency": "1",
           "text": "Täglich eine Filmtablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -16182,6 +16330,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz wechselt von einem mehrfach täglichen Quellschema zu einem einmal täglichen Zielpräparat."
       }
     },
     {
@@ -16497,6 +16648,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {tbl} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die orale Lösung wird durch eine Tablette ersetzt; eine vorhandene Dosierung kann sich auf das Lösungsvolumen beziehen."
       }
     },
     {
@@ -16711,6 +16865,9 @@
           "frequency": "",
           "text": "Inhalative Narkose mit Sevofluran; Konzentration entsprechend dem synthetischen Anästhesieverlauf titrieren."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Desfluran- und Sevofluran-Konzentrationen sind nicht als unverändertes Narkoseschema übertragbar."
       }
     },
     {
@@ -18234,6 +18391,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "d7da6d7432110617c5fe88b8957157fcd3bae61fe185e025d6ce3b43c6167c17"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -18290,6 +18450,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "d7da6d7432110617c5fe88b8957157fcd3bae61fe185e025d6ce3b43c6167c17"
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -18696,6 +18859,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette ohne Einnahmepause."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -18823,6 +18989,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette für 21 Tage, anschließend sieben Tage Einnahmepause; synthetisch neu gewähltes Zyklusschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die Mehrphasen-, Langzyklus- oder Placebopackung wird durch ein anderes Zyklusschema ersetzt."
       }
     },
     {
@@ -18898,6 +19067,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette für 21 Tage, anschließend sieben Tage Einnahmepause; synthetisch neu gewähltes Zyklusschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die Mehrphasen-, Langzyklus- oder Placebopackung wird durch ein anderes Zyklusschema ersetzt."
       }
     },
     {
@@ -18973,6 +19145,9 @@
       "ingredientSelection": {
         "method": "explicit-synthetic-choice",
         "sourceEvidenceSha256": "c9a4f088dce669d405ab1b0d27dad30d26eb453d9e89bb25dac997b116adee4c"
+      },
+      "sourceDoseReview": {
+        "note": "Die Mehrphasen-, Langzyklus- oder Placebopackung wird durch ein anderes Zyklusschema ersetzt."
       }
     },
     {
@@ -19204,6 +19379,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette für 21 Tage, anschließend sieben Tage Einnahmepause; synthetisch neu gewähltes Zyklusschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Die Mehrphasen-, Langzyklus- oder Placebopackung wird durch ein anderes Zyklusschema ersetzt."
       }
     },
     {
@@ -19310,6 +19488,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette ohne Einnahmepause."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -19365,6 +19546,9 @@
           "frequency": "",
           "text": "Intravenöse STEMI-Fibrinolyse mit Alteplase nach gewichtsabhängigem Bolus-/Infusionsschema."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Bolus-/Infusionsschema und gegebenenfalls biologische Einheiten unterscheiden sich zwischen den Fibrinolytika."
       }
     },
     {
@@ -19757,6 +19941,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette ohne Einnahmepause."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -20818,6 +21005,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -20874,6 +21064,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -20983,6 +21176,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -21092,6 +21288,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -21209,6 +21408,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -21275,6 +21477,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -21340,6 +21545,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {tbl} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -22065,6 +22273,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz wechselt von einem mehrfach täglichen Quellschema zu einem einmal täglichen Zielpräparat."
       }
     },
     {
@@ -22121,6 +22332,9 @@
           "frequency": "",
           "text": "Intramuskuläre Injektion durch den behandelnden Spezialisten; muskelbezogene Dosen für Abobotulinumtoxin A festlegen."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Botulinumtoxin-Typ und produktspezifische Einheiten wechseln; die ursprüngliche Dosis gehört zum Quellprodukt."
       }
     },
     {
@@ -22185,6 +22399,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -22249,6 +22466,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -22313,6 +22533,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Wechsel zwischen retardierter und unretardierter Form benötigt ein anderes Einnahmeschema."
       }
     },
     {
@@ -22530,6 +22753,9 @@
           "frequency": "3",
           "text": "Synthetisches Schema: 1 {caps} 3-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -23521,6 +23747,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -23936,6 +24165,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24000,6 +24232,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24064,6 +24299,9 @@
           "frequency": "2",
           "text": "Synthetisches Schema: 1 {tbl} 2-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24225,6 +24463,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24290,6 +24531,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24355,6 +24599,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24420,6 +24667,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24485,6 +24735,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -24550,6 +24803,9 @@
           "frequency": "1",
           "text": "Synthetisches Schema: 1 {caps} 1-mal täglich."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -25386,6 +25642,9 @@
           "frequency": "2",
           "text": "Morgens und abends eine Filmtablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Der Ersatz durch Sacubitril/Valsartan ändert beide Wirkstoffe und kann mit bestehender RAAS-Medikation der Patientengeschichte kollidieren."
       }
     },
     {
@@ -25449,6 +25708,9 @@
           "frequency": "1",
           "text": "Täglich eine Tablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {
@@ -25666,6 +25928,9 @@
           "frequency": "1",
           "text": "Morgens eine Filmtablette."
         }
+      },
+      "sourceDoseReview": {
+        "note": "Als Vertreter für denselben synthetischen Behandlungszweck verwendbar; eine wirkstoffbezogene Mengen- oder Konzentrationsangabe darf nicht auf den anderen Wirkstoff übertragen werden."
       }
     },
     {

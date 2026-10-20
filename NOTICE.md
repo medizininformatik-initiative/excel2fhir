@@ -45,3 +45,9 @@ under [CC BY 4.0](third-party/opus-mt/LICENSE.txt); entries identify editorial
 changes. Selected Wikidata labels use CC0. Name data uses Faker under its
 [MIT license](third-party/faker/LICENSE.txt). Source versions and evidence are
 recorded in the respective mapping tables.
+
+## blazectl
+
+The workbench worker includes [Samply blazectl 1.5.1](https://github.com/samply/blazectl/releases/tag/v1.5.1),
+Copyright 2019–2025 The Samply Community, under the [Apache License 2.0](third-party/blazectl/LICENSE).
+Release archives are verified against pinned SHA-256 checksums during the image build.

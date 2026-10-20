@@ -29,32 +29,50 @@ class ImportTest(unittest.TestCase):
         period = {'start': '1992-09-27T00:43:12+00:00', 'end': '1992-09-27T01:43:12+00:00'}
         source['entry'][1]['resource']['period'] = period
         rows, _ = prepare(source)
-        for value, expected in zip(rows['Fall'][0][2:4], period.values()):
+        for value, expected in zip([rows['Fall'][0]['Start'], rows['Fall'][0]['Ende']], period.values()):
             self.assertEqual(datetime.fromisoformat(value), datetime.fromisoformat(expected))
+
+    def test_historical_offset_seconds_are_rendered_in_utc(self):
+        import os, time
+        from unittest.mock import patch
+        source = bundle()
+        period = {'start': '1888-09-23T18:18:52+00:00', 'end': '1888-09-23T18:33:52+00:00'}
+        source['entry'][1]['resource']['period'] = period
+        try:
+            with patch.dict(os.environ, TZ='Europe/Berlin'):
+                time.tzset()
+                rows, _ = prepare(source)
+                for actual, expected in zip([rows['Fall'][0]['Start'], rows['Fall'][0]['Ende']], period.values()):
+                    self.assertEqual(expected, actual)
+        finally:
+            time.tzset()
 
     def test_keeps_codes_times_references_and_reports_excluded_resources(self):
         source=bundle();before=copy.deepcopy(source)
         rows,report=prepare(source)
         self.assertEqual(source,before)
-        self.assertEqual(rows['Fall'][0][4],'ambulant')
-        self.assertEqual(rows['Fall'][0][9],'Notfall')
+        self.assertEqual(rows['Fall'][0]['Einrichtungskontaktklasse'],'ambulant')
+        self.assertEqual(rows['Fall'][0]['Aufnahmegrund (4. Stelle)'],'Notfall')
         self.assertEqual(report['encounterMappings'][0]['admissionReasonFourthComponent'],'7')
-        self.assertEqual(rows['Diagnose'][0][1],'1')
-        self.assertEqual(rows['Diagnose'][0][3],'00123')
-        self.assertEqual(rows['Diagnose'][0][8],'2020-01')
-        self.assertEqual(rows['Diagnose'][0][10],'Aktiv')
+        self.assertEqual(rows['Diagnose'][0]['Fall-Nr'],'1')
+        self.assertEqual(rows['Diagnose'][0]['Code'],'00123')
+        self.assertEqual(rows['Diagnose'][0]['Beginn'],'2020-01')
+        self.assertEqual(rows['Diagnose'][0]['Klinischer Status'],'Aktiv')
         self.assertEqual(report['importedConditions'],1)
         self.assertTrue(any(x['resourceType']=='Procedure'for x in report['losses']))
 
-    def test_rejects_broken_reference_and_unknown_version(self):
+    def test_rejects_broken_reference_and_retains_unknown_version(self):
         source=bundle();source['entry'][2]['resource']['encounter']['reference']='urn:uuid:missing'
         with self.assertRaises(ValueError):prepare(source)
         source=bundle();source['entry'][2]['resource']['code']['coding'][0]['version']='unverified-release'
-        with self.assertRaises(ValueError):prepare(source)
+        rows, _ = prepare(source)
+        self.assertEqual(rows['Diagnose'][0]['Version'], 'unverified-release')
 
-    def test_never_emits_administrative_shell_or_relabels_unknown_encounter_class(self):
+    def test_imports_without_diagnoses_and_rejects_unknown_encounter_class(self):
         source=bundle();source['entry']=[x for x in source['entry']if x['resource']['resourceType']!='Condition']
-        with self.assertRaises(ValueError):prepare(source)
+        rows, report = prepare(source)
+        self.assertEqual(rows['Diagnose'], [])
+        self.assertEqual(report['sourceConditions'], 0)
         source=bundle();source['entry'][1]['resource']['class']['code']='UNKNOWN'
         with self.assertRaises(ValueError):prepare(source)
 
@@ -63,7 +81,7 @@ class ImportTest(unittest.TestCase):
             {'system':'http://fhir.de/CodeSystem/bfarm/icd-10-gm','version':'2026','code':'A01'})
         rows,report=prepare(source)
         self.assertEqual(len(rows['Diagnose']),1)
-        self.assertEqual(rows['Diagnose'][0][3:5],['A01','ICD-10-GM'])
+        self.assertEqual([rows['Diagnose'][0]['Code'], rows['Diagnose'][0]['Codesystem']],['A01','ICD-10-GM'])
 
     def test_roundtrip_detects_missing_emergency_reason_and_extra_encounters(self):
         source = bundle()
@@ -74,6 +92,7 @@ class ImportTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         target['entry'][2]['resource']['encounter']['reference'] = 'Encounter/p-E-1'
         encounter['extension'] = [{

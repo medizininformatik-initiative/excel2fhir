@@ -39,18 +39,28 @@ class NationalMedicationTest(unittest.TestCase):
             rx['medicationCodeableConcept'] = {'coding': [{'system': RXNORM, 'code': code}]}
             rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
             row = rows['Medikation'][0]
-            self.assertEqual((row[4], row[6]), (pzn, atc))
+            self.assertEqual((row['Präparatcode'], row['ATC-Code']), (pzn, atc))
             self.assertNotIn('RxNorm', row)
-            self.assertEqual(row[16:19], ['2', 'mg', '3'])
+            self.assertEqual([row['Einzeldosis'], row['Dosiereinheit'], row['Dosen pro Tag']], ['2', 'mg', '3'])
             self.assertIn({'sourceId': 'rx', 'resourceType': 'MedicationRequest'}, report['clinicalImports'])
             if not pzn:
-                self.assertIn('ATC-Zuordnung offen', row[3])
+                self.assertIn('ATC-Zuordnung offen', row['Präparatbezeichnung'])
 
     def test_every_registered_rxnorm_concept_has_an_explicit_outcome(self):
         registry = json.loads(PATH.with_name('synthea-source-code-registry.json').read_text())
         mapping = NationalMedicationMapping()
         self.assertEqual(set(mapping.entries), {(e['system'], e['code']) for e in registry['entries']
                                                 if e['system'] == RXNORM})
+
+    def test_source_dose_system_is_preserved_without_ucum_assumption(self):
+        source = test_medication_products.ProductTest().medication_bundle()
+        request = source['entry'][-1]['resource']
+        request['medicationCodeableConcept'] = {'coding': [{'system': RXNORM, 'code': 'not-a-code'}]}
+        dose = request['dosageInstruction'][0]['doseAndRate'][0]['doseQuantity']
+        dose.update(system='my-units', code='µg')
+        request['dosageInstruction'][0]['text'] = 'Supplied instruction'
+        rows, _ = prepare_clinical(source['entry'], 'p', {'e': '1'})
+        self.assertEqual(['2', 'µg', 'my-units', '3', 'Supplied instruction'], [rows['Medikation'][0]['Einzeldosis'], rows['Medikation'][0]['Dosiereinheit'], rows['Medikation'][0]['Dosiereinheitcodesystem'], rows['Medikation'][0]['Dosen pro Tag'], rows['Medikation'][0]['Dosierungstext']])
 
     def test_every_registered_medication_imports_with_atc_and_real_ingredient_keys(self):
         mapping = NationalMedicationMapping()
@@ -61,25 +71,32 @@ class NationalMedicationTest(unittest.TestCase):
             rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
             self.assertEqual(len(rows['Medikation']), 1, coding)
             row = rows['Medikation'][0]
-            self.assertTrue(row[6], coding)
-            self.assertEqual(row[7], '2026')
-            self.assertRegex(row[4], r'^[0-9]{8}$')
-            self.assertEqual(row[5], 'PZN')
-            self.assertEqual(row[10], 'UNII')
-            for ingredient in row[9].split('; '):
+            decision = report['clinicalMappings'][0]
+            self.assertRegex(row['Präparatcode'], r'^[0-9]{8}$')
+            self.assertEqual('PZN', row['Präparatcodesystem'])
+            self.assertTrue(row['ATC-Code'], coding)
+            self.assertEqual(row['ATC-Version'], '2026')
+            self.assertEqual(row['Wirkstoffcodesystem'], 'UNII')
+            self.assertNotIn('productReview', decision)
+            self.assertEqual(['2', 'mg', '', '3', ''], [row[k] for k in
+                             ('Einzeldosis', 'Dosiereinheit', 'Dosiereinheitcodesystem', 'Dosen pro Tag', 'Dosierungstext')], coding)
+            for ingredient in filter(None, row['Wirkstoffcode'].split('; ')):
                 self.assertRegex(ingredient, r'^[A-Z0-9]{10}$')
             self.assertNotIn('RxNorm', row)
-            self.assertEqual(report['medicationMappingSummary']['withIngredients'], 1)
+            self.assertEqual(report['medicationMappingSummary']['withIngredients'], int(bool(row['Wirkstoffcode'])))
 
-    def test_synthetic_replacement_replaces_ingredient_and_dose_together(self):
+    def test_different_ingredient_candidate_does_not_replace_existing_dose(self):
         source = test_medication_products.ProductTest().medication_bundle()
         source['entry'][-1]['resource']['medicationCodeableConcept'] = {
             'coding': [{'system': RXNORM, 'code': '1860491'}]}
         rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
         row = rows['Medikation'][0]
-        self.assertIn('Hydromorphon', row[3])
-        self.assertEqual(row[6], 'N02AA03')
-        self.assertEqual(row[16:19], ['2', 'mg', '2'])
+        self.assertIn('Hydromorphon', row['Präparatbezeichnung'])
+        self.assertEqual('N02AA03', row['ATC-Code'])
+        self.assertTrue(row['Wirkstoffcode'])
+        self.assertEqual('09229081', row['Präparatcode'])
+        self.assertEqual([row['Einzeldosis'], row['Dosiereinheit'], row['Dosen pro Tag']], ['2', 'mg', '3'])
+        self.assertNotIn('productReview', report['clinicalMappings'][0])
         self.assertTrue(report['clinicalMappings'][0]['sourceDosage'])
 
     def test_unitless_oral_count_is_not_interpreted_as_milligrams(self):
@@ -90,12 +107,19 @@ class NationalMedicationTest(unittest.TestCase):
         quantity.pop('code')
         before = copy.deepcopy(source)
         rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
-        self.assertEqual(rows['Medikation'][0][16:19], ['2', '{tbl}', '3'])
+        self.assertEqual([rows['Medikation'][0][i] for i in ('Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag')], ['2', '', '3'])
         self.assertEqual(source, before)
-        self.assertEqual(report['clinicalMappings'][0]['doseUnitEnrichment'], '{tbl}')
+        self.assertNotIn('doseUnitEnrichment', report['clinicalMappings'][0])
+        self.assertEqual('19053588', rows['Medikation'][0]['Präparatcode'])
+        self.assertNotIn('productReview', report['clinicalMappings'][0])
         quantity['code'] = 'mg'
         rows, _ = prepare_clinical(source['entry'], 'p', {'e': '1'})
-        self.assertEqual(rows['Medikation'][0][16:19], ['2', 'mg', '3'])
+        self.assertEqual([rows['Medikation'][0][i] for i in ('Einzeldosis', 'Dosiereinheit', 'Dosen pro Tag')], ['2', 'mg', '3'])
+        quantity.pop('code')
+        quantity['system'] = 'custom-units'
+        rows, report = prepare_clinical(source['entry'], 'p', {'e': '1'})
+        self.assertEqual(['2', '', 'custom-units'], [rows['Medikation'][0]['Einzeldosis'], rows['Medikation'][0]['Dosiereinheit'], rows['Medikation'][0]['Dosiereinheitcodesystem']])
+        self.assertNotIn('doseUnitEnrichment', report['clinicalMappings'][0])
 
     def test_german_herceptin_excludes_hyaluronidase_excipient(self):
         result = NationalMedicationMapping().select({'system': RXNORM, 'code': '2119714'})
@@ -113,7 +137,7 @@ class NationalMedicationTest(unittest.TestCase):
                             'display': entry['source']['displays'][0]}]}}
             entries = test_medication_products.bundle()['entry'][:1] + [{'resource': resource}]
             rows, _ = prepare_clinical(entries, 'p', {})
-            dose, unit, frequency, text = rows['Medikation'][0][16:20]
+            dose, unit, system, frequency, text = [rows['Medikation'][0]['Einzeldosis'], rows['Medikation'][0]['Dosiereinheit'], rows['Medikation'][0]['Dosiereinheitcodesystem'], rows['Medikation'][0]['Dosen pro Tag'], rows['Medikation'][0]['Dosierungstext']]
             if text or frequency:
                 self.assertTrue(dose, entry['source']['code'])
 

@@ -19,7 +19,7 @@ for argument in "$@"; do
     -o=*|--output-directory=*) output_directory="${argument#*=}" ;;
     -t|--temp-directory) next_argument=temp ;;
     -t=*|--temp-directory=*) temp_directory="${argument#*=}" ;;
-    -h|--help|-V|--version) exec java -jar /app/excel2fhir.jar "$@" ;;
+    -h|--help|-V|--version) exec java -jar /app/synthifhir.jar "$@" ;;
   esac
 done
 
@@ -34,6 +34,6 @@ if [ "$(id -u)" -eq 0 ]; then
     mkdir -p "$temp_directory"
     chown "$owner" "$temp_directory"
   fi
-  exec su-exec "$owner" java -jar /app/excel2fhir.jar "$@"
+  exec su-exec "$owner" java -jar /app/synthifhir.jar "$@"
 fi
-exec java -jar /app/excel2fhir.jar "$@"
+exec java -jar /app/synthifhir.jar "$@"

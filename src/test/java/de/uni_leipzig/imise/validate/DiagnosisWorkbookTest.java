@@ -12,6 +12,119 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 public class DiagnosisWorkbookTest {
+    private static int column(org.apache.poi.ss.usermodel.Sheet sheet, String name) {
+        for (var cell : sheet.getRow(0)) {
+            if (name.equals(cell.getStringCellValue())) return cell.getColumnIndex();
+        }
+        throw new AssertionError("Missing field " + name + " on " + sheet.getSheetName());
+    }
+
+    private static org.apache.poi.ss.usermodel.Cell field(org.apache.poi.ss.usermodel.Sheet sheet, int row, String name) {
+        return sheet.getRow(row).getCell(column(sheet, name), org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+    }
+
+    private static String choice(XSSFWorkbook book, String list, int item) {
+        var sheet = book.getSheet("Codes");
+        for (var row : sheet) for (var cell : row) {
+            if (cell.getCellType() == CellType.STRING && list.equals(cell.getStringCellValue()))
+                return sheet.getRow(row.getRowNum() + item).getCell(cell.getColumnIndex()).getStringCellValue();
+        }
+        throw new AssertionError("Missing selection list " + list);
+    }
+
+    @Test
+    public void sparseRowsPreserveContinuationAndOriginalIssueLocations() throws Exception {
+        try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                var template = new XSSFWorkbook(input); var book = new XSSFWorkbook()) {
+            // Build a sparse fixture with the real headers, without modifying the template.
+            for (var source : template) {
+                var header = book.createSheet(source.getSheetName()).createRow(0);
+                for (var cell : source.getRow(0))
+                    header.createCell(cell.getColumnIndex()).setCellValue(cell.getStringCellValue());
+            }
+            var person = book.getSheet("Person");
+            person.createRow(1);
+            field(person, 1, "Patient-ID").setCellValue("p1");
+            var encounter = book.getSheet("Fall");
+            encounter.createRow(1);
+            field(encounter, 1, "Patient-ID").setCellValue("p1");
+            field(encounter, 1, "Fall-Nr").setCellValue("f1");
+            field(encounter, 1, "Einrichtungskontaktklasse").setCellValue("vollstationär");
+            field(encounter, 1, "Start").setCellValue("2026-01-01T12:00:00+01:00");
+            var vaccination = book.getSheet("Impfung");
+            vaccination.createRow(1);
+            field(vaccination, 1, "Patient-ID").setCellValue("p1");
+            field(vaccination, 1, "Fall-Nr").setCellValue("f1");
+            field(vaccination, 1, "Eintrag ID").setCellValue("v1");
+            int last = 1048575;
+            for (var sheet : List.of(person, encounter, vaccination)) {
+                sheet.createRow(100); // A physical empty row among absent rows.
+                sheet.createRow(last);
+            }
+            field(person, last, "Patient-ID").setCellValue("p1"); // Duplicate at the original Excel row.
+            field(encounter, last, "Start").setCellValue("invalid timestamp"); // Inherits p1 across the gap.
+            field(vaccination, last, "Fall-Nr").setCellValue("f1"); // Inherits p1 and resolves f1.
+            field(vaccination, last, "Eintrag ID").setCellValue("v2");
+            field(vaccination, last, "Zeitpunkt").setCellValue("invalid timestamp");
+            var checked = new ExcelTemplateValidator().validate(book,
+                    de.uni_leipzig.life.synthifhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"), "test");
+            assertEquals(checked.getIssues().toString(), 3, checked.getIssues().size());
+            for (String sheet : List.of("Person", "Fall", "Impfung")) {
+                assertTrue(checked.getIssues().toString(), checked.getIssues().stream().anyMatch(issue ->
+                        sheet.equals(issue.getSheetName()) && issue.getRowNumber() == last + 1 && issue.isError()));
+            }
+            assertTrue(checked.getIssues().stream().anyMatch(issue -> "Patient-ID must be unique".equals(issue.getMessage())));
+            assertTrue(checked.getIssues().stream().noneMatch(issue -> issue.getMessage().contains("previous Patient-ID")
+                    || issue.getMessage().contains("does not exist")));
+        }
+    }
+
+    @Test
+    public void reorderedFieldsPassButDuplicateFieldsFail() throws Exception {
+        var file = java.nio.file.Files.createTempFile("reordered-fields-", ".xlsx");
+        try {
+            try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx"); var book = new XSSFWorkbook(input)) {
+                var sheet = book.getSheet("Medikation");
+                int system = column(sheet, "Dosiereinheitcodesystem");
+                int text = column(sheet, "Dosierungstext");
+                var formatter = new org.apache.poi.ss.usermodel.DataFormatter();
+                for (var row : sheet) {
+                    String a = formatter.formatCellValue(row.getCell(system));
+                    String b = formatter.formatCellValue(row.getCell(text));
+                    row.getCell(system, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue(b);
+                    row.getCell(text, org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).setCellValue(a);
+                }
+                try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+                var result = new ExcelTemplateValidator().validate(file.toFile());
+                assertFalse(result.getIssues().toString(), result.hasErrors());
+                field(sheet, 0, "Dosierungstext").setCellValue("Dosiereinheitcodesystem");
+                try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+                assertTrue(new ExcelTemplateValidator().validate(file.toFile()).hasErrors());
+            }
+        } finally { java.nio.file.Files.deleteIfExists(file); }
+    }
+
+    @Test
+    public void reversedDiagnosisDatesPassInputConsistencyChecks() throws Exception {
+        var file = java.nio.file.Files.createTempFile("reversed-diagnosis-", ".xlsx");
+        try {
+            try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
+                    var book = new XSSFWorkbook(input)) {
+                var sheet = book.getSheet("Diagnose");
+                for (var cell : sheet.getRow(0)) {
+                    String name = cell.getStringCellValue();
+                    if (name.equals("Beginn") || name.equals("Ende"))
+                        sheet.getRow(1).getCell(cell.getColumnIndex(), org.apache.poi.ss.usermodel.Row.MissingCellPolicy.CREATE_NULL_AS_BLANK)
+                                .setCellValue(name.equals("Beginn") ? "2026-05-05" : "2026-05-01");
+                }
+                try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
+            }
+            var result = new ExcelTemplateValidator().validate(file.toFile(),
+                    de.uni_leipzig.life.synthifhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"));
+            assertFalse(result.getIssues().toString(), result.hasErrors());
+        } finally { java.nio.file.Files.deleteIfExists(file); }
+    }
+
     @Test
     public void contactPreflightCollectsIndependentRowsAndOtherSheets() throws Exception {
         java.nio.file.Path file = java.nio.file.Files.createTempFile("contact-input-errors-", ".xlsx");
@@ -19,11 +132,11 @@ public class DiagnosisWorkbookTest {
             try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
                     var book = new XSSFWorkbook(input)) {
                 var fall = book.getSheet("Fall");
-                fall.getRow(1).getCell(2).setCellValue("2026-01-03");
-                fall.getRow(1).getCell(3).setCellValue("2026-01-01");
-                fall.getRow(4).getCell(2).setCellValue("unlesbar");
+                field(fall, 1, "Start").setCellValue("unlesbar");
+                field(fall, 1, "Ende").setCellValue("2026-01-01");
+                field(fall, 4, "Start").setCellValue("unlesbar");
                 // Another sheet must still be checked, not hidden by Fall errors.
-                book.getSheet("Person").getRow(1).getCell(0).setCellValue("");
+                field(book.getSheet("Person"), 1, "Patient-ID").setCellValue("");
                 try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
             }
             var result = new ExcelTemplateValidator().validate(file.toFile());
@@ -36,38 +149,20 @@ public class DiagnosisWorkbookTest {
     }
 
     @Test
-    public void optionsUseOnlyColumnAAndReportInvalidAndConflictingValues() throws Exception {
-        for (String mode : List.of("columnB", "invalid", "duplicate", "false")) {
-            var file = java.nio.file.Files.createTempFile("option-input-", ".xlsx");
-            try {
-                try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx");
-                        var book = new XSSFWorkbook(input)) {
-                    book.getSheet("Person").getRow(1).getCell(0).setCellValue("");
-                    var sheet = book.getSheet("Konvertierungsoptionen");
-                    for (var row : sheet) {
-                        var cell = row.getCell(0);
-                        if (cell != null && cell.toString().startsWith("CHECK_INPUT_CONSISTENCY")) cell.setCellValue("# Default");
-                    }
-                    sheet.createRow(150).createCell(mode.equals("columnB") ? 1 : 0)
-                            .setCellValue("CHECK_INPUT_CONSISTENCY=" + (mode.equals("invalid") ? "treu" : "false"));
-                    if (mode.equals("duplicate")) sheet.createRow(151).createCell(0).setCellValue("CHECK_INPUT_CONSISTENCY=true");
-                    if (mode.equals("invalid")) sheet.createRow(151).createCell(0).setCellValue("START_ID_CONDITION=abc");
-                    try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
-                }
-                var result = new ExcelTemplateValidator().validate(file.toFile());
-                if (mode.equals("false")) assertFalse(result.getIssues().toString(), result.hasErrors());
-                else assertTrue(mode, result.hasErrors());
-                if (mode.equals("columnB")) assertTrue(result.getIssues().stream().anyMatch(i -> i.getSheetName().equals("Person")));
-                if (mode.equals("invalid")) assertEquals(2, result.getIssues().stream()
-                        .filter(i -> i.getSheetName().equals("Konvertierungsoptionen")).count());
-                if (mode.equals("duplicate")) assertTrue(result.getIssues().stream()
-                        .anyMatch(i -> i.getMessage().contains("conflicting duplicate values")));
-            } finally { java.nio.file.Files.deleteIfExists(file); }
-        }
+    public void embeddedOptionsCannotDisableInputChecks() throws Exception {
+        var file = java.nio.file.Files.createTempFile("option-input-", ".xlsx");
+        try {
+            try (var input = new FileInputStream("FHIR_Testdatengenerator_Vorlage.xlsx"); var book = new XSSFWorkbook(input)) {
+                field(book.getSheet("Person"), 1, "Patient-ID").setCellValue("");
+                book.createSheet("Konvertierungsoptionen").createRow(0).createCell(0).setCellValue("CHECK_INPUT_CONSISTENCY=false");
+                try (var out = java.nio.file.Files.newOutputStream(file)) { book.write(out); }
+            }
+            assertTrue(new ExcelTemplateValidator().validate(file.toFile()).hasErrors());
+        } finally { java.nio.file.Files.delete(file); }
     }
 
     @Test
-    public void exportedOptionSheetRemainsPropertiesTextIncludingCommentsAndEmptyValues() throws Exception {
+    public void optionSheetsAreExcludedFromCsvExport() throws Exception {
         var directory = java.nio.file.Files.createTempDirectory("options-export-");
         var source = directory.resolve("input.xlsx");
         var csv = directory.resolve("csv"); java.nio.file.Files.createDirectory(csv);
@@ -81,10 +176,7 @@ public class DiagnosisWorkbookTest {
         }
         de.uni_leipzig.imise.utils.Excel2Csv.splitExcel(source.toFile(), null, csv.toFile());
         var config = csv.resolve("input_Konvertierungsoptionen.csv");
-        var options = new de.uni_leipzig.life.csv2fhir.ConverterOptions(config.toString());
-        assertTrue(options.getErrors().toString(), options.getErrors().isEmpty());
-        assertFalse(options.is(de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY));
-        assertEquals("demo-p1", options.getFullPID("p1"));
+        assertFalse(java.nio.file.Files.exists(config));
         try (var files = java.nio.file.Files.walk(directory)) {
             for (var path : files.sorted(java.util.Comparator.reverseOrder()).toList()) java.nio.file.Files.delete(path);
         }
@@ -97,62 +189,88 @@ public class DiagnosisWorkbookTest {
             assertFalse(name + ": " + result.getIssues(), result.hasErrors());
             try (FileInputStream input = new FileInputStream(name);
                     XSSFWorkbook book = new XSSFWorkbook(input)) {
-                assertEquals("Konvertierungsoptionen", book.getSheetName(0));
-                var optionNames = new java.util.HashSet<String>();
-                for (var optionRow : book.getSheet("Konvertierungsoptionen")) {
-                    var cell = optionRow.getCell(0);
-                    if (cell == null) continue;
-                    String value = new org.apache.poi.ss.usermodel.DataFormatter().formatCellValue(cell, book.getCreationHelper().createFormulaEvaluator()).replaceFirst("^#\\s*", "").trim();
-                    if (value.matches("[A-Z][A-Z_0-9]*\\s*=.*")) {
-                        String optionName = value.split("=", 2)[0].trim();
-                        assertTrue("Duplicate option: " + optionName, optionNames.add(optionName));
-                        assertEquals("FFF2CC", ((org.apache.poi.xssf.usermodel.XSSFCellStyle) cell.getCellStyle()).getFillForegroundXSSFColor().getARGBHex().substring(2));
-                    }
-                }
-                var supportedOptions = new java.util.HashSet<String>();
-                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.values()) supportedOptions.add(value.name());
-                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.IntOption.values()) supportedOptions.add(value.name());
-                for (var value : de.uni_leipzig.life.csv2fhir.ConverterOptions.StringOption.values()) supportedOptions.add(value.name());
-                assertEquals(supportedOptions, optionNames);
+                assertNull(book.getSheet("Konvertierungsoptionen"));
                 var person = book.getSheet("Person");
-                assertEquals("Geburtsdatum", person.getRow(0).getCell(3).getStringCellValue());
-                assertEquals("Straße", person.getRow(0).getCell(11).getStringCellValue());
-                assertEquals("Postleitzahl", person.getRow(0).getCell(12).getStringCellValue());
-                assertTrue(person.getRow(1).getCell(11).getStringCellValue().contains("1"));
-                assertEquals("53121", person.getRow(1).getCell(12).getStringCellValue());
-                assertEquals("Bonn", person.getRow(1).getCell(13).getStringCellValue());
-                assertEquals("DE", person.getRow(1).getCell(15).getStringCellValue());
+                assertEquals("Geburtsdatum", field(person, 0, "Geburtsdatum").getStringCellValue());
+                assertEquals("Straße", field(person, 0, "Straße").getStringCellValue());
+                assertEquals("Postleitzahl", field(person, 0, "Postleitzahl").getStringCellValue());
+                assertTrue(field(person, 1, "Straße").getStringCellValue().contains("1"));
+                assertEquals("53121", field(person, 1, "Postleitzahl").getStringCellValue());
+                assertEquals("Bonn", field(person, 1, "Ort").getStringCellValue());
+                assertEquals("DE", field(person, 1, "Land").getStringCellValue());
                 var diagnoses = book.getSheet("Diagnose");
-                assertEquals("Code", diagnoses.getRow(0).getCell(3).getStringCellValue());
-                assertEquals("Codesystem", diagnoses.getRow(0).getCell(4).getStringCellValue());
-                assertEquals("Typ", diagnoses.getRow(0).getCell(12).getStringCellValue());
-                assertEquals(CellType.STRING, diagnoses.getRow(1).getCell(3).getCellType());
-                assertEquals("@", diagnoses.getRow(1).getCell(3).getCellStyle().getDataFormatString());
+                assertEquals("Code", field(diagnoses, 0, "Code").getStringCellValue());
+                assertEquals("Codesystem", field(diagnoses, 0, "Codesystem").getStringCellValue());
+                assertEquals("Typ", field(diagnoses, 0, "Typ").getStringCellValue());
+                assertEquals(CellType.STRING, field(diagnoses, 1, "Code").getCellType());
+                assertEquals("@", field(diagnoses, 1, "Code").getCellStyle().getDataFormatString());
                 for (String formula : List.of("Codes!$W$30:$W$31", "Codes!$X$30:$X$41",
                         "Codes!$Y$30:$Y$41", "Codes!$Z$30:$Z$37", "Codes!$D$4:$D$13")) {
                     assertTrue(formula, diagnoses.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
-                assertEquals("SNOMED CT (Version nicht angegeben)", book.getSheet("Codes").getRow(29).getCell(22).getStringCellValue());
-                assertEquals("ICD-10-GM", book.getSheet("Codes").getRow(30).getCell(22).getStringCellValue());
-                assertEquals("PZN", book.getSheet("Codes").getRow(29).getCell(47).getStringCellValue());
+                assertEquals("SNOMED CT (Version nicht angegeben)", choice(book, "Diagnosecodesystem", 1));
+                assertEquals("ICD-10-GM", choice(book, "Diagnosecodesystem", 2));
+                assertEquals("PZN", choice(book, "Medikamentencodes", 1));
                 assertTrue(book.getSheet("Medikation").getDataValidations().stream()
                         .map(DataValidation::getValidationConstraint)
                         .anyMatch(v -> "Codes!$AV$30:$AV$33".equals(v.getFormula1())));
+                assertEquals("Dosiereinheitcodesystem", field(book.getSheet("Medikation"), 0, "Dosiereinheitcodesystem").getStringCellValue());
+                for (String sheetName : List.of("Laborbefund", "Klinische Dokumentation")) {
+                    var measurements = book.getSheet(sheetName);
+                    assertEquals("Einheitencodesystem", field(measurements, 0, "Einheitencodesystem").getStringCellValue());
+                    assertTrue(measurements.getDataValidations().stream()
+                            .anyMatch(v -> v.getRegions().getCellRangeAddresses()[0].isInRange(1, column(measurements, "Einheitencodesystem"))
+                                    && "Codes!$BP$30".equals(v.getValidationConstraint().getFormula1()) && !v.getShowErrorBox()));
+                }
+                assertEquals("http://unitsofmeasure.org", choice(book, "Einheitencodesystem", 1));
+                assertTrue(book.getSheet("Medikation").getDataValidations().stream()
+                        .anyMatch(v -> v.getRegions().getCellRangeAddresses()[0].isInRange(1, column(book.getSheet("Medikation"), "Dosiereinheitcodesystem"))
+                                && "Codes!$BP$30".equals(v.getValidationConstraint().getFormula1()) && !v.getShowErrorBox()));
                 assertNull(book.getSheet("Allergie"));
-                assertEquals("ATC", book.getSheet("Codes").getRow(29).getCell(50).getStringCellValue());
+                assertEquals("ATC", choice(book, "Impfstoffcodes", 1));
                 var encounters = book.getSheet("Fall");
-                assertEquals("Aufnahmegrund (4. Stelle)", encounters.getRow(0).getCell(9).getStringCellValue());
-                assertEquals("Kontaktart", encounters.getRow(0).getCell(10).getStringCellValue());
-                assertEquals("Erklärung/Ausfüllhilfe", encounters.getRow(0).getCell(11).getStringCellValue());
+                assertEquals("Aufnahmegrund (4. Stelle)", field(encounters, 0, "Aufnahmegrund (4. Stelle)").getStringCellValue());
+                assertEquals("Kontaktart", field(encounters, 0, "Kontaktart").getStringCellValue());
+                assertEquals("Erklärung/Ausfüllhilfe", field(encounters, 0, "Erklärung/Ausfüllhilfe").getStringCellValue());
                 for (String formula : List.of("Codes!$BF$30:$BF$34")) {
                     assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                             .anyMatch(v -> formula.equals(v.getFormula1())));
                 }
                 assertTrue(encounters.getDataValidations().stream().map(DataValidation::getValidationConstraint)
                         .anyMatch(v -> "Codes!$AA$30:$AA$41".equals(v.getFormula1())));
-                assertEquals("Notfall", book.getSheet("Codes").getRow(34).getCell(26).getStringCellValue());
+                assertEquals("Notfall", choice(book, "Aufnahmegrund (4. Stelle)", 6));
             }
         }
     }
+    @Test public void customDiagnosisSystemsPassPreflightAndWorkbookListsAllowTyping() throws Exception {
+        try (var book = new XSSFWorkbook()) {
+            var sheet = book.createSheet("Diagnose"); var row = sheet.createRow(1);
+            var columns = new java.util.HashMap<String, Integer>();
+            String[] headers = {"Code", "Codesystem", "Zusatzcode", "Zusatzcodesystem"};
+            String[] values = {"nonsense", "https://example.invalid/system", "other", "urn:example:extra"};
+            for (int i = 0; i < headers.length; i++) { columns.put(headers[i], i); row.createCell(i).setCellValue(values[i]); }
+            var result = new TemplateValidationResult();
+            new ExcelTemplateValidator().validateDiagnosisSelections(row, columns, result);
+            assertFalse(result.getIssues().toString(), result.hasErrors());
+        }
+        for (String file : List.of("FHIR_Testdatengenerator_Vorlage.xlsx", "input/FHIR_Testdatengenerator_Vorlage.xlsx",
+                "FHIR_Testdatengenerator_Interpolar_Demo.xlsx")) {
+            int checked = 0;
+            try (var input = new FileInputStream(file); var book = new XSSFWorkbook(input)) {
+                for (var sheet : book) {
+                    if (sheet.getRow(0) == null) continue;
+                    for (var cell : sheet.getRow(0)) {
+                        if (cell.getCellType() != CellType.STRING || !cell.getStringCellValue().toLowerCase(java.util.Locale.ROOT).endsWith("codesystem")) continue;
+                        for (var validation : sheet.getDataValidations()) for (var range : validation.getRegions().getCellRangeAddresses())
+                            if (range.isInRange(1, cell.getColumnIndex())) {
+                                assertFalse(file + " " + sheet.getSheetName() + " " + cell.getStringCellValue(), validation.getShowErrorBox()); checked++;
+                            }
+                    }
+                }
+            }
+            assertTrue(file, checked >= 10);
+        }
+    }
+
 }

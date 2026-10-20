@@ -1,4 +1,6 @@
 import json
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 import tempfile
 import unittest
@@ -29,13 +31,30 @@ class CompleteWorkflowTest(unittest.TestCase):
     def conversion(self, source, output, *, option_files=(), directory=None, validate=False, **settings):
         self.assertTrue(all(p.is_file() for p in option_files))
         (directory / 'fhir/good.json').write_text('{"resourceType":"Bundle"}')
-        (directory / 'details/reports/summary.json').write_text(json.dumps({'status': self.status,
-            'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx')}],
+        (directory / 'details/reports/summary.json').write_text(json.dumps({'status': 'COMPLETE' if self.status == 'NOT_CHECKED' else self.status,
+            'results': [{'workbook': str(directory / 'excel/Fall-good.xlsx'), 'validationStatus': self.status}],
             'failures': [{'source': 'bad'}] if self.status == 'FAILED' else []}))
-        return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED'} else 1
+        return 0 if self.status in {'COMPLETE', 'NOT_VALIDATED', 'NOT_CHECKED'} else 1
+
+    def test_inpatient_progress_is_forwarded_and_exhaustion_prevents_conversion(self):
+        line = 'WORKBENCH_SELECTION {"attempts":1,"exhausted":true}\n'
+        process = Mock(stdout=iter([line]), returncode=1)
+        manager = Mock()
+        manager.__enter__ = Mock(return_value=process)
+        manager.__exit__ = Mock(return_value=False)
+        output = io.StringIO()
+        with patch.object(workflow.subprocess, 'Popen', return_value=manager), \
+                patch.object(workflow, 'convert_cases') as convert, redirect_stdout(output):
+            with self.assertRaisesRegex(RuntimeError, 'Synthea failed'):
+                workflow.run(self.root / 'output', ['--generate.workbench_inpatient=true'])
+        convert.assert_not_called()
+        self.assertIn(line, output.getvalue())
+        directory = next((self.root / 'output').glob('run-*'))
+        self.assertEqual(line, (directory / 'details/logs/synthea.log').read_text())
+        self.assertEqual('FAILED', json.loads((directory / 'details/reports/workflow.json').read_text())['status'])
 
     @patch.object(workflow.subprocess, 'run', return_value=Mock(returncode=0))
-    def test_partial_or_unchecked_outputs_are_never_reported_as_complete(self, generate):
+    def test_partial_generation_fails_but_unchecked_validation_does_not(self, generate):
         self.status = 'FAILED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
             self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
@@ -44,7 +63,7 @@ class CompleteWorkflowTest(unittest.TestCase):
         self.assertEqual('FAILED', json.loads((directory/'details/reports/workflow.json').read_text())['status'])
         self.status = 'NOT_CHECKED'
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
-            self.assertEqual(1, workflow.run(self.root / 'output', ['-p', '1']))
+            self.assertEqual(0, workflow.run(self.root / 'output', ['-p', '1']))
         self.assertEqual(2, len(list((self.root/'output').glob('run-*'))))
         self.assertIn('--exporter.fhir.bulk_data=false', generate.call_args.args[0])
 
@@ -69,7 +88,7 @@ class CompleteWorkflowTest(unittest.TestCase):
         with patch.object(workflow, 'convert_cases', side_effect=self.conversion):
             workflow.run(self.root / 'output', ['--exporter.years_of_history=7'])
         command = generate.call_args.args[0]
-        self.assertLess(command.index('--exporter.years_of_history=0'),
+        self.assertLess(command.index('--exporter.years_of_history=5'),
                         command.index('--exporter.years_of_history=7'))
 
     @patch.object(workflow.subprocess, 'run')
@@ -122,3 +141,12 @@ class CompleteWorkflowTest(unittest.TestCase):
         self.assertEqual(2, convert.call_args.kwargs['patients_per_bundle'])
         command = generate.call_args.args[0]
         self.assertEqual('7', command[command.index('-p') + 1])
+
+    def test_zero_exit_with_memory_error_never_starts_conversion(self):
+        def generate(*args, **kwargs):
+            kwargs['stdout'].write('java.lang.OutOfMemoryError: Java heap space\n')
+            return Mock(returncode=0)
+        with patch.object(workflow.subprocess, 'run', side_effect=generate), patch.object(workflow, 'convert_cases') as convert:
+            with self.assertRaises(MemoryError):
+                workflow.run(self.root / 'output', [])
+            convert.assert_not_called()

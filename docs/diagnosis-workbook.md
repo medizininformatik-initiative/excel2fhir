@@ -20,9 +20,10 @@ describe the same diagnosis. Enter distinct diagnoses in separate rows.
 | M | `Typ` | Diagnosis role within the case. |
 | N / O | `Version` / `Zusatzversion` | Version text, DAR or omission for the corresponding coding. |
 
-Code values are preserved literally, including leading zeros. Choose a code system
-for each populated code. Additional coding uses a different system, consistent
-with the supported profile slices.
+Code values are preserved literally, including leading zeros. Choose a suggested
+code system or enter an absolute system URI for each populated code; see
+[code-system inputs](clinical-selections.md). Additional coding can use the same system; the optional validator checks profile
+slice limits.
 
 Code system and version are entered separately. Version fields accept text,
 a readable DAR selection or an empty value for omission. The event date is an

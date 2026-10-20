@@ -8,11 +8,11 @@ clinical fields and mappings.
 ## Run with Docker
 
 ```sh
-docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea .
+docker build -f docker/synthea.Dockerfile -t synthifhir-synthea .
 docker run --rm \
   -v /absolute/path/to/synthea/fhir:/input:ro \
   -v /absolute/path/to/results:/output \
-  excel2fhir-synthea -i /input -o /output
+  synthifhir-synthea -i /input -o /output
 ```
 
 The [common converter options](converter-usage.md#common-options) apply to this

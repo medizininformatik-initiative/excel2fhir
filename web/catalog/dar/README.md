@@ -1,8 +1,9 @@
 # DAR field catalogue
 
 `web/catalog/dar/generated/catalog.json` describes the Data Absent Reason
-choices for supported converter fields. It is a generated design contract for the
-configuration editor; conversion does not yet apply these catalogue rules.
+choices for supported converter fields. It is the shared contract for the
+configuration editor and Java output overrides. `DarOverrides` applies selected
+rules after resource derivations and contact assignment, before serialization.
 
 ## Sources and derivation
 
@@ -32,9 +33,9 @@ sources. The validation probe detects changed source digests.
 
 ## Meaning and replacement
 
-The semantic allowlists are project decisions, not additional HL7 prohibitions.
-A numeric measurement can offer NaN and infinity reasons; a name or coding version
-cannot. Workflow-dependent reasons must describe the actual situation. `as-text`
+The semantic code lists are field-specific editor suggestions. Every DAR code field
+also accepts free text, including codes outside those suggestions or the FHIR value set.
+Numeric measurements suggest NaN and infinity reasons; names and coding versions do not. Workflow-dependent reasons must describe the actual situation. `as-text`
 requires the content to be present in the resource narrative, not merely in an
 arbitrary text property. These contextual conditions cannot be inferred reliably
 from a primitive datatype or a ValueSet binding.
@@ -60,8 +61,14 @@ handling of the corresponding URL, size and hash.
 `applyTo` describes the intended occurrence scope. Existing coding occurrences are
 updated without synthesizing new coding systems or repeated items. Missing scalar
 fields and choices need a known concrete type before an override can create them;
-this is part of the future transformation implementation, not implied by profile
-cardinality alone.
+the runtime uses the converter’s dateTime representation for missing scalar
+choices. Repeated parents are not synthesized. Observation measurement variants
+are selected from the original value type; an absent value has no inferable
+variant and remains unchanged. `as-text` is applied even without resource narrative;
+the user controls the intended content, including deliberately invalid test data. Condition DAR overrides are
+applied even when the resulting status/abatement combination violates `con-4` or
+`con-5`. Roundtrip comparisons verify the requested replacement; enable FHIR
+validation to check the generated resources against these constraints.
 
 ## Adding a field or changing the code selection
 
@@ -92,8 +99,8 @@ and exercises representative primitive DAR and Observation absence representatio
 with the existing bundled-package validator. It also checks incompatible
 Observation value/absence and Condition status/end combinations. These tests do
 not certify every field/code combination; each extension of the catalogue needs
-appropriate new fixtures. The editor and conversion integration remain separate
-implementation work.
+appropriate new fixtures. `DarOverridesTest` additionally checks runtime replacement, source preservation,
+coding discriminators, narrative-independent replacement, choice types and attachment metadata.
 
 ## Verification commands
 
@@ -103,9 +110,9 @@ Run from the repository root:
 python3 web/catalog/dar/generator/generate_catalog.py --check
 python3 web/catalog/dar/tests/test_generate_catalog.py
 mvn clean test package
-java --class-path target/excel2fhir.jar web/catalog/dar/tests/ValidateDarCatalog.java
+java --class-path target/synthifhir.jar web/catalog/dar/tests/ValidateDarCatalog.java
 ```
 
-The JSON is a GUI module asset, not a converter JAR resource. The Java probe uses
+The JSON is bundled as a converter JAR resource and used by the editor. The Java probe uses
 the built converter JAR and its existing validator without adding GUI tests to
 the converter source tree.

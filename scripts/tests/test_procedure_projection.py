@@ -40,10 +40,10 @@ class ProcedureProjectionTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual([r[3] for r in rows['Prozedur']], ['3-202', '3-207', '3-206'])
-        self.assertEqual([r[2] for r in rows['Prozedur']], ['Native Computertomographie des Thorax',
+        self.assertEqual([r['Prozedurencode'] for r in rows['Prozedur']], ['3-202', '3-207', '3-206'])
+        self.assertEqual([r['Prozedurentext'] for r in rows['Prozedur']], ['Native Computertomographie des Thorax',
             'Native Computertomographie des Abdomens', 'Native Computertomographie des Beckens'])
-        self.assertTrue(all(r[6:8] == ['', ''] for r in rows['Prozedur']))
+        self.assertTrue(all([r['Zusatzcode'], r['Zusatzcodesystem']] == ['', ''] for r in rows['Prozedur']))
         self.assertEqual([o['row'] for o in report['clinicalMappings'][0]['outputs']], [2, 3, 4])
 
     def test_chemo_counts_substances_once_and_groups_days_but_not_long_breaks(self):
@@ -101,9 +101,7 @@ class ProcedureProjectionTest(unittest.TestCase):
         source = self.source()
         self.procedure(source, 'ct', '418023006')
         rows, report = prepare(source)
-        headers = ['Patient-ID', 'Fall-Nr', 'Prozedurentext', 'Prozedurencode', 'Durchführungsbeginn',
-                   'Codesystem', 'Zusatzcode', 'Zusatzcodesystem', 'Ende', 'Status', 'Kategorie', 'Version', 'Zusatzversion']
-        excel = [dict(zip(headers, r)) for r in rows['Prozedur']]
+        excel = rows['Prozedur']
         target = {'entry': [{'resource': {'resourceType': 'Procedure', 'id': f'p{i}',
                     'code': {'coding': o['codings'], 'text': o['label']}, 'status': o['status'],
                     'performedPeriod': {'start': o['start'], 'end': o['end']}}}

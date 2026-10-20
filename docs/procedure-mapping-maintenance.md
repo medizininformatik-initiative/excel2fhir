@@ -24,12 +24,11 @@ organ absence, route, indication and timing checks apply where configured by eac
 rule. These checks are deliberately scoped to the encoded source concepts and
 recognized terminology labels; they are not a general clinical inference engine.
 
-Global context checks also cover existing mappings. Conflicting patient references,
-maternal/reproductive events with incompatible source sex or age, male reproductive
-procedures with incompatible source sex, relevant prior hysterectomy, and events
-after recorded death produce `context-conflict` with no output row and a loss entry.
-The female age range 12–55 is a conservative synthetic dataset default, not a
-universal clinical rule. Missing required facts block the affected candidates.
+Global clinical context checks record `contextWarning` for unusual source age,
+sex, organ history or event times. These events retain their original source
+coding and timestamps; uncertain events do not receive synthetic OPS enrichment.
+The reproductive age heuristic (12–55) is only a review hint, not a universal
+clinical rule. Patient and encounter references must still resolve consistently.
 If only a proposed enrichment is incompatible, the importer retains the original
 service and records `contextualFallback`. Enrichment requires completed events.
 

@@ -67,6 +67,19 @@ public class FileLogger {
         public abstract String getPattern();
     }
 
+    /** A run-scoped root appender, closed before the next conversion begins. */
+    public static AutoCloseable openRootFileLogger(File file, LogContentLayout layout) {
+        LoggerContext context = (LoggerContext) LogManager.getContext(false);
+        Appender appender = getFileAppender(file.getAbsolutePath(), context.getConfiguration(), layout.getPattern());
+        context.getRootLogger().addAppender(appender);
+        context.updateLoggers();
+        return () -> {
+            context.getRootLogger().removeAppender(appender);
+            appender.stop();
+            context.updateLoggers();
+        };
+    }
+
     /**
      * @param relativeOrAbsoluteFile
      * @param logContentLayout

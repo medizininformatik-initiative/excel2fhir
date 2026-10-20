@@ -43,9 +43,9 @@ class MappingTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Diagnose'][0][3:7], [
+        self.assertEqual([rows['Diagnose'][0]['Code'], rows['Diagnose'][0]['Codesystem'], rows['Diagnose'][0]['Zusatzcode'], rows['Diagnose'][0]['Zusatzcodesystem']], [
             'J20.9', 'ICD-10-GM', '10509002', 'SNOMED CT (Version nicht angegeben)'])
-        self.assertEqual(rows['Diagnose'][0][8], '2020-01')
+        self.assertEqual(rows['Diagnose'][0]['Beginn'], '2020-01')
         self.assertEqual(report['diagnosisMappings'][0]['status'], 'approximate')
         self.assertEqual(len(rows['Diagnose']), 1)
 
@@ -54,7 +54,7 @@ class MappingTest(unittest.TestCase):
         source['entry'][2]['resource']['code']['coding'].append({
             'system': ICD10GM, 'version': '2025', 'code': 'J20.8'})
         rows, report = prepare(source)
-        self.assertEqual(rows['Diagnose'][0][3:5], ['J20.8', 'ICD-10-GM'])
+        self.assertEqual([rows['Diagnose'][0]['Code'], rows['Diagnose'][0]['Codesystem']], ['J20.8', 'ICD-10-GM'])
         self.assertEqual(report['diagnosisMappings'][0]['status'], 'source-preserved')
 
     def test_no_guess_from_conflicting_display_unknown_code_or_explicit_version(self):
@@ -84,7 +84,7 @@ class MappingTest(unittest.TestCase):
         rows, report = prepare(source)
         self.assertEqual(source, before)
         self.assertEqual(len(rows['Diagnose']), 1)
-        self.assertEqual(rows['Diagnose'][0][3], 'J20.9')
+        self.assertEqual(rows['Diagnose'][0]['Code'], 'J20.9')
         self.assertEqual(report['sourceConditions'], 2)
         self.assertEqual(report['importedConditions'], 1)
         self.assertEqual(report['conditionRows'], {original['resource']['id']: 2})
@@ -100,7 +100,7 @@ class MappingTest(unittest.TestCase):
         source['entry'][2]['resource']['code']['coding'][0].update(
             code='225444004', display='At increased risk for suicide (finding)')
         rows, report = prepare(source)
-        self.assertEqual(rows['Diagnose'][0][3:7], ['R45.8', 'ICD-10-GM',
+        self.assertEqual([rows['Diagnose'][0]['Code'], rows['Diagnose'][0]['Codesystem'], rows['Diagnose'][0]['Zusatzcode'], rows['Diagnose'][0]['Zusatzcodesystem']], ['R45.8', 'ICD-10-GM',
                                                  '225444004', 'SNOMED CT (Version nicht angegeben)'])
         self.assertIn('keine exakte Äquivalenz', report['diagnosisMappings'][0]['reason'])
 
@@ -115,7 +115,7 @@ class MappingTest(unittest.TestCase):
             source['entry'][2]['resource']['code']['coding'][0].update(code=code, display=display)
             before = copy.deepcopy(source)
             rows, report = prepare(source)
-            self.assertEqual(rows['Diagnose'][0][3], expected)
+            self.assertEqual(rows['Diagnose'][0]['Code'], expected)
             self.assertEqual(source, before)
             self.assertEqual(prepare(source), (rows, report))
             self.assertTrue(report['diagnosisMappings'][0]['reason'])
@@ -136,11 +136,11 @@ class MappingTest(unittest.TestCase):
                 before = copy.deepcopy(source)
                 rows, report = prepare(source)
                 self.assertEqual(source, before)
-                self.assertEqual(rows['Diagnose'][0][3], target)
+                self.assertEqual(rows['Diagnose'][0]['Code'], target)
                 changed = report['diagnosisMappings'][0].get('verificationStatusChange')
                 self.assertEqual(bool(changed), status in [None, 'confirmed'])
                 if changed:
-                    self.assertEqual(rows['Diagnose'][0][11], 'Vorläufig')
+                    self.assertEqual(rows['Diagnose'][0]['Verifikationsstatus'], 'Vorläufig')
                     self.assertEqual(changed['from'], condition.get('verificationStatus'))
             condition['code']['coding'].append({'system': ICD10GM, 'version': '2026', 'code': target})
             self.assertNotIn('verificationStatusChange', map_diagnosis(condition))
@@ -174,6 +174,7 @@ class MappingTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         encounter['extension'] = [{'url': 'http://fhir.de/StructureDefinition/Aufnahmegrund',
             'extension': [{'url': 'VierteStelle', 'valueCoding': {
@@ -202,6 +203,7 @@ class MappingTest(unittest.TestCase):
         target['entry'][0]['resource']['address'] = [dict(report['demographics']['address'], state='DE-NW')]
         encounter = target['entry'][1]['resource']
         encounter['id'] = 'p-E-1'
+        encounter['type'] = [{'coding': [{'system': 'http://fhir.de/CodeSystem/Kontaktebene', 'code': 'einrichtungskontakt'}]}]
         encounter['class']['code'] = 'AMB'
         encounter['extension'] = [{'url': 'http://fhir.de/StructureDefinition/Aufnahmegrund',
             'extension': [{'url': 'VierteStelle', 'valueCoding': {

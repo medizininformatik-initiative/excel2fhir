@@ -31,7 +31,7 @@ def read_output(directory):
             root = Path(__file__).resolve().parents[1]
             with tempfile.TemporaryDirectory() as temporary:
                 output = Path(temporary) / 'bundles.json'
-                subprocess.run(['java', '-cp', str(root / 'target/excel2fhir.jar'),
+                subprocess.run(['java', '-cp', str(root / 'target/synthifhir.jar'),
                                 str(root / 'scripts/ReadXmlBundles.java'), str(output)],
                                input=json.dumps([str(p) for p in files]), text=True, capture_output=True, check=True)
                 bundles = json.loads(output.read_text())

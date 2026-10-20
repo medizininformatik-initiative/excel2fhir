@@ -1,7 +1,7 @@
 """Exercise the isolated Compose prototype, including a worker container crash.
 
 Run after `docker compose -f web/compose.yml up -d --build`.
-Only the worker in the excel2fhir-web-prototype project is stopped/restarted.
+Only the worker in the synthifhir-workbench project is stopped/restarted.
 """
 import io
 import json
@@ -23,7 +23,7 @@ def request(path, data=None):
 
 
 def create():
-    return json.loads(request('/jobs', {'source': 'starter', 'profile': 'default'}))['id']
+    return json.loads(request('/jobs', {'source': 'starter'}))['id']
 
 
 def wait(job_id, states, timeout=120):

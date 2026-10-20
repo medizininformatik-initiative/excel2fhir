@@ -25,7 +25,7 @@ public final class WorkflowRun {
         Path root = (outputRoot == null ? Path.of("outputGlobal") : outputRoot.toPath()).toAbsolutePath();
         Files.createDirectories(root);
         // Synthea supplies the system offset separately from its clinical time zone.
-        String offset = System.getProperty("excel2fhir.runOffset");
+        String offset = System.getProperty("synthifhir.runOffset");
         ZoneId zone = offset == null ? ZoneId.systemDefault() : ZoneOffset.of(offset);
         String stamp = DateTimeFormatter.ofPattern("yyyyMMdd_HH-mm-ss").format(ZonedDateTime.now(zone));
         String name = "run-" + stamp + "-" + operation;
@@ -65,12 +65,16 @@ public final class WorkflowRun {
         }
         boolean unchecked = false;
         boolean invalid = false;
+        boolean findings = false;
+        boolean validationReported = false;
         for (Path file : files) {
             String name = file.getFileName().toString();
             if (name.endsWith(".validation.json")) {
+                validationReported = true;
                 var report = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
                 String state = report.get("status").getAsString();
                 unchecked |= state.equals("NOT_CHECKED");
+                findings |= state.equals("WARNING") || state.equals("IGNORED");
                 invalid |= !List.of("VALID", "WARNING", "IGNORED", "NOT_CHECKED").contains(state);
             }
             if (name.endsWith(".import.json") || name.endsWith(".validation.json")) {
@@ -101,14 +105,19 @@ public final class WorkflowRun {
                 Files.move(file, target);
             }
         }
-        String state = importProblems || invalid ? "FAILED"
-                : unchecked ? "NOT_CHECKED"
-                        : validationProblems ? "FAILED" : validationRequested ? "COMPLETE" : "NOT_VALIDATED";
+        String validation = !validationRequested ? "not-requested"
+                : !validationReported ? "unavailable"
+                        : invalid || findings || validationProblems && !unchecked ? "findings"
+                        : unchecked ? "incomplete" : "passed";
+        var outcome = new com.google.gson.JsonObject();
+        outcome.addProperty("generation", importProblems ? "failed" : "succeeded");
+        outcome.addProperty("validation", validation);
+        Files.writeString(directory.resolve("outcome.json"), outcome.toString());
+        String state = importProblems ? "FAILED" : validationRequested ? "COMPLETE" : "NOT_VALIDATED";
         status(state, importProblems ? "Incomplete import. Diagnostic files remain in details/pending/."
-                : unchecked ? "Import complete; terminology checks could not all be performed."
-                        : "Import complete. Validation: " + state);
+                : "Generation complete. FHIR validation: " + validation + ". See details/reports/.");
         System.out.println(state + ": " + directory.resolve("status.txt"));
-        return state.equals("COMPLETE") || state.equals("NOT_VALIDATED") ? 0 : 1;
+        return importProblems ? 1 : 0;
     }
 
     public void fail(Exception error) throws IOException {

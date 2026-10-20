@@ -58,6 +58,23 @@ editorial, machine-drafted and selected Wikidata provenance recorded per entry.
 Approximate mapping decisions, source evidence and contradiction guards remain
 part of the published mapping data. Preserve these alongside the notices.
 
+## German LOINC names
+
+The German text catalogue uses unchanged `LONG_COMMON_NAME` values from the
+German (Germany) linguistic variant of LOINC 2.83 for 173 of its 446 LOINC
+identifiers. Entries without an official German long name retain their project
+reading text and its provenance, including answer identifiers. Codes, units and
+result values remain unchanged.
+
+Each official entry records the LOINC version, term status and any external
+copyright notice. The catalogue and import report identify the source file and
+its SHA-256, the distribution archive SHA-256 and the uncovered identifiers.
+The [LOINC notice](../NOTICE.md#loinc) and [license](https://loinc.org/license)
+apply to the official names.
+
+Refresh the names from a downloaded official distribution with
+`python3 scripts/update_loinc_german_texts.py /path/to/Loinc_2.83.zip`.
+
 ## Medication product facts
 
 The 495 medication mappings select 330 distinct PZNs. Evidence consists of product

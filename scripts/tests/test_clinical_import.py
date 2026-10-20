@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from synthea_to_excel import prepare
-from clinical_import import select_german_product
+from clinical_import import select_german_product, observation_value
 from test_synthea_import import bundle
 
 
@@ -12,6 +12,26 @@ class ClinicalImportTest(unittest.TestCase):
     def add(self, source, resource):
         resource.update(subject={'reference':'urn:uuid:p'}, encounter={'reference':'urn:uuid:e'})
         source['entry'].append({'fullUrl':'urn:uuid:'+resource['id'],'resource':resource})
+
+    def test_missing_medication_ingredients_and_event_time_stay_empty(self):
+        for kind in ('MedicationRequest', 'MedicationAdministration'):
+            source = bundle()
+            medication = {'resourceType': kind, 'id': 'no-mapping',
+                          'medicationCodeableConcept': {'coding': [
+                              {'system': 'http://snomed.info/sct', 'code': '12345', 'display': 'Probe'}]}}
+            self.add(source, medication)
+            before = copy.deepcopy(source)
+            rows, _ = prepare(source)
+            row = rows['Medikation'][0]
+            for field in ('Wirkstoffcode', 'Wirkstoffcodesystem', 'Beginn', 'Dokumentationszeitpunkt'):
+                self.assertEqual('', row[field], (kind, field))
+            self.assertEqual('12345', row['Präparatcode'])
+            self.assertEqual(before, source)
+            field = 'authoredOn' if kind == 'MedicationRequest' else 'effectiveDateTime'
+            medication[field] = '2026-09-01T08:30:00+02:00'
+            rows, _ = prepare(source)
+            target = 'Dokumentationszeitpunkt' if kind == 'MedicationRequest' else 'Beginn'
+            self.assertEqual(medication[field], rows['Medikation'][0][target])
 
     def test_components_preserve_zero_and_coded_answers_without_new_observation(self):
         source=bundle()
@@ -24,13 +44,25 @@ class ClinicalImportTest(unittest.TestCase):
         before=copy.deepcopy(source);rows,report=prepare(source)
         self.assertEqual(source,before)
         self.assertEqual(len(rows['Klinische Dokumentation']),2)
-        self.assertEqual(rows['Klinische Dokumentation'][1][7],'0')
-        self.assertEqual(rows['Klinische Dokumentation'][1][16],'bp')
+        self.assertEqual(rows['Klinische Dokumentation'][1]['Wert'],'0')
+        self.assertEqual(rows['Klinische Dokumentation'][1]['Komponente von'],'bp')
         self.assertEqual(len(report['clinicalImports']),1)
         source['entry'][-1]['resource']['component'][0]['valueQuantity']['system']='unknown'
         rows,report=prepare(source)
-        self.assertEqual(rows['Klinische Dokumentation'],[])
-        self.assertTrue(any(x['path']=='$'for x in report['losses']if x['resourceType']=='Observation'))
+        self.assertEqual(rows['Klinische Dokumentation'][1]['Einheitencodesystem'], 'unknown')
+        self.assertFalse(any(x['path']=='$' for x in report['losses'] if x['resourceType']=='Observation'))
+
+    def test_quantity_projection_preserves_explicit_fields_and_comparators(self):
+        for system in ('', 'http://unitsofmeasure.org', 'my units'):
+            for comparator in ('', '<', '<=', '>', '>='):
+                quantity = {'value': 0, 'unit': 'µg', 'code': 'wrong-code'}
+                if system: quantity['system'] = system
+                if comparator: quantity['comparator'] = comparator
+                value, unit, kind, _, _, code, actual_system = observation_value({'valueQuantity': quantity})
+                self.assertEqual((comparator + '0', 'µg', 'Zahl', 'wrong-code', system),
+                                 (value, unit, kind, code, actual_system))
+        self.assertEqual(['', 'Text only', 'Zahl', '', '', '', ''],
+                         observation_value({'valueQuantity': {'unit': 'Text only'}}))
 
     def test_vaccine_classification_preserves_event_and_excludes_cvx(self):
         source = bundle()
@@ -41,15 +73,15 @@ class ClinicalImportTest(unittest.TestCase):
         before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Impfung'][0][4:9], ['J07BF03', 'ATC', '2020-01-02', 'completed', 'true'])
-        self.assertIn('Poliomyelitis', rows['Impfung'][0][3])
+        self.assertEqual([rows['Impfung'][0]['Code'], rows['Impfung'][0]['Codesystem'], rows['Impfung'][0]['Zeitpunkt'], rows['Impfung'][0]['Status'], rows['Impfung'][0]['Primärquelle']], ['J07BF03', 'ATC', '2020-01-02', 'completed', 'true'])
+        self.assertIn('Poliomyelitis', rows['Impfung'][0]['Bezeichner'])
         self.assertEqual(report['vaccineMappings'][0]['source']['code'], '10')
         source['entry'][-1]['resource']['vaccineCode']['coding'][0]['code'] = 'unmapped'
         rows, report = prepare(source)
         self.assertEqual(len(rows['Impfung']), 1)
-        self.assertEqual(rows['Impfung'][0][4:6], ['', ''])
+        self.assertEqual([rows['Impfung'][0]['Code'], rows['Impfung'][0]['Codesystem']], ['', ''])
         self.assertEqual(report['vaccineMappings'][0]['status'], 'unmapped')
-        self.assertIn('offen', rows['Impfung'][0][3])
+        self.assertIn('offen', rows['Impfung'][0]['Bezeichner'])
 
     def test_allergy_exclusion_is_explicit_and_does_not_remove_other_events(self):
         source = bundle()
@@ -84,8 +116,8 @@ class ClinicalImportTest(unittest.TestCase):
         rows, report = prepare(source)
         self.assertEqual(len(rows['Klinische Dokumentation']), 1)
         row = rows['Klinische Dokumentation'][0]
-        self.assertEqual(row[3:7], ['72166-2', 'LOINC', '365981007', 'SNOMED CT (Version nicht angegeben)'])
-        self.assertEqual(row[11:13], ['266919005', 'SNOMED CT (Version nicht angegeben)'])
+        self.assertEqual([row['Untersuchungscode'], row['Codesystem'], row['Zusatzcode'], row['Zusatzcodesystem']], ['72166-2', 'LOINC', '365981007', 'SNOMED CT (Version nicht angegeben)'])
+        self.assertEqual([row['Wertcode'], row['Wertcodesystem']], ['266919005', 'SNOMED CT (Version nicht angegeben)'])
 
     def test_product_selection_preserves_source_without_local_mapping(self):
         coding={'system':'http://www.nlm.nih.gov/research/umls/rxnorm','code':'123'}
@@ -97,7 +129,7 @@ class ClinicalImportTest(unittest.TestCase):
         self.add(source,{'resourceType':'DiagnosticReport','id':'r','status':'final',
             'code':{'coding':[{'system':'http://loinc.org','code':'test'}]},'result':[{'reference':'urn:uuid:missing'}]})
         rows,report=prepare(source)
-        self.assertEqual(rows['Befundbericht'][0][9],'')
+        self.assertEqual(rows['Befundbericht'][0]['Ergebnisse'],'')
         self.assertTrue(any(x['path']=='result'for x in report['losses']))
 
     def test_broken_patient_reference_is_not_silently_ignored(self):
@@ -106,13 +138,15 @@ class ClinicalImportTest(unittest.TestCase):
         source['entry'][-1]['resource']['subject']['reference']='urn:uuid:another-patient'
         with self.assertRaises(ValueError):prepare(source)
 
-    def test_boolean_laboratory_value_is_reported_without_partial_rows(self):
+    def test_boolean_laboratory_value_is_preserved(self):
         source = bundle()
         self.add(source, {'resourceType':'Observation', 'id':'bool-lab', 'status':'final',
             'category':[{'coding':[{'system':'http://terminology.hl7.org/CodeSystem/observation-category', 'code':'laboratory'}]}],
             'code':{'coding':[{'system':'http://loinc.org', 'code':'1234-5'}]}, 'valueBoolean':True})
         rows, report = prepare(source)
-        self.assertEqual(rows['Laborbefund'], [])
-        self.assertTrue(any('boolean results' in str(loss) for loss in report['losses']))
+        self.assertEqual(len(rows['Laborbefund']), 1)
+        self.assertEqual(rows['Laborbefund'][0]['Messwert'], 'true')
+        self.assertEqual(rows['Laborbefund'][0]['Werttyp'], 'Ja/Nein')
+        self.assertFalse(any('boolean results' in str(loss) for loss in report['losses']))
 
 if __name__=='__main__':unittest.main()

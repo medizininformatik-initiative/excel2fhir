@@ -13,9 +13,9 @@ import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
 import de.uni_leipzig.imise.utils.WorkflowRun;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.OutputFileType;
-import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
-import de.uni_leipzig.life.csv2fhir.TableIdentifier;
+import de.uni_leipzig.life.synthifhir.OutputFileType;
+import de.uni_leipzig.life.synthifhir.PrintExceptionMessageHandler;
+import de.uni_leipzig.life.synthifhir.TableIdentifier;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -23,8 +23,14 @@ import picocli.CommandLine.Option;
 /**
  * @author AXS (14.11.2021)
  */
-@Command(name = "excel2fhir", mixinStandardHelpOptions = true, version = "1.0", description = "Converts a directory containing multiple excel files into (a) json bundle(s).")
+@Command(name = "synthifhir", mixinStandardHelpOptions = true, version = "1.0", description = "Converts a directory containing multiple excel files into (a) json bundle(s).")
 public class Excel2FhirMain implements Callable<Integer> {
+
+    private final File csvInput;
+
+    public Excel2FhirMain() { this(null); }
+
+    Excel2FhirMain(File csvInput) { this.csvInput = csvInput; }
 
     /**  */
     private static Logger LOG = LoggerFactory.getLogger(Excel2FhirMain.class);
@@ -45,7 +51,10 @@ public class Excel2FhirMain implements Callable<Integer> {
             "--temp-directory" }, paramLabel = "TEMP-DIRECTORY", description = "Optional CSV root; creates a fresh run subdirectory. Default: details/csv inside the output run.")
     File tempDirectory;
 
-    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter options; repeat for multiple variants.")
+    @Option(names = "--export-default-options", paramLabel = "FILE", description = "Write the default configuration and exit.")
+    File exportDefaultOptions;
+
+    @Option(names = "--converter-options", paramLabel = "FILE", description = "External converter configuration (one per run).")
     List<File> converterOptions = new java.util.ArrayList<>();
 
     @Option(names = { "-r",
@@ -90,6 +99,13 @@ public class Excel2FhirMain implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (converterOptions.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
+        if (exportDefaultOptions != null) {
+            java.nio.file.Files.writeString(exportDefaultOptions.toPath(),
+                    de.uni_leipzig.life.synthifhir.ContractConfiguration.defaultProperties(),
+                    java.nio.file.StandardOpenOption.CREATE_NEW);
+            return 0;
+        }
         if (patientsPerBundle < 1)
             throw new IllegalArgumentException("-p must be positive.");
         if (inputFile != null && inputDirectory != null) {
@@ -97,7 +113,7 @@ public class Excel2FhirMain implements Callable<Integer> {
         }
         if (inputFile == null && inputDirectory == null)
             inputDirectory = new File("input");
-        if (inputFile != null && !inputFile.isFile())
+        if (csvInput == null && inputFile != null && !inputFile.isFile())
             throw new IllegalArgumentException("Input file not found: " + inputFile);
         if (inputDirectory != null) {
             File[] inputs = inputDirectory.listFiles(f -> f.isFile() && !f.getName().startsWith("~")
@@ -105,20 +121,24 @@ public class Excel2FhirMain implements Callable<Integer> {
             if (inputs == null || inputs.length == 0)
                 throw new IllegalArgumentException("No Excel workbooks in " + inputDirectory);
         }
-        WorkflowRun run = new WorkflowRun(outputDirectory, tempDirectory, "excel-to-fhir");
-        FileLogger.addRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
-                logFileContentLayout);
-        try {
+        if (csvInput != null && (!csvInput.isDirectory() || inputFile == null || inputDirectory != null))
+            throw new IllegalArgumentException("CSV batch input requires a directory and a logical file name");
+        WorkflowRun run = new WorkflowRun(outputDirectory, tempDirectory, csvInput == null ? "excel-to-fhir" : "csv-to-fhir");
+        try (var log = FileLogger.openRootFileLogger(run.directory.resolve("details/logs/conversion.log").toFile(),
+                logFileContentLayout)) {
             List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
-            if (inputFile != null) {
+            if (csvInput != null) {
+                converter.convertCsvDirectory(inputFile, csvInput, run.staging.toFile(),
+                        patientsPerBundle, outputFileTypes);
+            } else if (inputFile != null) {
                 converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             } else {
                 converter.convertAllExcelInDir(inputDirectory, sheets, run.csv.toFile(), run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             }
-            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), validateBundles);
+            return run.finish(converter.hasImportProblems(), converter.hasValidationProblems(), converter.wasValidationRequested());
         } catch (Exception e) {
             run.fail(e);
             LOG.error(e.getMessage(), e);
