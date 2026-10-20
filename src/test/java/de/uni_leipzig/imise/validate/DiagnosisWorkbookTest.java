@@ -67,7 +67,7 @@ public class DiagnosisWorkbookTest {
             field(vaccination, last, "Eintrag ID").setCellValue("v2");
             field(vaccination, last, "Zeitpunkt").setCellValue("invalid timestamp");
             var checked = new ExcelTemplateValidator().validate(book,
-                    de.uni_leipzig.life.csv2fhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"), "test");
+                    de.uni_leipzig.life.synthifhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"), "test");
             assertEquals(checked.getIssues().toString(), 3, checked.getIssues().size());
             for (String sheet : List.of("Person", "Fall", "Impfung")) {
                 assertTrue(checked.getIssues().toString(), checked.getIssues().stream().anyMatch(issue ->
@@ -120,7 +120,7 @@ public class DiagnosisWorkbookTest {
                 try (var output = java.nio.file.Files.newOutputStream(file)) { book.write(output); }
             }
             var result = new ExcelTemplateValidator().validate(file.toFile(),
-                    de.uni_leipzig.life.csv2fhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"));
+                    de.uni_leipzig.life.synthifhir.ConverterOptions.fromText("CHECK_INPUT_CONSISTENCY=true"));
             assertFalse(result.getIssues().toString(), result.hasErrors());
         } finally { java.nio.file.Files.deleteIfExists(file); }
     }

@@ -96,7 +96,7 @@ public class Excel2Csv {
         String csvDirBasename = targetCsvDir.getPath();
         for (Sheet dataSheet : workbook) {
             String sheetName = dataSheet.getSheetName();
-            if (de.uni_leipzig.life.csv2fhir.ConverterOptionSet.isOptionsSheet(sheetName)) continue;
+            if (de.uni_leipzig.life.synthifhir.ConverterOptionSet.isOptionsSheet(sheetName)) continue;
             if (sheetNamePatterns != null) {
                 if (!matches(sheetName, sheetNamePatterns)) {
                     LOG.info("Skip sheet \"" + sheetName + "\"");

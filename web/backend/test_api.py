@@ -36,7 +36,7 @@ class ApiTests(QueueFixture):
         self.assertTrue(self.client.get('/api/jobs').json()[0]['download_available'])
         response = self.client.get(f'/api/jobs/{job_id}/download')
         self.assertEqual(buffer.getvalue(), response.content)
-        self.assertIn('excel2fhir-1Pat-', response.headers['content-disposition'])
+        self.assertIn('synthifhir-1Pat-', response.headers['content-disposition'])
 
     def test_input_configuration_source_is_not_a_start_option(self):
         response = self.client.post('/api/jobs', json={'profile': 'workbook'})

@@ -69,7 +69,7 @@ class DatasetTests(QueueFixture):
         self.assertEqual(404, self.client.get(f'/api/datasets/{self.job}.99/download').status_code)
         path = self.run / manifest['artifacts'][0]['path'].removeprefix('run-example/')
         path.unlink()
-        path.symlink_to(store.APP / 'excel2fhir.jar')
+        path.symlink_to(store.APP / 'synthifhir.jar')
         self.assertEqual(404, self.client.get(f"/api/jobs/{self.job}/artifacts/{manifest['artifacts'][0]['id']}").status_code)
 
     def test_finished_runs_are_indexed_without_changing_snapshots(self):

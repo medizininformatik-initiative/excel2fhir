@@ -51,8 +51,8 @@ def bundles(item, root, run, log, cancelled):
                         raise ValueError('Invalid dataset archive path')
                 archive.extractall(expanded)
             output = work / 'export.ndjson'
-            run(['java', '-Xmx512m', '-cp', str(store.APP / 'excel2fhir.jar'),
-                 'de.uni_leipzig.life.csv2fhir.DatasetUploadExport', str(expanded), str(output)], log, 600)
+            run(['java', '-Xmx512m', '-cp', str(store.APP / 'synthifhir.jar'),
+                 'de.uni_leipzig.life.synthifhir.DatasetUploadExport', str(expanded), str(output)], log, 600)
             with output.open() as stream:
                 for line in stream:
                     if cancelled():

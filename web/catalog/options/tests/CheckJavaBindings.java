@@ -1,6 +1,6 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;

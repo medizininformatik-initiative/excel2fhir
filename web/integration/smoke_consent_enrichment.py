@@ -56,9 +56,9 @@ with tempfile.TemporaryDirectory() as tmp:
     normal = root/'normal'
     subprocess.run([sys.executable,str(synthea_runtime.ROOT/'scripts/run_synthea_cases.py'),
                     '-i',str(sources),'-o',str(normal),'--converter-options',str(job/'default.config')],
-                   env={**os.environ,'EXCEL2FHIR_TABLE_FORMAT':'csv','EXCEL2FHIR_DIAGNOSTICS':'true',
-                        'EXCEL2FHIR_CONSENT_SEED':settings['patientSeed'],
-                        'EXCEL2FHIR_CONSENT_CONTEXT':json.dumps({'end_date':settings['endDate'], 'years_of_history':settings['yearsOfHistory']})},check=True)
+                   env={**os.environ,'SYNTHIFHIR_TABLE_FORMAT':'csv','SYNTHIFHIR_DIAGNOSTICS':'true',
+                        'SYNTHIFHIR_CONSENT_SEED':settings['patientSeed'],
+                        'SYNTHIFHIR_CONSENT_CONTEXT':json.dumps({'end_date':settings['endDate'], 'years_of_history':settings['yearsOfHistory']})},check=True)
     summary=json.loads(next(normal.rglob('summary.json')).read_text())
     assert not summary['failures'], summary['failures']
     assert all(v['comparisonStatus']=='passed' for r in summary['results'] for v in r['variants'])

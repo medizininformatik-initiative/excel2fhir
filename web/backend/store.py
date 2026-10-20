@@ -55,8 +55,8 @@ def digest(path):
 def validate_configuration(path):
     metadata = path.with_suffix(".validated.json")
     try:
-        result = subprocess.run(["java", "-Xmx256m", "-cp", str(APP / "excel2fhir.jar"),
-                                 "de.uni_leipzig.life.csv2fhir.ConfigurationPreflight", str(path), str(metadata)],
+        result = subprocess.run(["java", "-Xmx256m", "-cp", str(APP / "synthifhir.jar"),
+                                 "de.uni_leipzig.life.synthifhir.ConfigurationPreflight", str(path), str(metadata)],
                                 capture_output=True, text=True, timeout=30)
         if result.returncode:
             raise ValueError(result.stderr.strip() or "Configuration validation failed")
@@ -184,7 +184,7 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
             raise ValueError('Bulk generation requires zero additional patient copies')
         execution = {'formats': ['JSONGZIP'], 'validation': False, 'patientsPerFile': 1}
     snapshot = {'schemaVersion': 1, 'source': source, 'profile': config,
-                'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'excel2fhir.jar'), **execution}
+                'inputKind': input_kind, 'inputSha256': digest(directory / filename), 'converterSha256': digest(APP / 'synthifhir.jar'), **execution}
     if input_kind == 'workbook-set':
         manifest = json.loads((directory / filename).read_text())
         snapshot['repeatedFrom'] = {'id': manifest['sourceRun'], 'snapshotSha256': manifest['sourceSnapshotSha256']}

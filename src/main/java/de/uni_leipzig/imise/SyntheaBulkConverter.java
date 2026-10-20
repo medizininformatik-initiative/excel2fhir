@@ -6,9 +6,9 @@ import com.google.gson.JsonParser;
 import com.google.gson.Gson;
 import java.util.HashMap;
 import java.util.Map;
-import de.uni_leipzig.life.csv2fhir.AdditionalIdentifiers;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
-import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
+import de.uni_leipzig.life.synthifhir.AdditionalIdentifiers;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.Csv2Fhir;
 
 /** Internal gzip JSON writer for freshly generated tables, never for uploaded input. */
 public final class SyntheaBulkConverter {

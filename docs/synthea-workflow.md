@@ -97,7 +97,7 @@ UID/GID so the generated files remain editable by that user.
 
 ## Edit a generated workbook
 
-Open the workbook, edit its data sheets, then pass its path to Excel2FHIR using
+Open the workbook, edit its data sheets, then pass its path to synthiFHIR using
 `-f`. Supply one external configuration as described in
 [converter usage](converter-usage.md).
 

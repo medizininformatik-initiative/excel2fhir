@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Synthea R4 -> German tables -> FHIR, with import and validation reports.
 Usage: run_synthea_cases.py [-i INPUT_DIRECTORY | -f INPUT_FILE] [-o OUTPUT_ROOT] [-v]
-Requires Java/JDK 17+, LibreOffice and a freshly built target/excel2fhir.jar.
+Requires Java/JDK 17+, LibreOffice and a freshly built target/synthifhir.jar.
 Each invocation creates a fresh run below outputGlobal (or -o).
 Source files stay unchanged.
 """
@@ -26,7 +26,7 @@ from fhir_output import read_output
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / 'FHIR_Testdatengenerator_Vorlage.xlsx'
-JAR = ROOT / 'target/excel2fhir.jar'
+JAR = ROOT / 'target/synthifhir.jar'
 
 
 def run_conversion_batch(jobs, validate):
@@ -34,7 +34,7 @@ def run_conversion_batch(jobs, validate):
         return
     # Sequential workbook conversion benefits from SerialGC's smaller heap footprint.
     command = ['java', '-XX:+UseSerialGC', '-Xmx3g' if validate else '-Xmx1g', '-Duser.timezone=Europe/Berlin',
-               '-Dexcel2fhir.runOffset=' + run_time().strftime('%z'), '-cp', str(JAR),
+               '-Dsynthifhir.runOffset=' + run_time().strftime('%z'), '-cp', str(JAR),
                'de.uni_leipzig.imise.Excel2FhirBatch']
     batch_log = Path(jobs[0]['log']).parents[2] / 'reports/java-batch.log'
     with batch_log.open('w') as log:
@@ -138,8 +138,8 @@ def prepare_workbook(source, out, defaults, workbook_session, table_format="exce
     if consent is not None:
         from synthea_consent import enrich
         report['syntheticConsent'] = enrich(rows, bundle, consent[report['sourcePatient']],
-                                             os.environ['EXCEL2FHIR_CONSENT_SEED'],
-                                             **json.loads(os.environ.get('EXCEL2FHIR_CONSENT_CONTEXT', '{}')))
+                                             os.environ['SYNTHIFHIR_CONSENT_SEED'],
+                                             **json.loads(os.environ.get('SYNTHIFHIR_CONSENT_CONTEXT', '{}')))
     write_json(case / 'source.json', {'file': str(source), 'sha256': sha256(source)})
     source_patient = report['sourcePatient']
     if diagnostics:
@@ -187,11 +187,11 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
     source_dir = Path(source_dir).resolve()
     if not source_dir.exists():
         raise ValueError('Source directory is missing: ' + str(source_dir))
-    table_format = table_format or os.environ.get('EXCEL2FHIR_TABLE_FORMAT', 'excel')
+    table_format = table_format or os.environ.get('SYNTHIFHIR_TABLE_FORMAT', 'excel')
     if table_format not in {'excel', 'csv'}:
         raise ValueError('Unknown Synthea table format: ' + table_format)
     if diagnostics is None:
-        diagnostics = os.environ.get('EXCEL2FHIR_DIAGNOSTICS', 'false') == 'true'
+        diagnostics = os.environ.get('SYNTHIFHIR_DIAGNOSTICS', 'false') == 'true'
     metadata = environment(table_format)
     metadata['diagnostics'] = diagnostics
     metadata['tableFormat'] = table_format
@@ -212,9 +212,9 @@ def run(source_dir, output_dir, *, directory=None, validate=False, option_files=
         finally:
             candidate = None
     consent = None
-    if 'EXCEL2FHIR_CONSENT_SEED' in os.environ:
+    if 'SYNTHIFHIR_CONSENT_SEED' in os.environ:
         from synthea_consent import assignments
-        consent = assignments(source_patients, os.environ['EXCEL2FHIR_CONSENT_SEED'])
+        consent = assignments(source_patients, os.environ['SYNTHIFHIR_CONSENT_SEED'])
     selected = selected_configs(option_files, source_patients)
     defaults = resolve_config()['values'] if option_files else selected[0]['values']
     from terminology_year import settings

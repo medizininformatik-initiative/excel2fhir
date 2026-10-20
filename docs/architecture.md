@@ -2,7 +2,7 @@
 
 ## Shared conversion pipeline
 
-The Java converter produces FHIR R4 from CSV tables. Excel2FHIR uses Apache POI
+The Java converter produces FHIR R4 from CSV tables. synthiFHIR uses Apache POI
 to extract workbook data into CSV and invokes that converter. The workbook's data
 sheets define cases; Converter Options define KDS variants. Invocation options
 control output formats, bundle size and FHIR validation.
@@ -23,7 +23,7 @@ flowchart LR
 | Component | Responsibility |
 | --- | --- |
 | `Excel2FhirMain` | Reads workbooks and options sets, exports CSV and invokes conversion. |
-| `life.csv2fhir.Main` | Converts CSV inputs using the selected options sets. |
+| `life.synthifhir.Main` | Converts CSV inputs using the selected options sets. |
 | `ConverterOptionSet` / `ConverterOptions` | Select, parse and check options; supply shared defaults. |
 | `Converter` | Creates resources and references from case data. |
 | `WorkflowRun` | Manages run directories, output and reports. |
@@ -104,13 +104,13 @@ unchanged in the immutable job snapshot.
 The Python importer projects Synthea R4 bundles into copies of the Excel template.
 LibreOffice/UNO fills existing cells while preserving workbook formatting.
 Generated workbooks contain case data. One external configuration and conversion
-parameters are passed to Excel2FHIR; without a file, shared defaults apply.
+parameters are passed to synthiFHIR; without a file, shared defaults apply.
 
 | Component | Responsibility |
 | --- | --- |
 | `run_synthea_container.py` | Runs under the output directory owner's UID/GID. |
 | `run_synthea_workflow.py` | Checks the pinned generator and options, then runs generation and import. |
-| `run_synthea_cases.py` | Creates workbooks, invokes Excel2FHIR and compares each KDS variant with its source. |
+| `run_synthea_cases.py` | Creates workbooks, invokes synthiFHIR and compares each KDS variant with its source. |
 | `synthea_to_excel.py` | Prepares rows using clinical mappings and fills the template. |
 | `WorkbookUno.java` | Provides LibreOffice access. |
 | `WorkflowOptions.java` | Uses the Java option parser and patient-ID rules for preflight checks. |

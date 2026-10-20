@@ -44,7 +44,7 @@ export function ServiceLinks({ language }: { language: Language }) {
       <code className="my-3 block break-all">{command}</code>
       <Button type="button" variant="outline" onClick={() => void copy()}>{t('app.upload.copy')}</Button>
       {copied && <p role="status" className="mt-2">{t(copied)}</p>}
-      <a className="mt-3 block text-teal-800 underline" href="https://github.com/medizininformatik-initiative/excel2fhir/blob/main/web/deployment/README.md" target="_blank" rel="noreferrer">{t('app.services.setupDocs')}</a>
+      <a className="mt-3 block text-teal-800 underline" href="https://github.com/medizininformatik-initiative/synthifhir/blob/main/web/deployment/README.md" target="_blank" rel="noreferrer">{t('app.services.setupDocs')}</a>
     </details>
     <details className="border-t border-slate-200 pt-4 text-sm">
       <summary className="cursor-pointer font-medium">{t('app.services.torch')}</summary>

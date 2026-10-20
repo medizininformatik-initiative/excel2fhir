@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.nio.file.Path;
 import java.nio.file.Files;
-import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
+import de.uni_leipzig.life.synthifhir.ConverterOptionSet;
 import de.uni_leipzig.imise.validate.TemplateValidationException;
 
 import org.apache.commons.io.FilenameUtils;
@@ -21,10 +21,10 @@ import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.imise.validate.ExcelTemplateValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.ConverterResult.ConverterResultStatistics;
-import de.uni_leipzig.life.csv2fhir.Csv2Fhir;
-import de.uni_leipzig.life.csv2fhir.AdditionalIdentifiers;
-import de.uni_leipzig.life.csv2fhir.OutputFileType;
+import de.uni_leipzig.life.synthifhir.ConverterResult.ConverterResultStatistics;
+import de.uni_leipzig.life.synthifhir.Csv2Fhir;
+import de.uni_leipzig.life.synthifhir.AdditionalIdentifiers;
+import de.uni_leipzig.life.synthifhir.OutputFileType;
 
 /**
  * @author fmeineke (02.11.2020), AXS (21.11.2021)

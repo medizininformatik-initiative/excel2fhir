@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Re-generate selected checked-in test data workbooks with excel2fhir.
+# Re-generate selected checked-in test data workbooks with synthifhir.
 #
 # Expected default layout:
-#   <workspace>/csv2fhir
+#   <workspace>/synthifhir
 #   <workspace>/kerndatensatz-testdaten
 #
 # Override TESTDATA_ROOT when the test-data repository is elsewhere:
 #   TESTDATA_ROOT=/path/to/kerndatensatz-testdaten/Test_Data ./scripts/generate-known-testdata.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-EXCEL2FHIR_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-TESTDATA_ROOT="${TESTDATA_ROOT:-$(cd "$EXCEL2FHIR_DIR/../kerndatensatz-testdaten/Test_Data" && pwd)}"
+SYNTHIFHIR_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+TESTDATA_ROOT="${TESTDATA_ROOT:-$(cd "$SYNTHIFHIR_DIR/../kerndatensatz-testdaten/Test_Data" && pwd)}"
 MAIN_CLASS="de.uni_leipzig.imise.Excel2FhirMain"
 COMMON_ARGS="--result-file-format ZIPJSON --result-file-format NDJSON -v"
 
@@ -32,7 +32,7 @@ require_file() {
   fi
 }
 
-cd "$EXCEL2FHIR_DIR"
+cd "$SYNTHIFHIR_DIR"
 
 VHF_DIR="$TESTDATA_ROOT/Vorhofflimmern"
 POLAR_DIR="$TESTDATA_ROOT/POLAR_WP_1.1_v2"

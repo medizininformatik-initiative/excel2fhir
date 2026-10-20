@@ -50,7 +50,7 @@ with tempfile.TemporaryDirectory() as temp:
     import os
     subprocess.run([sys.executable, str(synthea_runtime.ROOT / 'scripts/run_synthea_cases.py'),
         '-i', str(sources), '-o', str(normal), '--converter-options', str(job / 'default.config')],
-        env={**os.environ, 'EXCEL2FHIR_TABLE_FORMAT': 'csv', 'EXCEL2FHIR_DIAGNOSTICS': 'true'}, check=True)
+        env={**os.environ, 'SYNTHIFHIR_TABLE_FORMAT': 'csv', 'SYNTHIFHIR_DIAGNOSTICS': 'true'}, check=True)
     def content(paths):
         return sorted(hashlib.sha256(gzip.decompress(p.read_bytes()) if p.name.endswith('.gz') else p.read_bytes()).hexdigest() for p in paths)
     assert content(result.rglob('*.json.gz')) == content(normal.rglob('*.ndjson')), (content(result.rglob('*.json.gz')), content(normal.rglob('*.ndjson')))

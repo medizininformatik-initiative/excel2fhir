@@ -39,7 +39,7 @@ def archive(job_id):
         for path in files:
             if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
                 raise store.SubmissionConflict('A saved conversion input is unavailable')
-        temporary = tempfile.NamedTemporaryFile(prefix='excel2fhir-inputs-', suffix='.zip', delete=False)
+        temporary = tempfile.NamedTemporaryFile(prefix='synthifhir-inputs-', suffix='.zip', delete=False)
         destination = Path(temporary.name)
         temporary.close()
         try:
