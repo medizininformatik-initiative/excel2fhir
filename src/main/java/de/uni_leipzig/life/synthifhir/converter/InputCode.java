@@ -9,8 +9,11 @@ import org.hl7.fhir.r4.model.Extension;
 public final class InputCode<T extends Enum<?>> extends Enumeration<T> {
     private static final long serialVersionUID = 1L;
 
-    /** For Java deserialization; Enumeration.readExternal restores the enum factory. */
-    @SuppressWarnings("deprecation")
+    /**
+     * @deprecated For Java deserialization only; use {@link #of(Enumeration, String)}.
+     * Enumeration.readExternal restores the enum factory.
+     */
+    @Deprecated
     public InputCode() {
         super();
     }
