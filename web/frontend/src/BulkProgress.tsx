@@ -35,7 +35,7 @@ export function BulkProgress({ progress, subruns, state, language }: { progress?
   const states: Record<string, string> = de
     ? { queued: 'Ausstehend', running: 'Läuft', succeeded: 'Abgeschlossen', failed: 'Fehlgeschlagen', cancelled: 'Abgebrochen', interrupted: 'Unterbrochen' }
     : { queued: 'Pending', running: 'Running', succeeded: 'Complete', failed: 'Failed', cancelled: 'Cancelled', interrupted: 'Interrupted' }
-  const p = progress
+  const p: BulkStatus = progress ?? { completed: 0, total: subruns?.reduce((sum, run) => sum + run.total, 0) ?? 0, chunk: 0, phase: 'starting' }
   const workDone = p?.workCompleted ?? p?.completed ?? 0
   const workTotal = p?.workTotal ?? p?.total ?? 1
   const activeRun = state === 'running' ? subruns?.find(run => run.state === 'running') : undefined
@@ -57,21 +57,20 @@ export function BulkProgress({ progress, subruns, state, language }: { progress?
     ? `${de ? 'Teillauf' : 'Subrun'} ${number(currentRun)} ${de ? 'von' : 'of'} ${number(totalRuns)} · ${number(finishedRuns)} ${de ? 'abgeschlossen' : 'complete'}`
     : `${de ? 'Teilläufe' : 'Subruns'} · ${number(finishedRuns)} ${de ? 'von' : 'of'} ${number(totalRuns)} ${de ? 'abgeschlossen' : 'complete'}`
   return <div className="space-y-4">
-    {!p && subruns && <p>{number(subruns.reduce((sum, run) => sum + run.total, 0))} {de ? 'Patienten insgesamt' : 'patients in total'}</p>}
-    {p && <div className="space-y-2" role="status" aria-live="polite">
-      <p className="font-medium">{(100 * workDone / workTotal).toLocaleString(locale, { maximumFractionDigits: 0 })} % {de ? 'Gesamtfortschritt' : 'overall progress'}</p>
+    <div className="space-y-2" role="status" aria-live="polite">
+      <p className="font-medium">{(workTotal > 0 ? 100 * workDone / workTotal : 0).toLocaleString(locale, { maximumFractionDigits: 0 })} % {de ? 'Gesamtfortschritt' : 'overall progress'}</p>
       <ProgressBar max={workTotal} value={workDone} label={de ? 'Gesamtfortschritt' : 'Overall progress'}/>
       <p>{number(p.completed)} / {number(p.total)} {de ? 'Patienten abgeschlossen' : 'patients complete'}</p>
       {currentRun && <p className="font-medium">{subrunLabel}</p>}
       {state === 'running' && <p>{de ? 'Aktueller Schritt: ' : 'Current stage: '}{phases[p.phase] ?? p.phase}{!!p.stageTotal && ` · ${number(p.stageCompleted ?? 0)} / ${number(p.stageTotal)}`}{p.phase === 'generating' && !!p.attempts && ` · ${number(p.attempts)} ${de ? 'Kandidaten geprüft' : 'candidates checked'}`}</p>}
       {state === 'running' && !!p.stageTotal && <ProgressBar compact max={p.stageTotal} value={p.stageCompleted ?? 0} label={de ? 'Fortschritt des aktuellen Arbeitsschritts' : 'Current stage progress'}/>}
-      {p.generatedBytes !== undefined && <p>{de ? 'FHIR-Daten erzeugt' : 'FHIR data generated'}: <strong>{bytes(p.generatedBytes)}</strong>{p.estimatedTotalBytes != null && state !== 'succeeded' && ` / ${de ? 'voraussichtlich ca.' : 'estimated approx.'} ${bytes(p.estimatedTotalBytes)}`}</p>}
-      {state === 'running' && <p>{p.remainingSeconds == null ? (de ? 'Schätzung wird nach der ersten abgeschlossenen 100er-Teilmenge ermittelt.' : 'Estimates become available after the first completed 100-patient chunk.') : `${de ? 'Geschätzte Restzeit: ca.' : 'Estimated time remaining: approx.'} ${duration(p.remainingSeconds)}`}</p>}
+      <p>{de ? 'FHIR-Daten erzeugt' : 'FHIR data generated'}: <strong>{bytes(p.generatedBytes ?? 0)}</strong>{state !== 'succeeded' && ` / ${de ? 'Geschätzte Gesamtgröße' : 'Estimated total size'}: ${p.estimatedTotalBytes == null ? (de ? 'Wird ermittelt' : 'Calculating') : `${de ? 'ca.' : 'approx.'} ${bytes(p.estimatedTotalBytes)}`}`}</p>
+      {state === 'running' && <p>{de ? 'Geschätzte Restzeit' : 'Estimated time remaining'}: {p.remainingSeconds == null ? (de ? 'Wird ermittelt' : 'Calculating') : `${de ? 'ca.' : 'approx.'} ${duration(p.remainingSeconds)}`}</p>}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
-        {!!p.archiveBytes && <p>{de ? 'In ZIP-Paketen gespeichert' : 'Stored in ZIP packages'}: {bytes(p.archiveBytes)}</p>}
-        {state === 'running' && p.updatedAt && <p>{de ? 'Letzte Statusmeldung' : 'Last status update'}: {new Date(p.updatedAt * 1000).toLocaleTimeString(locale)}</p>}
+        <p>{de ? 'In ZIP-Paketen gespeichert' : 'Stored in ZIP packages'}: {bytes(p.archiveBytes ?? 0)}</p>
+        {state === 'running' && <p>{de ? 'Letzte Statusmeldung' : 'Last status update'}: {p.updatedAt ? new Date(p.updatedAt * 1000).toLocaleTimeString(locale) : (de ? 'Noch keine' : 'None yet')}</p>}
       </div>
-    </div>}
+    </div>
     {subruns && <div>
       <h4 className="mb-2 font-semibold">{subrunLabel}</h4>
       <div ref={tableContainer} className="max-h-96 overflow-auto rounded-lg border border-teal-200 bg-white">

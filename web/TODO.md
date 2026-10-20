@@ -5,6 +5,25 @@ GUI code, catalogues, tests and documentation live under `web/`. Shared converte
 behavior remains in the Java converter. Existing issue references describe the
 planned work streams; this checklist does not change their status.
 
+## Profile-neutral and international FHIR output
+
+- [ ] Extend the generator to support profile-neutral FHIR R4 test data and
+  international CSV/Excel case specifications. This is a planned product
+  extension independent of the MIE paper; international implementation-guide
+  conformance requires separate verification.
+- [ ] Inventory German-specific output assumptions across converters and the
+  Synthea importer, including automatic MII profile claims, fixed code systems,
+  extensions, terminology mappings and encounter structures. Distinguish explicit
+  input from generated additions and document existing workbench controls.
+- [ ] Agree on coherent output behavior and workbench controls before
+  implementation. Retain the German KDS workflow and support generic output
+  without unintended German profile claims or coding assumptions; do not add
+  individual switches before agreeing on the overall approach.
+- [ ] Verify representative international cases through the shared CSV/Excel
+  pipeline, including terminology preservation, simplified encounters and
+  emitted profile metadata. Existing generic Encounter output alone does not
+  establish profile-neutral behavior for other resource types.
+
 ## Next bulk generation steps
 
 - [ ] Regenerate all 10,000 patients in one sequential bulk run after the

@@ -6,15 +6,23 @@ EXISTING = 'existing identifier'
 
 
 class Registry:
-    def __init__(self, path):
+    def __init__(self, path, seed=None):
         # A previous process may have stopped after checking an unpublished chunk.
         # Rebuild from committed journals instead of trusting that tentative state.
         path.unlink(missing_ok=True)
         path.with_name(path.name + '-journal').unlink(missing_ok=True)
         self.path = path
         self.db = sqlite3.connect(path)
+        if seed is not None:
+            with sqlite3.connect(f'file:{seed}?mode=ro', uri=True) as source:
+                source.backup(self.db)
+            return
         self.db.execute('CREATE TABLE identifiers (system TEXT, value TEXT, owner TEXT, rule TEXT, '
                         'PRIMARY KEY (system, value, owner))')
+
+    def save(self, path):
+        with sqlite3.connect(path) as destination:
+            self.db.backup(destination)
 
     def close(self):
         self.db.close()

@@ -102,7 +102,7 @@ def run():
         sentinel = output / 'existing-output.zip'
         sentinel.write_bytes(b'Existing outputs must remain unchanged')
         sentinel_before = fingerprint(sentinel)
-        environment = {'WORKBENCH_DATA': str(root / 'data'), 'MASS_OUTPUT_ROOT': str(output), 'WORKBENCH_OUTPUT': str(output)}
+        environment = {'WORKBENCH_DATA': str(root / 'data'), 'WORKBENCH_OUTPUT': str(output)}
         config = ('CONFIGURATION_VERSION=1\nCHECKS_FHIR_VALIDATION=false\n'
                   'IDENTIFIER_RULE_1_ID=4797e210-671c-4200-9bfb-90faaee082f0\n'
                   'IDENTIFIER_RULE_1_ENABLED=true\nIDENTIFIER_RULE_1_RESOURCES=Encounter\n'
@@ -128,7 +128,7 @@ def run():
                 future = executor.submit(worker.execute, job_id)
                 try:
                     wait_until(lambda: (root / 'cancel-ready').exists(), future, folder)
-                    first, = (destination / 'packages').glob('*.zip')
+                    first, = (destination).glob('*.zip')
                     before = fingerprint(first)
                     assert list((folder / 'bulk-staging').rglob('*.json.gz')), 'Cancellation must encounter unpublished FHIR'
                     assert json.loads((folder / 'bulk-progress.json').read_text())['completed'] == 100
@@ -158,10 +158,10 @@ def run():
                     if not future.done():
                         api.cancel(job_id)
                         future.result(timeout=30)
-            assert [json.loads(line) for line in (root / 'attempts.jsonl').read_text().splitlines()] == ['100', '101', '101']
+            assert [json.loads(line) for line in (root / 'attempts.jsonl').read_text().splitlines()] == ['100', '101']
             values = {'urn:resume:patient': [], 'urn:resume:case': []}
             patient_ids = []
-            archives = sorted((destination / 'packages').glob('*.zip'))
+            archives = sorted((destination).glob('*.zip'))
             assert len(archives) == 2
             for archive in archives:
                 with zipfile.ZipFile(archive) as z:

@@ -122,6 +122,9 @@ jobs:
         docker run --rm -i --memory=4g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_bulk_identifiers.py
     - name: Cancel and resume bulk identifier generation
       run: docker run --rm -i --memory=4g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_bulk_resume.py
+    - name: Verify bulk series continuation
+      run: docker run --rm -i --memory=4g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_bulk_continuation.py
+
     - name: Generate Synthea sources and compare repeated clinical histories
       run: docker run --rm -i --memory=6g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_generation.py
     - name: Import Synthea sources and repeat immutable runs

@@ -85,6 +85,26 @@ def create(request: JobRequest):
     return store.get(job_id)
 
 
+class ContinuationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    requestId: UUID | None = None
+    population: int = Field(ge=1, le=100000, strict=True)
+
+
+@app.get('/api/jobs/{job_id}/continuation')
+def continuation_preview(job_id: UUID):
+    import bulk_continuation
+    return configuration_call(bulk_continuation.preview, str(job_id))
+
+
+@app.post('/api/jobs/{job_id}/continuation', status_code=201)
+def continue_job(job_id: UUID, request: ContinuationRequest):
+    import bulk_continuation
+    result = configuration_call(bulk_continuation.create, str(job_id), request.population,
+                                str(request.requestId) if request.requestId else None)
+    return store.get(result)
+
+
 @app.post("/api/jobs/{job_id}/cancel", status_code=202)
 def cancel(job_id: str):
     directory(job_id)

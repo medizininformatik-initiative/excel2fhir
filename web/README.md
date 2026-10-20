@@ -706,7 +706,7 @@ sequentially within one overall job; its details list each subrun and seed range
 The worker processes at most 100 patients per internal chunk.
 For KDS output, additional identifier counters continue across every patient, chunk
 and subrun of the overall job. Completed chunks store the counter positions for
-resumption; independent jobs start at the configured values.
+resumption; new series start at the configured values.
 Identifier collisions across patients and chunks stop publication of the affected
 chunk. A disk-backed index checks identifier ownership, including case-scoped
 sharing, and is rebuilt from checksummed registration journals on resume.
@@ -726,7 +726,7 @@ Directory names use a Europe/Berlin timestamp, a sanitized dataset name and the 
 
 Standard and bulk Workbench runs publish reusable dataset ZIPs under
 `outputGlobal/<timestamp>_<dataset-name>_<run-id>/`. Standard runs export one ZIP
-per dataset variant; bulk runs publish ZIPs in `packages/`, each containing at most
+per dataset variant; bulk runs publish ZIPs directly in the run directory, each containing at most
 1,000 patients from one subrun. The interface shows a copyable result directory.
 Inputs, logs, reports and intermediate files remain in the internal Workbench
 volume. Standard-run downloads and reports remain available in the interface.
@@ -770,9 +770,10 @@ default KDS configuration generates ward organizations as separate resources and
 references them from Encounter.serviceProvider. Patient identities are ranked by a versioned hash of the patient
 seed and identity. The allocation is 50% full consent, 15% patient data only,
 15% patient and insurance data, 10% full refusal, and 10% without documented consent.
-Bulk generation applies this allocation to each 100-patient chunk. Partial chunks
-and standard runs use largest-remainder rounding. Reproducing the same seed,
-patient set and chunk boundaries reproduces the assignment.
+Bulk generation assigns consent to complete 100-patient source blocks, including
+patients retained internally for continuation. Standard runs use largest-remainder
+rounding for their requested population. Matching seeds and source blocks reproduce
+the assignment independently of how a bulk series is split into jobs.
 
 The consent date is the first inpatient encounter within the configured history,
 falling back to the first other encounter in that period. The history ends on the
@@ -809,6 +810,35 @@ job** reuses its saved settings and seeds, skips completed chunks in verified ZI
 recreates only unfinished temporary work. Completed files and packages remain in
 place. Resume requires the generator, converter and importer versions saved with
 the job. Keep its local output files and job record until it finishes.
+
+### Continuing a bulk series
+
+Choose **Continue series** below the execution mode, or use the same action in a
+completed run's details. Select a previous run; the form loads the last block in
+its continuation chain. Set the additional patient count and start the next block.
+All other generation and converter settings are inherited and read-only. Identifier
+rules display their next counter starts.
+
+Continuation requires a successfully completed block with a saved completion state
+and, for partial source blocks, its checksummed source remainder. The generator produces complete 100-patient source blocks and retains unused patients
+internally. Continuation consumes this remainder before generating another block.
+Consent assignments are retained from the complete source block; identifier counters
+advance only during conversion of requested patients. The population seed advances
+once per consumed 100-patient source block; the clinician seed stays unchanged. Each identifier rule continues
+from its actual allocated counter, including allocations for contacts that are not
+emitted. The backend also carries the identifier collision index into the new job.
+Generator, converter and importer versions must match. An unfinished successor must
+be completed or resumed before adding another block; the same predecessor cannot
+start two successors. Keep the latest block's job record for continuation.
+
+The isolated integration test compares 300 patients in one job against 275 followed
+by a 25-patient continuation without regeneration. It uses seeded source fixtures and the real mapper,
+converter, consent enrichment, counter restoration and ZIP publication, comparing
+uncompressed FHIR bytes and identifier uniqueness:
+
+```bash
+docker run --rm -i --memory=4g --cpus=2 excel2fhir-web-prototype-worker:latest python - < web/integration/smoke_bulk_continuation.py
+```
 
 ### Uploading bulk packages
 

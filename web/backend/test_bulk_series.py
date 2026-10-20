@@ -132,7 +132,7 @@ class SeriesTests(unittest.TestCase):
             modules['synthea_consent'].enrich=lambda *args:{}
             with patch.dict('sys.modules',modules), patch.object(bulk,'OUTPUT_ROOT',root/'output'), patch.object(generation,'native_command',side_effect=command), patch.object(bulk,'checked_process',side_effect=process), redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError,'deliberate failure'): bulk.run(folder)
-                first=root/'output/cohort/packages/run-00001-package-00001-100Pat.zip'
+                first=root/'output/cohort/run-00001-package-00001-100Pat.zip'
                 saved=first.read_bytes(); modified=first.stat().st_mtime_ns
                 progress=json.loads((folder/'bulk-progress.json').read_text())
                 self.assertEqual(100,progress['completed'])

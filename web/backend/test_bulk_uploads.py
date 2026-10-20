@@ -28,7 +28,7 @@ class StreamingTests(QueueFixture):
         job = store.create('starter', 'default')
         folder = store.ROOT / 'jobs' / job
         snapshot = json.loads((folder / 'snapshot.json').read_text())
-        snapshot.update(bulkOutputName=job, bulkOutputDirectory='outputMass/' + job,
+        snapshot.update(bulkOutputName=job, bulkOutputDirectory='outputGlobal/' + job,
                         generation={'executionMode': 'bulk', 'population': 2, 'patientsPerRun': 100, 'patientSeed': '1'}, bulkLayoutVersion=3)
         (folder / 'snapshot.json').chmod(0o600)
         (folder / 'snapshot.json').write_text(json.dumps(snapshot))

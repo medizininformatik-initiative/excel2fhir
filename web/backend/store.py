@@ -38,6 +38,7 @@ def connect():
                     db.execute(f'ALTER TABLE jobs ADD COLUMN {column} REAL')
             if "elapsed" not in columns:
                 db.execute("ALTER TABLE jobs ADD COLUMN elapsed REAL NOT NULL DEFAULT 0")
+            db.execute("CREATE TABLE IF NOT EXISTS bulk_series_links (parent TEXT PRIMARY KEY, child TEXT UNIQUE NOT NULL)")
             db.execute("CREATE TABLE IF NOT EXISTS submissions (id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, jobs TEXT NOT NULL)")
         with db:
             yield db
@@ -84,7 +85,7 @@ def submitted(request_id, fingerprint, db):
     return None
 
 
-def submit(descriptor, request_id, prepare):
+def submit(descriptor, request_id, prepare, *, register=None):
     """Publish all prepared snapshots in one transaction; retries return the same jobs."""
     fingerprint = hashlib.sha256(json.dumps(descriptor, sort_keys=True).encode()).hexdigest()
     with connect() as db:
@@ -103,6 +104,8 @@ def submit(descriptor, request_id, prepare):
             now = time.time()
             for index, job_id in enumerate(prepared):
                 db.execute("INSERT INTO jobs(id,state,created) VALUES (?, 'queued', ?)", (job_id, now + index * 0.000001))
+            if register:
+                register(db, prepared)
             if request_id:
                 db.execute("INSERT INTO submissions(id,fingerprint,jobs) VALUES (?,?,?)",
                            (request_id, fingerprint, json.dumps(prepared)))
@@ -115,7 +118,7 @@ def submit(descriptor, request_id, prepare):
 
 
 def prepare_job(prepared, source, profile, configuration_properties=None, *, input_path=None,
-                source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None, table_format=None, diagnostics=False):
+                source_name=None, input_kind='workbook', generation_settings=None, dataset_name=None, table_format=None, diagnostics=False, continuation=None):
     specification = None
     if input_path is None and source == 'synthea-generation':
         import generation
@@ -173,7 +176,10 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
         config = {'id': 'default' if configuration_properties is None else 'editor',
                   'name': 'Converter defaults' if configuration_properties is None else 'Submitted configuration',
                   'optionsProperties': (directory / 'default.config').read_text()}
+    counter_starts = {}
     if bulk:
+        if not native:
+            counter_starts = execution.get('identifierCounterStarts', {})
         if execution.get('additionalRepetitions', 0):
             raise ValueError('Bulk generation requires zero additional patient copies')
         execution = {'formats': ['JSONGZIP'], 'validation': False, 'patientsPerFile': 1}
@@ -199,6 +205,21 @@ def prepare_job(prepared, source, profile, configuration_properties=None, *, inp
     snapshot['resultOutputName'] = bulk_generation.output_directory_name(job_id, dataset_name or 'Datensatz', time.time())
     if bulk:
         snapshot['bulkLayoutVersion'] = 3
+        if not specification.get('singlePersonSeed'):
+            snapshot['bulkSourceVersion'] = 1
+        snapshot['identifierCounterStarts'] = counter_starts
+        if continuation is not None:
+            snapshot['continuation'] = continuation
+            if continuation.get('remainder'):
+                import bulk_sources
+                shutil.copyfile(ROOT / 'jobs' / continuation['sourceRun'] / bulk_sources.REMAINDER, directory / bulk_sources.INHERITED)
+                if digest(directory / bulk_sources.INHERITED) != continuation['remainder']['sha256']:
+                    raise SubmissionConflict('Saved source remainder changed')
+                (directory / bulk_sources.INHERITED).chmod(0o444)
+            shutil.copyfile(ROOT / 'jobs' / continuation['sourceRun'] / 'bulk-identifier-history.sqlite', directory / 'series-identifiers.sqlite')
+            if digest(directory / 'series-identifiers.sqlite') != continuation['identifierHistorySha256']:
+                raise SubmissionConflict('Series identifier history changed')
+            (directory / 'series-identifiers.sqlite').chmod(0o444)
         snapshot['bulkOutputName'] = snapshot['resultOutputName']
         import result_exports
         snapshot['bulkOutputDirectory'] = result_exports.label(snapshot)
@@ -259,9 +280,10 @@ def editor_input(job_id):
             suffix = {'workbook': '.xlsx', 'csv': '.zip', 'synthea': '.json', 'synthea-zip': '.zip'}[kind]
             name = snapshot.get('sourceName') or ('Run-' + job_id[:8] + suffix)
             source = inputs.publish(incoming, name)['id']
+    import result_exports
     return {'source': source, 'generation': snapshot.get('generation'),
             **({'tableFormat': snapshot.get('tableFormat', 'excel'), 'diagnostics': snapshot.get('diagnostics', True)} if kind.startswith('synthea') and snapshot['profile']['id'] != 'synthea' else {}),
-            'datasetName': snapshot.get('datasetName', ''),
+            'datasetName': result_exports.dataset_name(snapshot),
             'configurationProperties': snapshot['profile'].get('optionsProperties')
                 or (APP / 'defaults.config').read_text()}
 
@@ -284,14 +306,14 @@ def job_result(row):
     snapshot_path = ROOT / 'jobs' / job['id'] / 'snapshot.json'
     if snapshot_path.is_file():
         snapshot = json.loads(snapshot_path.read_text())
-        import inputs, run_replay
+        import inputs, run_replay, result_exports
         job['workbook_count'] = len(run_replay.workbooks(snapshot_path.parent, snapshot))
         job['editor_available'] = (snapshot_path.parent / inputs.input_filename(snapshot.get('inputKind', 'workbook'))).is_file()
         config = snapshot['profile']
         job['summary'] = run_summary.summary(snapshot_path.parent, snapshot, job['state'])
         job['outcomes'] = run_outcomes.read(snapshot_path.parent, snapshot, job['state'])
         job['table_format'] = snapshot.get('tableFormat')
-        job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=snapshot.get('datasetName'), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
+        job.update(input_kind=snapshot.get('inputKind', 'workbook'), dataset_name=result_exports.dataset_name(snapshot), source=snapshot['source'], source_name=snapshot.get('sourceName'), configuration={'id': config['id'], 'name': config['name'],
                    'revision': config.get('revision')}, batch_id=snapshot.get('batchId'),
                    repeated_from=snapshot.get('repeatedFrom', {}).get('id'), generation=snapshot.get('generation'))
         if snapshot.get('resultOutputName'):
@@ -301,11 +323,13 @@ def job_result(row):
             import bulk_generation
             job['bulk_output_directory'] = job.get('output_directory') or (bulk_generation.output_directory_label(snapshot['bulkOutputName'])
                                             if snapshot.get('bulkOutputName') else snapshot['bulkOutputDirectory'])
+            job['continuation'] = snapshot.get('continuation')
+            job['bulk_continuable'] = job['state'] == 'succeeded' and not snapshot['generation'].get('singlePersonSeed') and (snapshot.get('bulkSourceVersion') or snapshot['generation']['population'] % 100 == 0) and (snapshot_path.parent / 'bulk-completion.json').is_file()
             progress = snapshot_path.parent / 'bulk-progress.json'
             job['bulk_progress'] = json.loads(progress.read_text()) if progress.is_file() else None
             if snapshot.get('bulkLayoutVersion', 0) >= 2:
                 import bulk_plan
-                job['bulk_subruns'] = bulk_plan.subruns(snapshot['generation'], job['bulk_progress'] or {}, job['state'])
+                job['bulk_subruns'] = bulk_plan.subruns(snapshot['generation'], job['bulk_progress'] or {}, job['state'], snapshot.get('continuation', {}).get('sourceOffset', 0))
                 job['bulk_resumable'] = job['state'] in {'failed', 'cancelled', 'interrupted'}
         result = snapshot_path.parent / 'generation-result.json'
         if job['state'] in {'succeeded', 'failed'} and result.is_file():
