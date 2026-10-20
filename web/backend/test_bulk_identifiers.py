@@ -51,3 +51,20 @@ class IdentifierRegistryTests(unittest.TestCase):
                     include('Patient/four', EXISTING, 'mixed')
             finally:
                 registry.close()
+
+    def test_saved_series_index_rejects_collision_in_successor(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            journal = root / 'chunk.jsonl'
+            journal.write_text(json.dumps(dict(system='urn:series', value='1', owner='Patient/one', rule='rule')) + '\n')
+            registry = Registry(root / 'first.sqlite')
+            registry.include(journal)
+            registry.save(root / 'history.sqlite')
+            registry.close()
+            registry = Registry(root / 'second.sqlite', root / 'history.sqlite')
+            try:
+                journal.write_text(json.dumps(dict(system='urn:series', value='1', owner='Patient/two', rule='rule')) + '\n')
+                with self.assertRaisesRegex(ValueError, 'Identifier collision'):
+                    registry.include(journal)
+            finally:
+                registry.close()

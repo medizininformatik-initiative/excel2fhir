@@ -19,6 +19,8 @@ public final class ConfigurationPreflight {
         result.put("validation", options.validationEnabled(false));
         result.put("patientsPerFile", options.patientsPerFile(1));
         result.put("additionalRepetitions", options.getValue(ConverterOptions.IntOption.PID_LAST_NUMBER_INCREASE_LOOP_COUNT));
+        result.set("identifierCounterStarts", new ObjectMapper().valueToTree(
+                new AdditionalIdentifiers(options.configuration()).counterSnapshot()));
         return result;
     }
 

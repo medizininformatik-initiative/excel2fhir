@@ -155,7 +155,7 @@ def publish(folder, snapshot):
     """Expose packages as ordinary selectable/downloadable datasets without copying them."""
     destination = output_path(snapshot)
     items = []
-    for path in sorted((destination / 'packages').glob('*.zip')):
+    for path in sorted(package_directory(snapshot).glob('*.zip')):
         manifest = read_manifest(path, verify=False)
         items.append({'id': folder.name + '.' + str(len(items)), 'name': path.stem,
                       'kind': 'bulk', 'path': path.relative_to(destination).as_posix(),
@@ -180,14 +180,14 @@ def migrate_completed(folder, snapshot):
         parts = sorted(p.name for p in directory.glob('part-*') if p.is_dir())
         # Published ZIPs already own their parts after an interrupted migration.
         existing = {}
-        for archive in sorted((destination / 'packages').glob(f'run-{run_number:05d}-package-*.zip')):
+        for archive in sorted(package_directory(snapshot).glob(f'run-{run_number:05d}-package-*.zip')):
             manifest = read_manifest(archive)
             existing.update(manifest['chunks'])
             package(directory, list(manifest['chunks']), archive, lambda *_: None)
         parts = sorted(set(parts) | set(existing))
         for start in range(0, len(parts), 10):
             group = parts[start:start + 10]
-            target = destination / 'packages' / f'run-{run_number:05d}-package-{start // 10 + 1:05d}.zip'
+            target = package_directory(snapshot) / f'run-{run_number:05d}-package-{start // 10 + 1:05d}.zip'
             legacy_tar = target.with_suffix('.tar')
             target = package_path(directory, group, target)
             chunks = {}
@@ -202,5 +202,11 @@ def migrate_completed(folder, snapshot):
     progress_path = folder / 'bulk-progress.json'
     if progress_path.exists():
         data = json.loads(progress_path.read_text())
-        data.update(archiveBytes=sum(p.stat().st_size for p in (destination / 'packages').glob('*.zip')), archiveFormat='zip')
+        data.update(archiveBytes=sum(p.stat().st_size for p in package_directory(snapshot).glob('*.zip')), archiveFormat='zip')
         atomic_json(progress_path, data)
+
+
+def package_directory(snapshot):
+    destination = output_path(snapshot)
+    existing = destination / 'packages'
+    return existing if existing.is_dir() else destination

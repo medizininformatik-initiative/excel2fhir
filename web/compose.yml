@@ -10,19 +10,15 @@ services:
     volumes:
       - ../outputGlobal:/global-output
       - ..:/host-project:ro
-      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output
     restart: "no"
   api:
     build:
       context: ..
       dockerfile: web/backend/Dockerfile
       target: api
-    environment:
-      MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
       - ../outputGlobal:/global-output
-      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output:ro
     depends_on:
       output-init:
         condition: service_completed_successfully
@@ -36,12 +32,9 @@ services:
       target: worker
     command: [python, worker.py]
     init: true
-    environment:
-      MASS_OUTPUT_LABEL: ${MASS_OUTPUT_DIRECTORY:-outputMass}
     volumes:
       - workbench:/data
       - ../outputGlobal:/global-output
-      - ${MASS_OUTPUT_DIRECTORY:-../outputMass}:/mass-output
     depends_on:
       output-init:
         condition: service_completed_successfully

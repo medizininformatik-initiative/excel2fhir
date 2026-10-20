@@ -16,14 +16,16 @@ import bulk_archives
 from bulk_identifiers import Registry
 
 import bulk_plan
+import bulk_sources
 
 import generation
 import store
 import synthea_runtime
+import result_exports
 
 CHUNK_SIZE = 100
-OUTPUT_ROOT = Path(os.environ.get('MASS_OUTPUT_ROOT', '/mass-output'))
-OUTPUT_LABEL = os.environ.get('MASS_OUTPUT_LABEL', 'outputMass')
+OUTPUT_ROOT = result_exports.ROOT
+OUTPUT_LABEL = result_exports.LABEL
 
 
 def output_directory_label(name):
@@ -55,11 +57,11 @@ def compact_output_names(directory):
         source.rename(target)
 
 
-def compress_native(source_directory, destination, expected, update):
+def compress_native(source_directory, destination, expected, update, sources=None):
     """Keep original JSON bytes, including separate provider/organization bundles."""
     patients = 0
     supporting = 0
-    for source in sorted(source_directory.glob('*.json')):
+    for source in (sources if sources is not None else sorted(source_directory.glob('*.json'))):
         with source.open() as stream:
             bundle = json.load(stream)
         count = sum(entry.get('resource', {}).get('resourceType') == 'Patient'
@@ -150,7 +152,12 @@ package = bulk_archives.package
 
 
 def run(folder):
-    registry = Registry(folder / 'bulk-identifiers.sqlite')
+    seed = folder / 'series-identifiers.sqlite'
+    snapshot = json.loads((folder / 'snapshot.json').read_text())
+    expected = snapshot.get('continuation', {}).get('identifierHistorySha256')
+    if expected and (not seed.is_file() or store.digest(seed) != expected):
+        raise ValueError('Series identifier history is missing or changed')
+    registry = Registry(folder / 'bulk-identifiers.sqlite', seed if expected else None)
     try:
         _run(folder, registry)
     finally:
@@ -175,9 +182,9 @@ def _run(folder, registry):
     destination = bulk_archives.output_path(snapshot) if snapshot.get('resultOutputName') else OUTPUT_ROOT / snapshot.get('bulkOutputName', folder.name)
     grouped = snapshot.get('bulkLayoutVersion', 0) >= 2
     destination.mkdir(parents=True, exist_ok=grouped)
-    identifier_counters = {}
+    identifier_counters = dict(snapshot.get('continuation', {}).get('identifierCounters', {}))
     total = settings['population']
-    runs = bulk_plan.plan(settings) if grouped else [{'number': 1, 'start': 0, 'total': total}]
+    runs = bulk_plan.plan(settings, snapshot.get('continuation', {}).get('sourceOffset', 0)) if grouped else [{'number': 1, 'start': 0, 'total': total}]
     completed = 0
     generated_bytes = 0
     archive_bytes = 0
@@ -217,7 +224,7 @@ def _run(folder, registry):
         print(f'Subrun {run_number}/{len(runs)}: {run_info["total"]} patients', flush=True)
         part_names = []
         packed_chunks = {}
-        for archive in sorted((destination / 'packages').glob(f'run-{run_number:05d}-package-*.zip')):
+        for archive in sorted(bulk_archives.package_directory(snapshot).glob(f'run-{run_number:05d}-package-*.zip')):
             saved_manifest = bulk_archives.read_manifest(archive)
             packed_chunks.update(saved_manifest['chunks'])
         for local_index, start in enumerate(range(run_info['start'], run_info['start'] + run_info['total'], CHUNK_SIZE)):
@@ -254,25 +261,40 @@ def _run(folder, registry):
                 pending.mkdir()
                 chunk = chunk_settings(settings, index, size)
                 update(chunk=index + 1, phase='generating', stageCompleted=0, stageTotal=size, attempts=0)
-                command = generation.native_command(chunk, work / 'synthea')
-                command = command if native else [arg.replace('hospital.fhir.export=true', 'hospital.fhir.export=false')
-                           .replace('practitioner.fhir.export=true', 'practitioner.fhir.export=false') for arg in command]
-                def generating(values):
-                    if 'stageCompleted' not in values:
-                        values['stageCompleted'] = len(list((work / 'synthea/fhir').glob('*.json')))
-                    update(**values)
-                if grouped:
-                    checked_process(command, work / 'generation.log', generating)
+                selected_sources = None
+                if snapshot.get('bulkSourceVersion'):
+                    def generate_source(source_index, destination):
+                        update(stageTotal=CHUNK_SIZE, stageCompleted=0)
+                        source_settings = chunk_settings(settings, source_index, CHUNK_SIZE)
+                        command = generation.native_command(source_settings, destination)
+                        if not native:
+                            command = [arg.replace('hospital.fhir.export=true', 'hospital.fhir.export=false')
+                                       .replace('practitioner.fhir.export=true', 'practitioner.fhir.export=false') for arg in command]
+                        checked_process(command, work / 'generation.log', lambda values: update(**values))
+                    selected_sources = bulk_sources.select(folder, snapshot, start, size, work, generate_source)
                 else:
-                    checked_process(command, work / 'generation.log')
+                    command = generation.native_command(chunk, work / 'synthea')
+                    command = command if native else [arg.replace('hospital.fhir.export=true', 'hospital.fhir.export=false')
+                               .replace('practitioner.fhir.export=true', 'practitioner.fhir.export=false') for arg in command]
+                    def generating(values):
+                        if 'stageCompleted' not in values:
+                            values['stageCompleted'] = len(list((work / 'synthea/fhir').glob('*.json')))
+                        update(**values)
+                    if grouped:
+                        checked_process(command, work / 'generation.log', generating)
+                    else:
+                        checked_process(command, work / 'generation.log')
                 if native:
-                    update(phase='compressing', stageCompleted=0, attempts=0)
-                    compress_native(work / 'synthea/fhir', pending, size, update)
+                    update(phase='compressing', stageCompleted=0, stageTotal=size, attempts=0)
+                    compress_native(work / 'synthea/fhir', pending, size, update,
+                                    [r['path'] for r in selected_sources] if selected_sources is not None else None)
                 else:
-                    update(phase='mapping', stageCompleted=0, attempts=0)
+                    update(phase='mapping', stageCompleted=0, stageTotal=size, attempts=0)
                     jobs = []
                     consent = {}
-                    if settings.get('syntheticConsent'):
+                    if selected_sources is not None:
+                        consent = {r['id']: r['consent'] for r in selected_sources if 'consent' in r}
+                    elif settings.get('syntheticConsent'):
                         patient_ids = []
                         for source in sorted((work / 'synthea/fhir').glob('*.json')):
                             with source.open() as stream:
@@ -280,17 +302,20 @@ def _run(folder, registry):
                                                    if e.get('resource', {}).get('resourceType') == 'Patient')
                         consent = assignments(patient_ids, chunk['patientSeed'])
                     last_update = time.monotonic()
-                    for source in sorted((work / 'synthea/fhir').glob('*.json')):
+                    sources = selected_sources if selected_sources is not None else [
+                        {'path': p, 'seed': chunk['patientSeed']} for p in sorted((work / 'synthea/fhir').glob('*.json'))]
+                    for source_index, source_record in enumerate(sources):
+                        source = source_record['path']
                         bundle = json.loads(source.read_text())
                         if not any(e.get('resource', {}).get('resourceType') == 'Patient' for e in bundle.get('entry', [])):
                             continue
                         rows, _ = prepare(bundle, options, diagnostics=False)
                         if consent:
                             pid = rows['Person'][0]['Patient-ID']
-                            enrich(rows, bundle, consent[pid], chunk['patientSeed'],
+                            enrich(rows, bundle, consent[pid], source_record['seed'],
                                    end_date=chunk.get('endDate'),
                                    years_of_history=chunk.get('yearsOfHistory', 0))
-                        tables = work / 'tables' / source.stem
+                        tables = work / 'tables' / str(source_index)
                         prefix = 'Fall-' + source.stem
                         write_direct_csv(rows, tables, prefix)
                         jobs.append({'input': str(tables), 'output': str(pending), 'prefix': prefix})
@@ -336,12 +361,14 @@ def _run(folder, registry):
                 generated_bytes += size_bytes
                 measured_seconds += seconds
                 shutil.rmtree(work)
+                if snapshot.get('bulkSourceVersion'):
+                    bulk_sources.prune(folder, snapshot, completed)
                 print(f'Completed {completed}/{total} patients', flush=True)
             current_started = time.monotonic()
             update(chunk=index + 1, phase='between-chunks', stageCompleted=size, stageTotal=size)
             if grouped and (len(part_names) * CHUNK_SIZE >= bulk_plan.PACKAGE_SIZE or completed == run_info['start'] + run_info['total']):
                 package_number = local_index * CHUNK_SIZE // bulk_plan.PACKAGE_SIZE + 1
-                target = destination / 'packages' / f'run-{run_number:05d}-package-{package_number:05d}.zip'
+                target = bulk_archives.package_directory(snapshot) / f'run-{run_number:05d}-package-{package_number:05d}.zip'
                 legacy_tar = target.with_suffix('.tar')
                 target = bulk_archives.package_path(run_directory, part_names, target)
                 package_patients = min(len(part_names) * CHUNK_SIZE, run_info['total'] - (package_number - 1) * bulk_plan.PACKAGE_SIZE)
@@ -358,6 +385,12 @@ def _run(folder, registry):
         print(f'Subrun {run_number}/{len(runs)} complete', flush=True)
     if grouped:
         bulk_archives.publish(folder, snapshot)
+    if 'identifierCounterStarts' in snapshot:
+        import bulk_continuation
+        if snapshot.get('bulkSourceVersion'):
+            bulk_sources.finish(folder, snapshot)
+        registry.save(folder / 'bulk-identifier-history.sqlite')
+        atomic_json(folder / bulk_continuation.STATE_FILE, bulk_continuation.completion(folder, snapshot, identifier_counters))
     update(phase='complete', stageCompleted=0, stageTotal=0, remainingSeconds=0)
 
 

@@ -38,4 +38,3 @@ def prepare(path, owner):
 if __name__ == '__main__':
     owner = Path('/host-project').stat()
     prepare('/global-output', owner)
-    prepare('/mass-output', owner)
