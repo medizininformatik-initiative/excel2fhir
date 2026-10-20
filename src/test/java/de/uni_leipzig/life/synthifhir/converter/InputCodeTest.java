@@ -1,6 +1,7 @@
 package de.uni_leipzig.life.synthifhir.converter;
 
 import static org.junit.Assert.*;
+import java.io.*;
 import java.util.List;
 import org.hl7.fhir.r4.model.*;
 import org.junit.Test;
@@ -18,6 +19,23 @@ public class InputCodeTest {
                     assertTrue(encoded, encoded.contains(code.replace("!dar:", "")));
                     if (code.startsWith("!dar:")) assertTrue(encoded.contains("data-absent-reason"));
                 }
+            }
+        }
+    }
+
+    @Test public void javaDeserializationRestoresFactoryAndExplicitCodes() throws Exception {
+        for (String code : List.of("female", "made-up")) {
+            var original = InputCode.of(new Patient().getGenderElement(), code);
+            var bytes = new ByteArrayOutputStream();
+            try (var output = new ObjectOutputStream(bytes)) {
+                output.writeObject(original);
+            }
+            try (var input = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+                var restored = (InputCode<?>) input.readObject();
+                assertEquals(code, restored.getValueAsString());
+                assertEquals(original.getValue(), restored.getValue());
+                assertEquals(original.getEnumFactory().getClass(), restored.getEnumFactory().getClass());
+                assertEquals(code, restored.copy().getValueAsString());
             }
         }
     }
