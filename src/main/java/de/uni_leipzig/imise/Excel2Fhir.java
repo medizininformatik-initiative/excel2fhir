@@ -203,7 +203,7 @@ public class Excel2Fhir {
     }
 
     /** Convert internally generated CSV tables with the same validation and output policy as Excel. */
-    public void convertCsvDirectory(File source, File input, File tempDir, File resultDir,
+    public void convertCsvDirectory(File source, File input, File resultDir,
             int patientsPerBundle, OutputFileType... outputFileTypes) throws IOException {
         var sets = optionFiles.isEmpty() ? ConverterOptionSet.defaults() : ConverterOptionSet.external(optionFiles);
         String prefix = FilenameUtils.removeExtension(source.getName()) + "_";

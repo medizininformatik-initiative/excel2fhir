@@ -9,6 +9,12 @@ import org.hl7.fhir.r4.model.Extension;
 public final class InputCode<T extends Enum<?>> extends Enumeration<T> {
     private static final long serialVersionUID = 1L;
 
+    /** For Java deserialization; Enumeration.readExternal restores the enum factory. */
+    @SuppressWarnings("deprecation")
+    public InputCode() {
+        super();
+    }
+
     private InputCode(EnumFactory<T> factory) {
         super(factory);
     }

@@ -129,7 +129,7 @@ public class Excel2FhirMain implements Callable<Integer> {
             List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
             if (csvInput != null) {
-                converter.convertCsvDirectory(inputFile, csvInput, run.csv.toFile(), run.staging.toFile(),
+                converter.convertCsvDirectory(inputFile, csvInput, run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             } else if (inputFile != null) {
                 converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),

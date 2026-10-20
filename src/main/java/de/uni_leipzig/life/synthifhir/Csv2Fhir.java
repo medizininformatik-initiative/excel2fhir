@@ -497,9 +497,10 @@ public class Csv2Fhir {
             if (bundle == null || bundle.getEntry().isEmpty()) return false;
             File target = new File(outputDirectory,
                     getOutputFileName(outputFileNameBase, fileNameExtension, JSON) + ".gz");
-            try (Writer writer = new BufferedWriter(new java.io.OutputStreamWriter(
-                    new java.util.zip.GZIPOutputStream(new java.io.FileOutputStream(target)),
-                    java.nio.charset.StandardCharsets.UTF_8))) {
+            try (var output = new java.io.FileOutputStream(target);
+                    var gzip = new java.util.zip.GZIPOutputStream(output);
+                    Writer writer = new BufferedWriter(new java.io.OutputStreamWriter(
+                            gzip, java.nio.charset.StandardCharsets.UTF_8))) {
                 JSON.getParser().setPrettyPrint(false).encodeResourceToWriter(bundle, writer);
                 writer.write("\n");
             }
