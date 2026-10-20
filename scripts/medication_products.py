@@ -19,7 +19,7 @@ INGREDIENT_SYSTEMS = {'http://fhir.de/CodeSystem/ask': 'ASK',
 
 
 def local_catalog_path():
-    return Path.home() / '.local/share/excel2fhir/medication-products.json'
+    return Path.home() / '.local/share/synthifhir/medication-products.json'
 
 
 def require_external_path(path):
@@ -91,10 +91,8 @@ class ProductCatalog:
         entry = self.entries.get((coding.get('system'), coding.get('code')))
         if entry is None or coding.get('version'):
             return result
-        if entry['doseCompatibility'] != 'unchanged':
-            result['reason'] += ' Lokale Zuordnung nicht angewendet: Dosierung bei Produktwechsel ungeklärt.'
-            return result
         result.update(status='local-product', provider='mmi-local',
+                      enrichment=None, sourceDoseReview=None,
                       target=copy.deepcopy(entry['target']),
                       provenance=copy.deepcopy(entry['provenance']),
                       doseCompatibility=entry['doseCompatibility'],

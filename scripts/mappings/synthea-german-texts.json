@@ -30157,6 +30157,18 @@
       "review": "pending-medical-review"
     },
     {
+      "original": "Greater than 100,000 colony forming units per mL Klebsiella pneumoniae",
+      "de": "Mehr als 100.000 koloniebildende Einheiten pro ml Klebsiella pneumoniae",
+      "source": "editorial",
+      "review": "editorially-corrected"
+    },
+    {
+      "original": "Greater than 100,000 colony forming units per mL Proteus mirabilis",
+      "de": "Mehr als 100.000 koloniebildende Einheiten pro ml Proteus mirabilis",
+      "source": "editorial",
+      "review": "editorially-corrected"
+    },
+    {
       "original": "Headache",
       "de": "Kopfschmerzen",
       "source": "editorial",
@@ -30651,6 +30663,12 @@
     {
       "original": "emergent",
       "de": "Notfallmäßig",
+      "source": "editorial",
+      "review": "editorially-corrected"
+    },
+    {
+      "original": "emergent_salvage",
+      "de": "Notfallmäßiger Rettungseingriff",
       "source": "editorial",
       "review": "editorially-corrected"
     },

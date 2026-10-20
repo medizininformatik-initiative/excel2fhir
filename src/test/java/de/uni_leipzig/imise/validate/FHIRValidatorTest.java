@@ -15,8 +15,8 @@ import ca.uhn.fhir.validation.ResultSeverityEnum;
 import ca.uhn.fhir.validation.SingleValidationMessage;
 import ca.uhn.fhir.validation.ValidationResult;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.MultiSinglePatientBundlesFileWriter;
-import de.uni_leipzig.life.csv2fhir.OutputFileType;
+import de.uni_leipzig.life.synthifhir.MultiSinglePatientBundlesFileWriter;
+import de.uni_leipzig.life.synthifhir.OutputFileType;
 
 public class FHIRValidatorTest {
     private FHIRValidator validator(ResultSeverityEnum severity, String text) {

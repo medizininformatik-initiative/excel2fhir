@@ -42,7 +42,7 @@ class WorkerTests(QueueFixture):
     def test_rejects_converter_change_before_execution(self):
         job = store.create('starter', 'default')
         store.claim()
-        (store.APP / 'excel2fhir.jar').write_bytes(b'changed converter')
+        (store.APP / 'synthifhir.jar').write_bytes(b'changed converter')
         worker.execute(job)
         self.assertEqual('failed', store.get(job)['state'])
         log = (store.ROOT / 'jobs' / job / 'converter.log').read_text()

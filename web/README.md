@@ -44,8 +44,9 @@ configurations and validates them before replacing the current draft. See the
 [configuration format](catalog/options/README.md#properties-export-and-import)
 for values, comments, DAR fields and identifier rules. Imports and **Restore defaults**
 are saved automatically. Invalid drafts cannot be exported. Imports reject unknown fields, incorrect types,
-unsupported schema versions, duplicate assignments, JSON members or rule IDs, unsuitable DAR
-codes and invalid identifier patterns.
+unsupported schema versions, duplicate assignments, JSON members or rule IDs, empty DAR
+codes and invalid identifier patterns. DAR code fields offer standard suggestions and accept
+free text, including intentionally invalid codes. Optional FHIR validation reports vocabulary violations.
 
 DAR rules offer three choices: unchanged, add DAR only when missing, or always
 replace. Missing-only rules retain existing values and existing DAR, including
@@ -129,10 +130,19 @@ ZIP archives retain their original bytes; each run extracts its own input direct
 
 Synthea inspection counts patients and resources, rejects duplicate patient IDs
 and identifies bundles without patients. The import skips those bundles. Each
-patient bundle must contain one Patient with an ID. The worker runs the existing
-Synthea-to-Excel-to-FHIR pipeline using LibreOffice, the bundled template and
-German mappings. Results include the generated workbooks, source comparison,
-projection-loss reports and effective configuration. The current editor settings
+patient bundle must contain one Patient with an ID. Choose **CSV (ZIP)** for faster
+conversion with lower memory use, especially for many cases. Choose **Excel** to
+edit the generated workbooks and convert them again. Both paths use the same German
+mappings, table validation and KDS converter. Excel creation uses LibreOffice.
+Results include CSV tables as a ZIP archive or editable workbooks and the effective
+configuration. Source comparisons and projection-loss reports are included when
+**Detailed source diagnostics** is enabled. The selected table format is
+saved with the run and restored when loading its settings.
+
+CSV downloads are compressed; processing still needs space for unpacked tables,
+original sources and FHIR output. The worker streams tables into a ZIP and verifies
+it before removing the unpacked CSV working copies. Run cleanup retains that ZIP.
+Plan disk capacity for the complete run, not only the download size. The current editor settings
 control the KDS conversion. Each snapshot also fingerprints the import scripts,
 template and mappings.
 
@@ -150,6 +160,32 @@ fields are disabled while this option is selected; switching it off restores the
 values. An explicitly configured single-person seed also uses that timestamp when
 requesting one patient. The resolved values are saved with the run. Loading a run
 into the editor selects its saved manual seeds, allowing reproducible generation.
+
+Synthetic contact enrichment has its own fixed seed, `20260912`. Patient and
+source Encounter IDs determine the per-case random sequence for room/bed movements;
+department routing also considers the clinical source data. Identical source data,
+generator rules and mappings reproduce the same contacts. The movement report
+records the seed and rule/mapping metadata. Converting saved workbooks again uses
+the contacts already stored in those workbooks.
+
+Enable **Only patients with an inpatient stay** to require one individual hospital
+stay lasting at least the selected number of days (default: 2; one day is 24 hours).
+The stay must overlap the exported history window. History 0 includes all history.
+Durations are not added across stays; other encounters of a selected patient remain
+available. The criterion combines with the other patient-selection settings.
+
+The run shows matching patients, candidates checked, attempts for the current
+patient and the configured limit. After 100 consecutive unsuccessful candidates,
+a notice suggests cancelling and relaxing the criteria. **Maximum attempts** is a
+limit per requested patient. Exhausting it stops the generation with a failed
+status; it does not proceed to KDS conversion with a smaller cohort. Cancellation
+also stops an ongoing candidate simulation through the existing process-group
+shutdown. A limit bounds candidate count, not the duration of a single simulation.
+
+The Compose build applies `scripts/synthea-workbench/generator.patch` to the pinned
+Synthea source and includes `InpatientSelection.java`. The resulting JAR fingerprint
+is saved in each generation snapshot. The build runs selection boundary checks
+against this JAR before assembling the runtime images.
 
 Advanced settings provide living/deceased selection, the bundled patient-selection
 modules, an optional single-person seed, simulation timestep, attempt limit,
@@ -179,10 +215,10 @@ generator revision and hashes are recorded.
 Runs show requested, actually exported and successfully imported source-patient
 counts separately. Extra deceased patients can increase the exported count.
 
-The web workflow accepts 1–1000 requested patients per run and up to 10,000
+Standard generation accepts 1–1,000 requested patients per run; bulk generation accepts up to 100,000 patients per overall job. Selection allows up to 10,000
 attempts per patient slot. Generation defaults to ages 18–80, five years of history and disabled overflow.
 It uses one Synthea thread, a 1.5 GiB generator heap, a 1 GiB converter heap
-and a 2200 MiB worker container; jobs run sequentially. Generated FHIR, editable
+and a 6 GiB worker container; jobs run sequentially. Generated FHIR, CSV ZIP or editable
 workbooks, original Synthea bundles, workflow reports and logs are included in
 the download. See the [Synthea workflow](../docs/synthea-workflow.md) for output
 layout and seed semantics.
@@ -253,6 +289,21 @@ work. An interrupted or failed transfer can leave already uploaded transactions
 on the server; it is not rolled back. Select the datasets again to explicitly
 start another action. Reloading the browser does not cancel an upload.
 
+Dataset labels combine the chosen name (or workbook filename), source and saved
+run facts, for example `Demo · Synthea (Pat 10 · Cases 42 · Hist 0 · Age 18–85)`.
+Patient and case counts come from the saved workbook Person/Fall entries; contact
+sublevels are excluded. Native Synthea output uses its inspected Patient/Encounter
+counts. When actual and requested populations differ, both are shown. History and
+age are the submitted Synthea settings; history is always numeric, including zero.
+Unavailable counts are omitted. New upload records retain these labels when the
+source run is deleted.
+
+The upload history initially shows the five latest completed actions and all active
+uploads. **Load older uploads** reveals more completed entries. Details and full
+server diagnostics expand on demand; a short error remains visible. Delete an
+individual completed history entry or clear all completed history to remove its
+local logs and working files. Uploaded resources remain on the FHIR server.
+
 The worker uses pinned `blazectl 1.5.1`, with two concurrent transactions for
 Blaze and one for HAPI. It prepares PUT transactions preserving resource IDs and
 FHIR resources, selects one representation per output directory in the same
@@ -280,6 +331,14 @@ converter reports, effective options and logs, including for failed validation
 runs. Formats, patients per output file and FHIR validation follow the submitted
 configuration. Defaults are JSON and NDJSON, one patient per JSON bundle and
 FHIR validation disabled. See [converter results](../docs/converter-usage.md#output).
+
+**Download configuration and Excel** provides a compact ZIP for conversion from
+saved workbooks. It includes the submitted configuration, available effective
+configuration files and environment reports, converter fingerprint, and file
+checksums. Use the identified converter version and the saved output settings.
+Externally referenced document files must be supplied separately at their expected
+paths. Source comparison and upstream generation require the original sources.
+For failed runs, the archive contains the workbooks produced before failure.
 
 **Cancel** cancels queued work or terminates the running converter process group.
 Reloading or closing the browser leaves work running. A worker restart marks
@@ -377,7 +436,7 @@ maintaining independent service definitions. It generates a seven-day localhost
 certificate and PKCS12 trust store, a disposable `prototype` / `prototype` Basic
 auth account, and a small patient-count Measure. Use only generated test data.
 
-The isolated project is `excel2fhir-data-node-74`. Ports 5185–5188 are bound to
+The isolated project is `synthifhir-data-node-74`. Ports 5185–5188 are bound to
 loopback: Blaze, TORCH, TORCH's file server, and the TLS reverse proxy. Its named
 volumes persist Blaze data and TORCH output. FDE uploads reports to Blaze;
 `verify_fde.py` exports the latest reports into `node-test/fde-output`.
@@ -497,10 +556,305 @@ Build and update API and worker together whenever converter or import-pipeline
 files change. Both services must contain identical converter and importer assets:
 
 ```sh
-docker compose -f web/compose.yml build api worker web
-docker compose -f web/compose.yml up -d --no-deps api worker web
+docker compose -f web/compose.yml build output-init api worker web
+docker compose -f web/compose.yml up -d api worker web
 ```
 
 Wait for active runs and uploads to finish before updating. Submitted runs retain
 the converter and importer fingerprints; execution rejects mismatched versions.
 The Synthea comparison uses the bundled DAR and option catalogues.
+
+### Run cleanup
+
+**Clean up / delete** opens a choice for the selected run. **Clean up** is available
+for completed or failed runs after dataset inspection. It retains configuration,
+Excel workbooks or the CSV table ZIP, generated FHIR files, version metadata and a checksum inventory.
+Referenced files are retained conservatively, including dependencies found in
+other saved workbooks and datasets. Shared input-library files are retained.
+
+Cleanup removes source data, intermediate files, logs and redundant ZIP archives.
+Source comparisons require the original source data and cannot be repeated after
+those sources have been removed. To repeat an Excel conversion, download
+**Configuration and Excel**, then load a workbook with the saved configuration.
+Original workbook/CSV inputs and generation settings remain loadable in the editor;
+removed Synthea import files do not. Native Synthea runs have no Excel workbooks.
+
+Dataset downloads and uploads remain available. A requested dataset ZIP is rebuilt
+from checksum-verified result files and cached until the next cleanup. Its archive
+checksum is updated when the ZIP is rebuilt. The complete run
+download contains the retained files and is created temporarily. Active uploads
+prevent cleanup. **Delete completely** removes the entire local run; FHIR-server
+contents and upload history remain available.
+
+### Patient repetitions
+
+**Additional repetitions** creates copies of the input patients: zero keeps one
+pass, two produces three passes. The first pass uses prefix + original patient ID
++ suffix. Additional passes append `-rep-1`, `-rep-2`, etc. Clinical references
+follow the corresponding copied patient. Collisions are checked before output.
+Resource counter starts and per-repetition clinical time shifts remain independent.
+Use different prefixes or suffixes to distinguish separate DIZ runs.
+
+### Reuse saved Excel workbooks
+
+On a completed run, **Reuse saved Excel** loads all its saved workbooks as one
+input set and restores its converter configuration in the editor. Set the dataset
+name and a DIZ-specific patient ID prefix or suffix, adjust the configuration, and
+start conversion. Repeat with another configuration to produce another dataset
+from exactly the same workbooks. The input selector retains the saved workbook
+set for subsequent runs.
+
+This executes Excel-to-FHIR conversion without running Synthea or the Synthea
+importer again. The clinical content and mappings already written into Excel stay
+fixed. Synthea-derived workbooks retain the Europe/Berlin conversion time zone.
+Each run owns byte-identical copies of its inputs, a checksum manifest, and its
+configuration. Removing the source run does not remove those copies. The action
+also works after run cleanup; failed runs may supply only their available subset
+of workbooks. Native Synthea output without Excel cannot use this action.
+
+**Load input and settings** on a Synthea generation run restores its generator
+settings and runs Synthea again when submitted. Use **Reuse saved Excel** to
+convert its existing workbooks instead.
+
+Select an uploaded input and choose **Remove input** to delete its saved copy from
+the input library after confirmation. Existing runs keep their independent input
+copies and results, and the original file on your computer is retained. Saved
+Excel sets can also be removed and recreated from an existing run. Bundled inputs
+remain available.
+
+### Replay identity audit
+
+Run the real worker audit in isolated temporary storage:
+
+```sh
+docker compose -f web/compose.yml exec -T worker python < web/integration/smoke_replay_ids.py
+```
+
+It imports two bundled Synthea examples once, reuses their Excel workbooks with
+different ID prefixes/suffixes and repetitions, and checks references, JSON/NDJSON
+agreement, counter starts, input independence and cleanup. It writes no FHIR
+server data and removes its temporary jobs. Assertions include unqualified
+`{count}` identifiers remaining unique across workbooks.
+
+Additional identifier counters start once per rule and run at the configured
+value. They continue across patients, repetitions and workbooks in sorted filename
+order; independent runs start again at the configured value. Collision checks also
+cover all workbooks in the run.
+Patient ID prefixes/suffixes affect
+patient-derived resource identities; identical medication definitions can retain
+shared identities.
+
+### Bulk cancellation and resume audit
+
+Run the integration test in a separate worker container without mounting existing data:
+
+```sh
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_resume.py
+```
+
+The test uses temporary queue and output directories and fixed Synthea fixtures with
+the real mapper and Java converter. It cancels through the API handler after the
+second subrun has produced unpublished FHIR, then resumes through the API handler.
+It checks unique, contiguous patient and encounter identifiers across both subruns,
+checkpoint counters, ZIP checksums, unchanged published output and temporary-file
+cleanup. A synchronization gate makes the cancellation deterministic. The test
+runs in the `workbench-inputs` CI job.
+
+### Run outcomes
+
+Generation succeeds when conversion completes and produces its output files.
+Source comparison differences and optional FHIR validation findings do not change
+that outcome or suppress generated test data. Process failures and incomplete
+imports still fail generation; the CLI returns a nonzero exit code for these
+failures. Inspect validation reports when using the CLI for conformance checks.
+
+Run details show generation and FHIR validation separately. Synthea conversions
+also show import notes, source comparisons with differences, and comparisons that
+could not be assessed. Notes covered by disabled resources or explicit DAR
+replacement are accounted for separately. Import notes can indicate mapping work,
+but do not automatically mean a missing mapping. A failing source comparison
+reports its first difference for each source dataset and variant, not an exhaustive
+count of differing fields. These summaries remain available after run cleanup.
+Historical reports without independent comparison results show that assessment as
+unavailable; their recorded execution status is retained.
+
+### Source diagnostics
+
+Synthea KDS runs generate tables and FHIR with source diagnostics disabled by default. Enable **Detailed source diagnostics** to compare the result with the Synthea source and retain detailed transfer reports. This increases runtime, memory and disk usage. The selection is saved with the run and restored when loading it into the editor. Input checks, conversion failures and missing-output checks always run. FHIR validation remains a separate configuration option.
+
+### Bulk gzip JSON generation
+
+Run `bash web/prepare-bulk.sh` from the project directory before submitting a bulk
+run. It stops the currently running optional Compose services (DataPortal and its
+databases/authentication, TORCH, Blaze/HAPI and auxiliary services), keeping the
+web UI, API and worker available. It records the stopped services locally. After
+completion, `bash web/restore-services.sh` restarts exactly those services. Both
+commands require queued/running generations and FHIR transfers to finish first.
+
+Bulk admission requires at least 3 GiB of available Docker VM RAM. The interface
+updates availability every five seconds; the API checks submission and the worker
+checks again immediately before execution, including its container memory headroom.
+Unavailable memory measurements block admission. If memory is still insufficient
+after preparation, assign more RAM to Docker. Keep optional services stopped during
+the run. The check reserves no memory and cannot prevent other applications from
+consuming RAM later. Standard generation uses its existing admission behavior.
+
+Choose **Bulk data generation** in the Synthea settings to generate up to 100,000
+source patients. Set **Patients per subrun** to a multiple of 100 between 100 and
+10,000. A final subrun may contain fewer patients. One start executes all subruns
+sequentially within one overall job; its details list each subrun and seed range.
+The worker processes at most 100 patients per internal chunk.
+For KDS output, additional identifier counters continue across every patient, chunk
+and subrun of the overall job. Completed chunks store the counter positions for
+resumption; new series start at the configured values.
+Identifier collisions across patients and chunks stop publication of the affected
+chunk. A disk-backed index checks identifier ownership, including case-scoped
+sharing, and is rebuilt from checksummed registration journals on resume.
+Overall progress weights generation, KDS mapping and conversion (or native JSON
+compression), and ZIP writing/checksum verification equally per patient. A second
+bar shows the current stage. The patient counter counts completed chunks; the
+remaining-time estimate uses measured processing times rather than stage weights.
+Choose **KDS FHIR** to apply the clinical configuration and German mappings, or
+**Synthea FHIR** to retain the original US FHIR R4 output. Both produce one
+gzip-compressed JSON bundle per patient (`.json.gz`). Synthea output also retains
+separate organization and clinician bundles as `support-*.json.gz` in each chunk.
+Decompression restores the original Synthea JSON bytes. Source diagnostics and
+FHIR validation are disabled in bulk mode. Bulk runs do not create dataset previews, CSV downloads,
+whole-run ZIPs or detailed reports. Standard runs retain their existing behavior.
+
+Directory names use a Europe/Berlin timestamp, a sanitized dataset name and the unique run ID. Dataset names use portable ASCII letters, digits, hyphens and underscores and retain at most the final 24 characters. The timestamp uses `YYYYMMDD-HHMMSS`; the full run UUID is written without hyphens. Patient files are named `p001.json.gz` through `p100.json.gz` within each chunk; patient IDs remain inside the bundles.
+
+Standard and bulk Workbench runs publish reusable dataset ZIPs under
+`outputGlobal/<timestamp>_<dataset-name>_<run-id>/`. Standard runs export one ZIP
+per dataset variant; bulk runs publish ZIPs directly in the run directory, each containing at most
+1,000 patients from one subrun. The interface shows a copyable result directory.
+Inputs, logs, reports and intermediate files remain in the internal Workbench
+volume. Standard-run downloads and reports remain available in the interface.
+Deleting or cleaning a run does not remove its exported ZIPs.
+
+Compose prepares the output directory before starting the unprivileged services.
+On Linux it grants the service user access using filesystem ACLs and retains the
+checkout owner's access. Docker Desktop uses its shared-folder permissions.
+No host UID configuration or manual permission changes are required on supported
+writable local filesystems. Read-only shares cannot be used as output directories.
+
+Bulk chunks are staged internally until their ZIP is closed and verified. ZIP
+stores `.json.gz` files without recompressing them. The `-<count>Pat.zip` suffix
+reports distinct Patient resources actually contained in the package.
+Reference-only output retains clinical resources and reports `0Pat` when no
+Patient resources are included. Every bulk package contains a manifest with
+checksums and generation checkpoints. Packages can be downloaded individually
+or selected for FHIR upload.
+
+Each chunk uses a distinct reproducible patient seed derived from the submitted
+seed. A 10,000-patient subrun consumes 100 seeds; the next starts with the following
+seed. The requested count refers to source patients; supporting bundles do not count
+toward that total. For KDS output, clinical output selections, ID settings and a
+common time shift apply. Additional patient copies and per-copy
+time shifts are disabled. Synthea output uses the generator settings directly;
+KDS configuration and synthetic consent apply only to KDS output. Overflow is disabled in bulk mode.
+The processes finish between chunks, and successful chunks release their temporary
+sources and tables. The final gzip JSON collection continues to consume disk space.
+
+Only successfully completed chunks receive a `part-*` name. Hidden `.partial`
+directories are incomplete and must not be imported or shared. A failed or cancelled
+run retains completed chunks; failed working files remain with the run for diagnosis.
+Deleting the run removes its job metadata and working files, but never deletes the
+external result directory. Loading settings starts a new run, not a resume operation.
+
+### Synthetic consent
+
+**Add synthetic consent** is enabled by default in the Synthea KDS generation
+settings and populates consent fields. Clear the checkbox to disable it. The
+default KDS configuration generates ward organizations as separate resources and
+references them from Encounter.serviceProvider. Patient identities are ranked by a versioned hash of the patient
+seed and identity. The allocation is 50% full consent, 15% patient data only,
+15% patient and insurance data, 10% full refusal, and 10% without documented consent.
+Bulk generation assigns consent to complete 100-patient source blocks, including
+patients retained internally for continuation. Standard runs use largest-remainder
+rounding for their requested population. Matching seeds and source blocks reproduce
+the assignment independently of how a bulk series is split into jobs.
+
+The consent date is the first inpatient encounter within the configured history,
+falling back to the first other encounter in that period. The history ends on the
+simulation end date; zero history years includes the entire lifetime. Dates are
+restricted to the patient's lifetime. Without a matching encounter, the history
+start (or birth, if later) is used. With unlimited history, the fallback is the
+simulation end date or death date, whichever is earlier. Consent is omitted when
+no plausible date is available, including death before the history window.
+Supplied consent fields remain unchanged. The five groups are set explicitly to
+yes or no; patients without documented consent have no consent date.
+The generation setting is saved with the run. Consent provenance is included only
+when detailed source diagnostics are enabled. Bulk jobs do not create separate
+consent reports.
+
+To broaden medication output, select **Add medication statement** for medication
+administrations. To emit ward organizations, select **Generate and reference
+organization** under **Ward as service provider**. These are independent clinical
+configuration settings.
+
+### Bulk progress and resuming
+
+The current status updates in place approximately every two seconds during generation
+and conversion. It shows the phase, selected/generated patients or converted files,
+and selection attempts where available. Console output records chunk and subrun
+completion. No per-patient console messages are displayed.
+
+After the first completed chunk, the interface estimates remaining generation time
+and total compressed FHIR size from completed chunks. These estimates adapt as more
+patients complete. They are approximate: patient histories vary, and packaging adds
+some overhead. Generated FHIR bytes and the size stored in ZIP packages are shown separately; these are not two retained copies.
+
+A failed or cancelled overall job stops before subsequent subruns. **Resume overall
+job** reuses its saved settings and seeds, skips completed chunks in verified ZIP packages or loose chunk directories and
+recreates only unfinished temporary work. Completed files and packages remain in
+place. Resume requires the generator, converter and importer versions saved with
+the job. Keep its local output files and job record until it finishes.
+
+### Continuing a bulk series
+
+Choose **Continue series** below the execution mode, or use the same action in a
+completed run's details. Select a previous run; the form loads the last block in
+its continuation chain. Set the additional patient count and start the next block.
+All other generation and converter settings are inherited and read-only. Identifier
+rules display their next counter starts.
+
+Continuation requires a successfully completed block with a saved completion state
+and, for partial source blocks, its checksummed source remainder. The generator produces complete 100-patient source blocks and retains unused patients
+internally. Continuation consumes this remainder before generating another block.
+Consent assignments are retained from the complete source block; identifier counters
+advance only during conversion of requested patients. The population seed advances
+once per consumed 100-patient source block; the clinician seed stays unchanged. Each identifier rule continues
+from its actual allocated counter, including allocations for contacts that are not
+emitted. The backend also carries the identifier collision index into the new job.
+Generator, converter and importer versions must match. An unfinished successor must
+be completed or resumed before adding another block; the same predecessor cannot
+start two successors. Keep the latest block's job record for continuation.
+
+The isolated integration test compares 300 patients in one job against 275 followed
+by a 25-patient continuation without regeneration. It uses seeded source fixtures and the real mapper,
+converter, consent enrichment, counter restoration and ZIP publication, comparing
+uncompressed FHIR bytes and identifier uniqueness:
+
+```bash
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_continuation.py
+```
+
+### Uploading bulk packages
+
+In **Provide & use data**, start Blaze or HAPI, select completed ZIP packages and
+submit an upload. Search by run name and use **Select all matches** to select all
+packages of a run. The packages use the same dataset selection as standard results.
+
+The uploader scans the selected resources for conflicting contents before writing
+to the server. For bulk packages it reads one gzip-compressed patient bundle at a
+time directly from the ZIP; it does not extract archives or create full upload
+copies. A temporary on-disk resource hash index supports conflict detection.
+Ordinary datasets in a mixed selection retain their existing format conversion.
+
+Each patient is sent as a FHIR transaction with stable-ID PUT requests. Progress
+shows checked bundles, confirmed transactions and completed packages. **Resume
+upload** continues a stopped bulk upload to the same target after the last confirmed
+patient. If a response was lost, that patient's PUT transaction may be repeated.
+Previously uploaded resources must still exist on the target; after clearing a
+server, start a new upload. Generation and upload are explicitly separate actions.

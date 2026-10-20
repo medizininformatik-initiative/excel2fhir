@@ -1,17 +1,16 @@
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import com.google.gson.*;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
-import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterOptionSet;
 
 /** Use the converter's own parser and ID rules in the Python workflow. */
 public class WorkflowOptions {
     public static void main(String[] args) throws Exception {
         JsonObject input = JsonParser.parseString(new String(System.in.readAllBytes(), StandardCharsets.UTF_8)).getAsJsonObject();
-        Map<String, String> defaults = new LinkedHashMap<>();
-        input.getAsJsonObject("defaults").entrySet().forEach(e -> defaults.put(e.getKey(), e.getValue().getAsString()));
-        ConverterOptions options = input.get("text").getAsString().isBlank() ? ConverterOptionSet.defaults().get(0).options()
-                : ConverterOptions.fromText(input.get("text").getAsString(), defaults);
+        ConverterOptions options = !input.has("name") && input.get("text").getAsString().isBlank()
+                ? ConverterOptionSet.defaults().get(0).options()
+                : ConverterOptions.fromConfigurationText(input.get("text").getAsString());
         List<String> errors = new ArrayList<>(options.getErrors());
         Map<String, String> values = new LinkedHashMap<>();
         for (var key : ConverterOptions.BooleanOption.values()) values.put(key.name(), Boolean.toString(options.is(key)));

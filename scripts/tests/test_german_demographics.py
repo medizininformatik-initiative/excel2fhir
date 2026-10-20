@@ -3,6 +3,7 @@ import json
 import hashlib
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from german_demographics import identity, localize_document_identity, check_patient
@@ -68,6 +69,30 @@ class DemographicsTest(unittest.TestCase):
         with self.assertRaises(AssertionError):check_patient(source, changed, report)
         with self.assertRaises(AssertionError):check_patient(source, target, {'demographics':{}})
 
+    def test_multipart_given_names_follow_excel_conversion_without_hiding_changes(self):
+        source = bundle()['entry'][0]['resource']
+        for given in ('Heinz Dieter', 'Hans-Peter', 'Şule Maria'):
+            with self.subTest(given=given):
+                replacement = identity(source)
+                replacement['name']['given'] = [given]
+                report = {'demographics': replacement}
+                target = dict(source, name=[dict(replacement['name'], given=given.split(' '))],
+                              address=[dict(replacement['address'], state='DE-NW')])
+                with patch('german_demographics.identity', return_value=replacement):
+                    check_patient(source, target, report)
+                    for wrong in ([], ['Other'], given.split(' ') + ['Other']):
+                        changed = copy.deepcopy(target)
+                        changed['name'][0]['given'] = wrong
+                        with self.assertRaisesRegex(AssertionError, 'Localized patient name changed'):
+                            check_patient(source, changed, report)
+                    if ' ' in given:
+                        changed = copy.deepcopy(target)
+                        changed['name'][0]['given'].reverse()
+                        with self.assertRaises(AssertionError): check_patient(source, changed, report)
+                    changed = copy.deepcopy(target)
+                    changed['name'][0]['family'] = 'Other'
+                    with self.assertRaises(AssertionError): check_patient(source, changed, report)
+
     def test_document_replacement_preserves_clinical_text_and_word_boundaries(self):
         patient = dict(bundle()['entry'][0]['resource'], name=[{'given':['May123'], 'family':'Brown456'}])
         text = 'May123 Brown456. May123 has Brown syndrome in May. XMay123. Brown456.'
@@ -82,10 +107,10 @@ class DemographicsTest(unittest.TestCase):
         source = bundle();before = copy.deepcopy(source)
         rows, report = prepare(source)
         self.assertEqual(source, before)
-        self.assertEqual(rows['Person'][0][1:3],
+        self.assertEqual([rows['Person'][0]['Vorname'], rows['Person'][0]['Nachname']],
                          [report['demographics']['name']['given'][0], report['demographics']['name']['family']])
-        self.assertEqual(rows['Person'][0][5:11], [''] * 6)
-        self.assertEqual(rows['Person'][0][15], 'DE')
+        self.assertEqual([rows['Person'][0]['Datum Einwilligung'], rows['Person'][0]['PDAT Einwilligung'], rows['Person'][0]['KKDAT retro Einwilligung'], rows['Person'][0]['KKDAT Einwilligung'], rows['Person'][0]['BIOMAT Einwilligung'], rows['Person'][0]['BIOMAT Zusatz Einwilligung']], [''] * 6)
+        self.assertEqual(rows['Person'][0]['Land'], 'DE')
         self.assertTrue(any(l['path']=='address' for l in report['losses']))
 
 

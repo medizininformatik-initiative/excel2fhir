@@ -1,5 +1,16 @@
-name: excel2fhir-web-prototype
+name: synthifhir-workbench
 services:
+  output-init:
+    build:
+      context: ..
+      dockerfile: web/backend/Dockerfile
+      target: worker
+    user: "0:0"
+    command: [python, init_output.py]
+    volumes:
+      - ../outputGlobal:/global-output
+      - ..:/host-project:ro
+    restart: "no"
   api:
     build:
       context: ..
@@ -7,6 +18,10 @@ services:
       target: api
     volumes:
       - workbench:/data
+      - ../outputGlobal:/global-output
+    depends_on:
+      output-init:
+        condition: service_completed_successfully
     mem_limit: 512m
     cpus: 1
     restart: unless-stopped
@@ -19,6 +34,10 @@ services:
     init: true
     volumes:
       - workbench:/data
+      - ../outputGlobal:/global-output
+    depends_on:
+      output-init:
+        condition: service_completed_successfully
     mem_limit: 6g
     cpus: 2
     stop_grace_period: 15s

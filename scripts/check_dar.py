@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from check_medication_transformations import DAR, absent
 from synthea_expected_fields import expected_fields
+from check_output_selection import resource_key
 
 
 @lru_cache(maxsize=1)
@@ -39,10 +40,10 @@ def checked_original_dar(source, target, report):
                     property_name = properties[scoped]
                     code = options[property_name]
             if resource['resourceType'] == 'Observation':
-                vital = any(c.get('code') == 'vital-signs' and c.get('system') == 'http://terminology.hl7.org/CodeSystem/observation-category'
-                            for cc in original.get('category', []) for c in cc.get('coding', []))
-                if identifier.startswith('VitalSigns.') != vital: continue
+                kind = resource_key(original)
+                if kind == 'OBSERVATION' or identifier.startswith('VitalSigns.') != (kind == 'OBSERVATION_VITAL_SIGNS'): continue
             if code == 'unchanged': continue
+            if code.startswith('!dar:'): code = code[5:]
             only_missing = str(options.get(property_name + '_ONLY_WHEN_MISSING', False)).lower() == 'true'
             if field['representation'] == 'dataAbsentReason':
                 values = list(zip(original.get('component', []), resource.get('component', []))) if field['field'].startswith('component.') else [(original, resource)]

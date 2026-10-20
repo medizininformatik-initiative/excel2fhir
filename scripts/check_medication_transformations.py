@@ -1,9 +1,6 @@
 """Expected medication events derived from input rows, before output selections."""
 from copy import deepcopy
 from decimal import Decimal
-from functools import lru_cache
-from pathlib import Path
-import re
 from check_output_selection import named_id, selected, resource_key
 from check_medication_selection import product_id
 
@@ -24,70 +21,52 @@ def primitive(parent, key, value):
         parent[key] = value
 
 
-@lru_cache(maxsize=1)
-def ucum_tables():
-    root = Path(__file__).resolve().parents[1] / 'src/main/resources/ucum'
-    tables = []
-    for name in ('UCUM_Codes.map', 'UCUM_Synonyms_automatic.map', 'UCUM_Synonyms_manual.map'):
-        values = {}
-        for line in (root / name).read_text().splitlines():
-            if not line.strip() or line.lstrip().startswith('#'): continue
-            parts = line.split(None, 1)
-            if len(parts) == 2:
-                values[re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m[1], 16)), parts[0])] = parts[1].strip()
-        tables.append(values)
-    return tables[0], {**tables[1], **tables[2]}
-
-
-def quantity(value, unit):
-    labels, synonyms = ucum_tables()
-    code = unit if unit in labels else synonyms.get(unit, unit)
-    result = {'system': 'http://unitsofmeasure.org'}
+def quantity(value, unit, system=None):
+    result = {}
+    if system: result['system'] = system
     if value: primitive(result, 'value', value if str(value).startswith('!dar:') else float(Decimal(str(value))))
-    primitive(result, 'code', code or '!dar:unknown')
-    primitive(result, 'unit', labels.get(code) or code or '!dar:unknown')
+    if unit: result.update(code=unit, unit=unit)
     return result
 
 
 def dose_text(row):
-    parts = [row[19]] if row[19] else []
+    parts = [row['Dosierungstext']] if row['Dosierungstext'] else []
     from workbook_absent import display
-    dose = display('Medikation', 'Einzeldosis', row[16], {})
-    if dose: parts.append('Einzeldosis: ' + dose + (' ' + row[17] if row[17] else ' (Einheit unbekannt)'))
-    if row[18]: parts.append('Dosen pro Tag: ' + row[18])
+    dose = display('Medikation', 'Einzeldosis', row['Einzeldosis'], {})
+    if dose: parts.append('Einzeldosis: ' + dose + (' ' + row['Dosiereinheit'] if row['Dosiereinheit'] else ' (Einheit unbekannt)'))
+    if row['Dosen pro Tag']: parts.append('Dosen pro Tag: ' + row['Dosen pro Tag'])
     return '; '.join(parts)
 
 
 def baseline_medications(rows, options, pid):
     result, counts = [], {}
     for row in rows:
-        kind, suffix, key = TYPES[row[2]]
+        kind, suffix, key = TYPES[row['Medikationstyp']]
         number = counts.get(kind, int(options.get('START_ID_' + key, 1))); counts[kind] = number + 1
-        identifier = pid + ('-E-' + row[1] if row[1] else '') + '-' + suffix + '-' + str(number)
+        identifier = pid + ('-E-' + row['Fall-Nr'] if row['Fall-Nr'] else '') + '-' + suffix + '-' + str(number)
         resource = {'resourceType': kind, 'id': identifier, 'medicationReference': {'reference': 'Medication/' + product_id(row)}}
-        resource['status'] = row[11] or ('completed' if suffix == 'MA' else 'active')
+        primitive(resource, 'status', row['Status'])
         if suffix == 'MR':
-            resource['intent'] = row[12] or 'order'
-            primitive(resource, 'authoredOn', row[13])
+            primitive(resource, 'intent', row['Absicht'])
+            primitive(resource, 'authoredOn', row['Dokumentationszeitpunkt'])
         else:
-            if row[15]:
+            if row['Ende']:
                 resource['effectivePeriod'] = {}
-                primitive(resource['effectivePeriod'], 'start', row[14]); primitive(resource['effectivePeriod'], 'end', row[15])
-            else: primitive(resource, 'effectiveDateTime', row[14])
-            if suffix == 'MS': primitive(resource, 'dateAsserted', row[13])
+                primitive(resource['effectivePeriod'], 'start', row['Beginn']); primitive(resource['effectivePeriod'], 'end', row['Ende'])
+            else: primitive(resource, 'effectiveDateTime', row['Beginn'])
+            if suffix == 'MS': primitive(resource, 'dateAsserted', row['Dokumentationszeitpunkt'])
         dose = {}
         if suffix == 'MA':
-            if row[16] or row[17]: dose['dose'] = quantity(row[16], row[17])
-            if row[19] or row[18] or (row[16] and not row[17]): dose['text'] = dose_text(row)
+            if any([row['Einzeldosis'], row['Dosiereinheit'], row['Dosiereinheitcodesystem']]): dose['dose'] = quantity(row['Einzeldosis'], row['Dosiereinheit'], row['Dosiereinheitcodesystem'])
+            if row['Dosierungstext'] or row['Dosen pro Tag'] or (row['Einzeldosis'] and not row['Dosiereinheit']): dose['text'] = dose_text(row)
             if dose: resource['dosage'] = dose
         else:
-            frequency = Decimal(row[18]) if row[18] else None
+            frequency = Decimal(row['Dosen pro Tag']) if row['Dosen pro Tag'] else None
             integral = frequency is not None and frequency == int(frequency) and -2147483648 <= frequency <= 2147483647
-            if not row[19] and row[16] and row[17] and integral:
-                dose = {'doseAndRate': [{'doseQuantity': quantity(row[16], row[17])}],
-                        'timing': {'repeat': {'frequency': int(frequency), 'period': 1, 'periodUnit': 'd'}}}
-            elif dose_text(row): dose = {'text': dose_text(row)}
-            if not row[16] and row[17]: dose['doseAndRate'] = [{'doseQuantity': quantity(row[16], row[17])}]
+            if any([row['Einzeldosis'], row['Dosiereinheit'], row['Dosiereinheitcodesystem']]): dose['doseAndRate'] = [{'doseQuantity': quantity(row['Einzeldosis'], row['Dosiereinheit'], row['Dosiereinheitcodesystem'])}]
+            if integral:
+                dose['timing'] = {'repeat': {'frequency': int(frequency), 'period': 1, 'periodUnit': 'd'}}
+            if row['Dosierungstext'] or (row['Dosen pro Tag'] and not integral) or (row['Einzeldosis'] and not row['Dosiereinheit']): dose['text'] = dose_text(row)
             if dose: resource['dosageInstruction' if suffix == 'MR' else 'dosage'] = [dose]
         result.append(resource)
     return result

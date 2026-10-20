@@ -13,6 +13,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     stream = io.BytesIO()
     fixtures = synthea_runtime.ROOT / 'scripts/tests/fixtures/synthea'
     with zipfile.ZipFile(stream, 'w') as archive:
@@ -23,7 +25,7 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
         (incoming / 'input.zip').write_bytes(data)
         item = inputs.publish(incoming, 'Synthea.zip')
     assert item['inspection']['patients'] == 2
-    job = store.create(item['id'], 'default', 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n')
+    job = store.create(item['id'], 'default', 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n', table_format='excel', diagnostics=True)
     assert store.claim() == job
     worker.execute(job)
     folder = store.ROOT / 'jobs' / job
@@ -38,10 +40,12 @@ with tempfile.TemporaryDirectory(prefix='synthea-workbench-') as directory:
     assert len(manifest['datasets']) == 1
     assert manifest['datasets'][0]['inspection']['patients'] == 2
     loaded = store.editor_input(job)
-    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
+    assert loaded['diagnostics'] is True
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'), table_format=loaded.get('tableFormat'), diagnostics=loaded['diagnostics'])
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated
     assert store.get(repeated)['state'] == 'succeeded', (repeat_folder / 'converter.log').read_text()[-6000:]
     assert (repeat_folder / 'input.zip').read_bytes() == data
+    assert list((repeat_folder / 'output').glob('*/details/cases/*/Fall.loss.json'))
     print('PASS: Synthea ZIP inspection, two real LibreOffice/Java imports, reports, immutable snapshots and repeat')

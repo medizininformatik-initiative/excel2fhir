@@ -61,7 +61,7 @@ test('rejects malformed or ambiguous properties before replacing the draft', () 
     prefix + 'PATIENT_MODE = neither\n# PATIENT_MODE = reference-only',
     prefix + 'CHECK_INPUT_CONSISTENCY = yes', prefix + 'PATIENT_MODE = invalid',
     prefix + 'PID_PREFIX = broken\\', prefix + 'PID_PREFIX = \\uXYZW',
-    prefix + 'DAR_PATIENT_NAME_FAMILY = made-up', prefix + 'IDENTIFIER_RULE_1_ENABLED = true',
+    prefix + 'DAR_PATIENT_NAME_FAMILY = ', prefix + 'IDENTIFIER_RULE_1_ENABLED = true',
     prefix + 'this is not an assignment', prefix + 'OUTPUT_FORMATS = JSON,JSON'])
     assert.throws(() => importConfiguration(text), text)
   assert.equal(importConfiguration(prefix + 'PID_PREFIX = \\u00e4').values['ids.patient.prefix'], 'ä')
@@ -134,4 +134,24 @@ test('counter start survives properties export for a scoped contact rule', () =>
   const text = exportPropertiesConfiguration(config, 'de')
   assert.match(text, /^IDENTIFIER_RULE_1_COUNT_START = 500$/m)
   assert.deepEqual(importConfiguration(text).identifierRules, config.identifierRules)
+})
+
+ test('custom DAR codes roundtrip through both export languages', () => {
+  const config = defaults()
+  for (const code of ['custom-code', 'unchanged', '!dar:custom']) {
+  config.dar['Patient.name.family'] = { mode: 'overwrite', code, onlyWhenMissing: true }
+  for (const language of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, language)), config)
+  }
+})
+
+test('case identifiers roundtrip with scope and restricted pattern tokens', () => {
+  const config = defaults()
+  config.identifierRules = [{ ...rule, scope: 'case', resources: ['Encounter', 'Observation'],
+    pattern: '{{case}}-{patientId}-{caseId}' }]
+  for (const lang of ['de', 'en']) assert.deepEqual(importConfiguration(exported(config, lang)), config)
+  for (const pattern of ['{count}', '{resourceId}', '{resourceType}', '{hash}', '{iteration}']) {
+    const invalid = structuredClone(config)
+    invalid.identifierRules[0].pattern = pattern
+    assert.throws(() => importConfiguration(JSON.stringify(invalid)))
+  }
 })

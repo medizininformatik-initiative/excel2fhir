@@ -24,6 +24,52 @@ class GenerationTests(QueueFixture):
                      patch.object(synthea_runtime, 'fingerprint', return_value='importer')]:
             item.start(); self.addCleanup(item.stop)
 
+    def test_consent_is_optional_saved_and_requires_kds(self):
+        self.assertTrue(generation.Settings().syntheticConsent)
+        self.assertFalse(generation.Settings(outputMode='synthea').syntheticConsent)
+        self.assertFalse(generation.Settings(syntheticConsent=False).syntheticConsent)
+        job = store.create('synthea-generation', 'default', generation_settings={'syntheticConsent': True})
+        self.assertTrue(store.editor_input(job)['generation']['syntheticConsent'])
+        with self.assertRaises(ValueError):
+            generation.Settings(outputMode='synthea', syntheticConsent=True)
+
+    def test_table_format_snapshot_repeat_and_request_identity(self):
+        for table_format in ('csv', 'excel'):
+            request = {'source': 'synthea-generation', 'generation': {}, 'tableFormat': table_format, 'requestId': str(uuid4())}
+            response = self.client.post('/api/jobs', json=request)
+            self.assertEqual(201, response.status_code, response.text)
+            job = response.json()['id']
+            self.assertEqual(table_format, store.editor_input(job)['tableFormat'])
+            self.assertEqual(table_format, store.get(job)['table_format'])
+            self.assertEqual(409, self.client.post('/api/jobs', json={**request, 'tableFormat': 'excel' if table_format == 'csv' else 'csv'}).status_code)
+        default = store.create('synthea-generation', 'default', generation_settings={})
+        self.assertEqual('csv', store.editor_input(default)['tableFormat'])
+        for request in ({'tableFormat': 'csv'}, {'source': 'synthea-generation', 'generation': {'outputMode': 'synthea'}, 'tableFormat': 'csv'}, {'tableFormat': 'invalid'}):
+            self.assertEqual(422, self.client.post('/api/jobs', json=request).status_code)
+
+    def test_diagnostics_default_repeat_and_request_identity(self):
+        request = {'source': 'synthea-generation', 'generation': {}, 'requestId': str(uuid4())}
+        response = self.client.post('/api/jobs', json=request)
+        self.assertEqual(201, response.status_code, response.text)
+        self.assertFalse(store.editor_input(response.json()['id'])['diagnostics'])
+        self.assertEqual(409, self.client.post('/api/jobs', json={**request, 'diagnostics': True}).status_code)
+        response = self.client.post('/api/jobs', json={**request, 'requestId': str(uuid4()), 'diagnostics': True})
+        self.assertEqual(201, response.status_code, response.text)
+        self.assertTrue(store.editor_input(response.json()['id'])['diagnostics'])
+        self.assertEqual(422, self.client.post('/api/jobs', json={'diagnostics': True}).status_code)
+
+    def test_inpatient_selection_is_validated_and_only_enabled_explicitly(self):
+        for invalid in [0, -1, True, 1.5, 36501]:
+            with self.assertRaises(ValueError):
+                generation.Settings(inpatientMinDays=invalid)
+        defaults = generation.arguments({})
+        self.assertFalse(any('workbench_inpatient' in arg for arg in defaults))
+        args = generation.arguments({'inpatientOnly': True, 'inpatientMinDays': 7, 'yearsOfHistory': 10, 'maxAttempts': 4})
+        self.assertIn('--generate.workbench_inpatient=true', args)
+        self.assertIn('--generate.workbench_inpatient_days=7', args)
+        self.assertIn('--generate.max_attempts_to_keep_patient=4', args)
+        self.assertIn('--exporter.years_of_history=10', args)
+
     def test_invalid_settings_do_not_create_jobs(self):
         for settings in [{'population': 0}, {'population': True}, {'minAge': 81}, {'patientSeed': str(2**63)},
                          {'state': '--some-option'}, {'city': 'Unknown'}, {'modules': ['../../file']},

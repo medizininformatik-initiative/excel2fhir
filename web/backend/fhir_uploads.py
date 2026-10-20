@@ -55,7 +55,9 @@ def get(identifier):
         evidence = server_responses(folder(identifier) / 'upload.log')
         if evidence:
             result = {**(result or {}), **evidence}
-    return {**dict(row), 'descriptor': json.loads(row['descriptor']), 'result': result}
+    descriptor = json.loads(row['descriptor'])
+    return {**dict(row), 'descriptor': descriptor, 'result': result,
+            'resumable': bool(descriptor.get('streaming')) and row['state'] in {'failed', 'cancelled', 'interrupted'}}
 
 
 def server_responses(path):
@@ -99,6 +101,41 @@ def history():
     return [get(row['id']) for row in rows]
 
 
+def history_page(limit):
+    with store.connect() as db:
+        rows = db.execute("""SELECT id FROM uploads WHERE state IN ('queued','preparing','uploading')
+            OR id IN (SELECT id FROM uploads WHERE state NOT IN ('queued','preparing','uploading')
+                      ORDER BY created DESC, id DESC LIMIT ?)
+            ORDER BY created DESC, id DESC""", (limit,)).fetchall()
+        count = db.execute("SELECT COUNT(*) FROM uploads WHERE state NOT IN ('queued','preparing','uploading')").fetchone()[0]
+    items = []
+    for row in rows:
+        try:
+            items.append(get(row['id']))
+        except FileNotFoundError:
+            pass  # Another request may remove completed history while polling.
+    return {'items': items, 'hasMore': count > limit, 'completedCount': count}
+
+
+def delete_history(identifier=None):
+    """Remove only local completed upload records and their working files."""
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        if identifier is not None:
+            row = db.execute('SELECT state FROM uploads WHERE id=?', (identifier,)).fetchone()
+            if row is None:
+                raise FileNotFoundError('Upload not found')
+            if row['state'] in {'queued', 'preparing', 'uploading'}:
+                raise store.SubmissionConflict('Active uploads cannot be removed')
+        rows = db.execute("""SELECT id FROM uploads WHERE state NOT IN ('queued','preparing','uploading')
+            AND (? IS NULL OR id=?)""", (identifier, identifier)).fetchall()
+        for row in rows:
+            path = folder(row['id'])
+            if path.exists():
+                shutil.rmtree(path)
+            db.execute('DELETE FROM uploads WHERE id=?', (row['id'],))
+
+
 def create(identifier, target, selection):
     if target not in TARGETS or not selection or len(set(selection)) != len(selection):
         raise ValueError('Invalid server or dataset selection')
@@ -112,25 +149,51 @@ def create(identifier, target, selection):
             raise store.SubmissionConflict('This upload ID was already used for another selection')
         return get(identifier)
     selected = []
+    archive_paths = {}
     for dataset_id in sorted(selection):
         job, item, path = datasets.resolve_dataset(dataset_id)
         if job['state'] != 'succeeded' or item.get('error') or not item.get('sha256') or not path.is_file():
             raise ValueError('Select complete datasets from successful runs')
+        archive_paths[dataset_id] = path
         selected.append({'id': item['id'], 'name': item['name'], 'jobId': job['id'], 'sha256': item['sha256'],
-                         'snapshotSha256': store.digest(path.parent / 'snapshot.json')})
+                         'snapshotSha256': store.digest(store.ROOT / 'jobs' / job['id'] / 'snapshot.json'),
+                         **({'kind': 'bulk', 'inspection': item.get('inspection'), 'size': item['size']} if item.get('kind') == 'bulk' else {}),
+                         'datasetName': job.get('dataset_name'), 'source': job.get('source'),
+                         'sourceName': job.get('source_name'), 'inputKind': job.get('input_kind'),
+                         'generation': job.get('generation'), 'summary': job.get('summary')})
     descriptor = {'target': {'id': target, **TARGETS[target]}, 'datasets': selected,
-                  'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'excel2fhir.jar')}
+                  'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'synthifhir.jar')}
+    if any(item.get('kind') == 'bulk' for item in selected):
+        descriptor['streaming'] = True
     with store.connect() as db:
         db.execute('BEGIN IMMEDIATE')
         for item in selected:
             if db.execute('SELECT id FROM jobs WHERE id=?', (item['jobId'],)).fetchone() is None:
                 raise ValueError('A selected run was deleted')
+            archive_path = archive_paths[item['id']]
+            if not archive_path.is_file() or (archive_path.stat().st_size != item['size'] if item.get('kind') == 'bulk' else store.digest(archive_path) != item['sha256']):
+                raise store.SubmissionConflict('A selected run was cleaned up; select its dataset again')
         db.execute('INSERT OR IGNORE INTO uploads(id,state,created,descriptor) VALUES (?, ?, ?, ?)',
                    (identifier, 'queued', time.time(), json.dumps(descriptor)))
     current = get(identifier)
     if current['descriptor'] != descriptor:
         raise store.SubmissionConflict('This upload ID was already used for another selection')
     return current
+
+
+def resume(identifier):
+    upload = get(identifier)
+    if not upload['descriptor'].get('streaming'):
+        raise ValueError('This upload does not support continuation')
+    with store.connect() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT state FROM uploads WHERE id=?', (identifier,)).fetchone()
+        if row['state'] == 'queued':
+            return upload
+        if row['state'] not in {'failed', 'cancelled', 'interrupted'}:
+            raise store.SubmissionConflict('Only stopped uploads can be continued')
+        db.execute("UPDATE uploads SET state='queued',cancel=0 WHERE id=?", (identifier,))
+    return get(identifier)
 
 
 def claim():
@@ -235,7 +298,8 @@ def execute(identifier, stopping, terminate):
     root.mkdir(parents=True, exist_ok=True)
     descriptor = get(identifier)['descriptor']
     (root / 'snapshot.json').write_text(json.dumps(descriptor, indent=2))
-    summary = {'mayHaveWritten': False}
+    summary = (get(identifier).get('result') or {'mayHaveWritten': False}) if descriptor.get('streaming') else {'mayHaveWritten': False}
+    summary.pop('error', None)
     def cancelled():
         return stopping() or bool(get(identifier)['cancel'])
     def run(command, log, timeout):
@@ -259,9 +323,13 @@ def execute(identifier, stopping, terminate):
         finally:
             terminate(process)
     try:
-        with (root / 'upload.log').open('w') as log:
-            if store.digest(store.APP / 'excel2fhir.jar') != descriptor['converterSha256']:
+        with (root / 'upload.log').open('a' if descriptor.get('streaming') else 'w') as log:
+            if store.digest(store.APP / 'synthifhir.jar') != descriptor['converterSha256']:
                 raise ValueError('Converter image changed after submission')
+            if descriptor.get('streaming'):
+                import bulk_uploads
+                bulk_uploads.execute(identifier, descriptor, root, summary, run, log, cancelled)
+                return
             exports = []
             for index, item in enumerate(descriptor['datasets']):
                 if cancelled():
@@ -283,8 +351,8 @@ def execute(identifier, stopping, terminate):
                             raise ValueError('Invalid dataset archive path')
                     archive.extractall(expanded)
                 exported = root / f'export-{index}.ndjson'
-                run(['java', '-Xmx512m', '-cp', str(store.APP / 'excel2fhir.jar'),
-                     'de.uni_leipzig.life.csv2fhir.DatasetUploadExport', str(expanded), str(exported)], log, 600)
+                run(['java', '-Xmx512m', '-cp', str(store.APP / 'synthifhir.jar'),
+                     'de.uni_leipzig.life.synthifhir.DatasetUploadExport', str(expanded), str(exported)], log, 600)
                 exports.append((item['id'], exported))
             summary.update(prepare_transactions(exports, root / 'transactions', cancelled))
             if cancelled():

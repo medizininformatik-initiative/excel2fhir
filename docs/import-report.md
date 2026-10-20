@@ -48,4 +48,5 @@ A row-conversion error can leave earlier changes to resources in the partial out
 | `*.validation.json` | What did the requested FHIR checks find? |
 
 [FHIR validation](fhir-validation.md) has its own status. An unavailable terminology
-check produces `NOT_CHECKED` and exit code 1 when validation is enabled.
+check produces `NOT_CHECKED` in the validation report. Complete generation retains
+exit code 0; validation findings are assessed separately.

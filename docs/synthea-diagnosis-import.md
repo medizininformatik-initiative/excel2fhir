@@ -7,7 +7,7 @@ ICD-10-GM codings for the [selected catalogue year](terminology-versions.md) and
 ICD-10-GM is the primary coding; SNOMED is additional coding or the retained source
 when a target is unavailable. Existing source ICD-10-GM with an explicit version
 takes precedence. Exclusions and status adjustments are recorded with source IDs
-in `Fall.loss.json`. Excel2FHIR then converts the codes entered in the workbook.
+in `Fall.loss.json`. synthiFHIR then converts the codes entered in the workbook.
 
 ## Emergency contacts
 

@@ -65,7 +65,10 @@ def check_patient(source, target, report):
     assert report.get('demographics') == expected, 'Demographic replacement report changed'
     assert len(target.get('name', [])) == 1 and len(target.get('address', [])) == 1
     for key, value in expected['name'].items():
-        assert target['name'][0].get(key) == value, 'Localized patient name changed'
+        if key == 'given':
+            # Excel joins given names; PatientConverter emits each space-separated part.
+            value = ' '.join(value).split(' ')
+        assert target['name'][0].get(key) == value, 'Localized patient name changed: '+key
     for key, value in expected['address'].items():
         if key == 'state':
             # FHIR uses the ISO code; the workbook and identity report retain the name.

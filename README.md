@@ -1,4 +1,4 @@
-# excel2fhir
+# synthiFHIR
 
 Generate FHIR R4 test data for the German MII Core Data Set (KDS) from Excel,
 CSV or Synthea in the local web workbench. Choose the services you need below.

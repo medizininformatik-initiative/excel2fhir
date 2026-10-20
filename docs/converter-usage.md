@@ -12,13 +12,13 @@ and [selection lists](clinical-selections.md) for field-level guidance.
 Edit or replace the supplied workbook in `input/`, then run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
+docker compose -f docker/docker-compose.yml run --build --rm synthifhir
 ```
 
 The Compose file mounts the project at `/workspace` and writes results to
 `outputGlobal/`. `-f docker/docker-compose.yml` selects the Compose file in its
 subdirectory. To select one workbook, append `-f input/MyCase.xlsx` after
-`excel2fhir`; this second `-f` is an Excel2FHIR option.
+`synthifhir`; this second `-f` is an synthiFHIR option.
 
 ## Output
 
@@ -65,7 +65,7 @@ directory. Custom Docker output paths need a writable volume mount.
 For example, explicitly select a workbook:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -f input/MyCase.xlsx
+docker compose -f docker/docker-compose.yml run --build --rm synthifhir -f input/MyCase.xlsx
 ```
 
 ## Converter Options
@@ -76,17 +76,20 @@ representation, including reference directions and patient-ID generation.
 Each invocation uses one configuration. Supply it explicitly:
 
 ```sh
-java -jar target/excel2fhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
+java -jar target/synthifhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
 ```
 
 Without an external configuration, the converter uses its built-in defaults.
 Export an editable default configuration with either CLI:
 
 ```sh
-java -jar target/excel2fhir.jar --export-default-options options.config
+java -jar target/synthifhir.jar --export-default-options options.config
 ```
 
 The export creates a new file. Edit it and pass it with `--converter-options`.
+Configuration files require `CONFIGURATION_VERSION=1`. Missing or unsupported
+versions and invalid settings are rejected. Omitting `--converter-options` uses
+the defaults with the supplied CLI execution settings.
 Excel workbooks and CSV inputs contain case data; configuration files are supplied
 separately. Each run records its effective configuration under `details/options/`.
 Run the converter separately for each KDS variant.
@@ -111,8 +114,8 @@ examples. Supply converter settings separately with `--converter-options`.
 Place the CSV files in `input/` and run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java excel2fhir \
-  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
+docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java synthifhir \
+  -cp /app/synthifhir.jar de.uni_leipzig.life.synthifhir.Main
 ```
 
 The converter groups files by their prefix: `Case_Person.csv` and `Case_Fall.csv`
@@ -125,13 +128,13 @@ CSV runs use the same options and output conventions, with the suffix `csv-to-fh
 | Run status | Exit code | Meaning |
 | --- | --- | --- |
 | `NOT_VALIDATED` | 0 | Conversion completed with FHIR validation disabled. |
-| `COMPLETE` | 0 | Conversion and requested validation completed successfully. |
-| `NOT_CHECKED` | 1 | Some requested terminology checks could not run. |
-| `FAILED` | 1 | An input, conversion or validation error occurred. |
+| `COMPLETE` | 0 | Generation completed; requested validation has separate results. |
+| `FAILED` | 1 | An input or conversion failure prevented complete generation. |
 
 Incomplete imports remain in `details/pending/`. Completed FHIR output remains
 available when validation finds errors. Inspect `status.txt` and the reports for
-the affected input and KDS variant.
+the affected input and KDS variant. `outcome.json` records generation and validation
+separately; validation findings do not change the generation exit code.
 
 See [import reports](import-report.md) and [FHIR validation](fhir-validation.md).
 
@@ -141,11 +144,11 @@ With JDK 17 and Maven 3.x:
 
 ```sh
 mvn test package
-java -jar target/excel2fhir.jar
+java -jar target/synthifhir.jar
 ```
 
 This reads workbooks from `input/`. For CSV input:
 
 ```sh
-java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
+java -cp target/synthifhir.jar de.uni_leipzig.life.synthifhir.Main
 ```
