@@ -18,6 +18,14 @@
   "prConcurrentLimit": 4,
   "packageRules": [
     {
+      "description": "Update Pydantic and its exactly matched core dependency together.",
+      "matchPackageNames": [
+        "pydantic",
+        "pydantic-core"
+      ],
+      "groupName": "Pydantic"
+    },
+    {
       "description": "Keep HAPI FHIR updates separate because validator behavior can change.",
       "matchManagers": [
         "maven"
