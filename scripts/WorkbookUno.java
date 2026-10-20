@@ -32,7 +32,7 @@ public class WorkbookUno {
         XUnoUrlResolver resolver = q(XUnoUrlResolver.class,
                 local.getServiceManager().createInstanceWithContext("com.sun.star.bridge.UnoUrlResolver", local));
         XComponentContext context = q(XComponentContext.class, resolver.resolve(
-                "uno:socket,host=localhost,port=" + System.getenv().getOrDefault("CSV2FHIR_UNO_PORT", "20152")
+                "uno:socket,host=localhost,port=" + System.getenv().getOrDefault("SYNTHIFHIR_UNO_PORT", "20152")
                         + ";urp;StarOffice.ComponentContext"));
         XComponentLoader loader = q(XComponentLoader.class,
                 context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", context));

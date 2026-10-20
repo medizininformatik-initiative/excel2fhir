@@ -21,7 +21,7 @@ from starlette.background import BackgroundTask
 from generation import Settings as GenerationSettings
 from starlette.concurrency import run_in_threadpool
 
-app = FastAPI(title="Excel2FHIR workbench prototype")
+app = FastAPI(title="synthiFHIR Workbench")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "api", "testserver"])
 
 
@@ -177,7 +177,7 @@ def inputs_download(job_id: UUID):
         raise HTTPException(404, str(error))
     except store.SubmissionConflict as error:
         raise HTTPException(409, str(error))
-    return FileResponse(path, filename=f'excel2fhir-inputs-{job_id}.zip',
+    return FileResponse(path, filename=f'synthifhir-inputs-{job_id}.zip',
                         background=BackgroundTask(path.unlink, missing_ok=True))
 
 

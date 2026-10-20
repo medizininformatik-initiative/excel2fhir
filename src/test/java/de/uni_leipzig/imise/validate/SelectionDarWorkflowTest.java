@@ -8,8 +8,8 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.hl7.fhir.r4.model.*;
 import de.uni_leipzig.imise.Excel2FhirMain;
-import de.uni_leipzig.life.csv2fhir.OutputFileType;
-import de.uni_leipzig.life.csv2fhir.DarOverrides;
+import de.uni_leipzig.life.synthifhir.OutputFileType;
+import de.uni_leipzig.life.synthifhir.DarOverrides;
 import picocli.CommandLine;
 
 /** Real workbook -> converter -> serialized output, including interacting policies. */

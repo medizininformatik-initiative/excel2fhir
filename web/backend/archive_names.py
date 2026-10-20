@@ -12,7 +12,7 @@ import zipfile
 
 def filename(name, patients, fallback):
     label = re.sub(r'[^\w.-]+', '-', name or '', flags=re.UNICODE).strip('.-')[:120]
-    return f'{label}-{patients}Pat.zip' if label else f'excel2fhir-{patients}Pat-{fallback}.zip'
+    return f'{label}-{patients}Pat.zip' if label else f'synthifhir-{patients}Pat-{fallback}.zip'
 
 
 def patient_count(path, *, result=False):

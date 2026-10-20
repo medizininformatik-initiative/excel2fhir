@@ -64,7 +64,7 @@ public class Excel2CsvTest {
             }
             assertFalse("Fixture must exercise cached formulas", formulas.isEmpty());
             for (boolean check : List.of(true, false)) {
-                var options = de.uni_leipzig.life.csv2fhir.ConverterOptions.fromText(
+                var options = de.uni_leipzig.life.synthifhir.ConverterOptions.fromText(
                         "CHECK_INPUT_CONSISTENCY=" + check + "\n");
                 var expected = validator.validate(source, options, "test");
                 var actual = validator.validate(workbook, options, "test");

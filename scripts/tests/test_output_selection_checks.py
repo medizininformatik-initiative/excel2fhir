@@ -179,7 +179,7 @@ class OutputSelectionChecks(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, 'neither'):
                 check_configured(source, target, {'sourcePatient': 'p'}, options, ['p'])
 
-    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/excel2fhir.jar').exists(), 'Build the converter JAR to test the Java workflow bridge')
+    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/synthifhir.jar').exists(), 'Build the converter JAR to test the Java workflow bridge')
     def test_workflow_bridge_exposes_effective_selection_and_reference_values(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'selection.config'

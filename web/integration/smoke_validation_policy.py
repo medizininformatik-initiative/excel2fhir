@@ -11,7 +11,7 @@ import sys
 import tempfile
 import time
 
-PROJECT = Path('/synthea') if Path('/synthea/target/excel2fhir.jar').is_file() else Path(__file__).resolve().parents[2]
+PROJECT = Path('/synthea') if Path('/synthea/target/synthifhir.jar').is_file() else Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT / 'scripts'))
 sys.path.insert(0, '/app' if PROJECT == Path('/synthea') else str(PROJECT / 'web/backend'))
 from synthea_to_excel import write_workbook, apply_workbook_edits, column_number
@@ -20,7 +20,7 @@ from run_outcomes import collect
 
 ROOT = Path(tempfile.mkdtemp(prefix='validation-policy-'))
 print('AUDIT_ROOT', ROOT, flush=True)
-JAR = PROJECT / 'target/excel2fhir.jar'
+JAR = PROJECT / 'target/synthifhir.jar'
 TEMPLATE = PROJECT / 'FHIR_Testdatengenerator_Vorlage.xlsx'
 headers = read_sheets(TEMPLATE)
 patient = {'Patient-ID': 'audit-1', 'Vorname': 'Jörg', 'Nachname': 'Groß',
@@ -75,7 +75,7 @@ for kind, inputs in sources.items():
                                   'DAR_PATIENT_NAME_FAMILY=invalid-dar\n')
                 command = ['java', '-Xmx3g', '-Duser.timezone=Europe/Berlin']
                 command += (['-jar', str(JAR), '-f', str(source)] if kind == 'excel'
-                            else ['-cp', str(JAR), 'de.uni_leipzig.life.csv2fhir.Main', '-i', str(source)])
+                            else ['-cp', str(JAR), 'de.uni_leipzig.life.synthifhir.Main', '-i', str(source)])
                 started = time.monotonic()
                 with (folder / 'process.log').open('w') as log:
                     process = subprocess.run(command + ['-o', str(folder / 'output'), '--converter-options', str(config)],

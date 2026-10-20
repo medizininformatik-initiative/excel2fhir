@@ -43,8 +43,8 @@ def variants(run, snapshot):
 
 
 def inspect(folder, destination, cancelled):
-    command = ['java', '-Xmx512m', '-cp', str(store.APP / 'excel2fhir.jar'),
-               'de.uni_leipzig.life.csv2fhir.DatasetInspection', str(folder), str(destination)]
+    command = ['java', '-Xmx512m', '-cp', str(store.APP / 'synthifhir.jar'),
+               'de.uni_leipzig.life.synthifhir.DatasetInspection', str(folder), str(destination)]
     with destination.with_suffix('.log').open('w') as log:
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
         started = time.monotonic()
@@ -99,7 +99,7 @@ def build(job_id, snapshot, cancelled=lambda: False):
 def build_locked(job_id, snapshot, cancelled=lambda: False):
     folder = store.ROOT / 'jobs' / job_id
     root = folder / 'output'
-    manifest = {'schemaVersion': 1, 'inspectorSha256': store.digest(store.APP / 'excel2fhir.jar'), 'datasets': [], 'artifacts': []}
+    manifest = {'schemaVersion': 1, 'inspectorSha256': store.digest(store.APP / 'synthifhir.jar'), 'datasets': [], 'artifacts': []}
     for path in sorted(root.rglob('*')):
         ensure_running(cancelled)
         if not path.is_file() or path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):

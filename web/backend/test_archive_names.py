@@ -24,7 +24,7 @@ class ArchiveNameTests(unittest.TestCase):
             self.assertEqual(2, archive_names.patient_count(path, result=True))
 
     def test_short_safe_names(self):
-        self.assertEqual('excel2fhir-17Pat-id.zip', archive_names.filename('', 17, 'id'))
+        self.assertEqual('synthifhir-17Pat-id.zip', archive_names.filename('', 17, 'id'))
         self.assertEqual('Kohorte-17Pat.zip', archive_names.filename('Kohorte', 17, 'id'))
         self.assertEqual('Test-Name-0Pat.zip', archive_names.filename('../Test/Name', 0, 'id'))
 

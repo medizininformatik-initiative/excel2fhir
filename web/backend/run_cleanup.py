@@ -172,7 +172,7 @@ def archive(job_id):
         root = store.ROOT / 'jobs' / job_id
         if not (root / 'cleanup.json').is_file():
             raise FileNotFoundError('Cleaned run not found')
-        handle = tempfile.NamedTemporaryFile(prefix='excel2fhir-run-', suffix='.zip', delete=False)
+        handle = tempfile.NamedTemporaryFile(prefix='synthifhir-run-', suffix='.zip', delete=False)
         destination = Path(handle.name)
         handle.close()
         try:

@@ -15,7 +15,7 @@ COPY web/catalog/options/contract.json web/catalog/options/contract.json
 COPY web/catalog/dar/generated/catalog.json web/catalog/dar/generated/catalog.json
 COPY FHIR_Testdatengenerator_Vorlage.xlsx FHIR_Testdatengenerator_Interpolar_Demo.xlsx ./
 COPY input/FHIR_Testdatengenerator_Vorlage.xlsx input/
-RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
+RUN --mount=type=cache,id=synthifhir-maven,target=/root/.m2,sharing=locked \
     mvn -B test package
 
 FROM debian:bookworm-slim AS runtime
@@ -27,7 +27,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
 ENV LANG=C.UTF-8
 WORKDIR /app
-COPY --from=build /build/target/excel2fhir.jar ./target/excel2fhir.jar
+COPY --from=build /build/target/synthifhir.jar ./target/synthifhir.jar
 COPY scripts ./scripts
 COPY web/catalog/dar/generated/catalog.json ./web/catalog/dar/generated/catalog.json
 COPY web/catalog/options/contract.json ./web/catalog/options/contract.json

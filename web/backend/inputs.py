@@ -104,8 +104,8 @@ def inspect(path):
             fcntl.flock(lock, fcntl.LOCK_EX)
             command = ([sys.executable, str(Path(__file__).with_name('synthea_input.py'))]
                        if kind.startswith('synthea') else
-                       ['java', '-Xmx256m', '-cp', str(store.APP / 'excel2fhir.jar'),
-                        'de.uni_leipzig.life.csv2fhir.' + ('CsvInputPreflight' if kind == 'csv' else 'WorkbookPreflight')])
+                       ['java', '-Xmx256m', '-cp', str(store.APP / 'synthifhir.jar'),
+                        'de.uni_leipzig.life.synthifhir.' + ('CsvInputPreflight' if kind == 'csv' else 'WorkbookPreflight')])
             checked = subprocess.run([*command, str(expanded if archive_input else path), str(report)],
                                      capture_output=True, text=True, timeout=60)
         if checked.returncode:

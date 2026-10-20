@@ -23,7 +23,7 @@ class QueueFixture(unittest.TestCase):
         (store.APP / 'input').mkdir()
         (store.APP / store.SOURCES['starter']).write_bytes(b'workbook')
         (store.APP / 'defaults.config').write_text('CHECK_INPUT_CONSISTENCY=true')
-        (store.APP / 'excel2fhir.jar').write_bytes(b'converter')
+        (store.APP / 'synthifhir.jar').write_bytes(b'converter')
 
 
 class QueueTests(QueueFixture):

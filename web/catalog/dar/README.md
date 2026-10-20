@@ -110,7 +110,7 @@ Run from the repository root:
 python3 web/catalog/dar/generator/generate_catalog.py --check
 python3 web/catalog/dar/tests/test_generate_catalog.py
 mvn clean test package
-java --class-path target/excel2fhir.jar web/catalog/dar/tests/ValidateDarCatalog.java
+java --class-path target/synthifhir.jar web/catalog/dar/tests/ValidateDarCatalog.java
 ```
 
 The JSON is bundled as a converter JAR resource and used by the editor. The Java probe uses

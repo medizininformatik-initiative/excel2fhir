@@ -66,6 +66,6 @@ class RunInputsTests(QueueFixture):
         book.unlink()
         with self.assertRaises(store.SubmissionConflict):
             run_inputs.archive(job)
-        book.symlink_to(store.APP / 'excel2fhir.jar')
+        book.symlink_to(store.APP / 'synthifhir.jar')
         with self.assertRaises(store.SubmissionConflict):
             run_inputs.archive(job)

@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import de.uni_leipzig.UcumMapper;
-import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
+import de.uni_leipzig.life.synthifhir.PrintExceptionMessageHandler;
 import picocli.CommandLine;
 
 /** Internal sequential worker for one Synthea import; job metadata arrives on stdin. */

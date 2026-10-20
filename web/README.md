@@ -436,7 +436,7 @@ maintaining independent service definitions. It generates a seven-day localhost
 certificate and PKCS12 trust store, a disposable `prototype` / `prototype` Basic
 auth account, and a small patient-count Measure. Use only generated test data.
 
-The isolated project is `excel2fhir-data-node-74`. Ports 5185–5188 are bound to
+The isolated project is `synthifhir-data-node-74`. Ports 5185–5188 are bound to
 loopback: Blaze, TORCH, TORCH's file server, and the TLS reverse proxy. Its named
 volumes persist Blaze data and TORCH output. FDE uploads reports to Blaze;
 `verify_fde.py` exports the latest reports into `node-test/fde-output`.
@@ -649,7 +649,7 @@ shared identities.
 Run the integration test in a separate worker container without mounting existing data:
 
 ```sh
-docker run --rm -i --memory=4g --cpus=2 excel2fhir-web-prototype-worker:latest python - < web/integration/smoke_bulk_resume.py
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_resume.py
 ```
 
 The test uses temporary queue and output directories and fixed Synthea fixtures with
@@ -837,7 +837,7 @@ converter, consent enrichment, counter restoration and ZIP publication, comparin
 uncompressed FHIR bytes and identifier uniqueness:
 
 ```bash
-docker run --rm -i --memory=4g --cpus=2 excel2fhir-web-prototype-worker:latest python - < web/integration/smoke_bulk_continuation.py
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_continuation.py
 ```
 
 ### Uploading bulk packages

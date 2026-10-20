@@ -1,4 +1,4 @@
-name: excel2fhir-web-prototype
+name: synthifhir-workbench
 services:
   output-init:
     build:

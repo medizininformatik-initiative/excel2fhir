@@ -76,7 +76,7 @@ counts events and unresolved codes; `clinicalMappings` records provenance.
 ## Optional local catalog
 
 The importer loads a catalog from
-`~/.local/share/excel2fhir/medication-products.json` when present. Prepare this
+`~/.local/share/synthifhir/medication-products.json` when present. Prepare this
 file from data you are entitled to use. The adapter checks its schema and source
 inventory; catalog preparation is responsible for product validity and evidence.
 

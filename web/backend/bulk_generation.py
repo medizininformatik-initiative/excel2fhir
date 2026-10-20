@@ -333,7 +333,7 @@ def _run(folder, registry):
                     manifest.write_text(json.dumps(jobs))
                     update(phase='converting', stageCompleted=0)
                     command = ['java', '-Xmx1g', '-Duser.timezone=Europe/Berlin', '-cp',
-                               str(store.APP / 'excel2fhir.jar'), 'de.uni_leipzig.imise.SyntheaBulkConverter',
+                               str(store.APP / 'synthifhir.jar'), 'de.uni_leipzig.imise.SyntheaBulkConverter',
                                str(manifest), str(folder / 'default.config')]
                     if grouped:
                         checked_process(command, work / 'conversion.log', lambda values: update(**values))
