@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 
-import de.uni_leipzig.life.csv2fhir.ucum.UcumCodesExtractor;
-import de.uni_leipzig.life.csv2fhir.utils.BothDirectionResourceMapper;
+import de.uni_leipzig.life.synthifhir.ucum.UcumCodesExtractor;
+import de.uni_leipzig.life.synthifhir.utils.BothDirectionResourceMapper;
 
 /**
  * @author AXS (10.12.2021)

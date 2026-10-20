@@ -10,6 +10,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='generation-workbench-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     catalogue = generation.catalogue()
     assert catalogue['revision'] == (generation.synthea_runtime.ROOT / 'scripts/synthea-version.txt').read_text().strip()
     assert catalogue['modules'] and catalogue['keepModules'] and 'Massachusetts' in catalogue['locations']
@@ -24,7 +26,7 @@ with tempfile.TemporaryDirectory(prefix='generation-workbench-') as directory:
     originals = sorted((folder / 'output').glob('*/details/sources/synthea/fhir/*.json'))
     assert originals
     loaded = store.editor_input(job)
-    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
+    repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'), table_format=loaded.get('tableFormat'))
     assert store.claim() == repeated
     worker.execute(repeated)
     repeat_folder = store.ROOT / 'jobs' / repeated

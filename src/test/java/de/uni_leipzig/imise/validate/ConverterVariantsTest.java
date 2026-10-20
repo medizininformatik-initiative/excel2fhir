@@ -13,8 +13,8 @@ import org.junit.rules.TemporaryFolder;
 
 import de.uni_leipzig.imise.Excel2FhirMain;
 import de.uni_leipzig.imise.utils.Excel2Csv;
-import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterOptionSet;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
 import picocli.CommandLine;
 
 public class ConverterVariantsTest {
@@ -55,7 +55,7 @@ public class ConverterVariantsTest {
         }
         assertFalse(new ExcelTemplateValidator().validate(file.toFile()).hasErrors());
         Path options = temp.newFile("DIZ.config").toPath();
-        Files.writeString(options, "PID_PREFIX=site-\n");
+        Files.writeString(options, "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_PREFIX=site-\n");
         Path output = temp.newFolder("external-output").toPath();
         assertEquals(0, new CommandLine(new Excel2FhirMain()).execute("-f", file.toString(), "-o", output.toString(), "-p", "1000",
                 "--converter-options", options.toString()));
@@ -79,7 +79,7 @@ public class ConverterVariantsTest {
                 var args = new java.util.ArrayList<>(List.of("-i", input.toString(), "-o", output.toString(), "-p", "1000"));
                 for (int v = 1; v <= variants; v++) {
                     Path options = root.resolve("KDS-" + v + ".config");
-                    Files.writeString(options, "PID_PREFIX=variant" + v + "-\n");
+                    Files.writeString(options, "CONFIGURATION_VERSION=1\nOUTPUT_PATIENTS_PER_FILE=1000\nPID_PREFIX=variant" + v + "-\n");
                     args.addAll(List.of("--converter-options", options.toString()));
                 }
                 assertEquals(0, new CommandLine(new Excel2FhirMain()).execute(args.toArray(String[]::new)));

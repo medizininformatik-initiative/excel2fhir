@@ -44,9 +44,10 @@ def audit_procedures(source, target, rows, report):
         coding = r['code']['coding'][0]
         entry = mappings.get(coding['code'], {})
         decision = reported[r['id']]
-        if decision.get('status') == 'context-conflict':
+        if decision.get('contextWarning'):
             from audit_contextual_procedures import check_conflict
             check_conflict(r, decision, index, table)
+            add(r, [r['id']], [coding], begin(r), r.get('performedPeriod', {}).get('end', ''))
             continue
         if (coding.get('system') != SNOMED or coding.get('version') or
                 (coding.get('display') and coding['display'] not in entry.get('sourceDisplays', []))):

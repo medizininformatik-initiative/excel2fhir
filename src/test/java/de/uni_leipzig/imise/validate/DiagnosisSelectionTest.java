@@ -12,10 +12,11 @@ import org.junit.Test;
 public class DiagnosisSelectionTest {
 
     @Test
-    public void rejectsMissingSystemsAndInvalidSelections() throws Exception {
-        assertTrue(check(Map.of("Code", "00123")).hasErrors());
-        assertTrue(check(Map.of("Klinischer Status", "unbekannter Status")).hasErrors());
-        assertTrue(check(Map.of("Verifikationsstatus", "!dar:invented")).hasErrors());
+    public void permitsIncompleteCodingsAndFreeCodes() throws Exception {
+        assertFalse(check(Map.of("Code", "00123")).hasErrors());
+        assertFalse(check(Map.of("Codesystem", "ICD-10-GM")).hasErrors());
+        assertFalse(check(Map.of("Klinischer Status", "unbekannter Status")).hasErrors());
+        assertFalse(check(Map.of("Verifikationsstatus", "!dar:invented")).hasErrors());
         assertFalse(check(Map.of("Code", "A01", "Codesystem", "ICD-10-GM 2026",
                 "Zusatzcode", "A02", "Zusatzcodesystem", "ICD-10-GM 2025")).hasErrors());
     }

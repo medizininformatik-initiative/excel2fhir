@@ -4,7 +4,7 @@ from check_output_selection import descriptive_reference, named_id
 
 def product_id(row):
     # Java length prefixes count UTF-16 code units, including supplementary characters.
-    parts = [str(part or '') for part in row[3:11]]
+    parts = [str(part or '') for part in [row['Präparatbezeichnung'], row['Präparatcode'], row['Präparatcodesystem'], row['ATC-Code'], row['ATC-Version'], row['Darreichungsform'], row['Wirkstoffcode'], row['Wirkstoffcodesystem']]]
     return named_id('Medication', ''.join(str(len(p.encode('utf-16-le')) // 2) + ':' + p for p in parts))
 
 
@@ -16,7 +16,7 @@ def check_medication_references(rows, resources, options, pid):
     for identifier, resource in actual.items():
         wanted = expected[identifier]
         product = wanted['medicationReference']['reference'].removeprefix('Medication/')
-        label = next(row[3] for row in rows if product_id(row) == product)
+        label = next(row['Präparatbezeichnung'] for row in rows if product_id(row) == product)
         reference = descriptive_reference('Medication', product, label, options)
         if reference: wanted['medicationReference'] = reference
         else: wanted.pop('medicationReference')

@@ -44,7 +44,7 @@ def generate():
                  'additionalProperties': False},
                 {'type': 'object', 'required': ['mode', 'code'],
                  'properties': {'mode': {'const': 'overwrite'},
-                                'code': {'enum': field['allowedCodes']},
+                                'code': {'type': 'string', 'minLength': 1, 'pattern': r'\S'},
                                 'onlyWhenMissing': {'type': 'boolean'}},
                  'additionalProperties': False},
             ]
@@ -74,6 +74,7 @@ def generate():
                                       'minItems': 1, 'items': {'enum': eligible}},
                         'system': {'type': 'string', 'minLength': 1},
                         'pattern': {'type': 'string', 'minLength': 1},
+                        'scope': {'type': 'string', 'enum': ['resource', 'case']},
                         'countStart': {'type': 'integer', 'minimum': 1, 'maximum': 9007199254740991, 'default': 1},
                         'use': {'enum': ['', 'usual', 'official', 'temp', 'secondary', 'old']},
                         'typeText': {'type': 'string'},

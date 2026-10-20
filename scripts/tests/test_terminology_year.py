@@ -43,8 +43,8 @@ class TerminologyYearTest(unittest.TestCase):
             for mode, expected in [('Jahr', year), ('', ''), ('Unbekannt (Data Absent Reason)', '!dar:unknown')]:
                 rows, report = prepare(source, {'SYNTHEA_MAPPING_YEAR': year, 'SYNTHEA_VERSION_OUTPUT': mode})
                 row = rows['Diagnose'][0]
-                self.assertEqual([code, 'ICD-10-GM'], row[3:5])
-                self.assertEqual([expected, ''], row[13:])
+                self.assertEqual([code, 'ICD-10-GM'], [row['Code'], row['Codesystem']])
+                self.assertEqual([expected, ''], [row['Version'], row['Zusatzversion']])
                 self.assertEqual(year, report['diagnosisMappings'][0]['target']['version'])
                 self.assertEqual(year, report['terminology']['mappingYear'])
         self.assertEqual(before, source)

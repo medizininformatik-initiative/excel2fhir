@@ -1,7 +1,7 @@
 import de from '../../catalog/options/de.json' with { type: 'json' }
 import en from '../../catalog/options/en.json' with { type: 'json' }
 import {
-  contract, options, darFields, darResource, defaults, normalize, problems,
+  identifierNumber, contract, options, darFields, darResource, defaults, normalize, problems,
   optionEnabled, unmetDependencies, resourceEnabled,
   type Configuration, type Option, type Value, type Rule
 } from './configuration.ts'
@@ -87,6 +87,7 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     comment(t(`dar.field.${field.id}.label`))
     comment(t(`dar.help.${field.semanticGroup}`))
     comment(`${t('app.config.fileChoices')}: unchanged, ${field.allowedCodes.join(', ')}`)
+    comment(t('app.config.freeDarCode'))
     // Include conditional restrictions exactly as shown by the editor.
     for (const code of Object.keys(field.codeConditions)) {
       comment(`${code}: ${t(code === 'as-text'
@@ -96,17 +97,17 @@ export function exportPropertiesConfiguration(input: Configuration, language: 'd
     if (inactive) comment(t('app.config.fileResourceInactive'))
     const rule = config.dar[field.id]
     assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties],
-      rule?.mode === 'overwrite' ? rule.code : 'unchanged', inactive)
+      rule?.mode === 'overwrite' ? (rule.code === 'unchanged' || rule.code.startsWith('!dar:') ? '!dar:' + rule.code : rule.code) : 'unchanged', inactive)
     if (rule?.mode === 'overwrite' && rule.onlyWhenMissing) assignment(contract.propertiesFormat.darProperties[field.id as keyof typeof contract.propertiesFormat.darProperties] + '_ONLY_WHEN_MISSING', true, inactive)
   }
   for (const [index, rule] of config.identifierRules.entries()) {
     lines.push('')
-    comment(t('app.config.rule').replace('{number}', String(index + 1)))
-    comment(t('identifier.help'))
+    comment(t(rule.scope === 'case' ? 'app.config.caseRule' : 'app.config.rule').replace('{number}', String(identifierNumber(config.identifierRules, index))))
+    comment(t(rule.scope === 'case' ? 'app.config.caseRuleHelp' : 'identifier.help'))
     const inactive = !rule.enabled || !rule.resources.some(r => resourceEnabled(r, config.values))
     if (inactive) comment(t('app.config.fileRuleInactive'))
     const prefix = `${contract.propertiesFormat.identifierPrefix}${index + 1}_`
-    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.countStart !== undefined ? { COUNT_START: rule.countStart } : {}), ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
+    const fields = { ID: rule.id, ENABLED: rule.enabled, RESOURCES: rule.resources, SYSTEM: rule.system, PATTERN: rule.pattern, ...(rule.scope ? { SCOPE: rule.scope } : {}), ...(rule.countStart !== undefined ? { COUNT_START: rule.countStart } : {}), ...(rule.use ? { USE: rule.use } : {}), ...(rule.typeText ? { TYPE_TEXT: rule.typeText } : {}), ...(rule.typeCodings?.length ? { TYPE_CODINGS: JSON.stringify(rule.typeCodings) } : {}) }
     for (const [name, value] of Object.entries(fields)) {
       comment(t(`identifier.${name.toLowerCase()}`))
       // An explicit false remains executable: it intentionally disables this rule.
@@ -135,6 +136,11 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       throw new Error('Expected NAME = VALUE')
     }
     const [, key, encoded] = match
+    if (['PID_LAST_NUMBER_INCREASE_INITIAL_OFFSET', 'PID_LAST_NUMBER_INCREASE_LOOP_OFFSET'].includes(key)) {
+      if (seen.has(key) || encoded.trim() !== '0') throw new Error('Use patient ID prefixes or suffixes instead of numeric offsets')
+      seen.add(key)
+      continue
+    }
     if (key === 'ADD_MISSING_DIAGNOSES_FROM_SUPER_ENCOUNTER') {
       if (seen.has(key) || !['true', 'false'].includes(encoded.trim())) throw new Error('Invalid retired setting')
       seen.add(key)
@@ -143,7 +149,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
     const option = byName.get(key)
     const conditionField = key.endsWith('_ONLY_WHEN_MISSING') ? darNames.get(key.slice(0, -18)) : undefined
     const field = darNames.get(key)
-    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
+    const ruleMatch = /^IDENTIFIER_RULE_([1-9]\d*)_(ID|ENABLED|RESOURCES|SYSTEM|PATTERN|SCOPE|COUNT_START|USE|TYPE_TEXT|TYPE_CODINGS)$/.exec(key)
     if (!option && !field && !conditionField && !ruleMatch && key !== contract.propertiesFormat.versionProperty)
       throw new Error(`Unknown property: ${key}`)
     if (seen.has(key)) throw new Error(`Duplicate property: ${key}`)
@@ -160,7 +166,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
       conditions.set(conditionField, value === 'true')
     } else if (option) config.values[option.id] = decode(value, option)
     else if (field) {
-      if (value !== 'unchanged') config.dar[field] = { mode: 'overwrite', code: value }
+      if (value !== 'unchanged') config.dar[field] = { mode: 'overwrite', code: value.startsWith('!dar:') ? value.slice(5) : value }
     } else if (ruleMatch) {
       const index = Number(ruleMatch[1])
       if (!Number.isSafeInteger(index)) throw new Error('Invalid rule index')
@@ -178,7 +184,7 @@ export function parsePropertiesConfiguration(text: string): Configuration {
   config.identifierRules = entries.map(([index, rule], offset): Rule => {
     if (index !== offset + 1 || !['ID', 'ENABLED', 'RESOURCES', 'SYSTEM', 'PATTERN'].every(key => key in rule) || !['true', 'false'].includes(rule.ENABLED))
       throw new Error('Incomplete identifier rule')
-    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.COUNT_START !== undefined ? { countStart: decode(rule.COUNT_START, { type: 'integer' } as Option) as number } : {}), ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
+    return { id: rule.ID, enabled: rule.ENABLED === 'true', resources: rule.RESOURCES.split(','), system: rule.SYSTEM, pattern: rule.PATTERN, ...(rule.SCOPE ? { scope: rule.SCOPE as Rule['scope'] } : {}), ...(rule.COUNT_START !== undefined ? { countStart: decode(rule.COUNT_START, { type: 'integer' } as Option) as number } : {}), ...(rule.USE ? { use: rule.USE } : {}), ...(rule.TYPE_TEXT ? { typeText: rule.TYPE_TEXT } : {}), ...(rule.TYPE_CODINGS ? { typeCodings: JSON.parse(rule.TYPE_CODINGS) } : {}) }
   })
   if (problems(config).length) throw new Error('Invalid configuration')
   return config

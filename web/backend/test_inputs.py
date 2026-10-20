@@ -115,3 +115,20 @@ class InputTests(QueueFixture):
             loaded = store.editor_input(job)
         repeated = store.create(loaded['source'], 'default', None if (loaded.get('generation') or {}).get('outputMode') == 'synthea' else loaded['configurationProperties'], generation_settings=loaded.get('generation'))
         self.assertEqual(data, (store.ROOT / 'jobs' / repeated / 'input.zip').read_bytes())
+
+    def test_remove_input_keeps_queued_run_snapshot_and_can_restore_from_run(self):
+        item = self.upload()
+        job = store.create(item['id'], 'default')
+        path = store.ROOT / 'jobs' / job / 'input.xlsx'
+        saved = path.read_bytes()
+        identifier = item['id'].removeprefix('upload:')
+        self.assertEqual(403, self.client.delete('/api/inputs/' + identifier, headers={'Origin': 'https://other.invalid'}).status_code)
+        self.assertEqual(204, self.client.delete('/api/inputs/' + identifier).status_code)
+        self.assertEqual([], inputs.summaries())
+        self.assertEqual(saved, path.read_bytes())
+        self.assertEqual('queued', store.get(job)['state'])
+        self.assertEqual(404, self.client.delete('/api/inputs/' + identifier).status_code)
+        self.assertEqual(422, self.client.delete('/api/inputs/starter').status_code)
+        with patch.object(inputs, 'inspect', return_value=REPORT):
+            restored = store.editor_input(job)
+        self.assertEqual(saved, inputs.resolve(restored['source'])[0].read_bytes())

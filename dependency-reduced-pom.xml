@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>de.uni-leipzig.life.csv2fhir</groupId>
-  <artifactId>csv2fhir</artifactId>
-  <name>csv2fhir</name>
+  <groupId>de.uni-leipzig.life.synthifhir</groupId>
+  <artifactId>synthifhir</artifactId>
+  <name>synthiFHIR</name>
   <version>1.0-SNAPSHOT</version>
-  <url>https://github.com/life-research/csv2fhir</url>
+  <url>https://github.com/medizininformatik-initiative/synthifhir</url>
   <build>
-    <finalName>excel2fhir</finalName>
+    <finalName>synthifhir</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>

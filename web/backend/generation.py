@@ -4,6 +4,7 @@ from datetime import date
 from functools import lru_cache
 import io
 import json
+import result_exports
 from typing import Literal
 import zipfile
 
@@ -14,8 +15,11 @@ import synthea_runtime
 
 class Settings(BaseModel):
     model_config = ConfigDict(extra='forbid')
+    executionMode: Literal['standard', 'bulk'] = 'standard'
     outputMode: Literal['kds', 'synthea'] = 'kds'
-    population: int = Field(default=1, ge=1, le=1000, strict=True)
+    syntheticConsent: bool = True
+    population: int = Field(default=1, ge=1, le=100000, strict=True)
+    patientsPerRun: int = Field(default=10000, ge=100, le=10000, strict=True)
     minAge: int = Field(default=18, ge=0, le=140, strict=True)
     maxAge: int = Field(default=80, ge=0, le=140, strict=True)
     gender: Literal['', 'F', 'M'] = ''
@@ -31,12 +35,29 @@ class Settings(BaseModel):
     overflow: bool = Field(default=False, strict=True)
     modules: list[str] = Field(default_factory=list, max_length=500)
     keepModule: str = ''
+    inpatientOnly: bool = Field(default=False, strict=True)
+    inpatientMinDays: int = Field(default=2, ge=1, le=36500, strict=True)
     timestepDays: int = Field(default=7, ge=1, le=365, strict=True)
     maxAttempts: int = Field(default=1000, ge=1, le=10000, strict=True)
     veteranPopulation: bool = Field(default=False, strict=True)
 
+    @model_validator(mode='before')
+    @classmethod
+    def consent_default(cls, value):
+        if isinstance(value, dict) and 'syntheticConsent' not in value:
+            return {**value, 'syntheticConsent': value.get('outputMode', 'kds') == 'kds'}
+        return value
+
     @model_validator(mode='after')
     def consistent(self):
+        if self.patientsPerRun % 100:
+            raise ValueError('Patients per subrun must be a multiple of 100')
+        if self.executionMode == 'standard' and self.population > 1000:
+            raise ValueError('Standard runs support at most 1000 patients; choose bulk generation')
+        if self.executionMode == 'bulk' and self.overflow:
+            raise ValueError('Bulk generation requires disabled overflow')
+        if self.syntheticConsent and self.outputMode != 'kds':
+            raise ValueError('Synthetic consent requires KDS output')
         if self.minAge > self.maxAge:
             raise ValueError('Minimum age must not exceed maximum age')
         if self.referenceDate > self.endDate or self.endDate > date.today():
@@ -77,7 +98,7 @@ def catalogue():
                                'name': module.get('name', name),
                                'examples': {kind: sorted(labels)[:5] for kind, labels in examples.items() if labels}})
             return result
-        return {'revision': revision, 'sha256': store.digest(root / 'target/synthea.jar'),
+        return {'bulkOutputDirectory': result_exports.LABEL, 'revision': revision, 'sha256': store.digest(root / 'target/synthea.jar'),
                 'locations': {state: sorted(cities) for state, cities in sorted(locations.items())},
                 'modules': modules('modules/'), 'keepModules': modules('keep_modules/'),
                 'defaults': Settings().model_dump(mode='json')}
@@ -108,6 +129,9 @@ def arguments(value):
               f'--generate.timestep={settings.timestepDays * 86400000}',
               f'--generate.max_attempts_to_keep_patient={settings.maxAttempts}',
               '--generate.veteran_population_override=' + str(settings.veteranPopulation).lower()]
+    if settings.inpatientOnly:
+        result += ['--generate.workbench_inpatient=true',
+                   f'--generate.workbench_inpatient_days={settings.inpatientMinDays}']
     if settings.gender:
         result += ['-g', settings.gender]
     if settings.singlePersonSeed:

@@ -98,8 +98,10 @@ def check(resource, entry, decision, index, all_decisions, table):
 
 
 def check_conflict(resource, decision, index, table):
-    """Require source evidence for a withheld event, independently of its report."""
-    assert not decision['outputs'] and decision.get('reason')
+    """Require source evidence for a warning and retention of the original event."""
+    assert decision.get('contextWarning')
+    assert len(decision['outputs']) == 1
+    assert decision['outputs'][0]['codings'] == [resource['code']['coding'][0]]
     patient = index.get(resource.get('subject', {}).get('reference'), {})
     encounter = index.get(resource.get('encounter', {}).get('reference'), {})
     if not patient.get('id'):

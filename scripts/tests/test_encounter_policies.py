@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from workbook_records import record
 from check_encounter_policies import expected_end, checked_original_periods, instant
 
 
@@ -47,7 +48,16 @@ class EncounterPolicyTests(unittest.TestCase):
         source = {'entry': [{'resource': {'resourceType': 'Encounter', 'id': 'source', 'period': {'start': start, 'end': end}}}]}
         report = {'sourcePatient': 'p', 'encounterNumbers': {'source': '1'},
                   'converterOptions': {'ENCOUNTER_INPATIENT_END_POLICY': 'open'},
-                  'movements': {'contacts': [['p', '1', start, end, 'stationaer', 'A', 'Ward', '', '', '', 'Normalstationär']]}}
+                  'movements': {'contacts': [record('Fall', {
+                      'Patient-ID': 'p',
+                      'Fall-Nr': '1',
+                      'Start': start,
+                      'Ende': end,
+                      'Einrichtungskontaktklasse': 'stationaer',
+                      'Fachabteilung': 'A',
+                      'Station': 'Ward',
+                      'Kontaktart': 'Normalstationär',
+                  })]}}
         resources = []
         for id, level, parent in [('p-E-1', 'einrichtungskontakt', None), ('p-E-1-A-1', 'abteilungskontakt', 'p-E-1'), ('p-E-1-V-1', 'versorgungsstellenkontakt', 'p-E-1-A-1')]:
             resource = {'resourceType': 'Encounter', 'id': id, 'class': {'code': 'IMP'}, 'status': 'in-progress', 'period': {'start': start},

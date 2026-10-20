@@ -1,14 +1,15 @@
 import { datasetLabel, type DatasetContext } from './dataset-label'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Help } from './Help'
 import { Download } from 'lucide-react'
 import { Button } from './components/ui/button'
-import { translate, type Language } from './i18n'
+import { translate, type Language, type TextKey } from './i18n'
 
 type Report = { validationErrors: number; validationWarnings: number; status: string | null; issues: number; omissions: number; failures: number; derivations: number; selections: number; reasons: Record<string, number> }
 type Artifact = { id: string; path: string; size: number; report?: Report | null }
 type Dataset = { id: string; name: string; path?: string; error?: string; size?: number; inspection?: { patients: number; uniqueResources: number; resourceInstances: number; repeatedIds: number; missingIds: number; resourceCounts: Record<string, number>; inspectedFormats: string[] } }
 type Manifest = { pending?: boolean; error?: string; datasets: Dataset[]; artifacts: Artifact[] }
-export function DatasetResults({ jobId, state, language, context, onUpload }: { jobId: string; state: string; language: Language; context: DatasetContext; onUpload: (ids: string[]) => void }) {
+export function DatasetResults({ jobId, state, language, context, onUpload, inputKind, downloadAvailable, children }: { children?: ReactNode; downloadAvailable: boolean; inputKind?: string; jobId: string; state: string; language: Language; context: DatasetContext; onUpload: (ids: string[]) => void }) {
   const t = (key: Parameters<typeof translate>[1], params?: Parameters<typeof translate>[2]) => translate(language, key, params)
   const [manifest, setManifest] = useState<Manifest | null>(null)
   const [failed, setFailed] = useState(false)
@@ -31,10 +32,23 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
     void refresh()
     return () => { active = false; clearTimeout(timer) }
   }, [jobId, state])
-  if (failed) return <p role="alert" className="mb-4 text-sm text-red-700">{t('app.datasets.failed')}</p>
-  if (manifest?.error) return <p role="alert" className="mb-4 text-sm text-red-700">{manifest.error}</p>
-  if (manifest?.pending) return <p className="mb-4 text-sm text-slate-500">{t('app.datasets.pending')}</p>
-  if (!manifest || (manifest.datasets.length === 0 && manifest.artifacts.length === 0)) return null
+  const csvArchive = manifest?.artifacts.find(file => file.path.endsWith('/csv.zip'))
+  const runDownloads = <>
+    {csvArchive && <Button variant="outline" asChild><a href={`/api/jobs/${jobId}/artifacts/${csvArchive.id}`}><Download size={14}/>{t('app.tableFormat.download')}</a></Button>}
+    {['succeeded', 'failed'].includes(state) && (['workbook', 'workbook-set'].includes(inputKind ?? '') || manifest?.artifacts.some(file => file.path.endsWith('.xlsx'))) && <div className="flex items-center gap-2"><Button variant="outline" asChild><a href={`/api/jobs/${jobId}/inputs-download`} aria-label={t('app.datasets.inputsDownload')}><Download size={14}/>{t('app.datasets.inputsShort')}</a></Button><Help text={t('app.datasets.inputsHint')} t={key => t(key as TextKey)}/></div>}
+    {downloadAvailable && <div className="flex items-center gap-2"><Button variant="outline" asChild><a href={`/api/jobs/${jobId}/download`} aria-label={t('app.download')}><Download size={14}/>{t('app.datasets.runShort')}</a></Button><Help text={t('app.downloadHelp')} t={key => t(key as TextKey)}/></div>}
+  </>
+  const frame = (content: ReactNode, withDatasets = false, files?: ReactNode) => <div className="mb-6 space-y-4">
+    <h3 className="font-semibold">{t('app.datasets.title')}</h3>
+    {!withDatasets && <div className="flex flex-wrap items-center gap-3">{runDownloads}</div>}
+    {content}
+    {children}
+    {files}
+  </div>
+  if (failed) return frame(<p role="alert" className="text-sm text-red-700">{t('app.datasets.failed')}</p>)
+  if (manifest?.error) return frame(<p role="alert" className="text-sm text-red-700">{manifest.error}</p>)
+  if (manifest?.pending) return frame(<p className="text-sm text-slate-500">{t('app.datasets.pending')}</p>)
+  if (!manifest || (manifest.datasets.length === 0 && manifest.artifacts.length === 0)) return downloadAvailable ? frame(null) : <>{children}</>
   const artifacts = manifest.artifacts.filter(file => file.path.toLowerCase().includes(search.toLowerCase()))
   const fileGroups = [
     { id: 'json', label: 'app.datasets.jsonFiles' },
@@ -52,17 +66,20 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
     if (extension === 'xml') return 'xml'
     if (['xlsx', 'xls', 'xlsm'].includes(extension ?? '')) return 'excel'
     if (extension === 'log' || /(^|\/)logs?\//i.test(file.path)) return 'logs'
-    if (extension === 'csv') return 'csv'
+    if (extension === 'csv' || file.path.endsWith('/csv.zip')) return 'csv'
     return 'other'
   }
   const isFhir = (file: Artifact) => manifest.datasets.some(dataset => dataset.path && file.path.startsWith(`${dataset.path}/`))
   const download = (file: Artifact) => <a className="break-all text-teal-800 underline" href={`/api/jobs/${jobId}/artifacts/${file.id}`}>{file.path}</a>
-  return <div className="mb-6 space-y-4">
-    <h3 className="font-semibold">{t('app.datasets.title')}</h3>
-    {state === 'succeeded' && manifest.datasets.some(dataset => dataset.size !== undefined && !dataset.error) && <Button variant="outline" onClick={() => onUpload(manifest.datasets.filter(dataset => dataset.size !== undefined && !dataset.error).map(dataset => dataset.id))}>{t('app.upload.open')}</Button>}
+  return frame(<>
+    {state === 'succeeded' && manifest.datasets.some(dataset => dataset.size !== undefined && !dataset.error) && <Button onClick={() => onUpload(manifest.datasets.filter(dataset => dataset.size !== undefined && !dataset.error).map(dataset => dataset.id))}>{t('app.upload.open')}</Button>}
     {state === 'failed' && <p className="text-sm text-amber-800">{t('app.datasets.incomplete')}</p>}
     {manifest.datasets.map(dataset => <section key={dataset.id} className="rounded-xl border border-slate-200 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3"><h4 className="font-semibold">{datasetLabel({ ...dataset, ...context }, language)}</h4>{dataset.size !== undefined && <Button variant="outline" asChild><a href={`/api/datasets/${dataset.id}/download`}><Download size={14}/>{t('app.datasets.download')}</a></Button>}</div>
+      <h4 className="font-semibold">{datasetLabel({ ...dataset, ...context }, language)}</h4>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {dataset.size !== undefined && <div className="flex items-center gap-2"><Button variant="outline" asChild><a href={`/api/datasets/${dataset.id}/download`} aria-label={t('app.datasets.download')}><Download size={14}/>{t('app.datasets.downloadShort')}</a></Button><Help text={t('app.datasets.downloadHint')} t={key => t(key as TextKey)}/></div>}
+        {runDownloads}
+      </div>
       {dataset.error && <p role="alert" className="mt-2 text-sm text-red-700">{dataset.error}</p>}
       {dataset.inspection && <>
         <p className="mt-2 text-sm">{t('app.datasets.counts', { patients: dataset.inspection.patients, resources: dataset.inspection.uniqueResources })}</p>
@@ -70,6 +87,7 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
         <details className="mt-3 text-sm"><summary className="cursor-pointer">{t('app.datasets.resources')}</summary><table className="mt-2 w-full"><tbody>{Object.entries(dataset.inspection.resourceCounts).map(([type, count]) => <tr key={type} className="border-t"><th className="py-1 text-left font-normal">{type}</th><td className="text-right">{count}</td></tr>)}</tbody></table></details>
       </>}
     </section>)}
+  </>, manifest.datasets.length > 0, <>
     <details className="text-sm"><summary className="cursor-pointer font-medium">{t('app.datasets.files', { count: manifest.artifacts.length })}</summary>
       <p className="mt-2 text-xs text-slate-500">{t('app.datasets.fileHint')}</p>
       <input className="mt-3 w-full rounded-lg border border-slate-300 p-2" aria-label={t('app.datasets.search')} placeholder={t('app.datasets.search')} value={search} onChange={e => setSearch(e.target.value)}/>
@@ -92,5 +110,5 @@ export function DatasetResults({ jobId, state, language, context, onUpload }: { 
         {Object.keys(file.report!.reasons).length > 0 && <ul className="mt-2 space-y-1 text-slate-600">{Object.entries(file.report!.reasons).map(([reason, count]) => <li key={reason}>{reason}: {count}</li>)}</ul>}
       </div>)}</div>
     </details>
-  </div>
+  </>)
 }

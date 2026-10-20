@@ -273,9 +273,11 @@ def guard_reason(guard, ctx, candidate):
 
 def apply_contextual(decisions, contexts):
     for identifier in sorted(decisions):
+        if identifier not in contexts:
+            continue
         d, ctx = decisions[identifier], contexts[identifier]
         r = ctx.event
-        if d['status'] == 'context-conflict':
+        if d.get('contextWarning'):
             continue
         entry = ENTRIES.get(d['source'].get('code'), {})
         if d['status'] == 'not-assessed' or not entry.get('contextualRule'):
@@ -379,7 +381,7 @@ def summary(decisions):
         covered = bool(ops or d.get('sharedOutputs') or d.get('chemotherapyBlock'))
         counts['withOps'] += covered
         counts['companionOnly'] += covered and d.get('contextualSelection', {}).get('relationship') == 'synthetic-companion'
-        counts['contextConflicts'] += d['status'] == 'context-conflict'
+        counts['contextConflicts'] += bool(d.get('contextWarning'))
         counts['sourceRetained'] += bool(d['outputs']) and not covered
         counts['opsRows'] += len(ops)
     return counts

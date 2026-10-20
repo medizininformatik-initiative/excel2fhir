@@ -132,7 +132,7 @@ def check_configured(source, target, report, options, patient_ids):
         from check_medication_transformations import transformed_medications
         rows, _ = prepare(source, options)
         derived_owners = {r['id']: pid for pid in patient_ids for r in transformed_medications(rows['Medikation'], options, pid)}
-    shared = {'Medication', 'Location'}
+    shared = {'Medication', 'Location', 'Organization'}
     groups = {pid: [] for pid in patient_ids}
     for entry in target['entry']:
         resource = entry['resource']

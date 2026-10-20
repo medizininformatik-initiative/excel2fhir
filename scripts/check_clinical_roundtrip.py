@@ -6,7 +6,7 @@ from medication_products import PZN
 from clinical_events import prepare_events, prepare_documents
 from german_texts import GermanTexts, localize_rows
 from german_demographics import identity
-from check_output_selection import selected, enabled
+from check_output_selection import selected, enabled, event_id
 from check_medication_selection import product_id
 
 
@@ -40,25 +40,48 @@ def check_clinical(source, target, report):
     medication_events = transformed_medications(medication_rows, options, report.get('outputPatient', pid.replace('_', '-')))
     wanted = Counter(r['resourceType'] for r in imports if r['resourceType'] not in ('MedicationRequest', 'MedicationAdministration', 'MedicationStatement'))
     wanted.update(r['resourceType'] for r in medication_events)
+    consent = report.get('syntheticConsent')
+    if consent and consent.get('date') and enabled(options, 'CONSENT_ENABLED'):
+        wanted['Consent'] = 1
+        actual_consent = [r for r in dst if r['resourceType'] == 'Consent']
+        assert len(actual_consent) == 1, 'Expected one synthetic consent'
+        from datetime import date, timedelta
+        from check_time_shift import shift_days
+        expected_date = (date.fromisoformat(consent['date']) + timedelta(days=shift_days(report))).isoformat()
+        assert actual_consent[0]['dateTime'][:10] == expected_date
+        expected_groups = {'full': [True]*5, 'patient-data': [True,False,False,False,False],
+                           'patient-and-insurance': [True,True,True,False,False], 'deny': [False]*5}
+        groups = [(2,3,4,5,6,7,8,9,37),(11,12,13,38),(15,16,17,39),(19,20,21,22,23),(25,)]
+        expected_codes = {str(code): 'permit' if permitted else 'deny'
+                          for codes, permitted in zip(groups, expected_groups[consent['variant']]) for code in codes}
+        provisions = actual_consent[0]['provision']
+        assert provisions['type'] == 'deny'
+        assert {c['code'].rsplit('.',1)[-1]: p['type'] for p in provisions['provision']
+                for concept in p['code'] for c in concept['coding']} == expected_codes
+    if options.get('ENCOUNTER_STATION_SERVICE_PROVIDER') == 'generate-reference':
+        organization_ids = {r['serviceProvider']['reference'].split('/',1)[1] for r in dst
+                            if r['resourceType'] == 'Encounter' and r.get('serviceProvider',{}).get('reference','').startswith('Organization/')}
+        assert {r['id'] for r in dst if r['resourceType'] == 'Organization'} == organization_ids
+        wanted['Organization'] = len(organization_ids)
     excluded = {'Patient','Encounter','Condition','Medication'}
     if 'movements' in report: excluded.add('Location')
     actual = Counter(r['resourceType'] for r in dst if r['resourceType'] not in excluded)
     assert wanted == actual, {'expectedClinicalCounts':wanted,'actualClinicalCounts':actual}
+    from check_careplans import check_careplans
+    localize_rows({'Behandlungsplan': events['Behandlungsplan']})
+    check_careplans(events['Behandlungsplan'] if enabled(options, 'CARE_PLAN_ENABLED') else [],
+                   dst, report.get('outputPatient', pid.replace('_', '-')))
     def code(cc):
         c=(cc.get('coding')or[{}])[0]
         return c.get('system'), c.get('code')
     translations = GermanTexts(identity(next(r for r in src.values() if r['resourceType']=='Patient'))['address'])
     def value(r, source=False):
         if 'valueQuantity'in r:
-            q=r['valueQuantity'];return ('number',str(Decimal(str(q['value'])).normalize()),q.get('code'))
+            q=r['valueQuantity']
+            amount = str(Decimal(str(q['value'])).normalize()) if 'value' in q else None
+            return ('number', amount, q.get('unit'), q.get('code'), q.get('system'), q.get('comparator'))
         if 'valueCodeableConcept'in r:
             cc = r['valueCodeableConcept']
-            if code(cc) == (None, None) and 'text' in cc:
-                coding = cc['coding'][0]
-                for primitive in ('_system', '_code'):
-                    assert coding[primitive]['extension'] == [{'url':
-                        'http://hl7.org/fhir/StructureDefinition/data-absent-reason', 'valueCode':'unknown'}]
-                return ('text', cc['text'])
             return ('code',code(cc))
         if 'valueString'in r:return ('text',translations.observation_text(r['valueString'], *code(r['code'])) if source else r['valueString'])
         if 'valueBoolean'in r:return ('boolean',r['valueBoolean'])
@@ -77,7 +100,9 @@ def check_clinical(source, target, report):
                 value(r, source),tuple((code(c['code']),value(c, source))for c in r.get('component',[])))
     wanted_obs=Counter(obs(src[i['sourceId']], True)for i in imports if i['resourceType']=='Observation')
     from check_observation_units import checked_observation_units
-    checked_dst = checked_observation_units(dst, options)
+    originals = {event_id(report.get('outputPatient', pid.replace('_', '-')), 'Observation', r['id']): r
+                 for r in src.values() if r['resourceType'] == 'Observation'}
+    checked_dst = checked_observation_units(dst, options, originals)
     actual_obs=Counter(obs(r)for r in checked_dst if r['resourceType']=='Observation')
     assert wanted_obs==actual_obs, {'missingObservations':list((wanted_obs-actual_obs).items())[:2],
                                   'unexpectedObservations':list((actual_obs-wanted_obs).items())[:2]}
@@ -102,8 +127,8 @@ def check_clinical(source, target, report):
     vaccine_rows = events['Impfung'] if enabled(options, 'IMMUNIZATION_ENABLED') else []
     def vaccine_row(row):
         systems = {'ATC ' + year: ('http://fhir.de/CodeSystem/bfarm/atc', year)}
-        system, version = systems.get(row[5], (next((k for k,v in SYSTEMS.items() if v == row[5]), None), None))
-        return (row[3], (signature(emitted({'system': system, 'code': row[4], 'version': version}, mode)),) if row[4] else (), row[6], row[7], row[8])
+        system, version = systems.get(row['Codesystem'], (next((k for k,v in SYSTEMS.items() if v == row['Codesystem']), None), None))
+        return (row['Bezeichner'], (signature(emitted({'system': system, 'code': row['Code'], 'version': version}, mode)),) if row['Code'] else (), row['Zeitpunkt'], row['Status'], row['Primärquelle'])
     assert Counter(vaccine_row(row) for row in vaccine_rows) == Counter((
         r['vaccineCode'].get('text', ''), tuple(signature(c)
         for c in r['vaccineCode'].get('coding', [])), r.get('occurrenceDateTime', ''),
@@ -113,9 +138,9 @@ def check_clinical(source, target, report):
     product_systems = {**SYSTEMS, PZN: 'PZN'}
     def product_row(row):
         codings = []
-        if row[4]: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row[5]), 'code': row[4]}))
-        if row[6] or row[7]: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row[6], 'version': row[7]}, mode)))
-        return row[3], tuple(codings), row[8]
+        if row['Präparatcode']: codings.append(signature({'system': next(k for k,v in product_systems.items() if v == row['Präparatcodesystem']), 'code': row['Präparatcode']}))
+        if row['ATC-Code'] or row['ATC-Version']: codings.append(signature(emitted({'system': 'http://fhir.de/CodeSystem/bfarm/atc', 'code': row['ATC-Code'], 'version': row['ATC-Version']}, mode)))
+        return row['Präparatbezeichnung'], tuple(codings), row['Darreichungsform']
     expected_products = {product_id(row): product_row(row) for row in rows['Medikation']} if selected({'resourceType': 'Medication'}, options) else {}
     actual_products = {r['id']: (r['code'].get('text', ''),
         tuple(signature(c) for c in r['code'].get('coding', [])),
@@ -124,7 +149,7 @@ def check_clinical(source, target, report):
     from check_medication_selection import check_medication_references
     check_medication_references(rows['Medikation'], dst, options, report.get('outputPatient', pid.replace('_', '-')))
     import base64
-    assert Counter(row[4]for row in document_rows if enabled(options, 'DOCUMENT_REFERENCE_ENABLED'))==Counter(
+    assert Counter(row['Dokumenttext'] for row in document_rows if enabled(options, 'DOCUMENT_REFERENCE_ENABLED'))==Counter(
         base64.b64decode(r['content'][0]['attachment']['data']).decode('utf-8')for r in dst if r['resourceType']=='DocumentReference'), 'Document text changed'
     from check_clinical_references import check_clinical_references
     check_clinical_references(source, dst, report, rows['Medikation'], document_rows)

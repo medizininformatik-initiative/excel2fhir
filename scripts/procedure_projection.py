@@ -39,11 +39,17 @@ def project(entries, year=2026):
         decision = select_ops(coding)
         decision['outputs'] = []
         result[r['id']] = decision
+        if not coding.get('code'):
+            continue  # The clinical importer reports a missing source code.
         ctx = contexts[r['id']] = context_index.context(r)
         decision['contextEvidence'] = ctx.facts()
         problem = ctx.contradiction()
-        if problem:
-            decision.update(status='context-conflict', reason=problem, target=None)
+        if problem and decision['status'] != 'excluded':
+            decision.update(status='source-preserved', contextWarning=problem, target=None,
+                            reason='Quellereignis erhalten; automatische OPS-Anreicherung wegen Kontextauffälligkeit ausgelassen.')
+            for key in ('strategy', 'targets', 'internationalReplacement'):
+                decision.pop(key, None)
+            decision['outputs'] = [output(r, [coding], r.get('code', {}).get('text', coding.get('display', '')))]
             continue
         if decision.get('minimumAge'):
             patient = index.get(r.get('subject', {}).get('reference'), {})

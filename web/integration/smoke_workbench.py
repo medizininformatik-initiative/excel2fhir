@@ -1,7 +1,7 @@
 """Exercise the isolated Compose prototype, including a worker container crash.
 
 Run after `docker compose -f web/compose.yml up -d --build`.
-Only the worker in the excel2fhir-web-prototype project is stopped/restarted.
+Only the worker in the synthifhir-workbench project is stopped/restarted.
 """
 import io
 import json

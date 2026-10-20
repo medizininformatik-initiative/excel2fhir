@@ -22,8 +22,8 @@ class ObservationMappingTest(unittest.TestCase):
             rows, report = prepare(source)
             self.assertEqual(source, before)
             row = rows['Klinische Dokumentation'][0]
-            self.assertEqual(row[3:7], [target, 'LOINC', source_code, 'SNOMED CT (Version nicht angegeben)'])
-            self.assertEqual(row[7], '0')
+            self.assertEqual([row['Untersuchungscode'], row['Codesystem'], row['Zusatzcode'], row['Zusatzcodesystem']], [target, 'LOINC', source_code, 'SNOMED CT (Version nicht angegeben)'])
+            self.assertEqual(row['Wert'], '0')
             self.assertFalse(report['observationMappings'][0]['valueChange'])
             resource['valueQuantity']['code'] = '1'
             self.assertIsNone(decision(resource))

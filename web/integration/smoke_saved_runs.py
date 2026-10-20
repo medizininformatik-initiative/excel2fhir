@@ -40,6 +40,8 @@ def measurements(job_id):
 
 with tempfile.TemporaryDirectory(prefix='saved-runs-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     base = 'CONFIGURATION_VERSION=1\nOUTPUT_FORMATS=JSON\n'
     normal = configurations.create('Standard', base)
     faulty = configurations.create('Unit only', base + 'OBSERVATION_LABORATORY_UCUM_CODE_IN_UNIT=true\nOBSERVATION_VITAL_SIGNS_UCUM_CODE_IN_UNIT=true\n')

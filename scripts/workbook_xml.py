@@ -14,12 +14,22 @@ def read_sheets(path):
             target = rels[sheet.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']]
             target = target.lstrip('/') if target.startswith('/') else 'xl/' + target
             cells = {}
-            for cell in ET.fromstring(z.read(target)).findall('.//s:sheetData/s:row/s:c', NS):
-                v = cell.find('s:v', NS)
-                value = v.text if v is not None else ''.join(cell.find('s:is', NS).itertext()) if cell.find('s:is', NS) is not None else ''
-                if cell.attrib.get('t') == 's':
-                    value = strings[int(value)]
-                if value:
-                    cells[cell.attrib['r']] = value
+            # Release each parsed row instead of retaining a complete worksheet tree.
+            with z.open(target) as xml:
+                sheet_data = None
+                for event, element in ET.iterparse(xml, events=('start', 'end')):
+                    if event == 'start' and element.tag == '{' + NS['s'] + '}sheetData':
+                        sheet_data = element
+                    elif event == 'end' and element.tag == '{' + NS['s'] + '}row' and sheet_data is not None:
+                        for cell in element.findall('s:c', NS):
+                            v = cell.find('s:v', NS)
+                            value = v.text if v is not None else ''.join(cell.find('s:is', NS).itertext()) if cell.find('s:is', NS) is not None else ''
+                            if cell.attrib.get('t') == 's':
+                                value = strings[int(value)]
+                            if value:
+                                cells[cell.attrib['r']] = value
+                        sheet_data.remove(element)
+                    elif event == 'end' and element is sheet_data:
+                        sheet_data = None
             sheets[sheet.attrib['name']] = cells
         return sheets

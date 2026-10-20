@@ -16,7 +16,7 @@ The interface defaults to German and offers English. `de.json` and `en.json`
 contain the visible labels, choices, help, disabled-control reasons and interface
 messages. The contract references stable text keys; option IDs and values remain
 language independent. DAR field/code labels are resolved using the key patterns
-in `dar`; its clinical catalogue remains the source for allowed codes and rules.
+in `dar`; its clinical catalogue remains the source for suggested codes and representation rules.
 
 The language setting affects presentation only. FHIR output retains the German
 KDS profiles, terminology bindings and German descriptions/display text. Original
@@ -114,14 +114,14 @@ selected contact level could fall back to a different, available default level.
 Missing assignments use defaults; stored unavailable selections become ineffective
 without substituting another choice.
 
-The shared Java reader accepts this format from external files, CSV option files
-and Excel option sheets. It validates stored values and determines effective
+External configuration files require `CONFIGURATION_VERSION=1`. The shared Java
+reader rejects missing or unsupported versions and validates supplied settings. It validates stored values and determines effective
 selections from the same contract. Directly equivalent Java properties are mapped to existing converter options.
 Resource selection, diagnosis/procedure references, medication transformations,
 DAR, identifiers and encounter rules use the shared Java execution pipeline.
 Versioned configuration controls output formats, patients per file and FHIR
 validation for Excel, CSV and web runs; these values replace the corresponding
-legacy CLI defaults and flags. The API uses the same Java preflight as file-based
+CLI defaults and flags. The API uses the same Java preflight as file-based
 configuration input. The web start action submits the current editor settings.
 
 
@@ -282,8 +282,10 @@ other clinical facts to hide a validation failure.
 Table code strings remain unrestricted by this target contract, including
 unknown `!dar:<code>` tokens. Structural and type checks still apply. Optional
 FHIR validation reports invalid vocabulary codes; a valid but clinically
-unsuitable DAR code can pass that validator. Editor choices provide the semantic
-selection policy.
+unsuitable DAR code can pass that validator. The editor offers field-specific suggestions and accepts custom codes for both
+missing-only and overwrite rules. In configuration properties, `unchanged` disables
+a rule; `!dar:unchanged` sets the literal code `unchanged`. A code starting with
+`!dar:` is escaped with one additional `!dar:` prefix by the exporter.
 
 MedicationRequest replacement runs first. MedicationAdministration and
 MedicationStatement each offer one action: retain, additionally create the other
@@ -313,7 +315,7 @@ DAR overrides are applied after derivations and contact assignment, including
 to derived medication resources.
 
 Additional identifiers append to existing identifiers. Each rule has a stable
-identity and one counter across eligible resources and repetitions, unaffected
+identity and one counter per run across input files, eligible resources and repetitions, unaffected
 by output selection. Counts are reserved for original resources followed by
 potential request and event derivatives, including stored actions whose output
 dependencies are inactive. Omitted resources can therefore leave gaps. Shared
@@ -323,10 +325,37 @@ repetitions fail with the rule and conflicting resource identities. Deterministi
 hash identifiers do not guarantee secure pseudonymization. Hashes use the first 32 lowercase hexadecimal characters of SHA-256 with
 collision checking. Patterns combine literal text with `{count}`, `{count:08}`, `{patientId}`,
 `{resourceId}`, `{resourceType}`, `{iteration}` and `{hash}`. The shared counter
-starts at 1; the repetition index starts at 0. Padding sets a minimum width, not
+starts at the configured value (default 1), continues across input files in sorted
+filename order, and resets for each independent run; the repetition index starts at 0. Padding sets a minimum width, not
 a maximum. The Java runtime rejects padding above 1,000,000 characters with
 a rule-specific error. `{{` and `}}` insert literal braces. Unknown tokens, unmatched braces
 and malformed padding are errors; patterns do not evaluate expressions.
+
+### Case-based additional identifiers
+
+**Add case-based identifier** creates a rule with the same system, type and
+target-resource selectors as ordinary identifier rules, including Encounter
+levels. Its scope is exported as `IDENTIFIER_RULE_N_SCOPE=case`; omitted scope
+means the ordinary resource-based rule.
+
+Patterns accept literal text, escaped braces, `{patientId}` and `{caseId}`.
+The default `{patientId}-{caseId}` combines the effective patient ID (including
+prefix, suffix and repetition) with the original facility case/admission number.
+All selected resources assigned to that case receive the same value. This can
+reproduce local conventions that depart from FHIR or profile semantics.
+
+The internal Encounter hierarchy identifies the case even when output hierarchy
+levels are reduced. Assigned encounter references take precedence over source
+case references. Multiple source references to the same facility case agree;
+references to different cases are ambiguous. Resources without a unique case
+receive no additional identifier; `outputSelections` in the import report
+records `omit-identifier` with reason `missing-or-ambiguous-case`.
+This note also appears among report reasons in the workbench.
+
+Sharing is permitted within a case. Equal system/value pairs for different cases
+still fail collision checks. Using `{caseId}` alone therefore requires case
+numbers unique within the identifier system. Ordinary identifier rules retain
+their per-resource counters and collision checks.
 
 ## Checks
 
@@ -342,7 +371,7 @@ Verify that every existing Java option is represented, directly or by an explici
 adapter mapping, against a built converter:
 
 ```sh
-java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindings.java
+java --class-path target/synthifhir.jar web/catalog/options/tests/CheckJavaBindings.java
 ```
 
 Keep implementation and acceptance in #76/#77 distinct from this definition.

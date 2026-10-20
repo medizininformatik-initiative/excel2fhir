@@ -14,7 +14,8 @@ COPY src ./src
 COPY web/catalog/options/contract.json web/catalog/options/contract.json
 COPY web/catalog/dar/generated/catalog.json web/catalog/dar/generated/catalog.json
 COPY FHIR_Testdatengenerator_Vorlage.xlsx FHIR_Testdatengenerator_Interpolar_Demo.xlsx ./
-RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked \
+COPY input/FHIR_Testdatengenerator_Vorlage.xlsx input/
+RUN --mount=type=cache,id=synthifhir-maven,target=/root/.m2,sharing=locked \
     mvn -B test package
 
 FROM debian:bookworm-slim AS runtime
@@ -26,7 +27,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && cp /usr/share/zoneinfo/Etc/UTC /etc/localtime
 ENV LANG=C.UTF-8
 WORKDIR /app
-COPY --from=build /build/target/excel2fhir.jar ./target/excel2fhir.jar
+COPY --from=build /build/target/synthifhir.jar ./target/synthifhir.jar
 COPY scripts ./scripts
 COPY web/catalog/dar/generated/catalog.json ./web/catalog/dar/generated/catalog.json
 COPY web/catalog/options/contract.json ./web/catalog/options/contract.json
@@ -34,7 +35,7 @@ COPY src/main/resources/workbook-absent-reasons.json ./src/main/resources/workbo
 COPY src/main/resources/ucum ./src/main/resources/ucum
 COPY third-party ./third-party
 COPY LICENSE FHIR_Testdatengenerator_Vorlage.xlsx ./
-RUN PYTHONPATH=/app/scripts python3 -c "from check_dar import catalogue; from check_medication_transformations import ucum_tables; catalogue(); ucum_tables()"
+RUN PYTHONPATH=/app/scripts python3 -c "from check_dar import catalogue; catalogue()"
 ENTRYPOINT ["python3", "/app/scripts/run_synthea_cases.py"]
 
 # Opt-in build target for the full workflow. The default target below retains

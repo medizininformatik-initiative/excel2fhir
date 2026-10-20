@@ -26,7 +26,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Test Synthea import and roundtrip checks
-        run: python3 -m unittest discover -s scripts/tests -v
+        run: |
+          python3 -m unittest discover -s scripts/tests -v
+          PYTHONPATH=scripts python3 -m unittest scripts/test_synthea_consent.py -v
 
       - name: Check Compose profile combinations
         run: python3 web/integration/test_compose_profiles.py
@@ -64,7 +66,7 @@ jobs:
         run: |
           python3 web/catalog/options/generate_schema.py --check
           python3 -m unittest discover -s web/catalog/options/tests -v
-          java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindings.java
+          java --class-path target/synthifhir.jar web/catalog/options/tests/CheckJavaBindings.java
 
       - name: Set up Python for workbench tests
         uses: actions/setup-python@v5
@@ -97,23 +99,36 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build workbench worker
-      run: docker build -f web/backend/Dockerfile --target worker -t excel2fhir-workbench:ci .
+      run: docker build -f web/backend/Dockerfile --target worker -t synthifhir-workbench:ci .
+    - name: Verify output permissions and standard exports
+      run: docker run --rm -i --user 0:0 --memory=2g synthifhir-workbench:ci python - < web/integration/smoke_output_storage.py
     - name: Verify blazectl uploads on Blaze and HAPI
       run: |
         trap 'docker compose -f web/compose.yml stop blaze hapi hapi-db' EXIT
         docker compose -f web/compose.yml up -d --wait --wait-timeout 180 blaze
-        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py blaze
+        docker run --rm --memory=1g --network synthifhir-workbench_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" synthifhir-workbench:ci python /probe.py blaze
         docker compose -f web/compose.yml stop blaze
         docker compose -f web/compose.yml up -d hapi-db hapi
         for attempt in $(seq 1 90); do
           if curl --fail --silent http://localhost:5191/fhir/metadata >/dev/null; then break; fi
           sleep 2
         done
-        docker run --rm --memory=1g --network excel2fhir-web-prototype_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" excel2fhir-workbench:ci python /probe.py hapi
+        docker run --rm --memory=1g --network synthifhir-workbench_default -v "$PWD/web/integration/smoke_fhir_upload.py:/probe.py:ro" synthifhir-workbench:ci python /probe.py hapi
+    - name: Verify bulk output equivalence and synthetic enrichment
+      run: |
+        docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_bulk_generation.py
+        docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_consent_enrichment.py
+        docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_native_bulk.py
+        docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_bulk_identifiers.py
+    - name: Cancel and resume bulk identifier generation
+      run: docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_bulk_resume.py
+    - name: Verify bulk series continuation
+      run: docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_bulk_continuation.py
+
     - name: Generate Synthea sources and compare repeated clinical histories
-      run: docker run --rm -i --memory=6g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_generation.py
+      run: docker run --rm -i --memory=6g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_synthea_generation.py
     - name: Import Synthea sources and repeat immutable runs
-      run: docker run --rm -i --memory=4g --cpus=2 excel2fhir-workbench:ci python - < web/integration/smoke_synthea_inputs.py
+      run: docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench:ci python - < web/integration/smoke_synthea_inputs.py
 
   security-scan:
     runs-on: ubuntu-latest
@@ -160,7 +175,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build existing Synthea importer image
-      run: docker build -f docker/synthea.Dockerfile -t excel2fhir-synthea:ci .
+      run: docker build -f docker/synthea.Dockerfile -t synthifhir-synthea:ci .
     - name: Convert and validate actual Synthea regression fixtures
       shell: bash
       run: |
@@ -169,7 +184,7 @@ jobs:
         docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
           -v "$PWD/scripts/tests/fixtures/synthea:/input:ro" \
           -v "$RUNNER_TEMP/synthea-results:/output" \
-          excel2fhir-synthea:ci -v -i /input -o /output
+          synthifhir-synthea:ci -v -i /input -o /output
         result=$?
         set -e
         python3 - "$RUNNER_TEMP/synthea-results" "$result" <<'PYTHON'
@@ -190,7 +205,7 @@ jobs:
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         version: ${{ env.TRIVY_VERSION }}
-        image-ref: excel2fhir-synthea:ci
+        image-ref: synthifhir-synthea:ci
         exit-code: 1
         ignore-unfixed: true
         trivyignores: '.trivyignore'
@@ -199,11 +214,11 @@ jobs:
     - name: Build generator and run the complete workflow offline
       shell: bash
       run: |
-        docker compose -p excel2fhir-ci -f compose.synthea.yml build
-        docker run --rm --network none --entrypoint python3 excel2fhir-ci-synthea:latest \
+        docker compose -p synthifhir-ci -f compose.synthea.yml build
+        docker run --rm --network none --entrypoint python3 synthifhir-ci-synthea:latest \
           -m unittest discover -s /app/scripts/tests -p test_container_output.py -v
         set +e
-        docker compose -p excel2fhir-ci -f compose.synthea.yml run --rm synthea
+        docker compose -p synthifhir-ci -f compose.synthea.yml run --rm synthea
         result=$?
         set -e
         python3 - "$result" <<'PYTHON'
@@ -227,7 +242,7 @@ jobs:
       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
       with:
         version: ${{ env.TRIVY_VERSION }}
-        image-ref: excel2fhir-ci-synthea:latest
+        image-ref: synthifhir-ci-synthea:latest
         exit-code: 1
         ignore-unfixed: true
         trivyignores: '.trivyignore'
@@ -242,7 +257,7 @@ jobs:
           ${{ runner.temp }}/synthea-results
           outputGlobal/
 
-  build-excel2fhir:
+  build-synthifhir:
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [test, security-scan, synthea-workflow]
     runs-on: ubuntu-latest
@@ -263,12 +278,12 @@ jobs:
         echo "repository=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
         echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
-    - name: Build and push docker image for excel2fhir
+    - name: Build and push docker image for synthifhir
       uses: docker/build-push-action@v4
       with:
         context: .
         file: docker/Dockerfile
         tags: |
-          ghcr.io/${{ steps.prep.outputs.repository }}/excel2fhir:latest
-          ghcr.io/${{ steps.prep.outputs.repository }}/excel2fhir:${{ steps.prep.outputs.version }}
+          ghcr.io/${{ steps.prep.outputs.repository }}/synthifhir:latest
+          ghcr.io/${{ steps.prep.outputs.repository }}/synthifhir:${{ steps.prep.outputs.version }}
         push: true

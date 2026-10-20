@@ -66,13 +66,13 @@ class ContractConsistencyTest(unittest.TestCase):
         self.assertEqual(set(self.contract['propertiesFormat']['darProperties']),
                          {f['id'] for f in catalogue['fields']})
 
-    def test_dar_schema_uses_exact_catalogue_choices(self):
+    def test_dar_schema_accepts_nonempty_free_codes(self):
         catalogue = {'fields': generator.expanded_fields(self.contract)}
         schema = generator.generate()['properties']['dar']['properties']
         self.assertEqual(set(schema), {field['id'] for field in catalogue['fields']})
         for field in catalogue['fields']:
-            self.assertEqual(schema[field['id']]['oneOf'][1]['properties']['code']['enum'],
-                             field['allowedCodes'])
+            self.assertEqual(schema[field['id']]['oneOf'][1]['properties']['code'],
+                             {'type': 'string', 'minLength': 1, 'pattern': r'\S'})
             self.assertTrue(set(field['codeConditions']) <= set(field['allowedCodes']))
             self.assertIn(field['resourceType'],
                           {r['resourceType'] for r in self.contract['resources']})

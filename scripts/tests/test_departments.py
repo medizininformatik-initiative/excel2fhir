@@ -6,6 +6,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from workbook_records import record
 from synthea_departments import select_department, ICD10GM, DEPARTMENTS
 from synthea_movements import enrich
 
@@ -40,13 +41,17 @@ class DepartmentTest(unittest.TestCase):
         self.assertFalse(report['fallback'])
         source = {'entry': [{'fullUrl': 'urn:uuid:' + r['id'], 'resource': r} for r in self.resources]}
         before = copy.deepcopy(source)
-        rows = [['p', '1', '', '', 'stationaer', '', '', '', '', '']]
+        rows = [record('Fall', {
+            'Patient-ID': 'p',
+            'Fall-Nr': '1',
+            'Einrichtungskontaktklasse': 'stationaer',
+        })]
         output, movement = enrich(source, rows, {'e': '1'})
         stays = output[1:]
         self.assertTrue(stays)
-        self.assertEqual({'Kinderchirurgie'}, {r[5] for r in stays})
-        self.assertEqual({'Station KC1'}, {r[6] for r in stays})
-        self.assertEqual({'Normalstationär'}, {r[10] for r in stays})
+        self.assertEqual({'Kinderchirurgie'}, {r['Fachabteilung'] for r in stays})
+        self.assertEqual({'Station KC1'}, {r['Station'] for r in stays})
+        self.assertEqual({'Normalstationär'}, {r['Kontaktart'] for r in stays})
         self.assertEqual((output, movement), enrich(source, rows, {'e': '1'}))
         self.assertEqual(before, source)
 

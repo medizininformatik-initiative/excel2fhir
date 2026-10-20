@@ -1,6 +1,8 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 import json
+import io
+import zipfile
 
 from api import app
 import store
@@ -27,9 +29,14 @@ class ApiTests(QueueFixture):
         job_id = store.create('starter', 'default')
         store.finish(job_id, 'failed', 1)
         self.assertEqual(409, self.client.get(f'/api/jobs/{job_id}/download').status_code)
-        (store.ROOT / 'jobs' / job_id / 'result.zip').write_bytes(b'archive')
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as archive:
+            archive.writestr('output/run-test/fhir/p.json', json.dumps({'resourceType': 'Patient', 'id': 'p'}))
+        (store.ROOT / 'jobs' / job_id / 'result.zip').write_bytes(buffer.getvalue())
         self.assertTrue(self.client.get('/api/jobs').json()[0]['download_available'])
-        self.assertEqual(b'archive', self.client.get(f'/api/jobs/{job_id}/download').content)
+        response = self.client.get(f'/api/jobs/{job_id}/download')
+        self.assertEqual(buffer.getvalue(), response.content)
+        self.assertIn('synthifhir-1Pat-', response.headers['content-disposition'])
 
     def test_input_configuration_source_is_not_a_start_option(self):
         response = self.client.post('/api/jobs', json={'profile': 'workbook'})
