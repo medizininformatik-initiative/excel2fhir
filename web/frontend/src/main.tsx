@@ -1,3 +1,4 @@
+import { numberRuns, continuationReference } from './run-numbering'
 import { OutputDirectory } from './OutputDirectory'
 import { BulkProgress, type BulkStatus, type BulkSubrun } from './BulkProgress'
 import { SelectionProgress } from './SelectionProgress'
@@ -22,7 +23,9 @@ import { ConfigurationEditor } from './ConfigurationEditor'
 import { problems, type Configuration } from './configuration'
 import { exportPropertiesConfiguration, importRunProperties } from './configuration-properties'
 
-type Job = { output_directory?: string; bulk_output_directory?: string; bulk_progress?: BulkStatus; bulk_subruns?: BulkSubrun[]; bulk_resumable?: boolean; table_format?: 'csv' | 'excel'; outcomes?: Outcomes; workbook_count?: number; cleanup?: { completed: number; removedBytes: number; removedFiles: number }; editor_available?: boolean; summary?: DatasetContext['summary']; input_kind?: string; duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
+type Continuation = { sourceOffset?: number; sourceRun: string; requestedRun: string; seriesRoot: string; completedBefore: number; generation: Generation; datasetName: string; configurationProperties?: string; nextCounters: Record<string, string> }
+
+type Job = { continuation?: { sourceRun: string } | null; bulk_continuable?: boolean; output_directory?: string; bulk_output_directory?: string; bulk_progress?: BulkStatus; bulk_subruns?: BulkSubrun[]; bulk_resumable?: boolean; table_format?: 'csv' | 'excel'; outcomes?: Outcomes; workbook_count?: number; cleanup?: { completed: number; removedBytes: number; removedFiles: number }; editor_available?: boolean; summary?: DatasetContext['summary']; input_kind?: string; duration_seconds?: number | null; failure?: { kind: 'memory' | 'killed'; evidence: string }; dataset_name?: string; id: string; state: string; created: number; cancel: number; exit_code: number | null; download_available: boolean; source?: string; source_name?: string; configuration?: { id: string; name: string; revision: number | null }; batch_id?: string | null; repeated_from?: string | null; generation?: Generation; generation_result?: { generatedPatients: number; importedPatients: number; failedPatients: number } }
 async function fetchResponse(path: string, init?: RequestInit): Promise<Response> {
   let response: Response
   try { response = await fetch('/api' + path, init) }
@@ -110,6 +113,8 @@ function App() {
       localStorage.setItem('workbenchTableFormat', tableFormat)
     } catch { /* Settings remain usable when browser storage is unavailable. */ }
   }, [diagnostics, tableFormat])
+  const [seriesMode, setSeriesMode] = useState(() => !!localStorage.getItem('workbenchContinuation'))
+  const [continuation, setContinuation] = useState<Continuation | null>(null)
   const [generation, setGeneration] = useState<Generation | null>(null)
   const [executionMode, setExecutionMode] = useState<'standard' | 'bulk'>('standard')
   const [uploadingInput, setUploadingInput] = useState(false)
@@ -119,7 +124,7 @@ function App() {
   const nativeOutput = source === 'synthea-generation' && generation?.outputMode === 'synthea'
   const bulkOutput = source === 'synthea-generation' && executionMode === 'bulk'
   const syntheaTables = !nativeOutput && (source === 'synthea-generation' || inputKind?.startsWith('synthea'))
-  const canStart = (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
+  const canStart = (!seriesMode || continuation !== null) && (nativeOutput || configurationReady) && (source !== 'synthea-generation' || generation !== null)
   const generationPayload = { ...(source === 'synthea-generation' ? { generation } : {}), datasetName: datasetName.trim() || undefined }
   const [logs, setLogs] = useState<string | null>(null)
   const [error, setError] = useState<Message | null>(null)
@@ -154,7 +159,7 @@ function App() {
     if (!canStart) return
     setBusy(true); setError(null)
     try {
-      const next = [await submitRuns<Job>('/jobs', {
+      const next = [continuation ? await submitRuns<Job>(`/jobs/${continuation.sourceRun}/continuation`, { population: generation!.population }) : await submitRuns<Job>('/jobs', {
         source, ...generationPayload,
         ...(syntheaTables ? { tableFormat: bulkOutput ? 'csv' : tableFormat, diagnostics: bulkOutput ? false : diagnostics } : {}),
         ...(nativeOutput ? {} : { configurationProperties: exportPropertiesConfiguration(configuration!, language) })
@@ -162,6 +167,28 @@ function App() {
       setJobs(old => [...next, ...old.filter(job => !next.some(value => value.id === job.id))]); select(next[0].id); setRunSearch(''); setRunLimit(10); setActiveTab('runs')
     } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
+  useEffect(() => {
+    const previous = localStorage.getItem('workbenchContinuation')
+    if (previous && previous !== 'choose') void loadContinuation(previous)
+  }, [])
+  async function loadContinuation(id: string) {
+    setSeriesMode(true)
+    localStorage.setItem('workbenchContinuation', id)
+    setBusy(true); setError(null); setContinuation(null)
+    try {
+      const loaded = await request<Continuation>(`/jobs/${id}/continuation`)
+      const config = loaded.configurationProperties ? importRunProperties(loaded.configurationProperties) : configuration!
+      const displayed = config && { ...config, identifierRules: config.identifierRules.map(rule => ({ ...rule,
+        ...(loaded.nextCounters[rule.id] ? { countStart: Number(loaded.nextCounters[rule.id]) } : {}) })) }
+      setEditorLoad({ configuration: displayed, generation: loaded.generation, key: Date.now() })
+      setConfiguration(displayed); setGeneration(loaded.generation); setExecutionMode('bulk')
+      localStorage.setItem('workbenchContinuation', loaded.sourceRun)
+      setContinuation(loaded); setSeriesMode(true); setSource('synthea-generation')
+      setDatasetName(loaded.datasetName); setActiveTab('generate')
+    } catch (e) { setError(errorMessage(e)) } finally { setBusy(false) }
+  }
+  function newSeries() { localStorage.removeItem('workbenchContinuation'); setSeriesMode(false); setContinuation(null) }
+  function chooseSeries() { localStorage.setItem('workbenchContinuation', 'choose'); setSeriesMode(true) }
   async function resumeBulk() {
     if (!job) return
     setBusy(true); setError(null)
@@ -176,6 +203,7 @@ function App() {
     try {
       const loaded = await request<{ source: string; datasetName: string; tableFormat?: 'csv' | 'excel'; diagnostics?: boolean; generation?: Generation; configurationProperties: string }>(`/jobs/${job.id}/${fromExcel ? 'excel-editor' : 'editor'}`, { method: 'POST' })
       const config = importRunProperties(loaded.configurationProperties)
+      newSeries()
       setEditorLoad({ configuration: config, generation: loaded.generation, key: Date.now() })
       setConfiguration(config); setGeneration(loaded.generation ?? null)
       setTableFormat(loaded.tableFormat ?? 'csv');
@@ -215,7 +243,12 @@ function App() {
   async function cancel() {
     try { await request(`/jobs/${selected}/cancel`, { method: 'POST' }) } catch (e) { setError(errorMessage(e)) }
   }
-  const filteredJobs = jobs.filter(j => [j.id, j.dataset_name ?? '', configurationName(j), j.source_name ?? j.source ?? '', t(stateKey(j.state))].join(' ').toLowerCase().includes(runSearch.toLowerCase())).sort((a, b) => b.created - a.created)
+  const { newestFirst, numbers: runNumbers } = numberRuns(jobs)
+  function continuationLabel(sourceRun: string) {
+    const message = continuationReference(sourceRun, runNumbers)
+    return t(message.key, message.params)
+  }
+  const filteredJobs = newestFirst.filter(j => [j.id, j.dataset_name ?? '', configurationName(j), j.source_name ?? j.source ?? '', t(stateKey(j.state))].join(' ').toLowerCase().includes(runSearch.toLowerCase()))
   const alert = error || connectionError
   // This is the API's queue placeholder, not converter-produced log content.
   const logText = !selected ? t('app.selectRun') : logs === null || logs === 'Waiting for worker…' ? t('app.waiting') : logs
@@ -250,15 +283,19 @@ function App() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-lg font-semibold">{t('app.create')}</h2><p className="mt-1 text-sm text-slate-500">{t('app.intro')}</p>
       <div className="mt-6 flex flex-wrap items-start gap-5">
-        <InputSelection key={editorLoad?.key} language={language} source={source} onChange={value => { setInputKind(undefined); setSource(value) }} onBusy={setUploadingInput} onKindChange={setInputKind}/>
-        <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
+        <fieldset disabled={!!continuation}><InputSelection key={editorLoad?.key} language={language} source={source} onChange={value => { newSeries(); setInputKind(undefined); setSource(value) }} onBusy={setUploadingInput} onKindChange={setInputKind}/></fieldset>
+        <label className="flex w-full sm:w-80 flex-col gap-2 text-sm font-medium">{t('app.datasetName')}<input className="rounded-lg border border-slate-300 p-2.5" disabled={!!continuation} maxLength={200} value={datasetName} onChange={e => setDatasetName(e.target.value)} placeholder={t('app.datasetNameHint')}/></label>
         <Button className="sm:mt-7" onClick={() => void start()} disabled={busy || uploadingInput || !canStart}><Play size={16}/>{t(source === 'synthea-generation' ? 'app.generation.start' : 'app.start')}</Button>
       </div>
-      {source === 'synthea-generation' ? <GenerationSettings key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration} onExecutionModeChange={setExecutionMode}>{tableOptions}</GenerationSettings> : tableOptions}
+      {source === 'synthea-generation' ? <GenerationSettings sourceOffset={continuation?.sourceOffset ?? 0} continuationLocked={!!continuation} seriesControls={<div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="text-sm"><span className="flex min-h-6 items-center">{t('app.series.mode')}<Help text={t('app.series.help')} t={key => t(key as TextKey)}/></span><select className="mt-1 w-full rounded-lg border p-2" disabled={busy} value={seriesMode ? 'continue' : 'new'} onChange={e => e.target.value === 'new' ? newSeries() : chooseSeries()}><option value="new">{t('app.series.new')}</option><option value="continue">{t('app.series.continue')}</option></select></label>
+        {seriesMode && <label className="text-sm"><span className="flex min-h-6 items-center">{t('app.series.previous')}</span><select className="mt-1 w-full rounded-lg border p-2" disabled={busy} value={continuation?.sourceRun ?? ''} onChange={e => { if (e.target.value) void loadContinuation(e.target.value); else setContinuation(null) }}><option value="">{t('app.series.choose')}</option>{jobs.filter(item => item.bulk_continuable).map(item => <option key={item.id} value={item.id}>{item.dataset_name || item.id.slice(0, 8)} · {item.generation?.population.toLocaleString(locale)} · {new Date(item.created * 1000).toLocaleString(locale)}</option>)}</select></label>}
+        {continuation && <p className="text-sm sm:col-span-2">{t('app.series.range', { previous: continuation.completedBefore.toLocaleString(locale), first: (continuation.completedBefore + 1).toLocaleString(locale), last: (continuation.completedBefore + (generation?.population ?? 0)).toLocaleString(locale) })}<Help text={t('app.series.lockedHelp')} t={key => t(key as TextKey)}/></p>}
+      </div>} key={editorLoad?.key} initialValue={editorLoad?.generation} language={language} onChange={setGeneration} onExecutionModeChange={setExecutionMode}>{tableOptions}</GenerationSettings> : tableOptions}
       <p className="mt-4 text-xs text-slate-500">{t(nativeOutput ? 'app.generation.nativeHint' : bulkOutput ? 'app.bulk.overrides' : 'app.outputHint')}</p>
     </section>
     <div hidden={nativeOutput}>
-      <ConfigurationEditor bulkMode={bulkOutput} key={editorLoad?.key} initialConfiguration={editorLoad?.configuration} language={language} onChange={setConfiguration}/>
+      <ConfigurationEditor readOnly={!!continuation} bulkMode={bulkOutput} key={editorLoad?.key} initialConfiguration={editorLoad?.configuration} language={language} onChange={setConfiguration}/>
     </div>
     </div>
     <div role="tabpanel" id="main-panel-services" aria-labelledby="main-tab-services" hidden={activeTab !== 'services'}>
@@ -269,10 +306,11 @@ function App() {
     <div className="mt-8 grid gap-6 md:grid-cols-[300px_1fr]">
       <section><h2 className="mb-3 text-lg font-semibold">{t('app.runs')} <span className="text-slate-400">{jobs.length}</span></h2><input className="mb-3 w-full rounded-lg border border-slate-300 p-2 text-sm" aria-label={t('app.datasets.searchRuns')} placeholder={t('app.datasets.searchRuns')} value={runSearch} onChange={e => { setRunSearch(e.target.value); setRunLimit(10) }}/><div className="space-y-2">
         {jobs.length === 0 && <p className="text-sm text-slate-500">{t('app.empty')}</p>}
-        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span>{new Date(j.created * 1000).toLocaleTimeString(locale)}</span><span>{t(j.failure?.kind === 'memory' ? 'app.failure.memoryTitle' : stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.bulk_subruns && <p className="mt-1 text-xs text-slate-500">{j.bulk_subruns.filter(run => run.state === 'succeeded').length} / {j.bulk_subruns.length} {language === 'de' ? 'Teilläufe abgeschlossen' : 'subruns complete'}</p>}{duration(j) && <p className="mt-1 text-xs text-slate-500">{duration(j)}</p>}</button>)}
+        {filteredJobs.slice(0, runLimit ?? filteredJobs.length).map(j => <button key={j.id} onClick={() => select(j.id)} className={`w-full rounded-xl border p-4 text-left ${selected === j.id ? 'border-teal-700 bg-teal-50' : 'border-slate-200 bg-white'}`}><div className="flex justify-between gap-2 text-sm font-semibold"><span className="text-teal-700">{runNumbers.get(j.id)}</span><span>{t(j.failure?.kind === 'memory' ? 'app.failure.memoryTitle' : stateKey(j.state))}</span></div><p className="mt-2 font-mono text-xs text-slate-500">{j.id.slice(0, 8)} · {new Date(j.created * 1000).toLocaleDateString(locale)} · {new Date(j.created * 1000).toLocaleTimeString(locale)}</p><p className="mt-2 break-words text-sm">{configurationName(j)}</p>{j.continuation && <p className="mt-1 text-xs font-medium text-teal-700">{continuationLabel(j.continuation.sourceRun)}</p>}{j.bulk_subruns && <p className="mt-1 text-xs text-slate-500">{j.bulk_subruns.filter(run => run.state === 'succeeded').length} / {j.bulk_subruns.length} {language === 'de' ? 'Teilläufe abgeschlossen' : 'subruns complete'}</p>}{duration(j) && <p className="mt-1 text-xs text-slate-500">{duration(j)}</p>}</button>)}
       </div><ListExpansion language={language} total={filteredJobs.length} limit={runLimit} onChange={setRunLimit} countKey="app.list.runsCount"/></section>
       <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">{t('app.details')}</h2>{job && <div>{['queued','running'].includes(job.state) && <Button variant="outline" onClick={() => void cancel()} disabled={!!job.cancel}><Square size={14}/>{t(job.cancel ? 'app.cancelling' : 'app.cancel')}</Button>}</div>}</div>
+        {job?.continuation && <p className="mb-3 text-sm font-medium text-teal-700">{continuationLabel(job.continuation.sourceRun)}</p>}
         {job?.failure && <p role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{t(job.failure.kind === 'memory' ? 'app.failure.memory' : 'app.failure.killed')}</p>}
         {job?.output_directory && !job.bulk_output_directory && <OutputDirectory key={`directory-${job.id}`} path={job.output_directory} language={language}/>}
         {job && !job.bulk_output_directory && <DatasetResults key={job.id + ':' + (job.cleanup?.completed ?? '')} downloadAvailable={job.download_available} inputKind={job.input_kind} onUpload={openUpload} context={runContext(job)} jobId={job.id} state={job.state} language={language}>
@@ -296,7 +334,7 @@ function App() {
           <p className="text-sm">{t('app.bulk.resultsHelp')}</p>
           {job.state === 'succeeded' && <BulkPackages key={`packages-${job.id}`} jobId={job.id} language={language} onUpload={openUpload}/>}
           {job.bulk_resumable && <div><Button disabled={busy} onClick={() => void resumeBulk()}>{t('app.bulk.resume')}</Button><p className="mt-2 text-xs">{t('app.bulk.resumeHelp')}</p></div>}
-          {!['queued', 'running'].includes(job.state) && <div className="flex gap-2"><Button variant="outline" onClick={() => void loadRun()}>{t('app.loadRun')}</Button><Button variant="outline" onClick={() => deleteDialog.current?.showModal()}>{t('app.deleteRun')}</Button></div>}
+          {!['queued', 'running'].includes(job.state) && <div className="flex flex-wrap gap-2">{job.bulk_continuable && <Button variant="outline" disabled={busy} onClick={() => void loadContinuation(job.id)}>{t('app.series.continue')}</Button>}<Button variant="outline" onClick={() => void loadRun()}>{t('app.loadRun')}</Button><Button variant="outline" onClick={() => deleteDialog.current?.showModal()}>{t('app.deleteRun')}</Button></div>}
         </section>}
         <SelectionProgress log={logText} language={language} running={job?.state === 'running'}/>
         {!job?.cleanup && <details open={!!job && ['queued', 'running'].includes(job.state)}><summary className="cursor-pointer text-sm font-medium">{t('app.logs')}</summary><pre aria-label={t('app.logs')} className="mt-3 h-96 overflow-auto rounded-xl bg-slate-950 p-4 font-mono text-xs leading-5 whitespace-pre-wrap text-slate-200">{logText}</pre></details>}
