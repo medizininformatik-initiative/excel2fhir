@@ -246,7 +246,7 @@ function RulePreview({ rule, t }: { rule: Rule; t: Translator }) {
     </div>
   )
 }
-export function ConfigurationEditor({ language, onChange, initialConfiguration, bulkMode = false }: { bulkMode?: boolean; language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
+export function ConfigurationEditor({ language, onChange, initialConfiguration, bulkMode = false, readOnly = false }: { readOnly?: boolean; bulkMode?: boolean; language: Language; onChange?: (config: Configuration) => void; initialConfiguration?: Configuration }) {
   const t: Translator = (key, params) =>
     translate(language, key as TextKey, params)
   const [initial] = useState(() => {
@@ -363,7 +363,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration, 
         <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
           {t('app.config.integrationHint')}
         </p>
-        <SavedConfigurations editorActions={<>
+        <fieldset disabled={readOnly}><SavedConfigurations editorActions={<>
           {issues.length > 0 ? (
             <Button variant="outline" disabled>
               <Download size={15} />
@@ -407,6 +407,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration, 
           setDirty(true)
           setMessage(null)
         }}/>
+        </fieldset>
         {message && (
           <p role="status" className="mt-4 text-sm">
             {t(message.key, message.params)}
@@ -469,6 +470,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration, 
         aria-labelledby={`tab-${tab}`}
         className="p-6"
       >
+        <fieldset disabled={readOnly}>
         <header className="mb-6">
           <h3 className="mb-3 text-lg font-semibold">{t(`section.${tab}`)}</h3>
           <p className="max-w-3xl text-sm text-slate-600">
@@ -922,6 +924,7 @@ export function ConfigurationEditor({ language, onChange, initialConfiguration, 
             ))}
           </>
         )}
+        </fieldset>
       </div>
     </section>
   )

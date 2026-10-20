@@ -1,8 +1,8 @@
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import com.google.gson.*;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
-import de.uni_leipzig.life.csv2fhir.ConverterOptionSet;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterOptionSet;
 
 /** Use the converter's own parser and ID rules in the Python workflow. */
 public class WorkflowOptions {

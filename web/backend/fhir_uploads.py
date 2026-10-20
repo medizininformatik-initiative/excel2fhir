@@ -162,7 +162,7 @@ def create(identifier, target, selection):
                          'sourceName': job.get('source_name'), 'inputKind': job.get('input_kind'),
                          'generation': job.get('generation'), 'summary': job.get('summary')})
     descriptor = {'target': {'id': target, **TARGETS[target]}, 'datasets': selected,
-                  'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'excel2fhir.jar')}
+                  'blazectlVersion': BLAZECTL_VERSION, 'converterSha256': store.digest(store.APP / 'synthifhir.jar')}
     if any(item.get('kind') == 'bulk' for item in selected):
         descriptor['streaming'] = True
     with store.connect() as db:
@@ -324,7 +324,7 @@ def execute(identifier, stopping, terminate):
             terminate(process)
     try:
         with (root / 'upload.log').open('a' if descriptor.get('streaming') else 'w') as log:
-            if store.digest(store.APP / 'excel2fhir.jar') != descriptor['converterSha256']:
+            if store.digest(store.APP / 'synthifhir.jar') != descriptor['converterSha256']:
                 raise ValueError('Converter image changed after submission')
             if descriptor.get('streaming'):
                 import bulk_uploads
@@ -351,8 +351,8 @@ def execute(identifier, stopping, terminate):
                             raise ValueError('Invalid dataset archive path')
                     archive.extractall(expanded)
                 exported = root / f'export-{index}.ndjson'
-                run(['java', '-Xmx512m', '-cp', str(store.APP / 'excel2fhir.jar'),
-                     'de.uni_leipzig.life.csv2fhir.DatasetUploadExport', str(expanded), str(exported)], log, 600)
+                run(['java', '-Xmx512m', '-cp', str(store.APP / 'synthifhir.jar'),
+                     'de.uni_leipzig.life.synthifhir.DatasetUploadExport', str(expanded), str(exported)], log, 600)
                 exports.append((item['id'], exported))
             summary.update(prepare_transactions(exports, root / 'transactions', cancelled))
             if cancelled():

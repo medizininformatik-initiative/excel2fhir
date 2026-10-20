@@ -35,7 +35,7 @@ password = subprocess.check_output(['openssl', 'passwd', '-apr1', 'prototype'], 
 shutil.copyfile(Path(__file__).with_name('measure.json'), target / 'measure.json')
 # extends preserves upstream image/service definitions; explicit overrides isolate
 # ports, resources, mounts and generated-data authentication from other projects.
-compose = f'''name: excel2fhir-data-node-74
+compose = f'''name: synthifhir-data-node-74
 services:
   fhir-server:
     extends:

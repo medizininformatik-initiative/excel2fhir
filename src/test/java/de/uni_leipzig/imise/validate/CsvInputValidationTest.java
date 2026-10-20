@@ -13,7 +13,7 @@ import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import de.uni_leipzig.imise.utils.Excel2Csv;
 import de.uni_leipzig.imise.utils.ExcelWorkbooks;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
 
 public class CsvInputValidationTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();

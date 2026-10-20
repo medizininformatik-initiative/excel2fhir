@@ -371,7 +371,7 @@ Verify that every existing Java option is represented, directly or by an explici
 adapter mapping, against a built converter:
 
 ```sh
-java --class-path target/excel2fhir.jar web/catalog/options/tests/CheckJavaBindings.java
+java --class-path target/synthifhir.jar web/catalog/options/tests/CheckJavaBindings.java
 ```
 
 Keep implementation and acceptance in #76/#77 distinct from this definition.

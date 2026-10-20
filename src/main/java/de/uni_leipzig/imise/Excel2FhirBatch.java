@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import de.uni_leipzig.UcumMapper;
-import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
+import de.uni_leipzig.life.synthifhir.PrintExceptionMessageHandler;
 import picocli.CommandLine;
 
 /** Internal sequential worker for one Synthea import; job metadata arrives on stdin. */
@@ -26,7 +26,8 @@ public final class Excel2FhirBatch {
         long started = System.nanoTime();
         int exitCode;
         try (var log = new PrintStream(Files.newOutputStream(Path.of(job.get("log").getAsString())),
-                true, StandardCharsets.UTF_8)) {
+                true, StandardCharsets.UTF_8);
+                var writer = new PrintWriter(log, true)) {
             System.setOut(log);
             System.setErr(log);
             // Console appenders capture their stream when configured; bind them to this case.
@@ -34,7 +35,7 @@ public final class Excel2FhirBatch {
             UcumMapper.invalidUcumCodes.clear();
             String[] arguments = new com.google.gson.Gson().fromJson(job.get("arguments"), String[].class);
             exitCode = new CommandLine(new Excel2FhirMain(job.has("csvDirectory") ? new java.io.File(job.get("csvDirectory").getAsString()) : null))
-                    .setOut(new PrintWriter(log, true)).setErr(new PrintWriter(log, true))
+                    .setOut(writer).setErr(writer)
                     .setExecutionExceptionHandler(new PrintExceptionMessageHandler()).execute(arguments);
         } finally {
             UcumMapper.invalidUcumCodes.clear();

@@ -117,11 +117,12 @@ class SeriesTests(unittest.TestCase):
                     start = jobs[0]['identifierCounters'].get('patient-rule', 0)
                     counter_starts.append(start)
                     if seeds[-1]=='1001' and fail[0]: raise RuntimeError('deliberate failure')
+                    Path(jobs[0]['identifierRegistrationsOutput']).write_text('')
                     Path(jobs[0]['identifierCountersOutput']).write_text(json.dumps({'patient-rule': start + len(jobs)}))
                     for job in jobs:
                         pid=(Path(job['input'])/'pid').read_text()
                         with gzip.open(Path(job['output'])/(pid+'.json.gz'),'wt') as out:
-                            json.dump({'entry':[{'resource':{'resourceType':'Patient','id':pid}}]},out)
+                            json.dump({'resourceType':'Bundle','entry':[{'resource':{'resourceType':'Patient','id':pid}}]},out)
                     if update: update({'stageCompleted':len(json.loads(Path(command[-2]).read_text()))})
             modules={name:types.ModuleType(name) for name in ['synthea_to_excel','direct_csv','converter_options','synthea_consent']}
             modules['synthea_to_excel'].prepare=prepare
@@ -131,7 +132,7 @@ class SeriesTests(unittest.TestCase):
             modules['synthea_consent'].enrich=lambda *args:{}
             with patch.dict('sys.modules',modules), patch.object(bulk,'OUTPUT_ROOT',root/'output'), patch.object(generation,'native_command',side_effect=command), patch.object(bulk,'checked_process',side_effect=process), redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError,'deliberate failure'): bulk.run(folder)
-                first=root/'output/cohort/packages/run-00001-package-00001-100Pat.zip'
+                first=root/'output/cohort/run-00001-package-00001-100Pat.zip'
                 saved=first.read_bytes(); modified=first.stat().st_mtime_ns
                 progress=json.loads((folder/'bulk-progress.json').read_text())
                 self.assertEqual(100,progress['completed'])

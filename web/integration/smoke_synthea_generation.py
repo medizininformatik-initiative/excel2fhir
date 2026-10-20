@@ -10,6 +10,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='generation-workbench-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     catalogue = generation.catalogue()
     assert catalogue['revision'] == (generation.synthea_runtime.ROOT / 'scripts/synthea-version.txt').read_text().strip()
     assert catalogue['modules'] and catalogue['keepModules'] and 'Massachusetts' in catalogue['locations']

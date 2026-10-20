@@ -52,7 +52,7 @@ def execute(job_id):
         snapshot = json.loads((folder / "snapshot.json").read_text())
         if snapshot.get('validation', False):
             command[1] = '-Xmx3g'
-        if store.digest(store.APP / "excel2fhir.jar") != snapshot["converterSha256"]:
+        if store.digest(store.APP / "synthifhir.jar") != snapshot["converterSha256"]:
             raise RuntimeError("Converter image changed after submission; start a new run")
         kind = snapshot.get('inputKind', 'workbook')
         input_path = folder / inputs.input_filename(kind)
@@ -83,13 +83,13 @@ def execute(job_id):
             run_replay.verify(folder, json.loads(input_path.read_text()))
             if snapshot.get('clinicalTimeZone'):
                 command.append('-Duser.timezone=' + snapshot['clinicalTimeZone'])
-            command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-i', str(folder / 'workbooks')])
+            command.extend(['-jar', str(store.APP / 'synthifhir.jar'), '-i', str(folder / 'workbooks')])
         elif kind == 'csv':
             expanded = folder / 'input-csv'
             inputs.extract_csv(input_path, expanded)
-            command.extend(['-cp', str(store.APP / 'excel2fhir.jar'), 'de.uni_leipzig.life.csv2fhir.Main', '-i', str(expanded)])
+            command.extend(['-cp', str(store.APP / 'synthifhir.jar'), 'de.uni_leipzig.life.synthifhir.Main', '-i', str(expanded)])
         else:
-            command.extend(['-jar', str(store.APP / 'excel2fhir.jar'), '-f', str(input_path)])
+            command.extend(['-jar', str(store.APP / 'synthifhir.jar'), '-f', str(input_path)])
         command.extend(['-o', str(folder / 'output')])
         if snapshot["profile"]["id"] not in {"synthea"}:
             if (folder / "default.config").read_text() != snapshot["profile"]["optionsProperties"]:
@@ -107,19 +107,19 @@ def execute(job_id):
             from pathlib import Path
             command = [sys.executable, str(Path(__file__).with_name('bulk_generation.py')), str(folder)]
         environment = dict(os.environ)
-        environment.pop('EXCEL2FHIR_CONSENT_SEED', None)
-        environment.pop('EXCEL2FHIR_CONSENT_CONTEXT', None)
+        environment.pop('SYNTHIFHIR_CONSENT_SEED', None)
+        environment.pop('SYNTHIFHIR_CONSENT_CONTEXT', None)
         if kind == 'synthea-generation' and snapshot['generation'].get('syntheticConsent'):
-            environment['EXCEL2FHIR_CONSENT_SEED'] = snapshot['generation']['patientSeed']
-            environment['EXCEL2FHIR_CONSENT_CONTEXT'] = json.dumps({
+            environment['SYNTHIFHIR_CONSENT_SEED'] = snapshot['generation']['patientSeed']
+            environment['SYNTHIFHIR_CONSENT_CONTEXT'] = json.dumps({
                 'end_date': snapshot['generation']['endDate'],
                 'years_of_history': snapshot['generation']['yearsOfHistory']})
         if kind.startswith('synthea') and not native:
             table_format = snapshot.get('tableFormat', 'excel')
             if table_format not in {'csv', 'excel'}:
                 raise ValueError('Unknown Synthea table format')
-            environment['EXCEL2FHIR_TABLE_FORMAT'] = table_format
-            environment['EXCEL2FHIR_DIAGNOSTICS'] = 'true' if snapshot.get('diagnostics', True) else 'false'
+            environment['SYNTHIFHIR_TABLE_FORMAT'] = table_format
+            environment['SYNTHIFHIR_DIAGNOSTICS'] = 'true' if snapshot.get('diagnostics', True) else 'false'
         with (folder / "converter.log").open("a" if bulk else "w") as log:
             process = subprocess.Popen(command, cwd=folder, stdout=log, stderr=subprocess.STDOUT, start_new_session=True, env=environment)
             while process.poll() is None:

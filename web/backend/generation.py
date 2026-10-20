@@ -4,7 +4,7 @@ from datetime import date
 from functools import lru_cache
 import io
 import json
-import os
+import result_exports
 from typing import Literal
 import zipfile
 
@@ -98,7 +98,7 @@ def catalogue():
                                'name': module.get('name', name),
                                'examples': {kind: sorted(labels)[:5] for kind, labels in examples.items() if labels}})
             return result
-        return {'bulkOutputDirectory': os.environ.get('MASS_OUTPUT_LABEL', 'outputMass'), 'revision': revision, 'sha256': store.digest(root / 'target/synthea.jar'),
+        return {'bulkOutputDirectory': result_exports.LABEL, 'revision': revision, 'sha256': store.digest(root / 'target/synthea.jar'),
                 'locations': {state: sorted(cities) for state, cities in sorted(locations.items())},
                 'modules': modules('modules/'), 'keepModules': modules('keep_modules/'),
                 'defaults': Settings().model_dump(mode='json')}

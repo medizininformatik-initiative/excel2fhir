@@ -2,7 +2,7 @@ package de.uni_leipzig.imise.validate;
 
 import static de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity.ERROR;
 import static de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity.WARNING;
-import static de.uni_leipzig.life.csv2fhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY;
+import static de.uni_leipzig.life.synthifhir.ConverterOptions.BooleanOption.CHECK_INPUT_CONSISTENCY;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.uni_leipzig.imise.validate.TemplateValidationIssue.Severity;
-import de.uni_leipzig.life.csv2fhir.ConverterOptions;
-import de.uni_leipzig.life.csv2fhir.converter.DiagnosisValues;
-import de.uni_leipzig.life.csv2fhir.converter.AdmissionReasonValues;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.converter.DiagnosisValues;
+import de.uni_leipzig.life.synthifhir.converter.AdmissionReasonValues;
 
 /**
  * Validates the current Excel input template contract before converting it.
@@ -51,7 +51,7 @@ public class ExcelTemplateValidator {
 
     public TemplateValidationResult validate(File excelFile) throws IOException {
         TemplateValidationResult result = new TemplateValidationResult();
-        for (var set : de.uni_leipzig.life.csv2fhir.ConverterOptionSet.defaults()) {
+        for (var set : de.uni_leipzig.life.synthifhir.ConverterOptionSet.defaults()) {
             var checked = validate(excelFile, set.options(), set.name());
             if (checked.hasErrors()) return checked;
             result = checked;
@@ -190,7 +190,7 @@ public class ExcelTemplateValidator {
             return encounterIds;
         }
         Map<String, Integer> columns = columnIndexes(sheet);
-        var contacts = new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator();
+        var contacts = new de.uni_leipzig.life.synthifhir.converter.ContactInputValidator();
         String previousPatientId = null;
         for (RowView row : sheet) {
             int rowIndex = row.getRowNum();
@@ -216,7 +216,7 @@ public class ExcelTemplateValidator {
                 CellView cell = getCell(row, columns, column);
                 if (cell != null && cell.hasDate()) contactValues.put(column, new DateTimeType(cell.date()).getValueAsString());
             }
-            for (var issue : contacts.accept(new de.uni_leipzig.life.csv2fhir.converter.ContactInputValidator.Input(
+            for (var issue : contacts.accept(new de.uni_leipzig.life.synthifhir.converter.ContactInputValidator.Input(
                     rowIndex + 1, patientId, contactValues))) {
                 add(result, ERROR, "Fall", (int) issue.row(), issue.field(), issue.message());
             }
@@ -284,7 +284,7 @@ public class ExcelTemplateValidator {
                 }
             }
             if ("Behandlungsplan".equals(sheetName)) {
-                for (String error : de.uni_leipzig.life.csv2fhir.converter.CarePlanConverter.continuationErrors(
+                for (String error : de.uni_leipzig.life.synthifhir.converter.CarePlanConverter.continuationErrors(
                         field -> get(row, columns, field)))
                     add(result, ERROR, sheetName, rowIndex + 1, "Patient-ID", error);
             }
@@ -292,7 +292,7 @@ public class ExcelTemplateValidator {
                 validateDiagnosisSelections(row, columns, result);
             }
             if ("Medikation".equals(sheetName)) {
-                for (String error : de.uni_leipzig.life.csv2fhir.converter.MedicationValues.errors(key -> {
+                for (String error : de.uni_leipzig.life.synthifhir.converter.MedicationValues.errors(key -> {
                     CellView cell = getCell(row, columns, key);
                     if (cell != null && cell.hasDate()) return new DateTimeType(cell.date()).getValueAsString();
                     return get(row, columns, key);
@@ -379,7 +379,7 @@ public class ExcelTemplateValidator {
             if (value.matches("\\d{4}(-\\d{2}(-\\d{2})?)?(T.*)?")) {
                 return new DateTimeType(value);
             }
-            return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
+            return de.uni_leipzig.life.synthifhir.utils.DateUtil.parseDateTimeType(value);
         } catch (Exception e) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
                     "Value is not a supported date/time: " + value);
@@ -409,7 +409,7 @@ public class ExcelTemplateValidator {
             return new DateTimeType(cell.date());
         }
         try {
-            return de.uni_leipzig.life.csv2fhir.utils.DateUtil.parseDateTimeType(value);
+            return de.uni_leipzig.life.synthifhir.utils.DateUtil.parseDateTimeType(value);
         } catch (Exception e) {
             add(result, ERROR, sheet.getSheetName(), row.getRowNum() + 1, columnName,
                     "Value is not a supported date/time: " + value);
@@ -550,38 +550,53 @@ public class ExcelTemplateValidator {
         private final int index;
         private final String value;
         TextCell(int index, String value) { this.index = index; this.value = value; }
+        @Override
         public int getColumnIndex() { return index; }
+        @Override
         public String text() { return value; }
     }
     private static final class TextRow implements RowView {
         private final int index;
         private final List<CellView> cells;
         TextRow(int index, List<CellView> cells) { this.index = index; this.cells = cells; }
+        @Override
         public int getRowNum() { return index; }
+        @Override
         public CellView getCell(int index) { return index < cells.size() ? cells.get(index) : null; }
+        @Override
         public java.util.Iterator<CellView> iterator() { return cells.iterator(); }
     }
     private static final class TextTable implements TableView {
         private final String name;
         private final List<RowView> rows;
         TextTable(String name, List<RowView> rows) { this.name = name; this.rows = rows; }
+        @Override
         public String getSheetName() { return name; }
+        @Override
         public RowView getRow(int index) { return index < rows.size() ? rows.get(index) : null; }
+        @Override
         public java.util.Iterator<RowView> iterator() { return rows.iterator(); }
     }
     private final class ExcelCell implements CellView {
         private final Cell cell;
         ExcelCell(Cell cell) { this.cell = cell; }
+        @Override
         public int getColumnIndex() { return cell.getColumnIndex(); }
+        @Override
         public String text() { return formatCell(cell); }
+        @Override
         public boolean hasDate() { return isExcelDateCell(cell) || isExcelDateFormulaCell(cell); }
+        @Override
         public Date date() { return isExcelDateCell(cell) ? cell.getDateCellValue() : evaluateDateFormula(cell); }
     }
     private final class ExcelRow implements RowView {
         private final Row row;
         ExcelRow(Row row) { this.row = row; }
+        @Override
         public int getRowNum() { return row.getRowNum(); }
+        @Override
         public CellView getCell(int index) { var cell = row.getCell(index); return cell == null ? null : new ExcelCell(cell); }
+        @Override
         public java.util.Iterator<CellView> iterator() {
             return java.util.stream.StreamSupport.stream(row.spliterator(), false)
                     .<CellView>map(ExcelCell::new).iterator();
@@ -590,8 +605,11 @@ public class ExcelTemplateValidator {
     private final class ExcelTable implements TableView {
         private final XSSFSheet sheet;
         ExcelTable(XSSFSheet sheet) { this.sheet = sheet; }
+        @Override
         public String getSheetName() { return sheet.getSheetName(); }
+        @Override
         public RowView getRow(int index) { var row = sheet.getRow(index); return row == null ? null : new ExcelRow(row); }
+        @Override
         public java.util.Iterator<RowView> iterator() {
             return java.util.stream.StreamSupport.stream(sheet.spliterator(), false)
                     .<RowView>map(ExcelRow::new).iterator();

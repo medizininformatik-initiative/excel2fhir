@@ -19,7 +19,7 @@ class ComposeProfilesTest(unittest.TestCase):
                         command += ['--profile', profile]
                     config = json.loads(subprocess.check_output(command + ['config', '--format', 'json']))
                     services = config['services']
-                    expected = {'api', 'worker', 'web'}
+                    expected = {'api', 'worker', 'web', 'output-init'}
                     if 'blaze' in profiles or 'data-portal' in profiles:
                         expected.add('blaze')
                     if 'hapi' in profiles:
@@ -38,6 +38,16 @@ class ComposeProfilesTest(unittest.TestCase):
                         self.assertNotIn('build', services['availability-updater'])
                         self.assertEqual('http://blaze:8080/fhir', services['dataportal-backend']['environment']['CQL_SERVER_BASE_URL'])
                     self.assertEqual(expected, set(services))
+                    for name in ('api', 'worker'):
+                        self.assertEqual('service_completed_successfully',
+                                         services[name]['depends_on']['output-init']['condition'])
+                        mounts = {mount['target']: mount for mount in services[name]['volumes']}
+                        self.assertEqual(str(ROOT / 'outputGlobal'), mounts['/global-output']['source'])
+                    initializer = services['output-init']
+                    self.assertEqual('0:0', initializer['user'])
+                    self.assertEqual('no', initializer['restart'])
+                    project = next(m for m in initializer['volumes'] if m['target'] == '/host-project')
+                    self.assertTrue(project['read_only'])
                     published = []
                     for service in services.values():
                         self.assertFalse(service.get('privileged', False))

@@ -12,13 +12,13 @@ and [selection lists](clinical-selections.md) for field-level guidance.
 Edit or replace the supplied workbook in `input/`, then run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir
+docker compose -f docker/docker-compose.yml run --build --rm synthifhir
 ```
 
 The Compose file mounts the project at `/workspace` and writes results to
 `outputGlobal/`. `-f docker/docker-compose.yml` selects the Compose file in its
 subdirectory. To select one workbook, append `-f input/MyCase.xlsx` after
-`excel2fhir`; this second `-f` is an Excel2FHIR option.
+`synthifhir`; this second `-f` is an synthiFHIR option.
 
 ## Output
 
@@ -65,7 +65,7 @@ directory. Custom Docker output paths need a writable volume mount.
 For example, explicitly select a workbook:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm excel2fhir -f input/MyCase.xlsx
+docker compose -f docker/docker-compose.yml run --build --rm synthifhir -f input/MyCase.xlsx
 ```
 
 ## Converter Options
@@ -76,14 +76,14 @@ representation, including reference directions and patient-ID generation.
 Each invocation uses one configuration. Supply it explicitly:
 
 ```sh
-java -jar target/excel2fhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
+java -jar target/synthifhir.jar -f input/MyCase.xlsx --converter-options options/KDS-A.config
 ```
 
 Without an external configuration, the converter uses its built-in defaults.
 Export an editable default configuration with either CLI:
 
 ```sh
-java -jar target/excel2fhir.jar --export-default-options options.config
+java -jar target/synthifhir.jar --export-default-options options.config
 ```
 
 The export creates a new file. Edit it and pass it with `--converter-options`.
@@ -114,8 +114,8 @@ examples. Supply converter settings separately with `--converter-options`.
 Place the CSV files in `input/` and run:
 
 ```sh
-docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java excel2fhir \
-  -cp /app/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
+docker compose -f docker/docker-compose.yml run --build --rm --entrypoint java synthifhir \
+  -cp /app/synthifhir.jar de.uni_leipzig.life.synthifhir.Main
 ```
 
 The converter groups files by their prefix: `Case_Person.csv` and `Case_Fall.csv`
@@ -144,11 +144,11 @@ With JDK 17 and Maven 3.x:
 
 ```sh
 mvn test package
-java -jar target/excel2fhir.jar
+java -jar target/synthifhir.jar
 ```
 
 This reads workbooks from `input/`. For CSV input:
 
 ```sh
-java -cp target/excel2fhir.jar de.uni_leipzig.life.csv2fhir.Main
+java -cp target/synthifhir.jar de.uni_leipzig.life.synthifhir.Main
 ```

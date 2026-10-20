@@ -65,6 +65,7 @@ def strings(path):
 
 def retained(root, manifest):
     keep = {root / name for name in ('snapshot.json', 'default.config', 'datasets.json',
+            'bulk-remainder.zip', 'series-remainder.zip', 'bulk-completion.json', 'bulk-identifier-history.sqlite', 'series-identifiers.sqlite',
             'input.xlsx', 'input.zip', 'generation.json', 'generation-result.json', 'timing.json', 'failure.json', 'outcomes.json')
             if (root / name).is_file()}
     snapshot = json.loads((root / 'snapshot.json').read_text())
@@ -171,7 +172,7 @@ def archive(job_id):
         root = store.ROOT / 'jobs' / job_id
         if not (root / 'cleanup.json').is_file():
             raise FileNotFoundError('Cleaned run not found')
-        handle = tempfile.NamedTemporaryFile(prefix='excel2fhir-run-', suffix='.zip', delete=False)
+        handle = tempfile.NamedTemporaryFile(prefix='synthifhir-run-', suffix='.zip', delete=False)
         destination = Path(handle.name)
         handle.close()
         try:

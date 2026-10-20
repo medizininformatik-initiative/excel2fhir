@@ -25,7 +25,7 @@ public final class WorkflowRun {
         Path root = (outputRoot == null ? Path.of("outputGlobal") : outputRoot.toPath()).toAbsolutePath();
         Files.createDirectories(root);
         // Synthea supplies the system offset separately from its clinical time zone.
-        String offset = System.getProperty("excel2fhir.runOffset");
+        String offset = System.getProperty("synthifhir.runOffset");
         ZoneId zone = offset == null ? ZoneId.systemDefault() : ZoneOffset.of(offset);
         String stamp = DateTimeFormatter.ofPattern("yyyyMMdd_HH-mm-ss").format(ZonedDateTime.now(zone));
         String name = "run-" + stamp + "-" + operation;

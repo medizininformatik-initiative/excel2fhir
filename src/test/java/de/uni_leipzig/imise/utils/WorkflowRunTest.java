@@ -49,13 +49,13 @@ public class WorkflowRunTest {
 
     private void checkClock(String systemZone, String runOffset, String expectedOffset) throws Exception {
         TimeZone previous = TimeZone.getDefault();
-        String previousOffset = System.getProperty("excel2fhir.runOffset");
+        String previousOffset = System.getProperty("synthifhir.runOffset");
         try {
             TimeZone.setDefault(TimeZone.getTimeZone(systemZone));
             if (runOffset == null)
-                System.clearProperty("excel2fhir.runOffset");
+                System.clearProperty("synthifhir.runOffset");
             else
-                System.setProperty("excel2fhir.runOffset", runOffset);
+                System.setProperty("synthifhir.runOffset", runOffset);
             long before = System.currentTimeMillis() / 1000;
             WorkflowRun run = new WorkflowRun(temporary.newFolder(), null, "excel-to-fhir");
             long after = System.currentTimeMillis() / 1000;
@@ -69,9 +69,9 @@ public class WorkflowRunTest {
         } finally {
             TimeZone.setDefault(previous);
             if (previousOffset == null)
-                System.clearProperty("excel2fhir.runOffset");
+                System.clearProperty("synthifhir.runOffset");
             else
-                System.setProperty("excel2fhir.runOffset", previousOffset);
+                System.setProperty("synthifhir.runOffset", previousOffset);
         }
     }
 }

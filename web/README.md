@@ -436,7 +436,7 @@ maintaining independent service definitions. It generates a seven-day localhost
 certificate and PKCS12 trust store, a disposable `prototype` / `prototype` Basic
 auth account, and a small patient-count Measure. Use only generated test data.
 
-The isolated project is `excel2fhir-data-node-74`. Ports 5185–5188 are bound to
+The isolated project is `synthifhir-data-node-74`. Ports 5185–5188 are bound to
 loopback: Blaze, TORCH, TORCH's file server, and the TLS reverse proxy. Its named
 volumes persist Blaze data and TORCH output. FDE uploads reports to Blaze;
 `verify_fde.py` exports the latest reports into `node-test/fde-output`.
@@ -556,8 +556,8 @@ Build and update API and worker together whenever converter or import-pipeline
 files change. Both services must contain identical converter and importer assets:
 
 ```sh
-docker compose -f web/compose.yml build api worker web
-docker compose -f web/compose.yml up -d --no-deps api worker web
+docker compose -f web/compose.yml build output-init api worker web
+docker compose -f web/compose.yml up -d api worker web
 ```
 
 Wait for active runs and uploads to finish before updating. Submitted runs retain
@@ -649,7 +649,7 @@ shared identities.
 Run the integration test in a separate worker container without mounting existing data:
 
 ```sh
-docker run --rm -i --memory=4g --cpus=2 excel2fhir-web-prototype-worker:latest python - < web/integration/smoke_bulk_resume.py
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_resume.py
 ```
 
 The test uses temporary queue and output directories and fixed Synthea fixtures with
@@ -706,7 +706,10 @@ sequentially within one overall job; its details list each subrun and seed range
 The worker processes at most 100 patients per internal chunk.
 For KDS output, additional identifier counters continue across every patient, chunk
 and subrun of the overall job. Completed chunks store the counter positions for
-resumption; independent jobs start at the configured values.
+resumption; new series start at the configured values.
+Identifier collisions across patients and chunks stop publication of the affected
+chunk. A disk-backed index checks identifier ownership, including case-scoped
+sharing, and is rebuilt from checksummed registration journals on resume.
 Overall progress weights generation, KDS mapping and conversion (or native JSON
 compression), and ZIP writing/checksum verification equally per patient. A second
 bar shows the current stage. The patient counter counts completed chunks; the
@@ -721,17 +724,27 @@ whole-run ZIPs or detailed reports. Standard runs retain their existing behavior
 
 Directory names use a Europe/Berlin timestamp, a sanitized dataset name and the unique run ID. Dataset names use portable ASCII letters, digits, hyphens and underscores and retain at most the final 24 characters. The timestamp uses `YYYYMMDD-HHMMSS`; the full run UUID is written without hyphens. Patient files are named `p001.json.gz` through `p100.json.gz` within each chunk; patient IDs remain inside the bundles.
 
-Completed chunks are temporarily stored under
-`outputMass/<timestamp>_<dataset-name>_<run-id>/run-00001/part-00001/`.
-The `packages/` directory contains ZIP packages of at most 1,000 patients, each
-belonging to one subrun. ZIP stores the `.json.gz` files without recompressing them.
-Every package contains a manifest with file checksums and generation checkpoints.
-After the ZIP is closed and all checksums verified, its loose files are removed.
-Only the package currently being built temporarily needs space for both copies.
-Packages can be downloaded individually or selected for FHIR upload.
-To choose another base directory, set `MASS_OUTPUT_DIRECTORY` to an absolute host
-path before starting Compose. The directory must be writable by the worker
-(container UID 10001). The interface displays the configured destination.
+Standard and bulk Workbench runs publish reusable dataset ZIPs under
+`outputGlobal/<timestamp>_<dataset-name>_<run-id>/`. Standard runs export one ZIP
+per dataset variant; bulk runs publish ZIPs directly in the run directory, each containing at most
+1,000 patients from one subrun. The interface shows a copyable result directory.
+Inputs, logs, reports and intermediate files remain in the internal Workbench
+volume. Standard-run downloads and reports remain available in the interface.
+Deleting or cleaning a run does not remove its exported ZIPs.
+
+Compose prepares the output directory before starting the unprivileged services.
+On Linux it grants the service user access using filesystem ACLs and retains the
+checkout owner's access. Docker Desktop uses its shared-folder permissions.
+No host UID configuration or manual permission changes are required on supported
+writable local filesystems. Read-only shares cannot be used as output directories.
+
+Bulk chunks are staged internally until their ZIP is closed and verified. ZIP
+stores `.json.gz` files without recompressing them. The `-<count>Pat.zip` suffix
+reports distinct Patient resources actually contained in the package.
+Reference-only output retains clinical resources and reports `0Pat` when no
+Patient resources are included. Every bulk package contains a manifest with
+checksums and generation checkpoints. Packages can be downloaded individually
+or selected for FHIR upload.
 
 Each chunk uses a distinct reproducible patient seed derived from the submitted
 seed. A 10,000-patient subrun consumes 100 seeds; the next starts with the following
@@ -757,9 +770,10 @@ default KDS configuration generates ward organizations as separate resources and
 references them from Encounter.serviceProvider. Patient identities are ranked by a versioned hash of the patient
 seed and identity. The allocation is 50% full consent, 15% patient data only,
 15% patient and insurance data, 10% full refusal, and 10% without documented consent.
-Bulk generation applies this allocation to each 100-patient chunk. Partial chunks
-and standard runs use largest-remainder rounding. Reproducing the same seed,
-patient set and chunk boundaries reproduces the assignment.
+Bulk generation assigns consent to complete 100-patient source blocks, including
+patients retained internally for continuation. Standard runs use largest-remainder
+rounding for their requested population. Matching seeds and source blocks reproduce
+the assignment independently of how a bulk series is split into jobs.
 
 The consent date is the first inpatient encounter within the configured history,
 falling back to the first other encounter in that period. The history ends on the
@@ -796,6 +810,35 @@ job** reuses its saved settings and seeds, skips completed chunks in verified ZI
 recreates only unfinished temporary work. Completed files and packages remain in
 place. Resume requires the generator, converter and importer versions saved with
 the job. Keep its local output files and job record until it finishes.
+
+### Continuing a bulk series
+
+Choose **Continue series** below the execution mode, or use the same action in a
+completed run's details. Select a previous run; the form loads the last block in
+its continuation chain. Set the additional patient count and start the next block.
+All other generation and converter settings are inherited and read-only. Identifier
+rules display their next counter starts.
+
+Continuation requires a successfully completed block with a saved completion state
+and, for partial source blocks, its checksummed source remainder. The generator produces complete 100-patient source blocks and retains unused patients
+internally. Continuation consumes this remainder before generating another block.
+Consent assignments are retained from the complete source block; identifier counters
+advance only during conversion of requested patients. The population seed advances
+once per consumed 100-patient source block; the clinician seed stays unchanged. Each identifier rule continues
+from its actual allocated counter, including allocations for contacts that are not
+emitted. The backend also carries the identifier collision index into the new job.
+Generator, converter and importer versions must match. An unfinished successor must
+be completed or resumed before adding another block; the same predecessor cannot
+start two successors. Keep the latest block's job record for continuation.
+
+The isolated integration test compares 300 patients in one job against 275 followed
+by a 25-patient continuation without regeneration. It uses seeded source fixtures and the real mapper,
+converter, consent enrichment, counter restoration and ZIP publication, comparing
+uncompressed FHIR bytes and identifier uniqueness:
+
+```bash
+docker run --rm -i --memory=4g --cpus=2 synthifhir-workbench-worker:latest python - < web/integration/smoke_bulk_continuation.py
+```
 
 ### Uploading bulk packages
 

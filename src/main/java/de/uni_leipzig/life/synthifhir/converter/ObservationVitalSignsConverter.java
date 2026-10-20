@@ -1,0 +1,98 @@
+package de.uni_leipzig.life.synthifhir.converter;
+
+import static de.uni_leipzig.life.synthifhir.ConverterOptions.IntOption.START_ID_OBSERVATION_VITAL_SIGNS;
+import static de.uni_leipzig.life.synthifhir.TableIdentifier.Klinische_Dokumentation;
+import static de.uni_leipzig.life.synthifhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Bezeichner;
+import static de.uni_leipzig.life.synthifhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Einheit;
+import static de.uni_leipzig.life.synthifhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Untersuchungscode;
+import static de.uni_leipzig.life.synthifhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Wert;
+import static de.uni_leipzig.life.synthifhir.converter.ObservationVitalSignsConverter.ObservationVitalSigns_Columns.Zeitstempel;
+import static org.hl7.fhir.r4.model.Observation.ObservationStatus.FINAL;
+
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.csv.CSVRecord;
+import org.hl7.fhir.r4.model.CodeableConcept;
+import org.hl7.fhir.r4.model.Coding;
+import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Observation;
+import org.hl7.fhir.r4.model.Reference;
+import org.hl7.fhir.r4.model.Resource;
+
+import com.google.common.collect.ImmutableList;
+
+import de.uni_leipzig.imise.validate.FHIRValidator;
+import de.uni_leipzig.life.synthifhir.ConverterOptions;
+import de.uni_leipzig.life.synthifhir.ConverterResult;
+import de.uni_leipzig.life.synthifhir.TableColumnIdentifier;
+
+/**
+ * @author jheuschkel (19.10.2020), AXS (05.11.2021)
+ */
+public class ObservationVitalSignsConverter extends ObservationLaboratoryConverter {
+
+    /**
+     * toString() result of these enum values are the names of the columns in the
+     * correspunding excel sheet.
+     */
+    public static enum ObservationVitalSigns_Columns implements TableColumnIdentifier {
+        Bezeichner,
+        Untersuchungscode,
+        Wert,
+        Einheit,
+        Zeitstempel
+    }
+
+    /**
+     * Category for all Observation of this type.<br>
+     * Unfortunately, observations with this actually correct category are not
+     * recognized as valid, which is why the vital sign observations continue to be
+     * assigned the category of laboratory observations.
+     */
+    private static List<CodeableConcept> VITAL_SIGNS_OBSERVATION_FIXED_CATEGORY = getVitalObservationFixedCategory();
+
+    /**
+     * @param record
+     * @param previousRecordPID
+     * @param result
+     * @param validator
+     * @param options
+     * @throws Exception
+     */
+    public ObservationVitalSignsConverter(CSVRecord record, String previousRecordPID, ConverterResult result,
+            FHIRValidator validator, ConverterOptions options) throws Exception {
+        super(record, previousRecordPID, result, validator, options);
+    }
+
+    @Override
+    protected List<Resource> convertInternal() throws Exception {
+        return convertObservation(true);
+    }
+
+    /**
+     * TODO: Change the ObservationVital Category if the ICU Package can be used
+     * This here is the correct Category if all packages could be used to validate
+     * the resources. But until now (08.07.22) there is no valid ICU Package, which
+     * should contain the Codes from file
+     * hl7.fhir.r4.core-4.0.1/package/ValueSet-observation-vitalsignresult.json are
+     * the same from https://loinc.org/85353-1/
+     *
+     * @return the always same category for vital signs observations
+     */
+    private static List<CodeableConcept> getVitalObservationFixedCategory() {
+        Coding vitalCategory1 = new Coding()
+                .setSystem("http://terminology.hl7.org/CodeSystem/observation-category")
+                .setCode("vital-signs")
+                .setDisplay("Vital Signs");
+        Coding vitalCatgeory2 = new Coding()
+                .setSystem("http://loinc.org")
+                .setCode("85353-1")
+                .setDisplay("Vital signs, weight, height, head circumference, oxygen saturation and BMI panel");
+        CodeableConcept vitalCategories = new CodeableConcept()
+                .addCoding(vitalCategory1)
+                .addCoding(vitalCatgeory2);
+        return ImmutableList.of(vitalCategories);
+    }
+
+}

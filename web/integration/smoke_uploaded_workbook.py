@@ -18,6 +18,8 @@ import worker
 original = (REPO / 'input' / 'FHIR_Testdatengenerator_Vorlage.xlsx').read_bytes()
 with tempfile.TemporaryDirectory(prefix='workbook-upload-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     store.APP = REPO / 'target'
     with TestClient(app) as client:
         uploaded = client.post('/api/inputs?filename=Uploaded%20test.xlsx', content=original)

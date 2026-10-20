@@ -1,5 +1,5 @@
 services:
-  excel2fhir:
+  synthifhir:
     build:
       context: ..
       dockerfile: docker/Dockerfile

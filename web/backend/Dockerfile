@@ -19,8 +19,8 @@ COPY src src
 COPY web/catalog/options/contract.json web/catalog/options/contract.json
 COPY web/catalog/dar/generated/catalog.json web/catalog/dar/generated/catalog.json
 COPY web/backend/ExportDefaults.java .
-RUN --mount=type=cache,id=excel2fhir-maven,target=/root/.m2,sharing=locked mvn -B -DskipTests package
-RUN java -cp target/excel2fhir.jar ExportDefaults.java /defaults
+RUN --mount=type=cache,id=synthifhir-maven,target=/root/.m2,sharing=locked mvn -B -DskipTests package
+RUN java -cp target/synthifhir.jar ExportDefaults.java /defaults
 
 FROM debian:bookworm-slim AS blazectl
 ARG TARGETARCH
@@ -43,8 +43,8 @@ COPY web/catalog/options/contract.json /synthea/web/catalog/options/contract.jso
 COPY src/main/resources/workbook-absent-reasons.json /synthea/src/main/resources/workbook-absent-reasons.json
 COPY src/main/resources/ucum /synthea/src/main/resources/ucum
 COPY FHIR_Testdatengenerator_Vorlage.xlsx /synthea/
-COPY --from=converter /build/target/excel2fhir.jar /synthea/target/excel2fhir.jar
-COPY --from=converter /build/target/excel2fhir.jar /converter/excel2fhir.jar
+COPY --from=converter /build/target/synthifhir.jar /synthea/target/synthifhir.jar
+COPY --from=converter /build/target/synthifhir.jar /converter/synthifhir.jar
 COPY input/FHIR_Testdatengenerator_Vorlage.xlsx /converter/input/
 COPY FHIR_Testdatengenerator_Interpolar_Demo.xlsx /converter/
 COPY --from=converter /defaults/converter-options.config /converter/defaults.config
@@ -52,7 +52,7 @@ COPY --from=converter /defaults/converter-options.config /converter/defaults.con
 # The existing Synthea importer fills a copy of the template through LibreOffice.
 FROM debian:bookworm-slim AS worker
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
-    ca-certificates tzdata python3 python3-venv openjdk-17-jdk-headless libreoffice-calc \
+    acl ca-certificates tzdata python3 python3-venv openjdk-17-jdk-headless libreoffice-calc \
     libreoffice-java-common fonts-crosextra-carlito \
     && rm -rf /var/lib/apt/lists/* && python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1

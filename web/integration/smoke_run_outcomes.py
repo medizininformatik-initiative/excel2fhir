@@ -11,6 +11,8 @@ import worker
 
 with tempfile.TemporaryDirectory(prefix='run-outcomes-') as directory:
     store.ROOT = Path(directory)
+    import result_exports
+    result_exports.ROOT = Path(directory) / 'outputGlobal'
     fixture = synthea_runtime.ROOT / 'scripts/tests/fixtures/synthea/female.json'
     with inputs.incoming() as incoming:
         (incoming / 'input.json').write_bytes(fixture.read_bytes())

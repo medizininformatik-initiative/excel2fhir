@@ -1,5 +1,6 @@
 """Atomic ZIP packages of already compressed patient bundles, without loose duplicates."""
 import hashlib
+import gzip
 import json
 from pathlib import Path, PurePosixPath
 import shutil
@@ -8,6 +9,22 @@ import time
 import zipfile
 
 import store
+
+
+def patient_ids(path):
+    with gzip.open(path, 'rt') as stream:
+        resource = json.load(stream)
+    entries = resource.get('entry', []) if resource.get('resourceType') == 'Bundle' else [{'resource': resource}]
+    return {entry['resource']['id'] for entry in entries
+            if entry.get('resource', {}).get('resourceType') == 'Patient' and entry['resource'].get('id')}
+
+
+def patient_count(manifest):
+    files = manifest['files'].values()
+    if all('patientIds' in entry for entry in files):
+        return len({pid for entry in files for pid in entry['patientIds']})
+    # Keep published packages readable without rewriting their manifests.
+    return sum(entry.get('role') != 'support' for entry in files)
 
 
 def read_manifest(path, verify=True, update=None):
@@ -50,8 +67,8 @@ def package_path(directory, parts, target):
         raise ValueError('Multiple published ZIPs exist for this package')
     if existing:
         return existing[0]
-    count = sum(not path.name.startswith('support-')
-                for part in parts for path in (directory / part).glob('*.json.gz'))
+    count = len({pid for part in parts for path in (directory / part).glob('*.json.gz')
+                 for pid in patient_ids(path)})
     return target.with_name(f'{target.stem}-{count}Pat.zip')
 
 
@@ -65,7 +82,7 @@ def package(directory, parts, destination, update, chunks=None):
             raise ValueError('Existing ZIP checkpoint differs from this run')
     else:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        pending = destination.with_suffix('.zip.partial')
+        pending = destination.with_name('.' + destination.name + '.partial')
         manifest = {'version': 1, 'chunks': chunks or {part: {} for part in parts}, 'files': {}}
         file_count = sum(len(list((directory / part).glob('*.json.gz'))) for part in parts)
         written = 0
@@ -77,7 +94,8 @@ def package(directory, parts, destination, update, chunks=None):
                     raise ValueError('Cannot package an empty patient chunk')
                 for source in files:
                     name = part + '/' + source.name
-                    manifest['files'][name] = {'size': source.stat().st_size, 'sha256': store.digest(source)}
+                    manifest['files'][name] = {'size': source.stat().st_size, 'sha256': store.digest(source),
+                                             'patientIds': sorted(patient_ids(source))}
                     if source.name.startswith('support-'):
                         manifest['files'][name]['role'] = 'support'
                     archive.write(source, name)
@@ -123,6 +141,9 @@ def remove_legacy_tar(path, zip_path):
 
 
 def output_path(snapshot):
+    if snapshot.get('resultOutputName'):
+        import result_exports
+        return result_exports.path(snapshot)
     from bulk_generation import OUTPUT_ROOT
     name = snapshot.get('bulkOutputName')
     if not name or Path(name).name != name:
@@ -134,12 +155,12 @@ def publish(folder, snapshot):
     """Expose packages as ordinary selectable/downloadable datasets without copying them."""
     destination = output_path(snapshot)
     items = []
-    for path in sorted((destination / 'packages').glob('*.zip')):
+    for path in sorted(package_directory(snapshot).glob('*.zip')):
         manifest = read_manifest(path, verify=False)
         items.append({'id': folder.name + '.' + str(len(items)), 'name': path.stem,
                       'kind': 'bulk', 'path': path.relative_to(destination).as_posix(),
                       'size': path.stat().st_size, 'sha256': store.digest(path),
-                      'inspection': {'patients': sum(entry.get('role') != 'support' for entry in manifest['files'].values())}, 'files': []})
+                      'inspection': {'patients': patient_count(manifest)}, 'files': []})
     from bulk_generation import atomic_json
     atomic_json(folder / 'datasets.json', {'schemaVersion': 1, 'datasets': items, 'artifacts': []})
 
@@ -147,6 +168,9 @@ def publish(folder, snapshot):
 def migrate_completed(folder, snapshot):
     """Package completed existing runs, retaining originals until their ZIP is verified."""
     from bulk_generation import atomic_json
+    if snapshot.get('resultOutputName'):
+        publish(folder, snapshot)
+        return
     destination = output_path(snapshot)
     if not destination.is_dir():
         raise FileNotFoundError('Bulk results directory is unavailable')
@@ -156,14 +180,14 @@ def migrate_completed(folder, snapshot):
         parts = sorted(p.name for p in directory.glob('part-*') if p.is_dir())
         # Published ZIPs already own their parts after an interrupted migration.
         existing = {}
-        for archive in sorted((destination / 'packages').glob(f'run-{run_number:05d}-package-*.zip')):
+        for archive in sorted(package_directory(snapshot).glob(f'run-{run_number:05d}-package-*.zip')):
             manifest = read_manifest(archive)
             existing.update(manifest['chunks'])
             package(directory, list(manifest['chunks']), archive, lambda *_: None)
         parts = sorted(set(parts) | set(existing))
         for start in range(0, len(parts), 10):
             group = parts[start:start + 10]
-            target = destination / 'packages' / f'run-{run_number:05d}-package-{start // 10 + 1:05d}.zip'
+            target = package_directory(snapshot) / f'run-{run_number:05d}-package-{start // 10 + 1:05d}.zip'
             legacy_tar = target.with_suffix('.tar')
             target = package_path(directory, group, target)
             chunks = {}
@@ -178,5 +202,11 @@ def migrate_completed(folder, snapshot):
     progress_path = folder / 'bulk-progress.json'
     if progress_path.exists():
         data = json.loads(progress_path.read_text())
-        data.update(archiveBytes=sum(p.stat().st_size for p in (destination / 'packages').glob('*.zip')), archiveFormat='zip')
+        data.update(archiveBytes=sum(p.stat().st_size for p in package_directory(snapshot).glob('*.zip')), archiveFormat='zip')
         atomic_json(progress_path, data)
+
+
+def package_directory(snapshot):
+    destination = output_path(snapshot)
+    existing = destination / 'packages'
+    return existing if existing.is_dir() else destination

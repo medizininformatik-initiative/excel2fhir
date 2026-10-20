@@ -52,12 +52,12 @@ class NativeBulkTests(unittest.TestCase):
             with patch.object(bulk, 'OUTPUT_ROOT', root / 'output'), patch.object(bulk, 'checked_process', side_effect=process), redirect_stdout(io.StringIO()):
                 with self.assertRaisesRegex(RuntimeError, 'deliberate interruption'):
                     bulk.run(folder)
-                archive = root / 'output/native/packages/run-00001-package-00001-100Pat.zip'
+                archive = root / 'output/native/run-00001-package-00001-100Pat.zip'
                 saved = archive.read_bytes()
                 fail[0] = False
                 bulk.run(folder)
                 self.assertEqual(saved, archive.read_bytes())
-                paths = sorted((root / 'output/native/packages').glob('*.zip'))
+                paths = sorted((root / 'output/native').glob('*.zip'))
                 self.assertEqual(2, len(paths))
                 for seed, path in zip(('1000', '1001'), paths):
                     manifest = bulk_archives.read_manifest(path)

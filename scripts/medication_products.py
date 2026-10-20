@@ -19,7 +19,7 @@ INGREDIENT_SYSTEMS = {'http://fhir.de/CodeSystem/ask': 'ASK',
 
 
 def local_catalog_path():
-    return Path.home() / '.local/share/excel2fhir/medication-products.json'
+    return Path.home() / '.local/share/synthifhir/medication-products.json'
 
 
 def require_external_path(path):

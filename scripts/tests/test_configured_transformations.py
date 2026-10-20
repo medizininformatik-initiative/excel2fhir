@@ -215,7 +215,7 @@ class DarChecks(unittest.TestCase):
             self.assertEqual(before, result['entry'][0]['resource'])
             self.assertEqual(absent(), target['entry'][0]['resource']['clinicalStatus'])
 
-    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/excel2fhir.jar').exists(), 'Build converter JAR')
+    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/synthifhir.jar').exists(), 'Build converter JAR')
     def test_bridge_exports_shift_medication_and_dar_and_respects_dependencies(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / 'test.config'
@@ -228,7 +228,7 @@ class DarChecks(unittest.TestCase):
             self.assertEqual('0', values['TIME_SHIFT_BASE_DAYS'])
             self.assertEqual('retain', values['MEDICATION_REQUEST_TREATMENT'])
 
-    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/excel2fhir.jar').exists(), 'Build converter JAR')
+    @unittest.skipUnless((Path(__file__).resolve().parents[2] / 'target/synthifhir.jar').exists(), 'Build converter JAR')
     def test_bridge_requires_version_for_supplied_files_and_uses_defaults_when_omitted(self):
         self.assertEqual([], resolve_config()['errors'])
         with tempfile.TemporaryDirectory() as folder:

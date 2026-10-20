@@ -416,7 +416,7 @@ class WorkbookSession:
                                 str(candidate), str(commands)] + (preview or []),
                                # Full lifetime cohorts can contain tens of thousands of rows.
                                check=True, timeout=600,
-                               env=dict(os.environ, CSV2FHIR_UNO_PORT=str(self.port)))
+                               env=dict(os.environ, SYNTHIFHIR_UNO_PORT=str(self.port)))
             except BaseException:
                 # A failed/timed-out helper may have left an open document in Office.
                 self.stop()

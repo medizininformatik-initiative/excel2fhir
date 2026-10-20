@@ -13,9 +13,9 @@ import de.uni_leipzig.imise.utils.FileLogger;
 import de.uni_leipzig.imise.utils.FileLogger.LogContentLayout;
 import de.uni_leipzig.imise.utils.WorkflowRun;
 import de.uni_leipzig.imise.validate.FHIRValidator.ValidationResultType;
-import de.uni_leipzig.life.csv2fhir.OutputFileType;
-import de.uni_leipzig.life.csv2fhir.PrintExceptionMessageHandler;
-import de.uni_leipzig.life.csv2fhir.TableIdentifier;
+import de.uni_leipzig.life.synthifhir.OutputFileType;
+import de.uni_leipzig.life.synthifhir.PrintExceptionMessageHandler;
+import de.uni_leipzig.life.synthifhir.TableIdentifier;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -23,7 +23,7 @@ import picocli.CommandLine.Option;
 /**
  * @author AXS (14.11.2021)
  */
-@Command(name = "excel2fhir", mixinStandardHelpOptions = true, version = "1.0", description = "Converts a directory containing multiple excel files into (a) json bundle(s).")
+@Command(name = "synthifhir", mixinStandardHelpOptions = true, version = "1.0", description = "Converts a directory containing multiple excel files into (a) json bundle(s).")
 public class Excel2FhirMain implements Callable<Integer> {
 
     private final File csvInput;
@@ -102,7 +102,7 @@ public class Excel2FhirMain implements Callable<Integer> {
         if (converterOptions.size() > 1) throw new IllegalArgumentException("Choose one converter configuration per run");
         if (exportDefaultOptions != null) {
             java.nio.file.Files.writeString(exportDefaultOptions.toPath(),
-                    de.uni_leipzig.life.csv2fhir.ContractConfiguration.defaultProperties(),
+                    de.uni_leipzig.life.synthifhir.ContractConfiguration.defaultProperties(),
                     java.nio.file.StandardOpenOption.CREATE_NEW);
             return 0;
         }
@@ -129,7 +129,7 @@ public class Excel2FhirMain implements Callable<Integer> {
             List<String> sheets = TableIdentifier.getExcelSheetNamePatterns();
             Excel2Fhir converter = new Excel2Fhir(validateBundles, minLogLevel, converterOptions, run.directory.resolve("details/options"));
             if (csvInput != null) {
-                converter.convertCsvDirectory(inputFile, csvInput, run.csv.toFile(), run.staging.toFile(),
+                converter.convertCsvDirectory(inputFile, csvInput, run.staging.toFile(),
                         patientsPerBundle, outputFileTypes);
             } else if (inputFile != null) {
                 converter.convertExcelFile(inputFile, sheets, run.csv.toFile(), run.staging.toFile(),

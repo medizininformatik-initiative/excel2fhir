@@ -10,7 +10,7 @@ def resolve_config(path=None, patients=None):
         request['name'] = Path(path).stem
     if patients is not None:
         request['patients'] = patients
-    result = subprocess.run(['java', '-cp', str(root / 'target/excel2fhir.jar'),
+    result = subprocess.run(['java', '-cp', str(root / 'target/synthifhir.jar'),
                              str(root / 'scripts/WorkflowOptions.java')],
                             input=json.dumps(request), capture_output=True, text=True)
     if result.returncode:
